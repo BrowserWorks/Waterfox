@@ -45,8 +45,8 @@ const {
 const InspectorUtils = require("InspectorUtils");
 
 const COMPAREMODE = {
-  "BOOLEAN": "bool",
-  "INTEGER": "int",
+  BOOLEAN: "bool",
+  INTEGER: "int",
 };
 
 /**
@@ -186,7 +186,7 @@ CssLogic.prototype = {
 
     // Full update is needed because the this.processMatchedSelectors() method
     // skips UA stylesheets if the filter does not allow such sheets.
-    const needFullUpdate = (oldValue == FILTER.UA || value == FILTER.UA);
+    const needFullUpdate = oldValue == FILTER.UA || value == FILTER.UA;
 
     if (needFullUpdate) {
       this._matchedRules = null;
@@ -232,7 +232,10 @@ CssLogic.prototype = {
     this.reset();
 
     // styleSheets isn't an array, but forEach can work on it anyway
-    const styleSheets = InspectorUtils.getAllStyleSheets(this.viewedDocument, true);
+    const styleSheets = InspectorUtils.getAllStyleSheets(
+      this.viewedDocument,
+      true
+    );
     Array.prototype.forEach.call(styleSheets, this._cacheSheet, this);
 
     this._sheetsCached = true;
@@ -264,9 +267,11 @@ CssLogic.prototype = {
 
       // Find import and keyframes rules.
       for (const aDomRule of cssSheet.getCssRules()) {
-        if (aDomRule.type == CSSRule.IMPORT_RULE &&
-            aDomRule.styleSheet &&
-            this.mediaMatches(aDomRule)) {
+        if (
+          aDomRule.type == CSSRule.IMPORT_RULE &&
+          aDomRule.styleSheet &&
+          this.mediaMatches(aDomRule)
+        ) {
           this._cacheSheet(aDomRule.styleSheet);
         } else if (aDomRule.type == CSSRule.KEYFRAMES_RULE) {
           this._keyframesRules.push(aDomRule);
@@ -444,12 +449,13 @@ CssLogic.prototype = {
       const [rule, status, distance] = matchedRule;
 
       rule.selectors.forEach(function(selector) {
-        if (selector._matchId !== this._matchId &&
-           (selector.inlineStyle ||
-            this.selectorMatchesElement(rule.domRule,
-                                        selector.selectorIndex))) {
+        if (
+          selector._matchId !== this._matchId &&
+          (selector.inlineStyle ||
+            this.selectorMatchesElement(rule.domRule, selector.selectorIndex))
+        ) {
           selector._matchId = this._matchId;
-          this._matchedSelectors.push([ selector, status, distance ]);
+          this._matchedSelectors.push([selector, status, distance]);
           if (callback) {
             callback.call(scope, selector, status, distance);
           }
@@ -479,8 +485,10 @@ CssLogic.prototype = {
       if (InspectorUtils.selectorMatchesElement(element, domRule, idx)) {
         return true;
       }
-    } while ((element = element.parentNode) &&
-             element.nodeType === nodeConstants.ELEMENT_NODE);
+    } while (
+      (element = element.parentNode) &&
+      element.nodeType === nodeConstants.ELEMENT_NODE
+    );
 
     return false;
   },
@@ -503,13 +511,14 @@ CssLogic.prototype = {
     this._matchedRules.some(function(value) {
       const rule = value[0];
       const status = value[1];
-      properties = properties.filter((property) => {
+      properties = properties.filter(property => {
         // We just need to find if a rule has this property while it matches
         // the viewedElement (or its parents).
-        if (rule.getPropertyValue(property) &&
-            (status == STATUS.MATCHED ||
-             (status == STATUS.PARENT_MATCH &&
-              this._isInherited(property)))) {
+        if (
+          rule.getPropertyValue(property) &&
+          (status == STATUS.MATCHED ||
+            (status == STATUS.PARENT_MATCH && this._isInherited(property)))
+        ) {
           result[property] = true;
           return false;
         }
@@ -550,8 +559,8 @@ CssLogic.prototype = {
     }
 
     do {
-      const status = this.viewedElement === element ?
-                   STATUS.MATCHED : STATUS.PARENT_MATCH;
+      const status =
+        this.viewedElement === element ? STATUS.MATCHED : STATUS.PARENT_MATCH;
 
       try {
         domRules = getCSSStyleRules(element);
@@ -595,8 +604,10 @@ CssLogic.prototype = {
       }
 
       distance--;
-    } while ((element = element.parentNode) &&
-              element.nodeType === nodeConstants.ELEMENT_NODE);
+    } while (
+      (element = element.parentNode) &&
+      element.nodeType === nodeConstants.ELEMENT_NODE
+    );
   },
 
   /**
@@ -608,8 +619,10 @@ CssLogic.prototype = {
    */
   mediaMatches: function(domObject) {
     const mediaText = domObject.media.mediaText;
-    return !mediaText ||
-      this.viewedDocument.defaultView.matchMedia(mediaText).matches;
+    return (
+      !mediaText ||
+      this.viewedDocument.defaultView.matchMedia(mediaText).matches
+    );
   },
 };
 
@@ -678,14 +691,16 @@ CssLogic.getBindingElementAndPseudo = getBindingElementAndPseudo;
  * @returns {CSSStyleDeclaration}
  */
 CssLogic.getComputedStyle = function(node) {
-  if (!node ||
-      Cu.isDeadWrapper(node) ||
-      node.nodeType !== nodeConstants.ELEMENT_NODE ||
-      !node.ownerGlobal) {
+  if (
+    !node ||
+    Cu.isDeadWrapper(node) ||
+    node.nodeType !== nodeConstants.ELEMENT_NODE ||
+    !node.ownerGlobal
+  ) {
     return null;
   }
 
-  const {bindingElement, pseudo} = CssLogic.getBindingElementAndPseudo(node);
+  const { bindingElement, pseudo } = CssLogic.getBindingElementAndPseudo(node);
 
   // For reasons that still escape us, pseudo-elements can sometimes be "unattached" (i.e.
   // not have a parentNode defined). This seems to happen when a page is reloaded while
@@ -842,7 +857,7 @@ CssSheet.prototype = {
       this._sheetAllowed = false;
     }
     if (filter !== FILTER.USER && filter !== FILTER.UA) {
-      this._sheetAllowed = (filter === this.href);
+      this._sheetAllowed = filter === this.href;
     }
 
     return this._sheetAllowed;
@@ -855,9 +870,7 @@ CssSheet.prototype = {
    */
   get ruleCount() {
     try {
-      return this._ruleCount > -1 ?
-        this._ruleCount :
-        this.getCssRules().length;
+      return this._ruleCount > -1 ? this._ruleCount : this.getCssRules().length;
     } catch (e) {
       return 0;
     }
@@ -957,7 +970,7 @@ function CssRule(cssSheet, domRule, element) {
     this.userRule = this._cssSheet.userSheet;
     this.agentRule = this._cssSheet.agentSheet;
   } else if (element) {
-    this._selectors = [ new CssSelector(this, "@element.style", 0) ];
+    this._selectors = [new CssSelector(this, "@element.style", 0)];
     this.line = -1;
     this.source = l10n("rule.sourceElement");
     this.href = "#";
@@ -1190,8 +1203,10 @@ CssSelector.prototype = {
     }
 
     if (typeof this._specificity !== "number") {
-      this._specificity = InspectorUtils.getSpecificity(this.cssRule.domRule,
-        this.selectorIndex);
+      this._specificity = InspectorUtils.getSpecificity(
+        this.cssRule.domRule,
+        this.selectorIndex
+      );
     }
 
     return this._specificity;
@@ -1241,8 +1256,9 @@ CssPropertyInfo.prototype = {
   get value() {
     if (!this._value && this._cssLogic.computedStyle) {
       try {
-        this._value =
-          this._cssLogic.computedStyle.getPropertyValue(this.property);
+        this._value = this._cssLogic.computedStyle.getPropertyValue(
+          this.property
+        );
       } catch (ex) {
         console.log("Error reading computed style for " + this.property);
         console.log(ex);
@@ -1288,8 +1304,10 @@ CssPropertyInfo.prototype = {
     });
 
     // Now we know which of the matches is best, we can mark it BEST_MATCH.
-    if (this._matchedSelectors.length > 0 &&
-        this._matchedSelectors[0].status > STATUS.UNMATCHED) {
+    if (
+      this._matchedSelectors.length > 0 &&
+      this._matchedSelectors[0].status > STATUS.UNMATCHED
+    ) {
       this._matchedSelectors[0].status = STATUS.BEST;
     }
   },
@@ -1304,12 +1322,18 @@ CssPropertyInfo.prototype = {
   _processMatchedSelector: function(selector, status, distance) {
     const cssRule = selector.cssRule;
     const value = cssRule.getPropertyValue(this.property);
-    if (value &&
-        (status == STATUS.MATCHED ||
-         (status == STATUS.PARENT_MATCH &&
-          this._isInherited(this.property)))) {
-      const selectorInfo = new CssSelectorInfo(selector, this.property, value,
-          status, distance);
+    if (
+      value &&
+      (status == STATUS.MATCHED ||
+        (status == STATUS.PARENT_MATCH && this._isInherited(this.property)))
+    ) {
+      const selectorInfo = new CssSelectorInfo(
+        selector,
+        this.property,
+        value,
+        status,
+        distance
+      );
       this._matchedSelectors.push(selectorInfo);
     }
   },
@@ -1365,7 +1389,7 @@ function CssSelectorInfo(selector, property, value, status, distance) {
   this.distance = distance;
   this.value = value;
   const priority = this.selector.cssRule.getPropertyPriority(this.property);
-  this.important = (priority === "important");
+  this.important = priority === "important";
 }
 
 CssSelectorInfo.prototype = {
@@ -1582,7 +1606,12 @@ CssSelectorInfo.prototype = {
     // Sheet index
     // Rule line
     // Rule column
-    for (const propName of ["specificity", "sheetIndex", "ruleLine", "ruleColumn"]) {
+    for (const propName of [
+      "specificity",
+      "sheetIndex",
+      "ruleLine",
+      "ruleColumn",
+    ]) {
       current = this.compare(that, propName, COMPAREMODE.INTEGER);
       if (current) {
         return current;

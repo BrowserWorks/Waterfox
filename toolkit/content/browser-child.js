@@ -4,28 +4,42 @@
 
 /* eslint-env mozilla/frame-script */
 
-const {WebProgressChild} = ChromeUtils.import("resource://gre/modules/WebProgressChild.jsm");
+const { WebProgressChild } = ChromeUtils.import(
+  "resource://gre/modules/WebProgressChild.jsm"
+);
 
 this.WebProgress = new WebProgressChild(this);
 
-addEventListener("DOMTitleChanged", function(aEvent) {
-  if (!aEvent.isTrusted || aEvent.target.defaultView != content)
-    return;
-  sendAsyncMessage("DOMTitleChanged", { title: content.document.title });
-}, false);
-
-addEventListener("ImageContentLoaded", function(aEvent) {
-  if (content.document instanceof Ci.nsIImageDocument) {
-    let req = content.document.imageRequest;
-    if (!req.image)
+addEventListener(
+  "DOMTitleChanged",
+  function(aEvent) {
+    if (!aEvent.isTrusted || aEvent.target.defaultView != content) {
       return;
-    sendAsyncMessage("ImageDocumentLoaded", { width: req.image.width,
-                                              height: req.image.height });
-  }
-}, false);
+    }
+    sendAsyncMessage("DOMTitleChanged", { title: content.document.title });
+  },
+  false
+);
+
+addEventListener(
+  "ImageContentLoaded",
+  function(aEvent) {
+    if (content.document instanceof Ci.nsIImageDocument) {
+      let req = content.document.imageRequest;
+      if (!req.image) {
+        return;
+      }
+      sendAsyncMessage("ImageDocumentLoaded", {
+        width: req.image.width,
+        height: req.image.height,
+      });
+    }
+  },
+  false
+);
 
 // We may not get any responses to Browser:Init if the browser element
 // is torn down too quickly.
 var outerWindowID = docShell.outerWindowID;
 var browsingContextId = docShell.browsingContext.id;
-sendAsyncMessage("Browser:Init", {outerWindowID, browsingContextId});
+sendAsyncMessage("Browser:Init", { outerWindowID, browsingContextId });

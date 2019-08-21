@@ -8,7 +8,7 @@ declTest("sendQuery testing", {
     let actorParent = parent.getActor("Test");
     ok(actorParent, "JSWindowActorParent should have value.");
 
-    let {result} = await actorParent.sendQuery("asyncAdd", {a: 10, b: 20});
+    let { result } = await actorParent.sendQuery("asyncAdd", { a: 10, b: 20 });
     is(result, 30);
   },
 });

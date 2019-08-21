@@ -3,7 +3,9 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 "use strict";
 
-const { accessibility: { AUDIT_TYPE } } = require("devtools/shared/constants");
+const {
+  accessibility: { AUDIT_TYPE },
+} = require("devtools/shared/constants");
 
 // Used in accessible component for properties tree rendering.
 exports.TREE_ROW_HEIGHT = 21;
@@ -73,8 +75,10 @@ exports.ACCESSIBLE_EVENTS = [
 ];
 
 // Telemetry name constants.
-exports.A11Y_SERVICE_DURATION = "DEVTOOLS_ACCESSIBILITY_SERVICE_TIME_ACTIVE_SECONDS";
-exports.A11Y_SERVICE_ENABLED_COUNT = "devtools.accessibility.service_enabled_count";
+exports.A11Y_SERVICE_DURATION =
+  "DEVTOOLS_ACCESSIBILITY_SERVICE_TIME_ACTIVE_SECONDS";
+exports.A11Y_SERVICE_ENABLED_COUNT =
+  "devtools.accessibility.service_enabled_count";
 
 // URL constants
 exports.A11Y_LEARN_MORE_LINK =

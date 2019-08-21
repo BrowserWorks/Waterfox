@@ -1,14 +1,24 @@
 "use strict";
 
-const {PlacesUtils} = ChromeUtils.import("resource://gre/modules/PlacesUtils.jsm");
-const {NewTabUtils} = ChromeUtils.import("resource://gre/modules/NewTabUtils.jsm");
-const {PlacesTestUtils} = ChromeUtils.import("resource://testing-common/PlacesTestUtils.jsm");
+const { PlacesUtils } = ChromeUtils.import(
+  "resource://gre/modules/PlacesUtils.jsm"
+);
+const { NewTabUtils } = ChromeUtils.import(
+  "resource://gre/modules/NewTabUtils.jsm"
+);
+const { PlacesTestUtils } = ChromeUtils.import(
+  "resource://testing-common/PlacesTestUtils.jsm"
+);
 
 // Disable top site search shortcuts for this test
-Services.prefs.setBoolPref("browser.newtabpage.activity-stream.improvesearch.topSiteSearchShortcuts", false);
+Services.prefs.setBoolPref(
+  "browser.newtabpage.activity-stream.improvesearch.topSiteSearchShortcuts",
+  false
+);
 
 // A small 1x1 test png
-const IMAGE_1x1 = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAAAAAA6fptVAAAACklEQVQI12NgAAAAAgAB4iG8MwAAAABJRU5ErkJggg==";
+const IMAGE_1x1 =
+  "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAAAAAA6fptVAAAACklEQVQI12NgAAAAAgAB4iG8MwAAAABJRU5ErkJggg==";
 
 add_task(async function test_topSites() {
   let visits = [];
@@ -18,7 +28,7 @@ add_task(async function test_topSites() {
   function setVisit(visit) {
     for (let j = 0; j < numVisits; ++j) {
       visitDate -= 1000;
-      visit.visits.push({date: new Date(visitDate)});
+      visit.visits.push({ date: new Date(visitDate) });
     }
     visits.push(visit);
   }
@@ -44,19 +54,26 @@ add_task(async function test_topSites() {
   await PlacesTestUtils.addFavicons(faviconData);
 
   // Ensure our links show up in activityStream.
-  let links = await NewTabUtils.activityStreamLinks.getTopSites({onePerDomain: false, topsiteFrecency: 1});
+  let links = await NewTabUtils.activityStreamLinks.getTopSites({
+    onePerDomain: false,
+    topsiteFrecency: 1,
+  });
 
-  equal(links.length, visits.length, "Top sites has been successfully initialized");
+  equal(
+    links.length,
+    visits.length,
+    "Top sites has been successfully initialized"
+  );
 
   // Drop the visits.visits for later testing.
-  visits = visits.map(v => { return {url: v.url, title: v.title, favicon: undefined}; });
+  visits = visits.map(v => {
+    return { url: v.url, title: v.title, favicon: undefined };
+  });
 
   // Test that results from all providers are returned by default.
   let extension = ExtensionTestUtils.loadExtension({
     manifest: {
-      "permissions": [
-        "topSites",
-      ],
+      permissions: ["topSites"],
     },
     background() {
       browser.test.onMessage.addListener(async options => {
@@ -78,28 +95,43 @@ add_task(async function test_topSites() {
     return extension.awaitMessage("sites");
   }
 
-  Assert.deepEqual([visits[0], visits[2]],
-                   await getSites(),
-                   "got topSites default");
-  Assert.deepEqual(visits,
-                   await getSites({onePerDomain: false}),
-                   "got topSites all links");
+  Assert.deepEqual(
+    [visits[0], visits[2]],
+    await getSites(),
+    "got topSites default"
+  );
+  Assert.deepEqual(
+    visits,
+    await getSites({ onePerDomain: false }),
+    "got topSites all links"
+  );
 
   NewTabUtils.activityStreamLinks.blockURL(visits[0]);
-  ok(NewTabUtils.blockedLinks.isBlocked(visits[0]), `link ${visits[0].url} is blocked`);
+  ok(
+    NewTabUtils.blockedLinks.isBlocked(visits[0]),
+    `link ${visits[0].url} is blocked`
+  );
 
-  Assert.deepEqual([visits[2], visits[1]],
-                   await getSites(),
-                   "got topSites with blocked links filtered out");
-  Assert.deepEqual([visits[0], visits[2]],
-                   await getSites({includeBlocked: true}),
-                   "got topSites with blocked links included");
+  Assert.deepEqual(
+    [visits[2], visits[1]],
+    await getSites(),
+    "got topSites with blocked links filtered out"
+  );
+  Assert.deepEqual(
+    [visits[0], visits[2]],
+    await getSites({ includeBlocked: true }),
+    "got topSites with blocked links included"
+  );
 
   // Test favicon result
-  let topSites = await getSites({includeBlocked: true, includeFavicon: true});
+  let topSites = await getSites({ includeBlocked: true, includeFavicon: true });
   equal(topSites[0].favicon, IMAGE_1x1, "received favicon");
 
-  equal(1, (await getSites({limit: 1, includeBlocked: true})).length, "limit 1 topSite");
+  equal(
+    1,
+    (await getSites({ limit: 1, includeBlocked: true })).length,
+    "limit 1 topSite"
+  );
 
   NewTabUtils.uninit();
   await extension.unload();

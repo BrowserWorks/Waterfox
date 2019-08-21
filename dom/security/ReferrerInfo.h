@@ -68,6 +68,10 @@ class ReferrerInfo : public nsIReferrerInfo {
   // create an copy of the ReferrerInfo with new referrer policy
   already_AddRefed<nsIReferrerInfo> CloneWithNewPolicy(uint32_t aPolicy) const;
 
+  // create an copy of the ReferrerInfo with new send referrer
+  already_AddRefed<nsIReferrerInfo> CloneWithNewSendReferrer(
+      bool aSendReferrer) const;
+
   /**
    * Check whether the given referrer's scheme is allowed to be computed and
    * sent. The whitelist schemes are: http, https, ftp.

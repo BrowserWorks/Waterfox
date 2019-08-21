@@ -5,20 +5,23 @@
 
 "use strict";
 
-var EXPORTED_SYMBOLS = [ "BrowserUtils" ];
+var EXPORTED_SYMBOLS = ["BrowserUtils"];
 
-const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
-ChromeUtils.defineModuleGetter(this, "PlacesUtils",
-  "resource://gre/modules/PlacesUtils.jsm");
+const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
+ChromeUtils.defineModuleGetter(
+  this,
+  "PlacesUtils",
+  "resource://gre/modules/PlacesUtils.jsm"
+);
 
 var BrowserUtils = {
-
   /**
    * Prints arguments separated by a space and appends a new line.
    */
   dumpLn(...args) {
-    for (let a of args)
+    for (let a of args) {
       dump(a + " ");
+    }
     dump("\n");
   },
 
@@ -27,18 +30,28 @@ var BrowserUtils = {
    * safe mode if it is already in safe mode.
    */
   restartApplication() {
-    let cancelQuit = Cc["@mozilla.org/supports-PRBool;1"]
-                       .createInstance(Ci.nsISupportsPRBool);
-    Services.obs.notifyObservers(cancelQuit, "quit-application-requested", "restart");
-    if (cancelQuit.data) { // The quit request has been canceled.
+    let cancelQuit = Cc["@mozilla.org/supports-PRBool;1"].createInstance(
+      Ci.nsISupportsPRBool
+    );
+    Services.obs.notifyObservers(
+      cancelQuit,
+      "quit-application-requested",
+      "restart"
+    );
+    if (cancelQuit.data) {
+      // The quit request has been canceled.
       return false;
     }
     // if already in safe mode restart in safe mode
     if (Services.appinfo.inSafeMode) {
-      Services.startup.restartInSafeMode(Ci.nsIAppStartup.eAttemptQuit | Ci.nsIAppStartup.eRestart);
+      Services.startup.restartInSafeMode(
+        Ci.nsIAppStartup.eAttemptQuit | Ci.nsIAppStartup.eRestart
+      );
       return undefined;
     }
-    Services.startup.quit(Ci.nsIAppStartup.eAttemptQuit | Ci.nsIAppStartup.eRestart);
+    Services.startup.quit(
+      Ci.nsIAppStartup.eAttemptQuit | Ci.nsIAppStartup.eRestart
+    );
     return undefined;
   },
 
@@ -64,15 +77,16 @@ var BrowserUtils = {
     }
 
     try {
-      if (aURL instanceof Ci.nsIURI)
+      if (aURL instanceof Ci.nsIURI) {
         secMan.checkLoadURIWithPrincipal(aPrincipal, aURL, aFlags);
-      else
+      } else {
         secMan.checkLoadURIStrWithPrincipal(aPrincipal, aURL, aFlags);
+      }
     } catch (e) {
       let principalStr = "";
       try {
         principalStr = " from " + aPrincipal.URI.spec;
-      } catch (e2) { }
+      } catch (e2) {}
 
       throw new Error(`Load of ${aURL + principalStr} denied.`);
     }
@@ -105,13 +119,18 @@ var BrowserUtils = {
 
     let secMan = Services.scriptSecurityManager;
     if (principal.isCodebasePrincipal) {
-      return secMan.createCodebasePrincipal(principal.URI, existingPrincipal.originAttributes);
+      return secMan.createCodebasePrincipal(
+        principal.URI,
+        existingPrincipal.originAttributes
+      );
     }
 
     if (principal.isNullPrincipal) {
       return secMan.createNullPrincipal(existingPrincipal.originAttributes);
     }
-    throw new Error("Can't change the originAttributes of an expanded principal!");
+    throw new Error(
+      "Can't change the originAttributes of an expanded principal!"
+    );
   },
 
   /**
@@ -158,7 +177,8 @@ var BrowserUtils = {
     let rect = aElement.getBoundingClientRect();
     let win = aElement.ownerGlobal;
 
-    let x = rect.left, y = rect.top;
+    let x = rect.left,
+      y = rect.top;
 
     // We need to compensate for any iframes that might shift things
     // over. We also need to compensate for zooming.
@@ -168,8 +188,14 @@ var BrowserUtils = {
       let cstyle = win.getComputedStyle(parentFrame);
 
       let framerect = parentFrame.getBoundingClientRect();
-      x += framerect.left + parseFloat(cstyle.borderLeftWidth) + parseFloat(cstyle.paddingLeft);
-      y += framerect.top + parseFloat(cstyle.borderTopWidth) + parseFloat(cstyle.paddingTop);
+      x +=
+        framerect.left +
+        parseFloat(cstyle.borderLeftWidth) +
+        parseFloat(cstyle.paddingLeft);
+      y +=
+        framerect.top +
+        parseFloat(cstyle.borderTopWidth) +
+        parseFloat(cstyle.paddingTop);
 
       parentFrame = win.frameElement;
     }
@@ -193,8 +219,9 @@ var BrowserUtils = {
   onBeforeLinkTraversal(originalTarget, linkURI, linkNode, isAppTab) {
     // Don't modify non-default targets or targets that aren't in top-level app
     // tab docshells (isAppTab will be false for app tab subframes).
-    if (originalTarget != "" || !isAppTab)
+    if (originalTarget != "" || !isAppTab) {
       return originalTarget;
+    }
 
     // External links from within app tabs should always open in new tabs
     // instead of replacing the app tab's page (Bug 575561)
@@ -209,14 +236,18 @@ var BrowserUtils = {
       return originalTarget;
     }
 
-    if (docHost == linkHost)
+    if (docHost == linkHost) {
       return originalTarget;
+    }
 
     // Special case: ignore "www" prefix if it is part of host string
     let [longHost, shortHost] =
-      linkHost.length > docHost.length ? [linkHost, docHost] : [docHost, linkHost];
-    if (longHost == "www." + shortHost)
+      linkHost.length > docHost.length
+        ? [linkHost, docHost]
+        : [docHost, linkHost];
+    if (longHost == "www." + shortHost) {
       return originalTarget;
+    }
 
     return "_blank";
   },
@@ -228,11 +259,13 @@ var BrowserUtils = {
    * @return the simplified name string.
    */
   makeNicePluginName(aName) {
-    if (aName == "Shockwave Flash")
+    if (aName == "Shockwave Flash") {
       return "Adobe Flash";
+    }
     // Regex checks if aName begins with "Java" + non-letter char
-    if (/^Java\W/.exec(aName))
+    if (/^Java\W/.exec(aName)) {
       return "Java";
+    }
 
     // Clean up the plugin name by stripping off parenthetical clauses,
     // trailing version numbers or "plugin".
@@ -240,9 +273,11 @@ var BrowserUtils = {
     // Do this by first stripping the numbers, etc. off the end, and then
     // removing "Plugin" (and then trimming to get rid of any whitespace).
     // (Otherwise, something like "Java(TM) Plug-in 1.7.0_07" gets mangled)
-    let newName = aName.replace(/\(.*?\)/g, "").
-                        replace(/[\s\d\.\-\_\(\)]+$/, "").
-                        replace(/\bplug-?in\b/i, "").trim();
+    let newName = aName
+      .replace(/\(.*?\)/g, "")
+      .replace(/[\s\d\.\-\_\(\)]+$/, "")
+      .replace(/\bplug-?in\b/i, "")
+      .trim();
     return newName;
   },
 
@@ -256,12 +291,14 @@ var BrowserUtils = {
     // A null linkNode typically means that we're checking a link that wasn't
     // provided via an <a> link, like a text-selected URL.  Don't leak
     // referrer information in this case.
-    if (!linkNode)
+    if (!linkNode) {
       return true;
+    }
 
     let rel = linkNode.getAttribute("rel");
-    if (!rel)
+    if (!rel) {
       return false;
+    }
 
     // The HTML spec says that rel should be split on spaces before looking
     // for particular rel values.
@@ -276,13 +313,15 @@ var BrowserUtils = {
    *        The MIME type to check.
    */
   mimeTypeIsTextBased(mimeType) {
-    return mimeType.startsWith("text/") ||
-           mimeType.endsWith("+xml") ||
-           mimeType == "application/x-javascript" ||
-           mimeType == "application/javascript" ||
-           mimeType == "application/json" ||
-           mimeType == "application/xml" ||
-           mimeType == "mozilla.application/cached-xul";
+    return (
+      mimeType.startsWith("text/") ||
+      mimeType.endsWith("+xml") ||
+      mimeType == "application/x-javascript" ||
+      mimeType == "application/javascript" ||
+      mimeType == "application/json" ||
+      mimeType == "application/xml" ||
+      mimeType == "mozilla.application/cached-xul"
+    );
   },
 
   /**
@@ -294,17 +333,22 @@ var BrowserUtils = {
   shouldFastFind(elt) {
     if (elt) {
       let win = elt.ownerGlobal;
-      if (elt instanceof win.HTMLInputElement && elt.mozIsTextField(false))
+      if (elt instanceof win.HTMLInputElement && elt.mozIsTextField(false)) {
         return false;
+      }
 
-      if (elt.isContentEditable || win.document.designMode == "on")
+      if (elt.isContentEditable || win.document.designMode == "on") {
         return false;
+      }
 
-      if (elt instanceof win.HTMLTextAreaElement ||
-          elt instanceof win.HTMLSelectElement ||
-          elt instanceof win.HTMLObjectElement ||
-          elt instanceof win.HTMLEmbedElement)
+      if (
+        elt instanceof win.HTMLTextAreaElement ||
+        elt instanceof win.HTMLSelectElement ||
+        elt instanceof win.HTMLObjectElement ||
+        elt instanceof win.HTMLEmbedElement
+      ) {
         return false;
+      }
 
       if (elt instanceof win.HTMLIFrameElement && elt.mozbrowser) {
         // If we're targeting a mozbrowser iframe, it should be allowed to
@@ -324,8 +368,10 @@ var BrowserUtils = {
    * This can be called from the parent process or from content processes.
    */
   canFindInPage(location) {
-    return !location.startsWith("about:addons") &&
-           !location.startsWith("about:preferences");
+    return (
+      !location.startsWith("about:addons") &&
+      !location.startsWith("about:preferences")
+    );
   },
 
   _visibleToolbarsMap: new WeakMap(),
@@ -341,8 +387,9 @@ var BrowserUtils = {
    */
   isToolbarVisible(docShell, which) {
     let window = this.getRootWindow(docShell);
-    if (!this._visibleToolbarsMap.has(window))
+    if (!this._visibleToolbarsMap.has(window)) {
       return false;
+    }
     let toolbars = this._visibleToolbarsMap.get(window);
     return !!toolbars && toolbars.has(which);
   },
@@ -376,7 +423,10 @@ var BrowserUtils = {
       });
     }
     if (bounds.height) {
-      toolbarItem.style.setProperty("--toolbarbutton-height", bounds.height + "px");
+      toolbarItem.style.setProperty(
+        "--toolbarbutton-height",
+        bounds.height + "px"
+      );
     }
   },
 
@@ -398,10 +448,11 @@ var BrowserUtils = {
       toolbars = new Set();
       this._visibleToolbarsMap.set(window, toolbars);
     }
-    if (!visible)
+    if (!visible) {
       toolbars.delete(which);
-    else
+    } else {
       toolbars.add(which);
+    }
   },
 
   /**
@@ -457,7 +508,11 @@ var BrowserUtils = {
    */
   getSelectionDetails(aTopWindow, aCharLen) {
     let focusedWindow = {};
-    let focusedElement = Services.focus.getFocusedElementForWindow(aTopWindow, true, focusedWindow);
+    let focusedElement = Services.focus.getFocusedElementForWindow(
+      aTopWindow,
+      true,
+      focusedWindow
+    );
     focusedWindow = focusedWindow.value;
 
     let selection = focusedWindow.getSelection();
@@ -470,9 +525,11 @@ var BrowserUtils = {
     // try getting a selected text in text input.
     if (!selectionStr && focusedElement) {
       // Don't get the selection for password fields. See bug 565717.
-      if (ChromeUtils.getClassName(focusedElement) === "HTMLTextAreaElement" ||
-          (ChromeUtils.getClassName(focusedElement) === "HTMLInputElement" &&
-           focusedElement.mozIsTextField(true))) {
+      if (
+        ChromeUtils.getClassName(focusedElement) === "HTMLTextAreaElement" ||
+        (ChromeUtils.getClassName(focusedElement) === "HTMLInputElement" &&
+          focusedElement.mozIsTextField(true))
+      ) {
         selection = focusedElement.editor.selection;
         selectionStr = selection.toString();
       }
@@ -501,10 +558,11 @@ var BrowserUtils = {
         if (!delimitedAtStart) {
           let container = beginRange.startContainer;
           let offset = beginRange.startOffset;
-          if (container.nodeType == container.TEXT_NODE && offset > 0)
+          if (container.nodeType == container.TEXT_NODE && offset > 0) {
             delimitedAtStart = /\W/.test(container.textContent[offset - 1]);
-          else
+          } else {
             delimitedAtStart = true;
+          }
         }
 
         let delimitedAtEnd = false;
@@ -514,17 +572,23 @@ var BrowserUtils = {
           if (!delimitedAtEnd) {
             let container = endRange.endContainer;
             let offset = endRange.endOffset;
-            if (container.nodeType == container.TEXT_NODE &&
-                offset < container.textContent.length)
+            if (
+              container.nodeType == container.TEXT_NODE &&
+              offset < container.textContent.length
+            ) {
               delimitedAtEnd = /\W/.test(container.textContent[offset]);
-            else
+            } else {
               delimitedAtEnd = true;
+            }
           }
         }
 
         if (delimitedAtStart && delimitedAtEnd) {
           try {
-            url = Services.uriFixup.createFixupURI(linkText, Services.uriFixup.FIXUP_FLAG_NONE);
+            url = Services.uriFixup.createFixupURI(
+              linkText,
+              Services.uriFixup.FIXUP_FLAG_NONE
+            );
           } catch (ex) {}
         }
       }
@@ -541,8 +605,13 @@ var BrowserUtils = {
       url = null;
     }
 
-    return { text: selectionStr, docSelectionIsCollapsed: collapsed, fullText,
-             linkURL: url ? url.spec : null, linkText: url ? linkText : "" };
+    return {
+      text: selectionStr,
+      docSelectionIsCollapsed: collapsed,
+      fullText,
+      linkURL: url ? url.spec : null,
+      linkText: url ? linkText : "",
+    };
   },
 
   // Iterates through every docshell in the window and calls PermitUnload.
@@ -575,7 +644,9 @@ var BrowserUtils = {
       if (param) {
         // If nor the url, nor postData contain parameters, but a parameter was
         // provided, return the original input.
-        throw new Error("A param was provided but there's nothing to bind it to");
+        throw new Error(
+          "A param was provided but there's nothing to bind it to"
+        );
       }
       return [url, postData];
     }
@@ -589,7 +660,9 @@ var BrowserUtils = {
       // Try to fetch a charset from History.
       try {
         // Will return an empty string if character-set is not found.
-        let pageInfo = await PlacesUtils.history.fetch(url, {includeAnnotations: true});
+        let pageInfo = await PlacesUtils.history.fetch(url, {
+          includeAnnotations: true,
+        });
         if (pageInfo && pageInfo.annotations.has(PlacesUtils.CHARSET_ANNO)) {
           charset = pageInfo.annotations.get(PlacesUtils.CHARSET_ANNO);
         }
@@ -607,14 +680,18 @@ var BrowserUtils = {
     let encodedParam = "";
     if (charset && charset != "UTF-8") {
       try {
-        let converter = Cc["@mozilla.org/intl/scriptableunicodeconverter"]
-                          .createInstance(Ci.nsIScriptableUnicodeConverter);
+        let converter = Cc[
+          "@mozilla.org/intl/scriptableunicodeconverter"
+        ].createInstance(Ci.nsIScriptableUnicodeConverter);
         converter.charset = charset;
         encodedParam = converter.ConvertFromUnicode(param) + converter.Finish();
       } catch (ex) {
         encodedParam = param;
       }
-      encodedParam = escape(encodedParam).replace(/[+@\/]+/g, encodeURIComponent);
+      encodedParam = escape(encodedParam).replace(
+        /[+@\/]+/g,
+        encodeURIComponent
+      );
     } else {
       // Default charset is UTF-8
       encodedParam = encodeURIComponent(param);
@@ -622,8 +699,9 @@ var BrowserUtils = {
 
     url = url.replace(/%s/g, encodedParam).replace(/%S/g, param);
     if (hasPOSTParam) {
-      postData = decodedPostData.replace(/%s/g, encodedParam)
-                                .replace(/%S/g, param);
+      postData = decodedPostData
+        .replace(/%s/g, encodedParam)
+        .replace(/%S/g, param);
     }
     return [url, postData];
   },
@@ -658,23 +736,30 @@ var BrowserUtils = {
     }
     let numberOfInsertionPoints = msg.match(/%\d+\$S/g).length;
     if (numberOfInsertionPoints != nodesOrStrings.length) {
-      Cu.reportError(`Message has ${numberOfInsertionPoints} insertion points, ` +
-                     `but got ${nodesOrStrings.length} replacement parameters!`);
+      Cu.reportError(
+        `Message has ${numberOfInsertionPoints} insertion points, ` +
+          `but got ${nodesOrStrings.length} replacement parameters!`
+      );
     }
 
     let fragment = doc.createDocumentFragment();
     let parts = [msg];
     let insertionPoint = 1;
     for (let replacement of nodesOrStrings) {
-      let insertionString = "%" + (insertionPoint++) + "$S";
-      let partIndex = parts.findIndex(part => typeof part == "string" && part.includes(insertionString));
+      let insertionString = "%" + insertionPoint++ + "$S";
+      let partIndex = parts.findIndex(
+        part => typeof part == "string" && part.includes(insertionString)
+      );
       if (partIndex == -1) {
         fragment.appendChild(doc.createTextNode(msg));
         return fragment;
       }
 
       if (typeof replacement == "string") {
-        parts[partIndex] = parts[partIndex].replace(insertionString, replacement);
+        parts[partIndex] = parts[partIndex].replace(
+          insertionString,
+          replacement
+        );
       } else {
         let [firstBit, lastBit] = parts[partIndex].split(insertionString);
         parts.splice(partIndex, 1, firstBit, replacement, lastBit);
@@ -711,7 +796,7 @@ var BrowserUtils = {
       let observer = (subject, topic, data) => {
         if (test(subject, data)) {
           Services.obs.removeObserver(observer, topic);
-          resolve({subject, data});
+          resolve({ subject, data });
         }
       };
       Services.obs.addObserver(observer, topic);
@@ -738,8 +823,9 @@ var BrowserUtils = {
     }
     let urlWithoutProtocol = url.substring(7);
 
-    let flags = Services.uriFixup.FIXUP_FLAG_ALLOW_KEYWORD_LOOKUP |
-                Services.uriFixup.FIXUP_FLAG_FIX_SCHEME_TYPOS;
+    let flags =
+      Services.uriFixup.FIXUP_FLAG_ALLOW_KEYWORD_LOOKUP |
+      Services.uriFixup.FIXUP_FLAG_FIX_SCHEME_TYPOS;
     let fixedUpURL, expectedURLSpec;
     try {
       fixedUpURL = Services.uriFixup.createFixupURI(urlWithoutProtocol, flags);

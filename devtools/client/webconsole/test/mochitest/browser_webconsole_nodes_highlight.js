@@ -38,10 +38,11 @@ add_task(async function() {
 
   // the inspector should be initialized first and then the node should
   // highlight after the hover effect.
-  const onNodeHighlight = toolbox.target.once("inspector")
+  const onNodeHighlight = toolbox.target
+    .once("inspector")
     .then(inspector => inspector.highlighter.once("node-highlight"));
 
-  EventUtils.synthesizeMouseAtCenter(node, {type: "mousemove"}, view);
+  EventUtils.synthesizeMouseAtCenter(node, { type: "mousemove" }, view);
 
   const nodeFront = await onNodeHighlight;
   is(nodeFront.displayName, "h1", "The correct node was highlighted");
@@ -49,7 +50,7 @@ add_task(async function() {
   info("Unhighlight the node by moving away from the node");
   const onNodeUnhighlight = toolbox.highlighter.once("node-unhighlight");
   const btn = toolbox.doc.getElementById("toolbox-meatball-menu-button");
-  EventUtils.synthesizeMouseAtCenter(btn, {type: "mousemove"}, view);
+  EventUtils.synthesizeMouseAtCenter(btn, { type: "mousemove" }, view);
 
   await onNodeUnhighlight;
   ok(true, "node-unhighlight event was fired when moving away from the node");

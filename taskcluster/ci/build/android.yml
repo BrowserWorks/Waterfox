@@ -49,11 +49,14 @@ android-api-16/debug:
     worker-type: b-linux
     worker:
         env:
+            FENNEC_NIGHTLY: "1"
             TOOLTOOL_MANIFEST: "mobile/android/config/tooltool-manifests/android/releng.manifest"
     run:
         actions: [get-secrets, build]
         config: ["builds/releng_base_android_64_builds.py"]
         custom-build-variant-cfg: api-16-debug
+        branding: mobile/android/branding/nightly
+        version-file: mobile/android/config/version-files/nightly
     toolchains:
         - linux64-sccache
 
@@ -75,31 +78,10 @@ android-api-16-beta/debug:
     run:
         actions: [get-secrets, build]
         config: ["builds/releng_base_android_64_builds.py"]
-        custom-build-variant-cfg: api-16-beta-debug
+        custom-build-variant-cfg: api-16-debug
         update-channel: beta
-    toolchains:
-        - linux64-sccache
-
-android-api-16-release/debug:
-    description: "Android 4.0 api-16+ Release Debug"
-    index:
-        job-name: android-api-16-release-debug
-    treeherder:
-        platform: android-4-0-armv7-api16-release/debug
-        symbol: B
-    worker-type: b-linux
-    worker:
-        env:
-            TOOLTOOL_MANIFEST: "mobile/android/config/tooltool-manifests/android/releng.manifest"
-        artifacts:
-            - name: public/build/target.maven.zip
-              path: /builds/worker/workspace/build/src/obj-firefox/gradle/build/mobile/android/geckoview/target.maven.zip
-              type: file
-    run:
-        actions: [get-secrets, build]
-        config: ["builds/releng_base_android_64_builds.py"]
-        custom-build-variant-cfg: api-16-release-debug
-        update-channel: release
+        branding: mobile/android/branding/beta
+        version-file: mobile/android/config/version-files/beta
     toolchains:
         - linux64-sccache
 
@@ -115,11 +97,14 @@ android-x86/opt:
     worker-type: b-linux
     worker:
         env:
+            FENNEC_NIGHTLY: "1"
             TOOLTOOL_MANIFEST: "mobile/android/config/tooltool-manifests/android-x86/releng.manifest"
     run:
         actions: [get-secrets, build]
         config: ["builds/releng_base_android_64_builds.py"]
         custom-build-variant-cfg: x86
+        branding: mobile/android/branding/nightly
+        version-file: mobile/android/config/version-files/nightly
     toolchains:
         - linux64-sccache
 
@@ -135,11 +120,14 @@ android-x86/debug:
     worker-type: b-linux
     worker:
         env:
+            FENNEC_NIGHTLY: "1"
             TOOLTOOL_MANIFEST: "mobile/android/config/tooltool-manifests/android-x86/releng.manifest"
     run:
         actions: [get-secrets, build]
         config: ["builds/releng_base_android_64_builds.py"]
         custom-build-variant-cfg: x86-debug
+        branding: mobile/android/branding/nightly
+        version-file: mobile/android/config/version-files/nightly
 
 android-x86-beta/debug:
     description: "Android x86 Beta Debug"
@@ -161,50 +149,10 @@ android-x86-beta/debug:
     run:
         actions: [get-secrets, build]
         config: ["builds/releng_base_android_64_builds.py"]
-        custom-build-variant-cfg: x86-beta-debug
+        custom-build-variant-cfg: x86-debug
         update-channel: beta
-
-android-x86-release/debug:
-    description: "Android x86 Release Debug"
-    index:
-        job-name: android-x86-release-debug
-    attributes:
-        enable-full-crashsymbols: false
-    treeherder:
-        platform: android-4-2-x86-release/debug
-        symbol: B
-    worker-type: b-linux
-    worker:
-        env:
-            TOOLTOOL_MANIFEST: "mobile/android/config/tooltool-manifests/android-x86/releng.manifest"
-        artifacts:
-            - name: public/build/target.maven.zip
-              path: /builds/worker/workspace/build/src/obj-firefox/gradle/build/mobile/android/geckoview/target.maven.zip
-              type: file
-    run:
-        actions: [get-secrets, build]
-        config: ["builds/releng_base_android_64_builds.py"]
-        custom-build-variant-cfg: x86-release-debug
-        update-channel: release
-
-android-x86-fuzzing/debug:
-    description: "Android x86 Fuzzing Debug"
-    index:
-        job-name: android-x86-fuzzing-debug
-    treeherder:
-        platform: android-4-2-x86/debug
-        symbol: Bf
-    worker-type: b-linux
-    worker:
-        env:
-            PERFHERDER_EXTRA_OPTIONS: android-x86-fuzzing
-            TOOLTOOL_MANIFEST: "mobile/android/config/tooltool-manifests/android-x86/releng.manifest"
-    run:
-        actions: [get-secrets, build]
-        config: ["builds/releng_base_android_64_builds.py"]
-        custom-build-variant-cfg: x86-fuzzing-debug
-    toolchains:
-        - linux64-sccache
+        branding: mobile/android/branding/beta
+        version-file: mobile/android/config/version-files/beta
 
 android-x86-nightly/opt:
     description: "Android 4.2 x86 Nightly"
@@ -223,6 +171,7 @@ android-x86-nightly/opt:
     worker-type: b-linux
     worker:
         env:
+            FENNEC_NIGHTLY: "1"
             TOOLTOOL_MANIFEST: "mobile/android/config/tooltool-manifests/android-x86/releng.manifest"
     run:
         actions: [get-secrets, build, multi-l10n]
@@ -231,6 +180,8 @@ android-x86-nightly/opt:
             - taskcluster_nightly.py
         custom-build-variant-cfg: x86
         update-channel: nightly
+        branding: mobile/android/branding/nightly
+        version-file: mobile/android/config/version-files/nightly
 
 android-x86-beta/opt:
     description: "Android 4.2 x86 Beta"
@@ -259,8 +210,10 @@ android-x86-beta/opt:
         config:
             - builds/releng_base_android_64_builds.py
             - taskcluster_nightly.py
-        custom-build-variant-cfg: x86-beta
+        custom-build-variant-cfg: x86
         update-channel: beta
+        branding: mobile/android/branding/beta
+        version-file: mobile/android/config/version-files/beta
 
 android-x86-release/opt:
     description: "Android 4.2 x86 Release"
@@ -289,8 +242,10 @@ android-x86-release/opt:
         config:
             - builds/releng_base_android_64_builds.py
             - taskcluster_nightly.py
-        custom-build-variant-cfg: x86-release
+        custom-build-variant-cfg: x86
         update-channel: release
+        branding: mobile/android/branding/official
+        version-file: mobile/android/config/version-files/release
 
 android-api-16/opt:
     description: "Android 4.0 api-16+ Opt"
@@ -304,11 +259,14 @@ android-api-16/opt:
     worker-type: b-linux
     worker:
         env:
+            FENNEC_NIGHTLY: "1"
             TOOLTOOL_MANIFEST: "mobile/android/config/tooltool-manifests/android/releng.manifest"
     run:
         actions: [get-secrets, build]
         config: ["builds/releng_base_android_64_builds.py"]
         custom-build-variant-cfg: api-16
+        branding: mobile/android/branding/nightly
+        version-file: mobile/android/config/version-files/nightly
     toolchains:
         - linux64-sccache
 
@@ -325,11 +283,14 @@ android-api-16/pgo:
     worker-type: b-linux
     worker:
         env:
+            FENNEC_NIGHTLY: "1"
             TOOLTOOL_MANIFEST: "mobile/android/config/tooltool-manifests/android/releng.manifest"
     run:
         actions: [get-secrets, build]
         config: ["builds/releng_base_android_64_builds.py"]
         custom-build-variant-cfg: api-16
+        branding: mobile/android/branding/nightly
+        version-file: mobile/android/config/version-files/nightly
 
 android-api-16-without-google-play-services/opt:
     description: "Android 4.0 api-16+ (without Google Play Services) Opt"
@@ -369,6 +330,7 @@ android-api-16-nightly/opt:
     worker-type: b-linux
     worker:
         env:
+            FENNEC_NIGHTLY: "1"
             TOOLTOOL_MANIFEST: "mobile/android/config/tooltool-manifests/android/releng.manifest"
     run:
         actions: [get-secrets, build, multi-l10n]
@@ -377,6 +339,8 @@ android-api-16-nightly/opt:
             - taskcluster_nightly.py
         custom-build-variant-cfg: api-16
         update-channel: nightly
+        branding: mobile/android/branding/nightly
+        version-file: mobile/android/config/version-files/nightly
 
 android-api-16-beta/opt:
     description: "Android 4.0 api-16+ Beta"
@@ -406,8 +370,10 @@ android-api-16-beta/opt:
         config:
             - builds/releng_base_android_64_builds.py
             - taskcluster_nightly.py
-        custom-build-variant-cfg: api-16-beta
+        custom-build-variant-cfg: api-16
         update-channel: beta
+        branding: mobile/android/branding/beta
+        version-file: mobile/android/config/version-files/beta
 
 android-api-16-release/opt:
     description: "Android 4.0 api-16+ Release"
@@ -437,8 +403,10 @@ android-api-16-release/opt:
         config:
             - builds/releng_base_android_64_builds.py
             - taskcluster_nightly.py
-        custom-build-variant-cfg: api-16-release
+        custom-build-variant-cfg: api-16
         update-channel: release
+        branding: mobile/android/branding/official
+        version-file: mobile/android/config/version-files/release
 
 android-api-16-beta-test/opt:
     description: "Android 4.0 api-16+ Beta"
@@ -460,8 +428,10 @@ android-api-16-beta-test/opt:
     run:
         actions: [get-secrets, build]
         config: ["builds/releng_base_android_64_builds.py"]
-        custom-build-variant-cfg: api-16-beta
+        custom-build-variant-cfg: api-16
         update-channel: beta
+        branding: mobile/android/branding/beta
+        version-file: mobile/android/config/version-files/beta
 
 android-api-16-release-test/opt:
     description: "Android 4.0 api-16+ Release"
@@ -483,8 +453,10 @@ android-api-16-release-test/opt:
     run:
         actions: [get-secrets, build]
         config: ["builds/releng_base_android_64_builds.py"]
-        custom-build-variant-cfg: api-16-release
+        custom-build-variant-cfg: api-16
         update-channel: release
+        branding: mobile/android/branding/official
+        version-file: mobile/android/config/version-files/release
 
 android-aarch64/opt:
     description: "Android 5.0 AArch64 Opt"
@@ -498,11 +470,14 @@ android-aarch64/opt:
     worker-type: b-linux
     worker:
         env:
+            FENNEC_NIGHTLY: "1"
             TOOLTOOL_MANIFEST: "mobile/android/config/tooltool-manifests/android/releng.manifest"
     run:
         actions: [get-secrets, build]
         config: ["builds/releng_base_android_64_builds.py"]
         custom-build-variant-cfg: aarch64
+        branding: mobile/android/branding/nightly
+        version-file: mobile/android/config/version-files/nightly
     toolchains:
         - linux64-sccache
 
@@ -519,11 +494,14 @@ android-aarch64/pgo:
     worker-type: b-linux
     worker:
         env:
+            FENNEC_NIGHTLY: "1"
             TOOLTOOL_MANIFEST: "mobile/android/config/tooltool-manifests/android/releng.manifest"
     run:
         actions: [get-secrets, build]
         config: ["builds/releng_base_android_64_builds.py"]
         custom-build-variant-cfg: aarch64
+        branding: mobile/android/branding/nightly
+        version-file: mobile/android/config/version-files/nightly
 
 android-aarch64/debug:
     description: "Android 5.0 AArch64 Debug"
@@ -537,11 +515,14 @@ android-aarch64/debug:
     worker-type: b-linux
     worker:
         env:
+            FENNEC_NIGHTLY: "1"
             TOOLTOOL_MANIFEST: "mobile/android/config/tooltool-manifests/android/releng.manifest"
     run:
         actions: [get-secrets, build]
         config: ["builds/releng_base_android_64_builds.py"]
         custom-build-variant-cfg: aarch64-debug
+        branding: mobile/android/branding/nightly
+        version-file: mobile/android/config/version-files/nightly
     toolchains:
         - linux64-sccache
 
@@ -563,31 +544,10 @@ android-aarch64-beta/debug:
     run:
         actions: [get-secrets, build]
         config: ["builds/releng_base_android_64_builds.py"]
-        custom-build-variant-cfg: aarch64-beta-debug
+        custom-build-variant-cfg: aarch64-debug
         update-channel: beta
-    toolchains:
-        - linux64-sccache
-
-android-aarch64-release/debug:
-    description: "Android 5.0 AArch64 Release ebug"
-    index:
-        job-name: android-aarch64-release-debug
-    treeherder:
-        platform: android-5-0-aarch64-release/debug
-        symbol: B
-    worker-type: b-linux
-    worker:
-        env:
-            TOOLTOOL_MANIFEST: "mobile/android/config/tooltool-manifests/android/releng.manifest"
-        artifacts:
-            - name: public/build/target.maven.zip
-              path: /builds/worker/workspace/build/src/obj-firefox/gradle/build/mobile/android/geckoview/target.maven.zip
-              type: file
-    run:
-        actions: [get-secrets, build]
-        config: ["builds/releng_base_android_64_builds.py"]
-        custom-build-variant-cfg: aarch64-release-debug
-        update-channel: release
+        branding: mobile/android/branding/beta
+        version-file: mobile/android/config/version-files/beta
     toolchains:
         - linux64-sccache
 
@@ -609,6 +569,7 @@ android-aarch64-nightly/opt:
     worker-type: b-linux
     worker:
         env:
+            FENNEC_NIGHTLY: "1"
             TOOLTOOL_MANIFEST: "mobile/android/config/tooltool-manifests/android/releng.manifest"
     run:
         actions: [get-secrets, build, multi-l10n]
@@ -617,6 +578,8 @@ android-aarch64-nightly/opt:
             - taskcluster_nightly.py
         custom-build-variant-cfg: aarch64
         update-channel: nightly
+        branding: mobile/android/branding/nightly
+        version-file: mobile/android/config/version-files/nightly
 
 android-aarch64-beta/opt:
     description: "Android 5.0 AArch64 Beta"
@@ -646,8 +609,10 @@ android-aarch64-beta/opt:
         config:
             - builds/releng_base_android_64_builds.py
             - taskcluster_nightly.py
-        custom-build-variant-cfg: aarch64-beta
+        custom-build-variant-cfg: aarch64
         update-channel: beta
+        branding: mobile/android/branding/beta
+        version-file: mobile/android/config/version-files/beta
 
 android-aarch64-release/opt:
     description: "Android 5.0 AArch64 Release"
@@ -677,8 +642,10 @@ android-aarch64-release/opt:
         config:
             - builds/releng_base_android_64_builds.py
             - taskcluster_nightly.py
-        custom-build-variant-cfg: aarch64-release
+        custom-build-variant-cfg: aarch64
         update-channel: release
+        branding: mobile/android/branding/official
+        version-file: mobile/android/config/version-files/release
 
 android-x86_64/opt:
     description: "Android 5.0 x86-64 Opt"
@@ -692,11 +659,14 @@ android-x86_64/opt:
     worker-type: b-linux
     worker:
         env:
+            FENNEC_NIGHTLY: "1"
             TOOLTOOL_MANIFEST: "mobile/android/config/tooltool-manifests/android-x86/releng.manifest"
     run:
         actions: [get-secrets, build]
         config: ["builds/releng_base_android_64_builds.py"]
         custom-build-variant-cfg: x86_64
+        branding: mobile/android/branding/nightly
+        version-file: mobile/android/config/version-files/nightly
     toolchains:
         - linux64-sccache
 
@@ -717,6 +687,7 @@ android-x86_64-nightly/opt:
     worker-type: b-linux
     worker:
         env:
+            FENNEC_NIGHTLY: "1"
             TOOLTOOL_MANIFEST: "mobile/android/config/tooltool-manifests/android-x86/releng.manifest"
     run:
         actions: [get-secrets, build, multi-l10n]
@@ -725,6 +696,8 @@ android-x86_64-nightly/opt:
             - taskcluster_nightly.py
         custom-build-variant-cfg: x86_64
         update-channel: nightly
+        branding: mobile/android/branding/nightly
+        version-file: mobile/android/config/version-files/nightly
 
 android-x86_64-beta/opt:
     description: "Android 5.0 x86-64 Beta"
@@ -753,8 +726,10 @@ android-x86_64-beta/opt:
         config:
             - builds/releng_base_android_64_builds.py
             - taskcluster_nightly.py
-        custom-build-variant-cfg: x86_64-beta
+        custom-build-variant-cfg: x86_64
         update-channel: beta
+        branding: mobile/android/branding/beta
+        version-file: mobile/android/config/version-files/beta
 
 android-x86_64-release/opt:
     description: "Android 5.0 x86-64 Release"
@@ -783,8 +758,10 @@ android-x86_64-release/opt:
         config:
             - builds/releng_base_android_64_builds.py
             - taskcluster_nightly.py
-        custom-build-variant-cfg: x86_64-release
+        custom-build-variant-cfg: x86_64
         update-channel: release
+        branding: mobile/android/branding/official
+        version-file: mobile/android/config/version-files/release
 
 android-x86_64-beta-test/opt:
     description: "Android 5.0 x86-64 Beta"
@@ -805,8 +782,10 @@ android-x86_64-beta-test/opt:
     run:
         actions: [get-secrets, build]
         config: ["builds/releng_base_android_64_builds.py"]
-        custom-build-variant-cfg: x86_64-beta
+        custom-build-variant-cfg: x86_64
         update-channel: beta
+        branding: mobile/android/branding/beta
+        version-file: mobile/android/config/version-files/beta
 
 android-x86_64-release-test/opt:
     description: "Android 5.0 x86-64 release"
@@ -827,8 +806,10 @@ android-x86_64-release-test/opt:
     run:
         actions: [get-secrets, build]
         config: ["builds/releng_base_android_64_builds.py"]
-        custom-build-variant-cfg: x86_64-release
+        custom-build-variant-cfg: x86_64
         update-channel: release
+        branding: mobile/android/branding/official
+        version-file: mobile/android/config/version-files/release
 
 android-x86_64/debug:
     description: "Android 5.0 x86-64 Debug"
@@ -842,11 +823,14 @@ android-x86_64/debug:
     worker-type: b-linux
     worker:
         env:
+            FENNEC_NIGHTLY: "1"
             TOOLTOOL_MANIFEST: "mobile/android/config/tooltool-manifests/android-x86/releng.manifest"
     run:
         actions: [get-secrets, build]
         config: ["builds/releng_base_android_64_builds.py"]
         custom-build-variant-cfg: x86_64-debug
+        branding: mobile/android/branding/nightly
+        version-file: mobile/android/config/version-files/nightly
     toolchains:
         - linux64-sccache
 
@@ -868,30 +852,9 @@ android-x86_64-beta/debug:
     run:
         actions: [get-secrets, build]
         config: ["builds/releng_base_android_64_builds.py"]
-        custom-build-variant-cfg: x86_64-beta-debug
+        custom-build-variant-cfg: x86_64-debug
         update-channel: beta
-    toolchains:
-        - linux64-sccache
-
-android-x86_64-release/debug:
-    description: "Android 5.0 x86-64 Release Debug"
-    index:
-        job-name: android-x86_64-release-debug
-    treeherder:
-        platform: android-5-0-x86_64-release/debug
-        symbol: B
-    worker-type: b-linux
-    worker:
-        env:
-            TOOLTOOL_MANIFEST: "mobile/android/config/tooltool-manifests/android-x86/releng.manifest"
-        artifacts:
-            - name: public/build/target.maven.zip
-              path: /builds/worker/workspace/build/src/obj-firefox/gradle/build/mobile/android/geckoview/target.maven.zip
-              type: file
-    run:
-        actions: [get-secrets, build]
-        config: ["builds/releng_base_android_64_builds.py"]
-        custom-build-variant-cfg: x86_64-release-debug
-        update-channel: release
+        branding: mobile/android/branding/beta
+        version-file: mobile/android/config/version-files/beta
     toolchains:
         - linux64-sccache

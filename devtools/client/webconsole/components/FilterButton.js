@@ -17,22 +17,22 @@ FilterButton.propTypes = {
 };
 
 function FilterButton(props) {
-  const {active, label, filterKey, dispatch} = props;
-  const classList = [
-    "devtools-button",
-    filterKey,
-  ];
+  const { active, label, filterKey, dispatch } = props;
+  const classList = ["devtools-button", filterKey];
   if (active) {
     classList.push("checked");
   }
 
-  return dom.button({
-    "aria-pressed": active === true,
-    className: classList.join(" "),
-    onClick: () => {
-      dispatch(actions.filterToggle(filterKey));
+  return dom.button(
+    {
+      "aria-pressed": active === true,
+      className: classList.join(" "),
+      onClick: () => {
+        dispatch(actions.filterToggle(filterKey));
+      },
     },
-  }, label);
+    label
+  );
 }
 
 module.exports = FilterButton;

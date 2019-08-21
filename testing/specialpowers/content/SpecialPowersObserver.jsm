@@ -13,14 +13,15 @@
 
 var EXPORTED_SYMBOLS = ["SpecialPowersObserver"];
 
-var {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
+var { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
 const CHILD_SCRIPT_API = "resource://specialpowers/specialpowersFrameScript.js";
 const CHILD_LOGGER_SCRIPT = "resource://specialpowers/MozillaLogger.js";
 
-
 // Glue to add in the observer API to this object.  This allows us to share code with chrome tests
-Services.scriptloader.loadSubScript("resource://specialpowers/SpecialPowersObserverAPI.js");
+Services.scriptloader.loadSubScript(
+  "resource://specialpowers/SpecialPowersObserverAPI.js"
+);
 
 /* XPCOM gunk */
 function SpecialPowersObserver() {
@@ -29,10 +30,11 @@ function SpecialPowersObserver() {
   this._serviceWorkerListener = null;
 }
 
-
 SpecialPowersObserver.prototype = new SpecialPowersObserverAPI();
 
-SpecialPowersObserver.prototype.QueryInterface = ChromeUtils.generateQI([Ci.nsIObserver]);
+SpecialPowersObserver.prototype.QueryInterface = ChromeUtils.generateQI([
+  Ci.nsIObserver,
+]);
 
 SpecialPowersObserver.prototype.observe = function(aSubject, aTopic, aData) {
   switch (aTopic) {
@@ -70,17 +72,29 @@ SpecialPowersObserver.prototype._loadFrameScript = function() {
     this._messageManager.addMessageListener("SPImportInMainProcess", this);
     this._messageManager.addMessageListener("SPChromeScriptMessage", this);
     this._messageManager.addMessageListener("SPQuotaManager", this);
-    this._messageManager.addMessageListener("SPSetTestPluginEnabledState", this);
+    this._messageManager.addMessageListener(
+      "SPSetTestPluginEnabledState",
+      this
+    );
     this._messageManager.addMessageListener("SPLoadExtension", this);
     this._messageManager.addMessageListener("SPStartupExtension", this);
     this._messageManager.addMessageListener("SPUnloadExtension", this);
     this._messageManager.addMessageListener("SPExtensionMessage", this);
     this._messageManager.addMessageListener("SPCleanUpSTSData", this);
-    this._messageManager.addMessageListener("SPRequestDumpCoverageCounters", this);
-    this._messageManager.addMessageListener("SPRequestResetCoverageCounters", this);
+    this._messageManager.addMessageListener(
+      "SPRequestDumpCoverageCounters",
+      this
+    );
+    this._messageManager.addMessageListener(
+      "SPRequestResetCoverageCounters",
+      this
+    );
     this._messageManager.addMessageListener("SPCheckServiceWorkers", this);
     this._messageManager.addMessageListener("SPRemoveAllServiceWorkers", this);
-    this._messageManager.addMessageListener("SPRemoveServiceWorkerDataForExampleDomain", this);
+    this._messageManager.addMessageListener(
+      "SPRemoveServiceWorkerDataForExampleDomain",
+      this
+    );
 
     this._messageManager.loadFrameScript(CHILD_LOGGER_SCRIPT, true);
     this._messageManager.loadFrameScript(CHILD_SCRIPT_API, true);
@@ -104,11 +118,13 @@ SpecialPowersObserver.prototype.init = function() {
   // Register special testing modules.
   var testsURI = Services.dirsvc.get("ProfD", Ci.nsIFile);
   testsURI.append("tests.manifest");
-  var manifestFile = Services.io.newFileURI(testsURI).
-                       QueryInterface(Ci.nsIFileURL).file;
+  var manifestFile = Services.io
+    .newFileURI(testsURI)
+    .QueryInterface(Ci.nsIFileURL).file;
 
-  Components.manager.QueryInterface(Ci.nsIComponentRegistrar).
-                 autoRegister(manifestFile);
+  Components.manager
+    .QueryInterface(Ci.nsIComponentRegistrar)
+    .autoRegister(manifestFile);
 
   obs.addObserver(this, "http-on-modify-request");
 
@@ -120,8 +136,9 @@ SpecialPowersObserver.prototype.init = function() {
   // difficult. For the time being, let the child process know when a test
   // registers a service worker so it can ask, synchronously, at the end if
   // the service worker had unregister called on it.
-  let swm = Cc["@mozilla.org/serviceworkers/manager;1"]
-              .getService(Ci.nsIServiceWorkerManager);
+  let swm = Cc["@mozilla.org/serviceworkers/manager;1"].getService(
+    Ci.nsIServiceWorkerManager
+  );
   let self = this;
   this._serviceWorkerListener = {
     onRegister() {
@@ -141,41 +158,66 @@ SpecialPowersObserver.prototype.uninit = function() {
   var obs = Services.obs;
   obs.removeObserver(this, "chrome-document-global-created");
   obs.removeObserver(this, "http-on-modify-request");
-  this._registerObservers._topics.forEach((element) => {
+  this._registerObservers._topics.forEach(element => {
     obs.removeObserver(this._registerObservers, element);
   });
   this._removeProcessCrashObservers();
 
-  let swm = Cc["@mozilla.org/serviceworkers/manager;1"]
-              .getService(Ci.nsIServiceWorkerManager);
+  let swm = Cc["@mozilla.org/serviceworkers/manager;1"].getService(
+    Ci.nsIServiceWorkerManager
+  );
   swm.removeListener(this._serviceWorkerListener);
 
   if (this._isFrameScriptLoaded) {
     this._messageManager.removeMessageListener("SPPrefService", this);
-    this._messageManager.removeMessageListener("SPProcessCrashManagerWait", this);
+    this._messageManager.removeMessageListener(
+      "SPProcessCrashManagerWait",
+      this
+    );
     this._messageManager.removeMessageListener("SPProcessCrashService", this);
     this._messageManager.removeMessageListener("SPPingService", this);
     this._messageManager.removeMessageListener("SpecialPowers.Quit", this);
     this._messageManager.removeMessageListener("SpecialPowers.Focus", this);
-    this._messageManager.removeMessageListener("SpecialPowers.CreateFiles", this);
-    this._messageManager.removeMessageListener("SpecialPowers.RemoveFiles", this);
+    this._messageManager.removeMessageListener(
+      "SpecialPowers.CreateFiles",
+      this
+    );
+    this._messageManager.removeMessageListener(
+      "SpecialPowers.RemoveFiles",
+      this
+    );
     this._messageManager.removeMessageListener("SPPermissionManager", this);
     this._messageManager.removeMessageListener("SPObserverService", this);
     this._messageManager.removeMessageListener("SPLoadChromeScript", this);
     this._messageManager.removeMessageListener("SPImportInMainProcess", this);
     this._messageManager.removeMessageListener("SPChromeScriptMessage", this);
     this._messageManager.removeMessageListener("SPQuotaManager", this);
-    this._messageManager.removeMessageListener("SPSetTestPluginEnabledState", this);
+    this._messageManager.removeMessageListener(
+      "SPSetTestPluginEnabledState",
+      this
+    );
     this._messageManager.removeMessageListener("SPLoadExtension", this);
     this._messageManager.removeMessageListener("SPStartupExtension", this);
     this._messageManager.removeMessageListener("SPUnloadExtension", this);
     this._messageManager.removeMessageListener("SPExtensionMessage", this);
     this._messageManager.removeMessageListener("SPCleanUpSTSData", this);
-    this._messageManager.removeMessageListener("SPRequestDumpCoverageCounters", this);
-    this._messageManager.removeMessageListener("SPRequestResetCoverageCounters", this);
+    this._messageManager.removeMessageListener(
+      "SPRequestDumpCoverageCounters",
+      this
+    );
+    this._messageManager.removeMessageListener(
+      "SPRequestResetCoverageCounters",
+      this
+    );
     this._messageManager.removeMessageListener("SPCheckServiceWorkers", this);
-    this._messageManager.removeMessageListener("SPRemoveAllServiceWorkers", this);
-    this._messageManager.removeMessageListener("SPRemoveServiceWorkerDataForExampleDomain", this);
+    this._messageManager.removeMessageListener(
+      "SPRemoveAllServiceWorkers",
+      this
+    );
+    this._messageManager.removeMessageListener(
+      "SPRemoveServiceWorkerDataForExampleDomain",
+      this
+    );
 
     this._messageManager.removeDelayedFrameScript(CHILD_LOGGER_SCRIPT);
     this._messageManager.removeDelayedFrameScript(CHILD_SCRIPT_API);
@@ -243,9 +285,10 @@ SpecialPowersObserver.prototype.receiveMessage = function(aMessage) {
   switch (aMessage.name) {
     case "SPPingService":
       if (aMessage.json.op == "ping") {
-        aMessage.target.frameLoader
-                .messageManager
-                .sendAsyncMessage("SPPingService", { op: "pong" });
+        aMessage.target.frameLoader.messageManager.sendAsyncMessage(
+          "SPPingService",
+          { op: "pong" }
+        );
       }
       break;
     case "SpecialPowers.Quit":
@@ -270,32 +313,48 @@ SpecialPowersObserver.prototype.receiveMessage = function(aMessage) {
           } else {
             testFile.createUnique(Ci.nsIFile.NORMAL_FILE_TYPE, filePerms);
           }
-          let outStream = Cc["@mozilla.org/network/file-output-stream;1"].createInstance(Ci.nsIFileOutputStream);
-          outStream.init(testFile, 0x02 | 0x08 | 0x20, // PR_WRONLY | PR_CREATE_FILE | PR_TRUNCATE
-                         filePerms, 0);
+          let outStream = Cc[
+            "@mozilla.org/network/file-output-stream;1"
+          ].createInstance(Ci.nsIFileOutputStream);
+          outStream.init(
+            testFile,
+            0x02 | 0x08 | 0x20, // PR_WRONLY | PR_CREATE_FILE | PR_TRUNCATE
+            filePerms,
+            0
+          );
           if (request.data) {
             outStream.write(request.data, request.data.length);
           }
           outStream.close();
-          promises.push(File.createFromFileName(testFile.path, request.options).then(function(file) {
-            filePaths.push(file);
-          }));
+          promises.push(
+            File.createFromFileName(testFile.path, request.options).then(
+              function(file) {
+                filePaths.push(file);
+              }
+            )
+          );
           createdFiles.push(testFile);
         });
 
-        Promise.all(promises).then(function() {
-          aMessage.target.frameLoader
-                  .messageManager
-                  .sendAsyncMessage("SpecialPowers.FilesCreated", filePaths);
-        }, function(e) {
-          aMessage.target.frameLoader
-                  .messageManager
-                  .sendAsyncMessage("SpecialPowers.FilesError", e.toString());
-        });
+        Promise.all(promises).then(
+          function() {
+            aMessage.target.frameLoader.messageManager.sendAsyncMessage(
+              "SpecialPowers.FilesCreated",
+              filePaths
+            );
+          },
+          function(e) {
+            aMessage.target.frameLoader.messageManager.sendAsyncMessage(
+              "SpecialPowers.FilesError",
+              e.toString()
+            );
+          }
+        );
       } catch (e) {
-          aMessage.target.frameLoader
-                  .messageManager
-                  .sendAsyncMessage("SpecialPowers.FilesError", e.toString());
+        aMessage.target.frameLoader.messageManager.sendAsyncMessage(
+          "SpecialPowers.FilesError",
+          e.toString()
+        );
       }
 
       break;
@@ -316,6 +375,5 @@ SpecialPowersObserver.prototype.receiveMessage = function(aMessage) {
 };
 
 SpecialPowersObserver.prototype.onRegister = function() {
-  this._sendAsyncMessage("SPServiceWorkerRegistered",
-    { registered: true });
+  this._sendAsyncMessage("SPServiceWorkerRegistered", { registered: true });
 };

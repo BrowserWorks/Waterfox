@@ -2,7 +2,7 @@
 
 /* globals ExtensionAPI */
 
-const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
+const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
 this.quitter = class extends ExtensionAPI {
   getAPI(context) {

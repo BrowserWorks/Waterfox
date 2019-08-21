@@ -8,8 +8,17 @@
 
 // React & Redux
 const { Component } = require("devtools/client/shared/vendor/react");
-loader.lazyRequireGetter(this, "PropTypes", "devtools/client/shared/vendor/react-prop-types");
-loader.lazyRequireGetter(this, "isWarningGroup", "devtools/client/webconsole/utils/messages", true);
+loader.lazyRequireGetter(
+  this,
+  "PropTypes",
+  "devtools/client/shared/vendor/react-prop-types"
+);
+loader.lazyRequireGetter(
+  this,
+  "isWarningGroup",
+  "devtools/client/webconsole/utils/messages",
+  true
+);
 
 const {
   MESSAGE_SOURCE,
@@ -66,22 +75,24 @@ class MessageContainer extends Component {
       this.props.pausedExecutionPoint !== nextProps.pausedExecutionPoint;
     const badgeChanged = this.props.badge !== nextProps.badge;
 
-    return repeatChanged
-      || badgeChanged
-      || openChanged
-      || payloadChanged
-      || tableDataChanged
-      || timestampVisibleChanged
-      || networkMessageUpdateChanged
-      || pausedChanged
-      || executionPointChanged;
+    return (
+      repeatChanged ||
+      badgeChanged ||
+      openChanged ||
+      payloadChanged ||
+      tableDataChanged ||
+      timestampVisibleChanged ||
+      networkMessageUpdateChanged ||
+      pausedChanged ||
+      executionPointChanged
+    );
   }
 
   render() {
     const message = this.props.getMessage();
 
     const MessageComponent = getMessageComponent(message);
-    return MessageComponent(Object.assign({message}, this.props));
+    return MessageComponent(Object.assign({ message }, this.props));
   }
 }
 

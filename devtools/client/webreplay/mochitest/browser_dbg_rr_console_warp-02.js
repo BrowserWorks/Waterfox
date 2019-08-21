@@ -8,23 +8,28 @@
 
 // Test basic console time warping functionality in web replay.
 add_task(async function() {
-  const dbg = await attachRecordingDebugger(
-    "doc_rr_logs.html",
-    { waitForRecording: true }
-  );
+  const dbg = await attachRecordingDebugger("doc_rr_logs.html", {
+    waitForRecording: true,
+  });
 
-  const {tab, toolbox, threadClient} = dbg;
+  const { tab, toolbox, threadClient } = dbg;
   const console = await getDebuggerSplitConsole(dbg);
   const hud = console.hud;
 
   let message = await warpToMessage(hud, dbg, "number: 1");
-  ok(message.classList.contains("paused-before"), "paused before message is shown");
+  ok(
+    message.classList.contains("paused-before"),
+    "paused before message is shown"
+  );
 
   await stepOverToLine(threadClient, 18);
   await reverseStepOverToLine(threadClient, 17);
 
   message = findMessage(hud, "number: 1");
-  ok(message.classList.contains("paused-before"), "paused before message is shown");
+  ok(
+    message.classList.contains("paused-before"),
+    "paused before message is shown"
+  );
 
   await toolbox.destroy();
   await gBrowser.removeTab(tab);

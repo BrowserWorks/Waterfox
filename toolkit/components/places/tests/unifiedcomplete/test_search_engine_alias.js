@@ -8,10 +8,22 @@ const SUGGESTIONS_ENGINE_NAME = "engine-suggestions.xml";
 add_task(async function basicGetAndPost() {
   // Note that head_autocomplete.js has already added a MozSearch engine.
   // Here we add another engine with a search alias.
-  await Services.search.addEngineWithDetails("AliasedGETMozSearch", "", "get", "",
-                                             "GET", "http://s.example.com/search");
-  await Services.search.addEngineWithDetails("AliasedPOSTMozSearch", "", "post", "",
-                                             "POST", "http://s.example.com/search");
+  await Services.search.addEngineWithDetails(
+    "AliasedGETMozSearch",
+    "",
+    "get",
+    "",
+    "GET",
+    "http://s.example.com/search"
+  );
+  await Services.search.addEngineWithDetails(
+    "AliasedPOSTMozSearch",
+    "",
+    "post",
+    "",
+    "POST",
+    "http://s.example.com/search"
+  );
 
   await PlacesTestUtils.addVisits("http://s.example.com/search?q=firefox");
   let historyMatch = {
@@ -105,15 +117,20 @@ add_task(async function basicGetAndPost() {
     // be recognized.  It should be treated as part of the search string.  Try
     // all the restriction tokens to test that.  We should get a single "search
     // with" heuristic result without an alias.
-    for (let restrictToken in UrlbarTokenizer.RESTRICT) {
-      let search = `${restrictToken} ${alias} query string`;
+    for (let token of Object.values(UrlbarTokenizer.RESTRICT)) {
+      let search = `${token} ${alias} query string`;
+      let searchQuery =
+        token == UrlbarTokenizer.RESTRICT.SEARCH &&
+        search.startsWith(UrlbarTokenizer.RESTRICT.SEARCH)
+          ? search.substring(2)
+          : search;
       await check_autocomplete({
         search,
         searchParam: "enable-actions",
         matches: [
           makeSearchMatch(search, {
             engineName: "MozSearch",
-            searchQuery: search,
+            searchQuery,
             heuristic: true,
           }),
         ],
@@ -123,7 +140,6 @@ add_task(async function basicGetAndPost() {
 
   await cleanup();
 });
-
 
 // Uses an engine that provides search suggestions.
 add_task(async function engineWithSuggestions() {
@@ -235,7 +251,6 @@ add_task(async function engineWithSuggestions() {
   await cleanup();
 });
 
-
 // When the search is simply "@", the results should be a list of all the "@"
 // alias engines.
 add_task(async function tokenAliasEngines() {
@@ -255,8 +270,9 @@ add_task(async function tokenAliasEngines() {
     Assert.ok(true, "No token alias engines, skipping task.");
     return;
   }
-  info("Got token alias engines: " +
-       tokenEngines.map(({ engine }) => engine.name));
+  info(
+    "Got token alias engines: " + tokenEngines.map(({ engine }) => engine.name)
+  );
 
   await check_autocomplete({
     search: "@",

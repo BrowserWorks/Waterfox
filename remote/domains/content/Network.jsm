@@ -6,7 +6,9 @@
 
 var EXPORTED_SYMBOLS = ["Network"];
 
-const {ContentProcessDomain} = ChromeUtils.import("chrome://remote/content/domains/ContentProcessDomain.jsm");
+const { ContentProcessDomain } = ChromeUtils.import(
+  "chrome://remote/content/domains/ContentProcessDomain.jsm"
+);
 
 class Network extends ContentProcessDomain {
   constructor(session) {

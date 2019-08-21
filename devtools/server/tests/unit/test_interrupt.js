@@ -4,9 +4,11 @@
 
 "use strict";
 
-add_task(threadClientTest(async ({ threadClient, debuggee, client, targetFront }) => {
-  await threadClient.interrupt();
-  Assert.equal(threadClient.paused, true);
-  await threadClient.resume();
-  Assert.equal(threadClient.paused, false);
-}));
+add_task(
+  threadClientTest(async ({ threadClient, debuggee, client, targetFront }) => {
+    await threadClient.interrupt();
+    Assert.equal(threadClient.paused, true);
+    await threadClient.resume();
+    Assert.equal(threadClient.paused, false);
+  })
+);

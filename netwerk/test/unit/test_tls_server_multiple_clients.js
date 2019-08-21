@@ -8,14 +8,18 @@ do_get_profile();
 // Ensure PSM is initialized
 Cc["@mozilla.org/psm;1"].getService(Ci.nsISupports);
 
-const { PromiseUtils } = ChromeUtils.import("resource://gre/modules/PromiseUtils.jsm");
-const certService = Cc["@mozilla.org/security/local-cert-service;1"]
-                    .getService(Ci.nsILocalCertService);
-const certOverrideService = Cc["@mozilla.org/security/certoverride;1"]
-                            .getService(Ci.nsICertOverrideService);
-const socketTransportService =
-  Cc["@mozilla.org/network/socket-transport-service;1"]
-  .getService(Ci.nsISocketTransportService);
+const { PromiseUtils } = ChromeUtils.import(
+  "resource://gre/modules/PromiseUtils.jsm"
+);
+const certService = Cc["@mozilla.org/security/local-cert-service;1"].getService(
+  Ci.nsILocalCertService
+);
+const certOverrideService = Cc[
+  "@mozilla.org/security/certoverride;1"
+].getService(Ci.nsICertOverrideService);
+const socketTransportService = Cc[
+  "@mozilla.org/network/socket-transport-service;1"
+].getService(Ci.nsISocketTransportService);
 
 function run_test() {
   run_next_test();
@@ -30,14 +34,15 @@ function getCert() {
           return;
         }
         resolve(c);
-      }
+      },
     });
   });
 }
 
 function startServer(cert) {
-  let tlsServer = Cc["@mozilla.org/network/tls-server-socket;1"]
-                  .createInstance(Ci.nsITLSServerSocket);
+  let tlsServer = Cc["@mozilla.org/network/tls-server-socket;1"].createInstance(
+    Ci.nsITLSServerSocket
+  );
   tlsServer.init(-1, true, -1);
   tlsServer.serverCert = cert;
 
@@ -46,8 +51,9 @@ function startServer(cert) {
   let listener = {
     onSocketAccepted: function(socket, transport) {
       info("Accept TLS client connection");
-      let connectionInfo = transport.securityInfo
-                           .QueryInterface(Ci.nsITLSServerConnectionInfo);
+      let connectionInfo = transport.securityInfo.QueryInterface(
+        Ci.nsITLSServerConnectionInfo
+      );
       connectionInfo.setSecurityObserver(listener);
       input = transport.openInputStream(0, 0, 0);
       output = transport.openOutputStream(0, 0, 0);
@@ -55,13 +61,18 @@ function startServer(cert) {
     onHandshakeDone: function(socket, status) {
       info("TLS handshake done");
 
-      input.asyncWait({
-        onInputStreamReady: function(input) {
-          NetUtil.asyncCopy(input, output);
-        }
-      }, 0, 0, Services.tm.currentThread);
+      input.asyncWait(
+        {
+          onInputStreamReady: function(input) {
+            NetUtil.asyncCopy(input, output);
+          },
+        },
+        0,
+        0,
+        Services.tm.currentThread
+      );
     },
-    onStopListening: function() {}
+    onStopListening: function() {},
   };
 
   tlsServer.setSessionTickets(false);
@@ -72,15 +83,26 @@ function startServer(cert) {
 }
 
 function storeCertOverride(port, cert) {
-  let overrideBits = Ci.nsICertOverrideService.ERROR_UNTRUSTED |
-                     Ci.nsICertOverrideService.ERROR_MISMATCH;
-  certOverrideService.rememberValidityOverride("127.0.0.1", port, cert,
-                                               overrideBits, true);
+  let overrideBits =
+    Ci.nsICertOverrideService.ERROR_UNTRUSTED |
+    Ci.nsICertOverrideService.ERROR_MISMATCH;
+  certOverrideService.rememberValidityOverride(
+    "127.0.0.1",
+    port,
+    cert,
+    overrideBits,
+    true
+  );
 }
 
 function startClient(port) {
-  let transport =
-    socketTransportService.createTransport(["ssl"], 1, "127.0.0.1", port, null);
+  let transport = socketTransportService.createTransport(
+    ["ssl"],
+    1,
+    "127.0.0.1",
+    port,
+    null
+  );
   let input;
   let output;
 
@@ -88,7 +110,6 @@ function startClient(port) {
   let outputDeferred = PromiseUtils.defer();
 
   let handler = {
-
     onTransportStatus: function(transport, status) {
       if (status === Ci.nsISocketTransport.STATUS_CONNECTED_TO) {
         output.asyncWait(handler, 0, 0, Services.tm.currentThread);
@@ -117,8 +138,7 @@ function startClient(port) {
       } catch (e) {
         outputDeferred.reject(e);
       }
-    }
-
+    },
   };
 
   transport.setEventSink(handler, Services.tm.currentThread);

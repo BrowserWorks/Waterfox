@@ -21,18 +21,61 @@ add_task(function test_isOriginMatching() {
     [false, "http://example.com:8080", "http://example.com:8081"],
     [false, "http://example.com", ""],
     [false, "", "http://example.com"],
-    [true, "http://example.com", "https://example.com", { schemeUpgrades: true }],
-    [true, "https://example.com", "https://example.com", { schemeUpgrades: true }],
-    [true, "http://example.com:8080", "http://example.com:8080", { schemeUpgrades: true }],
-    [true, "https://example.com:8443", "https://example.com:8443", { schemeUpgrades: true }],
-    [false, "https://example.com", "http://example.com", { schemeUpgrades: true }], // downgrade
-    [false, "http://example.com:8080", "https://example.com", { schemeUpgrades: true }], // port mismatch
-    [false, "http://example.com", "https://example.com:8443", { schemeUpgrades: true }], // port mismatch
-    [false, "http://sub.example.com", "http://example.com", { schemeUpgrades: true }],
+    [
+      true,
+      "http://example.com",
+      "https://example.com",
+      { schemeUpgrades: true },
+    ],
+    [
+      true,
+      "https://example.com",
+      "https://example.com",
+      { schemeUpgrades: true },
+    ],
+    [
+      true,
+      "http://example.com:8080",
+      "http://example.com:8080",
+      { schemeUpgrades: true },
+    ],
+    [
+      true,
+      "https://example.com:8443",
+      "https://example.com:8443",
+      { schemeUpgrades: true },
+    ],
+    [
+      false,
+      "https://example.com",
+      "http://example.com",
+      { schemeUpgrades: true },
+    ], // downgrade
+    [
+      false,
+      "http://example.com:8080",
+      "https://example.com",
+      { schemeUpgrades: true },
+    ], // port mismatch
+    [
+      false,
+      "http://example.com",
+      "https://example.com:8443",
+      { schemeUpgrades: true },
+    ], // port mismatch
+    [
+      false,
+      "http://sub.example.com",
+      "http://example.com",
+      { schemeUpgrades: true },
+    ],
   ];
   for (let tc of testcases) {
     let expected = tc.shift();
-    Assert.strictEqual(LoginHelper.isOriginMatching(...tc), expected,
-                       "Check " + JSON.stringify(tc));
+    Assert.strictEqual(
+      LoginHelper.isOriginMatching(...tc),
+      expected,
+      "Check " + JSON.stringify(tc)
+    );
   }
 });

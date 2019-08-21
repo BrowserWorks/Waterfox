@@ -164,11 +164,18 @@ function defineLazyServiceGetter(object, name, contract, interfaceName) {
  *        An object which acts on behalf of the module to be imported until
  *        the module has been imported.
  */
-function defineLazyModuleGetter(object, name, resource, symbol,
-                                preLambda, postLambda, proxy) {
+function defineLazyModuleGetter(
+  object,
+  name,
+  resource,
+  symbol,
+  preLambda,
+  postLambda,
+  proxy
+) {
   proxy = proxy || {};
 
-  if (typeof (preLambda) === "function") {
+  if (typeof preLambda === "function") {
     preLambda.apply(proxy);
   }
 
@@ -177,7 +184,7 @@ function defineLazyModuleGetter(object, name, resource, symbol,
     try {
       ChromeUtils.import(resource, temp);
 
-      if (typeof (postLambda) === "function") {
+      if (typeof postLambda === "function") {
         postLambda.apply(proxy);
       }
     } catch (ex) {
@@ -245,13 +252,17 @@ defineLazyGetter(exports.modules, "Debugger", () => {
   if (global.Debugger) {
     return global.Debugger;
   }
-  const { addDebuggerToGlobal } = ChromeUtils.import("resource://gre/modules/jsdebugger.jsm");
+  const { addDebuggerToGlobal } = ChromeUtils.import(
+    "resource://gre/modules/jsdebugger.jsm"
+  );
   addDebuggerToGlobal(global);
   return global.Debugger;
 });
 
 defineLazyGetter(exports.modules, "ChromeDebugger", () => {
-  const { addDebuggerToGlobal } = ChromeUtils.import("resource://gre/modules/jsdebugger.jsm");
+  const { addDebuggerToGlobal } = ChromeUtils.import(
+    "resource://gre/modules/jsdebugger.jsm"
+  );
   addDebuggerToGlobal(debuggerSandbox);
   return debuggerSandbox.Debugger;
 });
@@ -263,7 +274,9 @@ defineLazyGetter(exports.modules, "RecordReplayControl", () => {
   if (global.RecordReplayControl) {
     return global.RecordReplayControl;
   }
-  const { addDebuggerToGlobal } = ChromeUtils.import("resource://gre/modules/jsdebugger.jsm");
+  const { addDebuggerToGlobal } = ChromeUtils.import(
+    "resource://gre/modules/jsdebugger.jsm"
+  );
   addDebuggerToGlobal(global);
   return global.RecordReplayControl;
 });
@@ -277,7 +290,10 @@ defineLazyGetter(exports.modules, "InspectorUtils", () => {
 });
 
 defineLazyGetter(exports.modules, "Timer", () => {
-  const {setTimeout, clearTimeout} = require("resource://gre/modules/Timer.jsm");
+  const {
+    setTimeout,
+    clearTimeout,
+  } = require("resource://gre/modules/Timer.jsm");
   // Do not return Cu.import result, as DevTools loader would freeze Timer.jsm globals...
   return {
     setTimeout,
@@ -375,7 +391,9 @@ lazyGlobal("WebSocket", () => {
   return Services.appShell.hiddenDOMWindow.WebSocket;
 });
 lazyGlobal("indexedDB", () => {
-  return require("devtools/shared/indexed-db").createDevToolsIndexedDB(indexedDB);
+  return require("devtools/shared/indexed-db").createDevToolsIndexedDB(
+    indexedDB
+  );
 });
 lazyGlobal("isReplaying", () => {
   return exports.modules.Debugger.recordReplayProcessKind() == "Middleman";

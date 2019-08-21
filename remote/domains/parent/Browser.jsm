@@ -6,8 +6,10 @@
 
 var EXPORTED_SYMBOLS = ["Browser"];
 
-const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
-const {Domain} = ChromeUtils.import("chrome://remote/content/domains/Domain.jsm");
+const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
+const { Domain } = ChromeUtils.import(
+  "chrome://remote/content/domains/Domain.jsm"
+);
 
 class Browser extends Domain {
   getVersion() {

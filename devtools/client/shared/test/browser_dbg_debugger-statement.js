@@ -13,7 +13,8 @@
 /* import-globals-from helper_workers.js */
 Services.scriptloader.loadSubScript(
   "chrome://mochitests/content/browser/devtools/client/shared/test/helper_workers.js",
-  this);
+  this
+);
 
 const TAB_URL = TEST_URI_ROOT + "doc_inline-debugger-statement.html";
 

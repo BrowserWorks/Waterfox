@@ -9,60 +9,61 @@
  * triggers no matter which entry point we reach.
  */
 
-add_task(threadClientTest(({ threadClient, debuggee }) => {
-  return new Promise(resolve => {
-    threadClient.addOneTimeListener("paused", async function(event, packet) {
-      const source = await getSourceById(
-        threadClient,
-        packet.frame.where.actor
-      );
-      const location = {
-        sourceUrl: source.url,
-        line: debuggee.line0 + 3,
-        column: 5,
-      };
-
-      threadClient.setBreakpoint(location, {});
-
-      threadClient.addOneTimeListener("paused", function(event, packet) {
-        // Check the return value.
-        Assert.equal(packet.type, "paused");
-        Assert.equal(packet.why.type, "breakpoint");
-        // Check that the breakpoint worked.
-        Assert.equal(debuggee.i, 0);
-
-        // Remove the breakpoint.
-        threadClient.removeBreakpoint(location);
-
-        const location2 = {
+add_task(
+  threadClientTest(({ threadClient, debuggee }) => {
+    return new Promise(resolve => {
+      threadClient.addOneTimeListener("paused", async function(event, packet) {
+        const source = await getSourceById(
+          threadClient,
+          packet.frame.where.actor
+        );
+        const location = {
           sourceUrl: source.url,
           line: debuggee.line0 + 3,
-          column: 12,
+          column: 5,
         };
-        threadClient.setBreakpoint(location2, {});
+
+        threadClient.setBreakpoint(location, {});
 
         threadClient.addOneTimeListener("paused", function(event, packet) {
           // Check the return value.
           Assert.equal(packet.type, "paused");
           Assert.equal(packet.why.type, "breakpoint");
           // Check that the breakpoint worked.
-          Assert.equal(debuggee.i, 1);
+          Assert.equal(debuggee.i, 0);
 
           // Remove the breakpoint.
-          threadClient.removeBreakpoint(location2);
+          threadClient.removeBreakpoint(location);
 
-          threadClient.resume().then(resolve);
+          const location2 = {
+            sourceUrl: source.url,
+            line: debuggee.line0 + 3,
+            column: 12,
+          };
+          threadClient.setBreakpoint(location2, {});
+
+          threadClient.addOneTimeListener("paused", function(event, packet) {
+            // Check the return value.
+            Assert.equal(packet.type, "paused");
+            Assert.equal(packet.why.type, "breakpoint");
+            // Check that the breakpoint worked.
+            Assert.equal(debuggee.i, 1);
+
+            // Remove the breakpoint.
+            threadClient.removeBreakpoint(location2);
+
+            threadClient.resume().then(resolve);
+          });
+
+          // Continue until the breakpoint is hit again.
+          threadClient.resume();
         });
 
-        // Continue until the breakpoint is hit again.
+        // Continue until the breakpoint is hit.
         threadClient.resume();
       });
 
-      // Continue until the breakpoint is hit.
-      threadClient.resume();
-    });
-
-    /* eslint-disable */
+      /* eslint-disable */
     Cu.evalInSandbox("var line0 = Error().lineNumber;\n" +
                      "debugger;\n" +                      // line0 + 1
                      "var a, i = 0;\n" +                  // line0 + 2
@@ -71,5 +72,6 @@ add_task(threadClientTest(({ threadClient, debuggee }) => {
                      "}\n",                               // line0 + 5
                      debuggee);
     /* eslint-enable */
-  });
-}));
+    });
+  })
+);

@@ -502,6 +502,13 @@ already_AddRefed<nsIReferrerInfo> ReferrerInfo::CloneWithNewPolicy(
   return copy.forget();
 }
 
+already_AddRefed<nsIReferrerInfo> ReferrerInfo::CloneWithNewSendReferrer(
+    bool aSendReferrer) const {
+  RefPtr<ReferrerInfo> copy(new ReferrerInfo(*this));
+  copy->mSendReferrer = aSendReferrer;
+  return copy.forget();
+}
+
 NS_IMETHODIMP
 ReferrerInfo::GetOriginalReferrer(nsIURI** aOriginalReferrer) {
   *aOriginalReferrer = mOriginalReferrer;

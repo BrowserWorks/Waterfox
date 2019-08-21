@@ -13,11 +13,7 @@ const { propertiesEqual } = require("../utils/request-utils");
 
 const { div } = dom;
 
-const UPDATED_DOMAIN_PROPS = [
-  "remoteAddress",
-  "securityState",
-  "urlDetails",
-];
+const UPDATED_DOMAIN_PROPS = ["remoteAddress", "securityState", "urlDetails"];
 
 class RequestListColumnDomain extends Component {
   static get propTypes() {
@@ -28,17 +24,28 @@ class RequestListColumnDomain extends Component {
   }
 
   shouldComponentUpdate(nextProps) {
-    return !propertiesEqual(UPDATED_DOMAIN_PROPS, this.props.item, nextProps.item);
+    return !propertiesEqual(
+      UPDATED_DOMAIN_PROPS,
+      this.props.item,
+      nextProps.item
+    );
   }
 
   render() {
     const { item, onSecurityIconMouseDown } = this.props;
-    const { remoteAddress, remotePort, securityState,
-      urlDetails: { host, isLocal } } = item;
+    const {
+      remoteAddress,
+      remotePort,
+      securityState,
+      urlDetails: { host, isLocal },
+    } = item;
     const iconClassList = ["requests-security-state-icon"];
     let iconTitle;
-    const title = host + (remoteAddress ?
-      ` (${getFormattedIPAndPort(remoteAddress, remotePort)})` : "");
+    const title =
+      host +
+      (remoteAddress
+        ? ` (${getFormattedIPAndPort(remoteAddress, remotePort)})`
+        : "");
 
     let realSecurityState = securityState;
 
@@ -53,19 +60,19 @@ class RequestListColumnDomain extends Component {
       iconTitle = L10N.getStr(`netmonitor.security.state.${realSecurityState}`);
     }
 
-    return (
-      dom.td({ className: "requests-list-column requests-list-domain", title },
+    return dom.td(
+      { className: "requests-list-column requests-list-domain", title },
+      div({
+        className: iconClassList.join(" "),
+        onMouseDown: onSecurityIconMouseDown,
+        title: iconTitle,
+      }),
+      item.isThirdPartyTrackingResource &&
         div({
-          className: iconClassList.join(" "),
-          onMouseDown: onSecurityIconMouseDown,
-          title: iconTitle,
-        }),
-        item.isThirdPartyTrackingResource && div({
           className: "tracking-resource",
           title: L10N.getStr("netmonitor.trackingResource.tooltip"),
         }),
-        host,
-      )
+      host
     );
   }
 }

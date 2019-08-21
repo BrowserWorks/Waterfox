@@ -8,15 +8,17 @@
 
 // React
 const PropTypes = require("devtools/client/shared/vendor/react-prop-types");
+const { MESSAGE_TYPE, JSTERM_COMMANDS } = require("../constants");
 const {
-  MESSAGE_TYPE,
-  JSTERM_COMMANDS,
-} = require("../constants");
-const { getObjectInspector } = require("devtools/client/webconsole/utils/object-inspector");
+  getObjectInspector,
+} = require("devtools/client/webconsole/utils/object-inspector");
 const actions = require("devtools/client/webconsole/actions/index");
 
 const reps = require("devtools/client/shared/components/reps/reps");
-const { MODE, objectInspector: {utils} } = reps;
+const {
+  MODE,
+  objectInspector: { utils },
+} = reps;
 
 GripMessageBody.displayName = "GripMessageBody";
 
@@ -56,7 +58,10 @@ function GripMessageBody(props) {
 
   let styleObject;
   if (userProvidedStyle && userProvidedStyle !== "") {
-    styleObject = cleanupStyle(userProvidedStyle, serviceContainer.createElement);
+    styleObject = cleanupStyle(
+      userProvidedStyle,
+      serviceContainer.createElement
+    );
   }
 
   const objectInspectorProps = {
@@ -85,8 +90,8 @@ function GripMessageBody(props) {
 // Regular expression that matches the allowed CSS property names.
 const allowedStylesRegex = new RegExp(
   "^(?:-moz-)?(?:background|border|box|clear|color|cursor|display|float|font|line|" +
-  "margin|padding|text|transition|outline|white-space|word|writing|" +
-  "(?:min-|max-)?width|(?:min-|max-)?height)"
+    "margin|padding|text|transition|outline|white-space|word|writing|" +
+    "(?:min-|max-)?width|(?:min-|max-)?height)"
 );
 
 // Regular expression that matches the forbidden CSS property values.
@@ -108,26 +113,25 @@ function cleanupStyle(userProvidedStyle, createElement) {
   // without forbidden properties and values.
   return Array.from(dummy.style)
     .filter(name => {
-      return allowedStylesRegex.test(name)
-        && !forbiddenValuesRegexs.some(regex => regex.test(dummy.style[name]));
+      return (
+        allowedStylesRegex.test(name) &&
+        !forbiddenValuesRegexs.some(regex => regex.test(dummy.style[name]))
+      );
     })
     .reduce((object, name) => {
-      return Object.assign({
-        [name]: dummy.style[name],
-      }, object);
+      return Object.assign(
+        {
+          [name]: dummy.style[name],
+        },
+        object
+      );
     }, {});
 }
 
 function shouldAutoExpandObjectInspector(props) {
-  const {
-    helperType,
-    type,
-  } = props;
+  const { helperType, type } = props;
 
-  return (
-    type === MESSAGE_TYPE.DIR
-    || helperType === JSTERM_COMMANDS.INSPECT
-  );
+  return type === MESSAGE_TYPE.DIR || helperType === JSTERM_COMMANDS.INSPECT;
 }
 
 module.exports = GripMessageBody;

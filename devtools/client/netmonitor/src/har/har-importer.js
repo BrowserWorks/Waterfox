@@ -41,71 +41,79 @@ HarImporter.prototype = {
       const startedMillis = Date.parse(entry.startedDateTime);
 
       // Add request
-      this.actions.addRequest(requestId, {
-        startedMillis: startedMillis,
-        method: entry.request.method,
-        url: entry.request.url,
-        isXHR: false,
-        cause: {
-          loadingDocumentUri: "",
-          stackTraceAvailable: false,
-          type: "",
+      this.actions.addRequest(
+        requestId,
+        {
+          startedMillis: startedMillis,
+          method: entry.request.method,
+          url: entry.request.url,
+          isXHR: false,
+          cause: {
+            loadingDocumentUri: "",
+            stackTraceAvailable: false,
+            type: "",
+          },
+          fromCache: false,
+          fromServiceWorker: false,
         },
-        fromCache: false,
-        fromServiceWorker: false,
-      }, false);
+        false
+      );
 
       // Update request
-      this.actions.updateRequest(requestId, {
-        requestHeaders: {
-          headers: entry.request.headers,
-          headersSize: entry.request.headersSize,
-          rawHeaders: "",
-        },
-        responseHeaders: {
-          headers: entry.response.headers,
-          headersSize: entry.response.headersSize,
-          rawHeaders: "",
-        },
-        requestCookies: entry.request.cookies,
-        responseCookies: entry.response.cookies,
-        requestPostData: {
-          postData: entry.request.postData || {},
-          postDataDiscarded: false,
-        },
-        responseContent: {
-          content: entry.response.content,
-          contentDiscarded: false,
-        },
-        eventTimings: {
-          timings: entry.timings,
-        },
-        totalTime: TIMING_KEYS.reduce((sum, type) => {
-          const time = entry.timings[type];
-          return (time != -1) ? (sum + time) : sum;
-        }, 0),
+      this.actions.updateRequest(
+        requestId,
+        {
+          requestHeaders: {
+            headers: entry.request.headers,
+            headersSize: entry.request.headersSize,
+            rawHeaders: "",
+          },
+          responseHeaders: {
+            headers: entry.response.headers,
+            headersSize: entry.response.headersSize,
+            rawHeaders: "",
+          },
+          requestCookies: entry.request.cookies,
+          responseCookies: entry.response.cookies,
+          requestPostData: {
+            postData: entry.request.postData || {},
+            postDataDiscarded: false,
+          },
+          responseContent: {
+            content: entry.response.content,
+            contentDiscarded: false,
+          },
+          eventTimings: {
+            timings: entry.timings,
+          },
+          totalTime: TIMING_KEYS.reduce((sum, type) => {
+            const time = entry.timings[type];
+            return time != -1 ? sum + time : sum;
+          }, 0),
 
-        httpVersion: entry.request.httpVersion,
-        contentSize: entry.response.content.size,
-        mimeType: entry.response.content.mimeType,
-        remoteAddress: entry.serverIPAddress,
-        remotePort: entry.connection,
-        status: entry.response.status,
-        statusText: entry.response.statusText,
-        transferredSize: entry.response.bodySize,
-        securityState: entry._securityState,
+          httpVersion: entry.request.httpVersion,
+          contentSize: entry.response.content.size,
+          mimeType: entry.response.content.mimeType,
+          remoteAddress: entry.serverIPAddress,
+          remotePort: entry.connection,
+          status: entry.response.status,
+          statusText: entry.response.statusText,
+          transferredSize: entry.response.bodySize,
+          securityState: entry._securityState,
 
-        // Avoid auto-fetching data from the backend
-        eventTimingsAvailable: false,
-        requestCookiesAvailable: false,
-        requestHeadersAvailable: false,
-        responseContentAvailable: false,
-        responseStartAvailable: false,
-        responseCookiesAvailable: false,
-        responseHeadersAvailable: false,
-        securityInfoAvailable: false,
-        requestPostDataAvailable: false,
-      }, false);
+          // Avoid auto-fetching data from the backend
+          eventTimingsAvailable: false,
+          requestCookiesAvailable: false,
+          requestHeadersAvailable: false,
+          responseContentAvailable: false,
+          responseStartAvailable: false,
+          responseCookiesAvailable: false,
+          responseHeadersAvailable: false,
+          securityInfoAvailable: false,
+          requestPostDataAvailable: false,
+        },
+        false
+      );
 
       // Page timing markers
       const pageTimings = pages.get(entry.pageref).pageTimings;
@@ -113,8 +121,8 @@ HarImporter.prototype = {
       let onLoad = pageTimings.onLoad || 0;
 
       // Set 0 as the default value
-      onContentLoad = (onContentLoad != -1) ? onContentLoad : 0;
-      onLoad = (onLoad != -1) ? onLoad : 0;
+      onContentLoad = onContentLoad != -1 ? onContentLoad : 0;
+      onLoad = onLoad != -1 ? onLoad : 0;
 
       // Add timing markers
       if (onContentLoad > 0) {

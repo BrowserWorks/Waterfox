@@ -3,7 +3,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 function run_test() {
-  const time = (new Date("Jan 1, 2030")).getTime() / 1000;
+  const time = new Date("Jan 1, 2030").getTime() / 1000;
   var cookie = {
     name: "foo",
     value: "bar",
@@ -18,14 +18,14 @@ function run_test() {
     expiry: time,
     isHttpOnly: true,
     QueryInterface: function(iid) {
-      const validIIDs = [Ci.nsISupports,
-                         Ci.nsICookie,
-                         Ci.nsICookie2];
-      for (var i = 0; i < validIIDs.length; ++i)
-        if (iid == validIIDs[i])
+      const validIIDs = [Ci.nsISupports, Ci.nsICookie, Ci.nsICookie2];
+      for (var i = 0; i < validIIDs.length; ++i) {
+        if (iid == validIIDs[i]) {
           return this;
+        }
+      }
       throw Cr.NS_ERROR_NO_INTERFACE;
-    }
+    },
   };
   var cm = Cc["@mozilla.org/cookiemanager;1"].getService(Ci.nsICookieManager);
   Assert.ok(!cm.cookieExists(cookie.host, cookie.path, cookie.name, {}));

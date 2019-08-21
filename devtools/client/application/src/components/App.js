@@ -5,7 +5,10 @@
 "use strict";
 
 const PropTypes = require("devtools/client/shared/vendor/react-prop-types");
-const { createFactory, Component } = require("devtools/client/shared/vendor/react");
+const {
+  createFactory,
+  Component,
+} = require("devtools/client/shared/vendor/react");
 const { connect } = require("devtools/client/shared/vendor/react-redux");
 const { main } = require("devtools/client/shared/vendor/react-dom-factories");
 
@@ -30,20 +33,25 @@ class App extends Component {
   }
 
   render() {
-    let { workers, domain, client, serviceContainer, fluentBundles } = this.props;
+    let {
+      workers,
+      domain,
+      client,
+      serviceContainer,
+      fluentBundles,
+    } = this.props;
 
     // Filter out workers from other domains
-    workers = workers.filter((x) => new URL(x.url).hostname === domain);
+    workers = workers.filter(x => new URL(x.url).hostname === domain);
     const isEmpty = workers.length === 0;
 
-    return (
-      LocalizationProvider(
-        { messages: fluentBundles },
-        main(
-          { className: `application ${isEmpty ? "application--empty" : ""}` },
-          isEmpty ? WorkerListEmpty({ serviceContainer })
-                  : WorkerList({ workers, client })
-        )
+    return LocalizationProvider(
+      { messages: fluentBundles },
+      main(
+        { className: `application ${isEmpty ? "application--empty" : ""}` },
+        isEmpty
+          ? WorkerListEmpty({ serviceContainer })
+          : WorkerList({ workers, client })
       )
     );
   }
@@ -51,6 +59,7 @@ class App extends Component {
 
 // Exports
 
-module.exports = connect(
-  (state) => ({ workers: state.workers.list, domain: state.page.domain }),
-)(App);
+module.exports = connect(state => ({
+  workers: state.workers.list,
+  domain: state.page.domain,
+}))(App);

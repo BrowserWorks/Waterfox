@@ -8,35 +8,43 @@
  * Check basic step-in functionality.
  */
 
-add_task(threadClientTest(async ({ threadClient, debuggee, client }) => {
-  dumpn("Evaluating test code and waiting for first debugger statement");
-  const dbgStmt = await executeOnNextTickAndWaitForPause(
-    () => evaluateTestCode(debuggee), client);
-  equal(dbgStmt.frame.where.line, 2, "Should be at debugger statement on line 2");
-  equal(debuggee.a, undefined);
-  equal(debuggee.b, undefined);
+add_task(
+  threadClientTest(async ({ threadClient, debuggee, client }) => {
+    dumpn("Evaluating test code and waiting for first debugger statement");
+    const dbgStmt = await executeOnNextTickAndWaitForPause(
+      () => evaluateTestCode(debuggee),
+      client
+    );
+    equal(
+      dbgStmt.frame.where.line,
+      2,
+      "Should be at debugger statement on line 2"
+    );
+    equal(debuggee.a, undefined);
+    equal(debuggee.b, undefined);
 
-  const step1 = await stepIn(client, threadClient);
-  equal(step1.type, "paused");
-  equal(step1.why.type, "resumeLimit");
-  equal(step1.frame.where.line, 3);
-  equal(debuggee.a, undefined);
-  equal(debuggee.b, undefined);
+    const step1 = await stepIn(client, threadClient);
+    equal(step1.type, "paused");
+    equal(step1.why.type, "resumeLimit");
+    equal(step1.frame.where.line, 3);
+    equal(debuggee.a, undefined);
+    equal(debuggee.b, undefined);
 
-  const step3 = await stepIn(client, threadClient);
-  equal(step3.type, "paused");
-  equal(step3.why.type, "resumeLimit");
-  equal(step3.frame.where.line, 4);
-  equal(debuggee.a, 1);
-  equal(debuggee.b, undefined);
+    const step3 = await stepIn(client, threadClient);
+    equal(step3.type, "paused");
+    equal(step3.why.type, "resumeLimit");
+    equal(step3.frame.where.line, 4);
+    equal(debuggee.a, 1);
+    equal(debuggee.b, undefined);
 
-  const step4 = await stepIn(client, threadClient);
-  equal(step4.type, "paused");
-  equal(step4.why.type, "resumeLimit");
-  equal(step4.frame.where.line, 4);
-  equal(debuggee.a, 1);
-  equal(debuggee.b, 2);
-}));
+    const step4 = await stepIn(client, threadClient);
+    equal(step4.type, "paused");
+    equal(step4.why.type, "resumeLimit");
+    equal(step4.frame.where.line, 4);
+    equal(debuggee.a, 1);
+    equal(debuggee.b, 2);
+  })
+);
 
 function evaluateTestCode(debuggee) {
   /* eslint-disable */

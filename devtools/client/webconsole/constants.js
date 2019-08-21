@@ -107,8 +107,9 @@ const DEFAULT_FILTERS_VALUES = {
   [FILTERS.NETXHR]: false,
 };
 
-const DEFAULT_FILTERS = Object.keys(DEFAULT_FILTERS_VALUES)
-  .filter(filter => DEFAULT_FILTERS_VALUES[filter] !== false);
+const DEFAULT_FILTERS = Object.keys(DEFAULT_FILTERS_VALUES).filter(
+  filter => DEFAULT_FILTERS_VALUES[filter] !== false
+);
 
 const chromeRDPEnums = {
   MESSAGE_SOURCE: {
@@ -174,14 +175,15 @@ const historyCommands = {
 };
 
 // Combine into a single constants object
-module.exports = Object.assign({
-  FILTERS,
-  DEFAULT_FILTERS,
-  DEFAULT_FILTERS_VALUES,
-},
+module.exports = Object.assign(
+  {
+    FILTERS,
+    DEFAULT_FILTERS,
+    DEFAULT_FILTERS_VALUES,
+  },
   actionTypes,
   chromeRDPEnums,
   jstermCommands,
   prefs,
-  historyCommands,
+  historyCommands
 );

@@ -42,23 +42,48 @@ let getExtension = () => {
             break;
           case "test profile":
             result = await browser.geckoProfiler.getProfile();
-            browser.test.assertTrue("libs" in result, "The profile contains libs.");
-            browser.test.assertTrue("meta" in result, "The profile contains meta.");
-            browser.test.assertTrue("threads" in result, "The profile contains threads.");
-            browser.test.assertTrue(result.threads.some(t => t.name == "GeckoMain"),
-                                    "The profile contains a GeckoMain thread.");
+            browser.test.assertTrue(
+              "libs" in result,
+              "The profile contains libs."
+            );
+            browser.test.assertTrue(
+              "meta" in result,
+              "The profile contains meta."
+            );
+            browser.test.assertTrue(
+              "threads" in result,
+              "The profile contains threads."
+            );
+            browser.test.assertTrue(
+              result.threads.some(t => t.name == "GeckoMain"),
+              "The profile contains a GeckoMain thread."
+            );
             browser.test.sendMessage("tested profile");
             break;
           case "test profile as array buffer":
             let arrayBuffer = await browser.geckoProfiler.getProfileAsArrayBuffer();
-            browser.test.assertTrue(arrayBuffer.byteLength >= 2, "The profile array buffer contains data.");
+            browser.test.assertTrue(
+              arrayBuffer.byteLength >= 2,
+              "The profile array buffer contains data."
+            );
             let textDecoder = new TextDecoder();
             let profile = JSON.parse(textDecoder.decode(arrayBuffer));
-            browser.test.assertTrue("libs" in profile, "The profile contains libs.");
-            browser.test.assertTrue("meta" in profile, "The profile contains meta.");
-            browser.test.assertTrue("threads" in profile, "The profile contains threads.");
-            browser.test.assertTrue(profile.threads.some(t => t.name == "GeckoMain"),
-                                    "The profile contains a GeckoMain thread.");
+            browser.test.assertTrue(
+              "libs" in profile,
+              "The profile contains libs."
+            );
+            browser.test.assertTrue(
+              "meta" in profile,
+              "The profile contains meta."
+            );
+            browser.test.assertTrue(
+              "threads" in profile,
+              "The profile contains threads."
+            );
+            browser.test.assertTrue(
+              profile.threads.some(t => t.name == "GeckoMain"),
+              "The profile contains a GeckoMain thread."
+            );
             browser.test.sendMessage("tested profile as array buffer");
             break;
           case "remove runningListener":
@@ -74,10 +99,10 @@ let getExtension = () => {
     },
 
     manifest: {
-      "permissions": ["geckoProfiler"],
-      "applications": {
-        "gecko": {
-          "id": "profilertest@mozilla.com",
+      permissions: ["geckoProfiler"],
+      applications: {
+        gecko: {
+          id: "profilertest@mozilla.com",
         },
       },
     },
@@ -85,8 +110,12 @@ let getExtension = () => {
 };
 
 add_task(async function testProfilerControl() {
-  const acceptedExtensionIdsPref = "extensions.geckoProfiler.acceptedExtensionIds";
-  Services.prefs.setCharPref(acceptedExtensionIdsPref, "profilertest@mozilla.com");
+  const acceptedExtensionIdsPref =
+    "extensions.geckoProfiler.acceptedExtensionIds";
+  Services.prefs.setCharPref(
+    acceptedExtensionIdsPref,
+    "profilertest@mozilla.com"
+  );
 
   let extension = getExtension();
   await extension.startup();

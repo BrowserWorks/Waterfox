@@ -437,7 +437,7 @@ class RemoteAudioDecoder : public RemoteDataDecoder {
     return mFirstDemuxedSampleTime->ToMicroseconds() > aTime;
   }
 
-  bool ShouldDiscardSample() const {
+  bool ShouldDiscardSample(int64_t aSession) const {
     AssertOnTaskQueue();
     // HandleOutput() runs on Android binder thread pool and could be preempted
     // by RemoteDateDecoder task queue. That means ProcessOutput() could be
@@ -445,7 +445,8 @@ class RemoteAudioDecoder : public RemoteDataDecoder {
     // sample which is returned after calling Shutdown() and Flush(). We can
     // check mFirstDemuxedSampleTime to know whether the Flush() has been
     // called, becasue it would be reset in Flush().
-    return GetState() == State::SHUTDOWN || !mFirstDemuxedSampleTime;
+    return GetState() == State::SHUTDOWN || !mFirstDemuxedSampleTime ||
+           mSession != aSession;
   }
 
   // Param and LocalRef are only valid for the duration of a JNI method call.
@@ -466,7 +467,7 @@ class RemoteAudioDecoder : public RemoteDataDecoder {
 
     AssertOnTaskQueue();
 
-    if (ShouldDiscardSample() || !aBuffer->IsValid()) {
+    if (ShouldDiscardSample(aSample->Session()) || !aBuffer->IsValid()) {
       aSample->Dispose();
       return;
     }
@@ -476,8 +477,9 @@ class RemoteAudioDecoder : public RemoteDataDecoder {
     BufferInfo::LocalRef info = aSample->Info();
     MOZ_ASSERT(info);
 
-    int32_t flags;
+    int32_t flags = 0;
     bool ok = NS_SUCCEEDED(info->Flags(&flags));
+    bool isEOS = !!(flags & MediaCodec::BUFFER_FLAG_END_OF_STREAM);
 
     int32_t offset;
     ok &= NS_SUCCEEDED(info->Offset(&offset));
@@ -489,7 +491,8 @@ class RemoteAudioDecoder : public RemoteDataDecoder {
     ok &= NS_SUCCEEDED(info->Size(&size));
 
     if (!ok ||
-        IsSampleTimeSmallerThanFirstDemuxedSampleTime(presentationTimeUs)) {
+        (IsSampleTimeSmallerThanFirstDemuxedSampleTime(presentationTimeUs) &&
+         !isEOS)) {
       Error(MediaResult(NS_ERROR_DOM_MEDIA_FATAL_ERR, __func__));
       return;
     }
@@ -517,7 +520,7 @@ class RemoteAudioDecoder : public RemoteDataDecoder {
       UpdateOutputStatus(std::move(data));
     }
 
-    if ((flags & MediaCodec::BUFFER_FLAG_END_OF_STREAM) != 0) {
+    if (isEOS) {
       DrainComplete();
     }
   }
@@ -590,6 +593,7 @@ RemoteDataDecoder::RemoteDataDecoder(MediaData::Type aType,
       mFormat(aFormat),
       mDrmStubId(aDrmStubId),
       mTaskQueue(aTaskQueue),
+      mSession(0),
       mNumPendingInputs(0) {}
 
 RefPtr<MediaDataDecoder::FlushPromise> RemoteDataDecoder::Flush() {
@@ -633,7 +637,7 @@ RefPtr<MediaDataDecoder::DecodePromise> RemoteDataDecoder::Drain() {
     SetState(State::DRAINING);
     self->mInputBufferInfo->Set(0, 0, -1,
                                 MediaCodec::BUFFER_FLAG_END_OF_STREAM);
-    mJavaDecoder->Input(nullptr, self->mInputBufferInfo, nullptr);
+    mSession = mJavaDecoder->Input(nullptr, self->mInputBufferInfo, nullptr);
     return p;
   });
 }
@@ -739,11 +743,14 @@ RefPtr<MediaDataDecoder::DecodePromise> RemoteDataDecoder::ProcessDecode(
 
   SetState(State::DRAINABLE);
   mInputBufferInfo->Set(0, aSample->Size(), aSample->mTime.ToMicroseconds(), 0);
-  return mJavaDecoder->Input(bytes, mInputBufferInfo,
-                             GetCryptoInfoFromSample(aSample))
-             ? mDecodePromise.Ensure(__func__)
-             : DecodePromise::CreateAndReject(
-                   MediaResult(NS_ERROR_OUT_OF_MEMORY, __func__), __func__);
+  int64_t session = mJavaDecoder->Input(bytes, mInputBufferInfo,
+                                        GetCryptoInfoFromSample(aSample));
+  if (session == java::CodecProxy::INVALID_SESSION) {
+    return DecodePromise::CreateAndReject(
+        MediaResult(NS_ERROR_OUT_OF_MEMORY, __func__), __func__);
+  }
+  mSession = session;
+  return mDecodePromise.Ensure(__func__);
 }
 
 void RemoteDataDecoder::UpdatePendingInputStatus(PendingOp aOp) {

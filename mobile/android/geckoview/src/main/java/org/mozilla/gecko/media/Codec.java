@@ -72,6 +72,7 @@ import org.mozilla.gecko.gfx.GeckoSurface;
 
         private synchronized Sample onAllocate(final int size) {
             Sample sample = mSamplePool.obtainInput(size);
+            sample.session = mSession;
             mDequeuedSamples.add(sample);
             return sample;
         }
@@ -89,10 +90,12 @@ import org.mozilla.gecko.gfx.GeckoSurface;
                 return;
             }
 
-            Sample dequeued = mDequeuedSamples.remove();
-            dequeued.setBufferInfo(sample.info);
-            dequeued.setCryptoInfo(sample.cryptoInfo);
-            queueSample(dequeued);
+            if (sample.session >= mSession) {
+                Sample dequeued = mDequeuedSamples.remove();
+                dequeued.setBufferInfo(sample.info);
+                dequeued.setCryptoInfo(sample.cryptoInfo);
+                queueSample(dequeued);
+            }
 
             sample.dispose();
         }
@@ -145,6 +148,9 @@ import org.mozilla.gecko.gfx.GeckoSurface;
         private void feedSampleToBuffer() {
             while (!mAvailableInputBuffers.isEmpty() && !mInputSamples.isEmpty()) {
                 int index = mAvailableInputBuffers.poll();
+                if (!isValidBuffer(index)) {
+                    continue;
+                }
                 int len = 0;
                 final Sample sample = mInputSamples.poll().sample;
                 long pts = sample.info.presentationTimeUs;
@@ -253,6 +259,7 @@ import org.mozilla.gecko.gfx.GeckoSurface;
             try {
                 Sample output = obtainOutputSample(index, info);
                 mSentOutputs.add(new Output(output, index));
+                output.session = mSession;
                 mCallbacks.onOutput(output);
             } catch (Exception e) {
                 e.printStackTrace();
@@ -354,6 +361,7 @@ import org.mozilla.gecko.gfx.GeckoSurface;
     private AsyncCodec mCodec;
     private InputProcessor mInputProcessor;
     private OutputProcessor mOutputProcessor;
+    private long mSession;
     private SamplePool mSamplePool;
     // Values will be updated after configure called.
     private volatile boolean mIsAdaptivePlaybackSupported = false;
@@ -562,6 +570,7 @@ import org.mozilla.gecko.gfx.GeckoSurface;
             mInputProcessor.start();
             mOutputProcessor.start();
             mCodec.resumeReceivingInputs();
+            mSession++;
         } catch (Exception e) {
             reportError(Error.FATAL, e);
         }

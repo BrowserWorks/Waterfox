@@ -15,11 +15,34 @@ const {
   getReverseSearchResult,
 } = require("devtools/client/webconsole/selectors/history");
 
-loader.lazyRequireGetter(this, "PropTypes", "devtools/client/shared/vendor/react-prop-types");
-loader.lazyRequireGetter(this, "actions", "devtools/client/webconsole/actions/index");
-loader.lazyRequireGetter(this, "l10n", "devtools/client/webconsole/utils/messages", true);
-loader.lazyRequireGetter(this, "PluralForm", "devtools/shared/plural-form", true);
-loader.lazyRequireGetter(this, "KeyCodes", "devtools/client/shared/keycodes", true);
+loader.lazyRequireGetter(
+  this,
+  "PropTypes",
+  "devtools/client/shared/vendor/react-prop-types"
+);
+loader.lazyRequireGetter(
+  this,
+  "actions",
+  "devtools/client/webconsole/actions/index"
+);
+loader.lazyRequireGetter(
+  this,
+  "l10n",
+  "devtools/client/webconsole/utils/messages",
+  true
+);
+loader.lazyRequireGetter(
+  this,
+  "PluralForm",
+  "devtools/shared/plural-form",
+  true
+);
+loader.lazyRequireGetter(
+  this,
+  "KeyCodes",
+  "devtools/client/shared/keycodes",
+  true
+);
 
 const Services = require("Services");
 const isMacOS = Services.appinfo.OS === "Darwin";
@@ -46,11 +69,11 @@ class ReverseSearchInput extends Component {
   }
 
   componentDidUpdate(prevProps) {
-    const {setInputValue, focusInput} = this.props;
+    const { setInputValue, focusInput } = this.props;
     if (
-      prevProps.reverseSearchResult !== this.props.reverseSearchResult
-      && this.props.visible
-      && this.props.reverseSearchTotalResults > 0
+      prevProps.reverseSearchResult !== this.props.reverseSearchResult &&
+      this.props.visible &&
+      this.props.reverseSearchTotalResults > 0
     ) {
       setInputValue(this.props.reverseSearchResult);
     }
@@ -69,18 +92,9 @@ class ReverseSearchInput extends Component {
   }
 
   onInputKeyDown(event) {
-    const {
-      keyCode,
-      key,
-      ctrlKey,
-      shiftKey,
-    } = event;
+    const { keyCode, key, ctrlKey, shiftKey } = event;
 
-    const {
-      dispatch,
-      evaluateInput,
-      reverseSearchTotalResults,
-    } = this.props;
+    const { dispatch, evaluateInput, reverseSearchTotalResults } = this.props;
 
     // On Enter, we trigger an execute.
     if (keyCode === KeyCodes.DOM_VK_RETURN) {
@@ -92,17 +106,17 @@ class ReverseSearchInput extends Component {
 
     // On Escape (and Ctrl + c on OSX), we close the reverse search input.
     if (
-      keyCode === KeyCodes.DOM_VK_ESCAPE || (
-        isMacOS && ctrlKey === true && key.toLowerCase() === "c"
-      )
+      keyCode === KeyCodes.DOM_VK_ESCAPE ||
+      (isMacOS && ctrlKey === true && key.toLowerCase() === "c")
     ) {
       event.stopPropagation();
       dispatch(actions.reverseSearchInputToggle());
       return;
     }
 
-    const canNavigate = Number.isInteger(reverseSearchTotalResults)
-      && reverseSearchTotalResults > 1;
+    const canNavigate =
+      Number.isInteger(reverseSearchTotalResults) &&
+      reverseSearchTotalResults > 1;
 
     if (
       (!isMacOS && key === "F9" && shiftKey === false) ||
@@ -148,16 +162,16 @@ class ReverseSearchInput extends Component {
         .replace("#2", reverseSearchTotalResults);
     }
 
-    return dom.div({className: "reverse-search-info"}, text);
+    return dom.div({ className: "reverse-search-info" }, text);
   }
 
   renderNavigationButtons() {
-    const {
-      dispatch,
-      reverseSearchTotalResults,
-    } = this.props;
+    const { dispatch, reverseSearchTotalResults } = this.props;
 
-    if (!Number.isInteger(reverseSearchTotalResults) || reverseSearchTotalResults <= 1) {
+    if (
+      !Number.isInteger(reverseSearchTotalResults) ||
+      reverseSearchTotalResults <= 1
+    ) {
       return null;
     }
 
@@ -165,8 +179,10 @@ class ReverseSearchInput extends Component {
       dom.button({
         key: "search-result-button-prev",
         className: "devtools-button search-result-button-prev",
-        title: l10n.getFormatStr("webconsole.reverseSearch.result.previousButton.tooltip",
-          [isMacOS ? "Ctrl + R" : "F9"]),
+        title: l10n.getFormatStr(
+          "webconsole.reverseSearch.result.previousButton.tooltip",
+          [isMacOS ? "Ctrl + R" : "F9"]
+        ),
         onClick: () => {
           dispatch(actions.showReverseSearchBack());
           this.inputNode.focus();
@@ -175,8 +191,10 @@ class ReverseSearchInput extends Component {
       dom.button({
         key: "search-result-button-next",
         className: "devtools-button search-result-button-next",
-        title: l10n.getFormatStr("webconsole.reverseSearch.result.nextButton.tooltip",
-          [isMacOS ? "Ctrl + S" : "Shift + F9"]),
+        title: l10n.getFormatStr(
+          "webconsole.reverseSearch.result.nextButton.tooltip",
+          [isMacOS ? "Ctrl + S" : "Shift + F9"]
+        ),
         onClick: () => {
           dispatch(actions.showReverseSearchNext());
           this.inputNode.focus();
@@ -186,11 +204,7 @@ class ReverseSearchInput extends Component {
   }
 
   render() {
-    const {
-      dispatch,
-      visible,
-      reverseSearchTotalResults,
-    } = this.props;
+    const { dispatch, visible, reverseSearchTotalResults } = this.props;
 
     if (!visible) {
       return null;
@@ -201,7 +215,8 @@ class ReverseSearchInput extends Component {
       classNames.push("no-result");
     }
 
-    return dom.div({className: classNames.join(" ")},
+    return dom.div(
+      { className: classNames.join(" ") },
       dom.input({
         ref: node => {
           this.inputNode = node;
@@ -210,14 +225,17 @@ class ReverseSearchInput extends Component {
         placeholder: l10n.getStr("webconsole.reverseSearch.input.placeHolder"),
         className: "reverse-search-input devtools-monospace",
         onKeyDown: this.onInputKeyDown,
-        onInput: ({target}) => dispatch(actions.reverseSearchInputChange(target.value)),
+        onInput: ({ target }) =>
+          dispatch(actions.reverseSearchInputChange(target.value)),
       }),
       this.renderSearchInformation(),
       this.renderNavigationButtons(),
       dom.button({
         className: "devtools-button reverse-search-close-button",
-        title: l10n.getFormatStr("webconsole.reverseSearch.closeButton.tooltip",
-          ["Esc" + (isMacOS ? " | Ctrl + C" : "")]),
+        title: l10n.getFormatStr(
+          "webconsole.reverseSearch.closeButton.tooltip",
+          ["Esc" + (isMacOS ? " | Ctrl + C" : "")]
+        ),
         onClick: () => {
           dispatch(actions.reverseSearchInputToggle());
         },
@@ -233,6 +251,9 @@ const mapStateToProps = state => ({
   reverseSearchResult: getReverseSearchResult(state),
 });
 
-const mapDispatchToProps = dispatch => ({dispatch});
+const mapDispatchToProps = dispatch => ({ dispatch });
 
-module.exports = connect(mapStateToProps, mapDispatchToProps)(ReverseSearchInput);
+module.exports = connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(ReverseSearchInput);

@@ -7,9 +7,12 @@
 
 /* globals bindDOMWindowUtils, SpecialPowersAPI */
 
-var {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
+var { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
-Services.scriptloader.loadSubScript("resource://specialpowers/MozillaLogger.js", this);
+Services.scriptloader.loadSubScript(
+  "resource://specialpowers/MozillaLogger.js",
+  this
+);
 
 var EXPORTED_SYMBOLS = ["SpecialPowers", "attachSpecialPowersToWindow"];
 
@@ -23,59 +26,84 @@ function SpecialPowers(window, mm) {
   this.window = Cu.getWeakReference(window);
   this._windowID = window.windowUtils.currentInnerWindowID;
   this._encounteredCrashDumpFiles = [];
-  this._unexpectedCrashDumpFiles = { };
+  this._unexpectedCrashDumpFiles = {};
   this._crashDumpDir = null;
   this._serviceWorkerRegistered = false;
   this._serviceWorkerCleanUpRequests = new Map();
   this.DOMWindowUtils = bindDOMWindowUtils(window);
   Object.defineProperty(this, "Components", {
-      configurable: true, enumerable: true, value: this.getFullComponents(),
+    configurable: true,
+    enumerable: true,
+    value: this.getFullComponents(),
   });
   this._pongHandlers = [];
   this._messageListener = this._messageReceived.bind(this);
   this._grandChildFrameMM = null;
   this._createFilesOnError = null;
   this._createFilesOnSuccess = null;
-  this.SP_SYNC_MESSAGES = ["SPChromeScriptMessage",
-                           "SPLoadChromeScript",
-                           "SPImportInMainProcess",
-                           "SPObserverService",
-                           "SPPermissionManager",
-                           "SPPrefService",
-                           "SPProcessCrashService",
-                           "SPSetTestPluginEnabledState",
-                           "SPCleanUpSTSData",
-                           "SPCheckServiceWorkers"];
+  this.SP_SYNC_MESSAGES = [
+    "SPChromeScriptMessage",
+    "SPLoadChromeScript",
+    "SPImportInMainProcess",
+    "SPObserverService",
+    "SPPermissionManager",
+    "SPPrefService",
+    "SPProcessCrashService",
+    "SPSetTestPluginEnabledState",
+    "SPCleanUpSTSData",
+    "SPCheckServiceWorkers",
+  ];
 
-  this.SP_ASYNC_MESSAGES = ["SpecialPowers.Focus",
-                            "SpecialPowers.Quit",
-                            "SpecialPowers.CreateFiles",
-                            "SpecialPowers.RemoveFiles",
-                            "SPPingService",
-                            "SPLoadExtension",
-                            "SPProcessCrashManagerWait",
-                            "SPStartupExtension",
-                            "SPUnloadExtension",
-                            "SPExtensionMessage",
-                            "SPRequestDumpCoverageCounters",
-                            "SPRequestResetCoverageCounters",
-                            "SPRemoveAllServiceWorkers",
-                            "SPRemoveServiceWorkerDataForExampleDomain"];
+  this.SP_ASYNC_MESSAGES = [
+    "SpecialPowers.Focus",
+    "SpecialPowers.Quit",
+    "SpecialPowers.CreateFiles",
+    "SpecialPowers.RemoveFiles",
+    "SPPingService",
+    "SPLoadExtension",
+    "SPProcessCrashManagerWait",
+    "SPStartupExtension",
+    "SPUnloadExtension",
+    "SPExtensionMessage",
+    "SPRequestDumpCoverageCounters",
+    "SPRequestResetCoverageCounters",
+    "SPRemoveAllServiceWorkers",
+    "SPRemoveServiceWorkerDataForExampleDomain",
+  ];
   mm.addMessageListener("SPPingService", this._messageListener);
   mm.addMessageListener("SPServiceWorkerRegistered", this._messageListener);
   mm.addMessageListener("SpecialPowers.FilesCreated", this._messageListener);
   mm.addMessageListener("SpecialPowers.FilesError", this._messageListener);
-  mm.addMessageListener("SPServiceWorkerCleanupComplete", this._messageListener);
+  mm.addMessageListener(
+    "SPServiceWorkerCleanupComplete",
+    this._messageListener
+  );
   let self = this;
-  Services.obs.addObserver(function onInnerWindowDestroyed(subject, topic, data) {
+  Services.obs.addObserver(function onInnerWindowDestroyed(
+    subject,
+    topic,
+    data
+  ) {
     var id = subject.QueryInterface(Ci.nsISupportsPRUint64).data;
     if (self._windowID === id) {
-      Services.obs.removeObserver(onInnerWindowDestroyed, "inner-window-destroyed");
+      Services.obs.removeObserver(
+        onInnerWindowDestroyed,
+        "inner-window-destroyed"
+      );
       try {
         mm.removeMessageListener("SPPingService", self._messageListener);
-        mm.removeMessageListener("SpecialPowers.FilesCreated", self._messageListener);
-        mm.removeMessageListener("SpecialPowers.FilesError", self._messageListener);
-        mm.removeMessageListener("SPServiceWorkerCleanupComplete", self._messageListener);
+        mm.removeMessageListener(
+          "SpecialPowers.FilesCreated",
+          self._messageListener
+        );
+        mm.removeMessageListener(
+          "SpecialPowers.FilesError",
+          self._messageListener
+        );
+        mm.removeMessageListener(
+          "SPServiceWorkerCleanupComplete",
+          self._messageListener
+        );
       } catch (e) {
         // Ignore the exception which the message manager has been destroyed.
         if (e.result != Cr.NS_ERROR_ILLEGAL_VALUE) {
@@ -83,13 +111,18 @@ function SpecialPowers(window, mm) {
         }
       }
     }
-  }, "inner-window-destroyed");
+  },
+  "inner-window-destroyed");
 }
 
 SpecialPowers.prototype = new SpecialPowersAPI();
 
-SpecialPowers.prototype.toString = function() { return "[SpecialPowers]"; };
-SpecialPowers.prototype.sanityCheck = function() { return "foo"; };
+SpecialPowers.prototype.toString = function() {
+  return "[SpecialPowers]";
+};
+SpecialPowers.prototype.sanityCheck = function() {
+  return "foo";
+};
 
 // This gets filled in in the constructor.
 SpecialPowers.prototype.DOMWindowUtils = undefined;
@@ -98,7 +131,9 @@ SpecialPowers.prototype.IsInNestedFrame = false;
 
 SpecialPowers.prototype._sendSyncMessage = function(msgname, msg) {
   if (!this.SP_SYNC_MESSAGES.includes(msgname)) {
-    dump("TEST-INFO | specialpowers.js |  Unexpected SP message: " + msgname + "\n");
+    dump(
+      "TEST-INFO | specialpowers.js |  Unexpected SP message: " + msgname + "\n"
+    );
   }
   let result = this.mm.sendSyncMessage(msgname, msg);
   return Cu.cloneInto(result, this);
@@ -106,7 +141,9 @@ SpecialPowers.prototype._sendSyncMessage = function(msgname, msg) {
 
 SpecialPowers.prototype._sendAsyncMessage = function(msgname, msg) {
   if (!this.SP_ASYNC_MESSAGES.includes(msgname)) {
-    dump("TEST-INFO | specialpowers.js |  Unexpected SP message: " + msgname + "\n");
+    dump(
+      "TEST-INFO | specialpowers.js |  Unexpected SP message: " + msgname + "\n"
+    );
   }
   this.mm.sendAsyncMessage(msgname, msg);
 };
@@ -127,7 +164,9 @@ SpecialPowers.prototype.registerProcessCrashObservers = function() {
 
 SpecialPowers.prototype.unregisterProcessCrashObservers = function() {
   this.mm.removeMessageListener("SPProcessCrashService", this._messageListener);
-  this.mm.sendSyncMessage("SPProcessCrashService", { op: "unregister-observer" });
+  this.mm.sendSyncMessage("SPProcessCrashService", {
+    op: "unregister-observer",
+  });
 };
 
 SpecialPowers.prototype._messageReceived = function(aMessage) {
@@ -147,7 +186,9 @@ SpecialPowers.prototype._messageReceived = function(aMessage) {
           handler();
         }
         if (this._grandChildFrameMM) {
-          this._grandChildFrameMM.sendAsyncMessage("SPPingService", { op: "pong" });
+          this._grandChildFrameMM.sendAsyncMessage("SPPingService", {
+            op: "pong",
+          });
         }
       }
       break;
@@ -198,7 +239,11 @@ SpecialPowers.prototype.quit = function() {
 // A request must have a field |name|, which gives the base of the name of the
 // file to be created in the profile directory. If the request has a |data| field
 // then that data will be written to the file.
-SpecialPowers.prototype.createFiles = function(fileRequests, onCreation, onError) {
+SpecialPowers.prototype.createFiles = function(
+  fileRequests,
+  onCreation,
+  onError
+) {
   if (this._createFilesOnSuccess || this._createFilesOnError) {
     onError("Already waiting for SpecialPowers.createFiles() to finish.");
     return;
@@ -246,10 +291,13 @@ SpecialPowers.prototype.nestedFrameSetup = function() {
       mm.addMessageListener("SPPAddNestedMessageListener", function(msg) {
         self._addMessageListener(msg.json.name, function(aMsg) {
           mm.sendAsyncMessage(aMsg.name, aMsg.data);
-          });
+        });
       });
 
-      mm.loadFrameScript("resource://specialpowers/specialpowersFrameScript.js", false);
+      mm.loadFrameScript(
+        "resource://specialpowers/specialpowersFrameScript.js",
+        false
+      );
 
       let frameScript = "SpecialPowers.prototype.IsInNestedFrame=true;";
       mm.loadFrameScript("data:," + frameScript, false);
@@ -261,15 +309,21 @@ SpecialPowers.prototype.registeredServiceWorkers = function() {
   // For the time being, if parent_intercept is false, we can assume that
   // ServiceWorkers registered by the current test are all known to the SWM in
   // this process.
-  if (!Services.prefs.getBoolPref("dom.serviceWorkers.parent_intercept", false)) {
-    let swm = Cc["@mozilla.org/serviceworkers/manager;1"]
-                .getService(Ci.nsIServiceWorkerManager);
+  if (
+    !Services.prefs.getBoolPref("dom.serviceWorkers.parent_intercept", false)
+  ) {
+    let swm = Cc["@mozilla.org/serviceworkers/manager;1"].getService(
+      Ci.nsIServiceWorkerManager
+    );
     let regs = swm.getAllRegistrations();
 
     // XXX This is shared with SpecialPowersObserverAPI.js
     let workers = new Array(regs.length);
     for (let i = 0; i < workers.length; ++i) {
-      let { scope, scriptSpec } = regs.queryElementAt(i, Ci.nsIServiceWorkerRegistrationInfo);
+      let { scope, scriptSpec } = regs.queryElementAt(
+        i,
+        Ci.nsIServiceWorkerRegistrationInfo
+      );
       workers[i] = { scope, scriptSpec };
     }
 
@@ -292,7 +346,9 @@ SpecialPowers.prototype.registeredServiceWorkers = function() {
 SpecialPowers.prototype._removeServiceWorkerData = function(messageName) {
   return new Promise(resolve => {
     let id = Cc["@mozilla.org/uuid-generator;1"]
-               .getService(Ci.nsIUUIDGenerator).generateUUID().toString();
+      .getService(Ci.nsIUUIDGenerator)
+      .generateUUID()
+      .toString();
     this._serviceWorkerCleanUpRequests.set(id, resolve);
     this._sendAsyncMessage(messageName, { id });
   });
@@ -301,10 +357,12 @@ SpecialPowers.prototype._removeServiceWorkerData = function(messageName) {
 // Attach our API to the window.
 function attachSpecialPowersToWindow(aWindow, mm) {
   try {
-    if ((aWindow !== null) &&
-        (aWindow !== undefined) &&
-        (aWindow.wrappedJSObject) &&
-        !(aWindow.wrappedJSObject.SpecialPowers)) {
+    if (
+      aWindow !== null &&
+      aWindow !== undefined &&
+      aWindow.wrappedJSObject &&
+      !aWindow.wrappedJSObject.SpecialPowers
+    ) {
       let sp = new SpecialPowers(aWindow, mm);
       aWindow.wrappedJSObject.SpecialPowers = sp;
       if (sp.IsInNestedFrame) {
@@ -312,7 +370,11 @@ function attachSpecialPowersToWindow(aWindow, mm) {
       }
     }
   } catch (ex) {
-    dump("TEST-INFO | specialpowers.js |  Failed to attach specialpowers to window exception: " + ex + "\n");
+    dump(
+      "TEST-INFO | specialpowers.js |  Failed to attach specialpowers to window exception: " +
+        ex +
+        "\n"
+    );
   }
 }
 

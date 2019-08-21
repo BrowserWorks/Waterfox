@@ -9,7 +9,9 @@
 /* eslint-env mozilla/frame-script */
 /* eslint no-unused-vars: ["error", {args: "none"}] */
 
-var {XPCOMUtils} = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+var { XPCOMUtils } = ChromeUtils.import(
+  "resource://gre/modules/XPCOMUtils.jsm"
+);
 
 // BrowserChildGlobal
 var global = this;
@@ -31,7 +33,11 @@ XPCOMUtils.defineLazyGetter(this, "LoginManagerContent", () => {
 // NOTE: Much of this logic is duplicated in BrowserCLH.js for Android.
 addMessageListener("PasswordManager:fillForm", function(message) {
   // intercept if ContextMenu.jsm had sent a plain object for remote targets
-  message.objects.inputElement = ContextMenuChild.getTarget(global, message, "inputElement");
+  message.objects.inputElement = ContextMenuChild.getTarget(
+    global,
+    message,
+    "inputElement"
+  );
   LoginManagerContent.receiveMessage(message, content);
 });
 
@@ -75,6 +81,10 @@ ContentMetaHandler.init(this);
 // This is a temporary hack to prevent regressions (bug 1471327).
 void content;
 
-addEventListener("DOMWindowFocus", function(event) {
-  sendAsyncMessage("DOMWindowFocus", {});
-}, false);
+addEventListener(
+  "DOMWindowFocus",
+  function(event) {
+    sendAsyncMessage("DOMWindowFocus", {});
+  },
+  false
+);

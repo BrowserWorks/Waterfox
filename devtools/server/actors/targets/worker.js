@@ -20,7 +20,8 @@ const { workerTargetSpec } = require("devtools/shared/specs/targets/worker");
 loader.lazyRequireGetter(this, "ChromeUtils");
 
 XPCOMUtils.defineLazyServiceGetter(
-  this, "swm",
+  this,
+  "swm",
   "@mozilla.org/serviceworkers/manager;1",
   "nsIServiceWorkerManager"
 );
@@ -45,9 +46,10 @@ const WorkerTargetActor = protocol.ActorClassWithSpec(workerTargetSpec, {
     if (this._dbg.type === Ci.nsIWorkerDebugger.TYPE_SERVICE) {
       const registration = this._getServiceWorkerRegistrationInfo();
       form.scope = registration.scope;
-      const newestWorker = (registration.activeWorker ||
-                          registration.waitingWorker ||
-                          registration.installingWorker);
+      const newestWorker =
+        registration.activeWorker ||
+        registration.waitingWorker ||
+        registration.installingWorker;
       form.fetch = newestWorker && newestWorker.handlesFetchEvents;
     }
     return form;
@@ -107,20 +109,26 @@ const WorkerTargetActor = protocol.ActorClassWithSpec(workerTargetSpec, {
     }
 
     return DebuggerServer.connectToWorker(
-      this.conn, this._dbg, this.actorID, options
-    ).then(({ threadActor, transport, consoleActor }) => {
-      this._threadActor = threadActor;
-      this._transport = transport;
-      this._consoleActor = consoleActor;
+      this.conn,
+      this._dbg,
+      this.actorID,
+      options
+    ).then(
+      ({ threadActor, transport, consoleActor }) => {
+        this._threadActor = threadActor;
+        this._transport = transport;
+        this._consoleActor = consoleActor;
 
-      return {
-        type: "connected",
-        threadActor: this._threadActor,
-        consoleActor: this._consoleActor,
-      };
-    }, (error) => {
-      return { error: error.toString() };
-    });
+        return {
+          type: "connected",
+          threadActor: this._threadActor,
+          consoleActor: this._consoleActor,
+        };
+      },
+      error => {
+        return { error: error.toString() };
+      }
+    );
   },
 
   push() {
@@ -129,7 +137,8 @@ const WorkerTargetActor = protocol.ActorClassWithSpec(workerTargetSpec, {
     }
     const registration = this._getServiceWorkerRegistrationInfo();
     const originAttributes = ChromeUtils.originAttributesToSuffix(
-      this._dbg.principal.originAttributes);
+      this._dbg.principal.originAttributes
+    );
     swm.sendPushEvent(originAttributes, registration.scope);
     return { type: "pushed" };
   },

@@ -12,7 +12,9 @@
 
 var EXPORTED_SYMBOLS = ["UrlbarProviderUnifiedComplete"];
 
-const {XPCOMUtils} = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+const { XPCOMUtils } = ChromeUtils.import(
+  "resource://gre/modules/XPCOMUtils.jsm"
+);
 XPCOMUtils.defineLazyModuleGetters(this, {
   Log: "resource://gre/modules/Log.jsm",
   PlacesUtils: "resource://gre/modules/PlacesUtils.jsm",
@@ -23,18 +25,22 @@ XPCOMUtils.defineLazyModuleGetters(this, {
   UrlbarUtils: "resource:///modules/UrlbarUtils.jsm",
 });
 
-XPCOMUtils.defineLazyServiceGetter(this, "unifiedComplete",
+XPCOMUtils.defineLazyServiceGetter(
+  this,
+  "unifiedComplete",
   "@mozilla.org/autocomplete/search;1?name=unifiedcomplete",
-  "nsIAutoCompleteSearch");
+  "nsIAutoCompleteSearch"
+);
 
-XPCOMUtils.defineLazyGetter(this, "logger",
-  () => Log.repository.getLogger("Urlbar.Provider.UnifiedComplete"));
+XPCOMUtils.defineLazyGetter(this, "logger", () =>
+  Log.repository.getLogger("Urlbar.Provider.UnifiedComplete")
+);
 
-XPCOMUtils.defineLazyGetter(this, "bundle",
-  () => Services.strings.createBundle("chrome://global/locale/autocomplete.properties"));
-
-// See UnifiedComplete.
-const TITLE_TAGS_SEPARATOR = " \u2013 ";
+XPCOMUtils.defineLazyGetter(this, "bundle", () =>
+  Services.strings.createBundle(
+    "chrome://global/locale/autocomplete.properties"
+  )
+);
 
 /**
  * Class used to create the provider.
@@ -129,7 +135,11 @@ class ProviderUnifiedComplete extends UrlbarProvider {
     await new Promise(resolve => {
       let listener = {
         onSearchResult(_, result) {
-          let {done, matches} = convertResultToMatches(queryContext, result, urls);
+          let { done, matches } = convertResultToMatches(
+            queryContext,
+            result,
+            urls
+          );
           for (let match of matches) {
             addCallback(UrlbarProviderUnifiedComplete, match);
           }
@@ -140,10 +150,12 @@ class ProviderUnifiedComplete extends UrlbarProvider {
         },
       };
       this._resolveSearch = resolve;
-      unifiedComplete.startSearch(queryContext.searchString,
-                                  params.join(" "),
-                                  null, // previousResult
-                                  listener);
+      unifiedComplete.startSearch(
+        queryContext.searchString,
+        params.join(" "),
+        null, // previousResult
+        listener
+      );
     });
 
     // We are done.
@@ -183,12 +195,13 @@ var UrlbarProviderUnifiedComplete = new ProviderUnifiedComplete();
  */
 function convertResultToMatches(context, result, urls) {
   let matches = [];
-  let done = [
-    Ci.nsIAutoCompleteResult.RESULT_IGNORED,
-    Ci.nsIAutoCompleteResult.RESULT_FAILURE,
-    Ci.nsIAutoCompleteResult.RESULT_NOMATCH,
-    Ci.nsIAutoCompleteResult.RESULT_SUCCESS,
-  ].includes(result.searchResult) || result.errorDescription;
+  let done =
+    [
+      Ci.nsIAutoCompleteResult.RESULT_IGNORED,
+      Ci.nsIAutoCompleteResult.RESULT_FAILURE,
+      Ci.nsIAutoCompleteResult.RESULT_NOMATCH,
+      Ci.nsIAutoCompleteResult.RESULT_SUCCESS,
+    ].includes(result.searchResult) || result.errorDescription;
 
   for (let i = 0; i < result.matchCount; ++i) {
     // First, let's check if we already added this match.
@@ -200,7 +213,6 @@ function convertResultToMatches(context, result, urls) {
       continue;
     }
     urls.add(url);
-    // Not used yet: result.getLabelAt(i)
     let style = result.getStyleAt(i);
     let match = makeUrlbarResult(context.tokens, {
       url,
@@ -217,11 +229,15 @@ function convertResultToMatches(context, result, urls) {
     if (i == 0 && style.includes("heuristic")) {
       if (style.includes("autofill") && result.defaultIndex == 0) {
         let autofillValue = result.getValueAt(i);
-        if (autofillValue.toLocaleLowerCase()
-            .startsWith(context.searchString.toLocaleLowerCase())) {
+        if (
+          autofillValue
+            .toLocaleLowerCase()
+            .startsWith(context.searchString.toLocaleLowerCase())
+        ) {
           match.autofill = {
-            value: context.searchString +
-                   autofillValue.substring(context.searchString.length),
+            value:
+              context.searchString +
+              autofillValue.substring(context.searchString.length),
             selectionStart: context.searchString.length,
             selectionEnd: autofillValue.length,
           };
@@ -233,7 +249,7 @@ function convertResultToMatches(context, result, urls) {
     }
     matches.push(match);
   }
-  return {matches, done};
+  return { matches, done };
 }
 
 /**
@@ -266,9 +282,25 @@ function makeUrlbarResult(tokens, info) {
         );
       case "keyword": {
         let title = info.comment;
-        if (tokens && tokens.length > 1) {
-          title = bundle.formatStringFromName("bookmarkKeywordSearch",
-            [info.comment, tokens.slice(1).map(t => t.value).join(" ")], 2);
+        if (!title) {
+          // If the url doesn't have an host (e.g. javascript urls), comment
+          // will be empty, and we can't build the usual title. Thus use the url.
+          title = Services.textToSubURI.unEscapeURIForUI(
+            "UTF-8",
+            action.params.url
+          );
+        } else if (tokens && tokens.length > 1) {
+          title = bundle.formatStringFromName(
+            "bookmarkKeywordSearch",
+            [
+              info.comment,
+              tokens
+                .slice(1)
+                .map(t => t.value)
+                .join(" "),
+            ],
+            2
+          );
         }
         return new UrlbarResult(
           UrlbarUtils.RESULT_TYPE.KEYWORD,
@@ -354,13 +386,19 @@ function makeUrlbarResult(tokens, info) {
     source = UrlbarUtils.RESULT_SOURCE.BOOKMARKS;
     if (info.style.includes("tag")) {
       // Split title and tags.
-      [comment, tags] = info.comment.split(TITLE_TAGS_SEPARATOR);
+      [comment, tags] = info.comment.split(UrlbarUtils.TITLE_TAGS_SEPARATOR);
       // Tags are separated by a comma and in a random order.
       // We should also just include tags that match the searchString.
-      tags = tags.split(",").map(t => t.trim()).filter(tag => {
-        let lowerCaseTag = tag.toLocaleLowerCase();
-        return tokens.some(token => lowerCaseTag.includes(token.lowerCaseValue));
-      }).sort();
+      tags = tags
+        .split(",")
+        .map(t => t.trim())
+        .filter(tag => {
+          let lowerCaseTag = tag.toLocaleLowerCase();
+          return tokens.some(token =>
+            lowerCaseTag.includes(token.lowerCaseValue)
+          );
+        })
+        .sort();
     }
   } else if (info.style.includes("preloaded-top-sites")) {
     source = UrlbarUtils.RESULT_SOURCE.OTHER_LOCAL;

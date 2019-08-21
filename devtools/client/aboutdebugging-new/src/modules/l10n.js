@@ -38,7 +38,10 @@ class L10n {
     // Forward arguments via .apply() so that the original method can:
     // - perform asserts based on the number of arguments
     // - add new arguments
-    return this._reactLocalization.getString.apply(this._reactLocalization, arguments);
+    return this._reactLocalization.getString.apply(
+      this._reactLocalization,
+      arguments
+    );
   }
 }
 

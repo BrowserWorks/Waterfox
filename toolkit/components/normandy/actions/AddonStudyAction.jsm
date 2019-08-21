@@ -10,8 +10,12 @@
 
 "use strict";
 
-const {XPCOMUtils} = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
-const {BaseAction} = ChromeUtils.import("resource://normandy/actions/BaseAction.jsm");
+const { XPCOMUtils } = ChromeUtils.import(
+  "resource://gre/modules/XPCOMUtils.jsm"
+);
+const { BaseAction } = ChromeUtils.import(
+  "resource://normandy/actions/BaseAction.jsm"
+);
 
 XPCOMUtils.defineLazyModuleGetters(this, {
   Services: "resource://gre/modules/Services.jsm",
@@ -127,7 +131,9 @@ class AddonStudyAction extends BaseAction {
   _preExecution() {
     // Check opt-out preference
     if (!Services.prefs.getBoolPref(OPT_OUT_STUDIES_ENABLED_PREF, true)) {
-      this.log.info("User has opted-out of opt-out experiments, disabling action.");
+      this.log.info(
+        "User has opted-out of opt-out experiments, disabling action."
+      );
       this.disable();
     }
   }
@@ -147,7 +153,9 @@ class AddonStudyAction extends BaseAction {
 
     const hasStudy = await AddonStudies.has(recipe.id);
     const { extensionApiId } = recipe.arguments;
-    const extensionDetails = await NormandyApi.fetchExtensionDetails(extensionApiId);
+    const extensionDetails = await NormandyApi.fetchExtensionDetails(
+      extensionApiId
+    );
 
     if (hasStudy) {
       await this.update(recipe, extensionDetails);
@@ -162,7 +170,9 @@ class AddonStudyAction extends BaseAction {
    * studies that no longer apply, based on this.seenRecipeIds.
    */
   async _finalize() {
-    const activeStudies = (await AddonStudies.getAll()).filter(study => study.active);
+    const activeStudies = (await AddonStudies.getAll()).filter(
+      study => study.active
+    );
 
     for (const study of activeStudies) {
       if (!this.seenRecipeIds.has(study.recipeId)) {
@@ -187,7 +197,15 @@ class AddonStudyAction extends BaseAction {
    * @param errorClass The class of error to be thrown when exceptions occur.
    * @param reportError A function that reports errors to Telemetry.
    */
-  async downloadAndInstall(recipe, extensionDetails, onInstallStarted, onComplete, onFailedInstall, errorClass, reportError) {
+  async downloadAndInstall(
+    recipe,
+    extensionDetails,
+    onInstallStarted,
+    onComplete,
+    onFailedInstall,
+    errorClass,
+    reportError
+  ) {
     const { name } = recipe.arguments;
     const { hash, hash_algorithm } = extensionDetails;
 
@@ -196,15 +214,17 @@ class AddonStudyAction extends BaseAction {
 
     const install = await AddonManager.getInstallForURL(extensionDetails.xpi, {
       hash: `${hash_algorithm}:${hash}`,
-      telemetryInfo: {source: "internal"},
+      telemetryInfo: { source: "internal" },
     });
 
     const listener = {
       onDownloadFailed() {
-        downloadDeferred.reject(new errorClass(name, {
-          reason: "download-failure",
-          detail: AddonManager.errorToString(install.error),
-        }));
+        downloadDeferred.reject(
+          new errorClass(name, {
+            reason: "download-failure",
+            detail: AddonManager.errorToString(install.error),
+          })
+        );
       },
 
       onDownloadEnded() {
@@ -213,10 +233,12 @@ class AddonStudyAction extends BaseAction {
       },
 
       onInstallFailed() {
-        installDeferred.reject(new errorClass(name, {
-          reason: "install-failure",
-          detail: AddonManager.errorToString(install.error),
-        }));
+        installDeferred.reject(
+          new errorClass(name, {
+            reason: "install-failure",
+            detail: AddonManager.errorToString(install.error),
+          })
+        );
       },
 
       onInstallEnded() {
@@ -290,16 +312,21 @@ class AddonStudyAction extends BaseAction {
 
     const onInstallStarted = installDeferred => {
       return cbInstall => {
-        const versionMatches = cbInstall.addon.version === extensionDetails.version;
+        const versionMatches =
+          cbInstall.addon.version === extensionDetails.version;
         const idMatches = cbInstall.addon.id === extensionDetails.extension_id;
 
         if (cbInstall.existingAddon) {
-          installDeferred.reject(new AddonStudyEnrollError(name, {reason: "conflicting-addon-id"}));
+          installDeferred.reject(
+            new AddonStudyEnrollError(name, { reason: "conflicting-addon-id" })
+          );
           return false; // cancel the installation, no upgrades allowed
         } else if (!versionMatches || !idMatches) {
-          installDeferred.reject(new AddonStudyEnrollError(name, {
-            reason: "metadata-mismatch",
-          }));
+          installDeferred.reject(
+            new AddonStudyEnrollError(name, {
+              reason: "metadata-mismatch",
+            })
+          );
           return false; // cancel the installation, server metadata do not match downloaded add-on
         }
         return true;
@@ -342,7 +369,7 @@ class AddonStudyAction extends BaseAction {
       onComplete,
       onFailedInstall,
       AddonStudyEnrollError,
-      this.reportEnrollError,
+      this.reportEnrollError
     );
 
     // All done, report success to Telemetry
@@ -369,7 +396,10 @@ class AddonStudyAction extends BaseAction {
       });
     }
 
-    const versionCompare = Services.vc.compare(study.addonVersion, extensionDetails.version);
+    const versionCompare = Services.vc.compare(
+      study.addonVersion,
+      extensionDetails.version
+    );
     if (versionCompare > 0) {
       error = new AddonStudyUpdateError(name, {
         reason: "no-downgrade",
@@ -385,18 +415,23 @@ class AddonStudyAction extends BaseAction {
 
     const onInstallStarted = installDeferred => {
       return cbInstall => {
-        const versionMatches = cbInstall.addon.version === extensionDetails.version;
+        const versionMatches =
+          cbInstall.addon.version === extensionDetails.version;
         const idMatches = cbInstall.addon.id === extensionDetails.extension_id;
 
         if (!cbInstall.existingAddon) {
-          installDeferred.reject(new AddonStudyUpdateError(name, {
-            reason: "addon-does-not-exist",
-          }));
+          installDeferred.reject(
+            new AddonStudyUpdateError(name, {
+              reason: "addon-does-not-exist",
+            })
+          );
           return false; // cancel the installation, must upgrade an existing add-on
         } else if (!versionMatches || !idMatches) {
-          installDeferred.reject(new AddonStudyUpdateError(name, {
-            reason: "metadata-mismatch",
-          }));
+          installDeferred.reject(
+            new AddonStudyUpdateError(name, {
+              reason: "metadata-mismatch",
+            })
+          );
           return false; // cancel the installation, server metadata do not match downloaded add-on
         }
 
@@ -433,7 +468,7 @@ class AddonStudyAction extends BaseAction {
       onComplete,
       onFailedInstall,
       AddonStudyUpdateError,
-      this.reportUpdateError,
+      this.reportUpdateError
     );
 
     // All done, report success to Telemetry
@@ -446,38 +481,62 @@ class AddonStudyAction extends BaseAction {
   reportEnrollError(error) {
     if (error instanceof AddonStudyEnrollError) {
       // One of our known errors. Report it nicely to telemetry
-      TelemetryEvents.sendEvent("enrollFailed", "addon_study", error.studyName, error.extra);
+      TelemetryEvents.sendEvent(
+        "enrollFailed",
+        "addon_study",
+        error.studyName,
+        error.extra
+      );
     } else {
       /*
-        * Some unknown error. Add some helpful details, and report it to
-        * telemetry. The actual stack trace and error message could possibly
-        * contain PII, so we don't include them here. Instead include some
-        * information that should still be helpful, and is less likely to be
-        * unsafe.
-        */
-      const safeErrorMessage = `${error.fileName}:${error.lineNumber}:${error.columnNumber} ${error.name}`;
-      TelemetryEvents.sendEvent("enrollFailed", "addon_study", error.studyName, {
-        reason: safeErrorMessage.slice(0, 80),  // max length is 80 chars
-      });
+       * Some unknown error. Add some helpful details, and report it to
+       * telemetry. The actual stack trace and error message could possibly
+       * contain PII, so we don't include them here. Instead include some
+       * information that should still be helpful, and is less likely to be
+       * unsafe.
+       */
+      const safeErrorMessage = `${error.fileName}:${error.lineNumber}:${
+        error.columnNumber
+      } ${error.name}`;
+      TelemetryEvents.sendEvent(
+        "enrollFailed",
+        "addon_study",
+        error.studyName,
+        {
+          reason: safeErrorMessage.slice(0, 80), // max length is 80 chars
+        }
+      );
     }
   }
 
   reportUpdateError(error) {
     if (error instanceof AddonStudyUpdateError) {
       // One of our known errors. Report it nicely to telemetry
-      TelemetryEvents.sendEvent("updateFailed", "addon_study", error.studyName, error.extra);
+      TelemetryEvents.sendEvent(
+        "updateFailed",
+        "addon_study",
+        error.studyName,
+        error.extra
+      );
     } else {
       /*
-        * Some unknown error. Add some helpful details, and report it to
-        * telemetry. The actual stack trace and error message could possibly
-        * contain PII, so we don't include them here. Instead include some
-        * information that should still be helpful, and is less likely to be
-        * unsafe.
-        */
-      const safeErrorMessage = `${error.fileName}:${error.lineNumber}:${error.columnNumber} ${error.name}`;
-      TelemetryEvents.sendEvent("updateFailed", "addon_study", error.studyName, {
-        reason: safeErrorMessage.slice(0, 80),  // max length is 80 chars
-      });
+       * Some unknown error. Add some helpful details, and report it to
+       * telemetry. The actual stack trace and error message could possibly
+       * contain PII, so we don't include them here. Instead include some
+       * information that should still be helpful, and is less likely to be
+       * unsafe.
+       */
+      const safeErrorMessage = `${error.fileName}:${error.lineNumber}:${
+        error.columnNumber
+      } ${error.name}`;
+      TelemetryEvents.sendEvent(
+        "updateFailed",
+        "addon_study",
+        error.studyName,
+        {
+          reason: safeErrorMessage.slice(0, 80), // max length is 80 chars
+        }
+      );
     }
   }
 
@@ -493,7 +552,9 @@ class AddonStudyAction extends BaseAction {
       throw new Error(`No study found for recipe ${recipeId}.`);
     }
     if (!study.active) {
-      throw new Error(`Cannot stop study for recipe ${recipeId}; it is already inactive.`);
+      throw new Error(
+        `Cannot stop study for recipe ${recipeId}; it is already inactive.`
+      );
     }
 
     await AddonStudies.markAsEnded(study, reason);
@@ -502,7 +563,11 @@ class AddonStudyAction extends BaseAction {
     if (addon) {
       await addon.uninstall();
     } else {
-      this.log.warn(`Could not uninstall addon ${study.addonId} for recipe ${study.recipeId}: it is not installed.`);
+      this.log.warn(
+        `Could not uninstall addon ${study.addonId} for recipe ${
+          study.recipeId
+        }: it is not installed.`
+      );
     }
   }
 }

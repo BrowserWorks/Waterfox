@@ -1599,7 +1599,7 @@ VARCACHE_PREF(
 #undef PREF_VALUE
 
 #if defined(XP_WIN)
-# if defined(_ARM64_) || defined(__MINGW32__)
+# if defined(_ARM64_)
 #  define PREF_VALUE false
 # else
 #  define PREF_VALUE true
@@ -2372,6 +2372,16 @@ VARCACHE_PREF(
   uint32_t, 2048
 )
 
+// Prefs starting with "plain_text."
+//---------------------------------------------------------------------------
+
+// When false, text in plaintext documents does not wrap long lines.
+VARCACHE_PREF(
+  "plain_text.wrap_long_lines",
+  plain_text_wrap_long_lines,
+  bool, true
+)
+
 //---------------------------------------------------------------------------
 // Preferences prefs
 //---------------------------------------------------------------------------
@@ -2382,13 +2392,14 @@ PREF("preferences.allow.omt-write", bool, true)
 // Privacy prefs
 //---------------------------------------------------------------------------
 
-// Whether Content Blocking Third-Party Cookies UI has been enabled.
+// Whether Content Blocking allow list is respected for ETP interventions.
 VARCACHE_PREF(
   "browser.contentblocking.allowlist.storage.enabled",
    browser_contentblocking_allowlist_storage_enabled,
-  bool, false
+  bool, true
 )
 
+// Whether Content Blocking allow list is respected for tracking annotations.
 VARCACHE_PREF(
   "browser.contentblocking.allowlist.annotations.enabled",
    browser_contentblocking_allowlist_annotations_enabled,
@@ -2406,7 +2417,7 @@ VARCACHE_PREF(
 VARCACHE_PREF(
   "browser.contentblocking.rejecttrackers.control-center.ui.enabled",
    browser_contentblocking_rejecttrackers_control_center_ui_enabled,
-  bool, false
+  bool, true
 )
 
 VARCACHE_PREF(

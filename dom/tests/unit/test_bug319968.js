@@ -7,8 +7,10 @@ Cu.importGlobalProperties(["DOMParser"]);
 
 function run_test() {
   var domParser = new DOMParser();
-  var aDom = domParser.parseFromString("<root><feed><entry/><entry/></feed></root>",
-                                       "application/xml");
+  var aDom = domParser.parseFromString(
+    "<root><feed><entry/><entry/></feed></root>",
+    "application/xml"
+  );
   var feedList = aDom.getElementsByTagName("feed");
   Assert.notEqual(feedList, null);
   Assert.equal(feedList.length, 1);

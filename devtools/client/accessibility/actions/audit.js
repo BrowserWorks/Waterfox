@@ -4,16 +4,21 @@
 
 "use strict";
 
-const { AUDIT, AUDIT_PROGRESS, AUDITING, FILTER_TOGGLE } = require("../constants");
+const {
+  AUDIT,
+  AUDIT_PROGRESS,
+  AUDITING,
+  FILTER_TOGGLE,
+} = require("../constants");
 
-exports.filterToggle = filter =>
-  dispatch => dispatch({ filter, type: FILTER_TOGGLE });
+exports.filterToggle = filter => dispatch =>
+  dispatch({ filter, type: FILTER_TOGGLE });
 
-exports.auditing = filter =>
-  dispatch => dispatch({ auditing: filter, type: AUDITING });
+exports.auditing = filter => dispatch =>
+  dispatch({ auditing: filter, type: AUDITING });
 
-exports.audit = (walker, filter) =>
-  dispatch => new Promise(resolve => {
+exports.audit = (walker, filter) => dispatch =>
+  new Promise(resolve => {
     const auditEventHandler = ({ type, ancestries, progress }) => {
       switch (type) {
         case "error":

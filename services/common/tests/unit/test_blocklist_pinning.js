@@ -2,11 +2,16 @@
 
 const { Constructor: CC } = Components;
 
-const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
-const {BlocklistClients} = ChromeUtils.import("resource://services-common/blocklist-clients.js");
+const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
+const { BlocklistClients } = ChromeUtils.import(
+  "resource://services-common/blocklist-clients.js"
+);
 
-const BinaryInputStream = CC("@mozilla.org/binaryinputstream;1",
-  "nsIBinaryInputStream", "setInputStream");
+const BinaryInputStream = CC(
+  "@mozilla.org/binaryinputstream;1",
+  "nsIBinaryInputStream",
+  "setInputStream"
+);
 
 // First, we need to setup Services.appinfo or we can't do version checks
 var id = "xpcshell@tests.mozilla.org";
@@ -31,25 +36,34 @@ add_task(async function test_something() {
     PinningBlocklistClient: PinningPreloadClient,
   } = BlocklistClients.initialize({ verifySignature: false });
 
-  Services.prefs.setCharPref("services.settings.server",
-                             `http://localhost:${server.identity.primaryPort}/v1`);
+  Services.prefs.setCharPref(
+    "services.settings.server",
+    `http://localhost:${server.identity.primaryPort}/v1`
+  );
 
   // register a handler
   function handleResponse(request, response) {
     try {
       const sample = getSampleResponse(request, server.identity.primaryPort);
       if (!sample) {
-        do_throw(`unexpected ${request.method} request for ${request.path}?${request.queryString}`);
+        do_throw(
+          `unexpected ${request.method} request for ${request.path}?${
+            request.queryString
+          }`
+        );
       }
 
-      response.setStatusLine(null, sample.status.status,
-                             sample.status.statusText);
+      response.setStatusLine(
+        null,
+        sample.status.status,
+        sample.status.statusText
+      );
       // send the headers
       for (let headerLine of sample.sampleHeaders) {
         let headerElements = headerLine.split(":");
         response.setHeader(headerElements[0], headerElements[1].trimLeft());
       }
-      response.setHeader("Date", (new Date()).toUTCString());
+      response.setHeader("Date", new Date().toUTCString());
 
       response.write(sample.responseBody);
     } catch (e) {
@@ -57,23 +71,55 @@ add_task(async function test_something() {
     }
   }
   server.registerPathHandler("/v1/", handleResponse);
-  server.registerPathHandler("/v1/buckets/pinning/collections/pins", handleResponse);
-  server.registerPathHandler("/v1/buckets/pinning/collections/pins/records", handleResponse);
+  server.registerPathHandler(
+    "/v1/buckets/pinning/collections/pins",
+    handleResponse
+  );
+  server.registerPathHandler(
+    "/v1/buckets/pinning/collections/pins/records",
+    handleResponse
+  );
 
-  let sss = Cc["@mozilla.org/ssservice;1"]
-              .getService(Ci.nsISiteSecurityService);
+  let sss = Cc["@mozilla.org/ssservice;1"].getService(
+    Ci.nsISiteSecurityService
+  );
 
   // ensure our pins are all missing before we start
-  ok(!sss.isSecureURI(sss.HEADER_HPKP,
-                      Services.io.newURI("https://one.example.com"), 0));
-  ok(!sss.isSecureURI(sss.HEADER_HPKP,
-                      Services.io.newURI("https://two.example.com"), 0));
-  ok(!sss.isSecureURI(sss.HEADER_HPKP,
-                      Services.io.newURI("https://three.example.com"), 0));
-  ok(!sss.isSecureURI(sss.HEADER_HSTS,
-                      Services.io.newURI("https://four.example.com"), 0));
-  ok(!sss.isSecureURI(sss.HEADER_HSTS,
-                      Services.io.newURI("https://five.example.com"), 0));
+  ok(
+    !sss.isSecureURI(
+      sss.HEADER_HPKP,
+      Services.io.newURI("https://one.example.com"),
+      0
+    )
+  );
+  ok(
+    !sss.isSecureURI(
+      sss.HEADER_HPKP,
+      Services.io.newURI("https://two.example.com"),
+      0
+    )
+  );
+  ok(
+    !sss.isSecureURI(
+      sss.HEADER_HPKP,
+      Services.io.newURI("https://three.example.com"),
+      0
+    )
+  );
+  ok(
+    !sss.isSecureURI(
+      sss.HEADER_HSTS,
+      Services.io.newURI("https://four.example.com"),
+      0
+    )
+  );
+  ok(
+    !sss.isSecureURI(
+      sss.HEADER_HSTS,
+      Services.io.newURI("https://five.example.com"),
+      0
+    )
+  );
 
   // Test an empty db populates
   await PinningPreloadClient.maybeSync(2000);
@@ -84,8 +130,13 @@ add_task(async function test_something() {
   Assert.equal(before.length, 1);
 
   // check that a pin exists for one.example.com
-  ok(sss.isSecureURI(sss.HEADER_HPKP,
-                     Services.io.newURI("https://one.example.com"), 0));
+  ok(
+    sss.isSecureURI(
+      sss.HEADER_HPKP,
+      Services.io.newURI("https://one.example.com"),
+      0
+    )
+  );
 
   // Test the db is updated when we call again with a later lastModified value
   await PinningPreloadClient.maybeSync(4000);
@@ -96,15 +147,30 @@ add_task(async function test_something() {
   Assert.equal(after.length, 5);
 
   // check that a pin exists for two.example.com and three.example.com
-  ok(sss.isSecureURI(sss.HEADER_HPKP,
-                     Services.io.newURI("https://two.example.com"), 0));
-  ok(sss.isSecureURI(sss.HEADER_HPKP,
-                     Services.io.newURI("https://three.example.com"), 0));
+  ok(
+    sss.isSecureURI(
+      sss.HEADER_HPKP,
+      Services.io.newURI("https://two.example.com"),
+      0
+    )
+  );
+  ok(
+    sss.isSecureURI(
+      sss.HEADER_HPKP,
+      Services.io.newURI("https://three.example.com"),
+      0
+    )
+  );
 
   // check that a pin does not exist for four.example.com - it's in the
   // collection but the version should not match
-  ok(!sss.isSecureURI(sss.HEADER_HPKP,
-                      Services.io.newURI("https://four.example.com"), 0));
+  ok(
+    !sss.isSecureURI(
+      sss.HEADER_HPKP,
+      Services.io.newURI("https://four.example.com"),
+      0
+    )
+  );
 
   // Try to maybeSync with the current lastModified value - no connection
   // should be attempted.
@@ -116,25 +182,40 @@ add_task(async function test_something() {
   await PinningPreloadClient.maybeSync(3000);
 
   // Check that the HSTS preload added to the collection works...
-  ok(sss.isSecureURI(sss.HEADER_HSTS,
-                     Services.io.newURI("https://five.example.com"), 0));
+  ok(
+    sss.isSecureURI(
+      sss.HEADER_HSTS,
+      Services.io.newURI("https://five.example.com"),
+      0
+    )
+  );
   // ...and that includeSubdomains is honored
-  ok(!sss.isSecureURI(sss.HEADER_HSTS,
-                      Services.io.newURI("https://subdomain.five.example.com"),
-                      0));
+  ok(
+    !sss.isSecureURI(
+      sss.HEADER_HSTS,
+      Services.io.newURI("https://subdomain.five.example.com"),
+      0
+    )
+  );
 
   // Check that a sync completes even when there's bad data in the
   // collection. This will throw on fail, so just calling maybeSync is an
   // acceptible test (the data below with last_modified of 300 is nonsense).
-  Services.prefs.setCharPref("services.settings.server",
-                             `http://localhost:${server.identity.primaryPort}/v1`);
+  Services.prefs.setCharPref(
+    "services.settings.server",
+    `http://localhost:${server.identity.primaryPort}/v1`
+  );
   await PinningPreloadClient.maybeSync(5000);
 
   // The STS entry for five.example.com now has includeSubdomains set;
   // ensure that the new includeSubdomains value is honored.
-  ok(sss.isSecureURI(sss.HEADER_HSTS,
-                     Services.io.newURI("https://subdomain.five.example.com"),
-                     0));
+  ok(
+    sss.isSecureURI(
+      sss.HEADER_HSTS,
+      Services.io.newURI("https://subdomain.five.example.com"),
+      0
+    )
+  );
 });
 
 function run_test() {
@@ -145,173 +226,211 @@ function run_test() {
   run_next_test();
 
   registerCleanupFunction(function() {
-    server.stop(() => { });
+    server.stop(() => {});
   });
 }
 
 // get a response for a given request from sample data
 function getSampleResponse(req, port) {
   const responses = {
-    "OPTIONS": {
-      "sampleHeaders": [
+    OPTIONS: {
+      sampleHeaders: [
         "Access-Control-Allow-Headers: Content-Length,Expires,Backoff,Retry-After,Last-Modified,Total-Records,ETag,Pragma,Cache-Control,authorization,content-type,if-none-match,Alert,Next-Page",
         "Access-Control-Allow-Methods: GET,HEAD,OPTIONS,POST,DELETE,OPTIONS",
         "Access-Control-Allow-Origin: *",
         "Content-Type: application/json; charset=UTF-8",
         "Server: waitress",
       ],
-      "status": {status: 200, statusText: "OK"},
-      "responseBody": "null",
+      status: { status: 200, statusText: "OK" },
+      responseBody: "null",
     },
     "GET:/v1/?": {
-      "sampleHeaders": [
+      sampleHeaders: [
         "Access-Control-Allow-Origin: *",
         "Access-Control-Expose-Headers: Retry-After, Content-Length, Alert, Backoff",
         "Content-Type: application/json; charset=UTF-8",
         "Server: waitress",
       ],
-      "status": {status: 200, statusText: "OK"},
-      "responseBody": JSON.stringify({
-        "settings": {
-          "batch_max_requests": 25,
+      status: { status: 200, statusText: "OK" },
+      responseBody: JSON.stringify({
+        settings: {
+          batch_max_requests: 25,
         },
-        "url": `http://localhost:${port}/v1/`,
-        "documentation": "https://kinto.readthedocs.org/",
-        "version": "1.5.1",
-        "commit": "cbc6f58",
-        "hello": "kinto",
+        url: `http://localhost:${port}/v1/`,
+        documentation: "https://kinto.readthedocs.org/",
+        version: "1.5.1",
+        commit: "cbc6f58",
+        hello: "kinto",
       }),
     },
     "GET:/v1/buckets/pinning/collections/pins": {
-      "sampleHeaders": [
+      sampleHeaders: [
         "Access-Control-Allow-Origin: *",
         "Access-Control-Expose-Headers: Retry-After, Content-Length, Alert, Backoff",
         "Content-Type: application/json; charset=UTF-8",
         "Server: waitress",
-        "Etag: \"1234\"",
+        'Etag: "1234"',
       ],
-      "status": { status: 200, statusText: "OK" },
-      "responseBody": JSON.stringify({
-        "data": {
-          "id": "pins",
-          "last_modified": 1234,
+      status: { status: 200, statusText: "OK" },
+      responseBody: JSON.stringify({
+        data: {
+          id: "pins",
+          last_modified: 1234,
         },
       }),
     },
     "GET:/v1/buckets/pinning/collections/pins/records?_expected=2000&_sort=-last_modified": {
-      "sampleHeaders": [
+      sampleHeaders: [
         "Access-Control-Allow-Origin: *",
         "Access-Control-Expose-Headers: Retry-After, Content-Length, Alert, Backoff",
         "Content-Type: application/json; charset=UTF-8",
         "Server: waitress",
-        "Etag: \"3000\"",
+        'Etag: "3000"',
       ],
-      "status": {status: 200, statusText: "OK"},
-      "responseBody": JSON.stringify({"data": [{
-        "pinType": "KeyPin",
-        "hostName": "one.example.com",
-        "includeSubdomains": false,
-        "expires": new Date().getTime() + 1000000,
-        "pins": ["cUPcTAZWKaASuYWhhneDttWpY3oBAkE3h2+soZS7sWs=",
-                  "M8HztCzM3elUxkcjR2S5P4hhyBNf6lHkmjAHKhpGPWE="],
-        "versions": [Services.appinfo.version],
-        "id": "78cf8900-fdea-4ce5-f8fb-b78710617718",
-        "last_modified": 3000,
-      }]}),
+      status: { status: 200, statusText: "OK" },
+      responseBody: JSON.stringify({
+        data: [
+          {
+            pinType: "KeyPin",
+            hostName: "one.example.com",
+            includeSubdomains: false,
+            expires: new Date().getTime() + 1000000,
+            pins: [
+              "cUPcTAZWKaASuYWhhneDttWpY3oBAkE3h2+soZS7sWs=",
+              "M8HztCzM3elUxkcjR2S5P4hhyBNf6lHkmjAHKhpGPWE=",
+            ],
+            versions: [Services.appinfo.version],
+            id: "78cf8900-fdea-4ce5-f8fb-b78710617718",
+            last_modified: 3000,
+          },
+        ],
+      }),
     },
     "GET:/v1/buckets/pinning/collections/pins/records?_expected=4000&_sort=-last_modified&_since=3000": {
-      "sampleHeaders": [
+      sampleHeaders: [
         "Access-Control-Allow-Origin: *",
         "Access-Control-Expose-Headers: Retry-After, Content-Length, Alert, Backoff",
         "Content-Type: application/json; charset=UTF-8",
         "Server: waitress",
-        "Etag: \"4000\"",
+        'Etag: "4000"',
       ],
-      "status": {status: 200, statusText: "OK"},
-      "responseBody": JSON.stringify({"data": [{
-        "pinType": "KeyPin",
-        "hostName": "two.example.com",
-        "includeSubdomains": false,
-        "expires": new Date().getTime() + 1000000,
-        "pins": ["cUPcTAZWKaASuYWhhneDttWpY3oBAkE3h2+soZS7sWs=",
-                  "M8HztCzM3elUxkcjR2S5P4hhyBNf6lHkmjAHKhpGPWE="],
-        "versions": [Services.appinfo.version],
-        "id": "dabafde9-df4a-ddba-2548-748da04cc02c",
-        "last_modified": 4000,
-      }, {
-        "pinType": "KeyPin",
-        "hostName": "three.example.com",
-        "includeSubdomains": false,
-        "expires": new Date().getTime() + 1000000,
-        "pins": ["cUPcTAZWKaASuYWhhneDttWpY3oBAkE3h2+soZS7sWs=",
-                  "M8HztCzM3elUxkcjR2S5P4hhyBNf6lHkmjAHKhpGPWE="],
-        "versions": [Services.appinfo.version, "some other version that won't match"],
-        "id": "dabafde9-df4a-ddba-2548-748da04cc02d",
-        "last_modified": 4000,
-      }, {
-        "pinType": "KeyPin",
-        "hostName": "four.example.com",
-        "includeSubdomains": false,
-        "expires": new Date().getTime() + 1000000,
-        "pins": ["cUPcTAZWKaASuYWhhneDttWpY3oBAkE3h2+soZS7sWs=",
-                  "M8HztCzM3elUxkcjR2S5P4hhyBNf6lHkmjAHKhpGPWE="],
-        "versions": ["some version that won't match"],
-        "id": "dabafde9-df4a-ddba-2548-748da04cc02e",
-        "last_modified": 4000,
-      }, {
-        "pinType": "STSPin",
-        "hostName": "five.example.com",
-        "includeSubdomains": false,
-        "expires": new Date().getTime() + 1000000,
-        "versions": [Services.appinfo.version, "some version that won't match"],
-        "id": "dabafde9-df4a-ddba-2548-748da04cc032",
-        "last_modified": 4000,
-      }]}),
+      status: { status: 200, statusText: "OK" },
+      responseBody: JSON.stringify({
+        data: [
+          {
+            pinType: "KeyPin",
+            hostName: "two.example.com",
+            includeSubdomains: false,
+            expires: new Date().getTime() + 1000000,
+            pins: [
+              "cUPcTAZWKaASuYWhhneDttWpY3oBAkE3h2+soZS7sWs=",
+              "M8HztCzM3elUxkcjR2S5P4hhyBNf6lHkmjAHKhpGPWE=",
+            ],
+            versions: [Services.appinfo.version],
+            id: "dabafde9-df4a-ddba-2548-748da04cc02c",
+            last_modified: 4000,
+          },
+          {
+            pinType: "KeyPin",
+            hostName: "three.example.com",
+            includeSubdomains: false,
+            expires: new Date().getTime() + 1000000,
+            pins: [
+              "cUPcTAZWKaASuYWhhneDttWpY3oBAkE3h2+soZS7sWs=",
+              "M8HztCzM3elUxkcjR2S5P4hhyBNf6lHkmjAHKhpGPWE=",
+            ],
+            versions: [
+              Services.appinfo.version,
+              "some other version that won't match",
+            ],
+            id: "dabafde9-df4a-ddba-2548-748da04cc02d",
+            last_modified: 4000,
+          },
+          {
+            pinType: "KeyPin",
+            hostName: "four.example.com",
+            includeSubdomains: false,
+            expires: new Date().getTime() + 1000000,
+            pins: [
+              "cUPcTAZWKaASuYWhhneDttWpY3oBAkE3h2+soZS7sWs=",
+              "M8HztCzM3elUxkcjR2S5P4hhyBNf6lHkmjAHKhpGPWE=",
+            ],
+            versions: ["some version that won't match"],
+            id: "dabafde9-df4a-ddba-2548-748da04cc02e",
+            last_modified: 4000,
+          },
+          {
+            pinType: "STSPin",
+            hostName: "five.example.com",
+            includeSubdomains: false,
+            expires: new Date().getTime() + 1000000,
+            versions: [
+              Services.appinfo.version,
+              "some version that won't match",
+            ],
+            id: "dabafde9-df4a-ddba-2548-748da04cc032",
+            last_modified: 4000,
+          },
+        ],
+      }),
     },
     "GET:/v1/buckets/pinning/collections/pins/records?_expected=5000&_sort=-last_modified&_since=4000": {
-      "sampleHeaders": [
+      sampleHeaders: [
         "Access-Control-Allow-Origin: *",
         "Access-Control-Expose-Headers: Retry-After, Content-Length, Alert, Backoff",
         "Content-Type: application/json; charset=UTF-8",
         "Server: waitress",
-        "Etag: \"5000\"",
+        'Etag: "5000"',
       ],
-      "status": {status: 200, statusText: "OK"},
-      "responseBody": JSON.stringify({"data": [{
-        "irrelevant": "this entry looks nothing whatsoever like a pin preload",
-        "pinType": "KeyPin",
-        "id": "dabafde9-df4a-ddba-2548-748da04cc02f",
-        "last_modified": 5000,
-      }, {
-        "irrelevant": "this entry has data of the wrong type",
-        "pinType": "KeyPin",
-        "hostName": 3,
-        "includeSubdomains": "nonsense",
-        "expires": "more nonsense",
-        "pins": [1, 2, 3, 4],
-        "id": "dabafde9-df4a-ddba-2548-748da04cc030",
-        "last_modified": 5000,
-      }, {
-        "irrelevant": "this entry is missing the actual pins",
-        "pinType": "KeyPin",
-        "hostName": "missingpins.example.com",
-        "includeSubdomains": false,
-        "expires": new Date().getTime() + 1000000,
-        "versions": [Services.appinfo.version],
-        "id": "dabafde9-df4a-ddba-2548-748da04cc031",
-        "last_modified": 5000,
-      }, {
-        "pinType": "STSPin",
-        "hostName": "five.example.com",
-        "includeSubdomains": true,
-        "expires": new Date().getTime() + 1000000,
-        "versions": [Services.appinfo.version, "some version that won't match"],
-        "id": "dabafde9-df4a-ddba-2548-748da04cc032",
-        "last_modified": 5000,
-      }]}),
+      status: { status: 200, statusText: "OK" },
+      responseBody: JSON.stringify({
+        data: [
+          {
+            irrelevant:
+              "this entry looks nothing whatsoever like a pin preload",
+            pinType: "KeyPin",
+            id: "dabafde9-df4a-ddba-2548-748da04cc02f",
+            last_modified: 5000,
+          },
+          {
+            irrelevant: "this entry has data of the wrong type",
+            pinType: "KeyPin",
+            hostName: 3,
+            includeSubdomains: "nonsense",
+            expires: "more nonsense",
+            pins: [1, 2, 3, 4],
+            id: "dabafde9-df4a-ddba-2548-748da04cc030",
+            last_modified: 5000,
+          },
+          {
+            irrelevant: "this entry is missing the actual pins",
+            pinType: "KeyPin",
+            hostName: "missingpins.example.com",
+            includeSubdomains: false,
+            expires: new Date().getTime() + 1000000,
+            versions: [Services.appinfo.version],
+            id: "dabafde9-df4a-ddba-2548-748da04cc031",
+            last_modified: 5000,
+          },
+          {
+            pinType: "STSPin",
+            hostName: "five.example.com",
+            includeSubdomains: true,
+            expires: new Date().getTime() + 1000000,
+            versions: [
+              Services.appinfo.version,
+              "some version that won't match",
+            ],
+            id: "dabafde9-df4a-ddba-2548-748da04cc032",
+            last_modified: 5000,
+          },
+        ],
+      }),
     },
   };
-  return responses[`${req.method}:${req.path}?${req.queryString}`] ||
-         responses[`${req.method}:${req.path}`] ||
-         responses[req.method];
+  return (
+    responses[`${req.method}:${req.path}?${req.queryString}`] ||
+    responses[`${req.method}:${req.path}`] ||
+    responses[req.method]
+  );
 }

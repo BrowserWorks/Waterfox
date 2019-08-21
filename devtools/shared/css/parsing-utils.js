@@ -13,19 +13,24 @@
 
 "use strict";
 
-const {getCSSLexer} = require("devtools/shared/css/lexer");
+const { getCSSLexer } = require("devtools/shared/css/lexer");
 
-loader.lazyRequireGetter(this, "CSS_ANGLEUNIT", "devtools/shared/css/constants", true);
+loader.lazyRequireGetter(
+  this,
+  "CSS_ANGLEUNIT",
+  "devtools/shared/css/constants",
+  true
+);
 
-const SELECTOR_ATTRIBUTE = exports.SELECTOR_ATTRIBUTE = 1;
-const SELECTOR_ELEMENT = exports.SELECTOR_ELEMENT = 2;
-const SELECTOR_PSEUDO_CLASS = exports.SELECTOR_PSEUDO_CLASS = 3;
+const SELECTOR_ATTRIBUTE = (exports.SELECTOR_ATTRIBUTE = 1);
+const SELECTOR_ELEMENT = (exports.SELECTOR_ELEMENT = 2);
+const SELECTOR_PSEUDO_CLASS = (exports.SELECTOR_PSEUDO_CLASS = 3);
 
 // When commenting out a declaration, we put this character into the
 // comment opener so that future parses of the commented text know to
 // bypass the property name validity heuristic.
-const COMMENT_PARSING_HEURISTIC_BYPASS_CHAR =
-  exports.COMMENT_PARSING_HEURISTIC_BYPASS_CHAR = "!";
+const COMMENT_PARSING_HEURISTIC_BYPASS_CHAR = (exports.COMMENT_PARSING_HEURISTIC_BYPASS_CHAR =
+  "!");
 
 /**
  * A generator function that lexes a CSS source string, yielding the
@@ -96,7 +101,7 @@ function cssTokenizerWithLineColumn(string) {
         line: lineNumber,
         column: columnNumber,
       };
-      token.loc = {start: startLoc};
+      token.loc = { start: startLoc };
 
       result.push(token);
       prevToken = token;
@@ -152,8 +157,12 @@ function unescapeCSSComment(inputString) {
  * @return {array} Array of declarations of the same form as returned
  *                 by parseDeclarations.
  */
-function parseCommentDeclarations(isCssPropertyKnown, commentText, startOffset,
-                                  endOffset) {
+function parseCommentDeclarations(
+  isCssPropertyKnown,
+  commentText,
+  startOffset,
+  endOffset
+) {
   let commentOverride = false;
   if (commentText === "") {
     return [];
@@ -209,8 +218,13 @@ function parseCommentDeclarations(isCssPropertyKnown, commentText, startOffset,
   // seem worthwhile to support declarations in comments-in-comments
   // here, as there's no way to generate those using the tools, and
   // users would be crazy to write such things.
-  const newDecls = parseDeclarationsInternal(isCssPropertyKnown, rewrittenText,
-                                           false, true, commentOverride);
+  const newDecls = parseDeclarationsInternal(
+    isCssPropertyKnown,
+    rewrittenText,
+    false,
+    true,
+    commentOverride
+  );
   for (const decl of newDecls) {
     decl.offsets[0] = rewrites[decl.offsets[0]];
     decl.offsets[1] = rewrites[decl.offsets[1]];
@@ -229,10 +243,14 @@ function parseCommentDeclarations(isCssPropertyKnown, commentText, startOffset,
  *                  parseDeclarations
  */
 function getEmptyDeclaration() {
-  return {name: "", value: "", priority: "",
-          terminator: "",
-          offsets: [undefined, undefined],
-          colonOffsets: false};
+  return {
+    name: "",
+    value: "",
+    priority: "",
+    terminator: "",
+    offsets: [undefined, undefined],
+    colonOffsets: false,
+  };
 }
 
 /**
@@ -267,8 +285,13 @@ function cssTrim(str) {
  *        rewriteDeclarations, and skip the usual name-checking
  *        heuristic.
  */
-function parseDeclarationsInternal(isCssPropertyKnown, inputString,
-                                   parseComments, inComment, commentOverride) {
+function parseDeclarationsInternal(
+  isCssPropertyKnown,
+  inputString,
+  parseComments,
+  inComment,
+  commentOverride
+) {
   if (inputString === null || inputString === undefined) {
     throw new Error("empty input string");
   }
@@ -301,8 +324,13 @@ function parseDeclarationsInternal(isCssPropertyKnown, inputString,
         lastProp.offsets[0] = token.startOffset;
       }
       lastProp.offsets[1] = token.endOffset;
-    } else if (lastProp.name && !current && !importantState &&
-               !lastProp.priority && lastProp.colonOffsets[1]) {
+    } else if (
+      lastProp.name &&
+      !current &&
+      !importantState &&
+      !lastProp.priority &&
+      lastProp.colonOffsets[1]
+    ) {
       // Whitespace appearing after the ":" is attributed to it.
       lastProp.colonOffsets[1] = token.endOffset;
     } else if (importantState === 1) {
@@ -321,8 +349,11 @@ function parseDeclarationsInternal(isCssPropertyKnown, inputString,
 
         // When parsing a comment body, if the left-hand-side is not a
         // valid property name, then drop it and stop parsing.
-        if (inComment && !commentOverride &&
-            !isCssPropertyKnown(lastProp.name)) {
+        if (
+          inComment &&
+          !commentOverride &&
+          !isCssPropertyKnown(lastProp.name)
+        ) {
           lastProp.name = null;
           break;
         }
@@ -381,11 +412,16 @@ function parseDeclarationsInternal(isCssPropertyKnown, inputString,
       }
     } else if (token.tokenType === "comment") {
       if (parseComments && !lastProp.name && !lastProp.value) {
-        const commentText = inputString.substring(token.startOffset + 2,
-                                                token.endOffset - 2);
-        const newDecls = parseCommentDeclarations(isCssPropertyKnown, commentText,
-                                                token.startOffset,
-                                                token.endOffset);
+        const commentText = inputString.substring(
+          token.startOffset + 2,
+          token.endOffset - 2
+        );
+        const newDecls = parseCommentDeclarations(
+          isCssPropertyKnown,
+          commentText,
+          token.startOffset,
+          token.endOffset
+        );
 
         // Insert the new declarations just before the final element.
         const lastDecl = declarations.pop();
@@ -479,20 +515,34 @@ function parseDeclarationsInternal(isCssPropertyKnown, inputString,
  *         on the object, which will hold the offsets of the start
  *         and end of the enclosing comment.
  */
-function parseDeclarations(isCssPropertyKnown, inputString,
-                           parseComments = false) {
-  return parseDeclarationsInternal(isCssPropertyKnown, inputString,
-                                   parseComments, false, false);
+function parseDeclarations(
+  isCssPropertyKnown,
+  inputString,
+  parseComments = false
+) {
+  return parseDeclarationsInternal(
+    isCssPropertyKnown,
+    inputString,
+    parseComments,
+    false,
+    false
+  );
 }
 
 /**
  * Like @see parseDeclarations, but removes properties that do not
  * have a name.
  */
-function parseNamedDeclarations(isCssPropertyKnown, inputString,
-                                parseComments = false) {
-  return parseDeclarations(isCssPropertyKnown, inputString, parseComments)
-         .filter(item => !!item.name);
+function parseNamedDeclarations(
+  isCssPropertyKnown,
+  inputString,
+  parseComments = false
+) {
+  return parseDeclarations(
+    isCssPropertyKnown,
+    inputString,
+    parseComments
+  ).filter(item => !!item.name);
 }
 
 /**
@@ -612,8 +662,10 @@ function parsePseudoClassesAndAttributes(value) {
  * @return {Object} an object with 'value' and 'priority' properties.
  */
 function parseSingleValue(isCssPropertyKnown, value) {
-  const declaration = parseDeclarations(isCssPropertyKnown,
-                                      "a: " + value + ";")[0];
+  const declaration = parseDeclarations(
+    isCssPropertyKnown,
+    "a: " + value + ";"
+  )[0];
   return {
     value: declaration ? declaration.value : "",
     priority: declaration ? declaration.priority : "",
@@ -634,7 +686,7 @@ function getAngleValueInDegrees(angleValue, angleUnit) {
     case CSS_ANGLEUNIT.grad:
       return angleValue * 0.9;
     case CSS_ANGLEUNIT.rad:
-      return angleValue * 180 / Math.PI;
+      return (angleValue * 180) / Math.PI;
     case CSS_ANGLEUNIT.turn:
       return angleValue * 360;
     default:

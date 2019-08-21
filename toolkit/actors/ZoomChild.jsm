@@ -6,7 +6,9 @@
 
 var EXPORTED_SYMBOLS = ["ZoomChild"];
 
-const {ActorChild} = ChromeUtils.import("resource://gre/modules/ActorChild.jsm");
+const { ActorChild } = ChromeUtils.import(
+  "resource://gre/modules/ActorChild.jsm"
+);
 
 class ZoomChild extends ActorChild {
   constructor(dispatcher) {

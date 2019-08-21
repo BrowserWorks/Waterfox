@@ -53,8 +53,10 @@ async function recordReflows(testPromise, win = window) {
       // driver ticking. These are fine.
     },
 
-    QueryInterface: ChromeUtils.generateQI([Ci.nsIReflowObserver,
-                                            Ci.nsISupportsWeakReference]),
+    QueryInterface: ChromeUtils.generateQI([
+      Ci.nsIReflowObserver,
+      Ci.nsISupportsWeakReference,
+    ]),
   };
 
   let docShell = win.docShell;
@@ -125,23 +127,30 @@ async function recordReflows(testPromise, win = window) {
  */
 function reportUnexpectedReflows(reflows, expectedReflows = []) {
   let knownReflows = expectedReflows.map(r => {
-    return {stack: r.stack, path: r.stack.join("|"),
-            count: 0, maxCount: r.maxCount || 1,
-            actualStacks: new Map()};
+    return {
+      stack: r.stack,
+      path: r.stack.join("|"),
+      count: 0,
+      maxCount: r.maxCount || 1,
+      actualStacks: new Map(),
+    };
   });
   let unexpectedReflows = new Map();
 
   if (knownReflows.some(r => r.path.includes("*"))) {
-    Assert.ok(false,
-              "Do not include async frames in the stack, as " +
-              "that feature is not available on all trees.");
+    Assert.ok(
+      false,
+      "Do not include async frames in the stack, as " +
+        "that feature is not available on all trees."
+    );
   }
 
   for (let stack of reflows) {
-    let path =
-      stack.split("\n").slice(1) // the first frame which is our test code.
-           .map(line => line.replace(/:\d+:\d+$/, "")) // strip line numbers.
-           .join("|");
+    let path = stack
+      .split("\n")
+      .slice(1) // the first frame which is our test code.
+      .map(line => line.replace(/:\d+:\d+$/, "")) // strip line numbers.
+      .join("|");
 
     // Stack trace is empty. Reflow was triggered by native code, which
     // we ignore.
@@ -152,7 +161,11 @@ function reportUnexpectedReflows(reflows, expectedReflows = []) {
     // Functions from EventUtils.js calculate coordinates and
     // dimensions, causing us to reflow. That's the test
     // harness and we don't care about that, so we'll filter that out.
-    if (/^(synthesize|send|createDragEventObject).*?@chrome:\/\/mochikit.*?EventUtils\.js/.test(path)) {
+    if (
+      /^(synthesize|send|createDragEventObject).*?@chrome:\/\/mochikit.*?EventUtils\.js/.test(
+        path
+      )
+    ) {
       continue;
     }
 
@@ -167,38 +180,58 @@ function reportUnexpectedReflows(reflows, expectedReflows = []) {
   }
 
   let formatStack = stack =>
-    stack.split("\n").slice(1).map(frame => "  " + frame).join("\n");
+    stack
+      .split("\n")
+      .slice(1)
+      .map(frame => "  " + frame)
+      .join("\n");
   for (let reflow of knownReflows) {
     let firstFrame = reflow.stack[0];
     if (!reflow.count) {
-      Assert.ok(false,
-                `Unused expected reflow at ${firstFrame}:\nStack:\n` +
-                reflow.stack.map(frame => "  " + frame).join("\n") + "\n" +
-                "This is probably a good thing - just remove it from the whitelist.");
+      Assert.ok(
+        false,
+        `Unused expected reflow at ${firstFrame}:\nStack:\n` +
+          reflow.stack.map(frame => "  " + frame).join("\n") +
+          "\n" +
+          "This is probably a good thing - just remove it from the whitelist."
+      );
     } else {
       if (reflow.count > reflow.maxCount) {
-        Assert.ok(false,
-                  `reflow at ${firstFrame} was encountered ${reflow.count} times,\n` +
-                  `it was expected to happen up to ${reflow.maxCount} times.`);
+        Assert.ok(
+          false,
+          `reflow at ${firstFrame} was encountered ${reflow.count} times,\n` +
+            `it was expected to happen up to ${reflow.maxCount} times.`
+        );
       } else {
-        todo(false, `known reflow at ${firstFrame} was encountered ${reflow.count} times`);
+        todo(
+          false,
+          `known reflow at ${firstFrame} was encountered ${reflow.count} times`
+        );
       }
       for (let [stack, count] of reflow.actualStacks) {
-        info("Full stack" + (count > 1 ? ` (hit ${count} times)` : "") + ":\n" +
-             formatStack(stack));
+        info(
+          "Full stack" +
+            (count > 1 ? ` (hit ${count} times)` : "") +
+            ":\n" +
+            formatStack(stack)
+        );
       }
     }
   }
 
   for (let [stack, count] of unexpectedReflows) {
     let location = stack.split("\n")[1].replace(/:\d+:\d+$/, "");
-    Assert.ok(false,
-              `unexpected reflow at ${location} hit ${count} times\n` +
-              "Stack:\n" +
-              formatStack(stack));
+    Assert.ok(
+      false,
+      `unexpected reflow at ${location} hit ${count} times\n` +
+        "Stack:\n" +
+        formatStack(stack)
+    );
   }
-  Assert.ok(!unexpectedReflows.size,
-            unexpectedReflows.size + " unexpected reflows");
+  Assert.ok(
+    !unexpectedReflows.size,
+    unexpectedReflows.size + " unexpected reflows"
+  );
 }
 
 async function ensureNoPreloadedBrowser(win = window) {
@@ -213,8 +246,9 @@ async function ensureNoPreloadedBrowser(win = window) {
     set: [["browser.newtab.preload", false]],
   });
 
-  let aboutNewTabService = Cc["@mozilla.org/browser/aboutnewtab-service;1"]
-                             .getService(Ci.nsIAboutNewTabService);
+  let aboutNewTabService = Cc[
+    "@mozilla.org/browser/aboutnewtab-service;1"
+  ].getService(Ci.nsIAboutNewTabService);
   aboutNewTabService.newTabURL = "about:blank";
 
   registerCleanupFunction(() => {
@@ -233,7 +267,10 @@ async function ensureNoPreloadedBrowser(win = window) {
  */
 function forceImmediateToolbarOverflowHandling(win) {
   let overflowableToolbar = win.document.getElementById("nav-bar").overflowable;
-  if (overflowableToolbar._lazyResizeHandler && overflowableToolbar._lazyResizeHandler.isArmed) {
+  if (
+    overflowableToolbar._lazyResizeHandler &&
+    overflowableToolbar._lazyResizeHandler.isArmed
+  ) {
     overflowableToolbar._lazyResizeHandler.disarm();
     // Ensure the root frame is dirty before resize so that, if we're
     // in the middle of a reflow test, we record the reflows deterministically.
@@ -257,13 +294,21 @@ async function ensureFocusedUrlbar() {
   // The switchingtabs attribute prevents the historydropmarker opacity
   // transition, so if we expect a transitionend event when this attribute
   // is set, we wait forever. (it's removed off a MozAfterPaint event listener)
-  await BrowserTestUtils.waitForCondition(() =>
-    !gURLBar.hasAttribute("switchingtabs"));
+  await BrowserTestUtils.waitForCondition(
+    () => !gURLBar.hasAttribute("switchingtabs")
+  );
 
-  let dropmarker = document.getAnonymousElementByAttribute(gURLBar.textbox, "anonid",
-                                                           "historydropmarker");
-  let opacityPromise = BrowserTestUtils.waitForEvent(dropmarker, "transitionend",
-                                                     false, e => e.propertyName === "opacity");
+  let dropmarker = document.getAnonymousElementByAttribute(
+    gURLBar.textbox,
+    "anonid",
+    "historydropmarker"
+  );
+  let opacityPromise = BrowserTestUtils.waitForEvent(
+    dropmarker,
+    "transitionend",
+    false,
+    e => e.propertyName === "opacity"
+  );
   gURLBar.focus();
   await opacityPromise;
 }
@@ -278,20 +323,27 @@ async function ensureFocusedUrlbar() {
  */
 function computeMaxTabCount() {
   let currentTabCount = gBrowser.tabs.length;
-  let newTabButton =
-    document.getAnonymousElementByAttribute(gBrowser.tabContainer,
-                                            "anonid", "tabs-newtab-button");
+  let newTabButton = document.getAnonymousElementByAttribute(
+    gBrowser.tabContainer,
+    "anonid",
+    "tabs-newtab-button"
+  );
   let newTabRect = newTabButton.getBoundingClientRect();
   let tabStripRect = gBrowser.tabContainer.arrowScrollbox.getBoundingClientRect();
   let availableTabStripWidth = tabStripRect.width - newTabRect.width;
 
-  let tabMinWidth =
-    parseInt(getComputedStyle(gBrowser.selectedTab, null).minWidth, 10);
+  let tabMinWidth = parseInt(
+    getComputedStyle(gBrowser.selectedTab, null).minWidth,
+    10
+  );
 
-  let maxTabCount = Math.floor(availableTabStripWidth / tabMinWidth) - currentTabCount;
-  Assert.ok(maxTabCount > 0,
-            "Tabstrip needs to be wide enough to accomodate at least 1 more tab " +
-            "without overflowing.");
+  let maxTabCount =
+    Math.floor(availableTabStripWidth / tabMinWidth) - currentTabCount;
+  Assert.ok(
+    maxTabCount > 0,
+    "Tabstrip needs to be wide enough to accomodate at least 1 more tab " +
+      "without overflowing."
+  );
   return maxTabCount;
 }
 
@@ -358,7 +410,6 @@ async function addDummyHistoryEntries(searchStr = "") {
   });
 }
 
-
 /**
  * Async utility function to capture a screenshot of each painted frame.
  *
@@ -371,10 +422,12 @@ async function addDummyHistoryEntries(searchStr = "") {
  * @return An array of screenshots
  */
 async function recordFrames(testPromise, win = window) {
-  let canvas = win.document.createElementNS("http://www.w3.org/1999/xhtml",
-                                            "canvas");
+  let canvas = win.document.createElementNS(
+    "http://www.w3.org/1999/xhtml",
+    "canvas"
+  );
   canvas.mozOpaque = true;
-  let ctx = canvas.getContext("2d", {alpha: false, willReadFrequently: true});
+  let ctx = canvas.getContext("2d", { alpha: false, willReadFrequently: true });
 
   let frames = [];
 
@@ -382,10 +435,18 @@ async function recordFrames(testPromise, win = window) {
     let width, height;
     canvas.width = width = win.innerWidth;
     canvas.height = height = win.innerHeight;
-    ctx.drawWindow(win, 0, 0, width, height, "white",
-                   ctx.DRAWWINDOW_DO_NOT_FLUSH | ctx.DRAWWINDOW_DRAW_VIEW |
-                   ctx.DRAWWINDOW_ASYNC_DECODE_IMAGES |
-                   ctx.DRAWWINDOW_USE_WIDGET_LAYERS);
+    ctx.drawWindow(
+      win,
+      0,
+      0,
+      width,
+      height,
+      "white",
+      ctx.DRAWWINDOW_DO_NOT_FLUSH |
+        ctx.DRAWWINDOW_DRAW_VIEW |
+        ctx.DRAWWINDOW_ASYNC_DECODE_IMAGES |
+        ctx.DRAWWINDOW_USE_WIDGET_LAYERS
+    );
     let data = Cu.cloneInto(ctx.getImageData(0, 0, width, height).data, {});
     if (frames.length) {
       // Compare this frame with the previous one to avoid storing duplicate
@@ -404,7 +465,7 @@ async function recordFrames(testPromise, win = window) {
         }
       }
     }
-    frames.push({data, width, height});
+    frames.push({ data, width, height });
   };
   win.addEventListener("MozAfterPaint", afterPaintListener);
 
@@ -432,23 +493,29 @@ function compareFrames(frame, previousFrame) {
   const M = Math;
 
   function expandRect(x, y, rect) {
-    if (rect.x2 < x)
+    if (rect.x2 < x) {
       rect.x2 = x;
-    else if (rect.x1 > x)
+    } else if (rect.x1 > x) {
       rect.x1 = x;
-    if (rect.y2 < y)
+    }
+    if (rect.y2 < y) {
       rect.y2 = y;
+    }
   }
 
   function isInRect(x, y, rect) {
-    return (rect.y2 == y || rect.y2 == y - 1) && rect.x1 - 1 <= x && x <= rect.x2 + 1;
+    return (
+      (rect.y2 == y || rect.y2 == y - 1) && rect.x1 - 1 <= x && x <= rect.x2 + 1
+    );
   }
 
-  if (frame.height != previousFrame.height ||
-      frame.width != previousFrame.width) {
+  if (
+    frame.height != previousFrame.height ||
+    frame.width != previousFrame.width
+  ) {
     // If the frames have different sizes, assume the whole window has
     // been repainted when the window was resized.
-    return [{x1: 0, x2: frame.width, y1: 0, y2: frame.height}];
+    return [{ x1: 0, x2: frame.width, y1: 0, y2: frame.height }];
   }
 
   let l = frame.data.length;
@@ -456,7 +523,7 @@ function compareFrames(frame, previousFrame) {
   let rects = [];
   for (let i = 0; i < l; i += 4) {
     let x = (i / 4) % frame.width;
-    let y = M.floor((i / 4) / frame.width);
+    let y = M.floor(i / 4 / frame.width);
     for (let j = 0; j < 4; ++j) {
       let index = i + j;
 
@@ -469,8 +536,9 @@ function compareFrames(frame, previousFrame) {
             break;
           }
         }
-        if (!found)
-          rects.unshift({x1: x, x2: x, y1: y, y2: y});
+        if (!found) {
+          rects.unshift({ x1: x, x2: x, y1: y, y2: y });
+        }
 
         different.push(i);
         break;
@@ -483,9 +551,11 @@ function compareFrames(frame, previousFrame) {
   // (less than kMaxEmptyPixels away).
   // This is needed to avoid having a rect for each letter when a label moves.
   let areRectsContiguous = function(r1, r2) {
-    return r1.y2 >= r2.y1 - 1 - kMaxEmptyPixels &&
-           r2.x1 - 1 - kMaxEmptyPixels <= r1.x2 &&
-           r2.x2 >= r1.x1 - 1 - kMaxEmptyPixels;
+    return (
+      r1.y2 >= r2.y1 - 1 - kMaxEmptyPixels &&
+      r2.x1 - 1 - kMaxEmptyPixels <= r1.x2 &&
+      r2.x2 >= r1.x1 - 1 - kMaxEmptyPixels
+    );
   };
   let hasMergedRects;
   do {
@@ -516,14 +586,18 @@ function compareFrames(frame, previousFrame) {
   return rects;
 }
 
-function dumpFrame({data, width, height}) {
-  let canvas = document.createElementNS("http://www.w3.org/1999/xhtml", "canvas");
+function dumpFrame({ data, width, height }) {
+  let canvas = document.createElementNS(
+    "http://www.w3.org/1999/xhtml",
+    "canvas"
+  );
   canvas.mozOpaque = true;
   canvas.width = width;
   canvas.height = height;
 
-  canvas.getContext("2d", {alpha: false, willReadFrequently: true})
-        .putImageData(new ImageData(data, width, height), 0, 0);
+  canvas
+    .getContext("2d", { alpha: false, willReadFrequently: true })
+    .putImageData(new ImageData(data, width, height), 0, 0);
 
   info(canvas.toDataURL());
 }
@@ -559,7 +633,8 @@ function reportUnexpectedFlicker(frames, expectations) {
 
   let unexpectedRects = 0;
   for (let i = 1; i < frames.length; ++i) {
-    let frame = frames[i], previousFrame = frames[i - 1];
+    let frame = frames[i],
+      previousFrame = frames[i - 1];
     let rects = compareFrames(frame, previousFrame);
 
     if (expectations.filter) {
@@ -568,7 +643,7 @@ function reportUnexpectedFlicker(frames, expectations) {
 
     rects = rects.filter(rect => {
       let rectText = `${rect.toSource()}, window width: ${frame.width}`;
-      for (let e of (expectations.exceptions || [])) {
+      for (let e of expectations.exceptions || []) {
         if (e.condition(rect)) {
           todo(false, e.name + ", " + rectText);
           return false;
@@ -579,8 +654,9 @@ function reportUnexpectedFlicker(frames, expectations) {
       return true;
     });
 
-    if (!rects.length)
+    if (!rects.length) {
       continue;
+    }
 
     // Before dumping a frame with unexpected differences for the first time,
     // ensure at least one previous frame has been logged so that it's possible
@@ -653,10 +729,12 @@ async function withPerfObserver(testFn, exceptions = {}, win = window) {
  *        The array of expected reflow stacks when the panel is subsequently
  *        opened, if you're testing opening the panel twice.
  */
-async function runUrlbarTest(useAwesomebar,
-                             keyed,
-                             expectedReflowsFirstOpen,
-                             expectedReflowsSecondOpen = null) {
+async function runUrlbarTest(
+  useAwesomebar,
+  keyed,
+  expectedReflowsFirstOpen,
+  expectedReflowsSecondOpen = null
+) {
   const SEARCH_TERM = keyed ? "" : "urlbar-reflows-" + Date.now();
   await addDummyHistoryEntries(SEARCH_TERM);
 
@@ -677,7 +755,7 @@ async function runUrlbarTest(useAwesomebar,
       // mechanism since invalidations and result additions to the
       // URL bar occur without firing JS events (which is how we
       // normally know to dirty the frame tree).
-      popup.invalidate = (reason) => {
+      popup.invalidate = reason => {
         dirtyFrame(win);
         oldInvalidate(reason);
       };
@@ -702,12 +780,12 @@ async function runUrlbarTest(useAwesomebar,
       // mechanism since invalidations and result additions to the
       // URL bar occur without firing JS events (which is how we
       // normally know to dirty the frame tree).
-      popup.onQueryResults = (context) => {
+      popup.onQueryResults = context => {
         dirtyFrame(win);
         oldOnQueryResults(context);
       };
 
-      popup.onQueryFinished = (context) => {
+      popup.onQueryFinished = context => {
         dirtyFrame(win);
         oldOnQueryFinished(context);
       };
@@ -720,7 +798,9 @@ async function runUrlbarTest(useAwesomebar,
       // idle callback is called. The timeout seems to be required in
       // automation - presumably because the machines can be pretty busy
       // especially if it's GC'ing from previous tests.
-      await new Promise(resolve => win.requestIdleCallback(resolve, { timeout: 1000 }));
+      await new Promise(resolve =>
+        win.requestIdleCallback(resolve, { timeout: 1000 })
+      );
     };
 
     if (keyed) {
@@ -745,32 +825,52 @@ async function runUrlbarTest(useAwesomebar,
     await UrlbarTestUtils.promisePopupClose(win);
   };
 
-  let dropmarkerRect = win.document.getAnonymousElementByAttribute(URLBar.textbox,
-    "anonid", "historydropmarker").getBoundingClientRect();
-  let textBoxRect = win.document.getAnonymousElementByAttribute(URLBar.textbox,
-    "anonid", "moz-input-box").getBoundingClientRect();
+  let dropmarkerRect = win.document
+    .getAnonymousElementByAttribute(
+      URLBar.textbox,
+      "anonid",
+      "historydropmarker"
+    )
+    .getBoundingClientRect();
+  let textBoxRect = win.document
+    .getAnonymousElementByAttribute(URLBar.textbox, "anonid", "moz-input-box")
+    .getBoundingClientRect();
   let expectedRects = {
-    filter: rects => rects.filter(r => !(
-      // We put text into the urlbar so expect its textbox to change.
-      (r.x1 >= textBoxRect.left && r.x2 <= textBoxRect.right &&
-       r.y1 >= textBoxRect.top && r.y2 <= textBoxRect.bottom) ||
-      // The dropmarker is displayed as active during some of the test.
-      // dropmarkerRect.left isn't always an integer, hence the - 1 and + 1
-      (r.x1 >= dropmarkerRect.left - 1 && r.x2 <= dropmarkerRect.right + 1 &&
-       r.y1 >= dropmarkerRect.top && r.y2 <= dropmarkerRect.bottom)
-      // XXX For some reason the awesomebar panel isn't in our screenshots,
-      // but that's where we actually expect many changes.
-    )),
+    filter: rects =>
+      rects.filter(
+        r =>
+          !// We put text into the urlbar so expect its textbox to change.
+          (
+            (r.x1 >= textBoxRect.left &&
+              r.x2 <= textBoxRect.right &&
+              r.y1 >= textBoxRect.top &&
+              r.y2 <= textBoxRect.bottom) ||
+            // The dropmarker is displayed as active during some of the test.
+            // dropmarkerRect.left isn't always an integer, hence the - 1 and + 1
+            (r.x1 >= dropmarkerRect.left - 1 &&
+              r.x2 <= dropmarkerRect.right + 1 &&
+              r.y1 >= dropmarkerRect.top &&
+              r.y2 <= dropmarkerRect.bottom)
+          )
+        // XXX For some reason the awesomebar panel isn't in our screenshots,
+        // but that's where we actually expect many changes.
+      ),
   };
 
   info(`First opening, useAwesomebar=${useAwesomebar}`);
-  await withPerfObserver(testFn, {expectedReflows: expectedReflowsFirstOpen,
-                                  frames: expectedRects}, win);
+  await withPerfObserver(
+    testFn,
+    { expectedReflows: expectedReflowsFirstOpen, frames: expectedRects },
+    win
+  );
 
   if (expectedReflowsSecondOpen) {
     info(`Second opening, useAwesomebar=${useAwesomebar}`);
-    await withPerfObserver(testFn, {expectedReflows: expectedReflowsSecondOpen,
-                                    frames: expectedRects}, win);
+    await withPerfObserver(
+      testFn,
+      { expectedReflows: expectedReflowsSecondOpen, frames: expectedRects },
+      win
+    );
   }
 
   await BrowserTestUtils.closeWindow(win);

@@ -1,4 +1,3 @@
-
 /* global SpecialPowers */
 
 var gTestURL = "";
@@ -6,13 +5,15 @@ var gTestURL = "";
 function addPermissions() {
   SpecialPowers.pushPermissions(
     [{ type: "browser", allow: true, context: document }],
-    addPreferences);
+    addPreferences
+  );
 }
 
 function addPreferences() {
   SpecialPowers.pushPrefEnv(
-    {"set": [["dom.mozBrowserFramesEnabled", true]]},
-    insertFrame);
+    { set: [["dom.mozBrowserFramesEnabled", true]] },
+    insertFrame
+  );
 }
 
 function insertFrame() {

@@ -21,10 +21,16 @@ const TESTS = [
       added: {
         cookies: {
           "http://test1.example.org": [
-            getCookieId("c1", "test1.example.org",
-                        "/browser/devtools/server/tests/browser/"),
-            getCookieId("c2", "test1.example.org",
-                        "/browser/devtools/server/tests/browser/"),
+            getCookieId(
+              "c1",
+              "test1.example.org",
+              "/browser/devtools/server/tests/browser/"
+            ),
+            getCookieId(
+              "c2",
+              "test1.example.org",
+              "/browser/devtools/server/tests/browser/"
+            ),
           ],
         },
         localStorage: {
@@ -47,8 +53,11 @@ const TESTS = [
       changed: {
         cookies: {
           "http://test1.example.org": [
-            getCookieId("c1", "test1.example.org",
-                        "/browser/devtools/server/tests/browser/"),
+            getCookieId(
+              "c1",
+              "test1.example.org",
+              "/browser/devtools/server/tests/browser/"
+            ),
           ],
         },
       },
@@ -76,8 +85,11 @@ const TESTS = [
       deleted: {
         cookies: {
           "http://test1.example.org": [
-            getCookieId("c2", "test1.example.org",
-                        "/browser/devtools/server/tests/browser/"),
+            getCookieId(
+              "c2",
+              "test1.example.org",
+              "/browser/devtools/server/tests/browser/"
+            ),
           ],
         },
         localStorage: {
@@ -117,8 +129,11 @@ const TESTS = [
       added: {
         cookies: {
           "http://test1.example.org": [
-            getCookieId("c3", "test1.example.org",
-                        "/browser/devtools/server/tests/browser/"),
+            getCookieId(
+              "c3",
+              "test1.example.org",
+              "/browser/devtools/server/tests/browser/"
+            ),
           ],
         },
         sessionStorage: {
@@ -133,8 +148,11 @@ const TESTS = [
       deleted: {
         cookies: {
           "http://test1.example.org": [
-            getCookieId("c1", "test1.example.org",
-                        "/browser/devtools/server/tests/browser/"),
+            getCookieId(
+              "c1",
+              "test1.example.org",
+              "/browser/devtools/server/tests/browser/"
+            ),
           ],
         },
         localStorage: {
@@ -169,8 +187,11 @@ const TESTS = [
       deleted: {
         cookies: {
           "http://test1.example.org": [
-            getCookieId("c3", "test1.example.org",
-                        "/browser/devtools/server/tests/browser/"),
+            getCookieId(
+              "c3",
+              "test1.example.org",
+              "/browser/devtools/server/tests/browser/"
+            ),
           ],
         },
       },
@@ -225,7 +246,7 @@ function markOutMatched(toBeEmptied, data) {
   }
 }
 
-function onStoresUpdate(expected, {added, changed, deleted}, index) {
+function onStoresUpdate(expected, { added, changed, deleted }, index) {
   info("inside stores update for index " + index);
 
   // Here, added, changed and deleted might be null even if they are required as
@@ -244,16 +265,18 @@ function onStoresUpdate(expected, {added, changed, deleted}, index) {
     markOutMatched(expected.deleted, deleted);
   }
 
-  if ((!expected.added || !Object.keys(expected.added).length) &&
-      (!expected.changed || !Object.keys(expected.changed).length) &&
-      (!expected.deleted || !Object.keys(expected.deleted).length)) {
+  if (
+    (!expected.added || !Object.keys(expected.added).length) &&
+    (!expected.changed || !Object.keys(expected.changed).length) &&
+    (!expected.deleted || !Object.keys(expected.deleted).length)
+  ) {
     info("Everything expected has been received for index " + index);
   } else {
     info("Still some updates pending for index " + index);
   }
 }
 
-async function runTest({action, expected}, front, index) {
+async function runTest({ action, expected }, front, index) {
   const update = front.once("stores-update");
 
   info("Running test at index " + index);
@@ -295,8 +318,11 @@ function storesCleared(data) {
     const hosts = data.sessionStorage || data.localStorage;
     info("Stores cleared required for session storage");
     is(hosts.length, 1, "number of hosts is 1");
-    is(hosts[0], "http://test1.example.org",
-       "host matches for " + Object.keys(data)[0]);
+    is(
+      hosts[0],
+      "http://test1.example.org",
+      "host matches for " + Object.keys(data)[0]
+    );
   } else {
     ok(false, "Stores cleared should only be for local and session storage");
   }
@@ -309,9 +335,13 @@ async function finishTests(target) {
 }
 
 async function addCookie(name, value) {
-  await ContentTask.spawn(gBrowser.selectedBrowser, [name, value], ([iName, iValue]) => {
-    content.wrappedJSObject.window.addCookie(iName, iValue);
-  });
+  await ContentTask.spawn(
+    gBrowser.selectedBrowser,
+    [name, value],
+    ([iName, iValue]) => {
+      content.wrappedJSObject.window.addCookie(iName, iValue);
+    }
+  );
 }
 
 async function removeCookie(name) {
@@ -321,9 +351,13 @@ async function removeCookie(name) {
 }
 
 async function localStorageSetItem(name, value) {
-  await ContentTask.spawn(gBrowser.selectedBrowser, [name, value], ([iName, iValue]) => {
-    content.window.localStorage.setItem(iName, iValue);
-  });
+  await ContentTask.spawn(
+    gBrowser.selectedBrowser,
+    [name, value],
+    ([iName, iValue]) => {
+      content.window.localStorage.setItem(iName, iValue);
+    }
+  );
 }
 
 async function localStorageRemoveItem(name) {
@@ -333,9 +367,13 @@ async function localStorageRemoveItem(name) {
 }
 
 async function sessionStorageSetItem(name, value) {
-  await ContentTask.spawn(gBrowser.selectedBrowser, [name, value], ([iName, iValue]) => {
-    content.window.sessionStorage.setItem(iName, iValue);
-  });
+  await ContentTask.spawn(
+    gBrowser.selectedBrowser,
+    [name, value],
+    ([iName, iValue]) => {
+      content.window.sessionStorage.setItem(iName, iValue);
+    }
+  );
 }
 
 async function sessionStorageRemoveItem(name) {

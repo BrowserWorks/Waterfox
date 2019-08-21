@@ -8,20 +8,20 @@
  * Check that stepping out of a function returns the right return value.
  */
 
-async function invokeAndPause({global, debuggerClient}, expression) {
+async function invokeAndPause({ global, debuggerClient }, expression) {
   return executeOnNextTickAndWaitForPause(
     () => Cu.evalInSandbox(expression, global),
     debuggerClient
   );
 }
 
-async function step({threadClient, debuggerClient}, cmd) {
+async function step({ threadClient, debuggerClient }, cmd) {
   return cmd(debuggerClient, threadClient);
 }
 
 function getPauseLocation(packet) {
-  const {line, column} = packet.frame.where;
-  return {line, column};
+  const { line, column } = packet.frame.where;
+  return { line, column };
 }
 
 function getFrameFinished(packet) {
@@ -37,7 +37,7 @@ async function steps(dbg, sequence) {
   return locations;
 }
 
-async function testFinish({threadClient, debuggerClient}) {
+async function testFinish({ threadClient, debuggerClient }) {
   await resume(threadClient);
   await close(debuggerClient);
 
@@ -54,12 +54,10 @@ async function testRet(dbg) {
 
   deepEqual(
     getPauseLocation(packet),
-    {line: 6, column: 0},
+    { line: 6, column: 0 },
     `completion location in doRet`
   );
-  deepEqual(
-    getFrameFinished(packet),
-    {"return": 2}, `completion value`);
+  deepEqual(getFrameFinished(packet), { return: 2 }, `completion value`);
 
   await resume(dbg.threadClient);
 
@@ -71,13 +69,13 @@ async function testRet(dbg) {
 
   deepEqual(
     getPauseLocation(packet),
-    {line: 15, column: 2},
+    { line: 15, column: 2 },
     `completion location in doThrow`
   );
 
   deepEqual(
     getFrameFinished(packet),
-    {"return": 2},
+    { return: 2 },
     `completion completion value`
   );
 
@@ -94,7 +92,7 @@ async function testThrow(dbg) {
 
   deepEqual(
     getPauseLocation(packet),
-    {line: 9, column: 8},
+    { line: 9, column: 8 },
     `completion location in doThrow`
   );
 
@@ -118,13 +116,13 @@ async function testThrow(dbg) {
   packet = await step(dbg, stepOut);
   deepEqual(
     getPauseLocation(packet),
-    {line: 24, column: 0},
+    { line: 23, column: 0 },
     `stepOut location in doThrow`
   );
 
   deepEqual(
     getFrameFinished(packet),
-    {return: {type: "undefined"}},
+    { return: { type: "undefined" } },
     `completion type`
   );
   await resume(dbg.threadClient);

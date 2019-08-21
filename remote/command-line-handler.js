@@ -6,11 +6,16 @@
 
 // Stopgap module until we can land bug 1536862 and remove this temporary file
 
-const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
-const {XPCOMUtils} = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
+const { XPCOMUtils } = ChromeUtils.import(
+  "resource://gre/modules/XPCOMUtils.jsm"
+);
 
-ChromeUtils.defineModuleGetter(this, "RemoteAgent",
-    "chrome://remote/content/RemoteAgent.jsm");
+ChromeUtils.defineModuleGetter(
+  this,
+  "RemoteAgent",
+  "chrome://remote/content/RemoteAgent.jsm"
+);
 
 const RemoteAgentFactory = {
   createInstance(outer, iid) {
@@ -29,9 +34,9 @@ const RemoteAgentFactory = {
 function RemoteAgentComponent() {}
 
 RemoteAgentComponent.prototype = {
-    classDescription: "Remote Agent",
-    classID: Components.ID("{8f685a9d-8181-46d6-a71d-869289099c6d}"),
-    contractID: "@mozilla.org/remote/agent",
+  classDescription: "Remote Agent",
+  classID: Components.ID("{8f685a9d-8181-46d6-a71d-869289099c6d}"),
+  contractID: "@mozilla.org/remote/agent",
     _xpcom_factory: RemoteAgentFactory,  /* eslint-disable-line */
 };
 

@@ -15,8 +15,9 @@ class ModalInput extends ReflectedFluentElement {
     }
 
     let modalInputTemplate = document.querySelector("#modal-input-template");
-    this.attachShadow({mode: "open"})
-        .appendChild(modalInputTemplate.content.cloneNode(true));
+    this.attachShadow({ mode: "open" }).appendChild(
+      modalInputTemplate.content.cloneNode(true)
+    );
 
     if (this.hasAttribute("value")) {
       this.value = this.getAttribute("value");
@@ -27,7 +28,9 @@ class ModalInput extends ReflectedFluentElement {
       unlockedValue.setAttribute("type", "password");
     }
 
-    this.shadowRoot.querySelector(".reveal-checkbox").addEventListener("click", this);
+    this.shadowRoot
+      .querySelector(".reveal-checkbox")
+      .addEventListener("click", this);
   }
 
   static get reflectedFluentIDs() {
@@ -39,8 +42,10 @@ class ModalInput extends ReflectedFluentElement {
   }
 
   handleSpecialCaseFluentString(attrName) {
-    if (attrName != "reveal-checkbox-hide" &&
-        attrName != "reveal-checkbox-show") {
+    if (
+      attrName != "reveal-checkbox-hide" &&
+      attrName != "reveal-checkbox-show"
+    ) {
       return false;
     }
 
@@ -84,8 +89,10 @@ class ModalInput extends ReflectedFluentElement {
   }
 
   handleEvent(event) {
-    if (event.type != "click" ||
-        !event.target.classList.contains("reveal-checkbox")) {
+    if (
+      event.type != "click" ||
+      !event.target.classList.contains("reveal-checkbox")
+    ) {
       return;
     }
 
@@ -103,8 +110,9 @@ class ModalInput extends ReflectedFluentElement {
   }
 
   get value() {
-    return this.hasAttribute("editing") ? this.shadowRoot.querySelector(".unlocked-value").value.trim()
-                                        : this.getAttribute("value") || "";
+    return this.hasAttribute("editing")
+      ? this.shadowRoot.querySelector(".unlocked-value").value.trim()
+      : this.getAttribute("value") || "";
   }
 
   set value(val) {
@@ -123,8 +131,9 @@ class ModalInput extends ReflectedFluentElement {
 
   updateRevealCheckboxTitle() {
     let revealCheckbox = this.shadowRoot.querySelector(".reveal-checkbox");
-    let labelAttr = revealCheckbox.checked ? "reveal-checkbox-hide"
-                                           : "reveal-checkbox-show";
+    let labelAttr = revealCheckbox.checked
+      ? "reveal-checkbox-hide"
+      : "reveal-checkbox-show";
     revealCheckbox.setAttribute("aria-label", this.getAttribute(labelAttr));
     revealCheckbox.setAttribute("title", this.getAttribute(labelAttr));
   }

@@ -32,15 +32,33 @@
  *   Date when the study was ended.
  */
 
-const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
+const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
-ChromeUtils.defineModuleGetter(this, "IndexedDB", "resource://gre/modules/IndexedDB.jsm");
-ChromeUtils.defineModuleGetter(this, "AddonManager", "resource://gre/modules/AddonManager.jsm");
 ChromeUtils.defineModuleGetter(
-  this, "CleanupManager", "resource://normandy/lib/CleanupManager.jsm"
+  this,
+  "IndexedDB",
+  "resource://gre/modules/IndexedDB.jsm"
 );
-ChromeUtils.defineModuleGetter(this, "LogManager", "resource://normandy/lib/LogManager.jsm");
-ChromeUtils.defineModuleGetter(this, "TelemetryEvents", "resource://normandy/lib/TelemetryEvents.jsm");
+ChromeUtils.defineModuleGetter(
+  this,
+  "AddonManager",
+  "resource://gre/modules/AddonManager.jsm"
+);
+ChromeUtils.defineModuleGetter(
+  this,
+  "CleanupManager",
+  "resource://normandy/lib/CleanupManager.jsm"
+);
+ChromeUtils.defineModuleGetter(
+  this,
+  "LogManager",
+  "resource://normandy/lib/LogManager.jsm"
+);
+ChromeUtils.defineModuleGetter(
+  this,
+  "TelemetryEvents",
+  "resource://normandy/lib/TelemetryEvents.jsm"
+);
 
 var EXPORTED_SYMBOLS = ["AddonStudies"];
 
@@ -149,7 +167,9 @@ var AddonStudies = {
    */
   async onUninstalled(addon) {
     const activeStudies = (await this.getAll()).filter(study => study.active);
-    const matchingStudy = activeStudies.find(study => study.addonId === addon.id);
+    const matchingStudy = activeStudies.find(
+      study => study.addonId === addon.id
+    );
     if (matchingStudy) {
       await this.markAsEnded(matchingStudy, "uninstalled");
     }

@@ -4,7 +4,10 @@
 
 "use strict";
 
-const { createFactory, PureComponent } = require("devtools/client/shared/vendor/react");
+const {
+  createFactory,
+  PureComponent,
+} = require("devtools/client/shared/vendor/react");
 const dom = require("devtools/client/shared/vendor/react-dom-factories");
 const PropTypes = require("devtools/client/shared/vendor/react-prop-types");
 const { getStr } = require("devtools/client/inspector/layout/utils/l10n");
@@ -37,15 +40,16 @@ class GridList extends PureComponent {
       setSelectedNode,
     } = this.props;
 
-    return (
-      dom.div({ className: "grid-container" },
-        dom.span({}, getStr("layout.overlayGrid")),
-        dom.ul(
-          {
-            id: "grid-list",
-            className: "devtools-monospace",
-          },
-          grids.map(grid => GridItem({
+    return dom.div(
+      { className: "grid-container" },
+      dom.span({}, getStr("layout.overlayGrid")),
+      dom.ul(
+        {
+          id: "grid-list",
+          className: "devtools-monospace",
+        },
+        grids.map(grid =>
+          GridItem({
             key: grid.id,
             getSwatchColorPickerTooltip,
             grid,
@@ -54,7 +58,7 @@ class GridList extends PureComponent {
             onShowBoxModelHighlighterForNode,
             onToggleGridHighlighter,
             setSelectedNode,
-          }))
+          })
         )
       )
     );

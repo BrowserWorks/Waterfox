@@ -11,12 +11,14 @@ function debug(aStr) {
   }
 }
 
-var EXPORTED_SYMBOLS = [
-  "DateTimePickerParent",
-];
+var EXPORTED_SYMBOLS = ["DateTimePickerParent"];
 
-const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
-ChromeUtils.defineModuleGetter(this, "DateTimePickerPanel", "resource://gre/modules/DateTimePickerPanel.jsm");
+const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
+ChromeUtils.defineModuleGetter(
+  this,
+  "DateTimePickerPanel",
+  "resource://gre/modules/DateTimePickerPanel.jsm"
+);
 
 /*
  * DateTimePickerParent receives message from content side (input box) and
@@ -101,7 +103,9 @@ var DateTimePickerParent = {
     let browser = this.weakBrowser ? this.weakBrowser.get() : null;
     if (browser) {
       browser.messageManager.sendAsyncMessage(
-        "FormDateTime:PickerValueChanged", aEvent.detail);
+        "FormDateTime:PickerValueChanged",
+        aEvent.detail
+      );
     }
   },
 
@@ -122,8 +126,10 @@ var DateTimePickerParent = {
 
     let window = aBrowser.ownerGlobal;
     let tabbrowser = window.gBrowser;
-    if (Services.focus.activeWindow != window ||
-        tabbrowser.selectedBrowser != aBrowser) {
+    if (
+      Services.focus.activeWindow != window ||
+      tabbrowser.selectedBrowser != aBrowser
+    ) {
       // We were sent a message from a window or tab that went into the
       // background, so we'll ignore it for now.
       return;

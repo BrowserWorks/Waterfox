@@ -1,6 +1,6 @@
 // This file tests channel event sinks (bug 315598 et al)
 
-const {HttpServer} = ChromeUtils.import("resource://testing-common/httpd.js");
+const { HttpServer } = ChromeUtils.import("resource://testing-common/httpd.js");
 
 XPCOMUtils.defineLazyGetter(this, "URL", function() {
   return "http://localhost:" + httpserv.identity.primaryPort;
@@ -18,34 +18,44 @@ const categoryName = "net-channel-event-sinks";
  */
 var eventsink = {
   QueryInterface: function eventsink_qi(iid) {
-    if (iid.equals(Ci.nsISupports) ||
-        iid.equals(Ci.nsIFactory) ||
-        iid.equals(Ci.nsIChannelEventSink))
+    if (
+      iid.equals(Ci.nsISupports) ||
+      iid.equals(Ci.nsIFactory) ||
+      iid.equals(Ci.nsIChannelEventSink)
+    ) {
       return this;
+    }
     throw Cr.NS_ERROR_NO_INTERFACE;
   },
   createInstance: function eventsink_ci(outer, iid) {
-    if (outer)
+    if (outer) {
       throw Cr.NS_ERROR_NO_AGGREGATION;
+    }
     return this.QueryInterface(iid);
   },
   lockFactory: function eventsink_lockf(lock) {
     throw Cr.NS_ERROR_NOT_IMPLEMENTED;
   },
 
-  asyncOnChannelRedirect: function eventsink_onredir(oldChan, newChan, flags, callback) {
+  asyncOnChannelRedirect: function eventsink_onredir(
+    oldChan,
+    newChan,
+    flags,
+    callback
+  ) {
     // veto
     this.called = true;
     throw Cr.NS_BINDING_ABORTED;
   },
 
   getInterface: function eventsink_gi(iid) {
-    if (iid.equals(Ci.nsIChannelEventSink))
+    if (iid.equals(Ci.nsIChannelEventSink)) {
       return this;
+    }
     throw Cr.NS_ERROR_NO_INTERFACE;
   },
 
-  called: false
+  called: false,
 };
 
 var listener = {
@@ -59,10 +69,18 @@ var listener = {
 
       // The current URI must be the original URI, as all redirects have been
       // cancelled
-      if (!(request instanceof Ci.nsIChannel) ||
-          !request.URI.equals(request.originalURI))
-        do_throw("Wrong URI: Is <" + request.URI.spec + ">, should be <" +
-                 request.originalURI.spec + ">");
+      if (
+        !(request instanceof Ci.nsIChannel) ||
+        !request.URI.equals(request.originalURI)
+      ) {
+        do_throw(
+          "Wrong URI: Is <" +
+            request.URI.spec +
+            ">, should be <" +
+            request.originalURI.spec +
+            ">"
+        );
+      }
 
       if (request instanceof Ci.nsIHttpChannel) {
         // As we expect a blocked redirect, verify that we have a 3xx status
@@ -92,11 +110,11 @@ var listener = {
     do_test_finished();
   },
 
-  _iteration: 1
+  _iteration: 1,
 };
 
 function makeChan(url) {
-  return NetUtil.newChannel({uri: url, loadUsingSystemPrincipal: true});
+  return NetUtil.newChannel({ uri: url, loadUsingSystemPrincipal: true });
 }
 
 var httpserv = null;
@@ -107,8 +125,12 @@ function run_test() {
   httpserv.registerPathHandler("/redirectfile", redirectfile);
   httpserv.start(-1);
 
-  Components.manager.nsIComponentRegistrar.registerFactory(sinkCID,
-    "Unit test Event sink", sinkContract, eventsink);
+  Components.manager.nsIComponentRegistrar.registerFactory(
+    sinkCID,
+    "Unit test Event sink",
+    sinkContract,
+    eventsink
+  );
 
   // Step 1: Set the callbacks on the listener itself
   var chan = makeChan(URL + "/redirect");
@@ -122,19 +144,28 @@ function run_test() {
 function run_test_continued() {
   eventsink.called = false;
 
-  var catMan = Cc["@mozilla.org/categorymanager;1"]
-                 .getService(Ci.nsICategoryManager);
+  var catMan = Cc["@mozilla.org/categorymanager;1"].getService(
+    Ci.nsICategoryManager
+  );
 
   var chan;
   if (listener._iteration == 1) {
     // Step 2: Category entry
-    catMan.nsICategoryManager.addCategoryEntry(categoryName, "unit test",
-                                               sinkContract, false, true);
-    chan = makeChan(URL + "/redirect")
+    catMan.nsICategoryManager.addCategoryEntry(
+      categoryName,
+      "unit test",
+      sinkContract,
+      false,
+      true
+    );
+    chan = makeChan(URL + "/redirect");
   } else {
     // Step 3: Global contract id
-    catMan.nsICategoryManager.deleteCategoryEntry(categoryName, "unit test",
-                                                  false);
+    catMan.nsICategoryManager.deleteCategoryEntry(
+      categoryName,
+      "unit test",
+      false
+    );
     listener.expectSinkCall = false;
     chan = makeChan(URL + "/redirectfile");
   }
@@ -150,9 +181,11 @@ function run_test_continued() {
 // /redirect
 function redirect(metadata, response) {
   response.setStatusLine(metadata.httpVersion, 301, "Moved Permanently");
-  response.setHeader("Location",
-                     "http://localhost:" + metadata.port + "/",
-                     false);
+  response.setHeader(
+    "Location",
+    "http://localhost:" + metadata.port + "/",
+    false
+  );
 
   var body = "Moved\n";
   response.bodyOutputStream.write(body, body.length);

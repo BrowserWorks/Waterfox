@@ -14,11 +14,13 @@ const TEST_URL = URL + "service-workers/status-codes.html";
 
 add_task(async function() {
   await new Promise(done => {
-    const options = { "set": [
-      // Accept workers from mochitest's http.
-      ["dom.serviceWorkers.enabled", true],
-      ["dom.serviceWorkers.testing.enabled", true],
-    ]};
+    const options = {
+      set: [
+        // Accept workers from mochitest's http.
+        ["dom.serviceWorkers.enabled", true],
+        ["dom.serviceWorkers.testing.enabled", true],
+      ],
+    };
     SpecialPowers.pushPrefEnv(options, done);
   });
 
@@ -27,10 +29,9 @@ add_task(async function() {
 
   const { document, store, windowRequire, connector } = monitor.panelWin;
   const Actions = windowRequire("devtools/client/netmonitor/src/actions/index");
-  const {
-    getDisplayedRequests,
-    getSortedRequests,
-  } = windowRequire("devtools/client/netmonitor/src/selectors/index");
+  const { getDisplayedRequests, getSortedRequests } = windowRequire(
+    "devtools/client/netmonitor/src/selectors/index"
+  );
 
   store.dispatch(Actions.batchEnable(false));
 
@@ -61,8 +62,11 @@ add_task(async function() {
   // Fetch stack-trace data from the backend and wait till
   // all packets are received.
   const requests = getSortedRequests(store.getState());
-  await Promise.all(requests.map(requestItem =>
-    connector.requestData(requestItem.id, "stackTrace")));
+  await Promise.all(
+    requests.map(requestItem =>
+      connector.requestData(requestItem.id, "stackTrace")
+    )
+  );
 
   const requestItems = document.querySelectorAll(".request-list-item");
   for (const requestItem of requestItems) {
@@ -90,12 +94,17 @@ add_task(async function() {
     const stackLen = stacktrace ? stacktrace.length : 0;
 
     ok(stacktrace, `Request #${index} has a stacktrace`);
-    ok(stackLen >= request.stackFunctions.length,
-      `Request #${index} has a stacktrace with enough (${stackLen}) items`);
+    ok(
+      stackLen >= request.stackFunctions.length,
+      `Request #${index} has a stacktrace with enough (${stackLen}) items`
+    );
 
     request.stackFunctions.forEach((functionName, j) => {
-      is(stacktrace[j].functionName, functionName,
-      `Request #${index} has the correct function at position #${j} on the stack`);
+      is(
+        stacktrace[j].functionName,
+        functionName,
+        `Request #${index} has the correct function at position #${j} on the stack`
+      );
     });
 
     index++;

@@ -1183,7 +1183,9 @@ mozilla::ipc::IPCResult BrowserParent::RecvPDocAccessibleConstructor(
     RefPtr<IAccessible> proxy(aDocCOMProxy.Get());
     doc->SetCOMInterface(proxy);
     doc->MaybeInitWindowEmulation();
-    doc->SendParentCOMProxy();
+    if (a11y::Accessible* outerDoc = doc->OuterDocOfRemoteBrowser()) {
+      doc->SendParentCOMProxy(outerDoc);
+    }
 #  endif
   }
 #endif

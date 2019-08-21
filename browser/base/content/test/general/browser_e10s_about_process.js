@@ -21,15 +21,15 @@ const MUSTREMOTE = {
 const CANPRIVILEGEDREMOTE = {
   id: "a04ffafe-6c63-4266-acae-0f4b093165aa",
   path: "test-canprivilegedremote",
-  flags: Ci.nsIAboutModule.URI_MUST_LOAD_IN_CHILD |
-         Ci.nsIAboutModule.URI_CAN_LOAD_IN_PRIVILEGED_CHILD,
+  flags:
+    Ci.nsIAboutModule.URI_MUST_LOAD_IN_CHILD |
+    Ci.nsIAboutModule.URI_CAN_LOAD_IN_PRIVILEGED_CHILD,
 };
 const MUSTEXTENSION = {
   id: "f7a1798f-965b-49e9-be83-ec6ee4d7d675",
   path: "test-mustextension",
   flags: Ci.nsIAboutModule.URI_MUST_LOAD_IN_EXTENSION_PROCESS,
 };
-
 
 const TEST_MODULES = [
   CHROME,
@@ -39,8 +39,7 @@ const TEST_MODULES = [
   MUSTEXTENSION,
 ];
 
-function AboutModule() {
-}
+function AboutModule() {}
 
 AboutModule.prototype = {
   newChannel(aURI, aLoadInfo) {
@@ -67,8 +66,9 @@ AboutModule.prototype = {
 
 var AboutModuleFactory = {
   createInstance(aOuter, aIID) {
-    if (aOuter)
+    if (aOuter) {
       throw Cr.NS_ERROR_NO_AGGREGATION;
+    }
     return new AboutModule().QueryInterface(aIID);
   },
 
@@ -82,9 +82,12 @@ var AboutModuleFactory = {
 add_task(async function init() {
   let registrar = Components.manager.QueryInterface(Ci.nsIComponentRegistrar);
   for (let module of TEST_MODULES) {
-    registrar.registerFactory(Components.ID(module.id), "",
-                              "@mozilla.org/network/protocol/about;1?what=" + module.path,
-                              AboutModuleFactory);
+    registrar.registerFactory(
+      Components.ID(module.id),
+      "",
+      "@mozilla.org/network/protocol/about;1?what=" + module.path,
+      AboutModuleFactory
+    );
   }
 });
 
@@ -95,42 +98,156 @@ registerCleanupFunction(() => {
   }
 });
 
-function test_url(url, chromeResult, webContentResult, privilegedContentResult, extensionProcessResult) {
-  is(E10SUtils.canLoadURIInRemoteType(url, /* fission */ false, CHROME_PROCESS),
-     chromeResult, "Check URL in chrome process.");
-  is(E10SUtils.canLoadURIInRemoteType(url, /* fission */ false, WEB_CONTENT_PROCESS),
-     webContentResult, "Check URL in web content process.");
-  is(E10SUtils.canLoadURIInRemoteType(url, /* fission */ false, PRIVILEGED_CONTENT_PROCESS),
-     privilegedContentResult, "Check URL in privileged content process.");
-  is(E10SUtils.canLoadURIInRemoteType(url, /* fission */ false, EXTENSION_PROCESS),
-     extensionProcessResult, "Check URL in extension process.");
+function test_url(
+  url,
+  chromeResult,
+  webContentResult,
+  privilegedContentResult,
+  extensionProcessResult
+) {
+  is(
+    E10SUtils.canLoadURIInRemoteType(url, /* fission */ false, CHROME_PROCESS),
+    chromeResult,
+    "Check URL in chrome process."
+  );
+  is(
+    E10SUtils.canLoadURIInRemoteType(
+      url,
+      /* fission */ false,
+      WEB_CONTENT_PROCESS
+    ),
+    webContentResult,
+    "Check URL in web content process."
+  );
+  is(
+    E10SUtils.canLoadURIInRemoteType(
+      url,
+      /* fission */ false,
+      PRIVILEGED_CONTENT_PROCESS
+    ),
+    privilegedContentResult,
+    "Check URL in privileged content process."
+  );
+  is(
+    E10SUtils.canLoadURIInRemoteType(
+      url,
+      /* fission */ false,
+      EXTENSION_PROCESS
+    ),
+    extensionProcessResult,
+    "Check URL in extension process."
+  );
 
-  is(E10SUtils.canLoadURIInRemoteType(url + "#foo", /* fission */ false, CHROME_PROCESS),
-     chromeResult, "Check URL with ref in chrome process.");
-  is(E10SUtils.canLoadURIInRemoteType(url + "#foo", /* fission */ false, WEB_CONTENT_PROCESS),
-     webContentResult, "Check URL with ref in web content process.");
-  is(E10SUtils.canLoadURIInRemoteType(url + "#foo", /* fission */ false, PRIVILEGED_CONTENT_PROCESS),
-     privilegedContentResult, "Check URL with ref in privileged content process.");
-  is(E10SUtils.canLoadURIInRemoteType(url + "#foo", /* fission */ false, EXTENSION_PROCESS),
-     extensionProcessResult, "Check URL with ref in extension process.");
+  is(
+    E10SUtils.canLoadURIInRemoteType(
+      url + "#foo",
+      /* fission */ false,
+      CHROME_PROCESS
+    ),
+    chromeResult,
+    "Check URL with ref in chrome process."
+  );
+  is(
+    E10SUtils.canLoadURIInRemoteType(
+      url + "#foo",
+      /* fission */ false,
+      WEB_CONTENT_PROCESS
+    ),
+    webContentResult,
+    "Check URL with ref in web content process."
+  );
+  is(
+    E10SUtils.canLoadURIInRemoteType(
+      url + "#foo",
+      /* fission */ false,
+      PRIVILEGED_CONTENT_PROCESS
+    ),
+    privilegedContentResult,
+    "Check URL with ref in privileged content process."
+  );
+  is(
+    E10SUtils.canLoadURIInRemoteType(
+      url + "#foo",
+      /* fission */ false,
+      EXTENSION_PROCESS
+    ),
+    extensionProcessResult,
+    "Check URL with ref in extension process."
+  );
 
-  is(E10SUtils.canLoadURIInRemoteType(url + "?foo", /* fission */ false, CHROME_PROCESS),
-     chromeResult, "Check URL with query in chrome process.");
-  is(E10SUtils.canLoadURIInRemoteType(url + "?foo", /* fission */ false, WEB_CONTENT_PROCESS),
-     webContentResult, "Check URL with query in web content process.");
-  is(E10SUtils.canLoadURIInRemoteType(url + "?foo", /* fission */ false, PRIVILEGED_CONTENT_PROCESS),
-     privilegedContentResult, "Check URL with query in privileged content process.");
-  is(E10SUtils.canLoadURIInRemoteType(url + "?foo", /* fission */ false, EXTENSION_PROCESS),
-     extensionProcessResult, "Check URL with query in extension process.");
+  is(
+    E10SUtils.canLoadURIInRemoteType(
+      url + "?foo",
+      /* fission */ false,
+      CHROME_PROCESS
+    ),
+    chromeResult,
+    "Check URL with query in chrome process."
+  );
+  is(
+    E10SUtils.canLoadURIInRemoteType(
+      url + "?foo",
+      /* fission */ false,
+      WEB_CONTENT_PROCESS
+    ),
+    webContentResult,
+    "Check URL with query in web content process."
+  );
+  is(
+    E10SUtils.canLoadURIInRemoteType(
+      url + "?foo",
+      /* fission */ false,
+      PRIVILEGED_CONTENT_PROCESS
+    ),
+    privilegedContentResult,
+    "Check URL with query in privileged content process."
+  );
+  is(
+    E10SUtils.canLoadURIInRemoteType(
+      url + "?foo",
+      /* fission */ false,
+      EXTENSION_PROCESS
+    ),
+    extensionProcessResult,
+    "Check URL with query in extension process."
+  );
 
-  is(E10SUtils.canLoadURIInRemoteType(url + "?foo#bar", /* fission */ false, CHROME_PROCESS),
-     chromeResult, "Check URL with query and ref in chrome process.");
-  is(E10SUtils.canLoadURIInRemoteType(url + "?foo#bar", /* fission */ false, WEB_CONTENT_PROCESS),
-     webContentResult, "Check URL with query and ref in web content process.");
-  is(E10SUtils.canLoadURIInRemoteType(url + "?foo#bar", /* fission */ false, PRIVILEGED_CONTENT_PROCESS),
-     privilegedContentResult, "Check URL with query and ref in privileged content process.");
-  is(E10SUtils.canLoadURIInRemoteType(url + "?foo#bar", /* fission */ false, EXTENSION_PROCESS),
-     extensionProcessResult, "Check URL with query and ref in extension process.");
+  is(
+    E10SUtils.canLoadURIInRemoteType(
+      url + "?foo#bar",
+      /* fission */ false,
+      CHROME_PROCESS
+    ),
+    chromeResult,
+    "Check URL with query and ref in chrome process."
+  );
+  is(
+    E10SUtils.canLoadURIInRemoteType(
+      url + "?foo#bar",
+      /* fission */ false,
+      WEB_CONTENT_PROCESS
+    ),
+    webContentResult,
+    "Check URL with query and ref in web content process."
+  );
+  is(
+    E10SUtils.canLoadURIInRemoteType(
+      url + "?foo#bar",
+      /* fission */ false,
+      PRIVILEGED_CONTENT_PROCESS
+    ),
+    privilegedContentResult,
+    "Check URL with query and ref in privileged content process."
+  );
+  is(
+    E10SUtils.canLoadURIInRemoteType(
+      url + "?foo#bar",
+      /* fission */ false,
+      EXTENSION_PROCESS
+    ),
+    extensionProcessResult,
+    "Check URL with query and ref in extension process."
+  );
 }
 
 add_task(async function test_chrome() {
@@ -147,9 +264,7 @@ add_task(async function test_remote() {
 
 add_task(async function test_privileged_remote_true() {
   await SpecialPowers.pushPrefEnv({
-    set: [
-      ["browser.tabs.remote.separatePrivilegedContentProcess", true],
-    ],
+    set: [["browser.tabs.remote.separatePrivilegedContentProcess", true]],
   });
 
   // This shouldn't be taken literally. We will always use the privileged
@@ -160,9 +275,7 @@ add_task(async function test_privileged_remote_true() {
 
 add_task(async function test_privileged_remote_false() {
   await SpecialPowers.pushPrefEnv({
-    set: [
-      ["browser.tabs.remote.separatePrivilegedContentProcess", false],
-    ],
+    set: [["browser.tabs.remote.separatePrivilegedContentProcess", false]],
   });
 
   // This shouldn't be taken literally. We will always use the privileged

@@ -19,12 +19,16 @@ add_task(async function() {
   await performRequests(monitor, tab, 1);
 
   wait = waitForDOM(document, ".headers-overview");
-  EventUtils.sendMouseEvent({ type: "mousedown" },
-    document.querySelectorAll(".request-list-item")[0]);
+  EventUtils.sendMouseEvent(
+    { type: "mousedown" },
+    document.querySelectorAll(".request-list-item")[0]
+  );
   await wait;
 
-  EventUtils.sendMouseEvent({ type: "click" },
-    document.querySelector("#params-tab"));
+  EventUtils.sendMouseEvent(
+    { type: "click" },
+    document.querySelector("#params-tab")
+  );
 
   // The Params panel should render the following
   // POSTed JSON data structure:
@@ -60,8 +64,14 @@ add_task(async function() {
   ];
 
   for (let i = 0; i < actualKeys.length; i++) {
-    is(actualKeys[i].innerText, expectedKeys[i],
-      "Actual value " + actualKeys[i].innerText + " is equal to the " +
-      "expected value " + expectedKeys[i]);
+    is(
+      actualKeys[i].innerText,
+      expectedKeys[i],
+      "Actual value " +
+        actualKeys[i].innerText +
+        " is equal to the " +
+        "expected value " +
+        expectedKeys[i]
+    );
   }
 });

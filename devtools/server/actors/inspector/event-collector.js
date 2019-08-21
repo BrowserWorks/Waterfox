@@ -202,7 +202,9 @@ class MainEventCollector {
    */
   get chromeEnabled() {
     if (typeof this._chromeEnabled === "undefined") {
-      this._chromeEnabled = Services.prefs.getBoolPref("devtools.chrome.enabled");
+      this._chromeEnabled = Services.prefs.getBoolPref(
+        "devtools.chrome.enabled"
+      );
     }
 
     return this._chromeEnabled;
@@ -238,7 +240,7 @@ class MainEventCollector {
    * @return {Array}
    *         An array of event handlers.
    */
-  getListeners(node, {checkOnly}) {
+  getListeners(node, { checkOnly }) {
     throw new Error("You have to implement the method getListeners()!");
   }
 
@@ -253,11 +255,13 @@ class MainEventCollector {
    *         An array of unfiltered event listeners or an empty array
    */
   getDOMListeners(node) {
-    if (typeof node.nodeName !== "undefined" && node.nodeName.toLowerCase() === "html") {
+    if (
+      typeof node.nodeName !== "undefined" &&
+      node.nodeName.toLowerCase() === "html"
+    ) {
       const winListeners =
         Services.els.getListenerInfoFor(node.ownerGlobal) || [];
-      const docElementListeners =
-        Services.els.getListenerInfoFor(node) || [];
+      const docElementListeners = Services.els.getListenerInfoFor(node) || [];
       const docListeners =
         Services.els.getListenerInfoFor(node.parentNode) || [];
 
@@ -276,7 +280,8 @@ class MainEventCollector {
       return null;
     }
 
-    const hasJQuery = global.jQuery && global.jQuery.fn && global.jQuery.fn.jquery;
+    const hasJQuery =
+      global.jQuery && global.jQuery.fn && global.jQuery.fn.jquery;
 
     if (hasJQuery) {
       return global.jQuery;
@@ -295,7 +300,9 @@ class MainEventCollector {
     // JSM <video> tags may also report internal listeners, but they won't be
     // coming from the system principal. Instead, they will be using an expanded
     // principal.
-    return handlerPrincipal.isSystemPrincipal || handlerPrincipal.isExpandedPrincipal;
+    return (
+      handlerPrincipal.isSystemPrincipal || handlerPrincipal.isExpandedPrincipal
+    );
   }
 }
 
@@ -307,7 +314,7 @@ class MainEventCollector {
  * through `processHandlerForEvent()`.
  */
 class DOMEventCollector extends MainEventCollector {
-  getListeners(node, {checkOnly} = {}) {
+  getListeners(node, { checkOnly } = {}) {
     const handlers = [];
     const listeners = this.getDOMListeners(node);
 
@@ -385,14 +392,19 @@ class DOMEventCollector extends MainEventCollector {
  * Get or detect jQuery events.
  */
 class JQueryEventCollector extends MainEventCollector {
-  getListeners(node, {checkOnly} = {}) {
+  getListeners(node, { checkOnly } = {}) {
     const jQuery = this.getJQuery(node);
     const handlers = [];
 
     // If jQuery is not on the page, if this is an anonymous node or a pseudo
     // element we need to return early.
-    if (!jQuery || isNativeAnonymous(node) || isMarkerPseudoElement(node) ||
-        isBeforePseudoElement(node) || isAfterPseudoElement(node)) {
+    if (
+      !jQuery ||
+      isNativeAnonymous(node) ||
+      isMarkerPseudoElement(node) ||
+      isBeforePseudoElement(node) ||
+      isAfterPseudoElement(node)
+    ) {
       if (checkOnly) {
         return false;
       }
@@ -477,7 +489,7 @@ class JQueryEventCollector extends MainEventCollector {
  * Get or detect jQuery live events.
  */
 class JQueryLiveEventCollector extends MainEventCollector {
-  getListeners(node, {checkOnly} = {}) {
+  getListeners(node, { checkOnly } = {}) {
     const jQuery = this.getJQuery(node);
     const handlers = [];
 
@@ -634,14 +646,14 @@ class JQueryLiveEventCollector extends MainEventCollector {
  * Get or detect React events.
  */
 class ReactEventCollector extends MainEventCollector {
-  getListeners(node, {checkOnly} = {}) {
+  getListeners(node, { checkOnly } = {}) {
     const handlers = [];
     const props = this.getProps(node);
 
     if (props) {
       for (const [name, prop] of Object.entries(props)) {
         if (REACT_EVENT_NAMES.includes(name)) {
-          const listener = prop && prop.__reactBoundMethod || prop;
+          const listener = (prop && prop.__reactBoundMethod) || prop;
 
           if (typeof listener !== "function") {
             continue;
@@ -722,8 +734,10 @@ class ReactEventCollector extends MainEventCollector {
       functionText += ") {\n";
 
       const scriptSource = script.source.text;
-      functionText +=
-        scriptSource.substr(script.sourceStart, script.sourceLength);
+      functionText += scriptSource.substr(
+        script.sourceStart,
+        script.sourceLength
+      );
 
       listener.override.handler = functionText;
     }
@@ -780,7 +794,9 @@ class EventCollector {
    */
   get chromeEnabled() {
     if (typeof this._chromeEnabled === "undefined") {
-      this._chromeEnabled = Services.prefs.getBoolPref("devtools.chrome.enabled");
+      this._chromeEnabled = Services.prefs.getBoolPref(
+        "devtools.chrome.enabled"
+      );
     }
 
     return this._chromeEnabled;
@@ -903,7 +919,10 @@ class EventCollector {
       let sourceActor = "";
 
       // If the listener is an object with a 'handleEvent' method, use that.
-      if (listenerDO.class === "Object" || /^XUL\w*Element$/.test(listenerDO.class)) {
+      if (
+        listenerDO.class === "Object" ||
+        /^XUL\w*Element$/.test(listenerDO.class)
+      ) {
         let desc;
 
         while (!desc && listenerDO) {
@@ -937,17 +956,23 @@ class EventCollector {
 
         line = script.startLine;
         url = script.url;
-        const actor = this.targetActor.sources.getOrCreateSourceActor(script.source);
+        const actor = this.targetActor.sources.getOrCreateSourceActor(
+          script.source
+        );
         sourceActor = actor ? actor.actorID : null;
 
         // Checking for the string "[native code]" is the only way at this point
         // to check for native code. Even if this provides a false positive then
         // grabbing the source code a second time is harmless.
-        if (functionSource === "[object Object]" ||
-            functionSource === "[object XULElement]" ||
-            functionSource.includes("[native code]")) {
-          functionSource =
-            scriptSource.substr(script.sourceStart, script.sourceLength);
+        if (
+          functionSource === "[object Object]" ||
+          functionSource === "[object XULElement]" ||
+          functionSource.includes("[native code]")
+        ) {
+          functionSource = scriptSource.substr(
+            script.sourceStart,
+            script.sourceLength
+          );
 
           // At this point the script looks like this:
           // () { ... }
@@ -983,7 +1008,7 @@ class EventCollector {
       if (native) {
         origin = "[native code]";
       } else {
-        origin = url + ((dom0 || line === 0) ? "" : ":" + line);
+        origin = url + (dom0 || line === 0 ? "" : ":" + line);
       }
 
       const eventObj = {
@@ -992,8 +1017,10 @@ class EventCollector {
         origin: override.origin || origin,
         tags: override.tags || tags,
         DOM0: typeof override.dom0 !== "undefined" ? override.dom0 : dom0,
-        capturing: typeof override.capturing !== "undefined" ?
-                          override.capturing : capturing,
+        capturing:
+          typeof override.capturing !== "undefined"
+            ? override.capturing
+            : capturing,
         hide: typeof override.hide !== "undefined" ? override.hide : hide,
         native,
         sourceActor,

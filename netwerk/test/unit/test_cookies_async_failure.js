@@ -46,8 +46,18 @@ function* do_run_test() {
   // Create a cookie object for testing.
   this.now = Date.now() * 1000;
   this.futureExpiry = Math.round(this.now / 1e6 + 1000);
-  this.cookie = new Cookie("oh", "hai", "bar.com", "/", this.futureExpiry,
-    this.now, this.now, false, false, false);
+  this.cookie = new Cookie(
+    "oh",
+    "hai",
+    "bar.com",
+    "/",
+    this.futureExpiry,
+    this.now,
+    this.now,
+    false,
+    false,
+    false
+  );
 
   this.sub_generator = run_test_1(test_generator);
   sub_generator.next();
@@ -73,22 +83,19 @@ function* do_run_test() {
   return;
 }
 
-function do_get_backup_file(profile)
-{
+function do_get_backup_file(profile) {
   let file = profile.clone();
   file.append("cookies.sqlite.bak");
   return file;
 }
 
-function do_get_rebuild_backup_file(profile)
-{
+function do_get_rebuild_backup_file(profile) {
   let file = profile.clone();
   file.append("cookies.sqlite.bak-rebuild");
   return file;
 }
 
-function do_corrupt_db(file)
-{
+function do_corrupt_db(file) {
   // Sanity check: the database size should be larger than 450k, since we've
   // written about 460k of data. If it's not, let's make it obvious now.
   let size = file.fileSize;
@@ -102,8 +109,9 @@ function do_corrupt_db(file)
   // database file will be larger than the actual content requires, since the
   // cookie service uses a large growth increment. So we calculate the offset
   // based on the expected size of the content, not just the file size.)
-  let ostream = Cc["@mozilla.org/network/file-output-stream;1"].
-                createInstance(Ci.nsIFileOutputStream);
+  let ostream = Cc["@mozilla.org/network/file-output-stream;1"].createInstance(
+    Ci.nsIFileOutputStream
+  );
   ostream.init(file, 2, -1, 0);
   let sstream = ostream.QueryInterface(Ci.nsISeekableStream);
   let n = size - 450e3 + 20e3;
@@ -118,8 +126,7 @@ function do_corrupt_db(file)
   return size;
 }
 
-function* run_test_1(generator)
-{
+function* run_test_1(generator) {
   // Load the profile and populate it.
   let uri = NetUtil.newURI("http://foo.com/");
   Services.cookies.setCookieString(uri, null, "oh=hai; max-age=1000", null);
@@ -157,15 +164,24 @@ function* run_test_1(generator)
   db.close();
 
   // Attempt to insert a cookie with the same (name, host, path) triplet.
-  Services.cookiemgr.add(cookie.host, cookie.path, cookie.name, "hallo",
-    cookie.isSecure, cookie.isHttpOnly, cookie.isSession, cookie.expiry, {},
-    Ci.nsICookie2.SAMESITE_UNSET);
+  Services.cookiemgr.add(
+    cookie.host,
+    cookie.path,
+    cookie.name,
+    "hallo",
+    cookie.isSecure,
+    cookie.isHttpOnly,
+    cookie.isSession,
+    cookie.expiry,
+    {},
+    Ci.nsICookie2.SAMESITE_UNSET
+  );
 
   // Check that the cookie service accepted the new cookie.
   Assert.equal(Services.cookiemgr.countCookiesFromHost(cookie.host), 1);
 
   let isRebuildingDone = false;
-  let rebuildingObserve = function (subject, topic, data) {
+  let rebuildingObserve = function(subject, topic, data) {
     isRebuildingDone = true;
     Services.obs.removeObserver(rebuildingObserve, "cookie-db-rebuilding");
   };
@@ -177,7 +193,9 @@ function* run_test_1(generator)
   // the chaos status.
   for (let i = 0; i < 10; ++i) {
     Assert.equal(Services.cookiemgr.countCookiesFromHost(cookie.host), 1);
-    executeSoon(function() { do_run_generator(sub_generator); });
+    executeSoon(function() {
+      do_run_generator(sub_generator);
+    });
     yield;
   }
 
@@ -187,7 +205,9 @@ function* run_test_1(generator)
     new _observer(sub_generator, "cookie-db-rebuilding");
     yield;
   }
-  executeSoon(function() { do_run_generator(sub_generator); });
+  executeSoon(function() {
+    do_run_generator(sub_generator);
+  });
   yield;
 
   // At this point, the cookies should still be in memory.
@@ -228,11 +248,10 @@ function* run_test_1(generator)
   do_run_generator(generator);
 }
 
-function* run_test_2(generator)
-{
+function* run_test_2(generator) {
   // Load the profile and populate it.
   do_load_profile();
-  Services.cookies.runInTransaction(_=>{
+  Services.cookies.runInTransaction(_ => {
     for (let i = 0; i < 3000; ++i) {
       let uri = NetUtil.newURI("http://" + i + ".com/");
       Services.cookies.setCookieString(uri, null, "oh=hai; max-age=1000", null);
@@ -283,24 +302,31 @@ function* run_test_2(generator)
   do_run_generator(generator);
 }
 
-function* run_test_3(generator)
-{
+function* run_test_3(generator) {
   // Set the maximum cookies per base domain limit to a large value, so that
   // corrupting the database is easier.
   Services.prefs.setIntPref("network.cookie.maxPerHost", 3000);
 
   // Load the profile and populate it.
   do_load_profile();
-  Services.cookies.runInTransaction(_=>{
+  Services.cookies.runInTransaction(_ => {
     for (let i = 0; i < 10; ++i) {
       let uri = NetUtil.newURI("http://hither.com/");
-      Services.cookies.setCookieString(uri, null, "oh" + i + "=hai; max-age=1000",
-        null);
+      Services.cookies.setCookieString(
+        uri,
+        null,
+        "oh" + i + "=hai; max-age=1000",
+        null
+      );
     }
     for (let i = 10; i < 3000; ++i) {
       let uri = NetUtil.newURI("http://haithur.com/");
-      Services.cookies.setCookieString(uri, null, "oh" + i + "=hai; max-age=1000",
-        null);
+      Services.cookies.setCookieString(
+        uri,
+        null,
+        "oh" + i + "=hai; max-age=1000",
+        null
+      );
     }
   });
 
@@ -364,11 +390,10 @@ function* run_test_3(generator)
   do_run_generator(generator);
 }
 
-function* run_test_4(generator)
-{
+function* run_test_4(generator) {
   // Load the profile and populate it.
   do_load_profile();
-  Services.cookies.runInTransaction(_=>{
+  Services.cookies.runInTransaction(_ => {
     for (let i = 0; i < 3000; ++i) {
       let uri = NetUtil.newURI("http://" + i + ".com/");
       Services.cookies.setCookieString(uri, null, "oh=hai; max-age=1000", null);
@@ -426,14 +451,17 @@ function* run_test_4(generator)
   do_run_generator(generator);
 }
 
-function* run_test_5(generator)
-{
+function* run_test_5(generator) {
   // Load the profile and populate it.
   do_load_profile();
-  Services.cookies.runInTransaction(_=>{
+  Services.cookies.runInTransaction(_ => {
     let uri = NetUtil.newURI("http://bar.com/");
-    Services.cookies.setCookieString(uri, null, "oh=hai; path=/; max-age=1000",
-      null);
+    Services.cookies.setCookieString(
+      uri,
+      null,
+      "oh=hai; path=/; max-age=1000",
+      null
+    );
     for (let i = 0; i < 3000; ++i) {
       let uri = NetUtil.newURI("http://" + i + ".com/");
       Services.cookies.setCookieString(uri, null, "oh=hai; max-age=1000", null);
@@ -490,4 +518,3 @@ function* run_test_5(generator)
   Assert.ok(!do_get_backup_file(profile).exists());
   do_run_generator(generator);
 }
-

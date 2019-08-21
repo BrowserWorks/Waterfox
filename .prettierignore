@@ -39,83 +39,19 @@ testing/marionette/prefs/marionette.js
 toolkit/components/telemetry/datareporting-prefs.js
 toolkit/components/telemetry/healthreport-prefs.js
 
-# Ignore all top-level directories for now.
-accessible/**
-browser/**
-build/**
-caps/**
-chrome/**
-config/**
-docshell/**
-dom/**
-editor/**
-extensions/**
-gfx/**
-gradle/**
-hal/**
-image/**
-intl/**
-ipc/**
-js/**
-layout/**
-media/**
-memory/**
-mfbt/**
-mobile/**
-modules/**
-mozglue/**
-netwerk/**
-nsprpub/**
-other-licenses/**
-parser/**
-python/**
-remote/**
-security/**
-services/**
-servo/**
-startupcache/**
-storage/**
-taskcluster/**
-testing/**
-toolkit/**
-tools/**
-uriloader/**
-view/**
-widget/**
-xpcom/**
-xpfe/**
+# Ignore testing pref files which aren't parsed normally.
+testing/profiles/**/user.js
 
-# Ignore all devtools directories for now, except the debugger.
-devtools/client/*.js
-devtools/client/aboutdebugging/**
-devtools/client/aboutdebugging-new/**
-devtools/client/accessibility/**
-devtools/client/application/**
-devtools/client/bin/**
-devtools/client/dom/**
-devtools/client/framework/**
-devtools/client/inspector/**
-devtools/client/jsonview/**
-devtools/client/locales/**
-devtools/client/memory/**
-devtools/client/netmonitor/**
-devtools/client/performance/**
-devtools/client/performance-new/**
-devtools/client/preferences/**
-devtools/client/responsive.html/**
-devtools/client/scratchpad/**
-devtools/client/shared/**
-devtools/client/storage/**
-devtools/client/styleeditor/**
-devtools/client/themes/**
-devtools/client/webconsole/**
-devtools/client/webide/**
-devtools/client/webreplay/**
-devtools/docs/**
-devtools/platform/**
-devtools/server/**
-devtools/shared/**
-devtools/startup/**
+# Ignore CORS fixtures which require specific resource hashes.
+dom/security/test/sri/script*
+
+# Ignore other DOM fixtures with funky chars.
+dom/base/test/file_bug687859-charset.js
+dom/base/test/file_bug687859-inherit.js
+
+# Ignore preprocessed files.
+js/src/builtin/**/*.js
+js/src/shell/**/*.js
 
 # Ignore devtools debugger files
 # Keep in sync with devtools/client/debugger/.prettierignore

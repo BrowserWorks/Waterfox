@@ -4,18 +4,21 @@
 
 Cu.importGlobalProperties(["DOMParser"]);
 
-var {HttpServer} = ChromeUtils.import("resource://testing-common/httpd.js");
+var { HttpServer } = ChromeUtils.import("resource://testing-common/httpd.js");
 
 var server = new HttpServer();
 server.start(-1);
 
-var docbody = '<html xmlns="http://www.w3.org/1999/xhtml"><head></head><body></body></html>';
+var docbody =
+  '<html xmlns="http://www.w3.org/1999/xhtml"><head></head><body></body></html>';
 
 function handler(metadata, response) {
-  var {NetUtil} = ChromeUtils.import("resource://gre/modules/NetUtil.jsm");
+  var { NetUtil } = ChromeUtils.import("resource://gre/modules/NetUtil.jsm");
 
-  let body = NetUtil.readInputStreamToString(metadata.bodyInputStream,
-                                             metadata.bodyInputStream.available());
+  let body = NetUtil.readInputStreamToString(
+    metadata.bodyInputStream,
+    metadata.bodyInputStream.available()
+  );
   response.setStatusLine(metadata.httpVersion, 200, "OK");
   response.write(body, body.length);
 }
@@ -35,6 +38,10 @@ function run_test() {
     Assert.equal(false, false);
     server.stop(do_test_finished);
   };
-  xhr.open("POST", "http://localhost:" + server.identity.primaryPort + "/foo", true);
+  xhr.open(
+    "POST",
+    "http://localhost:" + server.identity.primaryPort + "/foo",
+    true
+  );
   xhr.send(doc);
 }

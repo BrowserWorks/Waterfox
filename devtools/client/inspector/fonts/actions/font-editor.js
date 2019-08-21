@@ -16,7 +16,6 @@ const {
 } = require("./index");
 
 module.exports = {
-
   resetFontEditor() {
     return {
       type: RESET_EDITOR,
@@ -75,5 +74,4 @@ module.exports = {
       warning,
     };
   },
-
 };

@@ -6,10 +6,15 @@
 
 var EXPORTED_SYMBOLS = ["BrowserChild"];
 
-const {ActorChild} = ChromeUtils.import("resource://gre/modules/ActorChild.jsm");
+const { ActorChild } = ChromeUtils.import(
+  "resource://gre/modules/ActorChild.jsm"
+);
 
-ChromeUtils.defineModuleGetter(this, "BrowserUtils",
-                               "resource://gre/modules/BrowserUtils.jsm");
+ChromeUtils.defineModuleGetter(
+  this,
+  "BrowserUtils",
+  "resource://gre/modules/BrowserUtils.jsm"
+);
 
 class BrowserChild extends ActorChild {
   handleEvent(event) {
@@ -20,30 +25,52 @@ class BrowserChild extends ActorChild {
 
   receiveMessage(message) {
     switch (message.name) {
-    case "Browser:CreateAboutBlank":
-      if (!this.content.document || this.content.document.documentURI != "about:blank") {
-        throw new Error("Can't create a content viewer unless on about:blank");
-      }
-      let principal = message.data;
-      principal = BrowserUtils.principalWithMatchingOA(principal, this.content.document.nodePrincipal);
-      this.mm.docShell.createAboutBlankContentViewer(principal);
-      break;
+      case "Browser:CreateAboutBlank":
+        if (
+          !this.content.document ||
+          this.content.document.documentURI != "about:blank"
+        ) {
+          throw new Error(
+            "Can't create a content viewer unless on about:blank"
+          );
+        }
+        let principal = message.data;
+        principal = BrowserUtils.principalWithMatchingOA(
+          principal,
+          this.content.document.nodePrincipal
+        );
+        this.mm.docShell.createAboutBlankContentViewer(principal);
+        break;
 
-    case "InPermitUnload":
-      let inPermitUnload = this.mm.docShell.contentViewer && this.mm.docShell.contentViewer.inPermitUnload;
-      this.mm.sendAsyncMessage("InPermitUnload", {id: message.data.id, inPermitUnload});
-      break;
+      case "InPermitUnload":
+        let inPermitUnload =
+          this.mm.docShell.contentViewer &&
+          this.mm.docShell.contentViewer.inPermitUnload;
+        this.mm.sendAsyncMessage("InPermitUnload", {
+          id: message.data.id,
+          inPermitUnload,
+        });
+        break;
 
-    case "PermitUnload":
-      this.mm.sendAsyncMessage("PermitUnload", {id: message.data.id, kind: "start"});
+      case "PermitUnload":
+        this.mm.sendAsyncMessage("PermitUnload", {
+          id: message.data.id,
+          kind: "start",
+        });
 
-      let permitUnload = true;
-      if (this.mm.docShell && this.mm.docShell.contentViewer) {
-        permitUnload = this.mm.docShell.contentViewer.permitUnload(message.data.aPermitUnloadFlags);
-      }
+        let permitUnload = true;
+        if (this.mm.docShell && this.mm.docShell.contentViewer) {
+          permitUnload = this.mm.docShell.contentViewer.permitUnload(
+            message.data.aPermitUnloadFlags
+          );
+        }
 
-      this.mm.sendAsyncMessage("PermitUnload", {id: message.data.id, kind: "end", permitUnload});
-      break;
+        this.mm.sendAsyncMessage("PermitUnload", {
+          id: message.data.id,
+          kind: "end",
+          permitUnload,
+        });
+        break;
     }
   }
 }

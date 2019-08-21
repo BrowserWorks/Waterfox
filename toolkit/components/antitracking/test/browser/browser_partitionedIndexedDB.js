@@ -1,6 +1,7 @@
 /* import-globals-from storageprincipal_head.js */
 
-StoragePrincipalHelper.runTest("IndexedDB",
+StoragePrincipalHelper.runTest(
+  "IndexedDB",
   async (win3rdParty, win1stParty, allowed) => {
     await new Promise(resolve => {
       let a = win1stParty.indexedDB.open("test", 1);
@@ -40,7 +41,9 @@ StoragePrincipalHelper.runTest("IndexedDB",
 
   async _ => {
     await new Promise(resolve => {
-      Services.clearData.deleteData(Ci.nsIClearDataService.CLEAR_ALL, value => resolve());
+      Services.clearData.deleteData(Ci.nsIClearDataService.CLEAR_ALL, value =>
+        resolve()
+      );
     });
-  });
-
+  }
+);

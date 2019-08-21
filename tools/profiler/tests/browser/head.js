@@ -1,5 +1,6 @@
-
-const { BrowserTestUtils } = ChromeUtils.import("resource://testing-common/BrowserTestUtils.jsm");
+const { BrowserTestUtils } = ChromeUtils.import(
+  "resource://testing-common/BrowserTestUtils.jsm"
+);
 
 const BASE_URL = "http://example.com/browser/tools/profiler/tests/browser/";
 

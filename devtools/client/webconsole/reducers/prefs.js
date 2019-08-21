@@ -5,14 +5,20 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 "use strict";
 
-const PrefState = (overrides) => Object.freeze(Object.assign({
-  logLimit: 1000,
-  sidebarToggle: false,
-  jstermCodeMirror: false,
-  groupWarnings: false,
-  filterContentMessages: false,
-  historyCount: 50,
-}, overrides));
+const PrefState = overrides =>
+  Object.freeze(
+    Object.assign(
+      {
+        logLimit: 1000,
+        sidebarToggle: false,
+        jstermCodeMirror: false,
+        groupWarnings: false,
+        filterContentMessages: false,
+        historyCount: 50,
+      },
+      overrides
+    )
+  );
 
 function prefs(state = PrefState(), action) {
   return state;

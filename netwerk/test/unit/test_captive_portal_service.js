@@ -1,6 +1,6 @@
 "use strict";
 
-const {HttpServer} = ChromeUtils.import("resource://testing-common/httpd.js");
+const { HttpServer } = ChromeUtils.import("resource://testing-common/httpd.js");
 
 var httpserver = null;
 XPCOMUtils.defineLazyGetter(this, "cpURI", function() {
@@ -9,8 +9,7 @@ XPCOMUtils.defineLazyGetter(this, "cpURI", function() {
 
 const SUCCESS_STRING = "success\n";
 let cpResponse = SUCCESS_STRING;
-function contentHandler(metadata, response)
-{
+function contentHandler(metadata, response) {
   response.setHeader("Content-Type", "text/plain");
   response.bodyOutputStream.write(cpResponse, cpResponse.length);
 }
@@ -42,13 +41,13 @@ function observerPromise(topic) {
           Services.obs.removeObserver(observer, topic);
           resolve(aData);
         }
-      }
-    }
+      },
+    };
     Services.obs.addObserver(observer, topic);
   });
 }
 
-add_task(function setup(){
+add_task(function setup() {
   httpserver = new HttpServer();
   httpserver.registerPathHandler("/captive.txt", contentHandler);
   httpserver.start(-1);
@@ -60,10 +59,10 @@ add_task(function setup(){
   Services.prefs.setBoolPref(PREF_DNS_NATIVE_IS_LOCALHOST, true);
 });
 
-add_task(async function test_simple()
-{
-  var cps = Cc["@mozilla.org/network/captive-portal-service;1"]
-              .getService(Ci.nsICaptivePortalService);
+add_task(async function test_simple() {
+  var cps = Cc["@mozilla.org/network/captive-portal-service;1"].getService(
+    Ci.nsICaptivePortalService
+  );
   Services.prefs.setBoolPref(PREF_CAPTIVE_ENABLED, false);
 
   equal(cps.state, Ci.nsICaptivePortalService.UNKNOWN);

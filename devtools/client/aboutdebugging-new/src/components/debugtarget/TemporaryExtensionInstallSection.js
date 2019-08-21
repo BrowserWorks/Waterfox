@@ -4,7 +4,10 @@
 
 "use strict";
 
-const { createFactory, PureComponent } = require("devtools/client/shared/vendor/react");
+const {
+  createFactory,
+  PureComponent,
+} = require("devtools/client/shared/vendor/react");
 const dom = require("devtools/client/shared/vendor/react-dom-factories");
 const PropTypes = require("devtools/client/shared/vendor/react-prop-types");
 
@@ -12,8 +15,9 @@ const FluentReact = require("devtools/client/shared/vendor/fluent-react");
 const Localized = createFactory(FluentReact.Localized);
 
 const Message = createFactory(require("../shared/Message"));
-const TemporaryExtensionInstaller =
-  createFactory(require("./TemporaryExtensionInstaller"));
+const TemporaryExtensionInstaller = createFactory(
+  require("./TemporaryExtensionInstaller")
+);
 
 const { MESSAGE_LEVEL } = require("../../constants");
 
@@ -60,12 +64,9 @@ class TemporaryExtensionInstallSection extends PureComponent {
         {
           id: "about-debugging-tmp-extension-install-error",
         },
-        dom.p(
-          { },
-          "There was an error during the temporary add-on installation"
-        )
+        dom.p({}, "There was an error during the temporary add-on installation")
       ),
-      errors,
+      errors
     );
   }
 
@@ -78,9 +79,9 @@ class TemporaryExtensionInstallSection extends PureComponent {
         {
           className: "temporary-extension-install-section__toolbar",
         },
-        TemporaryExtensionInstaller({ dispatch }),
+        TemporaryExtensionInstaller({ dispatch })
       ),
-      this.renderError(),
+      this.renderError()
     );
   }
 }

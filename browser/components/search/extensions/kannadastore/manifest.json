@@ -2,7 +2,7 @@
   "name": "Kannada Store",
   "description": "Kanada Store, Online store",
   "manifest_version": 2,
-  "version": "1.0",
+  "version": "1.2",
   "applications": {
     "gecko": {
       "id": "kannadastore@search.waterfox.net"
@@ -18,6 +18,7 @@
   "chrome_settings_overrides": {
     "search_provider": {
       "name": "Kannada Store",
+      "encoding": "ISO-8859-1",
       "search_url": "https://www.kannadastore.com/advanced_search_result.php",
       "search_form": "https://www.kannadastore.com/advanced_search_result.php",
       "search_url_get_params": "keywords={searchTerms}"

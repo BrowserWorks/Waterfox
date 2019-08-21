@@ -1,8 +1,10 @@
 "use strict";
 
 const URL = "http://www.example.com";
-const PRINCIPAL = Services.scriptSecurityManager
-  .createCodebasePrincipal(Services.io.newURI(URL), {});
+const PRINCIPAL = Services.scriptSecurityManager.createCodebasePrincipal(
+  Services.io.newURI(URL),
+  {}
+);
 
 const PERMISSIONS_URL = "chrome://browser/content/preferences/permissions.xul";
 const AUTOPLAY_ENABLED_KEY = "media.autoplay.default";
@@ -14,7 +16,9 @@ Services.prefs.setIntPref(AUTOPLAY_ENABLED_KEY, Ci.nsIAutoplay.ALLOWED);
 async function openExceptionsDialog() {
   let dialogOpened = promiseLoadSubDialog(PERMISSIONS_URL);
   await ContentTask.spawn(gBrowser.selectedBrowser, null, function() {
-    let exceptionsButton = content.document.getElementById("autoplayMediaPolicyButton");
+    let exceptionsButton = content.document.getElementById(
+      "autoplayMediaPolicyButton"
+    );
     exceptionsButton.click();
   });
   exceptionsDialog = await dialogOpened;
@@ -26,10 +30,12 @@ add_task(async function ensureCheckboxVisible() {
     gBrowser.removeCurrentTab();
   });
 
-  await openPreferencesViaOpenPreferencesAPI("privacy", {leaveOpen: true});
+  await openPreferencesViaOpenPreferencesAPI("privacy", { leaveOpen: true });
   let win = gBrowser.selectedBrowser.contentWindow;
-  is_element_visible(win.document.getElementById("autoplayMediaCheckbox"),
-                    "Ensure checkbox is visible");
+  is_element_visible(
+    win.document.getElementById("autoplayMediaCheckbox"),
+    "Ensure checkbox is visible"
+  );
 });
 
 add_task(async function enableBlockingAutoplay() {
@@ -39,9 +45,11 @@ add_task(async function enableBlockingAutoplay() {
     autoplayCheckBox.click();
   });
 
-  Assert.equal(Services.prefs.getIntPref(AUTOPLAY_ENABLED_KEY),
-               Ci.nsIAutoplay.BLOCKED,
-               "Ensure we have set autoplay to false");
+  Assert.equal(
+    Services.prefs.getIntPref(AUTOPLAY_ENABLED_KEY),
+    Ci.nsIAutoplay.BLOCKED,
+    "Ensure we have set autoplay to false"
+  );
 });
 
 add_task(async function addException() {
@@ -67,8 +75,11 @@ add_task(async function addException() {
   btnApplyChanges.click();
   await permChanged;
 
-  is(Services.perms.testPermissionFromPrincipal(PRINCIPAL, "autoplay-media"),
-     Ci.nsIPermissionManager.ALLOW_ACTION, "Correctly added the exception");
+  is(
+    Services.perms.testPermissionFromPrincipal(PRINCIPAL, "autoplay-media"),
+    Ci.nsIPermissionManager.ALLOW_ACTION,
+    "Correctly added the exception"
+  );
 });
 
 add_task(async function deleteException() {
@@ -87,14 +98,19 @@ add_task(async function deleteException() {
   }
 
   await TestUtils.waitForCondition(() => richlistbox.itemCount == 0);
-  is_element_visible(content.gSubDialog._dialogs[0]._box,
-    "Subdialog is visible after deleting an element");
+  is_element_visible(
+    content.gSubDialog._dialogs[0]._box,
+    "Subdialog is visible after deleting an element"
+  );
 
   let permChanged = TestUtils.topicObserved("perm-changed");
   let btnApplyChanges = doc.getElementById("btnApplyChanges");
   btnApplyChanges.click();
   await permChanged;
 
-  is(Services.perms.testPermissionFromPrincipal(PRINCIPAL, "autoplay-media"),
-     Ci.nsIPermissionManager.UNKNOWN_ACTION, "Correctly removed the exception");
+  is(
+    Services.perms.testPermissionFromPrincipal(PRINCIPAL, "autoplay-media"),
+    Ci.nsIPermissionManager.UNKNOWN_ACTION,
+    "Correctly removed the exception"
+  );
 });

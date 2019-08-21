@@ -9,9 +9,15 @@
 const { Cu } = require("chrome");
 const DevToolsUtils = require("devtools/shared/DevToolsUtils");
 const protocol = require("devtools/shared/protocol");
-const { propertyIteratorSpec } = require("devtools/shared/specs/property-iterator");
+const {
+  propertyIteratorSpec,
+} = require("devtools/shared/specs/property-iterator");
 loader.lazyRequireGetter(this, "ChromeUtils");
-loader.lazyRequireGetter(this, "ObjectUtils", "devtools/server/actors/object/utils");
+loader.lazyRequireGetter(
+  this,
+  "ObjectUtils",
+  "devtools/server/actors/object/utils"
+);
 
 /**
  * Creates an actor to iterate over an object's property names and values.
@@ -39,75 +45,80 @@ loader.lazyRequireGetter(this, "ObjectUtils", "devtools/server/actors/object/uti
  *          Regarding value filtering it just compare to the stringification
  *          of the property value.
  */
-const PropertyIteratorActor  = protocol.ActorClassWithSpec(propertyIteratorSpec, {
-  initialize(objectActor, options, conn) {
-    protocol.Actor.prototype.initialize.call(this, conn);
-    if (!DevToolsUtils.isSafeDebuggerObject(objectActor.obj)) {
-      this.iterator = {
-        size: 0,
-        propertyName: index => undefined,
-        propertyDescription: index => undefined,
-      };
-    } else if (options.enumEntries) {
-      const cls = objectActor.obj.class;
-      if (cls == "Map") {
-        this.iterator = enumMapEntries(objectActor);
-      } else if (cls == "WeakMap") {
-        this.iterator = enumWeakMapEntries(objectActor);
-      } else if (cls == "Set") {
-        this.iterator = enumSetEntries(objectActor);
-      } else if (cls == "WeakSet") {
-        this.iterator = enumWeakSetEntries(objectActor);
-      } else if (cls == "Storage") {
-        this.iterator = enumStorageEntries(objectActor);
+const PropertyIteratorActor = protocol.ActorClassWithSpec(
+  propertyIteratorSpec,
+  {
+    initialize(objectActor, options, conn) {
+      protocol.Actor.prototype.initialize.call(this, conn);
+      if (!DevToolsUtils.isSafeDebuggerObject(objectActor.obj)) {
+        this.iterator = {
+          size: 0,
+          propertyName: index => undefined,
+          propertyDescription: index => undefined,
+        };
+      } else if (options.enumEntries) {
+        const cls = objectActor.obj.class;
+        if (cls == "Map") {
+          this.iterator = enumMapEntries(objectActor);
+        } else if (cls == "WeakMap") {
+          this.iterator = enumWeakMapEntries(objectActor);
+        } else if (cls == "Set") {
+          this.iterator = enumSetEntries(objectActor);
+        } else if (cls == "WeakSet") {
+          this.iterator = enumWeakSetEntries(objectActor);
+        } else if (cls == "Storage") {
+          this.iterator = enumStorageEntries(objectActor);
+        } else {
+          throw new Error(
+            "Unsupported class to enumerate entries from: " + cls
+          );
+        }
+      } else if (
+        ObjectUtils.isArray(objectActor.obj) &&
+        options.ignoreNonIndexedProperties &&
+        !options.query
+      ) {
+        this.iterator = enumArrayProperties(objectActor, options);
       } else {
-        throw new Error("Unsupported class to enumerate entries from: " + cls);
+        this.iterator = enumObjectProperties(objectActor, options);
       }
-    } else if (
-      ObjectUtils.isArray(objectActor.obj)
-      && options.ignoreNonIndexedProperties
-      && !options.query
-    ) {
-      this.iterator = enumArrayProperties(objectActor, options);
-    } else {
-      this.iterator = enumObjectProperties(objectActor, options);
-    }
-  },
+    },
 
-  form() {
-    return {
-      type: this.typeName,
-      actor: this.actorID,
-      count: this.iterator.size,
-    };
-  },
+    form() {
+      return {
+        type: this.typeName,
+        actor: this.actorID,
+        count: this.iterator.size,
+      };
+    },
 
-  names({ indexes }) {
-    const list = [];
-    for (const idx of indexes) {
-      list.push(this.iterator.propertyName(idx));
-    }
-    return {
-      names: indexes,
-    };
-  },
+    names({ indexes }) {
+      const list = [];
+      for (const idx of indexes) {
+        list.push(this.iterator.propertyName(idx));
+      }
+      return {
+        names: indexes,
+      };
+    },
 
-  slice({ start, count }) {
-    const ownProperties = Object.create(null);
-    for (let i = start, m = start + count; i < m; i++) {
-      const name = this.iterator.propertyName(i);
-      ownProperties[name] = this.iterator.propertyDescription(i);
-    }
+    slice({ start, count }) {
+      const ownProperties = Object.create(null);
+      for (let i = start, m = start + count; i < m; i++) {
+        const name = this.iterator.propertyName(i);
+        ownProperties[name] = this.iterator.propertyDescription(i);
+      }
 
-    return {
-      ownProperties,
-    };
-  },
+      return {
+        ownProperties,
+      };
+    },
 
-  all() {
-    return this.slice({ start: 0, count: this.iterator.size });
-  },
-});
+    all() {
+      return this.slice({ start: 0, count: this.iterator.size });
+    },
+  }
+);
 
 /**
  * Helper function to create a grip from a Map/Set entry
@@ -117,7 +128,8 @@ function gripFromEntry({ obj, hooks }, entry) {
     entry = Cu.unwaiveXrays(entry);
   }
   return hooks.createValueGrip(
-    ObjectUtils.makeDebuggeeValueIfNeeded(obj, entry));
+    ObjectUtils.makeDebuggeeValueIfNeeded(obj, entry)
+  );
 }
 
 function enumArrayProperties(objectActor, options) {
@@ -145,9 +157,10 @@ function enumObjectProperties(objectActor, options) {
     const length = DevToolsUtils.getProperty(objectActor.obj, "length");
     let sliceIndex;
 
-    const isLengthTrustworthy = isUint32(length)
-      && (!length || ObjectUtils.isArrayIndex(names[length - 1]))
-      && !ObjectUtils.isArrayIndex(names[length]);
+    const isLengthTrustworthy =
+      isUint32(length) &&
+      (!length || ObjectUtils.isArrayIndex(names[length - 1])) &&
+      !ObjectUtils.isArrayIndex(names[length]);
 
     if (!isLengthTrustworthy) {
       // The length property may not reflect what the object looks like, let's find
@@ -207,8 +220,7 @@ function enumObjectProperties(objectActor, options) {
         // Calling getOwnPropertyDescriptor on wrapped native prototypes is not
         // allowed (bug 560072).
       }
-      if (desc && desc.value &&
-          String(desc.value).includes(query)) {
+      if (desc && desc.value && String(desc.value).includes(query)) {
         return true;
       }
       return false;
@@ -255,9 +267,15 @@ function enumMapEntries(objectActor) {
   // to be more confusing than beneficial in the case of Object previews.
   let keys, getValue;
   if (isWorker) {
-    const keysIterator = DevToolsUtils.callPropertyOnObject(objectActor.obj, "keys");
+    const keysIterator = DevToolsUtils.callPropertyOnObject(
+      objectActor.obj,
+      "keys"
+    );
     keys = [...DevToolsUtils.makeDebuggeeIterator(keysIterator)];
-    const valuesIterator = DevToolsUtils.callPropertyOnObject(objectActor.obj, "values");
+    const valuesIterator = DevToolsUtils.callPropertyOnObject(
+      objectActor.obj,
+      "values"
+    );
     const values = [...DevToolsUtils.makeDebuggeeIterator(valuesIterator)];
     const map = new Map();
     for (let i = 0; i < keys.length; i++) {
@@ -271,10 +289,10 @@ function enumMapEntries(objectActor) {
   }
 
   return {
-    [Symbol.iterator]: function* () {
+    [Symbol.iterator]: function*() {
       for (const key of keys) {
         const value = getValue(key);
-        yield [ key, value ].map(val => gripFromEntry(objectActor, val));
+        yield [key, value].map(val => gripFromEntry(objectActor, val));
       }
     },
     size: keys.length,
@@ -309,10 +327,10 @@ function enumStorageEntries(objectActor) {
     keys.push(raw.key(i));
   }
   return {
-    [Symbol.iterator]: function* () {
+    [Symbol.iterator]: function*() {
       for (const key of keys) {
         const value = raw.getItem(key);
-        yield [ key, value ].map(val => gripFromEntry(objectActor, val));
+        yield [key, value].map(val => gripFromEntry(objectActor, val));
       }
     },
     size: keys.length,
@@ -365,9 +383,9 @@ function enumWeakMapEntries(objectActor) {
   }
 
   return {
-    [Symbol.iterator]: function* () {
+    [Symbol.iterator]: function*() {
       for (let i = 0; i < keys.length; i++) {
-        yield [ keys[i], values[i] ].map(val => gripFromEntry(objectActor, val));
+        yield [keys[i], values[i]].map(val => gripFromEntry(objectActor, val));
       }
     },
     size: keys.length,
@@ -404,7 +422,10 @@ function enumSetEntries(objectActor) {
   // make sure we handle the resulting objects carefully.
   let values;
   if (isWorker) {
-    const iterator = DevToolsUtils.callPropertyOnObject(objectActor.obj, "values");
+    const iterator = DevToolsUtils.callPropertyOnObject(
+      objectActor.obj,
+      "values"
+    );
     values = [...DevToolsUtils.makeDebuggeeIterator(iterator)];
   } else {
     const raw = objectActor.obj.unsafeDereference();
@@ -412,7 +433,7 @@ function enumSetEntries(objectActor) {
   }
 
   return {
-    [Symbol.iterator]: function* () {
+    [Symbol.iterator]: function*() {
       for (const item of values) {
         yield gripFromEntry(objectActor, item);
       }
@@ -447,7 +468,7 @@ function enumWeakSetEntries(objectActor) {
   const keys = isWorker ? basekeys : Cu.waiveXrays(basekeys);
 
   return {
-    [Symbol.iterator]: function* () {
+    [Symbol.iterator]: function*() {
       for (const item of keys) {
         yield gripFromEntry(objectActor, item);
       }

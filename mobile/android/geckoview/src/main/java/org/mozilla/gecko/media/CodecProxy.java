@@ -27,8 +27,10 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 public final class CodecProxy {
     private static final String LOGTAG = "GeckoRemoteCodecProxy";
     private static final boolean DEBUG = false;
+    @WrapForJNI private static final long INVALID_SESSION = -1;
 
     private ICodec mRemote;
+    private long mSession;
     private boolean mIsEncoder;
     private FormatParam mFormat;
     private GeckoSurface mOutputSurface;
@@ -223,11 +225,11 @@ public final class CodecProxy {
     }
 
     @WrapForJNI
-    public synchronized boolean input(final ByteBuffer bytes, final BufferInfo info,
+    public synchronized long input(final ByteBuffer bytes, final BufferInfo info,
                                       final CryptoInfo cryptoInfo) {
         if (mRemote == null) {
             Log.e(LOGTAG, "cannot send input to an ended codec");
-            return false;
+            return INVALID_SESSION;
         }
 
         boolean eos = info.flags == MediaCodec.BUFFER_FLAG_END_OF_STREAM;
@@ -239,6 +241,7 @@ public final class CodecProxy {
         try {
             Sample s = mRemote.dequeueInput(info.size);
             fillInputBuffer(s.bufferId, bytes, info.offset, info.size);
+            mSession = s.session;
             return sendInput(s.set(info, cryptoInfo));
         } catch (RemoteException | NullPointerException e) {
             Log.e(LOGTAG, "fail to dequeue input buffer", e);
@@ -247,7 +250,7 @@ public final class CodecProxy {
             // Balance dequeue/queue.
             sendInput(null);
         }
-        return false;
+        return INVALID_SESSION;
     }
 
     private void fillInputBuffer(final int bufferId, final ByteBuffer bytes,
@@ -260,12 +263,14 @@ public final class CodecProxy {
         SampleBuffer buffer = mInputBuffers.get(bufferId);
         if (buffer == null) {
             buffer = mRemote.getInputBuffer(bufferId);
-            mInputBuffers.put(bufferId, buffer);
+            if (buffer != null) {
+                mInputBuffers.put(bufferId, buffer);
+            }
         }
         buffer.readFromByteBuffer(bytes, offset, size);
     }
 
-    private boolean sendInput(final Sample sample) {
+    private long sendInput(final Sample sample) {
         try {
             mRemote.queueInput(sample);
             if (sample != null) {
@@ -274,10 +279,9 @@ public final class CodecProxy {
             }
         } catch (Exception e) {
             Log.e(LOGTAG, "fail to queue input:" + sample, e);
-            return false;
+            return INVALID_SESSION;
         }
-
-        return true;
+        return mSession;
     }
 
     @WrapForJNI

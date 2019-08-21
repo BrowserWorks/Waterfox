@@ -23,4 +23,3 @@ function test_treeWalker_currentNode() {
   walker.currentNode = body.firstChild;
   walker.nextNode();
 }
-

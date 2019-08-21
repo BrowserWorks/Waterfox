@@ -29,5 +29,8 @@ add_task(async function() {
   info("Go back to the console");
   await openConsole();
 
-  ok(isInputFocused(hud), "input is focused when coming from a different panel");
+  ok(
+    isInputFocused(hud),
+    "input is focused when coming from a different panel"
+  );
 });

@@ -4,26 +4,40 @@
 
 "use strict";
 
-const {XPCOMUtils} = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
-const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
+const { XPCOMUtils } = ChromeUtils.import(
+  "resource://gre/modules/XPCOMUtils.jsm"
+);
+const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
 XPCOMUtils.defineLazyGlobalGetters(this, ["URL"]);
 
-ChromeUtils.defineModuleGetter(this, "AutoCompletePopup",
-                               "resource://gre/modules/AutoCompletePopup.jsm");
-ChromeUtils.defineModuleGetter(this, "DeferredTask",
-                               "resource://gre/modules/DeferredTask.jsm");
-ChromeUtils.defineModuleGetter(this, "LoginHelper",
-                               "resource://gre/modules/LoginHelper.jsm");
-ChromeUtils.defineModuleGetter(this, "PrivateBrowsingUtils",
-                               "resource://gre/modules/PrivateBrowsingUtils.jsm");
+ChromeUtils.defineModuleGetter(
+  this,
+  "AutoCompletePopup",
+  "resource://gre/modules/AutoCompletePopup.jsm"
+);
+ChromeUtils.defineModuleGetter(
+  this,
+  "DeferredTask",
+  "resource://gre/modules/DeferredTask.jsm"
+);
+ChromeUtils.defineModuleGetter(
+  this,
+  "LoginHelper",
+  "resource://gre/modules/LoginHelper.jsm"
+);
+ChromeUtils.defineModuleGetter(
+  this,
+  "PrivateBrowsingUtils",
+  "resource://gre/modules/PrivateBrowsingUtils.jsm"
+);
 
 XPCOMUtils.defineLazyGetter(this, "log", () => {
   let logger = LoginHelper.createLogger("LoginManagerParent");
   return logger.log.bind(logger);
 });
 
-var EXPORTED_SYMBOLS = [ "LoginManagerParent" ];
+var EXPORTED_SYMBOLS = ["LoginManagerParent"];
 
 var LoginManagerParent = {
   /**
@@ -40,7 +54,11 @@ var LoginManagerParent = {
   // to avoid spamming master password prompts on autocomplete searches.
   _lastMPLoginCancelled: Math.NEGATIVE_INFINITY,
 
-  _searchAndDedupeLogins(formOrigin, actionOrigin, {looseActionOriginMatch} = {}) {
+  _searchAndDedupeLogins(
+    formOrigin,
+    actionOrigin,
+    { looseActionOriginMatch } = {}
+  ) {
     let logins;
     let matchData = {
       hostname: formOrigin,
@@ -63,12 +81,14 @@ var LoginManagerParent = {
     }
 
     // Dedupe so the length checks below still make sense with scheme upgrades.
-    let resolveBy = [
-      "actionOrigin",
-      "scheme",
-      "timePasswordChanged",
-    ];
-    return LoginHelper.dedupeLogins(logins, ["username"], resolveBy, formOrigin, actionOrigin);
+    let resolveBy = ["actionOrigin", "scheme", "timePasswordChanged"];
+    return LoginHelper.dedupeLogins(
+      logins,
+      ["username"],
+      resolveBy,
+      formOrigin,
+      actionOrigin
+    );
   },
 
   // Listeners are added in BrowserGlue.jsm on desktop
@@ -78,30 +98,34 @@ var LoginManagerParent = {
     switch (msg.name) {
       case "PasswordManager:findLogins": {
         // TODO Verify msg.target's principals against the formOrigin?
-        this.sendLoginDataToChild(data.options.showMasterPassword,
-                                  data.formOrigin,
-                                  data.actionOrigin,
-                                  data.requestId,
-                                  msg.target.messageManager);
+        this.sendLoginDataToChild(
+          data.options.showMasterPassword,
+          data.formOrigin,
+          data.actionOrigin,
+          data.requestId,
+          msg.target.messageManager
+        );
         break;
       }
 
       case "PasswordManager:findRecipes": {
-        let formHost = (new URL(data.formOrigin)).host;
+        let formHost = new URL(data.formOrigin).host;
         return this._recipeManager.getRecipesForHost(formHost);
       }
 
       case "PasswordManager:onFormSubmit": {
         // TODO Verify msg.target's principals against the formOrigin?
-        this.onFormSubmit({hostname: data.hostname,
-                           formSubmitURL: data.formSubmitURL,
-                           autoFilledLoginGuid: data.autoFilledLoginGuid,
-                           usernameField: data.usernameField,
-                           newPasswordField: data.newPasswordField,
-                           oldPasswordField: data.oldPasswordField,
-                           openerTopWindowID: data.openerTopWindowID,
-                           dismissedPrompt: data.dismissedPrompt,
-                           target: msg.target});
+        this.onFormSubmit({
+          hostname: data.hostname,
+          formSubmitURL: data.formSubmitURL,
+          autoFilledLoginGuid: data.autoFilledLoginGuid,
+          usernameField: data.usernameField,
+          newPasswordField: data.newPasswordField,
+          oldPasswordField: data.oldPasswordField,
+          openerTopWindowID: data.openerTopWindowID,
+          dismissedPrompt: data.dismissedPrompt,
+          target: msg.target,
+        });
         break;
       }
 
@@ -142,7 +166,7 @@ var LoginManagerParent = {
     if (loginFormOrigin) {
       let formHost;
       try {
-        formHost = (new URL(loginFormOrigin)).host;
+        formHost = new URL(loginFormOrigin).host;
         let recipeManager = await this.recipeParentPromise;
         recipes = recipeManager.getRecipesForHost(formHost);
       } catch (ex) {
@@ -154,24 +178,33 @@ var LoginManagerParent = {
     // doesn't support structured cloning.
     let jsLogins = [LoginHelper.loginToVanillaObject(login)];
 
-    let objects = inputElement ? {inputElement} : null;
-    browser.messageManager.sendAsyncMessage("PasswordManager:fillForm", {
-      loginFormOrigin,
-      logins: jsLogins,
-      recipes,
-    }, objects);
+    let objects = inputElement ? { inputElement } : null;
+    browser.messageManager.sendAsyncMessage(
+      "PasswordManager:fillForm",
+      {
+        loginFormOrigin,
+        logins: jsLogins,
+        recipes,
+      },
+      objects
+    );
   },
 
   /**
    * Send relevant data (e.g. logins and recipes) to the child process (LoginManagerContent).
    */
-  async sendLoginDataToChild(showMasterPassword, formOrigin, actionOrigin,
-                             requestId, target) {
+  async sendLoginDataToChild(
+    showMasterPassword,
+    formOrigin,
+    actionOrigin,
+    requestId,
+    target
+  ) {
     let recipes = [];
     if (formOrigin) {
       let formHost;
       try {
-        formHost = (new URL(formOrigin)).host;
+        formHost = new URL(formOrigin).host;
         let recipeManager = await this.recipeParentPromise;
         recipes = recipeManager.getRecipesForHost(formHost);
       } catch (ex) {
@@ -198,8 +231,10 @@ var LoginManagerParent = {
       log("deferring sendLoginDataToChild for", formOrigin);
       let self = this;
       let observer = {
-        QueryInterface: ChromeUtils.generateQI([Ci.nsIObserver,
-                                                Ci.nsISupportsWeakReference]),
+        QueryInterface: ChromeUtils.generateQI([
+          Ci.nsIObserver,
+          Ci.nsISupportsWeakReference,
+        ]),
 
         observe(subject, topic, data) {
           log("Got deferred sendLoginDataToChild notification:", topic);
@@ -215,8 +250,13 @@ var LoginManagerParent = {
             return;
           }
 
-          self.sendLoginDataToChild(showMasterPassword, formOrigin, actionOrigin,
-                                    requestId, target);
+          self.sendLoginDataToChild(
+            showMasterPassword,
+            formOrigin,
+            actionOrigin,
+            requestId,
+            target
+          );
         },
       };
 
@@ -231,7 +271,9 @@ var LoginManagerParent = {
     }
 
     // Autocomplete results do not need to match actionOrigin.
-    let logins = this._searchAndDedupeLogins(formOrigin, actionOrigin, {looseActionOriginMatch: true});
+    let logins = this._searchAndDedupeLogins(formOrigin, actionOrigin, {
+      looseActionOriginMatch: true,
+    });
 
     log("sendLoginDataToChild:", logins.length, "deduped logins");
     // Convert the array of nsILoginInfo to vanilla JS objects since nsILoginInfo
@@ -244,10 +286,19 @@ var LoginManagerParent = {
     });
   },
 
-  doAutocompleteSearch({ formOrigin, actionOrigin,
-                         searchString, previousResult,
-                         rect, requestId, isSecure, isPasswordField,
-  }, target) {
+  doAutocompleteSearch(
+    {
+      formOrigin,
+      actionOrigin,
+      searchString,
+      previousResult,
+      rect,
+      requestId,
+      isSecure,
+      isPasswordField,
+    },
+    target
+  ) {
     // Note: previousResult is a regular object, not an
     // nsIAutoCompleteResult.
 
@@ -255,22 +306,31 @@ var LoginManagerParent = {
     if (!Services.logins.isLoggedIn) {
       let timeDiff = Date.now() - this._lastMPLoginCancelled;
       if (timeDiff < this._repromptTimeout) {
-        log("Not searching logins for autocomplete since the master password " +
-            `prompt was last cancelled ${Math.round(timeDiff / 1000)} seconds ago.`);
+        log(
+          "Not searching logins for autocomplete since the master password " +
+            `prompt was last cancelled ${Math.round(
+              timeDiff / 1000
+            )} seconds ago.`
+        );
         // Send an empty array to make LoginManagerContent clear the
         // outstanding request it has temporarily saved.
-        target.messageManager.sendAsyncMessage("PasswordManager:loginsAutoCompleted", {
-          requestId,
-          logins: [],
-        });
+        target.messageManager.sendAsyncMessage(
+          "PasswordManager:loginsAutoCompleted",
+          {
+            requestId,
+            logins: [],
+          }
+        );
         return;
       }
     }
 
     let searchStringLower = searchString.toLowerCase();
     let logins;
-    if (previousResult &&
-        searchStringLower.startsWith(previousResult.searchString.toLowerCase())) {
+    if (
+      previousResult &&
+      searchStringLower.startsWith(previousResult.searchString.toLowerCase())
+    ) {
       log("Using previous autocomplete result");
 
       // We have a list of results for a shorter search string, so just
@@ -280,7 +340,9 @@ var LoginManagerParent = {
       log("Creating new autocomplete search result.");
 
       // Autocomplete results do not need to match actionOrigin.
-      logins = this._searchAndDedupeLogins(formOrigin, actionOrigin, {looseActionOriginMatch: true});
+      logins = this._searchAndDedupeLogins(formOrigin, actionOrigin, {
+        looseActionOriginMatch: true,
+      });
     }
 
     let matchingLogins = logins.filter(function(fullMatch) {
@@ -298,26 +360,39 @@ var LoginManagerParent = {
     // Convert the array of nsILoginInfo to vanilla JS objects since nsILoginInfo
     // doesn't support structured cloning.
     var jsLogins = LoginHelper.loginsToVanillaObjects(matchingLogins);
-    target.messageManager.sendAsyncMessage("PasswordManager:loginsAutoCompleted", {
-      requestId,
-      logins: jsLogins,
-    });
+    target.messageManager.sendAsyncMessage(
+      "PasswordManager:loginsAutoCompleted",
+      {
+        requestId,
+        logins: jsLogins,
+      }
+    );
   },
 
-  onFormSubmit({hostname, formSubmitURL, autoFilledLoginGuid,
-                usernameField, newPasswordField,
-                oldPasswordField, openerTopWindowID,
-                dismissedPrompt, target}) {
+  onFormSubmit({
+    hostname,
+    formSubmitURL,
+    autoFilledLoginGuid,
+    usernameField,
+    newPasswordField,
+    oldPasswordField,
+    openerTopWindowID,
+    dismissedPrompt,
+    target,
+  }) {
     function getPrompter() {
-      var prompterSvc = Cc["@mozilla.org/login-manager/prompter;1"].
-                        createInstance(Ci.nsILoginManagerPrompter);
+      var prompterSvc = Cc[
+        "@mozilla.org/login-manager/prompter;1"
+      ].createInstance(Ci.nsILoginManagerPrompter);
       prompterSvc.init(target.ownerGlobal);
       prompterSvc.browser = target;
 
       for (let win of Services.wm.getEnumerator(null)) {
         let tabbrowser = win.gBrowser;
         if (tabbrowser) {
-          let browser = tabbrowser.getBrowserForOuterWindowID(openerTopWindowID);
+          let browser = tabbrowser.getBrowserForOuterWindowID(
+            openerTopWindowID
+          );
           if (browser) {
             prompterSvc.openerBrowser = browser;
             break;
@@ -334,8 +409,9 @@ var LoginManagerParent = {
         return;
       }
       // Update the lastUsed timestamp and increment the use count.
-      let propBag = Cc["@mozilla.org/hash-property-bag;1"].
-                    createInstance(Ci.nsIWritablePropertyBag);
+      let propBag = Cc["@mozilla.org/hash-property-bag;1"].createInstance(
+        Ci.nsIWritablePropertyBag
+      );
       propBag.setProperty("timeLastUsed", Date.now());
       propBag.setProperty("timesUsedIncrement", 1);
       Services.logins.modifyLogin(login, propBag);
@@ -346,22 +422,29 @@ var LoginManagerParent = {
       return;
     }
 
-    var formLogin = Cc["@mozilla.org/login-manager/loginInfo;1"].
-                    createInstance(Ci.nsILoginInfo);
-    formLogin.init(hostname, formSubmitURL, null,
-                   (usernameField ? usernameField.value : ""),
-                   newPasswordField.value,
-                   (usernameField ? usernameField.name : ""),
-                   newPasswordField.name);
+    var formLogin = Cc["@mozilla.org/login-manager/loginInfo;1"].createInstance(
+      Ci.nsILoginInfo
+    );
+    formLogin.init(
+      hostname,
+      formSubmitURL,
+      null,
+      usernameField ? usernameField.value : "",
+      newPasswordField.value,
+      usernameField ? usernameField.name : "",
+      newPasswordField.name
+    );
 
     if (autoFilledLoginGuid) {
       let loginsForGuid = LoginHelper.searchLoginsWithObject({
         guid: autoFilledLoginGuid,
       });
-      if (loginsForGuid.length == 1 &&
-          loginsForGuid[0].password == formLogin.password &&
-          (!formLogin.username || // Also cover cases where only the password is requested.
-           loginsForGuid[0].username == formLogin.username)) {
+      if (
+        loginsForGuid.length == 1 &&
+        loginsForGuid[0].password == formLogin.password &&
+        (!formLogin.username || // Also cover cases where only the password is requested.
+          loginsForGuid[0].username == formLogin.username)
+      ) {
         log("The filled login matches the form submission. Nothing to change.");
         recordLoginUse(loginsForGuid[0]);
         return;
@@ -383,12 +466,14 @@ var LoginManagerParent = {
 
         if (oldLogin.password == formLogin.password) {
           recordLoginUse(oldLogin);
-          log("(Not prompting to save/change since we have no username and the " +
-              "only saved password matches the new password)");
+          log(
+            "(Not prompting to save/change since we have no username and the " +
+              "only saved password matches the new password)"
+          );
           return;
         }
 
-        formLogin.username      = oldLogin.username;
+        formLogin.username = oldLogin.username;
         formLogin.usernameField = oldLogin.usernameField;
 
         prompter.promptToChangePassword(oldLogin, formLogin, dismissedPrompt);
@@ -402,7 +487,6 @@ var LoginManagerParent = {
 
       return;
     }
-
 
     var existingLogin = null;
     // Look for an existing login that matches the form login.
@@ -448,11 +532,19 @@ var LoginManagerParent = {
       if (existingLogin.password != formLogin.password) {
         log("...passwords differ, prompting to change.");
         prompter = getPrompter();
-        prompter.promptToChangePassword(existingLogin, formLogin, dismissedPrompt);
+        prompter.promptToChangePassword(
+          existingLogin,
+          formLogin,
+          dismissedPrompt
+        );
       } else if (!existingLogin.username && formLogin.username) {
         log("...empty username update, prompting to change.");
         prompter = getPrompter();
-        prompter.promptToChangePassword(existingLogin, formLogin, dismissedPrompt);
+        prompter.promptToChangePassword(
+          existingLogin,
+          formLogin,
+          dismissedPrompt
+        );
       } else {
         recordLoginUse(existingLogin);
       }
@@ -516,18 +608,29 @@ var LoginManagerParent = {
     state.hasInsecureLoginForms = hasInsecureLoginForms;
 
     // Report the insecure login form state immediately.
-    browser.dispatchEvent(new browser.ownerGlobal
-                                 .CustomEvent("InsecureLoginFormsStateChange"));
+    browser.dispatchEvent(
+      new browser.ownerGlobal.CustomEvent("InsecureLoginFormsStateChange")
+    );
   },
 };
 
-XPCOMUtils.defineLazyGetter(LoginManagerParent, "recipeParentPromise", function() {
-  const { LoginRecipesParent } = ChromeUtils.import("resource://gre/modules/LoginRecipes.jsm");
-  this._recipeManager = new LoginRecipesParent({
-    defaults: Services.prefs.getStringPref("signon.recipes.path"),
-  });
-  return this._recipeManager.initializationPromise;
-});
+XPCOMUtils.defineLazyGetter(
+  LoginManagerParent,
+  "recipeParentPromise",
+  function() {
+    const { LoginRecipesParent } = ChromeUtils.import(
+      "resource://gre/modules/LoginRecipes.jsm"
+    );
+    this._recipeManager = new LoginRecipesParent({
+      defaults: Services.prefs.getStringPref("signon.recipes.path"),
+    });
+    return this._recipeManager.initializationPromise;
+  }
+);
 
-XPCOMUtils.defineLazyPreferenceGetter(LoginManagerParent, "_repromptTimeout",
-                                      "signon.masterPasswordReprompt.timeout_ms", 900000); // 15 Minutes
+XPCOMUtils.defineLazyPreferenceGetter(
+  LoginManagerParent,
+  "_repromptTimeout",
+  "signon.masterPasswordReprompt.timeout_ms",
+  900000
+); // 15 Minutes

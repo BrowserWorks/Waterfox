@@ -758,7 +758,7 @@ void FetchBodyConsumer<Derived>::ContinueConsumeBody(nsresult aStatus,
         JS::Rooted<JS::Value> val(cx);
         val.setObjectOrNull(arrayBuffer);
 
-        localPromise->MaybeResolve(cx, val);
+        localPromise->MaybeResolve(val);
         // ArrayBuffer takes over ownership.
         aResult = nullptr;
       }
@@ -792,7 +792,7 @@ void FetchBodyConsumer<Derived>::ContinueConsumeBody(nsresult aStatus,
           JS::Rooted<JS::Value> json(cx);
           BodyUtil::ConsumeJson(cx, &json, decoded, error);
           if (!error.Failed()) {
-            localPromise->MaybeResolve(cx, json);
+            localPromise->MaybeResolve(json);
           }
         }
       };

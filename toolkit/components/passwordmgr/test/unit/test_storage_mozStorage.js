@@ -3,7 +3,6 @@
  * bypassing the normal password manager usage.
  */
 
-
 const ENCTYPE_BASE64 = 0;
 const ENCTYPE_SDR = 1;
 const PERMISSION_SAVE_LOGINS = "login-saving";
@@ -13,8 +12,10 @@ const PERMISSION_SAVE_LOGINS = "login-saving";
 const CURRENT_SCHEMA = 6;
 
 async function copyFile(aLeafName) {
-  await OS.File.copy(OS.Path.join(do_get_file("data").path, aLeafName),
-                     OS.Path.join(OS.Constants.Path.profileDir, aLeafName));
+  await OS.File.copy(
+    OS.Path.join(do_get_file("data").path, aLeafName),
+    OS.Path.join(OS.Constants.Path.profileDir, aLeafName)
+  );
 }
 
 function openDB(aLeafName) {
@@ -46,25 +47,32 @@ function reloadStorage(aInputPathName, aInputFileName) {
     inputFile.append(aInputFileName);
   }
 
-  let storage = Cc["@mozilla.org/login-manager/storage/mozStorage;1"]
-                  .createInstance(Ci.nsILoginManagerStorage);
-  storage.QueryInterface(Ci.nsIInterfaceRequestor)
-         .getInterface(Ci.nsIVariant)
-         .initWithFile(inputFile);
+  let storage = Cc[
+    "@mozilla.org/login-manager/storage/mozStorage;1"
+  ].createInstance(Ci.nsILoginManagerStorage);
+  storage
+    .QueryInterface(Ci.nsIInterfaceRequestor)
+    .getInterface(Ci.nsIVariant)
+    .initWithFile(inputFile);
 
   return storage;
 }
 
 function checkStorageData(storage, ref_disabledHosts, ref_logins) {
   LoginTestUtils.assertLoginListsEqual(storage.getAllLogins(), ref_logins);
-  LoginTestUtils.assertDisabledHostsEqual(getAllDisabledHostsFromPermissionManager(),
-                                          ref_disabledHosts);
+  LoginTestUtils.assertDisabledHostsEqual(
+    getAllDisabledHostsFromPermissionManager(),
+    ref_disabledHosts
+  );
 }
 
 function getAllDisabledHostsFromPermissionManager() {
   let disabledHosts = [];
   for (let perm of Services.perms.enumerator) {
-    if (perm.type == PERMISSION_SAVE_LOGINS && perm.capability == Services.perms.DENY_ACTION) {
+    if (
+      perm.type == PERMISSION_SAVE_LOGINS &&
+      perm.capability == Services.perms.DENY_ACTION
+    ) {
       disabledHosts.push(perm.principal.URI.prePath);
     }
   }
@@ -88,7 +96,9 @@ add_task(async function test_execute() {
   try {
     var isGUID = /^\{[0-9a-f\d]{8}-[0-9a-f\d]{4}-[0-9a-f\d]{4}-[0-9a-f\d]{4}-[0-9a-f\d]{12}\}$/;
     function getGUIDforID(conn, id) {
-      var stmt = conn.createStatement("SELECT guid from moz_logins WHERE id = " + id);
+      var stmt = conn.createStatement(
+        "SELECT guid from moz_logins WHERE id = " + id
+      );
       stmt.executeStep();
       var guid = stmt.getString(0);
       stmt.finalize();
@@ -96,7 +106,9 @@ add_task(async function test_execute() {
     }
 
     function getEncTypeForID(conn, id) {
-      var stmt = conn.createStatement("SELECT encType from moz_logins WHERE id = " + id);
+      var stmt = conn.createStatement(
+        "SELECT encType from moz_logins WHERE id = " + id
+      );
       stmt.executeStep();
       var encType = stmt.row.encType;
       stmt.finalize();
@@ -120,28 +132,70 @@ add_task(async function test_execute() {
     var testdesc = "Setup of nsLoginInfo test-users";
     var nsLoginInfo = new Components.Constructor(
       "@mozilla.org/login-manager/loginInfo;1",
-      Ci.nsILoginInfo);
+      Ci.nsILoginInfo
+    );
     Assert.ok(nsLoginInfo != null);
 
-    var testuser1 = new nsLoginInfo;
-    testuser1.init("http://test.com", "http://test.com", null,
-                   "testuser1", "testpass1", "u1", "p1");
-    var testuser1B = new nsLoginInfo;
-    testuser1B.init("http://test.com", "http://test.com", null,
-                    "testuser1B", "testpass1B", "u1", "p1");
-    var testuser2 = new nsLoginInfo;
-    testuser2.init("http://test.org", "http://test.org", null,
-                   "testuser2", "testpass2", "u2", "p2");
-    var testuser3 = new nsLoginInfo;
-    testuser3.init("http://test.gov", "http://test.gov", null,
-                   "testuser3", "testpass3", "u3", "p3");
-    var testuser4 = new nsLoginInfo;
-    testuser4.init("http://test.gov", "http://test.gov", null,
-                   "testuser1", "testpass2", "u4", "p4");
-    var testuser5 = new nsLoginInfo;
-    testuser5.init("http://test.gov", "http://test.gov", null,
-                   "testuser2", "testpass1", "u5", "p5");
-
+    var testuser1 = new nsLoginInfo();
+    testuser1.init(
+      "http://test.com",
+      "http://test.com",
+      null,
+      "testuser1",
+      "testpass1",
+      "u1",
+      "p1"
+    );
+    var testuser1B = new nsLoginInfo();
+    testuser1B.init(
+      "http://test.com",
+      "http://test.com",
+      null,
+      "testuser1B",
+      "testpass1B",
+      "u1",
+      "p1"
+    );
+    var testuser2 = new nsLoginInfo();
+    testuser2.init(
+      "http://test.org",
+      "http://test.org",
+      null,
+      "testuser2",
+      "testpass2",
+      "u2",
+      "p2"
+    );
+    var testuser3 = new nsLoginInfo();
+    testuser3.init(
+      "http://test.gov",
+      "http://test.gov",
+      null,
+      "testuser3",
+      "testpass3",
+      "u3",
+      "p3"
+    );
+    var testuser4 = new nsLoginInfo();
+    testuser4.init(
+      "http://test.gov",
+      "http://test.gov",
+      null,
+      "testuser1",
+      "testpass2",
+      "u4",
+      "p4"
+    );
+    var testuser5 = new nsLoginInfo();
+    testuser5.init(
+      "http://test.gov",
+      "http://test.gov",
+      null,
+      "testuser2",
+      "testpass1",
+      "u5",
+      "p5"
+    );
 
     /* ========== 1 ========== */
     testnum++;
@@ -176,8 +230,10 @@ add_task(async function test_execute() {
     await copyFile("signons-v999-2.sqlite");
     await OS.File.remove(failFile);
 
-    Assert.throws(() => reloadStorage(OUTDIR, "signons-v999-2.sqlite"),
-                  /Initialization failed/);
+    Assert.throws(
+      () => reloadStorage(OUTDIR, "signons-v999-2.sqlite"),
+      /Initialization failed/
+    );
 
     // Check to ensure the DB file was renamed to .corrupt.
     Assert.equal(false, await OS.File.exists(origFile));
@@ -223,12 +279,20 @@ add_task(async function test_execute() {
     dbConnection.close();
 
     storage = reloadStorage(OUTDIR, "signons-v1v2.sqlite");
-    checkStorageData(storage, ["https://disabled.net"], [testuser1, testuser2, testuser3]);
+    checkStorageData(
+      storage,
+      ["https://disabled.net"],
+      [testuser1, testuser2, testuser3]
+    );
 
     // While we're here, try modifying a login, to ensure that doing so doesn't
     // change the existing GUID.
     storage.modifyLogin(testuser1, testuser1B);
-    checkStorageData(storage, ["https://disabled.net"], [testuser1B, testuser2, testuser3]);
+    checkStorageData(
+      storage,
+      ["https://disabled.net"],
+      [testuser1B, testuser2, testuser3]
+    );
 
     // Check the GUIDs. Logins 1 and 2 should retain their original GUID, login 3
     // should have one created (because it didn't have one previously).
@@ -257,7 +321,12 @@ add_task(async function test_execute() {
 
     // Check to see that we added the correct encType to the logins.
     Assert.equal(CURRENT_SCHEMA, dbConnection.schemaVersion);
-    var encTypes = [ENCTYPE_BASE64, ENCTYPE_SDR, ENCTYPE_BASE64, ENCTYPE_BASE64];
+    var encTypes = [
+      ENCTYPE_BASE64,
+      ENCTYPE_SDR,
+      ENCTYPE_BASE64,
+      ENCTYPE_BASE64,
+    ];
     for (let i = 0; i < encTypes.length; i++) {
       Assert.equal(encTypes[i], getEncTypeForID(dbConnection, i + 1));
     }
@@ -265,8 +334,7 @@ add_task(async function test_execute() {
 
     // There are 4 logins, but 3 will be invalid because we can no longer decrypt
     // base64-encoded items. (testuser1/4/5)
-    checkStorageData(storage, ["https://disabled.net"],
-                     [testuser2]);
+    checkStorageData(storage, ["https://disabled.net"], [testuser2]);
 
     deleteFile(OUTDIR, "signons-v2.sqlite");
 
@@ -281,7 +349,13 @@ add_task(async function test_execute() {
     // Sanity check the test file.
     dbConnection = openDB("signons-v2v3.sqlite");
     Assert.equal(2, dbConnection.schemaVersion);
-    encTypes = [ENCTYPE_BASE64, ENCTYPE_SDR, ENCTYPE_BASE64, ENCTYPE_BASE64, null];
+    encTypes = [
+      ENCTYPE_BASE64,
+      ENCTYPE_SDR,
+      ENCTYPE_BASE64,
+      ENCTYPE_BASE64,
+      null,
+    ];
     for (let i = 0; i < encTypes.length; i++) {
       Assert.equal(encTypes[i], getEncTypeForID(dbConnection, i + 1));
     }
@@ -290,7 +364,13 @@ add_task(async function test_execute() {
     storage = reloadStorage(OUTDIR, "signons-v2v3.sqlite");
     Assert.equal(CURRENT_SCHEMA, dbConnection.schemaVersion);
 
-    encTypes = [ENCTYPE_BASE64, ENCTYPE_SDR, ENCTYPE_BASE64, ENCTYPE_BASE64, ENCTYPE_SDR];
+    encTypes = [
+      ENCTYPE_BASE64,
+      ENCTYPE_SDR,
+      ENCTYPE_BASE64,
+      ENCTYPE_BASE64,
+      ENCTYPE_SDR,
+    ];
     for (let i = 0; i < encTypes.length; i++) {
       Assert.equal(encTypes[i], getEncTypeForID(dbConnection, i + 1));
     }
@@ -299,14 +379,19 @@ add_task(async function test_execute() {
     // There are 5 logins, but 3 will be invalid because we can no longer decrypt
     // base64-encoded items. (testuser1/4/5). We no longer reencrypt with SDR.
     checkStorageData(storage, ["https://disabled.net"], [testuser2, testuser3]);
-    encTypes = [ENCTYPE_BASE64, ENCTYPE_SDR, ENCTYPE_BASE64, ENCTYPE_BASE64, ENCTYPE_SDR];
+    encTypes = [
+      ENCTYPE_BASE64,
+      ENCTYPE_SDR,
+      ENCTYPE_BASE64,
+      ENCTYPE_BASE64,
+      ENCTYPE_SDR,
+    ];
     for (let i = 0; i < encTypes.length; i++) {
       Assert.equal(encTypes[i], getEncTypeForID(dbConnection, i + 1));
     }
     dbConnection.close();
 
     deleteFile(OUTDIR, "signons-v2v3.sqlite");
-
 
     /* ========== 7 ========== */
     testnum++;
@@ -374,7 +459,6 @@ add_task(async function test_execute() {
     LoginTestUtils.assertTimeIsAboutNow(t2.timeLastUsed);
     LoginTestUtils.assertTimeIsAboutNow(t2.timePasswordChanged);
 
-
     /* ========== 9 ========== */
     testnum++;
     testdesc = "Test upgrade from v4 storage";
@@ -388,7 +472,6 @@ add_task(async function test_execute() {
     storage = reloadStorage(OUTDIR, "signons-v4.sqlite");
     Assert.equal(CURRENT_SCHEMA, dbConnection.schemaVersion);
     Assert.ok(dbConnection.tableExists("moz_deleted_logins"));
-
 
     /* ========== 10 ========== */
     testnum++;
@@ -422,20 +505,29 @@ add_task(async function test_execute() {
       "http://xn--19g.com",
     ];
 
-    LoginTestUtils.assertDisabledHostsEqual(disabledHosts, getAllDisabledHostsFromMozStorage(dbConnection));
+    LoginTestUtils.assertDisabledHostsEqual(
+      disabledHosts,
+      getAllDisabledHostsFromMozStorage(dbConnection)
+    );
 
     // Reload storage
     storage = reloadStorage(OUTDIR, "signons-v5v6.sqlite");
     Assert.equal(CURRENT_SCHEMA, dbConnection.schemaVersion);
 
     // moz_disabledHosts should now be empty after migration.
-    LoginTestUtils.assertDisabledHostsEqual([], getAllDisabledHostsFromMozStorage(dbConnection));
+    LoginTestUtils.assertDisabledHostsEqual(
+      [],
+      getAllDisabledHostsFromMozStorage(dbConnection)
+    );
 
     // Get all the other hosts currently saved in the permission manager.
     let hostsInPermissionManager = getAllDisabledHostsFromPermissionManager();
 
     // All disabledHosts should have migrated to the permission manager
-    LoginTestUtils.assertDisabledHostsEqual(disabledHosts, hostsInPermissionManager);
+    LoginTestUtils.assertDisabledHostsEqual(
+      disabledHosts,
+      hostsInPermissionManager
+    );
 
     // Remove all disabled hosts from the permission manager before test ends
     for (let host of disabledHosts) {
@@ -446,10 +538,16 @@ add_task(async function test_execute() {
     testnum++;
     testdesc = "Create nsILoginInfo instances for testing with";
 
-    testuser1 = new nsLoginInfo;
-    testuser1.init("http://dummyhost.mozilla.org", "", null,
-                   "dummydude", "itsasecret", "put_user_here", "put_pw_here");
-
+    testuser1 = new nsLoginInfo();
+    testuser1.init(
+      "http://dummyhost.mozilla.org",
+      "",
+      null,
+      "dummydude",
+      "itsasecret",
+      "put_user_here",
+      "put_pw_here"
+    );
 
     /*
      * ---------------------- DB Corruption ----------------------
@@ -469,7 +567,8 @@ add_task(async function test_execute() {
     // will init mozStorage module with corrupt database, init should fail
     Assert.throws(
       () => reloadStorage(OS.Constants.Path.profileDir, filename),
-      /Initialization failed/);
+      /Initialization failed/
+    );
 
     // check that the backup file exists
     Assert.ok(await OS.File.exists(filepath + ".corrupt"));
@@ -493,6 +592,8 @@ add_task(async function test_execute() {
     deleteFile(OS.Constants.Path.profileDir, filename + ".corrupt");
     deleteFile(OS.Constants.Path.profileDir, filename);
   } catch (e) {
-    throw new Error("FAILED in test #" + testnum + " -- " + testdesc + ": " + e);
+    throw new Error(
+      "FAILED in test #" + testnum + " -- " + testdesc + ": " + e
+    );
   }
 });

@@ -5,29 +5,31 @@
 add_task(async function() {
   await BrowserTestUtils.openNewForegroundTab(gBrowser, "http://example.net/");
   let window1 = await BrowserTestUtils.openNewBrowserWindow();
-  let tab1 = await BrowserTestUtils.openNewForegroundTab(window1.gBrowser, "http://example.com/");
+  let tab1 = await BrowserTestUtils.openNewForegroundTab(
+    window1.gBrowser,
+    "http://example.com/"
+  );
   window1.gBrowser.pinTab(tab1);
 
   let extension = ExtensionTestUtils.loadExtension({
     manifest: {
-      "permissions": ["tabs"],
+      permissions: ["tabs"],
     },
 
     background: function() {
-      browser.tabs.query(
-        {url: "<all_urls>"},
-        tabs => {
-          let destination = tabs[0];
-          let source = tabs[1]; // remember, pinning moves it to the left.
-          browser.tabs.move(source.id, {windowId: destination.windowId, index: 0});
-
-          browser.tabs.query(
-            {url: "<all_urls>"},
-            tabs => {
-              browser.test.assertEq(true, tabs[0].pinned);
-              browser.test.notifyPass("tabs.move.pin");
-            });
+      browser.tabs.query({ url: "<all_urls>" }, tabs => {
+        let destination = tabs[0];
+        let source = tabs[1]; // remember, pinning moves it to the left.
+        browser.tabs.move(source.id, {
+          windowId: destination.windowId,
+          index: 0,
         });
+
+        browser.tabs.query({ url: "<all_urls>" }, tabs => {
+          browser.test.assertEq(true, tabs[0].pinned);
+          browser.test.notifyPass("tabs.move.pin");
+        });
+      });
     },
   });
 

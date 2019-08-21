@@ -53,7 +53,7 @@ var startMeasure = "fetchStart";
 
 function raptorContentHandler() {
   // retrieve test settings from local ext storage
-  if (typeof(browser) !== "undefined") {
+  if (typeof browser !== "undefined") {
     // firefox, returns promise
     browser.storage.local.get("settings").then(function(item) {
       setup(item.settings);
@@ -141,9 +141,11 @@ function measureHero() {
         var resultType = `hero:${heroFound}`;
         console.log(`found ${resultType}`);
         // calculcate result: performance.timing.fetchStart - time when we got hero element
-        perfData.measure(name = resultType,
-                         startMark = startMeasure,
-                         endMark = heroFound);
+        perfData.measure(
+          (name = resultType),
+          (startMark = startMeasure),
+          (endMark = heroFound)
+        );
         var perfResult = perfData.getEntriesByName(resultType);
         var _result = Math.round(perfResult[0].duration);
         sendResult(resultType, _result);
@@ -153,27 +155,30 @@ function measureHero() {
       });
     }
     // we want the element 100% visible on the viewport
-    var options = {root: null, rootMargin: "0px", threshold: [1]};
+    var options = { root: null, rootMargin: "0px", threshold: [1] };
     try {
       obs = new window.IntersectionObserver(callbackHero, options);
       heroElementsFound.forEach(function(el) {
         // if hero element is one we want to measure, add it to the observer
-        if (heroesToCapture.indexOf(el.getAttribute("elementtiming")) > -1)
+        if (heroesToCapture.indexOf(el.getAttribute("elementtiming")) > -1) {
           obs.observe(el);
+        }
       });
     } catch (err) {
       console.log(err);
     }
   } else {
-      console.log("couldn't find hero element");
+    console.log("couldn't find hero element");
   }
 }
 
 function measureFNBPaint() {
   var x = window.performance.timing.timeToNonBlankPaint;
 
-  if (typeof(x) == "undefined") {
-    console.log("ERROR: timeToNonBlankPaint is undefined; ensure the pref is enabled");
+  if (typeof x == "undefined") {
+    console.log(
+      "ERROR: timeToNonBlankPaint is undefined; ensure the pref is enabled"
+    );
     return;
   }
   if (x > 0) {
@@ -184,10 +189,14 @@ function measureFNBPaint() {
   } else {
     gRetryCounter += 1;
     if (gRetryCounter <= 10) {
-      console.log(`\nfnbpaint is not yet available (0), retry number ${gRetryCounter}...\n`);
+      console.log(
+        `\nfnbpaint is not yet available (0), retry number ${gRetryCounter}...\n`
+      );
       window.setTimeout(measureFNBPaint, 100);
     } else {
-      console.log(`\nunable to get a value for fnbpaint after ${gRetryCounter} retries\n`);
+      console.log(
+        `\nunable to get a value for fnbpaint after ${gRetryCounter} retries\n`
+      );
     }
   }
 }
@@ -195,8 +204,10 @@ function measureFNBPaint() {
 function measureDCF() {
   var x = window.performance.timing.timeToDOMContentFlushed;
 
-  if (typeof(x) == "undefined") {
-    console.log("ERROR: domContentFlushed is undefined; ensure the pref is enabled");
+  if (typeof x == "undefined") {
+    console.log(
+      "ERROR: domContentFlushed is undefined; ensure the pref is enabled"
+    );
     return;
   }
   if (x > 0) {
@@ -207,10 +218,14 @@ function measureDCF() {
   } else {
     gRetryCounter += 1;
     if (gRetryCounter <= 10) {
-      console.log(`\dcf is not yet available (0), retry number ${gRetryCounter}...\n`);
+      console.log(
+        `\dcf is not yet available (0), retry number ${gRetryCounter}...\n`
+      );
       window.setTimeout(measureDCF, 100);
     } else {
-      console.log(`\nunable to get a value for dcf after ${gRetryCounter} retries\n`);
+      console.log(
+        `\nunable to get a value for dcf after ${gRetryCounter} retries\n`
+      );
     }
   }
 }
@@ -218,8 +233,10 @@ function measureDCF() {
 function measureTTFI() {
   var x = window.performance.timing.timeToFirstInteractive;
 
-  if (typeof(x) == "undefined") {
-    console.log("ERROR: timeToFirstInteractive is undefined; ensure the pref is enabled");
+  if (typeof x == "undefined") {
+    console.log(
+      "ERROR: timeToFirstInteractive is undefined; ensure the pref is enabled"
+    );
     return;
   }
   if (x > 0) {
@@ -236,7 +253,9 @@ function measureTTFI() {
     // times out at 30 seconds).  Some pages will never get 5 seconds
     // without a busy period!
     if (gRetryCounter <= 25 * (1000 / 200)) {
-      console.log(`TTFI is not yet available (0), retry number ${gRetryCounter}...\n`);
+      console.log(
+        `TTFI is not yet available (0), retry number ${gRetryCounter}...\n`
+      );
       window.setTimeout(measureTTFI, 200);
     } else {
       // unable to get a value for TTFI - negative value will be filtered out later
@@ -253,13 +272,16 @@ function measureFCP() {
 
   // Firefox implementation of FCP is not yet spec-compliant (see Bug 1519410)
   result = window.performance.timing.timeToContentfulPaint;
-  if (typeof(result) == "undefined") {
+  if (typeof result == "undefined") {
     // we're on chromium
     result = 0;
     let perfEntries = perfData.getEntriesByType("paint");
 
     if (perfEntries.length >= 2) {
-      if (perfEntries[1].name == "first-contentful-paint" && perfEntries[1].startTime != undefined) {
+      if (
+        perfEntries[1].name == "first-contentful-paint" &&
+        perfEntries[1].startTime != undefined
+      ) {
         // this value is actually the final measurement / time to get the FCP event in MS
         result = perfEntries[1].startTime;
       }
@@ -268,7 +290,7 @@ function measureFCP() {
 
   if (result > 0) {
     console.log("got time to first-contentful-paint");
-    if (typeof(browser) !== "undefined") {
+    if (typeof browser !== "undefined") {
       // Firefox returns a timestamp, not the actual measurement in MS; need to calculate result
       var startTime = perfData.timing.fetchStart;
       result = result - startTime;
@@ -279,10 +301,14 @@ function measureFCP() {
   } else {
     gRetryCounter += 1;
     if (gRetryCounter <= 10) {
-      console.log(`\ntime to first-contentful-paint is not yet available (0), retry number ${gRetryCounter}...\n`);
+      console.log(
+        `\ntime to first-contentful-paint is not yet available (0), retry number ${gRetryCounter}...\n`
+      );
       window.setTimeout(measureFCP, 100);
     } else {
-      console.log(`\nunable to get a value for time-to-fcp after ${gRetryCounter} retries\n`);
+      console.log(
+        `\nunable to get a value for time-to-fcp after ${gRetryCounter} retries\n`
+      );
     }
   }
 }
@@ -290,7 +316,7 @@ function measureFCP() {
 function measureLoadTime() {
   var x = window.performance.timing.loadEventStart;
 
-  if (typeof(x) == "undefined") {
+  if (typeof x == "undefined") {
     console.log("ERROR: loadEventStart is undefined");
     return;
   }
@@ -302,10 +328,14 @@ function measureLoadTime() {
   } else {
     gRetryCounter += 1;
     if (gRetryCounter <= 40 * (1000 / 200)) {
-      console.log(`\nloadEventStart is not yet available (0), retry number ${gRetryCounter}...\n`);
+      console.log(
+        `\nloadEventStart is not yet available (0), retry number ${gRetryCounter}...\n`
+      );
       window.setTimeout(measureLoadTime, 100);
     } else {
-      console.log(`\nunable to get a value for loadEventStart after ${gRetryCounter} retries\n`);
+      console.log(
+        `\nunable to get a value for loadEventStart after ${gRetryCounter} retries\n`
+      );
     }
   }
 }
@@ -313,7 +343,9 @@ function measureLoadTime() {
 function sendResult(_type, _value) {
   // send result back to background runner script
   console.log(`sending result back to runner: ${_type} ${_value}`);
-  chrome.runtime.sendMessage({"type": _type, "value": _value}, function(response) {
+  chrome.runtime.sendMessage({ type: _type, value: _value }, function(
+    response
+  ) {
     if (response !== undefined) {
       console.log(response.text);
     }

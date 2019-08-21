@@ -313,27 +313,11 @@ macosx1014-64-ccov/debug:
     test-sets:
         - macosx1014-64-tests
 
-macosx1010-64/debug:
-    build-platform: macosx64/debug
-    test-sets:
-        - macosx64-tests
         - marionette-media-tests
-
 macosx1010-64-shippable/opt:
     build-platform: macosx64-shippable/opt
     test-sets:
-        - macosx64-tests
         - desktop-screenshot-capture
-
-macosx1010-64-devedition/opt:
-    build-platform: macosx64-devedition-nightly/opt
-    test-sets:
-        - macosx64-tests
-
-macosx1010-64-ccov/debug:
-    build-platform: macosx64-ccov/debug
-    test-sets:
-        - macosx64-tests
 
 ##
 # Android platforms (matching /android-em.*/)
@@ -347,11 +331,6 @@ android-em-4.3-arm7-api-16/debug:
 
 android-em-4.3-arm7-api-16-beta/debug:
     build-platform: android-api-16-beta/debug
-    test-sets:
-        - android-common-tests
-
-android-em-4.3-arm7-api-16-release/debug:
-    build-platform: android-api-16-release/debug
     test-sets:
         - android-common-tests
 
@@ -414,11 +393,6 @@ android-em-7.0-x86-release/opt:
 
 android-em-7.0-x86_64-beta/debug:
     build-platform: android-x86_64-beta/debug
-    test-sets:
-        - android-x86_64-tests
-
-android-em-7.0-x86_64-release/debug:
-    build-platform: android-x86_64-release/debug
     test-sets:
         - android-x86_64-tests
 

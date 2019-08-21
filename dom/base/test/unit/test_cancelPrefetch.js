@@ -1,6 +1,7 @@
 // Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
-var prefetch = Cc["@mozilla.org/prefetch-service;1"].
-               getService(Ci.nsIPrefetchService);
+var prefetch = Cc["@mozilla.org/prefetch-service;1"].getService(
+  Ci.nsIPrefetchService
+);
 var ios = Services.io;
 var prefs = Services.prefs;
 
@@ -9,9 +10,10 @@ var parser = new DOMParser();
 
 var doc;
 
-var docbody = '<html xmlns="http://www.w3.org/1999/xhtml"><head></head><body>' +
-              '<link id="node1"/><link id="node2"/>' +
-              "</body></html>";
+var docbody =
+  '<html xmlns="http://www.w3.org/1999/xhtml"><head></head><body>' +
+  '<link id="node1"/><link id="node2"/>' +
+  "</body></html>";
 
 var node1;
 var node2;
@@ -42,16 +44,16 @@ add_test(function test_cancel1() {
     didFail = 1;
   }
 
-  Assert.ok(didFail == 1, "Prefetching the same request with the same " +
-                          "node fails.");
+  Assert.ok(
+    didFail == 1,
+    "Prefetching the same request with the same node fails."
+  );
 
-  Assert.ok(prefetch.hasMoreElements(), "There is still request in " +
-                                        "the queue");
+  Assert.ok(prefetch.hasMoreElements(), "There is still request in the queue");
 
   prefetch.cancelPrefetchPreloadURI(uri, node1);
 
-  Assert.ok(!prefetch.hasMoreElements(), "There is no request in the " +
-                                         "queue");
+  Assert.ok(!prefetch.hasMoreElements(), "There is no request in the queue");
   run_next_test();
 });
 
@@ -67,8 +69,10 @@ add_test(function test_cancel2() {
 
   prefetch.cancelPrefetchPreloadURI(uri, node1);
 
-  Assert.ok(prefetch.hasMoreElements(), "There is still one more request " +
-                                        "in the queue");
+  Assert.ok(
+    prefetch.hasMoreElements(),
+    "There is still one more request in the queue"
+  );
 
   prefetch.cancelPrefetchPreloadURI(uri, node2);
 
@@ -93,8 +97,10 @@ add_test(function test_cancel3() {
   }
   Assert.ok(didFail == 1, "Canceling the request failed");
 
-  Assert.ok(prefetch.hasMoreElements(), "There is still a request " +
-                                        "in the queue");
+  Assert.ok(
+    prefetch.hasMoreElements(),
+    "There is still a request in the queue"
+  );
 
   prefetch.cancelPrefetchPreloadURI(uri, node1);
   Assert.ok(!prefetch.hasMoreElements(), "There is no request in the queue");
@@ -119,8 +125,10 @@ add_test(function test_cancel4() {
   }
   Assert.ok(didFail == 1, "Canceling the request failed");
 
-  Assert.ok(prefetch.hasMoreElements(), "There is still a request " +
-                                        "in the queue");
+  Assert.ok(
+    prefetch.hasMoreElements(),
+    "There is still a request in the queue"
+  );
 
   prefetch.cancelPrefetchPreloadURI(uri1, node1);
   Assert.ok(!prefetch.hasMoreElements(), "There is no request in the queue");

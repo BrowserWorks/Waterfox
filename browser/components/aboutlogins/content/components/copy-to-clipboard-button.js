@@ -20,11 +20,16 @@ class CopyToClipboardButton extends ReflectedFluentElement {
       return;
     }
 
-    let CopyToClipboardButtonTemplate = document.querySelector("#copy-to-clipboard-button-template");
-    this.attachShadow({mode: "open"})
-        .appendChild(CopyToClipboardButtonTemplate.content.cloneNode(true));
+    let CopyToClipboardButtonTemplate = document.querySelector(
+      "#copy-to-clipboard-button-template"
+    );
+    this.attachShadow({ mode: "open" }).appendChild(
+      CopyToClipboardButtonTemplate.content.cloneNode(true)
+    );
 
-    this.shadowRoot.querySelector(".copy-button").addEventListener("click", this);
+    this.shadowRoot
+      .querySelector(".copy-button")
+      .addEventListener("click", this);
   }
 
   static get reflectedFluentIDs() {
@@ -36,8 +41,7 @@ class CopyToClipboardButton extends ReflectedFluentElement {
   }
 
   handleSpecialCaseFluentString(attrName) {
-    if (attrName != "copied-button-text" &&
-        attrName != "copy-button-text") {
+    if (attrName != "copied-button-text" && attrName != "copy-button-text") {
       return false;
     }
 
@@ -53,13 +57,16 @@ class CopyToClipboardButton extends ReflectedFluentElement {
     }
 
     copyButton.disabled = true;
-    navigator.clipboard.writeText(this._relatedInput.value).then(() => {
-      this.setAttribute("copied", "");
-      setTimeout(() => {
-        copyButton.disabled = false;
-        this.removeAttribute("copied");
-      }, CopyToClipboardButton.BUTTON_RESET_TIMEOUT);
-    }, () => copyButton.disabled = false);
+    navigator.clipboard.writeText(this._relatedInput.value).then(
+      () => {
+        this.setAttribute("copied", "");
+        setTimeout(() => {
+          copyButton.disabled = false;
+          this.removeAttribute("copied");
+        }, CopyToClipboardButton.BUTTON_RESET_TIMEOUT);
+      },
+      () => (copyButton.disabled = false)
+    );
   }
 
   set relatedInput(val) {

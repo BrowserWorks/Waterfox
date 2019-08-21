@@ -6,11 +6,11 @@
 // Unfortunately, browser tests cannot load that script as it is too reliant on
 // being loaded in the content process.
 
+let dbService = Cc["@mozilla.org/url-classifier/dbservice;1"].getService(
+  Ci.nsIUrlClassifierDBService
+);
 
-let dbService = Cc["@mozilla.org/url-classifier/dbservice;1"]
-                .getService(Ci.nsIUrlClassifierDBService);
-
-if (typeof(classifierHelper) == "undefined") {
+if (typeof classifierHelper == "undefined") {
   var classifierHelper = {};
 }
 
@@ -38,7 +38,9 @@ classifierHelper.waitForInit = function() {
   const table = "test-phish-simple";
   const url = "http://itisatrap.org/firefox/its-a-trap.html";
   let principal = Services.scriptSecurityManager.createCodebasePrincipal(
-    Services.io.newURI(url), {});
+    Services.io.newURI(url),
+    {}
+  );
 
   return new Promise(function(resolve, reject) {
     Services.obs.addObserver(function() {
@@ -46,7 +48,9 @@ classifierHelper.waitForInit = function() {
     }, "mozentries-update-finished");
 
     let listener = {
-      QueryInterface: ChromeUtils.generateQI(["nsIUrlClassifierUpdateObserver"]),
+      QueryInterface: ChromeUtils.generateQI([
+        "nsIUrlClassifierUpdateObserver",
+      ]),
 
       handleEvent(value) {
         if (value === table) {
@@ -95,9 +99,17 @@ classifierHelper.addUrlToDB = function(updateData) {
     classifierHelper._updatesToCleanup.push(update);
     testUpdate +=
       "n:1000\n" +
-      "i:" + LISTNAME + "\n" +
+      "i:" +
+      LISTNAME +
+      "\n" +
       "ad:1\n" +
-      "a:" + update.addChunk + ":" + HASHLEN + ":" + CHUNKLEN + "\n" +
+      "a:" +
+      update.addChunk +
+      ":" +
+      HASHLEN +
+      ":" +
+      CHUNKLEN +
+      "\n" +
       CHUNKDATA;
   }
 
@@ -110,10 +122,7 @@ classifierHelper.addUrlToDB = function(updateData) {
 classifierHelper.resetDatabase = function() {
   var testUpdate = "";
   for (var update of classifierHelper._updatesToCleanup) {
-    testUpdate +=
-      "n:1000\n" +
-      "i:" + update.db + "\n" +
-      "ad:" + update.addChunk + "\n";
+    testUpdate += "n:1000\ni:" + update.db + "\nad:" + update.addChunk + "\n";
   }
 
   return classifierHelper._update(testUpdate);
@@ -132,9 +141,11 @@ classifierHelper._update = function(update) {
       try {
         await new Promise((resolve, reject) => {
           let listener = {
-            QueryInterface: ChromeUtils.generateQI(["nsIUrlClassifierUpdateObserver"]),
-            updateUrlRequested(url) { },
-            streamFinished(status) { },
+            QueryInterface: ChromeUtils.generateQI([
+              "nsIUrlClassifierUpdateObserver",
+            ]),
+            updateUrlRequested(url) {},
+            streamFinished(status) {},
             updateError(errorCode) {
               reject(errorCode);
             },

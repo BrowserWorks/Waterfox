@@ -24,7 +24,7 @@ TestActor.prototype = {
   },
 };
 TestActor.prototype.requestTypes = {
-  "start": TestActor.prototype.start,
+  start: TestActor.prototype.start,
 };
 
 function TestClient(client, form) {
@@ -51,10 +51,13 @@ TestClient.prototype = {
 };
 
 function run_test() {
-  ActorRegistry.addGlobalActor({
-    constructorName: "TestActor",
-    constructorFun: TestActor,
-  }, "test");
+  ActorRegistry.addGlobalActor(
+    {
+      constructorName: "TestActor",
+      constructorFun: TestActor,
+    },
+    "test"
+  );
 
   DebuggerServer.init();
   DebuggerServer.registerAllActors();
@@ -67,7 +70,8 @@ function run_test() {
 
 function init() {
   gClient = new DebuggerClient(DebuggerServer.connectPipe());
-  gClient.connect()
+  gClient
+    .connect()
     .then(() => gClient.mainRoot.rootForm)
     .then(response => {
       gTestClient = new TestClient(gClient, response);
@@ -91,4 +95,3 @@ function close_client() {
     run_next_test();
   });
 }
-

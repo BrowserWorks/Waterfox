@@ -21,19 +21,25 @@ function run_test() {
   gDebuggee = addTestGlobal("test-stack");
   gClient = new DebuggerClient(DebuggerServer.connectPipe());
   gClient.connect().then(function() {
-    attachTestTabAndResume(gClient, "test-stack",
-                           function(response, targetFront, threadClient) {
-                             gThreadClient = threadClient;
-                             gTargetFront = targetFront;
-                             test_simple_new_source();
-                           });
+    attachTestTabAndResume(gClient, "test-stack", function(
+      response,
+      targetFront,
+      threadClient
+    ) {
+      gThreadClient = threadClient;
+      gTargetFront = targetFront;
+      test_simple_new_source();
+    });
   });
   do_test_pending();
 }
 
 function test_simple_new_source() {
   gThreadClient.addOneTimeListener("paused", function() {
-    gThreadClient.addOneTimeListener("newSource", async function(event2, packet2) {
+    gThreadClient.addOneTimeListener("newSource", async function(
+      event2,
+      packet2
+    ) {
       // The "stopMe" eval source is emitted first.
       Assert.equal(event2, "newSource");
       Assert.equal(packet2.type, "newSource");
@@ -51,7 +57,9 @@ function test_simple_new_source() {
       });
 
       const consoleFront = await gTargetFront.getFront("console");
-      consoleFront.evaluateJSAsync("function f() { }\n//# sourceURL=http://example.com/code.js");
+      consoleFront.evaluateJSAsync(
+        "function f() { }\n//# sourceURL=http://example.com/code.js"
+      );
     });
   });
 

@@ -16,24 +16,32 @@ add_task(async function() {
   store.dispatch(Actions.batchEnable(false));
 
   const wait = waitForNetworkEvents(monitor, 2);
-  await ContentTask.spawn(tab.linkedBrowser, HTTPS_REDIRECT_SJS, async function(url) {
+  await ContentTask.spawn(tab.linkedBrowser, HTTPS_REDIRECT_SJS, async function(
+    url
+  ) {
     content.wrappedJSObject.performRequests(1, url);
   });
   await wait;
 
-  is(store.getState().requests.requests.size, 2,
-     "There were two requests due to redirect.");
+  is(
+    store.getState().requests.requests.size,
+    2,
+    "There were two requests due to redirect."
+  );
 
-  const [
-    initialSecurityIcon,
-    redirectSecurityIcon,
-  ] = document.querySelectorAll(".requests-security-state-icon");
+  const [initialSecurityIcon, redirectSecurityIcon] = document.querySelectorAll(
+    ".requests-security-state-icon"
+  );
 
-  ok(initialSecurityIcon.classList.contains("security-state-insecure"),
-     "Initial request was marked insecure.");
+  ok(
+    initialSecurityIcon.classList.contains("security-state-insecure"),
+    "Initial request was marked insecure."
+  );
 
-  ok(redirectSecurityIcon.classList.contains("security-state-secure"),
-     "Redirected request was marked secure.");
+  ok(
+    redirectSecurityIcon.classList.contains("security-state-secure"),
+    "Redirected request was marked secure."
+  );
 
   await teardown(monitor);
 });

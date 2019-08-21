@@ -83,8 +83,8 @@ async function getObjectInspector(hud) {
   hud.ui.clearOutput();
   jsterm.execute("new Object({ browser_console_hide_jsterm_test: true })");
 
-  const message = await waitFor(
-    () => findMessage(hud, "Object { browser_console_hide_jsterm_test: true }")
+  const message = await waitFor(() =>
+    findMessage(hud, "Object { browser_console_hide_jsterm_test: true }")
   );
 
   const objInspector = message.querySelector(".tree");
@@ -92,8 +92,9 @@ async function getObjectInspector(hud) {
 }
 
 function testJSTermIsVisible(hud) {
-  const inputContainer = hud.ui.window.document
-                                    .querySelector(".jsterm-input-container");
+  const inputContainer = hud.ui.window.document.querySelector(
+    ".jsterm-input-container"
+  );
   isnot(inputContainer.style.display, "none", "input is visible");
 }
 
@@ -106,10 +107,14 @@ async function testObjectInspectorPropertiesAreSet(objInspector) {
   arrow.click();
   await onMutation;
 
-  ok(arrow.classList.contains("expanded"),
-    "The arrow of the root node of the tree is expanded after clicking on it");
+  ok(
+    arrow.classList.contains("expanded"),
+    "The arrow of the root node of the tree is expanded after clicking on it"
+  );
 
-  const nameNode = objInspector.querySelector(".node:not(.lessen) .object-label");
+  const nameNode = objInspector.querySelector(
+    ".node:not(.lessen) .object-label"
+  );
   const container = nameNode.parentNode;
   const name = nameNode.textContent;
   const value = container.querySelector(".objectBox").textContent;
@@ -119,6 +124,8 @@ async function testObjectInspectorPropertiesAreSet(objInspector) {
 }
 
 function testJSTermIsNotVisible(hud) {
-  const inputContainer = hud.ui.window.document.querySelector(".jsterm-input-container");
+  const inputContainer = hud.ui.window.document.querySelector(
+    ".jsterm-input-container"
+  );
   is(inputContainer, null, "input is not in dom");
 }

@@ -10,11 +10,36 @@ const Rule = require("devtools/client/inspector/rules/models/rule");
 const UserProperties = require("devtools/client/inspector/rules/models/user-properties");
 const { ELEMENT_STYLE } = require("devtools/shared/specs/styles");
 
-loader.lazyRequireGetter(this, "promiseWarn", "devtools/client/inspector/shared/utils", true);
-loader.lazyRequireGetter(this, "parseDeclarations", "devtools/shared/css/parsing-utils", true);
-loader.lazyRequireGetter(this, "parseNamedDeclarations", "devtools/shared/css/parsing-utils", true);
-loader.lazyRequireGetter(this, "parseSingleValue", "devtools/shared/css/parsing-utils", true);
-loader.lazyRequireGetter(this, "isCssVariable", "devtools/shared/fronts/css-properties", true);
+loader.lazyRequireGetter(
+  this,
+  "promiseWarn",
+  "devtools/client/inspector/shared/utils",
+  true
+);
+loader.lazyRequireGetter(
+  this,
+  "parseDeclarations",
+  "devtools/shared/css/parsing-utils",
+  true
+);
+loader.lazyRequireGetter(
+  this,
+  "parseNamedDeclarations",
+  "devtools/shared/css/parsing-utils",
+  true
+);
+loader.lazyRequireGetter(
+  this,
+  "parseSingleValue",
+  "devtools/shared/css/parsing-utils",
+  true
+);
+loader.lazyRequireGetter(
+  this,
+  "isCssVariable",
+  "devtools/shared/fronts/css-properties",
+  true
+);
 
 const PREF_INACTIVE_CSS_ENABLED = "devtools.inspector.inactive.css.enabled";
 
@@ -63,15 +88,20 @@ class ElementStyle {
 
     if (this.ruleView.isNewRulesView) {
       this.pageStyle.on("stylesheet-updated", this.onRefresh);
-      this.ruleView.inspector.styleChangeTracker.on("style-changed", this.onRefresh);
+      this.ruleView.inspector.styleChangeTracker.on(
+        "style-changed",
+        this.onRefresh
+      );
       this.ruleView.selection.on("pseudoclass", this.onRefresh);
     }
   }
 
   get unusedCssEnabled() {
     if (!this._unusedCssEnabled) {
-      this._unusedCssEnabled =
-        Services.prefs.getBoolPref(PREF_INACTIVE_CSS_ENABLED, false);
+      this._unusedCssEnabled = Services.prefs.getBoolPref(
+        PREF_INACTIVE_CSS_ENABLED,
+        false
+      );
     }
     return this._unusedCssEnabled;
   }
@@ -93,7 +123,10 @@ class ElementStyle {
 
     if (this.ruleView.isNewRulesView) {
       this.pageStyle.off("stylesheet-updated", this.onRefresh);
-      this.ruleView.inspector.styleChangeTracker.off("style-changed", this.onRefresh);
+      this.ruleView.inspector.styleChangeTracker.off(
+        "style-changed",
+        this.onRefresh
+      );
       this.ruleView.selection.off("pseudoclass", this.onRefresh);
     }
   }
@@ -116,52 +149,55 @@ class ElementStyle {
    * ready.
    */
   populate() {
-    const populated = this.pageStyle.getApplied(this.element, {
-      inherited: true,
-      matchedSelectors: true,
-      filter: this.showUserAgentStyles ? "ua" : undefined,
-    }).then(entries => {
-      if (this.destroyed || this.populated !== populated) {
-        return promise.resolve(undefined);
-      }
-
-      // Store the current list of rules (if any) during the population
-      // process. They will be reused if possible.
-      const existingRules = this.rules;
-
-      this.rules = [];
-
-      for (const entry of entries) {
-        this._maybeAddRule(entry, existingRules);
-      }
-
-      // Mark overridden computed styles.
-      this.onRuleUpdated();
-
-      this._sortRulesForPseudoElement();
-
-      if (this.ruleView.isNewRulesView) {
-        this.subscribeRulesToLocationChange();
-      }
-
-      // We're done with the previous list of rules.
-      for (const r of existingRules) {
-        if (r && r.editor) {
-          r.editor.destroy();
+    const populated = this.pageStyle
+      .getApplied(this.element, {
+        inherited: true,
+        matchedSelectors: true,
+        filter: this.showUserAgentStyles ? "ua" : undefined,
+      })
+      .then(entries => {
+        if (this.destroyed || this.populated !== populated) {
+          return promise.resolve(undefined);
         }
 
-        r.destroy();
-      }
+        // Store the current list of rules (if any) during the population
+        // process. They will be reused if possible.
+        const existingRules = this.rules;
 
-      return undefined;
-    }).catch(e => {
-      // populate is often called after a setTimeout,
-      // the connection may already be closed.
-      if (this.destroyed) {
-        return promise.resolve(undefined);
-      }
-      return promiseWarn(e);
-    });
+        this.rules = [];
+
+        for (const entry of entries) {
+          this._maybeAddRule(entry, existingRules);
+        }
+
+        // Mark overridden computed styles.
+        this.onRuleUpdated();
+
+        this._sortRulesForPseudoElement();
+
+        if (this.ruleView.isNewRulesView) {
+          this.subscribeRulesToLocationChange();
+        }
+
+        // We're done with the previous list of rules.
+        for (const r of existingRules) {
+          if (r && r.editor) {
+            r.editor.destroy();
+          }
+
+          r.destroy();
+        }
+
+        return undefined;
+      })
+      .catch(e => {
+        // populate is often called after a setTimeout,
+        // the connection may already be closed.
+        if (this.destroyed) {
+          return promise.resolve(undefined);
+        }
+        return promiseWarn(e);
+      });
     this.populated = populated;
     return this.populated;
   }
@@ -187,8 +223,9 @@ class ElementStyle {
     return new Promise((resolve, reject) => {
       this.ruleView.styleWindow.requestIdleCallback(async () => {
         try {
-          const fonts = await this.pageStyle.getUsedFontFaces(
-            this.element, { includePreviews: false });
+          const fonts = await this.pageStyle.getUsedFontFaces(this.element, {
+            includePreviews: false,
+          });
           resolve(fonts.map(font => font.CSSFamilyName));
         } catch (e) {
           reject(e);
@@ -220,8 +257,10 @@ class ElementStyle {
   _maybeAddRule(options, existingRules) {
     // If we've already included this domRule (for example, when a
     // common selector is inherited), ignore it.
-    if (options.system ||
-        (options.rule && this.rules.some(rule => rule.domRule === options.rule))) {
+    if (
+      options.system ||
+      (options.rule && this.rules.some(rule => rule.domRule === options.rule))
+    ) {
       return false;
     }
 
@@ -230,7 +269,7 @@ class ElementStyle {
     // If we're refreshing and the rule previously existed, reuse the
     // Rule object.
     if (existingRules) {
-      const ruleIndex = existingRules.findIndex((r) => r.matches(options));
+      const ruleIndex = existingRules.findIndex(r => r.matches(options));
       if (ruleIndex >= 0) {
         rule = existingRules[ruleIndex];
         rule.refresh(options);
@@ -282,9 +321,12 @@ class ElementStyle {
     // determine if the property is overridden.
     const textProps = [];
     for (const rule of this.rules) {
-      if ((rule.matchedSelectors.length > 0 ||
-           rule.domRule.type === ELEMENT_STYLE) &&
-          rule.pseudoElement === pseudo && !rule.keyframes) {
+      if (
+        (rule.matchedSelectors.length > 0 ||
+          rule.domRule.type === ELEMENT_STYLE) &&
+        rule.pseudoElement === pseudo &&
+        !rule.keyframes
+      ) {
         for (const textProp of rule.textProps.slice(0).reverse()) {
           if (textProp.enabled) {
             textProps.push(textProp);
@@ -331,11 +373,13 @@ class ElementStyle {
       }
 
       let overridden;
-      if (earlier &&
-          computedProp.priority === "important" &&
-          earlier.priority !== "important" &&
-          (earlier.textProp.rule.inherited ||
-           !computedProp.textProp.rule.inherited)) {
+      if (
+        earlier &&
+        computedProp.priority === "important" &&
+        earlier.priority !== "important" &&
+        (earlier.textProp.rule.inherited ||
+          !computedProp.textProp.rule.inherited)
+      ) {
         // New property is higher priority. Mark the earlier property
         // overridden (which will reverse its dirty state).
         earlier._overriddenDirty = !earlier._overriddenDirty;
@@ -345,8 +389,7 @@ class ElementStyle {
         overridden = !!earlier;
       }
 
-      computedProp._overriddenDirty =
-        (!!computedProp.overridden !== overridden);
+      computedProp._overriddenDirty = !!computedProp.overridden !== overridden;
       computedProp.overridden = overridden;
 
       if (!computedProp.overridden && computedProp.textProp.enabled) {
@@ -391,8 +434,11 @@ class ElementStyle {
       return;
     }
 
-    const declarationsToAdd = parseNamedDeclarations(this.cssProperties.isKnown,
-      value, true);
+    const declarationsToAdd = parseNamedDeclarations(
+      this.cssProperties.isKnown,
+      value,
+      true
+    );
     if (!declarationsToAdd.length) {
       return;
     }
@@ -406,7 +452,10 @@ class ElementStyle {
    * the stylesheet.
    */
   async addNewRule() {
-    await this.pageStyle.addNewRule(this.element, this.element.pseudoClassLocks);
+    await this.pageStyle.addNewRule(
+      this.element,
+      this.element.pseudoClassLocks
+    );
   }
 
   /**
@@ -460,8 +509,13 @@ class ElementStyle {
     for (const { commentOffsets, name, value, priority } of declarationsToAdd) {
       const isCommented = Boolean(commentOffsets);
       const enabled = !isCommented;
-      siblingDeclaration = rule.createProperty(name, value, priority, enabled,
-        siblingDeclaration);
+      siblingDeclaration = rule.createProperty(
+        name,
+        value,
+        priority,
+        enabled,
+        siblingDeclaration
+      );
     }
   }
 
@@ -534,12 +588,19 @@ class ElementStyle {
       return;
     }
 
-    const { declarationsToAdd, firstValue} = this._getValueAndExtraProperties(value);
-    const parsedValue = parseSingleValue(this.cssProperties.isKnown, firstValue);
+    const { declarationsToAdd, firstValue } = this._getValueAndExtraProperties(
+      value
+    );
+    const parsedValue = parseSingleValue(
+      this.cssProperties.isKnown,
+      firstValue
+    );
 
-    if (!declarationsToAdd.length &&
-        declaration.value === parsedValue.value &&
-        declaration.priority === parsedValue.priority) {
+    if (
+      !declarationsToAdd.length &&
+      declaration.value === parsedValue.value &&
+      declaration.priority === parsedValue.priority
+    ) {
       return;
     }
 
@@ -568,7 +629,10 @@ class ElementStyle {
         return;
       }
 
-      const response = await rule.domRule.modifySelector(this.element, selector);
+      const response = await rule.domRule.modifySelector(
+        this.element,
+        selector
+      );
       const { ruleProps, isMatching } = response;
 
       if (!ruleProps) {
@@ -674,20 +738,20 @@ class ElementStyle {
       delete computedProp._overriddenDirty;
     }
 
-    dirty = (!!prop.overridden !== overridden) || dirty;
+    dirty = !!prop.overridden !== overridden || dirty;
     prop.overridden = overridden;
     return dirty;
   }
 
- /**
-  * Returns the current value of a CSS variable; or null if the
-  * variable is not defined.
-  *
-  * @param  {String} name
-  *         The name of the variable.
-  * @return {String} the variable's value or null if the variable is
-  *         not defined.
-  */
+  /**
+   * Returns the current value of a CSS variable; or null if the
+   * variable is not defined.
+   *
+   * @param  {String} name
+   *         The name of the variable.
+   * @return {String} the variable's value or null if the variable is
+   *         not defined.
+   */
   getVariable(name) {
     return this.variables.get(name);
   }

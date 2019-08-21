@@ -627,7 +627,7 @@ pref("media.cubeb.sandbox", false);
 pref("media.audiograph.single_thread.enabled", false);
 
 #ifdef MOZ_AV1
-#if defined(XP_WIN) && !defined(_ARM64_) && !defined(__MINGW32__)
+#if defined(XP_WIN) && !defined(_ARM64_)
 pref("media.av1.enabled", true);
 pref("media.av1.use-dav1d", true);
 #elif defined(XP_MACOSX)
@@ -2330,6 +2330,12 @@ pref("network.http.tailing.delay-quantum-after-domcontentloaded", 100);
 pref("network.http.tailing.delay-max", 6000);
 // Total limit we delay tailed requests since a page load beginning.
 pref("network.http.tailing.total-max", 45000);
+
+// Enable or disable the whole fix from bug 1563538
+pref("network.http.spdy.bug1563538", true);
+pref("network.http.spdy.bug1563695", true);
+pref("network.http.spdy.bug1562315", true);
+pref("network.http.spdy.bug1556491", true);
 
 pref("permissions.default.image",           1); // 1-Accept, 2-Deny, 3-dontAcceptForeign
 
@@ -6070,3 +6076,6 @@ pref("fission.preserve_browsing_contexts", false);
 //  * userChrome.css
 pref("toolkit.legacyUserProfileCustomizations.stylesheets", false);
 
+// Enable support for XMLDocument.load and .async for webcompat (bug 1569102).
+pref("dom.xmldocument.load.enabled", true);
+pref("dom.xmldocument.async.enabled", true);

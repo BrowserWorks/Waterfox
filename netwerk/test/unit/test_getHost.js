@@ -1,6 +1,6 @@
 // Test getLocalHost/getLocalPort and getRemoteHost/getRemotePort.
 
-const {HttpServer} = ChromeUtils.import("resource://testing-common/httpd.js");
+const { HttpServer } = ChromeUtils.import("resource://testing-common/httpd.js");
 
 var httpserver = new HttpServer();
 httpserver.start(-1);
@@ -36,18 +36,17 @@ CheckGetHostListener.prototype = {
   },
 
   QueryInterface: function(iid) {
-    if (iid.equals(Ci.nsIRequestObserver) ||
-        iid.equals(Ci.nsISupports)
-        )
+    if (iid.equals(Ci.nsIRequestObserver) || iid.equals(Ci.nsISupports)) {
       return this;
+    }
     throw Cr.NS_NOINTERFACE;
   },
-}
+};
 
 function make_channel(url) {
   return NetUtil.newChannel({
     uri: url,
-    loadUsingSystemPrincipal: true
+    loadUsingSystemPrincipal: true,
   }).QueryInterface(Ci.nsIHttpChannel);
 }
 

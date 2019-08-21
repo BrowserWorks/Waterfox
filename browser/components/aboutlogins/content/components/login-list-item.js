@@ -14,9 +14,12 @@ class LoginListItem extends HTMLElement {
       return;
     }
 
-    let loginListItemTemplate = document.querySelector("#login-list-item-template");
-    this.attachShadow({mode: "open"})
-        .appendChild(loginListItemTemplate.content.cloneNode(true));
+    let loginListItemTemplate = document.querySelector(
+      "#login-list-item-template"
+    );
+    this.attachShadow({ mode: "open" }).appendChild(
+      loginListItemTemplate.content.cloneNode(true)
+    );
     this.render();
 
     this.addEventListener("click", this);
@@ -24,18 +27,24 @@ class LoginListItem extends HTMLElement {
 
   render() {
     this.setAttribute("guid", this._login.guid);
-    this.shadowRoot.querySelector(".hostname").textContent = this._login.hostname;
-    this.shadowRoot.querySelector(".username").textContent = this._login.username;
+    this.shadowRoot.querySelector(
+      ".hostname"
+    ).textContent = this._login.hostname;
+    this.shadowRoot.querySelector(
+      ".username"
+    ).textContent = this._login.username;
   }
 
   handleEvent(event) {
     switch (event.type) {
       case "click": {
-        this.dispatchEvent(new CustomEvent("AboutLoginsLoginSelected", {
-          bubbles: true,
-          composed: true,
-          detail: this._login,
-        }));
+        this.dispatchEvent(
+          new CustomEvent("AboutLoginsLoginSelected", {
+            bubbles: true,
+            composed: true,
+            detail: this._login,
+          })
+        );
       }
     }
   }

@@ -4,12 +4,18 @@
 
 let gElements = {};
 
-document.addEventListener("DOMContentLoaded", () => {
-  gElements.loginList = document.querySelector("login-list");
-  gElements.loginItem = document.querySelector("login-item");
+document.addEventListener(
+  "DOMContentLoaded",
+  () => {
+    gElements.loginList = document.querySelector("login-list");
+    gElements.loginItem = document.querySelector("login-item");
 
-  document.dispatchEvent(new CustomEvent("AboutLoginsInit", {bubbles: true}));
-}, {once: true});
+    document.dispatchEvent(
+      new CustomEvent("AboutLoginsInit", { bubbles: true })
+    );
+  },
+  { once: true }
+);
 
 window.addEventListener("AboutLoginsChromeToContent", event => {
   switch (event.detail.messageType) {

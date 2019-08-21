@@ -12,7 +12,8 @@ const sort = require("./sort");
 const timingMarkers = require("./timing-markers");
 const ui = require("./ui");
 
-Object.assign(exports,
+Object.assign(
+  exports,
   batching,
   filters,
   requests,

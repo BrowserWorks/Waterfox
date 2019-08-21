@@ -19,14 +19,23 @@ function test() {
   gBrowser.selectedTab = tabs[1];
   gBrowser.selectedTab = tabs[4];
   gBrowser.removeCurrentTab();
-  isnot(gBrowser.selectedTab, owner, "selecting a different tab clears the owner relation");
+  isnot(
+    gBrowser.selectedTab,
+    owner,
+    "selecting a different tab clears the owner relation"
+  );
 
   owner = gBrowser.selectedTab;
   BrowserOpenTab();
   gBrowser.moveTabTo(gBrowser.selectedTab, 0);
   gBrowser.removeCurrentTab();
-  is(gBrowser.selectedTab, owner, "owner relatitionship persists when tab is moved");
+  is(
+    gBrowser.selectedTab,
+    owner,
+    "owner relatitionship persists when tab is moved"
+  );
 
-  while (tabs.length > 1)
+  while (tabs.length > 1) {
     gBrowser.removeCurrentTab();
+  }
 }

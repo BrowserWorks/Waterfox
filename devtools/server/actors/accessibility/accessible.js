@@ -7,11 +7,28 @@
 const { Ci, Cu } = require("chrome");
 const { Actor, ActorClassWithSpec } = require("devtools/shared/protocol");
 const { accessibleSpec } = require("devtools/shared/specs/accessibility");
-const { accessibility: { AUDIT_TYPE } } = require("devtools/shared/constants");
+const {
+  accessibility: { AUDIT_TYPE },
+} = require("devtools/shared/constants");
 
-loader.lazyRequireGetter(this, "getContrastRatioFor", "devtools/server/actors/accessibility/contrast", true);
-loader.lazyRequireGetter(this, "isDefunct", "devtools/server/actors/utils/accessibility", true);
-loader.lazyRequireGetter(this, "findCssSelector", "devtools/shared/inspector/css-logic", true);
+loader.lazyRequireGetter(
+  this,
+  "getContrastRatioFor",
+  "devtools/server/actors/accessibility/contrast",
+  true
+);
+loader.lazyRequireGetter(
+  this,
+  "isDefunct",
+  "devtools/server/actors/utils/accessibility",
+  true
+);
+loader.lazyRequireGetter(
+  this,
+  "findCssSelector",
+  "devtools/shared/inspector/css-logic",
+  true
+);
 loader.lazyRequireGetter(this, "events", "devtools/shared/event-emitter");
 
 const RELATIONS_TO_IGNORE = new Set([
@@ -48,9 +65,10 @@ function getNodeDescription(node) {
     nodeType,
     // If node is a text node, we find a unique CSS selector for its parent and add a
     // CSS_TEXT_SELECTOR postfix to indicate that it's a text node.
-    nodeCssSelector: nodeType === Node.TEXT_NODE ?
-      `${findCssSelector(node.parentNode)}${CSS_TEXT_SELECTOR}` :
-      findCssSelector(node),
+    nodeCssSelector:
+      nodeType === Node.TEXT_NODE
+        ? `${findCssSelector(node.parentNode)}${CSS_TEXT_SELECTOR}`
+        : findCssSelector(node),
   };
 }
 
@@ -68,7 +86,7 @@ function getNodeDescription(node) {
 function getSnapshot(acc, a11yService) {
   if (isDefunct(acc)) {
     return {
-      states: [ a11yService.getStringStates(0, STATE_DEFUNCT) ],
+      states: [a11yService.getStringStates(0, STATE_DEFUNCT)],
     };
   }
 
@@ -87,9 +105,7 @@ function getSnapshot(acc, a11yService) {
   const state = {};
   const extState = {};
   acc.getState(state, extState);
-  const states = [
-    ...a11yService.getStringStates(state.value, extState.value),
-  ];
+  const states = [...a11yService.getStringStates(state.value, extState.value)];
 
   const children = [];
   for (let child = acc.firstChild; child; child = child.nextSibling) {
@@ -228,7 +244,11 @@ const AccessibleActor = ActorClassWithSpec(accessibleSpec, {
       return children;
     }
 
-    for (let child = this.rawAccessible.firstChild; child; child = child.nextSibling) {
+    for (
+      let child = this.rawAccessible.firstChild;
+      child;
+      child = child.nextSibling
+    ) {
       children.push(this.walker.addRef(child));
     }
     return children;
@@ -290,7 +310,10 @@ const AccessibleActor = ActorClassWithSpec(accessibleSpec, {
       return null;
     }
 
-    let x = {}, y = {}, w = {}, h = {};
+    let x = {},
+      y = {},
+      w = {},
+      h = {};
     try {
       this.rawAccessible.getBoundsInCSSPixels(x, y, w, h);
       x = x.value;
@@ -302,7 +325,10 @@ const AccessibleActor = ActorClassWithSpec(accessibleSpec, {
     }
 
     // Check if accessible bounds are invalid.
-    const left = x, right = x + w, top = y, bottom = y + h;
+    const left = x,
+      right = x + w,
+      top = y,
+      bottom = y + h;
     if (left === right || top === bottom) {
       return null;
     }
@@ -316,8 +342,9 @@ const AccessibleActor = ActorClassWithSpec(accessibleSpec, {
       return relationObjects;
     }
 
-    const relations =
-      [...this.rawAccessible.getRelations().enumerate(Ci.nsIAccessibleRelation)];
+    const relations = [
+      ...this.rawAccessible.getRelations().enumerate(Ci.nsIAccessibleRelation),
+    ];
     if (relations.length === 0) {
       return relationObjects;
     }
@@ -328,7 +355,9 @@ const AccessibleActor = ActorClassWithSpec(accessibleSpec, {
         return;
       }
 
-      const type = this.walker.a11yService.getStringRelationType(relation.relationType);
+      const type = this.walker.a11yService.getStringRelationType(
+        relation.relationType
+      );
       const targets = [...relation.getTargets().enumerate(Ci.nsIAccessible)];
       let relationObject;
       for (const target of targets) {
@@ -393,9 +422,12 @@ const AccessibleActor = ActorClassWithSpec(accessibleSpec, {
   },
 
   _isValidTextLeaf(rawAccessible) {
-    return !isDefunct(rawAccessible) &&
-           TEXT_ROLES.has(rawAccessible.role) &&
-           rawAccessible.name && rawAccessible.name.trim().length > 0;
+    return (
+      !isDefunct(rawAccessible) &&
+      TEXT_ROLES.has(rawAccessible.role) &&
+      rawAccessible.name &&
+      rawAccessible.name.trim().length > 0
+    );
   },
 
   /**
@@ -433,7 +465,7 @@ const AccessibleActor = ActorClassWithSpec(accessibleSpec, {
    *
    * @return {Object|null}
    *         Audit results for the accessible object.
-  */
+   */
   audit() {
     if (this._auditing) {
       return this._auditing;
@@ -442,29 +474,28 @@ const AccessibleActor = ActorClassWithSpec(accessibleSpec, {
     // More audit steps will be added here in the near future. In addition to
     // colour contrast ratio we will add autits for to the missing names,
     // invalid states, etc. (For example see bug 1518808).
-    this._auditing = Promise.all([
-      this._getContrastRatio(),
-    ]).then(([
-      contrastRatio,
-    ]) => {
-      let audit = null;
-      if (!this.isDefunct && !this.isDestroyed) {
-        audit = {
-          [AUDIT_TYPE.CONTRAST]: contrastRatio,
-        };
-        this._lastAudit = audit;
-        events.emit(this, "audited", audit);
-      }
+    this._auditing = Promise.all([this._getContrastRatio()])
+      .then(([contrastRatio]) => {
+        let audit = null;
+        if (!this.isDefunct && !this.isDestroyed) {
+          audit = {
+            [AUDIT_TYPE.CONTRAST]: contrastRatio,
+          };
+          this._lastAudit = audit;
+          events.emit(this, "audited", audit);
+        }
 
-      return audit;
-    }).catch(error => {
-      if (!this.isDefunct && !this.isDestroyed) {
-        throw error;
-      }
-      return null;
-    }).finally(() => {
-      this._auditing = null;
-    });
+        return audit;
+      })
+      .catch(error => {
+        if (!this.isDefunct && !this.isDestroyed) {
+          throw error;
+        }
+        return null;
+      })
+      .finally(() => {
+        this._auditing = null;
+      });
 
     return this._auditing;
   },

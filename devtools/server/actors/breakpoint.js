@@ -180,7 +180,11 @@ BreakpointActor.prototype = {
     const url = generatedSourceActor.url;
 
     if (
-      this.threadActor.sources.isBlackBoxed(url, generatedLine, generatedColumn) ||
+      this.threadActor.sources.isBlackBoxed(
+        url,
+        generatedLine,
+        generatedColumn
+      ) ||
       this.threadActor.skipBreakpoints ||
       frame.onStep
     ) {
@@ -222,7 +226,9 @@ BreakpointActor.prototype = {
 
     if (logValue) {
       const displayName = formatDisplayName(frame);
-      const completion = frame.evalWithBindings(`[${logValue}]`, { displayName });
+      const completion = frame.evalWithBindings(`[${logValue}]`, {
+        displayName,
+      });
       let value;
       if (!completion) {
         // The evaluation was killed (possibly by the slow script dialog).

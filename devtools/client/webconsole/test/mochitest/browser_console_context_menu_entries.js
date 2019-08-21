@@ -5,8 +5,9 @@
 
 // Check that we display the expected context menu entries.
 
-const TEST_URI = "http://example.com/browser/devtools/client/webconsole/" +
-                 "test/mochitest/test-console.html";
+const TEST_URI =
+  "http://example.com/browser/devtools/client/webconsole/" +
+  "test/mochitest/test-console.html";
 
 add_task(async function() {
   // Enable net messages in the console for this test.
@@ -46,8 +47,11 @@ async function performTests() {
     "#console-menu-select (A)",
     "#console-menu-export-clipboard ()",
   ]);
-  is(getSimplifiedContextMenu(menuPopup).join("\n"), expectedContextMenu.join("\n"),
-    "The context menu has the expected entries for a network message");
+  is(
+    getSimplifiedContextMenu(menuPopup).join("\n"),
+    expectedContextMenu.join("\n"),
+    "The context menu has the expected entries for a network message"
+  );
 
   info("Logging a text message in the content window");
   const onLogMessage = waitForMessage(hud, "simple text message");
@@ -66,10 +70,16 @@ async function performTests() {
     "#console-menu-select (A)",
     "#console-menu-export-clipboard ()",
   ]);
-  is(getSimplifiedContextMenu(menuPopup).join("\n"), expectedContextMenu.join("\n"),
-    "The context menu has the expected entries for a simple log message");
+  is(
+    getSimplifiedContextMenu(menuPopup).join("\n"),
+    expectedContextMenu.join("\n"),
+    "The context menu has the expected entries for a simple log message"
+  );
 
-  menuPopup = await openContextMenu(hud, hud.jsterm.node || hud.jsterm.inputNode);
+  menuPopup = await openContextMenu(
+    hud,
+    hud.jsterm.node || hud.jsterm.inputNode
+  );
 
   expectedContextMenu = [
     "#editmenu-undo (editmenu-undo) [disabled]",
@@ -79,8 +89,11 @@ async function performTests() {
     "#editmenu-delete (editmenu-delete) [disabled]",
     "#editmenu-selectAll (editmenu-select-all) [disabled]",
   ];
-  is(getL10NContextMenu(menuPopup).join("\n"), expectedContextMenu.join("\n"),
-    "The context menu has the correct edit menu items");
+  is(
+    getL10NContextMenu(menuPopup).join("\n"),
+    expectedContextMenu.join("\n"),
+    "The context menu has the correct edit menu items"
+  );
 
   const node = hud.jsterm.inputNode || hud.jsterm.node;
   const inputContainer = node.closest(".jsterm-input-container");
@@ -94,8 +107,11 @@ async function performTests() {
     "#editmenu-delete (editmenu-delete) [disabled]",
     "#editmenu-selectAll (editmenu-select-all) [disabled]",
   ];
-  is(getL10NContextMenu(menuPopup).join("\n"), expectedContextMenu.join("\n"),
-    "The context menu has the required elements");
+  is(
+    getL10NContextMenu(menuPopup).join("\n"),
+    expectedContextMenu.join("\n"),
+    "The context menu has the required elements"
+  );
 
   await hideContextMenu(hud);
   // Close the browser console.
@@ -111,19 +127,17 @@ function addPrefBasedEntries(expectedEntries) {
 }
 
 function getL10NContextMenu(popupElement) {
-  return [...popupElement.querySelectorAll("menuitem")]
-    .map(entry => {
-      const l10nID = entry.getAttribute("data-l10n-id");
-      const disabled = entry.hasAttribute("disabled");
-      return `#${entry.id} (${l10nID})${disabled ? " [disabled]" : ""}`;
-    });
+  return [...popupElement.querySelectorAll("menuitem")].map(entry => {
+    const l10nID = entry.getAttribute("data-l10n-id");
+    const disabled = entry.hasAttribute("disabled");
+    return `#${entry.id} (${l10nID})${disabled ? " [disabled]" : ""}`;
+  });
 }
 
 function getSimplifiedContextMenu(popupElement) {
-  return [...popupElement.querySelectorAll("menuitem")]
-    .map(entry => {
-      const key = entry.getAttribute("accesskey");
-      const disabled = entry.hasAttribute("disabled");
-      return `#${entry.id} (${key})${disabled ? " [disabled]" : ""}`;
-    });
+  return [...popupElement.querySelectorAll("menuitem")].map(entry => {
+    const key = entry.getAttribute("accesskey");
+    const disabled = entry.hasAttribute("disabled");
+    return `#${entry.id} (${key})${disabled ? " [disabled]" : ""}`;
+  });
 }

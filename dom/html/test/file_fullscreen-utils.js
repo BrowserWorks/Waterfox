@@ -1,18 +1,19 @@
-
 // Returns true if the window occupies the entire screen.
 // Note this only returns true once the transition from normal to
 // fullscreen mode is complete.
 function inFullscreenMode(win) {
-  return win.innerWidth == win.screen.width &&
-         win.innerHeight == win.screen.height;
+  return (
+    win.innerWidth == win.screen.width && win.innerHeight == win.screen.height
+  );
 }
 
 // Returns true if the window is in normal mode, i.e. non fullscreen mode.
 // Note this only returns true once the transition from fullscreen back to
 // normal mode is complete.
 function inNormalMode(win) {
-  return win.innerWidth == win.normalSize.w &&
-         win.innerHeight == win.normalSize.h;
+  return (
+    win.innerWidth == win.normalSize.w && win.innerHeight == win.normalSize.h
+  );
 }
 
 // Adds a listener that will be called once a fullscreen transition
@@ -31,7 +32,7 @@ function addFullscreenChangeContinuation(type, callback, inDoc) {
   if (!topWin.normalSize) {
     topWin.normalSize = {
       w: window.innerWidth,
-      h: window.innerHeight
+      h: window.innerHeight,
     };
   }
   function checkCondition() {
@@ -75,7 +76,9 @@ function addFullscreenErrorContinuation(callback, inDoc) {
   var doc = inDoc || document;
   var listener = function(event) {
     doc.removeEventListener("fullscreenerror", listener);
-    setTimeout(function(){callback(event);}, 0);
+    setTimeout(function() {
+      callback(event);
+    }, 0);
   };
   doc.addEventListener("fullscreenerror", listener);
 }
@@ -83,14 +86,18 @@ function addFullscreenErrorContinuation(callback, inDoc) {
 // Waits until the window has both the load event and a MozAfterPaint called on
 // it, and then invokes the callback
 function waitForLoadAndPaint(win, callback) {
-  win.addEventListener("MozAfterPaint", function() {
-    // The load event may have fired before the MozAfterPaint, in which case
-    // listening for it now will hang. Instead we check the readyState to see if
-    // it already fired, and if so, invoke the callback right away.
-    if (win.document.readyState == 'complete') {
-      callback();
-    } else {
-      win.addEventListener("load", callback, {once: true});
-    }
-  }, { once: true });
+  win.addEventListener(
+    "MozAfterPaint",
+    function() {
+      // The load event may have fired before the MozAfterPaint, in which case
+      // listening for it now will hang. Instead we check the readyState to see if
+      // it already fired, and if so, invoke the callback right away.
+      if (win.document.readyState == "complete") {
+        callback();
+      } else {
+        win.addEventListener("load", callback, { once: true });
+      }
+    },
+    { once: true }
+  );
 }

@@ -30,6 +30,9 @@ static const char SandboxPolicyUtility[] = R"SANDBOX_LITERAL(
   (if (defined? 'file-map-executable)
     (moz-deny file-map-executable))
 
+  ; Needed for things like getpriority()/setpriority()/pthread_setname()
+  (allow process-info-pidinfo process-info-setcontrol (target self))
+
   (if (defined? 'file-map-executable)
     (allow file-map-executable file-read*
       (subpath "/System/Library")

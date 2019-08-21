@@ -52,33 +52,35 @@ add_task(async function() {
   // Let's wait until we have all the logged messages.
   await waitFor(() => findMessages(hud, "").length === 5);
   // And also until the stacktraces are rendered (there should be 2)
-  await waitFor(() => hud.ui.outputNode.querySelectorAll(".frames").length === 2);
+  await waitFor(
+    () => hud.ui.outputNode.querySelectorAll(".frames").length === 2
+  );
 
   const message = findMessage(hud, "hello");
   const clipboardText = await exportAllToClipboard(hud, message);
   ok(true, "Clipboard text was found and saved");
 
-// Here we should have:
-//   -------------------------------------------------------------------
-//   hello test.js:4:17
-//   -------------------------------------------------------------------
-//   myObject:
-//   Object { a: 1 }
-//    myArray:
-//   Array [ "b", "c"]
-//   test.js:5:17
-//   -------------------------------------------------------------------
-//   Error: "error object":
-//       wrapper test.js:5
-//       logStuff test.js:17
-//   test.js:6:17
-//   -------------------------------------------------------------------
-//   console.trace() myConsoleTrace test.js:7:9
-//       wrapper test.js:7
-//       logStuff test.js:17
-//   -------------------------------------------------------------------
-//   world ! test.js:8:17
-//   -------------------------------------------------------------------
+  // Here we should have:
+  //   -------------------------------------------------------------------
+  //   hello test.js:4:17
+  //   -------------------------------------------------------------------
+  //   myObject:
+  //   Object { a: 1 }
+  //    myArray:
+  //   Array [ "b", "c"]
+  //   test.js:5:17
+  //   -------------------------------------------------------------------
+  //   Error: "error object":
+  //       wrapper test.js:5
+  //       logStuff test.js:17
+  //   test.js:6:17
+  //   -------------------------------------------------------------------
+  //   console.trace() myConsoleTrace test.js:7:9
+  //       wrapper test.js:7
+  //       logStuff test.js:17
+  //   -------------------------------------------------------------------
+  //   world ! test.js:8:17
+  //   -------------------------------------------------------------------
 
   info("Check if all messages where copied to clipboard");
   const clipboardLines = clipboardText.split("\n");
@@ -116,7 +118,9 @@ add_task(async function() {
  */
 async function exportAllToClipboard(hud, message) {
   const menuPopup = await openContextMenu(hud, message);
-  const exportClipboard = menuPopup.querySelector("#console-menu-export-clipboard");
+  const exportClipboard = menuPopup.querySelector(
+    "#console-menu-export-clipboard"
+  );
   ok(exportClipboard, "copy menu item is enabled");
 
   let clipboardText;

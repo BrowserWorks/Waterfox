@@ -144,6 +144,10 @@ class TLSFilterTransaction final : public nsAHttpTransaction,
   NullHttpTransaction* QueryNullTransaction() override;
   nsHttpTransaction* QueryHttpTransaction() override;
   SpdyConnectTransaction* QuerySpdyConnectTransaction() override;
+  MOZ_MUST_USE nsresult WriteSegmentsAgain(nsAHttpSegmentWriter* writer,
+                                           uint32_t count,
+                                           uint32_t* countWritten,
+                                           bool* again) override;
 
  private:
   MOZ_MUST_USE nsresult StartTimerCallback();
@@ -182,6 +186,11 @@ class TLSFilterTransaction final : public nsAHttpTransaction,
   nsresult mFilterReadCode;
   bool mForce;
   nsresult mReadSegmentReturnValue;
+  // Before Close() is called this is NS_ERROR_UNEXPECTED, in Close() we either
+  // take the reason, if it is a failure, or we change to
+  // NS_ERROR_BASE_STREAM_CLOSE.  This is returned when Write/ReadSegments is
+  // called after Close, when we don't have mTransaction any more.
+  nsresult mCloseReason;
   uint32_t mNudgeCounter;
 };
 
@@ -227,6 +236,7 @@ class SpdyConnectTransaction final : public NullHttpTransaction {
   void SetConnRefTaken();
 
  private:
+  friend class SocketTransportShim;
   friend class InputStreamShim;
   friend class OutputStreamShim;
 

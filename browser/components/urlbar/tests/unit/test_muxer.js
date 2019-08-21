@@ -4,38 +4,54 @@
 "use strict";
 
 add_task(async function test_muxer() {
-  Assert.throws(() => UrlbarProvidersManager.registerMuxer(),
-                /invalid muxer/,
-                "Should throw with no arguments");
-  Assert.throws(() => UrlbarProvidersManager.registerMuxer({}),
-                /invalid muxer/,
-                "Should throw with empty object");
-  Assert.throws(() => UrlbarProvidersManager.registerMuxer({
-                  name: "",
-                }),
-                /invalid muxer/,
-                "Should throw with empty name");
-  Assert.throws(() => UrlbarProvidersManager.registerMuxer({
-                  name: "test",
-                  sort: "no",
-                }),
-                /invalid muxer/,
-                "Should throw with invalid sort");
+  Assert.throws(
+    () => UrlbarProvidersManager.registerMuxer(),
+    /invalid muxer/,
+    "Should throw with no arguments"
+  );
+  Assert.throws(
+    () => UrlbarProvidersManager.registerMuxer({}),
+    /invalid muxer/,
+    "Should throw with empty object"
+  );
+  Assert.throws(
+    () =>
+      UrlbarProvidersManager.registerMuxer({
+        name: "",
+      }),
+    /invalid muxer/,
+    "Should throw with empty name"
+  );
+  Assert.throws(
+    () =>
+      UrlbarProvidersManager.registerMuxer({
+        name: "test",
+        sort: "no",
+      }),
+    /invalid muxer/,
+    "Should throw with invalid sort"
+  );
 
   let matches = [
-    new UrlbarResult(UrlbarUtils.RESULT_TYPE.TAB_SWITCH,
-                     UrlbarUtils.RESULT_SOURCE.TABS,
-                     { url: "http://mozilla.org/tab/" }),
-    new UrlbarResult(UrlbarUtils.RESULT_TYPE.URL,
-                     UrlbarUtils.RESULT_SOURCE.BOOKMARKS,
-                     { url: "http://mozilla.org/bookmark/" }),
-    new UrlbarResult(UrlbarUtils.RESULT_TYPE.URL,
-                     UrlbarUtils.RESULT_SOURCE.HISTORY,
-                     { url: "http://mozilla.org/history/" }),
+    new UrlbarResult(
+      UrlbarUtils.RESULT_TYPE.TAB_SWITCH,
+      UrlbarUtils.RESULT_SOURCE.TABS,
+      { url: "http://mozilla.org/tab/" }
+    ),
+    new UrlbarResult(
+      UrlbarUtils.RESULT_TYPE.URL,
+      UrlbarUtils.RESULT_SOURCE.BOOKMARKS,
+      { url: "http://mozilla.org/bookmark/" }
+    ),
+    new UrlbarResult(
+      UrlbarUtils.RESULT_TYPE.URL,
+      UrlbarUtils.RESULT_SOURCE.HISTORY,
+      { url: "http://mozilla.org/history/" }
+    ),
   ];
 
   let providerName = registerBasicTestProvider(matches);
-  let context = createContext(undefined, {providers: [providerName]});
+  let context = createContext(undefined, { providers: [providerName] });
   let controller = new UrlbarController({
     browserWindow: {
       location: {
@@ -69,11 +85,7 @@ add_task(async function test_muxer() {
 
   info("Check results, the order should be: bookmark, history, tab");
   await UrlbarProvidersManager.startQuery(context, controller);
-  Assert.deepEqual(context.results, [
-    matches[1],
-    matches[2],
-    matches[0],
-  ]);
+  Assert.deepEqual(context.results, [matches[1], matches[2], matches[0]]);
 
   // Sanity check, should not throw.
   UrlbarProvidersManager.unregisterMuxer(muxer);

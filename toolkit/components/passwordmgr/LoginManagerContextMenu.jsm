@@ -6,13 +6,21 @@
 
 var EXPORTED_SYMBOLS = ["LoginManagerContextMenu"];
 
-const {XPCOMUtils} = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
-const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
+const { XPCOMUtils } = ChromeUtils.import(
+  "resource://gre/modules/XPCOMUtils.jsm"
+);
+const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
-ChromeUtils.defineModuleGetter(this, "LoginHelper",
-                               "resource://gre/modules/LoginHelper.jsm");
-ChromeUtils.defineModuleGetter(this, "LoginManagerParent",
-                               "resource://gre/modules/LoginManagerParent.jsm");
+ChromeUtils.defineModuleGetter(
+  this,
+  "LoginHelper",
+  "resource://gre/modules/LoginHelper.jsm"
+);
+ChromeUtils.defineModuleGetter(
+  this,
+  "LoginManagerParent",
+  "resource://gre/modules/LoginManagerParent.jsm"
+);
 
 /*
  * Password manager object for the browser contextual menu.
@@ -50,16 +58,21 @@ var LoginManagerContextMenu = {
           username = this._getLocalizedString("noUsername");
         }
         let meta = login.QueryInterface(Ci.nsILoginMetaInfo);
-        let time = this.dateAndTimeFormatter.format(new Date(meta.timePasswordChanged));
+        let time = this.dateAndTimeFormatter.format(
+          new Date(meta.timePasswordChanged)
+        );
         username = this._getLocalizedString("loginHostAge", [username, time]);
       }
       item.setAttribute("label", username);
       item.setAttribute("class", "context-login-item");
 
       // login is bound so we can keep the reference to each object.
-      item.addEventListener("command", function(login, event) {
-        this._fillTargetField(login, inputElement, browser, documentURI);
-      }.bind(this, login));
+      item.addEventListener(
+        "command",
+        function(login, event) {
+          this._fillTargetField(login, inputElement, browser, documentURI);
+        }.bind(this, login)
+      );
 
       fragment.appendChild(item);
     }
@@ -96,11 +109,13 @@ var LoginManagerContextMenu = {
       schemeUpgrades: LoginHelper.schemeUpgrades,
     };
     let logins = LoginHelper.searchLoginsWithObject(searchParams);
-    let resolveBy = [
-      "scheme",
-      "timePasswordChanged",
-    ];
-    logins = LoginHelper.dedupeLogins(logins, ["username", "password"], resolveBy, documentURI.displayPrePath);
+    let resolveBy = ["scheme", "timePasswordChanged"];
+    logins = LoginHelper.dedupeLogins(
+      logins,
+      ["username", "password"],
+      resolveBy,
+      documentURI.displayPrePath
+    );
 
     // Sort logins in alphabetical order and by date.
     logins.sort((loginA, loginB) => {
@@ -178,19 +193,32 @@ var LoginManagerContextMenu = {
    */
   _getLocalizedString(key, formatArgs) {
     if (formatArgs) {
-      return this._stringBundle.formatStringFromName(key, formatArgs, formatArgs.length);
+      return this._stringBundle.formatStringFromName(
+        key,
+        formatArgs,
+        formatArgs.length
+      );
     }
     return this._stringBundle.GetStringFromName(key);
   },
 };
 
-XPCOMUtils.defineLazyGetter(LoginManagerContextMenu, "_stringBundle", function() {
-  return Services.strings.
-         createBundle("chrome://passwordmgr/locale/passwordmgr.properties");
-});
+XPCOMUtils.defineLazyGetter(
+  LoginManagerContextMenu,
+  "_stringBundle",
+  function() {
+    return Services.strings.createBundle(
+      "chrome://passwordmgr/locale/passwordmgr.properties"
+    );
+  }
+);
 
-XPCOMUtils.defineLazyGetter(LoginManagerContextMenu, "dateAndTimeFormatter", function() {
-  return new Services.intl.DateTimeFormat(undefined, {
-    dateStyle: "medium",
-  });
-});
+XPCOMUtils.defineLazyGetter(
+  LoginManagerContextMenu,
+  "dateAndTimeFormatter",
+  function() {
+    return new Services.intl.DateTimeFormat(undefined, {
+      dateStyle: "medium",
+    });
+  }
+);

@@ -6,7 +6,12 @@
 
 "use strict";
 
-loader.lazyRequireGetter(this, "openDocLink", "devtools/client/shared/link", true);
+loader.lazyRequireGetter(
+  this,
+  "openDocLink",
+  "devtools/client/shared/link",
+  true
+);
 
 class InactiveCssTooltipHelper {
   constructor() {
@@ -41,38 +46,38 @@ class InactiveCssTooltipHelper {
     doc.l10n.resumeObserving();
 
     // Size the content.
-    tooltip.setContentSize({width: 275, height: Infinity});
+    tooltip.setContentSize({ width: 275, height: Infinity });
   }
-/**
- * Get the template that the Fluent string will be merged with. This template
- * looks something like this but there is a variable amount of properties in the
- * fix section:
- *
- * <div class="devtools-tooltip-inactive-css">
- *   <p data-l10n-id="inactive-css-not-grid-or-flex-container"
- *      data-l10n-args="{&quot;property&quot;:&quot;align-content&quot;}">
- *     <strong></strong>
- *   </p>
- *   <p data-l10n-id="inactive-css-not-grid-or-flex-container-fix">
- *     <strong></strong>
- *     <strong></strong>
- *     <span data-l10n-name="link" class="link"></span>
- *   </p>
- * </div>
- *
- * @param {Object} data
- *        An object in the following format: {
- *          fixId: "inactive-css-not-grid-item-fix", // Fluent id containing the
- *                                                   // Inactive CSS fix.
- *          msgId: "inactive-css-not-grid-item", // Fluent id containing the
- *                                               // Inactive CSS message.
- *          numFixProps: 2, // Number of properties in the fix section of the
- *                          // tooltip.
- *          property: "color", // Property name
- *        }
- * @param {HTMLTooltip} tooltip
- *        The tooltip we are targetting.
- */
+  /**
+   * Get the template that the Fluent string will be merged with. This template
+   * looks something like this but there is a variable amount of properties in the
+   * fix section:
+   *
+   * <div class="devtools-tooltip-inactive-css">
+   *   <p data-l10n-id="inactive-css-not-grid-or-flex-container"
+   *      data-l10n-args="{&quot;property&quot;:&quot;align-content&quot;}">
+   *     <strong></strong>
+   *   </p>
+   *   <p data-l10n-id="inactive-css-not-grid-or-flex-container-fix">
+   *     <strong></strong>
+   *     <strong></strong>
+   *     <span data-l10n-name="link" class="link"></span>
+   *   </p>
+   * </div>
+   *
+   * @param {Object} data
+   *        An object in the following format: {
+   *          fixId: "inactive-css-not-grid-item-fix", // Fluent id containing the
+   *                                                   // Inactive CSS fix.
+   *          msgId: "inactive-css-not-grid-item", // Fluent id containing the
+   *                                               // Inactive CSS message.
+   *          numFixProps: 2, // Number of properties in the fix section of the
+   *                          // tooltip.
+   *          property: "color", // Property name
+   *        }
+   * @param {HTMLTooltip} tooltip
+   *        The tooltip we are targetting.
+   */
   getTemplate(data, tooltip) {
     const XHTML_NS = "http://www.w3.org/1999/xhtml";
     const { fixId, msgId, numFixProps, property } = data;
@@ -87,7 +92,7 @@ class InactiveCssTooltipHelper {
     templateNode.innerHTML = `
     <div class="devtools-tooltip-inactive-css">
       <p data-l10n-id="${msgId}"
-         data-l10n-args='${JSON.stringify({property})}'>
+         data-l10n-args='${JSON.stringify({ property })}'>
         <strong></strong>
       </p>
       <p data-l10n-id="${fixId}">

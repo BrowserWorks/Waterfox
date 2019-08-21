@@ -2,7 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
+const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
 const UPDATE_BEGIN = "safebrowsing-update-begin";
 const UPDATE_FINISH = "safebrowsing-update-finished";
@@ -32,8 +32,9 @@ function onLoad() {
  */
 var Search = {
   init() {
-    let classifier = Cc["@mozilla.org/url-classifier/dbservice;1"]
-                       .getService(Ci.nsIURIClassifier);
+    let classifier = Cc["@mozilla.org/url-classifier/dbservice;1"].getService(
+      Ci.nsIURIClassifier
+    );
     let featureNames = classifier.getFeatureNames();
 
     let fragment = document.createDocumentFragment();
@@ -93,8 +94,9 @@ var Search = {
       return;
     }
 
-    let classifier = Cc["@mozilla.org/url-classifier/dbservice;1"]
-                       .getService(Ci.nsIURIClassifier);
+    let classifier = Cc["@mozilla.org/url-classifier/dbservice;1"].getService(
+      Ci.nsIURIClassifier
+    );
 
     let featureNames = classifier.getFeatureNames();
     let features = [];
@@ -112,11 +114,13 @@ var Search = {
       return;
     }
 
-    let listType = document.getElementById("search-listtype").value == 0
-                     ? Ci.nsIUrlClassifierFeature.blacklist
-                     : Ci.nsIUrlClassifierFeature.whitelist;
-    classifier.asyncClassifyLocalWithFeatures(uri, features, listType,
-                                              list => Search.showResults(list));
+    let listType =
+      document.getElementById("search-listtype").value == 0
+        ? Ci.nsIUrlClassifierFeature.blacklist
+        : Ci.nsIUrlClassifierFeature.whitelist;
+    classifier.asyncClassifyLocalWithFeatures(uri, features, listType, list =>
+      Search.showResults(list)
+    );
 
     Search.hideError();
   },
@@ -154,11 +158,17 @@ var Search = {
       tr.appendChild(td);
 
       let featureName = document.createElement("div");
-      document.l10n.setAttributes(featureName, "url-classifier-search-result-uri", {uri: result.uri.spec});
+      document.l10n.setAttributes(
+        featureName,
+        "url-classifier-search-result-uri",
+        { uri: result.uri.spec }
+      );
       td.appendChild(featureName);
 
       let list = document.createElement("div");
-      document.l10n.setAttributes(list, "url-classifier-search-result-list", {list: result.list});
+      document.l10n.setAttributes(list, "url-classifier-search-result-list", {
+        list: result.list,
+      });
       td.appendChild(list);
     });
 
@@ -234,9 +244,13 @@ var Provider = {
     if (aData.startsWith("success")) {
       document.l10n.setAttributes(elem, "url-classifier-success");
     } else if (aData.startsWith("update error")) {
-      document.l10n.setAttributes(elem, "url-classifier-update-error", {error: aData.split(": ")[1]});
+      document.l10n.setAttributes(elem, "url-classifier-update-error", {
+        error: aData.split(": ")[1],
+      });
     } else if (aData.startsWith("download error")) {
-      document.l10n.setAttributes(elem, "url-classifier-download-error", {error: aData.split(": ")[1]});
+      document.l10n.setAttributes(elem, "url-classifier-download-error", {
+        error: aData.split(": ")[1],
+      });
     } else {
       elem.childNodes[0].nodeValue = aData;
     }
@@ -270,12 +284,14 @@ var Provider = {
         if (column.id === "col-update") {
           let btn = document.createElement("button");
           btn.id = "update-" + provider;
-          btn.addEventListener("click", () => { this.update(provider); });
+          btn.addEventListener("click", () => {
+            this.update(provider);
+          });
 
           document.l10n.setAttributes(btn, "url-classifier-trigger-update");
           td.appendChild(btn);
         } else if (column.id === "col-lastupdateresult") {
-            document.l10n.setAttributes(td, "url-classifier-not-available");
+          document.l10n.setAttributes(td, "url-classifier-not-available");
         } else {
           td.appendChild(document.createTextNode(""));
         }
@@ -290,7 +306,8 @@ var Provider = {
       let values = {};
       values["col-provider"] = provider;
 
-      let pref = "browser.safebrowsing.provider." + provider + ".lastupdatetime";
+      let pref =
+        "browser.safebrowsing.provider." + provider + ".lastupdatetime";
       let lut = Services.prefs.getCharPref(pref, "");
       values["col-lastupdatetime"] = lut ? new Date(lut * 1) : null;
 
@@ -298,8 +315,9 @@ var Provider = {
       let nut = Services.prefs.getCharPref(pref, "");
       values["col-nextupdatetime"] = nut ? new Date(nut * 1) : null;
 
-      let listmanager = Cc["@mozilla.org/url-classifier/listmanager;1"]
-                        .getService(Ci.nsIUrlListManager);
+      let listmanager = Cc[
+        "@mozilla.org/url-classifier/listmanager;1"
+      ].getService(Ci.nsIUrlListManager);
       let bot = listmanager.getBackOffTime(provider);
       values["col-backofftime"] = bot ? new Date(bot * 1) : null;
 
@@ -317,8 +335,9 @@ var Provider = {
 
   // Call update for the provider.
   update(provider) {
-    let listmanager = Cc["@mozilla.org/url-classifier/listmanager;1"]
-                      .getService(Ci.nsIUrlListManager);
+    let listmanager = Cc[
+      "@mozilla.org/url-classifier/listmanager;1"
+    ].getService(Ci.nsIUrlListManager);
 
     let pref = "browser.safebrowsing.provider." + provider + ".lists";
     let tables = Services.prefs.getCharPref(pref, "");
@@ -334,8 +353,9 @@ var Provider = {
   // the provider is active. This is used to filter out google v2 provider
   // without changing the preference.
   isActiveProvider(provider) {
-    let listmanager = Cc["@mozilla.org/url-classifier/listmanager;1"]
-                      .getService(Ci.nsIUrlListManager);
+    let listmanager = Cc[
+      "@mozilla.org/url-classifier/listmanager;1"
+    ].getService(Ci.nsIUrlListManager);
 
     let pref = "browser.safebrowsing.provider." + provider + ".lists";
     let tables = Services.prefs.getCharPref(pref, "").split(",");
@@ -378,16 +398,21 @@ var Cache = {
     this.createCacheEntries();
 
     let refreshBtn = document.getElementById("refresh-cache-btn");
-    refreshBtn.addEventListener("click", () => { this.refresh(); });
+    refreshBtn.addEventListener("click", () => {
+      this.refresh();
+    });
 
     let clearBtn = document.getElementById("clear-cache-btn");
     clearBtn.addEventListener("click", () => {
-      let dbservice = Cc["@mozilla.org/url-classifier/dbservice;1"]
-                      .getService(Ci.nsIUrlClassifierDBService);
+      let dbservice = Cc["@mozilla.org/url-classifier/dbservice;1"].getService(
+        Ci.nsIUrlClassifierDBService
+      );
       dbservice.clearCache();
       // Since clearCache is async call, we just simply assume it will be
       // updated in 100 milli-seconds.
-      setTimeout(() => { this.refresh(); }, 100);
+      setTimeout(() => {
+        this.refresh();
+      }, 100);
     });
   },
 
@@ -434,8 +459,9 @@ var Cache = {
       body.appendChild(tr);
     }
 
-    let dbservice = Cc["@mozilla.org/url-classifier/dbservice;1"]
-                    .getService(Ci.nsIUrlClassifierInfo);
+    let dbservice = Cc["@mozilla.org/url-classifier/dbservice;1"].getService(
+      Ci.nsIUrlClassifierInfo
+    );
 
     for (let provider of Provider.providers) {
       let pref = "browser.safebrowsing.provider." + provider + ".lists";
@@ -443,7 +469,7 @@ var Cache = {
 
       for (let table of tables) {
         dbservice.getCacheInfo(table, {
-          onGetCacheComplete: (aCache) => {
+          onGetCacheComplete: aCache => {
             let entries = aCache.entries;
             if (entries.length === 0) {
               this.showCacheEnties.delete(table);
@@ -451,8 +477,11 @@ var Cache = {
             }
 
             let positiveCacheCount = 0;
-            for (let i = 0; i < entries.length ; i++) {
-              let entry = entries.queryElementAt(i, Ci.nsIUrlClassifierCacheEntry);
+            for (let i = 0; i < entries.length; i++) {
+              let entry = entries.queryElementAt(
+                i,
+                Ci.nsIUrlClassifierCacheEntry
+              );
               let matches = entry.matches;
               positiveCacheCount += matches.length;
 
@@ -462,18 +491,34 @@ var Cache = {
                 continue;
               }
 
-              let tds = [table, entry.prefix, new Date(entry.expiry * 1000).toString()];
+              let tds = [
+                table,
+                entry.prefix,
+                new Date(entry.expiry * 1000).toString(),
+              ];
               let j = 0;
               do {
                 if (matches.length >= 1) {
-                  let match =
-                    matches.queryElementAt(j, Ci.nsIUrlClassifierPositiveCacheEntry);
-                  let list = [match.fullhash, new Date(match.expiry * 1000).toString()];
+                  let match = matches.queryElementAt(
+                    j,
+                    Ci.nsIUrlClassifierPositiveCacheEntry
+                  );
+                  let list = [
+                    match.fullhash,
+                    new Date(match.expiry * 1000).toString(),
+                  ];
                   tds = tds.concat(list);
                 } else {
-                  tds = tds.concat([{l10n: "url-classifier-not-available"}, {l10n: "url-classifier-not-available"}]);
+                  tds = tds.concat([
+                    { l10n: "url-classifier-not-available" },
+                    { l10n: "url-classifier-not-available" },
+                  ]);
                 }
-                createRow(tds, document.getElementById("cache-entries-table-body"), 5);
+                createRow(
+                  tds,
+                  document.getElementById("cache-entries-table-body"),
+                  5
+                );
                 j++;
                 tds = [""];
               } while (j < matches.length);
@@ -493,14 +538,19 @@ var Cache = {
             });
 
             let tds = [table, entries.length, positiveCacheCount, chk];
-            createRow(tds, document.getElementById("cache-table-body"), tds.length);
+            createRow(
+              tds,
+              document.getElementById("cache-table-body"),
+              tds.length
+            );
           },
         });
       }
     }
 
     let entries_div = document.getElementById("cache-entries");
-    entries_div.style.display = this.showCacheEnties.size == 0 ? "none" : "block";
+    entries_div.style.display =
+      this.showCacheEnties.size == 0 ? "none" : "block";
   },
 };
 
@@ -509,13 +559,15 @@ var Cache = {
  */
 var Debug = {
   // url-classifier NSPR Log modules.
-  modules: ["UrlClassifierDbService",
-            "nsChannelClassifier",
-            "UrlClassifier",
-            "UrlClassifierProtocolParser",
-            "UrlClassifierStreamUpdater",
-            "UrlClassifierPrefixSet",
-            "ApplicationReputation"],
+  modules: [
+    "UrlClassifierDbService",
+    "nsChannelClassifier",
+    "UrlClassifier",
+    "UrlClassifierProtocolParser",
+    "UrlClassifierStreamUpdater",
+    "UrlClassifierPrefixSet",
+    "ApplicationReputation",
+  ],
 
   init() {
     this.register();
@@ -569,7 +621,9 @@ var Debug = {
       chk.id = "chk-" + module;
       chk.type = "checkbox";
       chk.checked = true;
-      chk.addEventListener("click", () => { logModuleUpdate(module); });
+      chk.addEventListener("click", () => {
+        logModuleUpdate(module);
+      });
       container.appendChild(chk, modules);
 
       let label = document.createElement("label");
@@ -598,12 +652,14 @@ var Debug = {
 
     // Disable configure log modules if log modules are already set
     // by environment variable.
-    let env = Cc["@mozilla.org/process/environment;1"]
-              .getService(Ci.nsIEnvironment);
+    let env = Cc["@mozilla.org/process/environment;1"].getService(
+      Ci.nsIEnvironment
+    );
 
-    let logModules = env.get("MOZ_LOG") ||
-                     env.get("MOZ_LOG_MODULES") ||
-                     env.get("NSPR_LOG_MODULES");
+    let logModules =
+      env.get("MOZ_LOG") ||
+      env.get("MOZ_LOG_MODULES") ||
+      env.get("NSPR_LOG_MODULES");
 
     if (logModules.length > 0) {
       document.getElementById("set-log-modules").disabled = true;

@@ -1,17 +1,16 @@
-const {HttpServer} = ChromeUtils.import("resource://testing-common/httpd.js");
+const { HttpServer } = ChromeUtils.import("resource://testing-common/httpd.js");
 
 var httpserver = new HttpServer();
 var pass = 0;
-var responseBody = [0x0B, 0x02, 0x80, 0x74, 0x65, 0x73, 0x74, 0x0A, 0x03];
+var responseBody = [0x0b, 0x02, 0x80, 0x74, 0x65, 0x73, 0x74, 0x0a, 0x03];
 var responseLen = 5;
 var testUrl = "/test/brotli";
 
-
 function setupChannel() {
-    return NetUtil.newChannel({
-        uri: "http://localhost:" + httpserver.identity.primaryPort + testUrl,
-        loadUsingSystemPrincipal: true
-    });
+  return NetUtil.newChannel({
+    uri: "http://localhost:" + httpserver.identity.primaryPort + testUrl,
+    loadUsingSystemPrincipal: true,
+  });
 }
 
 function Listener() {}
@@ -20,10 +19,13 @@ Listener.prototype = {
   _buffer: null,
 
   QueryInterface: function(iid) {
-    if (iid.equals(Ci.nsIStreamListener) ||
-        iid.equals(Ci.nsIRequestObserver) ||
-        iid.equals(Ci.nsISupports))
+    if (
+      iid.equals(Ci.nsIStreamListener) ||
+      iid.equals(Ci.nsIRequestObserver) ||
+      iid.equals(Ci.nsISupports)
+    ) {
       return this;
+    }
     throw Cr.NS_ERROR_NO_INTERFACE;
   },
 
@@ -57,7 +59,7 @@ Listener.prototype = {
       httpserver.stop(do_test_finished);
       prefs.setCharPref("network.http.accept-encoding", cePref);
     }
-  }
+  },
 };
 
 var prefs;
@@ -89,8 +91,9 @@ function handler(metadata, response) {
   response.setHeader("Content-Encoding", "br", false);
   response.setHeader("Content-Length", "" + responseBody.length, false);
 
-  var bos = Cc["@mozilla.org/binaryoutputstream;1"]
-            .createInstance(Ci.nsIBinaryOutputStream);
+  var bos = Cc["@mozilla.org/binaryoutputstream;1"].createInstance(
+    Ci.nsIBinaryOutputStream
+  );
   bos.setOutputStream(response.bodyOutputStream);
 
   response.processAsync();

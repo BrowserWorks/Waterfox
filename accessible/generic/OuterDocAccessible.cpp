@@ -31,7 +31,7 @@ OuterDocAccessible::OuterDocAccessible(nsIContent* aContent,
 
 #ifdef XP_WIN
   if (DocAccessibleParent* remoteDoc = RemoteChildDoc()) {
-    remoteDoc->SendParentCOMProxy();
+    remoteDoc->SendParentCOMProxy(this);
   }
 #endif
 

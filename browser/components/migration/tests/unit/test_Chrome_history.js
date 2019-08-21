@@ -3,8 +3,9 @@
 
 "use strict";
 
-const {ChromeMigrationUtils} =
-  ChromeUtils.import("resource:///modules/ChromeMigrationUtils.jsm");
+const { ChromeMigrationUtils } = ChromeUtils.import(
+  "resource:///modules/ChromeMigrationUtils.jsm"
+);
 
 const SOURCE_PROFILE_DIR = "Library/Application Support/Google/Chrome/Default/";
 
@@ -18,43 +19,50 @@ const PROFILE = {
  * The main object reflects the data in the 'urls' table. The visits property
  * reflects the associated data in the 'visits' table.
  */
-const TEST_URLS = [{
-  id: 1,
-  url: "http://example.com/",
-  title: "test",
-  visit_count: 1,
-  typed_count: 0,
-  last_visit_time: 13193151310368000,
-  hidden: 0,
-  visits: [{
+const TEST_URLS = [
+  {
     id: 1,
-    url: 1,
-    visit_time: 13193151310368000,
-    from_visit: 0,
-    transition: 805306370,
-    segment_id: 0,
-    visit_duration: 10745006,
-    incremented_omnibox_typed_score: 0,
-  }],
-}, {
-  id: 2,
-  url: "http://invalid.com/",
-  title: "test2",
-  visit_count: 1,
-  typed_count: 0,
-  last_visit_time: 13193154948901000,
-  hidden: 0,
-  visits: [{
+    url: "http://example.com/",
+    title: "test",
+    visit_count: 1,
+    typed_count: 0,
+    last_visit_time: 13193151310368000,
+    hidden: 0,
+    visits: [
+      {
+        id: 1,
+        url: 1,
+        visit_time: 13193151310368000,
+        from_visit: 0,
+        transition: 805306370,
+        segment_id: 0,
+        visit_duration: 10745006,
+        incremented_omnibox_typed_score: 0,
+      },
+    ],
+  },
+  {
     id: 2,
-    url: 2,
-    visit_time: 13193154948901000,
-    from_visit: 0,
-    transition: 805306376,
-    segment_id: 0,
-    visit_duration: 6568270,
-    incremented_omnibox_typed_score: 0,
-  }],
-}];
+    url: "http://invalid.com/",
+    title: "test2",
+    visit_count: 1,
+    typed_count: 0,
+    last_visit_time: 13193154948901000,
+    hidden: 0,
+    visits: [
+      {
+        id: 2,
+        url: 2,
+        visit_time: 13193154948901000,
+        from_visit: 0,
+        transition: 805306376,
+        segment_id: 0,
+        visit_duration: 6568270,
+        incremented_omnibox_typed_score: 0,
+      },
+    ],
+  },
+];
 
 async function setVisitTimes(time) {
   let loginDataFile = do_get_file(`${SOURCE_PROFILE_DIR}History`);
@@ -70,28 +78,46 @@ async function setVisitTimes(time) {
   await dbConn.close();
 }
 
+function setExpectedVisitTimes(time) {
+  for (let urlInfo of TEST_URLS) {
+    urlInfo.last_visit_time = time;
+    urlInfo.visits[0].visit_time = time;
+  }
+}
+
 function assertEntryMatches(entry, urlInfo, dateWasInFuture = false) {
   info(`Checking url: ${urlInfo.url}`);
   Assert.ok(entry, `Should have stored an entry`);
 
   Assert.equal(entry.url, urlInfo.url, "Should have the correct URL");
   Assert.equal(entry.title, urlInfo.title, "Should have the correct title");
-  Assert.equal(entry.visits.length, urlInfo.visits.length,
-    "Should have the correct number of visits");
+  Assert.equal(
+    entry.visits.length,
+    urlInfo.visits.length,
+    "Should have the correct number of visits"
+  );
 
   for (let index in urlInfo.visits) {
-    Assert.equal(entry.visits[index].transition,
+    Assert.equal(
+      entry.visits[index].transition,
       PlacesUtils.history.TRANSITIONS.LINK,
-      "Should have Link type transition");
+      "Should have Link type transition"
+    );
 
     if (dateWasInFuture) {
-      Assert.lessOrEqual(entry.visits[index].date.getTime(), new Date().getTime(),
-        "Should have moved the date to no later than the current date.");
+      Assert.lessOrEqual(
+        entry.visits[index].date.getTime(),
+        new Date().getTime(),
+        "Should have moved the date to no later than the current date."
+      );
     } else {
       Assert.equal(
         entry.visits[index].date.getTime(),
-        ChromeMigrationUtils.chromeTimeToDate(urlInfo.visits[index].visit_time).getTime(),
-        "Should have the correct date");
+        ChromeMigrationUtils.chromeTimeToDate(
+          urlInfo.visits[index].visit_time
+        ).getTime(),
+        "Should have the correct date"
+      );
     }
   }
 }
@@ -126,14 +152,28 @@ add_task(async function setup() {
 add_task(async function test_import() {
   setupHistoryFile();
   await PlacesUtils.history.clear();
+  // Update to ~10 days ago since the date can't be too old or Places may expire it.
+  const pastDate = new Date(new Date().getTime() - 1000 * 60 * 60 * 24 * 10);
+  const pastChromeTime = ChromeMigrationUtils.dateToChromeTime(pastDate);
+  await setVisitTimes(pastChromeTime);
+  setExpectedVisitTimes(pastChromeTime);
 
   let migrator = await MigrationUtils.getMigrator("chrome");
-  Assert.ok(await migrator.isSourceAvailable(), "Sanity check the source exists");
+  Assert.ok(
+    await migrator.isSourceAvailable(),
+    "Sanity check the source exists"
+  );
 
-  await promiseMigration(migrator, MigrationUtils.resourceTypes.HISTORY, PROFILE);
+  await promiseMigration(
+    migrator,
+    MigrationUtils.resourceTypes.HISTORY,
+    PROFILE
+  );
 
   for (let urlInfo of TEST_URLS) {
-    let entry = await PlacesUtils.history.fetch(urlInfo.url, {includeVisits: true});
+    let entry = await PlacesUtils.history.fetch(urlInfo.url, {
+      includeVisits: true,
+    });
     assertEntryMatches(entry, urlInfo);
   }
 });
@@ -145,12 +185,21 @@ add_task(async function test_import_future_date() {
   await setVisitTimes(ChromeMigrationUtils.dateToChromeTime(futureDate));
 
   let migrator = await MigrationUtils.getMigrator("chrome");
-  Assert.ok(await migrator.isSourceAvailable(), "Sanity check the source exists");
+  Assert.ok(
+    await migrator.isSourceAvailable(),
+    "Sanity check the source exists"
+  );
 
-  await promiseMigration(migrator, MigrationUtils.resourceTypes.HISTORY, PROFILE);
+  await promiseMigration(
+    migrator,
+    MigrationUtils.resourceTypes.HISTORY,
+    PROFILE
+  );
 
   for (let urlInfo of TEST_URLS) {
-    let entry = await PlacesUtils.history.fetch(urlInfo.url, {includeVisits: true});
+    let entry = await PlacesUtils.history.fetch(urlInfo.url, {
+      includeVisits: true,
+    });
     assertEntryMatches(entry, urlInfo, true);
   }
 });

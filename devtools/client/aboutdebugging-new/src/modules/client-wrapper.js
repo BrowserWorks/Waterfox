@@ -4,8 +4,9 @@
 
 "use strict";
 
-const { checkVersionCompatibility } =
-  require("devtools/client/shared/remote-debugging/version-checker");
+const {
+  checkVersionCompatibility,
+} = require("devtools/client/shared/remote-debugging/version-checker");
 
 const { RUNTIME_PREFERENCE } = require("../constants");
 const { WorkersListener } = require("./workers-listener");
@@ -24,10 +25,7 @@ const PREF_TO_TYPE = {
 };
 
 // Some events are fired by mainRoot rather than client.
-const MAIN_ROOT_EVENTS = [
-  "addonListChanged",
-  "tabListChanged",
-];
+const MAIN_ROOT_EVENTS = ["addonListChanged", "tabListChanged"];
 
 /**
  * The ClientWrapper class is used to isolate aboutdebugging from the DevTools client API
@@ -106,8 +104,10 @@ class ClientWrapper {
 
   async getPreference(prefName, defaultValue) {
     if (typeof defaultValue === "undefined") {
-      throw new Error("Default value is mandatory for getPreference, the actor will " +
-        "throw if the preference is not set on the target runtime");
+      throw new Error(
+        "Default value is mandatory for getPreference, the actor will " +
+          "throw if the preference is not set on the target runtime"
+      );
     }
 
     const prefType = PREF_TO_TYPE[prefName];
@@ -149,7 +149,11 @@ class ClientWrapper {
   }
 
   async listWorkers() {
-    const { other, service, shared } = await this.client.mainRoot.listAllWorkers();
+    const {
+      other,
+      service,
+      shared,
+    } = await this.client.mainRoot.listAllWorkers();
 
     return {
       otherWorkers: other,

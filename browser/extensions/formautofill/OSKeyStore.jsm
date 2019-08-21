@@ -8,21 +8,34 @@
 
 "use strict";
 
-var EXPORTED_SYMBOLS = [
-  "OSKeyStore",
-];
+var EXPORTED_SYMBOLS = ["OSKeyStore"];
 
-const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
-const {XPCOMUtils} = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
+const { XPCOMUtils } = ChromeUtils.import(
+  "resource://gre/modules/XPCOMUtils.jsm"
+);
 
-ChromeUtils.defineModuleGetter(this, "AppConstants", "resource://gre/modules/AppConstants.jsm");
-XPCOMUtils.defineLazyServiceGetter(this, "nativeOSKeyStore",
-                                   "@mozilla.org/security/oskeystore;1", Ci.nsIOSKeyStore);
-XPCOMUtils.defineLazyServiceGetter(this, "osReauthenticator",
-                                   "@mozilla.org/security/osreauthenticator;1", Ci.nsIOSReauthenticator);
+ChromeUtils.defineModuleGetter(
+  this,
+  "AppConstants",
+  "resource://gre/modules/AppConstants.jsm"
+);
+XPCOMUtils.defineLazyServiceGetter(
+  this,
+  "nativeOSKeyStore",
+  "@mozilla.org/security/oskeystore;1",
+  Ci.nsIOSKeyStore
+);
+XPCOMUtils.defineLazyServiceGetter(
+  this,
+  "osReauthenticator",
+  "@mozilla.org/security/osreauthenticator;1",
+  Ci.nsIOSReauthenticator
+);
 
 // Skip reauth during tests, only works in non-official builds.
-const TEST_ONLY_REAUTH = "extensions.formautofill.osKeyStore.unofficialBuildOnlyLogin";
+const TEST_ONLY_REAUTH =
+  "extensions.formautofill.osKeyStore.unofficialBuildOnlyLogin";
 
 var OSKeyStore = {
   /**
@@ -71,13 +84,27 @@ var OSKeyStore = {
     log.debug("_ensureReauth: _testReauth: ", this._testReauth);
     switch (this._testReauth) {
       case "pass":
-        Services.obs.notifyObservers(null, "oskeystore-testonly-reauth", "pass");
+        Services.obs.notifyObservers(
+          null,
+          "oskeystore-testonly-reauth",
+          "pass"
+        );
         break;
       case "cancel":
-        Services.obs.notifyObservers(null, "oskeystore-testonly-reauth", "cancel");
-        throw new Components.Exception("Simulating user cancelling login dialog", Cr.NS_ERROR_FAILURE);
+        Services.obs.notifyObservers(
+          null,
+          "oskeystore-testonly-reauth",
+          "cancel"
+        );
+        throw new Components.Exception(
+          "Simulating user cancelling login dialog",
+          Cr.NS_ERROR_FAILURE
+        );
       default:
-        throw new Components.Exception("Unknown test pref value", Cr.NS_ERROR_FAILURE);
+        throw new Components.Exception(
+          "Unknown test pref value",
+          Cr.NS_ERROR_FAILURE
+        );
     }
   },
 
@@ -104,7 +131,10 @@ var OSKeyStore = {
       log.debug("ensureLoggedIn: Has a pending unlock operation");
       return this._pendingUnlockPromise;
     }
-    log.debug("ensureLoggedIn: Creating new pending unlock promise. reauth: ", reauth);
+    log.debug(
+      "ensureLoggedIn: Creating new pending unlock promise. reauth: ",
+      reauth
+    );
 
     let unlockPromise;
 
@@ -113,15 +143,21 @@ var OSKeyStore = {
       unlockPromise = Promise.resolve();
     } else if (!AppConstants.MOZILLA_OFFICIAL && this._testReauth) {
       unlockPromise = this._reauthInTests();
-    } else if (AppConstants.platform == "win" ||
-               AppConstants.platform == "macosx") {
+    } else if (
+      AppConstants.platform == "win" ||
+      AppConstants.platform == "macosx"
+    ) {
       let reauthLabel = typeof reauth == "string" ? reauth : "";
       // On Windows, this promise rejects when the user cancels login dialog, see bug 1502121.
       // On macOS this resolves to false, so we would need to check it.
-      unlockPromise = osReauthenticator.asyncReauthenticateUser(reauthLabel)
+      unlockPromise = osReauthenticator
+        .asyncReauthenticateUser(reauthLabel)
         .then(reauthResult => {
           if (typeof reauthResult == "boolean" && !reauthResult) {
-            throw new Components.Exception("User canceled OS reauth entry", Cr.NS_ERROR_FAILURE);
+            throw new Components.Exception(
+              "User canceled OS reauth entry",
+              Cr.NS_ERROR_FAILURE
+            );
           }
         });
     } else {
@@ -130,41 +166,58 @@ var OSKeyStore = {
     }
 
     unlockPromise = unlockPromise.then(async () => {
-      if (!await nativeOSKeyStore.asyncSecretAvailable(this.STORE_LABEL)) {
-        log.debug("ensureLoggedIn: Secret unavailable, attempt to generate new secret.");
-        let recoveryPhrase = await nativeOSKeyStore.asyncGenerateSecret(this.STORE_LABEL);
+      if (!(await nativeOSKeyStore.asyncSecretAvailable(this.STORE_LABEL))) {
+        log.debug(
+          "ensureLoggedIn: Secret unavailable, attempt to generate new secret."
+        );
+        let recoveryPhrase = await nativeOSKeyStore.asyncGenerateSecret(
+          this.STORE_LABEL
+        );
         // TODO We should somehow have a dialog to ask the user to write this down,
         // and another dialog somewhere for the user to restore the secret with it.
         // (Intentionally not printing it out in the console)
-        log.debug("ensureLoggedIn: Secret generated. Recovery phrase length: " + recoveryPhrase.length);
+        log.debug(
+          "ensureLoggedIn: Secret generated. Recovery phrase length: " +
+            recoveryPhrase.length
+        );
       }
     });
 
     if (nativeOSKeyStore.isNSSKeyStore) {
       // Workaround bug 1492305: NSS-implemented methods don't reject when user cancels.
       unlockPromise = unlockPromise.then(() => {
-        log.debug("ensureLoggedIn: isNSSKeyStore: ", reauth, Services.logins.isLoggedIn);
+        log.debug(
+          "ensureLoggedIn: isNSSKeyStore: ",
+          reauth,
+          Services.logins.isLoggedIn
+        );
         // User has hit the cancel button on the master password prompt.
         // We must reject the promise chain here.
         if (!Services.logins.isLoggedIn) {
-          throw Components.Exception("User canceled OS unlock entry (Workaround)", Cr.NS_ERROR_FAILURE);
+          throw Components.Exception(
+            "User canceled OS unlock entry (Workaround)",
+            Cr.NS_ERROR_FAILURE
+          );
         }
       });
     }
 
-    unlockPromise = unlockPromise.then(() => {
-      log.debug("ensureLoggedIn: Logged in");
-      this._pendingUnlockPromise = null;
-      this._isLocked = false;
+    unlockPromise = unlockPromise.then(
+      () => {
+        log.debug("ensureLoggedIn: Logged in");
+        this._pendingUnlockPromise = null;
+        this._isLocked = false;
 
-      return true;
-    }, (err) => {
-      log.debug("ensureLoggedIn: Not logged in", err);
-      this._pendingUnlockPromise = null;
-      this._isLocked = true;
+        return true;
+      },
+      err => {
+        log.debug("ensureLoggedIn: Not logged in", err);
+        this._pendingUnlockPromise = null;
+        this._isLocked = true;
 
-      return false;
-    });
+        return false;
+      }
+    );
 
     this._pendingUnlockPromise = unlockPromise;
 
@@ -187,10 +240,16 @@ var OSKeyStore = {
    * @returns {Promise<string>}           resolves to the decrypted string, or rejects otherwise.
    */
   async decrypt(cipherText, reauth = false) {
-    if (!await this.ensureLoggedIn(reauth)) {
-      throw Components.Exception("User canceled OS unlock entry", Cr.NS_ERROR_ABORT);
+    if (!(await this.ensureLoggedIn(reauth))) {
+      throw Components.Exception(
+        "User canceled OS unlock entry",
+        Cr.NS_ERROR_ABORT
+      );
     }
-    let bytes = await nativeOSKeyStore.asyncDecryptBytes(this.STORE_LABEL, cipherText);
+    let bytes = await nativeOSKeyStore.asyncDecryptBytes(
+      this.STORE_LABEL,
+      cipherText
+    );
     return String.fromCharCode.apply(String, bytes);
   },
 
@@ -201,8 +260,11 @@ var OSKeyStore = {
    * @returns {Promise<string>} resolves to the encrypted string (with algorithm), otherwise rejects.
    */
   async encrypt(plainText) {
-    if (!await this.ensureLoggedIn()) {
-      throw Components.Exception("User canceled OS unlock entry", Cr.NS_ERROR_ABORT);
+    if (!(await this.ensureLoggedIn())) {
+      throw Components.Exception(
+        "User canceled OS unlock entry",
+        Cr.NS_ERROR_ABORT
+      );
     }
 
     // Convert plain text into a UTF-8 binary string
@@ -214,7 +276,11 @@ var OSKeyStore = {
       textArr.push(char.charCodeAt(0));
     }
 
-    let rawEncryptedText = await nativeOSKeyStore.asyncEncryptBytes(this.STORE_LABEL, textArr.length, textArr);
+    let rawEncryptedText = await nativeOSKeyStore.asyncEncryptBytes(
+      this.STORE_LABEL,
+      textArr.length,
+      textArr
+    );
 
     // Mark the output with a version number.
     return rawEncryptedText;
@@ -244,13 +310,23 @@ var OSKeyStore = {
 };
 
 XPCOMUtils.defineLazyGetter(this, "log", () => {
-  let ConsoleAPI = ChromeUtils.import("resource://gre/modules/Console.jsm", {}).ConsoleAPI;
+  let ConsoleAPI = ChromeUtils.import("resource://gre/modules/Console.jsm", {})
+    .ConsoleAPI;
   return new ConsoleAPI({
     maxLogLevelPref: "extensions.formautofill.loglevel",
     prefix: "OSKeyStore",
   });
 });
 
-XPCOMUtils.defineLazyPreferenceGetter(OSKeyStore, "_testReauth", TEST_ONLY_REAUTH, "");
-XPCOMUtils.defineLazyPreferenceGetter(OSKeyStore, "_reauthEnabledByUser",
-                                      "extensions.formautofill.reauth.enabled", false);
+XPCOMUtils.defineLazyPreferenceGetter(
+  OSKeyStore,
+  "_testReauth",
+  TEST_ONLY_REAUTH,
+  ""
+);
+XPCOMUtils.defineLazyPreferenceGetter(
+  OSKeyStore,
+  "_reauthEnabledByUser",
+  "extensions.formautofill.reauth.enabled",
+  false
+);

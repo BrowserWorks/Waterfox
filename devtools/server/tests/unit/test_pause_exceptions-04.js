@@ -9,17 +9,19 @@
  * the debuggee to pause when an exception is thrown.
  */
 
-add_task(threadClientTest(async ({ threadClient, client, debuggee }) => {
-  let packet = null;
+add_task(
+  threadClientTest(
+    async ({ threadClient, client, debuggee }) => {
+      let packet = null;
 
-  threadClient.addOneTimeListener("paused", function(event, pkt) {
-    packet = pkt;
-    threadClient.resume();
-  });
+      threadClient.addOneTimeListener("paused", function(event, pkt) {
+        packet = pkt;
+        threadClient.resume();
+      });
 
-  await threadClient.pauseOnExceptions(true, true);
-  try {
-    /* eslint-disable */
+      await threadClient.pauseOnExceptions(true, true);
+      try {
+        /* eslint-disable */
     Cu.evalInSandbox(
       `                                   // 1
       function stopMe() {                 // 2
@@ -33,21 +35,21 @@ add_task(threadClientTest(async ({ threadClient, client, debuggee }) => {
       1
     );
     /* eslint-enable */
-  } catch (e) {}
+      } catch (e) {}
 
-  Assert.equal(!!packet, true);
-  Assert.equal(packet.why.type, "exception");
-  Assert.equal(packet.why.exception, "42");
-  packet = null;
+      Assert.equal(!!packet, true);
+      Assert.equal(packet.why.type, "exception");
+      Assert.equal(packet.why.exception, "42");
+      packet = null;
 
-  threadClient.addOneTimeListener("paused", function(event, pkt) {
-    packet = pkt;
-    threadClient.resume();
-  });
+      threadClient.addOneTimeListener("paused", function(event, pkt) {
+        packet = pkt;
+        threadClient.resume();
+      });
 
-  await threadClient.pauseOnExceptions(false, true);
-  try {
-    /* eslint-disable */
+      await threadClient.pauseOnExceptions(false, true);
+      try {
+        /* eslint-disable */
     Cu.evalInSandbox(
       `                                   // 1
       function dontStopMe() {             // 2
@@ -60,16 +62,16 @@ add_task(threadClientTest(async ({ threadClient, client, debuggee }) => {
       "test_pause_exceptions-04.js",
       1
     );
-    /* eslint-enable */
-  } catch (e) {}
+        /* eslint-enable */
+      } catch (e) {}
 
-  // Test that the paused listener callback hasn't been called
-  // on the thrown error from dontStopMe()
-  Assert.equal(!!packet, false);
+      // Test that the paused listener callback hasn't been called
+      // on the thrown error from dontStopMe()
+      Assert.equal(!!packet, false);
 
-  await threadClient.pauseOnExceptions(true, true);
-  try {
-    /* eslint-disable */
+      await threadClient.pauseOnExceptions(true, true);
+      try {
+        /* eslint-disable */
     Cu.evalInSandbox(
       `                                   // 1
       function stopMeAgain() {            // 2
@@ -83,14 +85,17 @@ add_task(threadClientTest(async ({ threadClient, client, debuggee }) => {
       1
     );
     /* eslint-enable */
-  } catch (e) {}
+      } catch (e) {}
 
-  // Test that the paused listener callback has been called
-  // on the thrown error from stopMeAgain()
-  Assert.equal(!!packet, true);
-  Assert.equal(packet.why.type, "exception");
-  Assert.equal(packet.why.exception, "44");
-}, {
-  // Bug 1508289, exception tests fails in worker scope
-  doNotRunWorker: true,
-}));
+      // Test that the paused listener callback has been called
+      // on the thrown error from stopMeAgain()
+      Assert.equal(!!packet, true);
+      Assert.equal(packet.why.type, "exception");
+      Assert.equal(packet.why.exception, "44");
+    },
+    {
+      // Bug 1508289, exception tests fails in worker scope
+      doNotRunWorker: true,
+    }
+  )
+);

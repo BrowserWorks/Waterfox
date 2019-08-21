@@ -6,18 +6,31 @@
 
 var EXPORTED_SYMBOLS = ["WebNavigationChild"];
 
-const {ActorChild} = ChromeUtils.import("resource://gre/modules/ActorChild.jsm");
-const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
-const {XPCOMUtils} = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+const { ActorChild } = ChromeUtils.import(
+  "resource://gre/modules/ActorChild.jsm"
+);
+const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
+const { XPCOMUtils } = ChromeUtils.import(
+  "resource://gre/modules/XPCOMUtils.jsm"
+);
 
-ChromeUtils.defineModuleGetter(this, "AppConstants",
-                               "resource://gre/modules/AppConstants.jsm");
-ChromeUtils.defineModuleGetter(this, "E10SUtils",
-                               "resource://gre/modules/E10SUtils.jsm");
+ChromeUtils.defineModuleGetter(
+  this,
+  "AppConstants",
+  "resource://gre/modules/AppConstants.jsm"
+);
+ChromeUtils.defineModuleGetter(
+  this,
+  "E10SUtils",
+  "resource://gre/modules/E10SUtils.jsm"
+);
 
-XPCOMUtils.defineLazyServiceGetter(this, "CrashReporter",
-                                   "@mozilla.org/xre/app-info;1",
-                                   "nsICrashReporter");
+XPCOMUtils.defineLazyServiceGetter(
+  this,
+  "CrashReporter",
+  "@mozilla.org/xre/app-info;1",
+  "nsICrashReporter"
+);
 
 class WebNavigationChild extends ActorChild {
   get webNavigation() {
@@ -36,9 +49,13 @@ class WebNavigationChild extends ActorChild {
         this.gotoIndex(message.data);
         break;
       case "WebNavigation:LoadURI":
-        let histogram = Services.telemetry.getKeyedHistogramById("FX_TAB_REMOTE_NAVIGATION_DELAY_MS");
-        histogram.add("WebNavigation:LoadURI",
-                      Services.telemetry.msSystemNow() - message.data.requestTime);
+        let histogram = Services.telemetry.getKeyedHistogramById(
+          "FX_TAB_REMOTE_NAVIGATION_DELAY_MS"
+        );
+        histogram.add(
+          "WebNavigation:LoadURI",
+          Services.telemetry.msSystemNow() - message.data.requestTime
+        );
 
         this.loadURI(message.data);
 
@@ -80,10 +97,7 @@ class WebNavigationChild extends ActorChild {
   }
 
   gotoIndex(params) {
-    let {
-      index,
-      cancelContentJSEpoch,
-    } = params || {};
+    let { index, cancelContentJSEpoch } = params || {};
     this.mm.docShell.setCancelContentJSEpoch(cancelContentJSEpoch);
     this._wrapURIChangeCall(() => this.webNavigation.gotoIndex(index));
   }
@@ -106,26 +120,43 @@ class WebNavigationChild extends ActorChild {
       try {
         let url = Services.io.newURI(uri);
         // If the current URI contains a username/password, remove it.
-        url = url.mutate()
-                 .setUserPass("")
-                 .finalize();
+        url = url
+          .mutate()
+          .setUserPass("")
+          .finalize();
         annotation = url.spec;
-      } catch (ex) { /* Ignore failures to parse and failures
-                      on about: URIs. */ }
+      } catch (ex) {
+        /* Ignore failures to parse and failures
+                      on about: URIs. */
+      }
       CrashReporter.annotateCrashReport("URL", annotation);
     }
-    if (postData)
+    if (postData) {
       postData = E10SUtils.makeInputStream(postData);
-    if (headers)
+    }
+    if (headers) {
       headers = E10SUtils.makeInputStream(headers);
-    if (baseURI)
+    }
+    if (baseURI) {
       baseURI = Services.io.newURI(baseURI);
-    this._assert(triggeringPrincipal, "We need a triggering principal to continue loading", new Error().lineNumber);
+    }
+    this._assert(
+      triggeringPrincipal,
+      "We need a triggering principal to continue loading",
+      new Error().lineNumber
+    );
 
-    triggeringPrincipal = E10SUtils.deserializePrincipal(triggeringPrincipal, () => {
-      this._assert(false, "Unable to deserialize passed triggering principal", new Error().lineNumber);
-      return Services.scriptSecurityManager.getSystemPrincipal({});
-    });
+    triggeringPrincipal = E10SUtils.deserializePrincipal(
+      triggeringPrincipal,
+      () => {
+        this._assert(
+          false,
+          "Unable to deserialize passed triggering principal",
+          new Error().lineNumber
+        );
+        return Services.scriptSecurityManager.getSystemPrincipal({});
+      }
+    );
     if (csp) {
       csp = E10SUtils.deserializeCSP(csp);
     }
@@ -148,7 +179,11 @@ class WebNavigationChild extends ActorChild {
   _assert(condition, msg, line = 0) {
     let debug = Cc["@mozilla.org/xpcom/debug;1"].getService(Ci.nsIDebug2);
     if (!condition && debug.isDebugBuild) {
-      debug.warning(`${msg} - ${new Error().stack}`, "WebNavigationChild.js", line);
+      debug.warning(
+        `${msg} - ${new Error().stack}`,
+        "WebNavigationChild.js",
+        line
+      );
       debug.abort("WebNavigationChild.js", line);
     }
   }
