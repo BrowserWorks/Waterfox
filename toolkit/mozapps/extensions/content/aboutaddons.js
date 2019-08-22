@@ -707,6 +707,7 @@ class PanelList extends HTMLElement {
   }
 
   onHide() {
+    requestAnimationFrame(() => this.sendEvent("hidden"));
     this.removeHideListeners();
   }
 
@@ -1749,6 +1750,9 @@ class AddonCard extends HTMLElement {
       if (action == "more-options") {
         this.panel.toggle(e);
       }
+    } else if (e.type === "shown" || e.type === "hidden") {
+      let panelOpen = e.type === "shown";
+      this.optionsButton.setAttribute("aria-expanded", panelOpen);
     }
   }
 
@@ -1843,7 +1847,7 @@ class AddonCard extends HTMLElement {
     }
 
     // Update the name.
-    let name = card.querySelector(".addon-name");
+    let name = this.addonNameEl;
     if (addon.isActive) {
       name.textContent = addon.name;
       name.removeAttribute("data-l10n-id");
@@ -1944,10 +1948,25 @@ class AddonCard extends HTMLElement {
     this.card = importTemplate("card").firstElementChild;
     this.setAttribute("addon-id", addon.id);
 
+    let nameContainer = this.card.querySelector(".addon-name-container");
+    let nameHeading = document.createElement("h3");
+    nameHeading.classList.add("addon-name");
+    if (!this.expanded) {
+      let name = document.createElement("a");
+      name.classList.add("addon-name-link");
+      name.href = `addons://detail/${addon.id}`;
+      nameHeading.appendChild(name);
+      this.addonNameEl = name;
+    } else {
+      this.addonNameEl = nameHeading;
+    }
+    nameContainer.prepend(nameHeading);
+
     let panelType = addon.type == "plugin" ? "plugin-options" : "addon-options";
     this.options = document.createElement(panelType);
     this.options.render();
     this.card.querySelector(".more-options-menu").appendChild(this.options);
+    this.optionsButton = this.card.querySelector(".more-options-button");
 
     // Set the contents.
     this.update();
