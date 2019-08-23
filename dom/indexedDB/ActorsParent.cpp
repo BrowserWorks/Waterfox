@@ -2134,12 +2134,7 @@ class EncodeKeysFunction final : public mozIStorageFunction {
     } else if (type == mozIStorageStatement::VALUE_TYPE_TEXT) {
       nsString stringKey;
       aArguments->GetString(0, stringKey);
-      ErrorResult errorResult;
-      auto result = key.SetFromString(stringKey, errorResult);
-      if (!result.Is(Ok, errorResult)) {
-        return result.Is(Invalid, errorResult) ? NS_ERROR_DOM_INDEXEDDB_DATA_ERR
-                                               : errorResult.StealNSResult();
-      }
+      key.SetFromString(stringKey);
     } else {
       NS_WARNING("Don't call me with the wrong type of arguments!");
       return NS_ERROR_UNEXPECTED;
@@ -18341,13 +18336,9 @@ nsresult DatabaseOperationBase::BindKeyRangeToStatement(
 
   if (!aKeyRange.lower().IsUnset()) {
     Key lower;
-    ErrorResult errorResult;
-    auto result =
-        aKeyRange.lower().ToLocaleBasedKey(lower, aLocale, errorResult);
-    if (!result.Is(Ok, errorResult)) {
-      return NS_WARN_IF(result.Is(Exception, errorResult))
-                 ? errorResult.StealNSResult()
-                 : NS_ERROR_DOM_INDEXEDDB_DATA_ERR;
+    rv = aKeyRange.lower().ToLocaleBasedKey(lower, aLocale);
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      return rv;
     }
 
     rv = lower.BindToStatement(aStatement, NS_LITERAL_CSTRING("lower_key"));
@@ -18362,13 +18353,9 @@ nsresult DatabaseOperationBase::BindKeyRangeToStatement(
 
   if (!aKeyRange.upper().IsUnset()) {
     Key upper;
-    ErrorResult errorResult;
-    auto result =
-        aKeyRange.upper().ToLocaleBasedKey(upper, aLocale, errorResult);
-    if (!result.Is(Ok, errorResult)) {
-      return NS_WARN_IF(result.Is(Exception, errorResult))
-                 ? errorResult.StealNSResult()
-                 : NS_ERROR_DOM_INDEXEDDB_DATA_ERR;
+    rv = aKeyRange.upper().ToLocaleBasedKey(upper, aLocale);
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      return rv;
     }
 
     rv = upper.BindToStatement(aStatement, NS_LITERAL_CSTRING("upper_key"));
@@ -20602,12 +20589,9 @@ nsresult OpenDatabaseOp::UpdateLocaleAwareIndex(
       return rv;
     }
 
-    ErrorResult errorResult;
-    auto result = oldKey.ToLocaleBasedKey(newSortKey, aLocale, errorResult);
-    if (!result.Is(Ok, errorResult)) {
-      return NS_WARN_IF(result.Is(Exception, errorResult))
-                 ? errorResult.StealNSResult()
-                 : NS_ERROR_DOM_INDEXEDDB_DATA_ERR;
+    rv = oldKey.ToLocaleBasedKey(newSortKey, aLocale);
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      return rv;
     }
 
     rv = newSortKey.BindToStatement(writeStmt,
@@ -25749,30 +25733,23 @@ void Cursor::OpenOp::GetRangeKeyInfo(bool aLowerBound, Key* aKey, bool* aOpen) {
   MOZ_ASSERT(aOpen);
 
   if (mOptionalKeyRange.isSome()) {
-    ErrorResult rv;
     const SerializedKeyRange& range = mOptionalKeyRange.ref();
     if (range.isOnly()) {
       *aKey = range.lower();
       *aOpen = false;
       if (mCursor->IsLocaleAware()) {
-        Unused << range.lower().ToLocaleBasedKey(*aKey, mCursor->mLocale, rv);
+        range.lower().ToLocaleBasedKey(*aKey, mCursor->mLocale);
       }
     } else {
       *aKey = aLowerBound ? range.lower() : range.upper();
       *aOpen = aLowerBound ? range.lowerOpen() : range.upperOpen();
       if (mCursor->IsLocaleAware()) {
         if (aLowerBound) {
-          Unused << range.lower().ToLocaleBasedKey(*aKey, mCursor->mLocale, rv);
+          range.lower().ToLocaleBasedKey(*aKey, mCursor->mLocale);
         } else {
-          Unused << range.upper().ToLocaleBasedKey(*aKey, mCursor->mLocale, rv);
+          range.upper().ToLocaleBasedKey(*aKey, mCursor->mLocale);
         }
       }
-    }
-
-    // XXX Explain why the error is ignored here (If it's impossible, then we
-    //     should change this to an assertion.)
-    if (rv.Failed()) {
-      rv.SuppressException();
     }
   } else {
     *aOpen = false;
