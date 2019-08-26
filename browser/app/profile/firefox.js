@@ -177,7 +177,7 @@ pref("app.update.idletime", 60);
 pref("app.update.service.enabled", true);
 #endif
 
-#ifdef XP_WIN
+#ifdef MOZ_BITS_DOWNLOAD
 // If set to true, the Update Service will attempt to use Windows BITS to
 // download updates and will fallback to downloading internally if that fails.
 pref("app.update.BITS.enabled", true);
