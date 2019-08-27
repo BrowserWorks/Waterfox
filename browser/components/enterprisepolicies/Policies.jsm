@@ -980,6 +980,12 @@ var Policies = {
     },
   },
 
+  OfferToSaveLoginsDefault: {
+    onBeforeUIStartup(manager, param) {
+      setDefaultPref("signon.rememberSignons", param);
+    },
+  },
+
   OverrideFirstRunPage: {
     onProfileAfterChange(manager, param) {
       let url = param ? param.href : "";
