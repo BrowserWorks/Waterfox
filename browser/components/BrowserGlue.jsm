@@ -1119,6 +1119,10 @@ BrowserGlue.prototype = {
       "browser.contentblocking.features.strict",
       this._setPrefExpectationsAndUpdate
     );
+    Services.prefs.removeObserver(
+      "extensions.activeThemeID",
+      this._applyAustralisStyle
+    );
   },
 
   // runs on startup, before the first command line handler is invoked
@@ -1636,6 +1640,38 @@ BrowserGlue.prototype = {
       "browser.contentblocking.features.strict",
       this._setPrefExpectationsAndUpdate
     );
+
+    this._applyAustralisStyle();
+    Services.prefs.addObserver(
+      "extensions.activeThemeID",
+      this._applyAustralisStyle
+    );
+  },
+
+  _applyAustralisStyle() {
+    let sss = Components.classes["@mozilla.org/content/style-sheet-service;1"]
+                        .getService(Components.interfaces.nsIStyleSheetService);
+    let ios = Components.classes["@mozilla.org/network/io-service;1"]
+                        .getService(Components.interfaces.nsIIOService);
+    let australisDefault = ios.newURI("chrome://browser/skin/australis-default.css", null, null),
+        australisLight = ios.newURI("chrome://browser/skin/australis-light.css", null, null),
+        australisDark = ios.newURI("chrome://browser/skin/australis-dark.css", null, null);
+
+    sss.unregisterSheet(australisDefault, sss.USER_SHEET);
+    sss.unregisterSheet(australisLight, sss.USER_SHEET);
+    sss.unregisterSheet(australisDark, sss.USER_SHEET);
+
+    let activeThemeID = Services.prefs.getCharPref("extensions.activeThemeID", "default-theme@mozilla.org");
+
+    if (activeThemeID == "default-theme@mozilla.org") {
+      sss.loadAndRegisterSheet(australisDefault, sss.USER_SHEET);
+    }
+    else if (activeThemeID == "firefox-compact-light@mozilla.org") {
+      sss.loadAndRegisterSheet(australisLight, sss.USER_SHEET);
+    }
+    else if (activeThemeID == "firefox-compact-dark@mozilla.org") {
+      sss.loadAndRegisterSheet(australisDark, sss.USER_SHEET);
+    }
   },
 
   _updateAutoplayPref() {
