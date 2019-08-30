@@ -433,6 +433,21 @@ nsIdentifierMapEntry::FireChangeCallbacks(Element* aOldElement,
   }
 }
 
+void
+nsIdentifierMapEntry::ClearAndNotify()
+{
+  Element* currentElement = mIdContentList.SafeElementAt(0);
+  mIdContentList.Clear();
+  if (currentElement) {
+    FireChangeCallbacks(currentElement, nullptr);
+  }
+  mNameContentList = nullptr;
+  if (mImageElement) {
+    SetImageElement(nullptr);
+  }
+  mChangeCallbacks = nullptr;
+}
+
 namespace {
 
 struct PositionComparator
@@ -8851,6 +8866,10 @@ nsDocument::DestroyElementMaps()
   mStyledLinksCleared = true;
 #endif
   mStyledLinks.Clear();
+  // Notify ID change listeners before clearing the identifier map.
+  for (auto iter = mIdentifierMap.Iter(); !iter.Done(); iter.Next()) {
+    iter.Get()->ClearAndNotify();
+  }
   mIdentifierMap.Clear();
   ++mExpandoAndGeneration.generation;
 }

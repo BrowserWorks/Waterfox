@@ -168,6 +168,11 @@ public:
   void RemoveContentChangeCallback(IDTargetObserver aCallback,
                                 void* aData, bool aForImage);
 
+  /**
+   * Remove all elements and notify change listeners.
+   */
+  void ClearAndNotify();
+
   void Traverse(nsCycleCollectionTraversalCallback* aCallback);
 
   struct ChangeCallback {
