@@ -109,7 +109,6 @@ static mozilla::LazyLogModule sLogModule("ipc");
 
 using namespace mozilla;
 using namespace mozilla::ipc;
-using namespace std;
 
 using mozilla::dom::AutoNoJSAPI;
 using mozilla::dom::ScriptSettingsInitialized;
