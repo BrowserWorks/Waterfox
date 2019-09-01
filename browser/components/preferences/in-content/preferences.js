@@ -121,7 +121,6 @@ function init_all() {
           value: "about:addons",
         });
       });
-    });
 
     document.dispatchEvent(
       new CustomEvent("Initialized", {
