@@ -60,11 +60,7 @@ class MockMVMContext : public MVMContext {
     return Some(mDisplaySize);
   }
   bool AllowZoomingForDocument() const { return true; }
-<<<<<<< local
-=======
   bool IsInReaderMode() const { return false; }
-  bool IsDocumentLoading() const { return false; }
->>>>>>> graft
 
   void SetResolutionAndScaleTo(float aResolution) { mResolution = aResolution; }
   void Reflow(const CSSSize& aNewSize, const CSSSize& aOldSize,
