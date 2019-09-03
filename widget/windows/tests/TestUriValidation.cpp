@@ -12,11 +12,11 @@
 using namespace mozilla;
 
 static LauncherResult<_bstr_t> ShellValidateUri(const wchar_t* aUri) {
-  LauncherResult<UniqueAbsolutePidl> pidlResult = ShellParseDisplayName(aUri);
-  if (pidlResult.isErr()) {
-    return LAUNCHER_ERROR_FROM_RESULT(pidlResult);
+  LauncherResult<PIDLIST_ABSOLUTE> rawAbsPidl = ShellParseDisplayName(aUri);
+  if (rawAbsPidl.isErr()) {
+    return LAUNCHER_ERROR_FROM_RESULT(rawAbsPidl);
   }
-  UniqueAbsolutePidl pidl = pidlResult.unwrap();
+  UniqueAbsolutePidl pidl(rawAbsPidl.unwrap());
 
   // |pidl| is an absolute path. IShellFolder::GetDisplayNameOf requires a
   // valid child ID, so the first thing we need to resolve is the IShellFolder

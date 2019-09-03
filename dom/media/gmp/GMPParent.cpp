@@ -420,7 +420,7 @@ bool GMPParent::EnsureProcessLoaded() {
   return NS_SUCCEEDED(rv);
 }
 
-void GMPParent::WriteExtraDataForMinidump() {
+void GMPParent::AddCrashAnnotations() {
   mCrashReporter->AddAnnotation(CrashReporter::Annotation::GMPPlugin, true);
   mCrashReporter->AddAnnotation(CrashReporter::Annotation::PluginFilename,
                                 NS_ConvertUTF16toUTF8(mName));
@@ -432,10 +432,12 @@ void GMPParent::WriteExtraDataForMinidump() {
 
 bool GMPParent::GetCrashID(nsString& aResult) {
   if (!mCrashReporter) {
+    CrashReporter::FinalizeOrphanedMinidump(OtherPid(),
+                                            GeckoProcessType_GMPlugin);
     return false;
   }
 
-  WriteExtraDataForMinidump();
+  AddCrashAnnotations();
   if (!mCrashReporter->GenerateCrashReport(OtherPid())) {
     return false;
   }

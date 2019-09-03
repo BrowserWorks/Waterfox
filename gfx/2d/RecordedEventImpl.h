@@ -1555,7 +1555,8 @@ void RecordedEvent::RecordPatternData(S& aStream,
 template <class S>
 void RecordedEvent::ReadPatternData(S& aStream,
                                     PatternStorage& aPattern) const {
-  ReadElement(aStream, aPattern.mType);
+  ReadElementConstrained(aStream, aPattern.mType, PatternType::COLOR,
+                         PatternType::RADIAL_GRADIENT);
 
   switch (aPattern.mType) {
     case PatternType::COLOR: {
@@ -1574,8 +1575,27 @@ void RecordedEvent::ReadPatternData(S& aStream,
       return;
     }
     case PatternType::SURFACE: {
-      ReadElement(aStream, *reinterpret_cast<SurfacePatternStorage*>(
-                               &aPattern.mStorage));
+      SurfacePatternStorage* sps =
+          reinterpret_cast<SurfacePatternStorage*>(&aPattern.mStorage);
+      ReadElement(aStream, *sps);
+      if (sps->mExtend < ExtendMode::CLAMP ||
+          sps->mExtend > ExtendMode::REFLECT) {
+        gfxDevCrash(LogReason::InvalidConstrainedValueRead)
+            << "Invalid ExtendMode read: value: " << int(sps->mExtend)
+            << ", min: " << int(ExtendMode::CLAMP)
+            << ", max: " << int(ExtendMode::REFLECT);
+        aStream.SetIsBad();
+      }
+
+      if (sps->mSamplingFilter < SamplingFilter::GOOD ||
+          sps->mSamplingFilter >= SamplingFilter::SENTINEL) {
+        gfxDevCrash(LogReason::InvalidConstrainedValueRead)
+            << "Invalid SamplingFilter read: value: "
+            << int(sps->mSamplingFilter)
+            << ", min: " << int(SamplingFilter::GOOD)
+            << ", sentinel: " << int(SamplingFilter::SENTINEL);
+        aStream.SetIsBad();
+      }
       return;
     }
     default:
@@ -1665,8 +1685,9 @@ void RecordedEvent::ReadStrokeOptions(S& aStream,
   ReadElement(aStream, aStrokeOptions.mDashOffset);
   ReadElement(aStream, aStrokeOptions.mLineWidth);
   ReadElement(aStream, aStrokeOptions.mMiterLimit);
-  ReadElement(aStream, joinStyle);
-  ReadElement(aStream, capStyle);
+  ReadElementConstrained(aStream, joinStyle, JoinStyle::BEVEL,
+                         JoinStyle::MITER_OR_BEVEL);
+  ReadElementConstrained(aStream, capStyle, CapStyle::BUTT, CapStyle::SQUARE);
   // On 32 bit we truncate the value of dashLength.
   // See also bug 811850 for history.
   aStrokeOptions.mDashLength = size_t(dashLength);
@@ -1681,6 +1702,55 @@ void RecordedEvent::ReadStrokeOptions(S& aStream,
   aStrokeOptions.mDashPattern = &mDashPatternStorage.front();
   aStream.read((char*)aStrokeOptions.mDashPattern,
                sizeof(Float) * aStrokeOptions.mDashLength);
+}
+
+template <class S>
+static void ReadDrawOptions(S& aStream, DrawOptions& aDrawOptions) {
+  ReadElement(aStream, aDrawOptions);
+  if (aDrawOptions.mAntialiasMode < AntialiasMode::NONE ||
+      aDrawOptions.mAntialiasMode > AntialiasMode::DEFAULT) {
+    gfxDevCrash(LogReason::InvalidConstrainedValueRead)
+        << "Invalid AntialiasMode read: value: "
+        << int(aDrawOptions.mAntialiasMode)
+        << ", min: " << int(AntialiasMode::NONE)
+        << ", max: " << int(AntialiasMode::DEFAULT);
+    aStream.SetIsBad();
+  }
+
+  if (aDrawOptions.mCompositionOp < CompositionOp::OP_OVER ||
+      aDrawOptions.mCompositionOp > CompositionOp::OP_COUNT) {
+    gfxDevCrash(LogReason::InvalidConstrainedValueRead)
+        << "Invalid CompositionOp read: value: "
+        << int(aDrawOptions.mCompositionOp)
+        << ", min: " << int(CompositionOp::OP_OVER)
+        << ", max: " << int(CompositionOp::OP_COUNT);
+    aStream.SetIsBad();
+  }
+}
+
+template <class S>
+static void ReadDrawSurfaceOptions(S& aStream,
+                                   DrawSurfaceOptions& aDrawSurfaceOptions) {
+  ReadElement(aStream, aDrawSurfaceOptions);
+  if (aDrawSurfaceOptions.mSamplingFilter < SamplingFilter::GOOD ||
+      aDrawSurfaceOptions.mSamplingFilter >= SamplingFilter::SENTINEL) {
+    gfxDevCrash(LogReason::InvalidConstrainedValueRead)
+        << "Invalid SamplingFilter read: value: "
+        << int(aDrawSurfaceOptions.mSamplingFilter)
+        << ", min: " << int(SamplingFilter::GOOD)
+        << ", sentinel: " << int(SamplingFilter::SENTINEL);
+    aStream.SetIsBad();
+  }
+
+  if (aDrawSurfaceOptions.mSamplingBounds < SamplingBounds::UNBOUNDED ||
+      aDrawSurfaceOptions.mSamplingBounds > SamplingBounds::BOUNDED) {
+    gfxDevCrash(LogReason::InvalidConstrainedValueRead)
+        << "Invalid SamplingBounds read: value: "
+        << int(aDrawSurfaceOptions.mSamplingBounds)
+        << ", min: " << int(SamplingBounds::UNBOUNDED)
+        << ", max: " << int(SamplingBounds::BOUNDED);
+    aStream.SetIsBad();
+  }
 }
 
 inline void RecordedEvent::OutputSimplePatternInfo(
@@ -1785,9 +1855,11 @@ template <class S>
 RecordedDrawTargetCreation::RecordedDrawTargetCreation(S& aStream)
     : RecordedEventDerived(DRAWTARGETCREATION), mExistingData(nullptr) {
   ReadElement(aStream, mRefPtr);
-  ReadElement(aStream, mBackendType);
+  ReadElementConstrained(aStream, mBackendType, BackendType::NONE,
+                         BackendType::CAPTURE);
   ReadElement(aStream, mSize);
-  ReadElement(aStream, mFormat);
+  ReadElementConstrained(aStream, mFormat, SurfaceFormat::A8R8G8B8_UINT32,
+                         SurfaceFormat::UNKNOWN);
   ReadElement(aStream, mHasExistingData);
 
   if (mHasExistingData) {
@@ -1866,7 +1938,8 @@ RecordedCreateSimilarDrawTarget::RecordedCreateSimilarDrawTarget(S& aStream)
     : RecordedEventDerived(CREATESIMILARDRAWTARGET) {
   ReadElement(aStream, mRefPtr);
   ReadElement(aStream, mSize);
-  ReadElement(aStream, mFormat);
+  ReadElementConstrained(aStream, mFormat, SurfaceFormat::A8R8G8B8_UINT32,
+                         SurfaceFormat::UNKNOWN);
 }
 
 inline void RecordedCreateSimilarDrawTarget::OutputSimpleEventInfo(
@@ -1976,7 +2049,8 @@ RecordedCreateClippedDrawTarget::RecordedCreateClippedDrawTarget(S& aStream)
   ReadElement(aStream, mRefPtr);
   ReadElement(aStream, mMaxSize);
   ReadElement(aStream, mTransform);
-  ReadElement(aStream, mFormat);
+  ReadElementConstrained(aStream, mFormat, SurfaceFormat::A8R8G8B8_UINT32,
+                         SurfaceFormat::UNKNOWN);
 }
 
 inline void RecordedCreateClippedDrawTarget::OutputSimpleEventInfo(
@@ -2001,7 +2075,8 @@ RecordedCreateDrawTargetForFilter::RecordedCreateDrawTargetForFilter(S& aStream)
     : RecordedDrawingEvent(CREATEDRAWTARGETFORFILTER, aStream) {
   ReadElement(aStream, mRefPtr);
   ReadElement(aStream, mMaxSize);
-  ReadElement(aStream, mFormat);
+  ReadElementConstrained(aStream, mFormat, SurfaceFormat::A8R8G8B8_UINT32,
+                         SurfaceFormat::UNKNOWN);
   ReadElement(aStream, mFilter);
   ReadElement(aStream, mSource);
   ReadElement(aStream, mSourceRect);
@@ -2098,7 +2173,7 @@ template <class S>
 RecordedFillRect::RecordedFillRect(S& aStream)
     : RecordedDrawingEvent(FILLRECT, aStream) {
   ReadElement(aStream, mRect);
-  ReadElement(aStream, mOptions);
+  ReadDrawOptions(aStream, mOptions);
   ReadPatternData(aStream, mPattern);
 }
 
@@ -2129,7 +2204,7 @@ template <class S>
 RecordedStrokeRect::RecordedStrokeRect(S& aStream)
     : RecordedDrawingEvent(STROKERECT, aStream) {
   ReadElement(aStream, mRect);
-  ReadElement(aStream, mOptions);
+  ReadDrawOptions(aStream, mOptions);
   ReadPatternData(aStream, mPattern);
   ReadStrokeOptions(aStream, mStrokeOptions);
 }
@@ -2165,7 +2240,7 @@ RecordedStrokeLine::RecordedStrokeLine(S& aStream)
     : RecordedDrawingEvent(STROKELINE, aStream) {
   ReadElement(aStream, mBegin);
   ReadElement(aStream, mEnd);
-  ReadElement(aStream, mOptions);
+  ReadDrawOptions(aStream, mOptions);
   ReadPatternData(aStream, mPattern);
   ReadStrokeOptions(aStream, mStrokeOptions);
 }
@@ -2188,7 +2263,7 @@ inline bool RecordedFill::PlayEvent(Translator* aTranslator) const {
 template <class S>
 RecordedFill::RecordedFill(S& aStream) : RecordedDrawingEvent(FILL, aStream) {
   ReadElement(aStream, mPath);
-  ReadElement(aStream, mOptions);
+  ReadDrawOptions(aStream, mOptions);
   ReadPatternData(aStream, mPattern);
 }
 
@@ -2222,7 +2297,7 @@ template <class S>
 RecordedFillGlyphs::RecordedFillGlyphs(S& aStream)
     : RecordedDrawingEvent(FILLGLYPHS, aStream) {
   ReadElement(aStream, mScaledFont);
-  ReadElement(aStream, mOptions);
+  ReadDrawOptions(aStream, mOptions);
   ReadPatternData(aStream, mPattern);
   ReadElement(aStream, mNumGlyphs);
   mGlyphs = new Glyph[mNumGlyphs];
@@ -2254,7 +2329,7 @@ inline bool RecordedMask::PlayEvent(Translator* aTranslator) const {
 
 template <class S>
 RecordedMask::RecordedMask(S& aStream) : RecordedDrawingEvent(MASK, aStream) {
-  ReadElement(aStream, mOptions);
+  ReadDrawOptions(aStream, mOptions);
   ReadPatternData(aStream, mSource);
   ReadPatternData(aStream, mMask);
 }
@@ -2295,7 +2370,7 @@ template <class S>
 RecordedStroke::RecordedStroke(S& aStream)
     : RecordedDrawingEvent(STROKE, aStream) {
   ReadElement(aStream, mPath);
-  ReadElement(aStream, mOptions);
+  ReadDrawOptions(aStream, mOptions);
   ReadPatternData(aStream, mPattern);
   ReadStrokeOptions(aStream, mStrokeOptions);
 }
@@ -2490,7 +2565,8 @@ RecordedPushLayerWithBlend::RecordedPushLayerWithBlend(S& aStream)
   ReadElement(aStream, mMaskTransform);
   ReadElement(aStream, mBounds);
   ReadElement(aStream, mCopyBackground);
-  ReadElement(aStream, mCompositionOp);
+  ReadElementConstrained(aStream, mCompositionOp, CompositionOp::OP_OVER,
+                         CompositionOp::OP_COUNT);
 }
 
 inline void RecordedPushLayerWithBlend::OutputSimpleEventInfo(
@@ -2566,8 +2642,8 @@ RecordedDrawSurface::RecordedDrawSurface(S& aStream)
   ReadElement(aStream, mRefSource);
   ReadElement(aStream, mDest);
   ReadElement(aStream, mSource);
-  ReadElement(aStream, mDSOptions);
-  ReadElement(aStream, mOptions);
+  ReadDrawSurfaceOptions(aStream, mDSOptions);
+  ReadDrawOptions(aStream, mOptions);
 }
 
 inline void RecordedDrawSurface::OutputSimpleEventInfo(
@@ -2598,8 +2674,8 @@ RecordedDrawDependentSurface::RecordedDrawDependentSurface(S& aStream)
     : RecordedDrawingEvent(DRAWDEPENDENTSURFACE, aStream) {
   ReadElement(aStream, mId);
   ReadElement(aStream, mDest);
-  ReadElement(aStream, mDSOptions);
-  ReadElement(aStream, mOptions);
+  ReadDrawSurfaceOptions(aStream, mDSOptions);
+  ReadDrawOptions(aStream, mOptions);
 }
 
 inline void RecordedDrawDependentSurface::OutputSimpleEventInfo(
@@ -2628,7 +2704,7 @@ RecordedDrawFilter::RecordedDrawFilter(S& aStream)
   ReadElement(aStream, mNode);
   ReadElement(aStream, mSourceRect);
   ReadElement(aStream, mDestPoint);
-  ReadElement(aStream, mOptions);
+  ReadDrawOptions(aStream, mOptions);
 }
 
 inline void RecordedDrawFilter::OutputSimpleEventInfo(
@@ -2663,7 +2739,8 @@ RecordedDrawSurfaceWithShadow::RecordedDrawSurfaceWithShadow(S& aStream)
   ReadElement(aStream, mColor);
   ReadElement(aStream, mOffset);
   ReadElement(aStream, mSigma);
-  ReadElement(aStream, mOp);
+  ReadElementConstrained(aStream, mOp, CompositionOp::OP_OVER,
+                         CompositionOp::OP_COUNT);
 }
 
 inline void RecordedDrawSurfaceWithShadow::OutputSimpleEventInfo(
@@ -2742,11 +2819,13 @@ RecordedPathCreation::RecordedPathCreation(S& aStream)
 
   ReadElement(aStream, mRefPtr);
   ReadElement(aStream, size);
-  ReadElement(aStream, mFillRule);
+  ReadElementConstrained(aStream, mFillRule, FillRule::FILL_WINDING,
+                         FillRule::FILL_EVEN_ODD);
 
   for (uint64_t i = 0; i < size; i++) {
     PathOp newPathOp;
-    ReadElement(aStream, newPathOp.mType);
+    ReadElementConstrained(aStream, newPathOp.mType, PathOp::OpType::OP_MOVETO,
+                           PathOp::OpType::OP_CLOSE);
     if (sPointCount[newPathOp.mType] >= 1) {
       ReadElement(aStream, newPathOp.mP1);
     }
@@ -2823,7 +2902,8 @@ RecordedSourceSurfaceCreation::RecordedSourceSurfaceCreation(S& aStream)
     : RecordedEventDerived(SOURCESURFACECREATION), mDataOwned(true) {
   ReadElement(aStream, mRefPtr);
   ReadElement(aStream, mSize);
-  ReadElement(aStream, mFormat);
+  ReadElementConstrained(aStream, mFormat, SurfaceFormat::A8R8G8B8_UINT32,
+                         SurfaceFormat::UNKNOWN);
   size_t size = mSize.width * mSize.height * BytesPerPixel(mFormat);
   mData = new (fallible) uint8_t[size];
   if (!mData) {
@@ -2914,7 +2994,8 @@ template <class S>
 RecordedFilterNodeCreation::RecordedFilterNodeCreation(S& aStream)
     : RecordedEventDerived(FILTERNODECREATION) {
   ReadElement(aStream, mRefPtr);
-  ReadElement(aStream, mType);
+  ReadElementConstrained(aStream, mType, FilterType::BLEND,
+                         FilterType::OPACITY);
 }
 
 inline void RecordedFilterNodeCreation::OutputSimpleEventInfo(
@@ -2972,7 +3053,8 @@ template <class S>
 RecordedGradientStopsCreation::RecordedGradientStopsCreation(S& aStream)
     : RecordedEventDerived(GRADIENTSTOPSCREATION), mDataOwned(true) {
   ReadElement(aStream, mRefPtr);
-  ReadElement(aStream, mExtendMode);
+  ReadElementConstrained(aStream, mExtendMode, ExtendMode::CLAMP,
+                         ExtendMode::REFLECT);
   ReadElement(aStream, mNumStops);
   mStops = new GradientStop[mNumStops];
 
@@ -3029,7 +3111,8 @@ RecordedIntoLuminanceSource::RecordedIntoLuminanceSource(S& aStream)
     : RecordedEventDerived(INTOLUMINANCE) {
   ReadElement(aStream, mRefPtr);
   ReadElement(aStream, mDT);
-  ReadElement(aStream, mLuminanceType);
+  ReadElementConstrained(aStream, mLuminanceType, LuminanceType::LUMINANCE,
+                         LuminanceType::LINEARRGB);
   ReadElement(aStream, mOpacity);
 }
 
@@ -3126,7 +3209,7 @@ inline bool RecordedFontData::GetFontDetails(RecordedFontDetails& fontDetails) {
 template <class S>
 RecordedFontData::RecordedFontData(S& aStream)
     : RecordedEventDerived(FONTDATA), mType(FontType::UNKNOWN), mData(nullptr) {
-  ReadElement(aStream, mType);
+  ReadElementConstrained(aStream, mType, FontType::DWRITE, FontType::UNKNOWN);
   ReadElement(aStream, mFontDetails.fontDataKey);
   ReadElement(aStream, mFontDetails.size);
   mData = new (fallible) uint8_t[mFontDetails.size];
@@ -3180,7 +3263,7 @@ inline void RecordedFontDescriptor::SetFontDescriptor(const uint8_t* aData,
 template <class S>
 RecordedFontDescriptor::RecordedFontDescriptor(S& aStream)
     : RecordedEventDerived(FONTDESC) {
-  ReadElement(aStream, mType);
+  ReadElementConstrained(aStream, mType, FontType::DWRITE, FontType::UNKNOWN);
   ReadElement(aStream, mRefPtr);
   ReadElement(aStream, mIndex);
 
@@ -3364,7 +3447,7 @@ RecordedMaskSurface::RecordedMaskSurface(S& aStream)
   ReadPatternData(aStream, mPattern);
   ReadElement(aStream, mRefMask);
   ReadElement(aStream, mOffset);
-  ReadElement(aStream, mOptions);
+  ReadDrawOptions(aStream, mOptions);
 }
 
 inline void RecordedMaskSurface::OutputSimpleEventInfo(
@@ -3425,7 +3508,8 @@ RecordedFilterNodeSetAttribute::RecordedFilterNodeSetAttribute(S& aStream)
     : RecordedEventDerived(FILTERNODESETATTRIBUTE) {
   ReadElement(aStream, mNode);
   ReadElement(aStream, mIndex);
-  ReadElement(aStream, mArgType);
+  ReadElementConstrained(aStream, mArgType, ArgType::ARGTYPE_UINT32,
+                         ArgType::ARGTYPE_FLOAT_ARRAY);
   uint64_t size;
   ReadElement(aStream, size);
   mPayload.resize(size_t(size));

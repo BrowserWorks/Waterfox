@@ -50,6 +50,7 @@ class MVMContext {
       const = 0;
   virtual Maybe<LayoutDeviceIntSize> GetContentViewerSize() const = 0;
   virtual bool AllowZoomingForDocument() const = 0;
+  virtual bool IsInReaderMode() const = 0;
 
   virtual void SetResolutionAndScaleTo(float aResolution) = 0;
   virtual void SetVisualViewportSize(const CSSSize& aSize) = 0;
