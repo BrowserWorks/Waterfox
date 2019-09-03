@@ -146,7 +146,9 @@
 @BINPATH@/@DLL_PREFIX@mozavcodec@DLL_SUFFIX@
 #endif
 @RESPATH@/browser/blocklist.xml
+#ifdef XP_WIN
 @BINPATH@/browser/ua-update.json
+#endif
 #ifdef XP_MACOSX
 @RESPATH@/browser/ua-update.json
 #endif
