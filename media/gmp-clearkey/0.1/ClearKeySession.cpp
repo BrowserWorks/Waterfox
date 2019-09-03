@@ -26,7 +26,6 @@
 
 using namespace mozilla;
 using namespace cdm;
-using namespace std;
 
 ClearKeySession::ClearKeySession(const std::string& aSessionId,
                                  SessionType aSessionType)
@@ -55,7 +54,7 @@ ClearKeySession::Init(InitDataType aInitDataType,
   } else if (aInitDataType == InitDataType::kWebM &&
              aInitDataSize <= kMaxWebmInitDataSize) {
     // "webm" initData format is simply the raw bytes of the keyId.
-    vector<uint8_t> keyId;
+    std::vector<uint8_t> keyId;
     keyId.assign(aInitData, aInitData+aInitDataSize);
     mKeyIds.push_back(keyId);
   }

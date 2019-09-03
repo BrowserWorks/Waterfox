@@ -89,7 +89,7 @@ const size_t TEST_READ_SIZE = 16 * 1024;
 bool
 CanReadSome(cdm::PlatformFile aFile)
 {
-  vector<uint8_t> data;
+  std::vector<uint8_t> data;
   data.resize(TEST_READ_SIZE);
 #ifdef XP_WIN
   DWORD bytesRead = 0;
