@@ -37,10 +37,11 @@ uint64_t DrawTargetD2D1::mVRAMUsageDT;
 uint64_t DrawTargetD2D1::mVRAMUsageSS;
 StaticRefPtr<ID2D1Factory1> DrawTargetD2D1::mFactory;
 
-RefPtr<ID2D1Factory1> D2DFactory()
-{
-  return DrawTargetD2D1::factory();
-}
+const D2D1_MATRIX_5X4_F kLuminanceMatrix =
+    D2D1::Matrix5x4F(0, 0, 0, 0.2125f, 0, 0, 0, 0.7154f, 0, 0, 0, 0.0721f, 0, 0,
+                     0, 0, 0, 0, 0, 0);
+
+RefPtr<ID2D1Factory1> D2DFactory() { return DrawTargetD2D1::factory(); }
 
 DrawTargetD2D1::DrawTargetD2D1()
   : mPushedLayers(1)
@@ -102,20 +103,22 @@ DrawTargetD2D1::Snapshot()
   return snapshot.forget();
 }
 
-bool
-DrawTargetD2D1::EnsureLuminanceEffect()
-{
+bool DrawTargetD2D1::EnsureLuminanceEffect() {
   if (mLuminanceEffect.get()) {
     return true;
   }
 
-  HRESULT hr = mDC->CreateEffect(CLSID_D2D1LuminanceToAlpha,
+  HRESULT hr = mDC->CreateEffect(CLSID_D2D1ColorMatrix,
                                  getter_AddRefs(mLuminanceEffect));
   if (FAILED(hr)) {
-    gfxCriticalError() << "Failed to create luminance effect. Code: " << hexa(hr);
+    gfxCriticalError() << "Failed to create luminance effect. Code: "
+                       << hexa(hr);
     return false;
   }
 
+  mLuminanceEffect->SetValue(D2D1_COLORMATRIX_PROP_COLOR_MATRIX, kLuminanceMatrix);
+  mLuminanceEffect->SetValue(D2D1_COLORMATRIX_PROP_ALPHA_MODE,
+                             D2D1_COLORMATRIX_ALPHA_MODE_STRAIGHT);
   return true;
 }
 
@@ -134,12 +137,24 @@ DrawTargetD2D1::IntoLuminanceSource(LuminanceType aLuminanceType, float aOpacity
     return DrawTarget::IntoLuminanceSource(aLuminanceType, aOpacity);
   }
 
+  Flush();
+
+  {
+    D2D1_MATRIX_5X4_F matrix = kLuminanceMatrix;
+    matrix._14 *= aOpacity;
+    matrix._24 *= aOpacity;
+    matrix._34 *= aOpacity;
+
+    mLuminanceEffect->SetValue(D2D1_COLORMATRIX_PROP_COLOR_MATRIX, matrix);
+  }
+
   mLuminanceEffect->SetInput(0, mBitmap);
 
   RefPtr<ID2D1Image> luminanceOutput;
   mLuminanceEffect->GetOutput(getter_AddRefs(luminanceOutput));
 
- return MakeAndAddRef<SourceSurfaceD2D1>(luminanceOutput, mDC, SurfaceFormat::A8, mSize);
+  return MakeAndAddRef<SourceSurfaceD2D1>(luminanceOutput, mDC,
+                                          SurfaceFormat::B8G8R8A8, mSize);
 }
 
 // Command lists are kept around by device contexts until EndDraw is called,
