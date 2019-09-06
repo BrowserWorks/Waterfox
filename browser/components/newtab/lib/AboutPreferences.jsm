@@ -23,6 +23,17 @@ const PREFS_BEFORE_SECTIONS = [
     },
     icon: "chrome://browser/skin/search-glass.svg",
   },
+  {
+    id: "topsites",
+    pref: {
+      feed: "feeds.topsites",
+      titleString: "settings_pane_topsites_header",
+      descString: "prefs_topsites_description",
+    },
+    icon: "topsites",
+    maxRows: 4,
+    rowsPref: "topSitesRows",
+  },
 ];
 
 // This CSS is added to the whole about:preferences page
