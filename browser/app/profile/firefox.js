@@ -325,7 +325,7 @@ pref("browser.urlbar.timesBeforeHidingSuggestionsHint", 4);
 pref("browser.urlbar.maxCharsForSearchSuggestions", 20);
 
 pref("browser.urlbar.formatting.enabled", true);
-pref("browser.urlbar.trimURLs", true);
+pref("browser.urlbar.trimURLs", false);
 
 pref("browser.urlbar.oneOffSearches", true);
 
