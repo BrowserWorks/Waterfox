@@ -24,6 +24,7 @@ ChromeUtils.defineModuleGetter(
 );
 
 const PREF_PDFJS_ENABLED_CACHE_STATE = "pdfjs.enabledCache.state";
+const PREF_AUSTRALISE_THEME = "browser.tabs.australiseBuiltinThemes";
 
 let ACTORS = {
   SubframeCrash: {
@@ -1123,6 +1124,10 @@ BrowserGlue.prototype = {
       "extensions.activeThemeID",
       this._applyAustralisStyle
     );
+    Services.prefs.removeObserver(
+      PREF_AUSTRALISE_THEME,
+      this._applyAustralisStyle
+    );
   },
 
   // runs on startup, before the first command line handler is invoked
@@ -1646,6 +1651,10 @@ BrowserGlue.prototype = {
       "extensions.activeThemeID",
       this._applyAustralisStyle
     );
+    Services.prefs.addObserver(
+      PREF_AUSTRALISE_THEME,
+      this._applyAustralisStyle
+    );
   },
 
   _applyAustralisStyle() {
@@ -1660,6 +1669,10 @@ BrowserGlue.prototype = {
     sss.unregisterSheet(australisDefault, sss.USER_SHEET);
     sss.unregisterSheet(australisLight, sss.USER_SHEET);
     sss.unregisterSheet(australisDark, sss.USER_SHEET);
+
+    if (!Services.prefs.getBoolPref(PREF_AUSTRALISE_THEME, true)) {
+      return;
+    }
 
     let activeThemeID = Services.prefs.getCharPref("extensions.activeThemeID", "default-theme@mozilla.org");
 
