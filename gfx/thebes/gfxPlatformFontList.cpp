@@ -415,6 +415,9 @@ nsresult gfxPlatformFontList::InitFontList() {
   mCodepointsWithNoFonts.SetRange(0, 0x1f);     // C0 controls
   mCodepointsWithNoFonts.SetRange(0x7f, 0x9f);  // C1 controls
 
+  // Forget any font family we previously chose for U+FFFD.
+  mReplacementCharFallbackFamily = FontFamily();
+
   sPlatformFontList = this;
 
   // Try to initialize the cross-process shared font list if enabled by prefs,
