@@ -47,6 +47,7 @@ class GeckoMVMContext : public MVMContext {
       const override;
   Maybe<LayoutDeviceIntSize> GetContentViewerSize() const override;
   bool AllowZoomingForDocument() const override;
+  bool IsInReaderMode() const override;
 
   void SetResolutionAndScaleTo(float aResolution) override;
   void SetVisualViewportSize(const CSSSize& aSize) override;

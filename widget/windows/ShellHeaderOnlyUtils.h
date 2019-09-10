@@ -126,6 +126,12 @@ inline LauncherVoidResult ShellExecuteByExplorer(const _bstr_t& aPath,
     return LAUNCHER_ERROR_FROM_HRESULT(hr);
   }
 
+  // Passing the foreground privilege so that the shell can launch an
+  // application in the foreground.  If CoAllowSetForegroundWindow fails,
+  // we continue because it's not fatal.
+  hr = ::CoAllowSetForegroundWindow(shellDisp, nullptr);
+  MOZ_ASSERT(SUCCEEDED(hr));
+
   // shellapi.h macros interfere with the correct naming of the method being
   // called on IShellDispatch2. Temporarily remove that definition.
 #if defined(ShellExecute)
@@ -155,7 +161,7 @@ inline LauncherVoidResult ShellExecuteByExplorer(const _bstr_t& aPath,
 using UniqueAbsolutePidl =
     UniquePtr<RemovePointer<PIDLIST_ABSOLUTE>::Type, CoTaskMemFreeDeleter>;
 
-inline LauncherResult<UniqueAbsolutePidl> ShellParseDisplayName(
+inline LauncherResult<PIDLIST_ABSOLUTE> ShellParseDisplayName(
     const wchar_t* aPath) {
   PIDLIST_ABSOLUTE rawAbsPidl = nullptr;
   SFGAOF sfgao;
@@ -164,7 +170,7 @@ inline LauncherResult<UniqueAbsolutePidl> ShellParseDisplayName(
     return LAUNCHER_ERROR_FROM_HRESULT(hr);
   }
 
-  return UniqueAbsolutePidl(rawAbsPidl);
+  return rawAbsPidl;
 }
 
 }  // namespace mozilla

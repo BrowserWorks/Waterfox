@@ -34,10 +34,11 @@ namespace mozilla {
  * As we need to get a full uri including a fragment, this function does 2).
  */
 inline LauncherResult<_bstr_t> UrlmonValidateUri(const wchar_t* aUri) {
-  LauncherResult<UniqueAbsolutePidl> pidlResult = ShellParseDisplayName(aUri);
-  if (pidlResult.isErr()) {
-    return LAUNCHER_ERROR_FROM_RESULT(pidlResult);
+  LauncherResult<PIDLIST_ABSOLUTE> rawAbsPidl = ShellParseDisplayName(aUri);
+  if (rawAbsPidl.isErr()) {
+    return LAUNCHER_ERROR_FROM_RESULT(rawAbsPidl);
   }
+  UniqueAbsolutePidl pidl(rawAbsPidl.unwrap());
 
 #ifndef __MINGW32__
   const auto createUri = CreateUri;
