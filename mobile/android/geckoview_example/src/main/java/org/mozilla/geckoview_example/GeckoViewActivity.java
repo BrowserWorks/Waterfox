@@ -143,6 +143,11 @@ public class GeckoViewActivity extends AppCompatActivity {
                     .crashHandler(ExampleCrashHandler.class);
 
             sGeckoRuntime = GeckoRuntime.create(this, runtimeSettingsBuilder.build());
+
+            sGeckoRuntime.setDelegate(() -> {
+                mKillProcessOnDestroy = true;
+                finish();
+            });
         }
 
         if(savedInstanceState == null) {
