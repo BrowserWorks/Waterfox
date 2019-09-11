@@ -177,6 +177,8 @@ MediaTransportHandlerSTS::MediaTransportHandlerSTS(
   if (!mStsThread) {
     MOZ_CRASH();
   }
+
+  RLogConnector::CreateInstance();
 }
 
 static NrIceCtx::Policy toNrIcePolicy(dom::RTCIceTransportPolicy aPolicy) {
@@ -923,9 +925,6 @@ void MediaTransportHandlerSTS::ClearIceLog() {
 }
 
 void MediaTransportHandlerSTS::EnterPrivateMode() {
-  // Do this from calling thread, because that's what we do in CreateIceCtx...
-  RLogConnector::CreateInstance();
-
   if (!mStsThread->IsOnCurrentThread()) {
     mStsThread->Dispatch(
         WrapRunnable(RefPtr<MediaTransportHandlerSTS>(this),
@@ -938,9 +937,6 @@ void MediaTransportHandlerSTS::EnterPrivateMode() {
 }
 
 void MediaTransportHandlerSTS::ExitPrivateMode() {
-  // Do this from calling thread, because that's what we do in CreateIceCtx...
-  RLogConnector::CreateInstance();
-
   if (!mStsThread->IsOnCurrentThread()) {
     mStsThread->Dispatch(
         WrapRunnable(RefPtr<MediaTransportHandlerSTS>(this),
