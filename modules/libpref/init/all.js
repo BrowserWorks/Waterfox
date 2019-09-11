@@ -1416,6 +1416,8 @@ pref("dom.webcomponents.enabled",           false);
 pref("dom.webcomponents.customelements.enabled", false);
 
 pref("javascript.enabled",                  true);
+// Enable Array.prototype.values
+pref("javascript.options.array_prototype_values", true);
 pref("javascript.options.strict",           false);
 #ifdef DEBUG
 pref("javascript.options.strict.debug",     false);
