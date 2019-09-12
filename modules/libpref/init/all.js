@@ -5043,6 +5043,9 @@ pref("dom.vibrator.max_vibrate_list_len", 128);
 // Battery API
 pref("dom.battery.enabled", false);
 
+// Streams API
+pref("dom.streams.enabled", false);
+
 // Push
 
 pref("dom.push.enabled", false);

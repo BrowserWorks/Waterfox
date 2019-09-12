@@ -2886,6 +2886,8 @@ public:
 
   static bool PushEnabled(JSContext* aCx, JSObject* aObj);
 
+  static bool StreamsEnabled(JSContext* aCx, JSObject* aObj);
+
   static bool IsNonSubresourceRequest(nsIChannel* aChannel);
 
   static uint32_t CookiesBehavior()
