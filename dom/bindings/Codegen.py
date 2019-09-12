@@ -5801,12 +5801,12 @@ def getJSToNativeConversionInfo(type, descriptorProvider, failureCode=None,
             # otherwise.
             if isOptional:
                 holderType = CGTemplatedType("SpiderMonkeyInterfaceRooter", interfaceType)
-                # If our typed array is nullable, this will set the Nullable to
-                # be not-null, but that's ok because we make an explicit
-                # SetNull() call on it as needed if our JS value is actually
-                # null.  XXXbz Because "Maybe" takes const refs for constructor
-                # arguments, we can't pass a reference here; have to pass a
-                # pointer.
+                # If our SpiderMonkey interface is nullable, this will set the
+                # Nullable to be not-null, but that's ok because we make an
+                # explicit SetNull() call on it as needed if our JS value is
+                # actually null.  XXXbz Because "Maybe" takes const refs for
+                # constructor arguments, we can't pass a reference here; have
+                # to pass a pointer.
                 holderArgs = "cx, &%s" % objRef
                 declArgs = None
             else:
@@ -6588,7 +6588,8 @@ recordWrapLevel = 0
 
 
 def getWrapTemplateForType(type, descriptorProvider, result, successCode,
-                           returnsNewObject, exceptionCode, typedArraysAreStructs,
+                           returnsNewObject, exceptionCode,
+                           spiderMonkeyInterfacesAreStructs,
                            isConstructorRetval=False):
     """
     Reflect a C++ value stored in "result", of IDL type "type" into JS.  The
@@ -6598,8 +6599,9 @@ def getWrapTemplateForType(type, descriptorProvider, result, successCode,
     doing a 'break' if the entire conversion template is inside a block that
     the 'break' will exit).
 
-    If typedArraysAreStructs is true, then if the type is a typed array,
-    "result" is one of the dom::TypedArray subclasses, not a JSObject*.
+    If spiderMonkeyInterfacesAreStructs is true, then if the type is a
+    SpiderMonkey interface, "result" is one of the
+    dom::SpiderMonkeyInterfaceObjectStorage subclasses, not a JSObject*.
 
     The resulting string should be used with string.Template.  It
     needs the following keys when substituting:
@@ -6694,7 +6696,7 @@ def getWrapTemplateForType(type, descriptorProvider, result, successCode,
         recTemplate, recInfall = getWrapTemplateForType(type.inner, descriptorProvider,
                                                         "%s.Value()" % result, successCode,
                                                         returnsNewObject, exceptionCode,
-                                                        typedArraysAreStructs)
+                                                        spiderMonkeyInterfacesAreStructs)
         code = fill(
             """
 
@@ -6726,7 +6728,7 @@ def getWrapTemplateForType(type, descriptorProvider, result, successCode,
                 'returnsNewObject': returnsNewObject,
                 'exceptionCode': exceptionCode,
                 'obj': "returnArray",
-                'typedArraysAreStructs': typedArraysAreStructs
+                'spiderMonkeyInterfacesAreStructs': spiderMonkeyInterfacesAreStructs
             })
         sequenceWrapLevel -= 1
         code = fill(
@@ -6780,7 +6782,7 @@ def getWrapTemplateForType(type, descriptorProvider, result, successCode,
                 'returnsNewObject': returnsNewObject,
                 'exceptionCode': exceptionCode,
                 'obj': "returnObj",
-                'typedArraysAreStructs': typedArraysAreStructs
+                'spiderMonkeyInterfacesAreStructs': spiderMonkeyInterfacesAreStructs
             })
         recordWrapLevel -= 1
         if type.keyType.isByteString():
@@ -6948,7 +6950,7 @@ def getWrapTemplateForType(type, descriptorProvider, result, successCode,
         return (head + _setValue(result, wrapAsType=type), False)
 
     if (type.isObject() or (type.isSpiderMonkeyInterface() and
-                            not typedArraysAreStructs)):
+                            not spiderMonkeyInterfacesAreStructs)):
         # See comments in GetOrCreateDOMReflector explaining why we need
         # to wrap here.
         if type.nullable():
@@ -6967,21 +6969,21 @@ def getWrapTemplateForType(type, descriptorProvider, result, successCode,
 
     if not (type.isUnion() or type.isPrimitive() or type.isDictionary() or
             type.isDate() or
-            (type.isSpiderMonkeyInterface() and typedArraysAreStructs)):
+            (type.isSpiderMonkeyInterface() and spiderMonkeyInterfacesAreStructs)):
         raise TypeError("Need to learn to wrap %s" % type)
 
     if type.nullable():
         recTemplate, recInfal = getWrapTemplateForType(type.inner, descriptorProvider,
                                                        "%s.Value()" % result, successCode,
                                                        returnsNewObject, exceptionCode,
-                                                       typedArraysAreStructs)
+                                                       spiderMonkeyInterfacesAreStructs)
         return ("if (%s.IsNull()) {\n" % result +
                 indent(setNull()) +
                 "}\n" +
                 recTemplate, recInfal)
 
     if type.isSpiderMonkeyInterface():
-        assert typedArraysAreStructs
+        assert spiderMonkeyInterfacesAreStructs
         # See comments in GetOrCreateDOMReflector explaining why we need
         # to wrap here.
         # NB: setObject(..., some-object-type) calls JS_WrapValue(), so is fallible
@@ -7063,7 +7065,7 @@ def wrapForType(type, descriptorProvider, templateValues):
         templateValues.get('successCode', None),
         templateValues.get('returnsNewObject', False),
         templateValues.get('exceptionCode', "return false;\n"),
-        templateValues.get('typedArraysAreStructs', False),
+        templateValues.get('spiderMonkeyInterfacesAreStructs', False),
         isConstructorRetval=templateValues.get('isConstructorRetval', False))[0]
 
     defaultValues = {'obj': 'obj'}
@@ -8411,10 +8413,10 @@ class CGMethodCall(CGThing):
             #     dictionary or "object" arg.
 
             # First grab all the overloads that have a non-callback interface
-            # (which includes typed arrays and arraybuffers) at the
-            # distinguishing index.  We can also include the ones that have an
-            # "object" here, since if those are present no other object-typed
-            # argument will be.
+            # (which includes SpiderMonkey interfaces) at the distinguishing
+            # index.  We can also include the ones that have an "object" here,
+            # since if those are present no other object-typed argument will
+            # be.
             objectSigs = [
                 s for s in possibleSignatures
                 if (distinguishingType(s).isObject() or
@@ -8445,16 +8447,17 @@ class CGMethodCall(CGThing):
             # There might be more than one thing in objectSigs; we need to check
             # which ones we unwrap to.
             if len(objectSigs) > 0:
-                # Here it's enough to guard on our argument being an object. The
-                # code for unwrapping non-callback interfaces, typed arrays,
-                # sequences, and Dates will just bail out and move on to
-                # the next overload if the object fails to unwrap correctly,
-                # while "object" accepts any object anyway.  We could even not
-                # do the isObject() check up front here, but in cases where we
-                # have multiple object overloads it makes sense to do it only
-                # once instead of for each overload.  That will also allow the
-                # unwrapping test to skip having to do codegen for the
-                # null-or-undefined case, which we already handled above.
+                # Here it's enough to guard on our argument being an object.
+                # The code for unwrapping non-callback interfaces, spiderMonkey
+                # interfaces, sequences, and Dates will just bail out and move
+                # on to the next overload if the object fails to unwrap
+                # correctly, while "object" accepts any object anyway.  We
+                # could even not do the isObject() check up front here, but in
+                # cases where we have multiple object overloads it makes sense
+                # to do it only once instead of for each overload.  That will
+                # also allow the unwrapping test to skip having to do codegen
+                # for the null-or-undefined case, which we already handled
+                # above.
                 caseBody.append(CGGeneric("if (%s.isObject()) {\n" %
                                           distinguishingArg))
                 for sig in objectSigs:
@@ -10583,7 +10586,7 @@ class CGUnionStruct(CGThing):
                 "jsvalHandle": "rval",
                 "obj": "scopeObj",
                 "result": val,
-                "typedArraysAreStructs": True
+                "spiderMonkeyInterfacesAreStructs": True
             })
         return CGGeneric(wrapCode)
 
@@ -13614,7 +13617,7 @@ class CGDictionary(CGThing):
                 # 'obj' can just be allowed to be the string "obj", since that
                 # will be our dictionary object, which is presumably itself in
                 # the right scope.
-                'typedArraysAreStructs': True
+                'spiderMonkeyInterfacesAreStructs': True
             })
         conversion = CGGeneric(innerTemplate)
         conversion = CGWrapper(conversion,
@@ -14393,7 +14396,7 @@ class CGBindingRoot(CGThing):
             return {desc.getDescriptor(desc.interface.parent.identifier.name)}
         for x in dependencySortObjects(jsImplemented, getParentDescriptor,
                                        lambda d: d.interface.identifier.name):
-            cgthings.append(CGCallbackInterface(x, typedArraysAreStructs=True))
+            cgthings.append(CGCallbackInterface(x, spiderMonkeyInterfacesAreStructs=True))
             cgthings.append(CGJSImplClass(x))
 
         # And make sure we have the right number of newlines at the end
@@ -14455,14 +14458,13 @@ class CGBindingRoot(CGThing):
 class CGNativeMember(ClassMethod):
     def __init__(self, descriptorProvider, member, name, signature, extendedAttrs,
                  breakAfter=True, passJSBitsAsNeeded=True, visibility="public",
-                 typedArraysAreStructs=True, variadicIsSequence=False,
-                 resultNotAddRefed=False,
-                 virtual=False,
-                 override=False):
+                 spiderMonkeyInterfacesAreStructs=True,
+                 variadicIsSequence=False, resultNotAddRefed=False,
+                 virtual=False, override=False):
         """
-        If typedArraysAreStructs is false, typed arrays will be passed as
-        JS::Handle<JSObject*>.  If it's true they will be passed as one of the
-        dom::TypedArray subclasses.
+        If spiderMonkeyInterfacesAreStructs is false, SpiderMonkey interfaces
+        will be passed as JS::Handle<JSObject*>.  If it's true they will be
+        passed as one of the dom::SpiderMonkeyInterfaceObjectStorage subclasses.
 
         If passJSBitsAsNeeded is false, we don't automatically pass in a
         JSContext* or a JSObject* based on the return and argument types.  We
@@ -14473,7 +14475,7 @@ class CGNativeMember(ClassMethod):
         self.extendedAttrs = extendedAttrs
         self.resultAlreadyAddRefed = not resultNotAddRefed
         self.passJSBitsAsNeeded = passJSBitsAsNeeded
-        self.typedArraysAreStructs = typedArraysAreStructs
+        self.spiderMonkeyInterfacesAreStructs = spiderMonkeyInterfacesAreStructs
         self.variadicIsSequence = variadicIsSequence
         breakAfterSelf = "\n" if breakAfter else ""
         ClassMethod.__init__(self, name,
@@ -14783,7 +14785,7 @@ class CGNativeMember(ClassMethod):
                     False, False)
 
         if type.isSpiderMonkeyInterface():
-            if not self.typedArraysAreStructs:
+            if not self.spiderMonkeyInterfacesAreStructs:
                 return "JS::Handle<JSObject*>", False, False
 
             # Unroll for the name, in case we're nullable.
@@ -15931,16 +15933,16 @@ class CGFastCallback(CGClass):
 
 
 class CGCallbackInterface(CGCallback):
-    def __init__(self, descriptor, typedArraysAreStructs=False):
+    def __init__(self, descriptor, spiderMonkeyInterfacesAreStructs=False):
         iface = descriptor.interface
         attrs = [m for m in iface.members if m.isAttr() and not m.isStatic()]
-        getters = [CallbackGetter(a, descriptor, typedArraysAreStructs)
+        getters = [CallbackGetter(a, descriptor, spiderMonkeyInterfacesAreStructs)
                    for a in attrs]
-        setters = [CallbackSetter(a, descriptor, typedArraysAreStructs)
+        setters = [CallbackSetter(a, descriptor, spiderMonkeyInterfacesAreStructs)
                    for a in attrs if not a.readonly]
         methods = [m for m in iface.members
                    if m.isMethod() and not m.isStatic() and not m.isIdentifierLess()]
-        methods = [CallbackOperation(m, sig, descriptor, typedArraysAreStructs)
+        methods = [CallbackOperation(m, sig, descriptor, spiderMonkeyInterfacesAreStructs)
                    for m in methods for sig in m.signatures()]
         if iface.isJSImplemented() and iface.ctor():
             sigs = descriptor.interface.ctor().signatures()
@@ -15985,7 +15987,8 @@ class CallbackMember(CGNativeMember):
     # CallSetup already handled the unmark-gray bits for us. we don't have
     # anything better to use for 'obj', really...
     def __init__(self, sig, name, descriptorProvider, needThisHandling,
-                 rethrowContentException=False, typedArraysAreStructs=False,
+                 rethrowContentException=False,
+                 spiderMonkeyInterfacesAreStructs=False,
                  wrapScope='CallbackKnownNotGray()'):
         """
         needThisHandling is True if we need to be able to accept a specified
@@ -16020,7 +16023,7 @@ class CallbackMember(CGNativeMember):
                                 extendedAttrs={},
                                 passJSBitsAsNeeded=False,
                                 visibility=visibility,
-                                typedArraysAreStructs=typedArraysAreStructs)
+                                spiderMonkeyInterfacesAreStructs=spiderMonkeyInterfacesAreStructs)
         # We have to do all the generation of our body now, because
         # the caller relies on us throwing if we can't manage it.
         self.exceptionCode = ("aRv.Throw(NS_ERROR_UNEXPECTED);\n"
@@ -16137,7 +16140,7 @@ class CallbackMember(CGNativeMember):
                     'obj': self.wrapScope,
                     'returnsNewObject': False,
                     'exceptionCode': self.exceptionCode,
-                    'typedArraysAreStructs': self.typedArraysAreStructs
+                    'spiderMonkeyInterfacesAreStructs': self.spiderMonkeyInterfacesAreStructs
                 })
         except MethodNotNewObjectError as err:
             raise TypeError("%s being passed as an argument to %s but is not "
@@ -16241,10 +16244,11 @@ class CallbackMember(CGNativeMember):
 
 class CallbackMethod(CallbackMember):
     def __init__(self, sig, name, descriptorProvider, needThisHandling,
-                 rethrowContentException=False, typedArraysAreStructs=False):
+                 rethrowContentException=False,
+                 spiderMonkeyInterfacesAreStructs=False):
         CallbackMember.__init__(self, sig, name, descriptorProvider,
                                 needThisHandling, rethrowContentException,
-                                typedArraysAreStructs=typedArraysAreStructs)
+                                spiderMonkeyInterfacesAreStructs=spiderMonkeyInterfacesAreStructs)
 
     def getRvalDecl(self):
         return "JS::Rooted<JS::Value> rval(cx);\n"
@@ -16303,12 +16307,12 @@ class CallbackOperationBase(CallbackMethod):
     """
     def __init__(self, signature, jsName, nativeName, descriptor,
                  singleOperation, rethrowContentException=False,
-                 typedArraysAreStructs=False):
+                 spiderMonkeyInterfacesAreStructs=False):
         self.singleOperation = singleOperation
         self.methodName = descriptor.binaryNameFor(jsName)
         CallbackMethod.__init__(self, signature, nativeName, descriptor,
                                 singleOperation, rethrowContentException,
-                                typedArraysAreStructs=typedArraysAreStructs)
+                                spiderMonkeyInterfacesAreStructs=spiderMonkeyInterfacesAreStructs)
 
     def getThisDecl(self):
         if not self.singleOperation:
@@ -16359,7 +16363,8 @@ class CallbackOperation(CallbackOperationBase):
     """
     Codegen actual WebIDL operations on callback interfaces.
     """
-    def __init__(self, method, signature, descriptor, typedArraysAreStructs):
+    def __init__(self, method, signature, descriptor,
+                 spiderMonkeyInterfacesAreStructs):
         self.ensureASCIIName(method)
         self.method = method
         jsName = method.identifier.name
@@ -16368,7 +16373,7 @@ class CallbackOperation(CallbackOperationBase):
                                        MakeNativeName(descriptor.binaryNameFor(jsName)),
                                        descriptor, descriptor.interface.isSingleOperationInterface(),
                                        rethrowContentException=descriptor.interface.isJSImplemented(),
-                                       typedArraysAreStructs=typedArraysAreStructs)
+                                       spiderMonkeyInterfacesAreStructs=spiderMonkeyInterfacesAreStructs)
 
     def getPrettyName(self):
         return "%s.%s" % (self.descriptorProvider.interface.identifier.name,
@@ -16379,13 +16384,14 @@ class CallbackAccessor(CallbackMember):
     """
     Shared superclass for CallbackGetter and CallbackSetter.
     """
-    def __init__(self, attr, sig, name, descriptor, typedArraysAreStructs):
+    def __init__(self, attr, sig, name, descriptor,
+                 spiderMonkeyInterfacesAreStructs):
         self.ensureASCIIName(attr)
         self.attrName = attr.identifier.name
         CallbackMember.__init__(self, sig, name, descriptor,
                                 needThisHandling=False,
                                 rethrowContentException=descriptor.interface.isJSImplemented(),
-                                typedArraysAreStructs=typedArraysAreStructs)
+                                spiderMonkeyInterfacesAreStructs=spiderMonkeyInterfacesAreStructs)
 
     def getPrettyName(self):
         return "%s.%s" % (self.descriptorProvider.interface.identifier.name,
@@ -16393,12 +16399,12 @@ class CallbackAccessor(CallbackMember):
 
 
 class CallbackGetter(CallbackAccessor):
-    def __init__(self, attr, descriptor, typedArraysAreStructs):
+    def __init__(self, attr, descriptor, spiderMonkeyInterfacesAreStructs):
         CallbackAccessor.__init__(self, attr,
                                   (attr.type, []),
                                   callbackGetterName(attr, descriptor),
                                   descriptor,
-                                  typedArraysAreStructs)
+                                  spiderMonkeyInterfacesAreStructs)
 
     def getRvalDecl(self):
         return "JS::Rooted<JS::Value> rval(cx);\n"
@@ -16420,12 +16426,12 @@ class CallbackGetter(CallbackAccessor):
 
 
 class CallbackSetter(CallbackAccessor):
-    def __init__(self, attr, descriptor, typedArraysAreStructs):
+    def __init__(self, attr, descriptor, spiderMonkeyInterfacesAreStructs):
         CallbackAccessor.__init__(self, attr,
                                   (BuiltinTypes[IDLBuiltinType.Types.void],
                                    [FakeArgument(attr.type, attr)]),
                                   callbackSetterName(attr, descriptor),
-                                  descriptor, typedArraysAreStructs)
+                                  descriptor, spiderMonkeyInterfacesAreStructs)
 
     def getRvalDecl(self):
         # We don't need an rval
@@ -16460,7 +16466,7 @@ class CGJSImplInitOperation(CallbackOperationBase):
                                        "__init", "__Init", descriptor,
                                        singleOperation=False,
                                        rethrowContentException=True,
-                                       typedArraysAreStructs=True)
+                                       spiderMonkeyInterfacesAreStructs=True)
 
     def getPrettyName(self):
         return "__init"
