@@ -495,6 +495,7 @@ shown from Android O while a tab is being queued.-->
 <!ENTITY share "Share">
 <!ENTITY share_title "Share via">
 <!ENTITY share_image_failed "Unable to share this image">
+<!ENTITY share_error_toast_message "Unable to share to the indicated app">
 <!ENTITY save_as_pdf "Save as PDF">
 <!ENTITY print "Print">
 <!ENTITY view_page_source "View Page Source">

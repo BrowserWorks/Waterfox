@@ -118,6 +118,7 @@
   <string name="share">&share;</string>
   <string name="share_title">&share_title;</string>
   <string name="share_image_failed">&share_image_failed;</string>
+  <string name="share_error_toast_message">&share_error_toast_message;</string>
   <string name="save_as_pdf">&save_as_pdf;</string>
   <string name="print">&print;</string>
   <string name="view_page_source">&view_page_source;</string>

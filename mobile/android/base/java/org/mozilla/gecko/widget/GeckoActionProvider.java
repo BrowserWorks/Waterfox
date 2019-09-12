@@ -10,6 +10,7 @@ import android.net.Uri;
 import android.support.design.widget.Snackbar;
 import android.support.v4.content.FileProvider;
 import android.util.Base64;
+import android.util.Log;
 import android.view.Menu;
 
 import org.mozilla.gecko.AppConstants;
@@ -36,6 +37,7 @@ import android.view.View.OnClickListener;
 import android.text.TextUtils;
 import android.webkit.MimeTypeMap;
 import android.webkit.URLUtil;
+import android.widget.Toast;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -48,6 +50,7 @@ import java.util.HashMap;
 
 public class GeckoActionProvider {
     private static final int MAX_HISTORY_SIZE_DEFAULT = 2;
+    private static final String LOGTAG = "ShareAction";
 
     /**
      * A listener to know when a target was selected.
@@ -249,7 +252,13 @@ public class GeckoActionProvider {
                         }
 
                         launchIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET);
-                        mContext.startActivity(launchIntent);
+
+                        try {
+                            mContext.startActivity(launchIntent);
+                        } catch (SecurityException exception) {
+                            Log.e(LOGTAG, exception.getMessage());
+                            Toast.makeText(mContext, R.string.share_error_toast_message, Toast.LENGTH_LONG).show();
+                        }
                     }
                 });
             }
