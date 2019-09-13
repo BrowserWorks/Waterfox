@@ -46,8 +46,8 @@ xpcshell:
     chunks:
         by-test-platform:
             .*-ccov/debug: 6
-            android-em-4.*: 8
-            android-em-4.3-arm7-api-16/debug: 12
+            android-em-4.*\/debug: 12
+            android-em.4.*\/(?:opt|pgo)?: 8
             android-em-7.*: 3
             macosx.*(?!-ccov)...../.*: 2
             linux64(-qr)?/debug: 6
