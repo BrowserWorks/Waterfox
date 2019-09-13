@@ -827,7 +827,6 @@ union alignas(8) Value {
    */
 
   void setPrivate(void* ptr) {
-    MOZ_ASSERT((uintptr_t(ptr) & 1) == 0);
 #if defined(JS_NUNBOX32)
     s_.tag_ = JSValueTag(0);
     s_.payload_.ptr_ = ptr;
@@ -837,6 +836,7 @@ union alignas(8) Value {
     MOZ_ASSERT((uintptr_t(ptr) & 0xFFFF000000000000ULL) == 0);
     asBits_ = uintptr_t(ptr);
 # else
+    MOZ_ASSERT((uintptr_t(ptr) & 1) == 0);
     asBits_ = uintptr_t(ptr) >> 1;
 # endif
 #endif
