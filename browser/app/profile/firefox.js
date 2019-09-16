@@ -1215,7 +1215,7 @@ pref("services.sync.prefs.sync.browser.newtabpage.activity-stream.feeds.section.
 pref("services.sync.prefs.sync.browser.newtabpage.activity-stream.section.highlights.includeVisited", true);
 pref("services.sync.prefs.sync.browser.newtabpage.activity-stream.section.highlights.includeBookmarks", true);
 pref("services.sync.prefs.sync.browser.newtabpage.activity-stream.section.highlights.includeDownloads", true);
-pref("services.sync.prefs.sync.browser.newtabpage.activity-stream.section.highlights.includePocket", true);
+pref("services.sync.prefs.sync.browser.newtabpage.activity-stream.section.highlights.includePocket", false, locked);
 pref("services.sync.prefs.sync.browser.newtabpage.activity-stream.section.highlights.rows", true);
 pref("services.sync.prefs.sync.browser.newtabpage.enabled", true);
 pref("services.sync.prefs.sync.browser.newtabpage.pinned", true);
