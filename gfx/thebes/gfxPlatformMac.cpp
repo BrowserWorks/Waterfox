@@ -433,11 +433,30 @@ public:
       }
 
       // Create a display link capable of being used with all active displays
-      // TODO: See if we need to create an active DisplayLink for each monitor in multi-monitor
-      // situations. According to the docs, it is compatible with all displays running on the computer
-      // But if we have different monitors at different display rates, we may hit issues.
-      if (CVDisplayLinkCreateWithActiveCGDisplays(&mDisplayLink) != kCVReturnSuccess) {
-        NS_WARNING("Could not create a display link with all active displays. Retrying");
+      // TODO: See if we need to create an active DisplayLink for each monitor
+      // in multi-monitor situations. According to the docs, it is compatible
+      // with all displays running on the computer But if we have different
+      // monitors at different display rates, we may hit issues.
+      CVReturn retval = CVDisplayLinkCreateWithActiveCGDisplays(&mDisplayLink);
+
+      // Workaround for bug 1201401: CVDisplayLinkCreateWithCGDisplays()
+      // (called by CVDisplayLinkCreateWithActiveCGDisplays()) sometimes
+      // creates a CVDisplayLinkRef with an uninitialized (nulled) internal
+      // pointer. If we continue to use this CVDisplayLinkRef, we will
+      // eventually crash in CVCGDisplayLink::getDisplayTimes(), where the
+      // internal pointer is dereferenced. Fortunately, when this happens
+      // another internal variable is also left uninitialized (zeroed),
+      // which is accessible via CVDisplayLinkGetCurrentCGDisplay(). In
+      // normal conditions the current display is never zero.
+      if ((retval == kCVReturnSuccess) &&
+          (CVDisplayLinkGetCurrentCGDisplay(mDisplayLink) == 0)) {
+        retval = kCVReturnInvalidDisplay;
+      }
+
+      if (retval != kCVReturnSuccess) {
+        NS_WARNING(
+            "Could not create a display link with all active displays. "
+            "Retrying");
         CVDisplayLinkRelease(mDisplayLink);
         mDisplayLink = nullptr;
 
