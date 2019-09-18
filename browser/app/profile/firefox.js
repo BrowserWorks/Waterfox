@@ -425,9 +425,9 @@ pref("permissions.postPrompt.animate", true);
 
 // This is primarily meant to be enabled for studies.
 #ifdef NIGHTLY_BUILD
-pref("permissions.eventTelemetry.enabled", true);
+pref("permissions.eventTelemetry.enabled", false, locked);
 #else
-pref("permissions.eventTelemetry.enabled", false);
+pref("permissions.eventTelemetry.enabled", false, locked);
 #endif
 
 // handle links targeting new windows
@@ -993,7 +993,7 @@ pref("app.productInfo.baseURL", "#");
 pref("security.alternate_certificate_error_page", "certerror");
 
 pref("browser.security.newcerterrorpage.mitm.enabled", true);
-pref("security.certerrors.recordEventTelemetry", true);
+pref("security.certerrors.recordEventTelemetry", false, locked);
 pref("security.certerrors.permanentOverride", true);
 pref("security.certerrors.mitm.priming.enabled", true);
 pref("security.certerrors.mitm.priming.endpoint", "https://mitmdetection.services.mozilla.com/");
@@ -1359,7 +1359,7 @@ pref("pdfjs.previousHandler.alwaysAskBeforeHandling", false);
 // Is the sidebar positioned ahead of the content browser
 pref("sidebar.position_start", true);
 
-pref("security.identitypopup.recordEventElemetry", true);
+pref("security.identitypopup.recordEventElemetry", false, locked);
 
 // Block insecure active content on https pages
 pref("security.mixed_content.block_active_content", true);
@@ -1535,7 +1535,7 @@ pref("toolkit.telemetry.archive.enabled", false, locked);
 // Enables sending the shutdown ping when Firefox shuts down.
 pref("toolkit.telemetry.shutdownPingSender.enabled", false, locked);
 // Enables sending the shutdown ping using the pingsender from the first session.
-pref("toolkit.telemetry.shutdownPingSender.enabledFirstSession", false);
+pref("toolkit.telemetry.shutdownPingSender.enabledFirstSession", false, locked);
 // Enables sending a duplicate of the first shutdown ping from the first session.
 pref("toolkit.telemetry.firstShutdownPing.enabled", false, locked);
 // Enables sending the 'new-profile' ping on new profiles.
@@ -1545,17 +1545,17 @@ pref("toolkit.telemetry.updatePing.enabled", false, locked);
 // Enables sending 'bhr' pings when the browser hangs.
 pref("toolkit.telemetry.bhrPing.enabled", false, locked);
 // Enables using Hybrid Content Telemetry from Mozilla privileged pages.
-pref("toolkit.telemetry.hybridContent.enabled", true);
+pref("toolkit.telemetry.hybridContent.enabled", false, locked);
 // Whether to enable Ecosystem Telemetry, requires a restart.
 #ifdef NIGHTLY_BUILD
 pref("toolkit.telemetry.ecosystemtelemetry.enabled", false, locked);
 #else
-pref("toolkit.telemetry.ecosystemtelemetry.enabled", false);
+pref("toolkit.telemetry.ecosystemtelemetry.enabled", false, locked);
 #endif
 
 // Ping Centre Telemetry settings.
 pref("browser.ping-centre.telemetry", false, locked);
-pref("browser.ping-centre.log", false);
+pref("browser.ping-centre.log", false, locked);
 pref("browser.ping-centre.staging.endpoint", "", locked);
 pref("browser.ping-centre.production.endpoint", "", locked);
 
