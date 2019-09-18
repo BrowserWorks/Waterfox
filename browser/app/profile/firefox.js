@@ -1642,8 +1642,8 @@ pref("privacy.userContext.ui.enabled", true);
 // 0 disables long press, 1 when clicked, the menu is shown, 2 the menu is shown after X milliseconds.
 pref("privacy.userContext.longPressBehavior", 2);
 #else
-pref("privacy.userContext.enabled", false);
-pref("privacy.userContext.ui.enabled", false);
+pref("privacy.userContext.enabled", true);
+pref("privacy.userContext.ui.enabled", true);
 
 // 0 disables long press, 1 when clicked, the menu is shown, 2 the menu is shown after X milliseconds.
 pref("privacy.userContext.longPressBehavior", 0);
