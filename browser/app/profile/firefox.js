@@ -966,7 +966,7 @@ pref("browser.zoom.siteSpecific", true);
 pref("browser.zoom.updateBackgroundTabs", true);
 
 // The breakpad report server to link to in about:crashes
-pref("breakpad.reportURL", "");
+pref("breakpad.reportURL", "", locked);
 
 // URL for "Learn More" for DataCollection
 pref("toolkit.datacollection.infoURL",
@@ -974,7 +974,7 @@ pref("toolkit.datacollection.infoURL",
 
 // URL for "Learn More" for Crash Reporter
 pref("toolkit.crashreporter.infoURL",
-     "");
+     "", locked);
 
 // base URL for web-based support pages
 pref("app.support.baseURL", "about:preferences");
@@ -1197,7 +1197,7 @@ pref("services.sync.prefs.sync.addons.ignoreUserEnabledChanges", true);
 pref("services.sync.prefs.sync.browser.contentblocking.category", true);
 pref("services.sync.prefs.sync.browser.contentblocking.features.strict", true);
 pref("services.sync.prefs.sync.browser.contentblocking.introCount", true);
-pref("services.sync.prefs.sync.browser.crashReports.unsubmittedCheck.autoSubmit2", true);
+pref("services.sync.prefs.sync.browser.crashReports.unsubmittedCheck.autoSubmit2", false, locked);
 pref("services.sync.prefs.sync.browser.ctrlTab.recentlyUsedOrder", true);
 pref("services.sync.prefs.sync.browser.download.useDownloadDir", true);
 pref("services.sync.prefs.sync.browser.formfill.enable", true);
@@ -1666,11 +1666,11 @@ pref("browser.tabs.remote.warmup.maxTabs", 3);
 pref("browser.tabs.remote.warmup.unloadDelayMs", 2000);
 
 // For the about:tabcrashed page
-pref("browser.tabs.crashReporting.sendReport", false);
-pref("browser.tabs.crashReporting.includeURL", false);
-pref("browser.tabs.crashReporting.requestEmail", false);
-pref("browser.tabs.crashReporting.emailMe", false);
-pref("browser.tabs.crashReporting.email", "");
+pref("browser.tabs.crashReporting.sendReport", false, locked);
+pref("browser.tabs.crashReporting.includeURL", false, locked);
+pref("browser.tabs.crashReporting.requestEmail", false, locked);
+pref("browser.tabs.crashReporting.emailMe", false, locked);
+pref("browser.tabs.crashReporting.email", "", locked);
 
 pref("extensions.legacy.enabled", true, locked);
 
@@ -1755,9 +1755,9 @@ pref("webchannel.allowObject.urlWhitelist", "");
 // crash reports, and then show a notification for submitting
 // those reports.
 #ifdef NIGHTLY_BUILD
-pref("browser.crashReports.unsubmittedCheck.enabled", true);
+pref("browser.crashReports.unsubmittedCheck.enabled", false, locked);
 #else
-pref("browser.crashReports.unsubmittedCheck.enabled", false);
+pref("browser.crashReports.unsubmittedCheck.enabled", false, locked);
 #endif
 
 // chancesUntilSuppress is how many times we'll show the unsubmitted
@@ -1765,7 +1765,7 @@ pref("browser.crashReports.unsubmittedCheck.enabled", false);
 // without a user choice before we suppress the notification for
 // some number of days.
 pref("browser.crashReports.unsubmittedCheck.chancesUntilSuppress", 4);
-pref("browser.crashReports.unsubmittedCheck.autoSubmit2", false);
+pref("browser.crashReports.unsubmittedCheck.autoSubmit2", false, locked);
 
 // Preferences for the form autofill system extension
 // The truthy values of "extensions.formautofill.available" are "on" and "detect",
