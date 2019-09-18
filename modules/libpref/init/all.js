@@ -1079,9 +1079,9 @@ pref("toolkit.telemetry.server", "", locked);
 pref("toolkit.telemetry.server_owner", "Mozilla");
 // Determines whether full SQL strings are returned when they might contain sensitive info
 // i.e. dynamically constructed SQL strings or SQL executed by addons against addon DBs
-pref("toolkit.telemetry.debugSlowSql", false);
+pref("toolkit.telemetry.debugSlowSql", false, locked);
 // Whether to use the unified telemetry behavior, requires a restart.
-pref("toolkit.telemetry.unified", true);
+pref("toolkit.telemetry.unified", false, locked);
 // AsyncShutdown delay before crashing in case of shutdown freeze
 #ifndef MOZ_ASAN
 pref("toolkit.asyncshutdown.crash_timeout", 60000); // 1 minute
