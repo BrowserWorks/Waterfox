@@ -1052,7 +1052,7 @@ SearchService.prototype = {
     } else {
       let engineList = this._enginesToLocales(engines);
       for (let [id, locales] of engineList) {
-        await this.ensureBuiltinExtension(id, locales);
+        await this.ensureBuiltinExtension(id, locales, isReload);
       }
 
       SearchUtils.log(
@@ -1082,7 +1082,7 @@ SearchService.prototype = {
    * @returns {Promise} A promise, resolved successfully once the
    * extension is installed and registered by the SearchService.
    */
-  async ensureBuiltinExtension(id, locales = [DEFAULT_TAG]) {
+  async ensureBuiltinExtension(id, locales = [DEFAULT_TAG], isReload = false) {
     SearchUtils.log("ensureBuiltinExtension: " + id);
     try {
       let policy = WebExtensionPolicy.getByID(id);
@@ -1095,7 +1095,12 @@ SearchService.prototype = {
       // On startup the extension may have not finished parsing the
       // manifest, wait for that here.
       await policy.readyPromise;
-      await this._installExtensionEngine(policy.extension, locales);
+      await this._installExtensionEngine(
+        policy.extension,
+        locales,
+        false,
+        isReload
+      );
       SearchUtils.log("ensureBuiltinExtension: " + id + " installed.");
     } catch (err) {
       Cu.reportError(
@@ -1153,6 +1158,7 @@ SearchService.prototype = {
     // There's no point in already reloading the list of engines, when the service
     // hasn't even initialized yet.
     if (!gInitialized) {
+      SearchUtils.log("Ignoring maybeReloadEngines() as inside init()");
       return;
     }
 
@@ -1942,7 +1948,7 @@ SearchService.prototype = {
 
   // nsISearchService
   async init(skipRegionCheck = false) {
-    SearchUtils.log("SearchService.init");
+    SearchUtils.log("SearchService.init: " + skipRegionCheck);
     if (this._initStarted) {
       if (!skipRegionCheck) {
         await this._ensureKnownRegionPromise;
@@ -2106,7 +2112,8 @@ SearchService.prototype = {
     description,
     method,
     template,
-    extensionID
+    extensionID,
+    isReload = false
   ) {
     SearchUtils.log('addEngineWithDetails: Adding "' + name + '".');
     let isCurrent = false;
@@ -2114,6 +2121,7 @@ SearchService.prototype = {
 
     if (iconURL && typeof iconURL == "object") {
       params = iconURL;
+      isReload = alias;
     } else {
       params = {
         iconURL,
@@ -2139,7 +2147,7 @@ SearchService.prototype = {
       SearchUtils.fail("Invalid template passed to addEngineWithDetails!");
     }
     let existingEngine = this._engines[name];
-    if (existingEngine) {
+    if (!isReload && existingEngine) {
       if (
         params.extensionID &&
         existingEngine._loadPath.startsWith(
@@ -2167,6 +2175,9 @@ SearchService.prototype = {
     if (params.extensionID) {
       newEngine._loadPath += ":" + params.extensionID;
     }
+    if (isReload && newEngine.name in this._engines) {
+      newEngine._engineToUpdate = this._engines[newEngine.name];
+    }
 
     this._addEngineToStore(newEngine);
     if (isCurrent) {
@@ -2190,7 +2201,7 @@ SearchService.prototype = {
     return this._installExtensionEngine(extension, [DEFAULT_TAG]);
   },
 
-  async _installExtensionEngine(extension, locales, initEngine) {
+  async _installExtensionEngine(extension, locales, initEngine, isReload) {
     SearchUtils.log("installExtensionEngine: " + extension.id);
 
     let installLocale = async locale => {
@@ -2202,7 +2213,8 @@ SearchService.prototype = {
         extension,
         manifest,
         locale,
-        initEngine
+        initEngine,
+        isReload
       );
     };
 
@@ -2223,7 +2235,8 @@ SearchService.prototype = {
     extension,
     manifest,
     locale = DEFAULT_TAG,
-    initEngine = false
+    initEngine = false,
+    isReload = false
   ) {
     let { IconDetails } = ExtensionParent;
 
@@ -2282,7 +2295,7 @@ SearchService.prototype = {
       initEngine,
     };
 
-    return this.addEngineWithDetails(params.name, params);
+    return this.addEngineWithDetails(params.name, params, isReload);
   },
 
   async addEngine(engineURL, iconURL, confirm, extensionID) {
