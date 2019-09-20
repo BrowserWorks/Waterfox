@@ -110,6 +110,8 @@ if CONFIG['CLANG_CL'] or not CONFIG['_MSC_VER']:
             SOURCES[f].flags += ['-mssse3']
         elif f.endswith('sse4.c'):
             SOURCES[f].flags += ['-msse4.1']
+        elif f.endswith('sse42.c'):
+            SOURCES[f].flags += ['-msse4.2']
         elif f.endswith('avx.c'):
             SOURCES[f].flags += ['-mavx']
         elif f.endswith('avx2.c'):
