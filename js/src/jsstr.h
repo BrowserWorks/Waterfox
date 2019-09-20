@@ -367,10 +367,10 @@ extern bool
 str_trim(JSContext* cx, unsigned argc, Value* vp);
 
 extern bool
-str_trimLeft(JSContext* cx, unsigned argc, Value* vp);
+str_trimStart(JSContext* cx, unsigned argc, Value* vp);
 
 extern bool
-str_trimRight(JSContext* cx, unsigned argc, Value* vp);
+str_trimEnd(JSContext* cx, unsigned argc, Value* vp);
 
 #if !EXPOSE_INTL_API
 extern bool
