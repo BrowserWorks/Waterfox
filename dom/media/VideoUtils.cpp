@@ -511,7 +511,8 @@ StartsWith(const nsACString& string, const char (&prefix)[N])
 bool
 IsAV1CodecString(const nsAString& aCodec)
 {
-  return aCodec.EqualsLiteral("av1"); // AV1
+  return aCodec.EqualsLiteral("av1") ||
+    StartsWith(NS_ConvertUTF16toUTF8(aCodec), "av01");
 }
 
 UniquePtr<TrackInfo>
