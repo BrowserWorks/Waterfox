@@ -405,6 +405,9 @@ pref("media.libavcodec.allow-obsolete", false);
 #if defined(MOZ_FFVPX)
 pref("media.ffvpx.enabled", true);
 #endif
+#ifdef MOZ_AV1
+pref("media.av1.enabled", false);
+#endif
 #if defined(MOZ_FFMPEG) || defined(MOZ_FFVPX)
 pref("media.ffmpeg.low-latency.enabled", false);
 #endif
