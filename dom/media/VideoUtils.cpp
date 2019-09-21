@@ -508,6 +508,12 @@ StartsWith(const nsACString& string, const char (&prefix)[N])
     return memcmp(string.Data(), prefix, N - 1) == 0;
 }
 
+bool
+IsAV1CodecString(const nsAString& aCodec)
+{
+  return aCodec.EqualsLiteral("av1"); // AV1
+}
+
 UniquePtr<TrackInfo>
 CreateTrackInfoWithMIMEType(const nsACString& aCodecMIMEType)
 {

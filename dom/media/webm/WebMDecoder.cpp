@@ -60,8 +60,7 @@ WebMDecoder::IsSupportedType(const MediaContainerType& aContainerType)
       continue;
     }
 #ifdef MOZ_AV1
-    if (isVideo && MediaPrefs::AV1Enabled() &&
-        AOMDecoder::IsSupportedCodec(codec)) {
+    if (MediaPrefs::AV1Enabled() && IsAV1CodecString(codec)) {
       continue;
     }
 #endif
