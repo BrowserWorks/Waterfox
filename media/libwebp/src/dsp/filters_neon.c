@@ -11,12 +11,12 @@
 //
 // Author: Skal (pascal.massimino@gmail.com)
 
-#include "./dsp.h"
+#include "src/dsp/dsp.h"
 
 #if defined(WEBP_USE_NEON)
 
 #include <assert.h>
-#include "./neon.h"
+#include "src/dsp/neon.h"
 
 //------------------------------------------------------------------------------
 // Helpful macros.
@@ -134,7 +134,7 @@ static WEBP_INLINE void DoVerticalFilter_NEON(const uint8_t* in,
 }
 
 static void VerticalFilter_NEON(const uint8_t* data, int width, int height,
-                               int stride, uint8_t* filtered_data) {
+                                int stride, uint8_t* filtered_data) {
   DoVerticalFilter_NEON(data, width, height, stride, 0, height,
                         filtered_data);
 }
@@ -196,7 +196,7 @@ static WEBP_INLINE void DoGradientFilter_NEON(const uint8_t* in,
 }
 
 static void GradientFilter_NEON(const uint8_t* data, int width, int height,
-                               int stride, uint8_t* filtered_data) {
+                                int stride, uint8_t* filtered_data) {
   DoGradientFilter_NEON(data, width, height, stride, 0, height,
                         filtered_data);
 }
@@ -251,9 +251,11 @@ static void VerticalUnfilter_NEON(const uint8_t* prev, const uint8_t* in,
 // GradientUnfilter_NEON is correct but slower than the C-version,
 // at least on ARM64. For armv7, it's a wash.
 // So best is to disable it for now, but keep the idea around...
-// #define USE_GRADIENT_UNFILTER
+#if !defined(USE_GRADIENT_UNFILTER)
+#define USE_GRADIENT_UNFILTER 0   // ALTERNATE_CODE
+#endif
 
-#if defined(USE_GRADIENT_UNFILTER)
+#if (USE_GRADIENT_UNFILTER == 1)
 #define GRAD_PROCESS_LANE(L)  do {                                             \
   const uint8x8_t tmp1 = ROTATE_RIGHT_N(pred, 1);  /* rotate predictor in */   \
   const int16x8_t tmp2 = vaddq_s16(BC, U8_TO_S16(tmp1));                       \
@@ -292,7 +294,7 @@ static void GradientPredictInverse_NEON(const uint8_t* const in,
 #undef GRAD_PROCESS_LANE
 
 static void GradientUnfilter_NEON(const uint8_t* prev, const uint8_t* in,
-                                 uint8_t* out, int width) {
+                                  uint8_t* out, int width) {
   if (prev == NULL) {
     HorizontalUnfilter_NEON(NULL, in, out, width);
   } else {
@@ -311,7 +313,7 @@ extern void VP8FiltersInitNEON(void);
 WEBP_TSAN_IGNORE_FUNCTION void VP8FiltersInitNEON(void) {
   WebPUnfilters[WEBP_FILTER_HORIZONTAL] = HorizontalUnfilter_NEON;
   WebPUnfilters[WEBP_FILTER_VERTICAL] = VerticalUnfilter_NEON;
-#if defined(USE_GRADIENT_UNFILTER)
+#if (USE_GRADIENT_UNFILTER == 1)
   WebPUnfilters[WEBP_FILTER_GRADIENT] = GradientUnfilter_NEON;
 #endif
 

@@ -14,8 +14,8 @@
 #ifndef WEBP_UTILS_FILTERS_UTILS_H_
 #define WEBP_UTILS_FILTERS_UTILS_H_
 
-#include "../webp/types.h"
-#include "../dsp/dsp.h"
+#include "src/webp/types.h"
+#include "src/dsp/dsp.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -29,4 +29,4 @@ WEBP_FILTER_TYPE WebPEstimateBestFilter(const uint8_t* data,
 }    // extern "C"
 #endif
 
-#endif  /* WEBP_UTILS_FILTERS_UTILS_H_ */
+#endif  // WEBP_UTILS_FILTERS_UTILS_H_

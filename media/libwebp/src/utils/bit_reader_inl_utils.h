@@ -17,15 +17,15 @@
 #define WEBP_UTILS_BIT_READER_INL_UTILS_H_
 
 #ifdef HAVE_CONFIG_H
-#include "../webp/config.h"
+#include "src/webp/config.h"
 #endif
 
 #include <string.h>  // for memcpy
 
-#include "../dsp/dsp.h"
-#include "./bit_reader_utils.h"
-#include "./endian_inl_utils.h"
-#include "./utils.h"
+#include "src/dsp/dsp.h"
+#include "src/utils/bit_reader_utils.h"
+#include "src/utils/endian_inl_utils.h"
+#include "src/utils/utils.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -187,4 +187,4 @@ static WEBP_INLINE int VP8GetBitAlt(VP8BitReader* const br, int prob) {
 }    // extern "C"
 #endif
 
-#endif   // WEBP_UTILS_BIT_READER_INL_UTILS_H_
+#endif  // WEBP_UTILS_BIT_READER_INL_UTILS_H_

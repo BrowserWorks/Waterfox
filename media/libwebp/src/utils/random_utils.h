@@ -15,7 +15,7 @@
 #define WEBP_UTILS_RANDOM_UTILS_H_
 
 #include <assert.h>
-#include "../webp/types.h"
+#include "src/webp/types.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -60,4 +60,4 @@ static WEBP_INLINE int VP8RandomBits(VP8Random* const rg, int num_bits) {
 }    // extern "C"
 #endif
 
-#endif  /* WEBP_UTILS_RANDOM_UTILS_H_ */
+#endif  // WEBP_UTILS_RANDOM_UTILS_H_

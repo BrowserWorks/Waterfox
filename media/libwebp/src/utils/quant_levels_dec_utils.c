@@ -14,11 +14,11 @@
 //
 // Author: Skal (pascal.massimino@gmail.com)
 
-#include "./quant_levels_dec_utils.h"
+#include "src/utils/quant_levels_dec_utils.h"
 
 #include <string.h>   // for memset
 
-#include "./utils.h"
+#include "src/utils/utils.h"
 
 // #define USE_DITHERING   // uncomment to enable ordered dithering (not vital)
 
@@ -261,9 +261,15 @@ static void CleanupParams(SmoothParams* const p) {
 
 int WebPDequantizeLevels(uint8_t* const data, int width, int height, int stride,
                          int strength) {
-  const int radius = 4 * strength / 100;
+  int radius = 4 * strength / 100;
+
   if (strength < 0 || strength > 100) return 0;
   if (data == NULL || width <= 0 || height <= 0) return 0;  // bad params
+
+  // limit the filter size to not exceed the image dimensions
+  if (2 * radius + 1 > width) radius = (width - 1) >> 1;
+  if (2 * radius + 1 > height) radius = (height - 1) >> 1;
+
   if (radius > 0) {
     SmoothParams p;
     memset(&p, 0, sizeof(p));

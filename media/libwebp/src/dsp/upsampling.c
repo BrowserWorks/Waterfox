@@ -11,8 +11,8 @@
 //
 // Author: somnath@google.com (Somnath Banerjee)
 
-#include "./dsp.h"
-#include "./yuv.h"
+#include "src/dsp/dsp.h"
+#include "src/dsp/yuv.h"
 
 #include <assert.h>
 

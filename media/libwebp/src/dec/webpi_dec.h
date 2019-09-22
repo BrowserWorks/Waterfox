@@ -18,8 +18,8 @@
 extern "C" {
 #endif
 
-#include "../utils/rescaler_utils.h"
-#include "./vp8_dec.h"
+#include "src/utils/rescaler_utils.h"
+#include "src/dec/vp8_dec.h"
 
 //------------------------------------------------------------------------------
 // WebPDecParams: Decoding output parameters. Transient internal object.
@@ -130,4 +130,4 @@ int WebPAvoidSlowMemory(const WebPDecBuffer* const output,
 }    // extern "C"
 #endif
 
-#endif  /* WEBP_DEC_WEBPI_DEC_H_ */
+#endif  // WEBP_DEC_WEBPI_DEC_H_

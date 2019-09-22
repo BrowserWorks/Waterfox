@@ -18,7 +18,7 @@
 extern "C" {
 #endif
 
-#include "../webp/types.h"
+#include "src/webp/types.h"
 
 #define WEBP_RESCALER_RFIX 32   // fixed-point precision for multiplies
 #define WEBP_RESCALER_ONE (1ull << WEBP_RESCALER_RFIX)
@@ -98,4 +98,4 @@ int WebPRescalerHasPendingOutput(const WebPRescaler* const rescaler) {
 }    // extern "C"
 #endif
 
-#endif  /* WEBP_UTILS_RESCALER_UTILS_H_ */
+#endif  // WEBP_UTILS_RESCALER_UTILS_H_

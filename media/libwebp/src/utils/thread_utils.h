@@ -15,10 +15,10 @@
 #define WEBP_UTILS_THREAD_UTILS_H_
 
 #ifdef HAVE_CONFIG_H
-#include "../webp/config.h"
+#include "src/webp/config.h"
 #endif
 
-#include "../webp/types.h"
+#include "src/webp/types.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -87,4 +87,4 @@ WEBP_EXTERN const WebPWorkerInterface* WebPGetWorkerInterface(void);
 }    // extern "C"
 #endif
 
-#endif  /* WEBP_UTILS_THREAD_UTILS_H_ */
+#endif  // WEBP_UTILS_THREAD_UTILS_H_

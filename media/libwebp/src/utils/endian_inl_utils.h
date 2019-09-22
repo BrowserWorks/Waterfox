@@ -13,11 +13,11 @@
 #define WEBP_UTILS_ENDIAN_INL_UTILS_H_
 
 #ifdef HAVE_CONFIG_H
-#include "../webp/config.h"
+#include "src/webp/config.h"
 #endif
 
-#include "../dsp/dsp.h"
-#include "../webp/types.h"
+#include "src/dsp/dsp.h"
+#include "src/webp/types.h"
 
 #if defined(WORDS_BIGENDIAN)
 #define HToLE32 BSwap32

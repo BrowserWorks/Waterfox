@@ -14,7 +14,7 @@
 #ifndef WEBP_UTILS_BIT_WRITER_UTILS_H_
 #define WEBP_UTILS_BIT_WRITER_UTILS_H_
 
-#include "../webp/types.h"
+#include "src/webp/types.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -151,4 +151,4 @@ static WEBP_INLINE void VP8LPutBits(VP8LBitWriter* const bw,
 }    // extern "C"
 #endif
 
-#endif  /* WEBP_UTILS_BIT_WRITER_UTILS_H_ */
+#endif  // WEBP_UTILS_BIT_WRITER_UTILS_H_

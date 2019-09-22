@@ -17,7 +17,7 @@
 
 #include <assert.h>
 
-#include "../webp/types.h"
+#include "src/webp/types.h"
 
 #ifdef __cplusplus
 extern "C" {

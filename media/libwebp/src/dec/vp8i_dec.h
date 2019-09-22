@@ -15,12 +15,12 @@
 #define WEBP_DEC_VP8I_DEC_H_
 
 #include <string.h>     // for memcpy()
-#include "./common_dec.h"
-#include "./vp8li_dec.h"
-#include "../utils/bit_reader_utils.h"
-#include "../utils/random_utils.h"
-#include "../utils/thread_utils.h"
-#include "../dsp/dsp.h"
+#include "src/dec/common_dec.h"
+#include "src/dec/vp8li_dec.h"
+#include "src/utils/bit_reader_utils.h"
+#include "src/utils/random_utils.h"
+#include "src/utils/thread_utils.h"
+#include "src/dsp/dsp.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -32,7 +32,7 @@ extern "C" {
 // version numbers
 #define DEC_MAJ_VERSION 1
 #define DEC_MIN_VERSION 0
-#define DEC_REV_VERSION 0
+#define DEC_REV_VERSION 2
 
 // YUV-cache parameters. Cache is 32-bytes wide (= one cacheline).
 // Constraints are: We need to store one 16x16 block of luma samples (y),
@@ -316,4 +316,4 @@ const uint8_t* VP8DecompressAlphaRows(VP8Decoder* const dec,
 }    // extern "C"
 #endif
 
-#endif  /* WEBP_DEC_VP8I_DEC_H_ */
+#endif  // WEBP_DEC_VP8I_DEC_H_

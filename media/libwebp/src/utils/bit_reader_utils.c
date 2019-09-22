@@ -12,11 +12,11 @@
 // Author: Skal (pascal.massimino@gmail.com)
 
 #ifdef HAVE_CONFIG_H
-#include "../webp/config.h"
+#include "src/webp/config.h"
 #endif
 
-#include "./bit_reader_inl_utils.h"
-#include "../utils/utils.h"
+#include "src/utils/bit_reader_inl_utils.h"
+#include "src/utils/utils.h"
 
 //------------------------------------------------------------------------------
 // VP8BitReader

@@ -13,9 +13,9 @@
 
 #include <stdlib.h>
 
-#include "./vp8i_dec.h"
-#include "./webpi_dec.h"
-#include "../utils/utils.h"
+#include "src/dec/vp8i_dec.h"
+#include "src/dec/webpi_dec.h"
+#include "src/utils/utils.h"
 
 //------------------------------------------------------------------------------
 // WebPDecBuffer
@@ -74,7 +74,8 @@ static VP8StatusCode CheckDecBuffer(const WebPDecBuffer* const buffer) {
   } else {    // RGB checks
     const WebPRGBABuffer* const buf = &buffer->u.RGBA;
     const int stride = abs(buf->stride);
-    const uint64_t size = MIN_BUFFER_SIZE(width, height, stride);
+    const uint64_t size =
+        MIN_BUFFER_SIZE(width * kModeBpp[mode], height, stride);
     ok &= (size <= buf->size);
     ok &= (stride >= width * kModeBpp[mode]);
     ok &= (buf->rgba != NULL);

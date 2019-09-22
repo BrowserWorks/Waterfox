@@ -35,8 +35,8 @@
 #ifndef WEBP_DSP_YUV_H_
 #define WEBP_DSP_YUV_H_
 
-#include "./dsp.h"
-#include "../dec/vp8_dec.h"
+#include "src/dsp/dsp.h"
+#include "src/dec/vp8_dec.h"
 
 //------------------------------------------------------------------------------
 // YUV -> RGB conversion
@@ -207,4 +207,4 @@ static WEBP_INLINE int VP8RGBToV(int r, int g, int b, int rounding) {
 }    // extern "C"
 #endif
 
-#endif  /* WEBP_DSP_YUV_H_ */
+#endif  // WEBP_DSP_YUV_H_

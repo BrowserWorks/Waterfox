@@ -16,7 +16,7 @@
 
 #include <assert.h>
 #include <stdlib.h>
-#include "./vp8i_enc.h"
+#include "src/enc/vp8i_enc.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -79,4 +79,4 @@ extern const uint16_t VP8FixedCostsI4[NUM_BMODES][NUM_BMODES][NUM_BMODES];
 }    // extern "C"
 #endif
 
-#endif  /* WEBP_ENC_COST_ENC_H_ */
+#endif  // WEBP_ENC_COST_ENC_H_

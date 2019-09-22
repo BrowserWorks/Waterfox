@@ -11,14 +11,14 @@
 //
 // Author: somnath@google.com (Somnath Banerjee)
 
-#include "./dsp.h"
+#include "src/dsp/dsp.h"
 
 #if defined(WEBP_USE_SSE2)
 
 #include <assert.h>
 #include <emmintrin.h>
 #include <string.h>
-#include "./yuv.h"
+#include "src/dsp/yuv.h"
 
 #ifdef FANCY_UPSAMPLING
 

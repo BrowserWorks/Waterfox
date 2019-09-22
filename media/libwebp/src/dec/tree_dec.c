@@ -11,8 +11,8 @@
 //
 // Author: Skal (pascal.massimino@gmail.com)
 
-#include "./vp8i_dec.h"
-#include "../utils/bit_reader_inl_utils.h"
+#include "src/dec/vp8i_dec.h"
+#include "src/utils/bit_reader_inl_utils.h"
 
 #if !defined(USE_GENERIC_TREE)
 #if !defined(__arm__) && !defined(_M_ARM) && !defined(__aarch64__)

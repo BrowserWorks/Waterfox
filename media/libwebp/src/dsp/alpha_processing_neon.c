@@ -11,11 +11,11 @@
 //
 // Author: Skal (pascal.massimino@gmail.com)
 
-#include "./dsp.h"
+#include "src/dsp/dsp.h"
 
 #if defined(WEBP_USE_NEON)
 
-#include "./neon.h"
+#include "src/dsp/neon.h"
 
 //------------------------------------------------------------------------------
 

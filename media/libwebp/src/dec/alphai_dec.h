@@ -14,8 +14,8 @@
 #ifndef WEBP_DEC_ALPHAI_DEC_H_
 #define WEBP_DEC_ALPHAI_DEC_H_
 
-#include "./webpi_dec.h"
-#include "../utils/filters_utils.h"
+#include "src/dec/webpi_dec.h"
+#include "src/utils/filters_utils.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -51,4 +51,4 @@ void WebPDeallocateAlphaMemory(VP8Decoder* const dec);
 }    // extern "C"
 #endif
 
-#endif  /* WEBP_DEC_ALPHAI_DEC_H_ */
+#endif  // WEBP_DEC_ALPHAI_DEC_H_

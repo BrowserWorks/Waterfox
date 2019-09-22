@@ -11,7 +11,7 @@
 //
 // Author: Skal (pascal.massimino@gmail.com)
 
-#include "./yuv.h"
+#include "src/dsp/yuv.h"
 
 #include <assert.h>
 #include <stdlib.h>
