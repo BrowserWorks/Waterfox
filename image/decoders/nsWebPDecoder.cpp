@@ -234,8 +234,12 @@ nsWebPDecoder::CreateFrame(const nsIntRect& aFrameRect)
 
   SurfacePipeFlags pipeFlags = SurfacePipeFlags();
 
+  AnimationParams animParams {
+    aFrameRect, mTimeout, mCurrentFrame, mBlend, mDisposal
+  };
+
   Maybe<SurfacePipe> pipe = SurfacePipeFactory::CreateSurfacePipe(this,
-      mCurrentFrame, Size(), OutputSize(), aFrameRect, mFormat, pipeFlags);
+      Size(), OutputSize(), aFrameRect, mFormat, Some(animParams), pipeFlags);
   if (!pipe) {
     MOZ_LOG(sWebPLog, LogLevel::Error,
         ("[this=%p] nsWebPDecoder::CreateFrame -- no pipe\n", this));
