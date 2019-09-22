@@ -14,7 +14,6 @@
 static int MozCPUInfo(CPUFeature feature)
 {
   switch (feature) {
-#if defined(__i386__) || defined(__x86_64__) || defined(WEBP_MSC_SSE2)
     case kSSE2:
       return mozilla::supports_sse2();
     case kSSE3:
@@ -25,11 +24,8 @@ static int MozCPUInfo(CPUFeature feature)
       return mozilla::supports_avx();
     case kAVX2:
       return mozilla::supports_avx2();
-#endif
-#if defined(WEBP_USE_NEON) || defined(WEBP_ANDROID_NEON)
     case kNEON:
       return mozilla::supports_neon();
-#endif
 #if defined(WEBP_USE_MIPS32) || defined(WEBP_USE_MIPS_DSP_R2) || defined(WEBP_USE_MSA)
     case kMIPS32:
     case kMIPSdspR2:

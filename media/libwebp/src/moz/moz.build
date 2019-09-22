@@ -8,7 +8,11 @@ with Files('**'):
     BUG_COMPONENT = ('Core', 'ImageLib')
 
 SOURCES += [
-    'demux.c',
+    'cpu.cpp',
+]
+
+LOCAL_INCLUDES += [
+    '/media/libwebp',
 ]
 
 FINAL_LIBRARY = 'gkmedias'
