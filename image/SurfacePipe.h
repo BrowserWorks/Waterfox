@@ -34,6 +34,8 @@
 #include "mozilla/Variant.h"
 #include "mozilla/gfx/2D.h"
 
+#include "AnimationParams.h"
+
 namespace mozilla {
 namespace image {
 
@@ -722,10 +724,10 @@ struct SurfaceConfig
 {
   using Filter = SurfaceSink;
   Decoder* mDecoder;           /// Which Decoder to use to allocate the surface.
-  uint32_t mFrameNum;          /// Which frame of animation this surface is for.
   gfx::IntSize mOutputSize;    /// The size of the surface.
   gfx::SurfaceFormat mFormat;  /// The surface format (BGRA or BGRX).
   bool mFlipVertically;        /// If true, write the rows from bottom to top.
+  Maybe<AnimationParams> mAnimParams; /// Given for animated images.
 };
 
 /**
@@ -750,12 +752,12 @@ struct PalettedSurfaceConfig
 {
   using Filter = PalettedSurfaceSink;
   Decoder* mDecoder;           /// Which Decoder to use to allocate the surface.
-  uint32_t mFrameNum;          /// Which frame of animation this surface is for.
   gfx::IntSize mOutputSize;    /// The logical size of the surface.
   gfx::IntRect mFrameRect;     /// The surface subrect which contains data.
   gfx::SurfaceFormat mFormat;  /// The surface format (BGRA or BGRX).
   uint8_t mPaletteDepth;       /// The palette depth of this surface.
   bool mFlipVertically;        /// If true, write the rows from bottom to top.
+  Maybe<AnimationParams> mAnimParams; /// Given for animated images.
 };
 
 /**

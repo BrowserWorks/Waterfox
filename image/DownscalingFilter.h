@@ -70,7 +70,7 @@ public:
   Maybe<SurfaceInvalidRect> TakeInvalidRect() override { return Nothing(); }
 
   template <typename... Rest>
-  nsresult Configure(const DownscalingConfig& aConfig, Rest... aRest)
+  nsresult Configure(const DownscalingConfig& aConfig, const Rest&... aRest)
   {
     return NS_ERROR_FAILURE;
   }
@@ -109,7 +109,7 @@ public:
   }
 
   template <typename... Rest>
-  nsresult Configure(const DownscalingConfig& aConfig, Rest... aRest)
+  nsresult Configure(const DownscalingConfig& aConfig, const Rest&... aRest)
   {
     nsresult rv = mNext.Configure(aRest...);
     if (NS_FAILED(rv)) {
