@@ -87,6 +87,9 @@ export class FakensIPrefBranch {
       if ("initHook" in args) {
         args.initHook.call(this);
       }
+      if (args.defaultBranch) {
+        this.prefs = {};
+      }
     }
     this._prefBranch = {};
     this.observers = {};
