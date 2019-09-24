@@ -4,15 +4,6 @@ export MOZILLA_OFFICIAL=1
 # Build GeckoView/Firefox for Android:
 ac_add_options --enable-application=mobile/android
 
-# Targeting the following architecture.
-# For regular phones, no --target is needed.
-# For x86 emulators (and x86 devices, which are uncommon):
-# ac_add_options --target=i686
-# For newer phones.
-ac_add_options --target=aarch64
-# For x86_64 emulators (and x86_64 devices, which are even less common):
-# ac_add_options --target=x86_64
-
 # With the following java:
 ac_add_options --with-java-bin-path="/Library/Java/JavaVirtualMachines/adoptopenjdk-8.jdk/Contents/Home/bin"
 
@@ -23,7 +14,7 @@ ac_add_options --with-android-ndk="/Users/akontos/.mozbuild/android-ndk-r17b"
 CC="/Users/akontos/.mozbuild/clang/bin/clang"
 CXX="/Users/akontos/.mozbuild/clang/bin/clang++"
 
-ac_add_options --enable-optimize="-Oz -march=armv8-a -w"
+ac_add_options --enable-optimize="-O2 -w"
 
 
 if test `uname -s` = MINGW32_NT-6.2; then
@@ -33,7 +24,7 @@ X=$(($(getconf _NPROCESSORS_ONLN 2>/dev/null || getconf NPROCESSORS_ONLN)*3/2))
 mk_add_options MOZ_MAKE_FLAGS=-j${X%.*}
 fi
 mk_add_options AUTOCLOBBER=1
-mk_add_options MOZ_OBJDIR=objdir-68-android
+mk_add_options MOZ_OBJDIR=objdir-current-android
 
 ac_add_options --disable-debug
 ac_add_options --disable-rust-debug
