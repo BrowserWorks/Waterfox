@@ -3321,8 +3321,8 @@ pref("dom.ipc.tabs.createKillHardCrashReports", true);
 
 pref("dom.ipc.plugins.flash.disable-protected-mode", false);
 
-pref("dom.ipc.plugins.flash.subprocess.crashreporter.enabled", true);
-pref("dom.ipc.plugins.reportCrashURL", true);
+pref("dom.ipc.plugins.flash.subprocess.crashreporter.enabled", false, locked);
+pref("dom.ipc.plugins.reportCrashURL", false, locked);
 
 // How long we wait before unloading an idle plugin process.
 // Defaults to 30 seconds.
