@@ -33,7 +33,7 @@
 !define DDEApplication        "Waterfox"
 !define AppRegName            "Waterfox"
 
-!define BrandProductName      "Firefox"
+!define BrandProductName      "Waterfox"
 !ifndef DEV_EDITION
 !define BrandShortName        "@MOZ_APP_DISPLAYNAME@"
 !endif
@@ -82,7 +82,7 @@
 
 #ifdef MOZ_LAUNCHER_PROCESS
 !define MOZ_LAUNCHER_PROCESS
-!define MOZ_LAUNCHER_SUBKEY "Software\Mozilla\${AppName}\Launcher"
+!define MOZ_LAUNCHER_SUBKEY "Software\Waterfox\${AppName}\Launcher"
 #endif
 
 #ifdef RELEASE_OR_BETA
@@ -134,7 +134,7 @@ VIProductVersion "1.0.0.0"
 VIAddVersionKey "ProductName"     "${BrandShortName}"
 VIAddVersionKey "CompanyName"     "${CompanyName}"
 #ifdef MOZ_OFFICIAL_BRANDING
-VIAddVersionKey "LegalTrademarks" "${BrandShortName} is a Trademark of The Mozilla Foundation."
+VIAddVersionKey "LegalTrademarks" "${BrandShortName} is a Trademark of Waterfox Ltd."
 #endif
 VIAddVersionKey "LegalCopyright"  "${CompanyName}"
 VIAddVersionKey "FileVersion"     "${AppVersion}"
