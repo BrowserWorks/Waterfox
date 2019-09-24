@@ -88,7 +88,7 @@ FetchDriver::~FetchDriver()
 }
 
 nsresult
-FetchDriver::Fetch(FetchSignal* aSignal, FetchDriverObserver* aObserver)
+FetchDriver::Fetch(AbortSignal* aSignal, FetchDriverObserver* aObserver)
 {
   workers::AssertIsOnMainThread();
 #ifdef DEBUG
@@ -119,7 +119,7 @@ FetchDriver::Fetch(FetchSignal* aSignal, FetchDriverObserver* aObserver)
   // the operation.
   if (aSignal) {
     if (aSignal->Aborted()) {
-      Aborted();
+      Abort();
       return NS_OK;
     }
 
@@ -474,6 +474,11 @@ FetchDriver::OnStartRequest(nsIRequest* aRequest,
   // Note, this can be called multiple times if we are doing an opaqueredirect.
   // In that case we will get a simulated OnStartRequest() and then the real
   // channel will call in with an errored OnStartRequest().
+
+  if (!mChannel) {
+    MOZ_ASSERT(!mObserver);
+    return NS_BINDING_ABORTED;
+  }
 
   nsresult rv;
   aRequest->GetStatus(&rv);
@@ -983,7 +988,7 @@ FetchDriver::SetRequestHeaders(nsIHttpChannel* aChannel) const
 }
 
 void
-FetchDriver::Aborted()
+FetchDriver::Abort()
 {
   MOZ_DIAGNOSTIC_ASSERT(NS_IsMainThread());
   if (mObserver) {

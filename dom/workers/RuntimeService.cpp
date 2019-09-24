@@ -298,7 +298,9 @@ LoadContextOptions(const char* aPrefName, void* /* aClosure */)
                 .setFuzzing(GetWorkerPref<bool>(NS_LITERAL_CSTRING("fuzzing.enabled")))
 #endif
                 .setStreams(GetWorkerPref<bool>(NS_LITERAL_CSTRING("streams")))
-                .setExtraWarnings(GetWorkerPref<bool>(NS_LITERAL_CSTRING("strict")));
+                .setExtraWarnings(GetWorkerPref<bool>(NS_LITERAL_CSTRING("strict")))
+                .setArrayProtoValues(GetWorkerPref<bool>(
+                      NS_LITERAL_CSTRING("array_prototype_values")));
 
   RuntimeService::SetDefaultContextOptions(contextOptions);
 

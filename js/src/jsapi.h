@@ -1171,6 +1171,7 @@ class JS_PUBLIC_API(ContextOptions) {
         werror_(false),
         strictMode_(false),
         extraWarnings_(false),
+        arrayProtoValues_(true),
 #ifdef NIGHTLY_BUILD
         forEachStatement_(false)
 #else
@@ -1323,6 +1324,12 @@ class JS_PUBLIC_API(ContextOptions) {
     }
 #endif
 
+    bool arrayProtoValues() const { return arrayProtoValues_; }
+    ContextOptions& setArrayProtoValues(bool flag) {
+        arrayProtoValues_ = flag;
+        return *this;
+    }
+
   private:
     bool baseline_ : 1;
     bool ion_ : 1;
@@ -1343,6 +1350,7 @@ class JS_PUBLIC_API(ContextOptions) {
 #ifdef FUZZING
     bool fuzzing_ : 1;
 #endif
+    bool arrayProtoValues_ : 1;
 
 };
 

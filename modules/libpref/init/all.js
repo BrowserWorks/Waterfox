@@ -1416,6 +1416,8 @@ pref("dom.webcomponents.enabled",           false);
 pref("dom.webcomponents.customelements.enabled", false);
 
 pref("javascript.enabled",                  true);
+// Enable Array.prototype.values
+pref("javascript.options.array_prototype_values", true);
 pref("javascript.options.strict",           false);
 #ifdef DEBUG
 pref("javascript.options.strict.debug",     false);
@@ -5040,6 +5042,15 @@ pref("dom.vibrator.max_vibrate_list_len", 128);
 
 // Battery API
 pref("dom.battery.enabled", false);
+
+// Streams API
+pref("dom.streams.enabled", false);
+
+// Abort API
+pref("dom.abortController.enabled", true);
+
+// Fetch + Abort API
+pref("dom.abortController.fetch.enabled", true);
 
 // Push
 
