@@ -8,7 +8,7 @@
 
 # BrandFullNameInternal is used for some registry and file system values
 # instead of BrandFullName and typically should not be modified.
-!define BrandFullNameInternal "Waterfox"
+!define BrandFullNameInternal "Waterfox Classic"
 !define CompanyName           "Waterfox Ltd"
 !define URLInfoAbout          "https://www.waterfox.net"
 !define URLUpdateInfo         "https://www.waterfox.net"
