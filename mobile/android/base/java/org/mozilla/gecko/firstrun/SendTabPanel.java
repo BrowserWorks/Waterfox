@@ -13,16 +13,17 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.Telemetry;
 import org.mozilla.gecko.TelemetryContract;
 import org.mozilla.gecko.fxa.FxAccountConstants;
 import org.mozilla.gecko.fxa.activities.FxAccountWebFlowActivity;
 
-public class SyncPanel extends FirstrunPanel {
+public class SendTabPanel extends FirstrunPanel {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstance) {
-        final ViewGroup root = (ViewGroup) inflater.inflate(R.layout.firstrun_sync_fragment, container, false);
+        final ViewGroup root = (ViewGroup) inflater.inflate(R.layout.firstrun_sendtab_fragment, container, false);
         final Bundle args = getArguments();
         if (args != null) {
             final int image = args.getInt(FirstrunPagerConfig.KEY_IMAGE);
