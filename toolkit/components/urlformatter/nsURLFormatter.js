@@ -99,6 +99,7 @@ nsURLFormatterService.prototype = {
     VENDOR:           function() { return this.appInfo.vendor; },
     NAME:             function() { return this.appInfo.name; },
     ID:               function() { return this.appInfo.ID; },
+    DISPLAY_VERSION:  () => AppConstants.MOZ_APP_VERSION_DISPLAY,
     VERSION:          function() { return this.appInfo.version; },
     MAJOR_VERSION:    function() { return this.appInfo.version.replace(/^([^\.]+\.[0-9]+[a-z]*).*/gi, "$1"); },
     APPBUILDID:       function() { return this.appInfo.appBuildID; },

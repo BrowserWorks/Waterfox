@@ -175,13 +175,13 @@ pref("app.update.staging.enabled", true);
 
 // Update service URL:
 #ifdef XP_WIN
-pref("app.update.url", "https://www.waterfox.net/update/win64/%VERSION%/%LOCALE%/%CHANNEL%/update.xml");
+pref("app.update.url", "https://www.waterfox.net/update/win64/%DISPLAY_VERSION%/%LOCALE%/%CHANNEL%/update.xml");
 #endif
 #ifdef XP_MACOSX
-pref("app.update.url", "https://www.waterfox.net/update/osx64/%VERSION%/%LOCALE%/%CHANNEL%/update.xml");
+pref("app.update.url", "https://www.waterfox.net/update/osx64/%DISPLAY_VERSION%/%LOCALE%/%CHANNEL%/update.xml");
 #endif
 #ifdef XP_LINUX
-pref("app.update.url", "https://www.waterfox.net/update/linux64/%VERSION%/%LOCALE%/%CHANNEL%/update.xml");
+pref("app.update.url", "https://www.waterfox.net/update/linux64/%DISPLAY_VERSION%/%LOCALE%/%CHANNEL%/update.xml");
 #endif
 // app.update.url.manual is in branding section
 // app.update.url.details is in branding section
