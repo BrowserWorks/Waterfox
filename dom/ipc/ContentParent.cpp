@@ -4702,7 +4702,7 @@ mozilla::ipc::IPCResult ContentParent::CommonCreateWindow(
     return IPC_FAIL(this, "Forbidden aChromeFlags passed");
   }
 
-  BrowserParent* thisBrowserParent = BrowserParent::GetFrom(aThisTab);
+  RefPtr<BrowserParent> thisBrowserParent = BrowserParent::GetFrom(aThisTab);
   nsCOMPtr<nsIContent> frame;
   if (thisBrowserParent) {
     frame = thisBrowserParent->GetOwnerElement();
@@ -4908,7 +4908,7 @@ mozilla::ipc::IPCResult ContentParent::RecvCreateWindow(
     aResolve(cwi);
   });
 
-  BrowserParent* newTab = BrowserParent::GetFrom(aNewTab);
+  RefPtr<BrowserParent> newTab = BrowserParent::GetFrom(aNewTab);
   MOZ_ASSERT(newTab);
 
   auto destroyNewTabOnError = MakeScopeExit([&] {
