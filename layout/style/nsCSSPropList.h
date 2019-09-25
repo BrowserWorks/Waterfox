@@ -1510,7 +1510,7 @@ CSS_PROP_COLUMN(
     CSS_PROPERTY_PARSE_VALUE |
         CSS_PROPERTY_VALUE_NONNEGATIVE,
     "",
-    VARIANT_HL | VARIANT_NORMAL | VARIANT_CALC,
+    VARIANT_HLP | VARIANT_NORMAL | VARIANT_CALC,
     nullptr,
     offsetof(nsStyleColumn, mColumnGap),
     eStyleAnimType_Coord)
