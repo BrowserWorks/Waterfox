@@ -11,16 +11,13 @@ const policiesToTest = {
 
 add_task(async function testAboutTask() {
   for (let policy in policiesToTest) {
-    let policyJSON = { policies: {} };
-    policyJSON.policies[policy] = true;
-    await testPageBlockedByPolicy(policyJSON, policiesToTest[policy]);
+    await testPageBlockedByPolicy(policy, policiesToTest[policy]);
   }
-  let policyJSON = { policies: {} };
-  policyJSON.policies.PasswordManagerEnabled = false;
-  await testPageBlockedByPolicy(policyJSON, "about:logins");
 });
 
-async function testPageBlockedByPolicy(policyJSON, page) {
+async function testPageBlockedByPolicy(policy, page) {
+  let policyJSON = { policies: {} };
+  policyJSON.policies[policy] = true;
   await setupPolicyEngineWithJson(policyJSON);
 
   await BrowserTestUtils.withNewTab(
