@@ -2003,7 +2003,7 @@ pref("dom.server-events.default-reconnection-time", 5000); // in milliseconds
 // This preference, if true, causes all UTF-8 domain names to be normalized to
 // punycode.  The intention is to allow UTF-8 domain names as input, but never
 // generate them from punycode.
-pref("network.IDN_show_punycode", false);
+pref("network.IDN_show_punycode", true);
 
 // If "network.IDN.use_whitelist" is set to true, TLDs with
 // "network.IDN.whitelist.tld" explicitly set to true are treated as
