@@ -58,31 +58,29 @@ Result CSTrustDomain::GetCertTrust(EndEntityOrCA endEntityOrCA,
   nsTArray<uint8_t> subjectBytes;
   nsTArray<uint8_t> pubKeyBytes;
 
-  Result result =
-      BuildRevocationCheckArrays(candidateCertDER, endEntityOrCA, issuerBytes,
-                                 serialBytes, subjectBytes, pubKeyBytes);
+  nsresult nsrv = BuildRevocationCheckArrays(
+      candidateCert, issuerBytes, serialBytes, subjectBytes, pubKeyBytes);
 #else
   nsAutoCString encIssuer;
   nsAutoCString encSerial;
   nsAutoCString encSubject;
   nsAutoCString encPubKey;
 
-  Result result =
-      BuildRevocationCheckStrings(candidateCertDER, endEntityOrCA, encIssuer,
-                                  encSerial, encSubject, encPubKey);
+  nsresult nsrv = BuildRevocationCheckStrings(candidateCert.get(), encIssuer,
+                                              encSerial, encSubject, encPubKey);
 #endif
-  if (result != Success) {
-    return result;
+  if (NS_FAILED(nsrv)) {
+    return Result::FATAL_ERROR_LIBRARY_FAILURE;
   }
 
 #ifdef MOZ_NEW_CERT_STORAGE
   int16_t revocationState;
-  nsresult nsrv = mCertBlocklist->GetRevocationState(
+  nsrv = mCertBlocklist->GetRevocationState(
       issuerBytes, serialBytes, subjectBytes, pubKeyBytes, &revocationState);
 #else
   bool isCertRevoked;
-  nsresult nsrv = mCertBlocklist->IsCertRevoked(
-      encIssuer, encSerial, encSubject, encPubKey, &isCertRevoked);
+  nsrv = mCertBlocklist->IsCertRevoked(encIssuer, encSerial, encSubject,
+                                       encPubKey, &isCertRevoked);
 #endif
   if (NS_FAILED(nsrv)) {
     return Result::FATAL_ERROR_LIBRARY_FAILURE;
