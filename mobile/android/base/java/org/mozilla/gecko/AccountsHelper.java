@@ -13,9 +13,11 @@ import android.accounts.AuthenticatorException;
 import android.accounts.OperationCanceledException;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.util.Log;
 
 import org.json.JSONException;
+import org.mozilla.gecko.activitystream.homepanel.ActivityStreamPanel;
 import org.mozilla.gecko.background.fxa.FxAccountUtils;
 import org.mozilla.gecko.fxa.FirefoxAccounts;
 import org.mozilla.gecko.fxa.FxAccountConstants;
@@ -139,12 +141,17 @@ public class AccountsHelper implements BundleEventListener {
                     }
                 }
 
+                // Bug 1570880 - If the user has signed in to FxA make sure to reset the dismiss flag for the awesomescreem sign in row.
+                final SharedPreferences sharedPreferences = GeckoSharedPrefs.forProfile(mContext);
+
                 // We could be either signing-up for an account, or logging into one.
                 // Send a correct telemetry event.
                 if (action.equals("signin")) {
                     MmaDelegate.track(MmaDelegate.USER_SIGNED_IN_TO_FXA);
+                    sharedPreferences.edit().putBoolean(ActivityStreamPanel.PREF_USER_DISMISSED_SIGNIN, false).apply();
                 } else if (action.equals("signup")) {
                     MmaDelegate.track(MmaDelegate.USER_SIGNED_UP_FOR_FXA);
+                    sharedPreferences.edit().putBoolean(ActivityStreamPanel.PREF_USER_DISMISSED_SIGNIN, false).apply();
                 }
 
             } catch (URISyntaxException | GeneralSecurityException |

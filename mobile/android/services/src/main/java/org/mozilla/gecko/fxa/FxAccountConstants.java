@@ -69,10 +69,13 @@ public class FxAccountConstants {
   public static final String ACTION_FXA_CONFIRM_ACCOUNT            = AppConstants.ANDROID_PACKAGE_NAME + ".ACTION_FXA_CONFIRM_ACCOUNT";
   public static final String ACTION_FXA_FINISH_MIGRATING           = AppConstants.ANDROID_PACKAGE_NAME + ".ACTION_FXA_FINISH_MIGRATING";
   public static final String ACTION_FXA_GET_STARTED                = AppConstants.ANDROID_PACKAGE_NAME + ".ACTION_FXA_GET_STARTED";
+  public static final String ACTION_FXA_SIGN_UP                    = AppConstants.ANDROID_PACKAGE_NAME + ".ACTION_FXA_SIGN_UP";
   public static final String ACTION_FXA_STATUS                     = AppConstants.ANDROID_PACKAGE_NAME + ".ACTION_FXA_STATUS";
   public static final String ACTION_FXA_UPDATE_CREDENTIALS         = AppConstants.ANDROID_PACKAGE_NAME + ".ACTION_FXA_UPDATE_CREDENTIALS";
 
   public static final String ENDPOINT_PREFERENCES  = "preferences";
   public static final String ENDPOINT_NOTIFICATION = "notification";
   public static final String ENDPOINT_FIRSTRUN = "firstrun";
+  public static final String ENDPOINT_AWESOMESCREEN_SIGNIN = "awesomescreen-signin";
+  public static final String ENDPOINT_AWESOMESCREEN_SIGNUP = "awesomescreen-signup";
 }

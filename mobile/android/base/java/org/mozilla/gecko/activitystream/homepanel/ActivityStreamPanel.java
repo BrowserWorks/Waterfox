@@ -9,6 +9,7 @@ import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.database.Cursor;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.Loader;
@@ -53,6 +54,7 @@ public class ActivityStreamPanel extends FrameLayout {
     public static final String PREF_POCKET_ENABLED = "pref_activitystream_pocket_enabled";
     public static final String PREF_VISITED_ENABLED = "pref_activitystream_visited_enabled";
     public static final String PREF_BOOKMARKS_ENABLED = "pref_activitystream_recentbookmarks_enabled";
+    public static final String PREF_USER_DISMISSED_SIGNIN = "pref_activitystream_user_dismissed_signin";
 
     private final RecyclerView contentRecyclerView;
 
@@ -67,10 +69,10 @@ public class ActivityStreamPanel extends FrameLayout {
 
         inflate(context, R.layout.as_content, this);
 
-        adapter = new StreamRecyclerAdapter();
+        adapter = new StreamRecyclerAdapter(context);
         sharedPreferences = GeckoSharedPrefs.forProfile(context);
 
-        contentRecyclerView = (RecyclerView) findViewById(R.id.activity_stream_main_recyclerview);
+        contentRecyclerView = findViewById(R.id.activity_stream_main_recyclerview);
         contentRecyclerView.setAdapter(adapter);
         contentRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         contentRecyclerView.setHasFixedSize(true);
@@ -172,23 +174,25 @@ public class ActivityStreamPanel extends FrameLayout {
     }
 
     private class HighlightsCallbacks implements LoaderManager.LoaderCallbacks<List<Highlight>> {
+        @NonNull
         @Override
         public Loader<List<Highlight>> onCreateLoader(int id, Bundle args) {
             return new HighlightsLoader(getContext(), HIGHLIGHTS_CANDIDATES, HIGHLIGHTS_LIMIT);
         }
 
         @Override
-        public void onLoadFinished(Loader<List<Highlight>> loader, List<Highlight> data) {
+        public void onLoadFinished(@NonNull Loader<List<Highlight>> loader, List<Highlight> data) {
             adapter.swapHighlights(data);
         }
 
         @Override
-        public void onLoaderReset(Loader<List<Highlight>> loader) {
+        public void onLoaderReset(@NonNull Loader<List<Highlight>> loader) {
             adapter.swapHighlights(Collections.<Highlight>emptyList());
         }
     }
 
     private class TopSitesCallback implements LoaderManager.LoaderCallbacks<Cursor> {
+        @NonNull
         @Override
         public Loader<Cursor> onCreateLoader(int id, Bundle args) {
             final int topSitesPerPage = TopSitesPage.NUM_COLUMNS * TopSitesPage.NUM_ROWS;
@@ -204,33 +208,32 @@ public class ActivityStreamPanel extends FrameLayout {
         }
 
         @Override
-        public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+        public void onLoadFinished(@NonNull Loader<Cursor> loader, Cursor data) {
             adapter.swapTopSitesCursor(data);
         }
 
         @Override
-        public void onLoaderReset(Loader<Cursor> loader) {
+        public void onLoaderReset(@NonNull Loader<Cursor> loader) {
             adapter.swapTopSitesCursor(null);
         }
     }
 
     private class PocketStoriesCallbacks implements LoaderManager.LoaderCallbacks<List<TopStory>> {
 
+        @NonNull
         @Override
         public Loader<List<TopStory>> onCreateLoader(int id, Bundle args) {
             return new PocketStoriesLoader(getContext());
         }
 
         @Override
-        public void onLoadFinished(Loader<List<TopStory>> loader, List<TopStory> data) {
+        public void onLoadFinished(@NonNull Loader<List<TopStory>> loader, List<TopStory> data) {
             adapter.swapTopStories(data);
         }
 
         @Override
-        public void onLoaderReset(Loader<List<TopStory>> loader) {
+        public void onLoaderReset(@NonNull Loader<List<TopStory>> loader) {
             adapter.swapTopStories(Collections.<TopStory>emptyList());
         }
-
-
     }
 }

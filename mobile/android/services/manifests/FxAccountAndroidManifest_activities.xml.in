@@ -35,6 +35,15 @@
         </activity>
 
         <activity
+             android:exported="false"
+             android:name="org.mozilla.gecko.fxa.activities.FxAccountSignUpActivityWeb">
+             <intent-filter>
+                 <action android:name="@ANDROID_PACKAGE_NAME@.ACTION_FXA_SIGN_UP"/>
+                 <category android:name="android.intent.category.DEFAULT"/>
+             </intent-filter>
+        </activity>
+
+        <activity
             android:exported="false"
             android:name="org.mozilla.gecko.fxa.activities.FxAccountUpdateCredentialsActivityWeb">
             <intent-filter>
