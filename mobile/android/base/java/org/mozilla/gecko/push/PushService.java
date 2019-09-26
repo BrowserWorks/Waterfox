@@ -136,7 +136,7 @@ public class PushService implements BundleEventListener {
 
     public void onStartup() {
         Log.i(LOG_TAG, "Starting up.");
-        ThreadUtils.assertOnBackgroundThread();
+        ThreadUtils.assertNotOnUiThread();
 
         try {
             pushManager.startup(System.currentTimeMillis());
@@ -190,7 +190,7 @@ public class PushService implements BundleEventListener {
 
     public void onRefresh() {
         Log.i(LOG_TAG, "Google Play Services requested GCM token refresh; invalidating GCM token and running startup again.");
-        ThreadUtils.assertOnBackgroundThread();
+        ThreadUtils.assertNotOnUiThread();
 
         pushManager.invalidateGcmToken();
         try {
@@ -203,7 +203,7 @@ public class PushService implements BundleEventListener {
 
     public void onMessageReceived(final @NonNull Context context, final @NonNull Bundle bundle) {
         Log.i(LOG_TAG, "Google Play Services GCM message received; delivering.");
-        ThreadUtils.assertOnBackgroundThread();
+        ThreadUtils.assertNotOnUiThread();
 
         final String chid = bundle.getString("chid");
         if (chid == null) {
@@ -320,7 +320,7 @@ public class PushService implements BundleEventListener {
     @Override
     public void handleMessage(final String event, final GeckoBundle message, final EventCallback callback) {
         Log.i(LOG_TAG, "Handling event: " + event);
-        ThreadUtils.assertOnBackgroundThread();
+        ThreadUtils.assertNotOnUiThread();
 
         final Context context = GeckoAppShell.getApplicationContext();
         // We're invoked in response to a Gecko message on a background thread.  We should always
