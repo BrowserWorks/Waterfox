@@ -11,13 +11,13 @@ const policiesToTest = {
 
 add_task(async function testAboutTask() {
   for (let policy in policiesToTest) {
-    await testPageBlockedByPolicy(policy, policiesToTest[policy]);
+    let policyJSON = { policies: {} };
+    policyJSON.policies[policy] = true;
+    await testPageBlockedByPolicy(policyJSON, policiesToTest[policy]);
   }
 });
 
-async function testPageBlockedByPolicy(policy, page) {
-  let policyJSON = { policies: {} };
-  policyJSON.policies[policy] = true;
+async function testPageBlockedByPolicy(policyJSON, page) {
   await setupPolicyEngineWithJson(policyJSON);
 
   await BrowserTestUtils.withNewTab(
