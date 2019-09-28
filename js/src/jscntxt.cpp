@@ -42,7 +42,6 @@
 #include "jsscript.h"
 #include "jsstr.h"
 #include "jstypes.h"
-#include "jswatchpoint.h"
 #include "jswin.h"
 
 #include "gc/Marking.h"
