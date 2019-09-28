@@ -406,7 +406,6 @@ const ObjectOps ModuleEnvironmentObject::objectOps_ = {
     ModuleEnvironmentObject::setProperty,
     ModuleEnvironmentObject::getOwnPropertyDescriptor,
     ModuleEnvironmentObject::deleteProperty,
-    nullptr, nullptr,                                    /* watch/unwatch */
     nullptr,                                             /* getElements */
     nullptr
 };
@@ -827,7 +826,6 @@ static const ObjectOps WithEnvironmentObjectOps = {
     with_SetProperty,
     with_GetOwnPropertyDescriptor,
     with_DeleteProperty,
-    nullptr, nullptr,    /* watch/unwatch */
     nullptr,             /* getElements */
     nullptr,
 };
@@ -1192,7 +1190,6 @@ static const ObjectOps RuntimeLexicalErrorObjectObjectOps = {
     lexicalError_SetProperty,
     lexicalError_GetOwnPropertyDescriptor,
     lexicalError_DeleteProperty,
-    nullptr, nullptr,    /* watch/unwatch */
     nullptr,             /* getElements */
     nullptr,             /* this */
 };
