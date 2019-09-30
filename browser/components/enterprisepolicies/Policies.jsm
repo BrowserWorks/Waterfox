@@ -1004,6 +1004,18 @@ var Policies = {
     },
   },
 
+  PasswordManagerEnabled: {
+    onBeforeUIStartup(manager, param) {
+      if (!param) {
+        // Passing no pages simply initializes the blocker
+        blockAboutPage(manager);
+        gBlockedChromePages.push("passwordManager.xul");
+        setAndLockPref("pref.privacy.disable_button.view_passwords", true);
+      }
+      setAndLockPref("signon.rememberSignons", param);
+    },
+  },
+
   Permissions: {
     onBeforeUIStartup(manager, param) {
       if (param.Camera) {
@@ -1633,6 +1645,9 @@ let gBlockedChromePages = [];
 function blockAboutPage(manager, feature, neededOnContentProcess = false) {
   if (!gBlockedChromePages.length) {
     addChromeURLBlocker();
+  }
+  if (!feature) {
+    return;
   }
   manager.disallowFeature(feature, neededOnContentProcess);
   let splitURL = Services.io
