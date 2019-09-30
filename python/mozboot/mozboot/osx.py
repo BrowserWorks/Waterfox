@@ -375,7 +375,7 @@ class OSXBootstrapper(BaseBootstrapper):
     def ensure_macports_system_packages(self):
         packages = [
             'python27',
-            'py27-readline',
+            'py27-gnureadline',
             'mercurial',
             'autoconf213',
             'gnutar',
@@ -389,8 +389,8 @@ class OSXBootstrapper(BaseBootstrapper):
         # TODO: Figure out what not to install for artifact mode
         packages = [
             'yasm',
-            'llvm-4.0',
-            'clang-4.0',
+            'llvm-8.0',
+            'clang-8.0',
         ]
 
         self._ensure_macports_packages(packages)
