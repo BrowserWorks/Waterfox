@@ -61,8 +61,7 @@ def make_signing_description(config, jobs):
 
         if 'win' in build_platform:
             # job['primary-dependency'].task['payload']['command']
-            scopes.append(add_scope_prefix(config, "signing:format:sha2signcode"))
-            formats = ['sha2signcode']
+            formats = ['autograph_authenticode']
         else:
             formats = ['autograph_gpg']
 
