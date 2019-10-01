@@ -9,8 +9,8 @@
  * PATENTS file, you can obtain it at www.aomedia.org/license/patent.
  */
 
-#ifndef TEST_ACM_RANDOM_H_
-#define TEST_ACM_RANDOM_H_
+#ifndef AOM_TEST_ACM_RANDOM_H_
+#define AOM_TEST_ACM_RANDOM_H_
 
 #include "third_party/googletest/src/googletest/include/gtest/gtest.h"
 
@@ -34,6 +34,19 @@ class ACMRandom {
     const uint32_t value =
         random_.Generate(testing::internal::Random::kMaxRange);
     return (value >> 15) & 0xffff;
+  }
+
+  int16_t Rand15Signed(void) {
+    const uint32_t value =
+        random_.Generate(testing::internal::Random::kMaxRange);
+    return (value >> 17) & 0xffff;
+  }
+
+  uint16_t Rand12(void) {
+    const uint32_t value =
+        random_.Generate(testing::internal::Random::kMaxRange);
+    // There's a bit more entropy in the upper bits of this implementation.
+    return (value >> 19) & 0xfff;
   }
 
   int16_t Rand9Signed(void) {
@@ -68,4 +81,4 @@ class ACMRandom {
 
 }  // namespace libaom_test
 
-#endif  // TEST_ACM_RANDOM_H_
+#endif  // AOM_TEST_ACM_RANDOM_H_

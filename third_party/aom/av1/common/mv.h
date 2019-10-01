@@ -9,8 +9,8 @@
  * PATENTS file, you can obtain it at www.aomedia.org/license/patent.
  */
 
-#ifndef AV1_COMMON_MV_H_
-#define AV1_COMMON_MV_H_
+#ifndef AOM_AV1_COMMON_MV_H_
+#define AOM_AV1_COMMON_MV_H_
 
 #include "av1/common/common.h"
 #include "av1/common/common_data.h"
@@ -20,10 +20,14 @@
 extern "C" {
 #endif
 
+#define INVALID_MV 0x80008000
+
 typedef struct mv {
   int16_t row;
   int16_t col;
 } MV;
+
+static const MV kZeroMv = { 0, 0 };
 
 typedef union int_mv {
   uint32_t as_int;
@@ -35,48 +39,29 @@ typedef struct mv32 {
   int32_t col;
 } MV32;
 
-#if (CONFIG_WARPED_MOTION || CONFIG_MOTION_VAR) && CONFIG_GLOBAL_MOTION
-#define SEPARATE_GLOBAL_MOTION 1
-#endif  // (CONFIG_WARPED_MOTION || CONFIG_MOTION_VAR) && CONFIG_GLOBAL_MOTION
-#if CONFIG_GLOBAL_MOTION || CONFIG_WARPED_MOTION
 // Bits of precision used for the model
 #define WARPEDMODEL_PREC_BITS 16
 #define WARPEDMODEL_ROW3HOMO_PREC_BITS 16
 
 #define WARPEDMODEL_TRANS_CLAMP (128 << WARPEDMODEL_PREC_BITS)
-#define WARPEDMODEL_DIAGAFFINE_CLAMP (1 << (WARPEDMODEL_PREC_BITS + 1))
-#define WARPEDMODEL_NONDIAGAFFINE_CLAMP (1 << (WARPEDMODEL_PREC_BITS - 1))
-#define WARPEDMODEL_ROW3HOMO_CLAMP (1 << (WARPEDMODEL_PREC_BITS - 1))
+#define WARPEDMODEL_NONDIAGAFFINE_CLAMP (1 << (WARPEDMODEL_PREC_BITS - 3))
+#define WARPEDMODEL_ROW3HOMO_CLAMP (1 << (WARPEDMODEL_PREC_BITS - 2))
 
 // Bits of subpel precision for warped interpolation
 #define WARPEDPIXEL_PREC_BITS 6
 #define WARPEDPIXEL_PREC_SHIFTS (1 << WARPEDPIXEL_PREC_BITS)
 
-// Taps for ntap filter
-#define WARPEDPIXEL_FILTER_TAPS 6
-
-// Precision of filter taps
-#define WARPEDPIXEL_FILTER_BITS 7
-
 #define WARP_PARAM_REDUCE_BITS 6
-
-// Precision bits reduction after horizontal shear
-#define HORSHEAR_REDUCE_PREC_BITS 5
-#define VERSHEAR_REDUCE_PREC_BITS \
-  (2 * WARPEDPIXEL_FILTER_BITS - HORSHEAR_REDUCE_PREC_BITS)
 
 #define WARPEDDIFF_PREC_BITS (WARPEDMODEL_PREC_BITS - WARPEDPIXEL_PREC_BITS)
 
 /* clang-format off */
-typedef enum {
+typedef enum ATTRIBUTE_PACKED {
   IDENTITY = 0,      // identity transformation, 0-parameter
   TRANSLATION = 1,   // translational motion 2-parameter
   ROTZOOM = 2,       // simplified affine with rotation + zoom only, 4-parameter
   AFFINE = 3,        // affine, 6-parameter
-  HORTRAPEZOID = 4,  // constrained homography, hor trapezoid, 6-parameter
-  VERTRAPEZOID = 5,  // constrained homography, ver trapezoid, 6-parameter
-  HOMOGRAPHY = 6,    // homography, 8-parameter
-  TRANS_TYPES = 7,
+  TRANS_TYPES,
 } TransformationType;
 /* clang-format on */
 
@@ -89,16 +74,12 @@ typedef enum {
 #define GLOBAL_TRANS_TYPES 4
 
 typedef struct {
-#if CONFIG_GLOBAL_MOTION
   int global_warp_allowed;
-#endif  // CONFIG_GLOBAL_MOTION
-#if CONFIG_WARPED_MOTION
   int local_warp_allowed;
-#endif  // CONFIG_WARPED_MOTION
 } WarpTypesAllowed;
 
 // number of parameters used by each transformation in TransformationTypes
-static const int trans_model_params[TRANS_TYPES] = { 0, 2, 4, 6, 6, 6, 8 };
+static const int trans_model_params[TRANS_TYPES] = { 0, 2, 4, 6 };
 
 // The order of values in the wmmat matrix below is best described
 // by the homography:
@@ -109,19 +90,19 @@ typedef struct {
   TransformationType wmtype;
   int32_t wmmat[8];
   int16_t alpha, beta, gamma, delta;
+  int8_t invalid;
 } WarpedMotionParams;
 
-static INLINE void set_default_warp_params(WarpedMotionParams *wm) {
-  static const int32_t default_wm_mat[8] = {
-    0, 0, (1 << WARPEDMODEL_PREC_BITS), 0, 0, (1 << WARPEDMODEL_PREC_BITS), 0, 0
-  };
-  memset(wm, 0, sizeof(*wm));
-  memcpy(wm->wmmat, default_wm_mat, sizeof(wm->wmmat));
-  wm->wmtype = IDENTITY;
-}
-#endif  // CONFIG_GLOBAL_MOTION || CONFIG_WARPED_MOTION
+/* clang-format off */
+static const WarpedMotionParams default_warp_params = {
+  IDENTITY,
+  { 0, 0, (1 << WARPEDMODEL_PREC_BITS), 0, 0, (1 << WARPEDMODEL_PREC_BITS), 0,
+    0 },
+  0, 0, 0, 0,
+  0,
+};
+/* clang-format on */
 
-#if CONFIG_GLOBAL_MOTION
 // The following constants describe the various precisions
 // of different parameters in the global motion experiment.
 //
@@ -178,9 +159,6 @@ static INLINE void set_default_warp_params(WarpedMotionParams *wm) {
 #define GM_ALPHA_MIN -GM_ALPHA_MAX
 #define GM_ROW3HOMO_MIN -GM_ROW3HOMO_MAX
 
-// Use global motion parameters for sub8x8 blocks
-#define GLOBAL_SUB8X8_USED 0
-
 static INLINE int block_center_x(int mi_col, BLOCK_SIZE bs) {
   const int bw = block_size_wide[bs];
   return mi_col * MI_SIZE + bw / 2 - 1;
@@ -197,69 +175,95 @@ static INLINE int convert_to_trans_prec(int allow_hp, int coor) {
   else
     return ROUND_POWER_OF_TWO_SIGNED(coor, WARPEDMODEL_PREC_BITS - 2) * 2;
 }
+static INLINE void integer_mv_precision(MV *mv) {
+  int mod = (mv->row % 8);
+  if (mod != 0) {
+    mv->row -= mod;
+    if (abs(mod) > 4) {
+      if (mod > 0) {
+        mv->row += 8;
+      } else {
+        mv->row -= 8;
+      }
+    }
+  }
 
-// Convert a global motion translation vector (which may have more bits than a
-// regular motion vector) into a motion vector
+  mod = (mv->col % 8);
+  if (mod != 0) {
+    mv->col -= mod;
+    if (abs(mod) > 4) {
+      if (mod > 0) {
+        mv->col += 8;
+      } else {
+        mv->col -= 8;
+      }
+    }
+  }
+}
+// Convert a global motion vector into a motion vector at the centre of the
+// given block.
+//
+// The resulting motion vector will have three fractional bits of precision. If
+// allow_hp is zero, the bottom bit will always be zero. If CONFIG_AMVR and
+// is_integer is true, the bottom three bits will be zero (so the motion vector
+// represents an integer)
 static INLINE int_mv gm_get_motion_vector(const WarpedMotionParams *gm,
                                           int allow_hp, BLOCK_SIZE bsize,
                                           int mi_col, int mi_row,
-                                          int block_idx) {
-  const int unify_bsize = CONFIG_CB4X4;
+                                          int is_integer) {
   int_mv res;
+
+  if (gm->wmtype == IDENTITY) {
+    res.as_int = 0;
+    return res;
+  }
+
   const int32_t *mat = gm->wmmat;
   int x, y, tx, ty;
 
   if (gm->wmtype == TRANSLATION) {
+    // All global motion vectors are stored with WARPEDMODEL_PREC_BITS (16)
+    // bits of fractional precision. The offset for a translation is stored in
+    // entries 0 and 1. For translations, all but the top three (two if
+    // cm->allow_high_precision_mv is false) fractional bits are always zero.
+    //
+    // After the right shifts, there are 3 fractional bits of precision. If
+    // allow_hp is false, the bottom bit is always zero (so we don't need a
+    // call to convert_to_trans_prec here)
     res.as_mv.row = gm->wmmat[0] >> GM_TRANS_ONLY_PREC_DIFF;
     res.as_mv.col = gm->wmmat[1] >> GM_TRANS_ONLY_PREC_DIFF;
+    assert(IMPLIES(1 & (res.as_mv.row | res.as_mv.col), allow_hp));
+    if (is_integer) {
+      integer_mv_precision(&res.as_mv);
+    }
     return res;
   }
 
-  if (bsize >= BLOCK_8X8 || unify_bsize) {
-    x = block_center_x(mi_col, bsize);
-    y = block_center_y(mi_row, bsize);
-  } else {
-    x = block_center_x(mi_col, bsize);
-    y = block_center_y(mi_row, bsize);
-    x += (block_idx & 1) * MI_SIZE / 2;
-    y += (block_idx & 2) * MI_SIZE / 4;
-  }
+  x = block_center_x(mi_col, bsize);
+  y = block_center_y(mi_row, bsize);
 
   if (gm->wmtype == ROTZOOM) {
     assert(gm->wmmat[5] == gm->wmmat[2]);
     assert(gm->wmmat[4] == -gm->wmmat[3]);
   }
-  if (gm->wmtype > AFFINE) {
-    int xc = (int)((int64_t)mat[2] * x + (int64_t)mat[3] * y + mat[0]);
-    int yc = (int)((int64_t)mat[4] * x + (int64_t)mat[5] * y + mat[1]);
-    const int Z = (int)((int64_t)mat[6] * x + (int64_t)mat[7] * y +
-                        (1 << WARPEDMODEL_ROW3HOMO_PREC_BITS));
-    xc *= 1 << (WARPEDMODEL_ROW3HOMO_PREC_BITS - WARPEDMODEL_PREC_BITS);
-    yc *= 1 << (WARPEDMODEL_ROW3HOMO_PREC_BITS - WARPEDMODEL_PREC_BITS);
-    xc = (int)(xc > 0 ? ((int64_t)xc + Z / 2) / Z : ((int64_t)xc - Z / 2) / Z);
-    yc = (int)(yc > 0 ? ((int64_t)yc + Z / 2) / Z : ((int64_t)yc - Z / 2) / Z);
-    tx = convert_to_trans_prec(allow_hp, xc) - (x << 3);
-    ty = convert_to_trans_prec(allow_hp, yc) - (y << 3);
-  } else {
-    const int xc =
-        (mat[2] - (1 << WARPEDMODEL_PREC_BITS)) * x + mat[3] * y + mat[0];
-    const int yc =
-        mat[4] * x + (mat[5] - (1 << WARPEDMODEL_PREC_BITS)) * y + mat[1];
-    tx = convert_to_trans_prec(allow_hp, xc);
-    ty = convert_to_trans_prec(allow_hp, yc);
-  }
+
+  const int xc =
+      (mat[2] - (1 << WARPEDMODEL_PREC_BITS)) * x + mat[3] * y + mat[0];
+  const int yc =
+      mat[4] * x + (mat[5] - (1 << WARPEDMODEL_PREC_BITS)) * y + mat[1];
+  tx = convert_to_trans_prec(allow_hp, xc);
+  ty = convert_to_trans_prec(allow_hp, yc);
 
   res.as_mv.row = ty;
   res.as_mv.col = tx;
+
+  if (is_integer) {
+    integer_mv_precision(&res.as_mv);
+  }
   return res;
 }
 
 static INLINE TransformationType get_gmtype(const WarpedMotionParams *gm) {
-  if (gm->wmmat[6] != 0 || gm->wmmat[7] != 0) {
-    if (!gm->wmmat[6] && !gm->wmmat[4]) return HORTRAPEZOID;
-    if (!gm->wmmat[7] && !gm->wmmat[3]) return VERTRAPEZOID;
-    return HOMOGRAPHY;
-  }
   if (gm->wmmat[5] == (1 << WARPEDMODEL_PREC_BITS) && !gm->wmmat[4] &&
       gm->wmmat[2] == (1 << WARPEDMODEL_PREC_BITS) && !gm->wmmat[3]) {
     return ((!gm->wmmat[1] && !gm->wmmat[0]) ? IDENTITY : TRANSLATION);
@@ -269,12 +273,10 @@ static INLINE TransformationType get_gmtype(const WarpedMotionParams *gm) {
   else
     return AFFINE;
 }
-#endif  // CONFIG_GLOBAL_MOTION
 
 typedef struct candidate_mv {
   int_mv this_mv;
   int_mv comp_mv;
-  uint8_t pred_diff[2];
   int weight;
 } CANDIDATE_MV;
 
@@ -292,11 +294,8 @@ static INLINE void clamp_mv(MV *mv, int min_col, int max_col, int min_row,
   mv->row = clamp(mv->row, min_row, max_row);
 }
 
-static INLINE int mv_has_subpel(const MV *mv) {
-  return (mv->row & SUBPEL_MASK) || (mv->col & SUBPEL_MASK);
-}
 #ifdef __cplusplus
 }  // extern "C"
 #endif
 
-#endif  // AV1_COMMON_MV_H_
+#endif  // AOM_AV1_COMMON_MV_H_

@@ -7,7 +7,7 @@
  * obtain it at www.aomedia.org/license/software. If the Alliance for Open
  * Media Patent License 1.0 was not distributed with this source code in the
  * PATENTS file, you can obtain it at www.aomedia.org/license/patent.
-*/
+ */
 
 #include "third_party/googletest/src/googletest/include/gtest/gtest.h"
 #include "test/codec_factory.h"
@@ -15,8 +15,8 @@
 
 namespace {
 
-class AV1FrameSizeTests : public ::libaom_test::EncoderTest,
-                          public ::testing::Test {
+class AV1FrameSizeTests : public ::testing::Test,
+                          public ::libaom_test::EncoderTest {
  protected:
   AV1FrameSizeTests()
       : EncoderTest(&::libaom_test::kAV1), expected_res_(AOM_CODEC_OK) {}

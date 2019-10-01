@@ -9,12 +9,13 @@
  * PATENTS file, you can obtain it at www.aomedia.org/license/patent.
  */
 
-#ifndef AOM_DSP_MIPS_LOOPFILTER_MACROS_DSPR2_H_
-#define AOM_DSP_MIPS_LOOPFILTER_MACROS_DSPR2_H_
+#ifndef AOM_AOM_DSP_MIPS_LOOPFILTER_MACROS_DSPR2_H_
+#define AOM_AOM_DSP_MIPS_LOOPFILTER_MACROS_DSPR2_H_
 
 #include <stdlib.h>
 
-#include "./aom_dsp_rtcd.h"
+#include "config/aom_dsp_rtcd.h"
+
 #include "aom/aom_integer.h"
 #include "aom_mem/aom_mem.h"
 
@@ -433,4 +434,4 @@ extern "C" {
 }  // extern "C"
 #endif
 
-#endif  // AOM_DSP_MIPS_LOOPFILTER_MACROS_DSPR2_H_
+#endif  // AOM_AOM_DSP_MIPS_LOOPFILTER_MACROS_DSPR2_H_

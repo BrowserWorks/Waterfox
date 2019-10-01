@@ -9,10 +9,11 @@
  * PATENTS file, you can obtain it at www.aomedia.org/license/patent.
  */
 
-#ifndef AOM_DSP_TXFM_COMMON_H_
-#define AOM_DSP_TXFM_COMMON_H_
+#ifndef AOM_AOM_DSP_TXFM_COMMON_H_
+#define AOM_AOM_DSP_TXFM_COMMON_H_
 
 #include "aom_dsp/aom_dsp_common.h"
+#include "av1/common/enums.h"
 
 // Constants and Macros used by all idct/dct functions
 #define DCT_CONST_BITS 14
@@ -20,6 +21,20 @@
 
 #define UNIT_QUANT_SHIFT 2
 #define UNIT_QUANT_FACTOR (1 << UNIT_QUANT_SHIFT)
+
+typedef struct txfm_param {
+  // for both forward and inverse transforms
+  TX_TYPE tx_type;
+  TX_SIZE tx_size;
+  int lossless;
+  int bd;
+  // are the pixel buffers octets or shorts?  This should collapse to
+  // bd==8 implies !is_hbd, but that's not certain right now.
+  int is_hbd;
+  TxSetType tx_set_type;
+  // for inverse transforms only
+  int eob;
+} TxfmParam;
 
 // Constants:
 //  for (int i = 1; i< 32; ++i)
@@ -66,5 +81,11 @@ static const tran_high_t sinpi_4_9 = 15212;
 
 // 16384 * sqrt(2)
 static const tran_high_t Sqrt2 = 23170;
+static const tran_high_t InvSqrt2 = 11585;
 
-#endif  // AOM_DSP_TXFM_COMMON_H_
+static INLINE tran_high_t fdct_round_shift(tran_high_t input) {
+  tran_high_t rv = ROUND_POWER_OF_TWO(input, DCT_CONST_BITS);
+  return rv;
+}
+
+#endif  // AOM_AOM_DSP_TXFM_COMMON_H_

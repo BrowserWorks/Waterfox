@@ -9,8 +9,8 @@
  * PATENTS file, you can obtain it at www.aomedia.org/license/patent.
  */
 
-#ifndef AOM_DSP_DAALABOOLWRITER_H_
-#define AOM_DSP_DAALABOOLWRITER_H_
+#ifndef AOM_AOM_DSP_DAALABOOLWRITER_H_
+#define AOM_AOM_DSP_DAALABOOLWRITER_H_
 
 #include <stdio.h>
 
@@ -28,19 +28,16 @@ struct daala_writer {
   unsigned int pos;
   uint8_t *buffer;
   od_ec_enc ec;
+  uint8_t allow_update_cdf;
 };
 
 typedef struct daala_writer daala_writer;
 
 void aom_daala_start_encode(daala_writer *w, uint8_t *buffer);
-void aom_daala_stop_encode(daala_writer *w);
+int aom_daala_stop_encode(daala_writer *w);
 
 static INLINE void aom_daala_write(daala_writer *w, int bit, int prob) {
-#if CONFIG_EC_SMALLMUL
   int p = (0x7FFFFF - (prob << 15) + prob) >> 8;
-#else
-  int p = ((prob << 15) + 256 - prob) >> 8;
-#endif
 #if CONFIG_BITSTREAM_DEBUG
   aom_cdf_prob cdf[2] = { (aom_cdf_prob)p, 32767 };
   /*int queue_r = 0;
@@ -56,12 +53,6 @@ static INLINE void aom_daala_write(daala_writer *w, int bit, int prob) {
 
   od_ec_encode_bool_q15(&w->ec, bit, p);
 }
-
-#if CONFIG_RAWBITS
-static INLINE void aom_daala_write_bit(daala_writer *w, int bit) {
-  od_ec_enc_bits(&w->ec, bit, 1);
-}
-#endif
 
 static INLINE void daala_write_symbol(daala_writer *w, int symb,
                                       const aom_cdf_prob *cdf, int nsymbs) {
@@ -84,4 +75,4 @@ static INLINE void daala_write_symbol(daala_writer *w, int symb,
 }  // extern "C"
 #endif
 
-#endif
+#endif  // AOM_AOM_DSP_DAALABOOLWRITER_H_

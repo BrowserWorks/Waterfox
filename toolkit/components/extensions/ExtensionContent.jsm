@@ -140,8 +140,16 @@ class CacheMap extends DefaultMap {
 
 class ScriptCache extends CacheMap {
   constructor(options) {
-    super(SCRIPT_EXPIRY_TIMEOUT_MS,
-          url => ChromeUtils.compileScript(url, options));
+    super(SCRIPT_EXPIRY_TIMEOUT_MS);
+    this.options = options;
+  }
+
+  defaultConstructor(url) {
+    let promise = ChromeUtils.compileScript(url, this.options);
+    promise.then(script => {
+      promise.script = script;
+    });
+    return promise;
   }
 }
 
@@ -261,7 +269,15 @@ class Script {
     if (this.runAt === "document_end") {
       await promiseDocumentReady(window.document);
     } else if (this.runAt === "document_idle") {
-      await promiseDocumentLoaded(window.document);
+      let readyThenIdle = promiseDocumentReady(window.document).then(() => {
+        return new Promise(resolve =>
+          window.requestIdleCallback(resolve, {timeout: idleTimeout}));
+      });
+
+      await Promise.race([
+        readyThenIdle,
+        promiseDocumentLoaded(window.document),
+      ]);
     }
 
     return this.inject(context);
@@ -312,24 +328,26 @@ class Script {
       }
     }
 
-    let scriptsPromise = Promise.all(this.compileScripts());
+    let scriptPromises = this.compileScripts();
 
-    // If we're supposed to inject at the start of the document load,
-    // and we haven't already missed that point, block further parsing
-    // until the scripts have been loaded.
-    let {document} = context.contentWindow;
-    if (this.runAt === "document_start" && document.readyState !== "complete") {
-      document.blockParsing(scriptsPromise);
+    let scripts = scriptPromises.map(promise => promise.script);
+    // If not all scripts are already available in the cache, block
+    // parsing and wait all promises to resolve.
+    if (!scripts.every(script => script)) {
+      let promise = Promise.all(scriptPromises);
+
+      // If we're supposed to inject at the start of the document load,
+      // and we haven't already missed that point, block further parsing
+      // until the scripts have been loaded.
+      let {document} = context.contentWindow;
+      if (this.runAt === "document_start" && document.readyState !== "complete") {
+        document.blockParsing(promise, {blockScriptCreated: false});
+      }
+
+      scripts = await promise;
     }
 
-    let scripts = await scriptsPromise;
     let result;
-
-    if (this.runAt === "document_idle") {
-      await new Promise(resolve =>
-          context.contentWindow.requestIdleCallback(resolve,
-                                                    {timeout: idleTimeout}));
-    }
 
     // The evaluations below may throw, in which case the promise will be
     // automatically rejected.

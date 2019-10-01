@@ -371,8 +371,11 @@ option('--enable-av1',
 @depends('--enable-av1', target, milestone)
 def av1(value, target, milestone):
     enabled = bool(value)
-    if value.origin == 'default' and milestone.is_nightly:
-        enabled = target.os != 'Android'
+    if value.origin == 'default':
+        if target.os == 'WINNT' and target.cpu == 'x86':
+            enabled = False
+        elif milestone.is_nightly:
+            enabled = target.os != 'Android'
     if enabled:
         return True
 
@@ -1179,7 +1182,7 @@ add_old_configure_assignment('FT2_CFLAGS',
 option('--with-system-webp',
        help='Use system libwebp (located with pkgconfig)')
 
-system_webp = pkg_check_modules('MOZ_WEBP', 'libwebp >= 1.0.0 libwebpdemux >= 1.0.0',
+system_webp = pkg_check_modules('MOZ_WEBP', 'libwebp >= 1.0.2 libwebpdemux >= 1.0.2',
                                 when='--with-system-webp')
 
 set_config('MOZ_SYSTEM_WEBP', depends_if(system_webp)(lambda _: True))

@@ -13,8 +13,8 @@
 #include <math.h>
 #include <stdio.h>
 
-#include "./aom_dsp_rtcd.h"
-#include "./aom_scale_rtcd.h"
+#include "config/aom_dsp_rtcd.h"
+#include "config/aom_scale_rtcd.h"
 
 #include "aom_dsp/aom_dsp_common.h"
 #include "aom_mem/aom_mem.h"
@@ -27,9 +27,11 @@
 #include "av1/common/entropymv.h"
 #include "av1/common/quant_common.h"
 #include "av1/common/reconinter.h"  // av1_setup_dst_planes()
-#include "av1/encoder/av1_quantize.h"
+#include "av1/common/txb_common.h"
 #include "av1/encoder/aq_variance.h"
+#include "av1/encoder/av1_quantize.h"
 #include "av1/encoder/block.h"
+#include "av1/encoder/dwt.h"
 #include "av1/encoder/encodeframe.h"
 #include "av1/encoder/encodemb.h"
 #include "av1/encoder/encodemv.h"
@@ -38,6 +40,7 @@
 #include "av1/encoder/firstpass.h"
 #include "av1/encoder/mcomp.h"
 #include "av1/encoder/rd.h"
+#include "av1/encoder/reconinter_enc.h"
 
 #define OUTPUT_FPF 0
 #define ARF_STATS_OUTPUT 0
@@ -49,9 +52,10 @@
 #define FACTOR_PT_LOW 0.70
 #define FACTOR_PT_HIGH 0.90
 #define FIRST_PASS_Q 10.0
-#define GF_MAX_BOOST 96.0
+#define GF_MAX_BOOST 90.0
 #define INTRA_MODE_PENALTY 1024
-#define KF_MAX_BOOST 128.0
+#define KF_MIN_FRAME_BOOST 80.0
+#define KF_MAX_FRAME_BOOST 128.0
 #define MIN_ARF_GF_BOOST 240
 #define MIN_DECAY_FACTOR 0.01
 #define MIN_KF_BOOST 300
@@ -60,6 +64,7 @@
 #define DEFAULT_GRP_WEIGHT 1.0
 #define RC_FACTOR_MIN 0.75
 #define RC_FACTOR_MAX 1.75
+#define MIN_FWD_KF_INTERVAL 8
 
 #define NCOUNT_INTRA_THRESH 8192
 #define NCOUNT_INTRA_FACTOR 3
@@ -112,7 +117,7 @@ static void output_stats(FIRSTPASS_STATS *stats,
     fprintf(fpfile,
             "%12.0lf %12.4lf %12.0lf %12.0lf %12.0lf %12.4lf %12.4lf"
             "%12.4lf %12.4lf %12.4lf %12.4lf %12.4lf %12.4lf %12.4lf %12.4lf"
-            "%12.4lf %12.4lf %12.0lf %12.0lf %12.0lf %12.4lf\n",
+            "%12.4lf %12.4lf %12.0lf %12.0lf %12.0lf %12.4lf %12.4lf\n",
             stats->frame, stats->weight, stats->intra_error, stats->coded_error,
             stats->sr_coded_error, stats->pcnt_inter, stats->pcnt_motion,
             stats->pcnt_second_ref, stats->pcnt_neutral, stats->intra_skip_pct,
@@ -140,6 +145,7 @@ static void zero_stats(FIRSTPASS_STATS *section) {
   section->frame = 0.0;
   section->weight = 0.0;
   section->intra_error = 0.0;
+  section->frame_avg_wavelet_energy = 0.0;
   section->coded_error = 0.0;
   section->sr_coded_error = 0.0;
   section->pcnt_inter = 0.0;
@@ -166,6 +172,7 @@ static void accumulate_stats(FIRSTPASS_STATS *section,
   section->frame += frame->frame;
   section->weight += frame->weight;
   section->intra_error += frame->intra_error;
+  section->frame_avg_wavelet_energy += frame->frame_avg_wavelet_energy;
   section->coded_error += frame->coded_error;
   section->sr_coded_error += frame->sr_coded_error;
   section->pcnt_inter += frame->pcnt_inter;
@@ -192,6 +199,7 @@ static void subtract_stats(FIRSTPASS_STATS *section,
   section->frame -= frame->frame;
   section->weight -= frame->weight;
   section->intra_error -= frame->intra_error;
+  section->frame_avg_wavelet_energy -= frame->frame_avg_wavelet_energy;
   section->coded_error -= frame->coded_error;
   section->sr_coded_error -= frame->sr_coded_error;
   section->pcnt_inter -= frame->pcnt_inter;
@@ -302,7 +310,6 @@ static unsigned int get_prediction_error(BLOCK_SIZE bsize,
   return sse;
 }
 
-#if CONFIG_HIGHBITDEPTH
 static aom_variance_fn_t highbd_get_block_variance_fn(BLOCK_SIZE bsize,
                                                       int bd) {
   switch (bd) {
@@ -342,7 +349,6 @@ static unsigned int highbd_get_prediction_error(BLOCK_SIZE bsize,
   fn(src->buf, src->stride, ref->buf, ref->stride, &sse);
   return sse;
 }
-#endif  // CONFIG_HIGHBITDEPTH
 
 // Refine the motion search range according to the frame dimension
 // for first pass test.
@@ -358,10 +364,10 @@ static void first_pass_motion_search(AV1_COMP *cpi, MACROBLOCK *x,
                                      const MV *ref_mv, MV *best_mv,
                                      int *best_motion_err) {
   MACROBLOCKD *const xd = &x->e_mbd;
-  MV tmp_mv = { 0, 0 };
+  MV tmp_mv = kZeroMv;
   MV ref_mv_full = { ref_mv->row >> 3, ref_mv->col >> 3 };
   int num00, tmp_err, n;
-  const BLOCK_SIZE bsize = xd->mi[0]->mbmi.sb_type;
+  const BLOCK_SIZE bsize = xd->mi[0]->sb_type;
   aom_variance_fn_ptr_t v_fn_ptr = cpi->fn_ptr[bsize];
   const int new_mv_mode_penalty = NEW_MV_MODE_PENALTY;
 
@@ -373,11 +379,9 @@ static void first_pass_motion_search(AV1_COMP *cpi, MACROBLOCK *x,
 
   // Override the default variance function to use MSE.
   v_fn_ptr.vf = get_block_variance_fn(bsize);
-#if CONFIG_HIGHBITDEPTH
   if (xd->cur_buf->flags & YV12_FLAG_HIGHBITDEPTH) {
     v_fn_ptr.vf = highbd_get_block_variance_fn(bsize, xd->bd);
   }
-#endif  // CONFIG_HIGHBITDEPTH
 
   // Center the initial step/diamond search on best mv.
   tmp_err = cpi->diamond_search_sad(x, &cpi->ss_cfg, &ref_mv_full, &tmp_mv,
@@ -456,12 +460,37 @@ static void set_first_pass_params(AV1_COMP *cpi) {
   cpi->rc.frames_to_key = INT_MAX;
 }
 
+static double raw_motion_error_stdev(int *raw_motion_err_list,
+                                     int raw_motion_err_counts) {
+  int64_t sum_raw_err = 0;
+  double raw_err_avg = 0;
+  double raw_err_stdev = 0;
+  if (raw_motion_err_counts == 0) return 0;
+
+  int i;
+  for (i = 0; i < raw_motion_err_counts; i++) {
+    sum_raw_err += raw_motion_err_list[i];
+  }
+  raw_err_avg = (double)sum_raw_err / raw_motion_err_counts;
+  for (i = 0; i < raw_motion_err_counts; i++) {
+    raw_err_stdev += (raw_motion_err_list[i] - raw_err_avg) *
+                     (raw_motion_err_list[i] - raw_err_avg);
+  }
+  // Calculate the standard deviation for the motion error of all the inter
+  // blocks of the 0,0 motion using the last source
+  // frame as the reference.
+  raw_err_stdev = sqrt(raw_err_stdev / raw_motion_err_counts);
+  return raw_err_stdev;
+}
+
 #define UL_INTRA_THRESH 50
 #define INVALID_ROW -1
 void av1_first_pass(AV1_COMP *cpi, const struct lookahead_entry *source) {
   int mb_row, mb_col;
   MACROBLOCK *const x = &cpi->td.mb;
   AV1_COMMON *const cm = &cpi->common;
+  const SequenceHeader *const seq_params = &cm->seq_params;
+  const int num_planes = av1_num_planes(cm);
   MACROBLOCKD *const xd = &x->e_mbd;
   TileInfo tile;
   struct macroblock_plane *const p = x->plane;
@@ -472,6 +501,7 @@ void av1_first_pass(AV1_COMP *cpi, const struct lookahead_entry *source) {
 
   int recon_yoffset, recon_uvoffset;
   int64_t intra_error = 0;
+  int64_t frame_avg_wavelet_energy = 0;
   int64_t coded_error = 0;
   int64_t sr_coded_error = 0;
 
@@ -487,9 +517,8 @@ void av1_first_pass(AV1_COMP *cpi, const struct lookahead_entry *source) {
   int image_data_start_row = INVALID_ROW;
   int new_mv_count = 0;
   int sum_in_vectors = 0;
-  MV lastmv = { 0, 0 };
+  MV lastmv = kZeroMv;
   TWO_PASS *twopass = &cpi->twopass;
-  const MV zero_mv = { 0, 0 };
   int recon_y_stride, recon_uv_stride, uv_mb_height;
 
   YV12_BUFFER_CONFIG *const lst_yv12 = get_ref_frame_buffer(cpi, LAST_FRAME);
@@ -499,13 +528,14 @@ void av1_first_pass(AV1_COMP *cpi, const struct lookahead_entry *source) {
   double intra_factor;
   double brightness_factor;
   BufferPool *const pool = cm->buffer_pool;
-  const int qindex = find_fp_qindex(cm->bit_depth);
+  const int qindex = find_fp_qindex(seq_params->bit_depth);
   const int mb_scale = mi_size_wide[BLOCK_16X16];
-#if CONFIG_PVQ
-  PVQ_QUEUE pvq_q;
-  od_adapt_ctx pvq_context;
-#endif
 
+  int *raw_motion_err_list;
+  int raw_motion_err_counts = 0;
+  CHECK_MEM_ERROR(
+      cm, raw_motion_err_list,
+      aom_calloc(cm->mb_rows * cm->mb_cols, sizeof(*raw_motion_err_list)));
   // First pass code requires valid last and new frame buffers.
   assert(new_yv12 != NULL);
   assert(frame_is_intra_only(cm) || (lst_yv12 != NULL));
@@ -520,7 +550,7 @@ void av1_first_pass(AV1_COMP *cpi, const struct lookahead_entry *source) {
 
   xd->mi = cm->mi_grid_visible;
   xd->mi[0] = cm->mi;
-  x->e_mbd.mi[0]->mbmi.sb_type = BLOCK_16X16;
+  x->e_mbd.mi[0]->sb_type = BLOCK_16X16;
 
   intra_factor = 0.0;
   brightness_factor = 0.0;
@@ -529,77 +559,34 @@ void av1_first_pass(AV1_COMP *cpi, const struct lookahead_entry *source) {
   set_first_pass_params(cpi);
   av1_set_quantizer(cm, qindex);
 
-  av1_setup_block_planes(&x->e_mbd, cm->subsampling_x, cm->subsampling_y);
+  av1_setup_block_planes(&x->e_mbd, seq_params->subsampling_x,
+                         seq_params->subsampling_y, num_planes);
 
-  av1_setup_src_planes(x, cpi->source, 0, 0);
-  av1_setup_dst_planes(xd->plane, cm->sb_size, new_yv12, 0, 0);
+  av1_setup_src_planes(x, cpi->source, 0, 0, num_planes);
+  av1_setup_dst_planes(xd->plane, seq_params->sb_size, new_yv12, 0, 0, 0,
+                       num_planes);
 
   if (!frame_is_intra_only(cm)) {
-    av1_setup_pre_planes(xd, 0, first_ref_buf, 0, 0, NULL);
+    av1_setup_pre_planes(xd, 0, first_ref_buf, 0, 0, NULL, num_planes);
   }
 
   xd->mi = cm->mi_grid_visible;
   xd->mi[0] = cm->mi;
 
-#if CONFIG_CFL
   // Don't store luma on the fist pass since chroma is not computed
-  x->cfl_store_y = 0;
-#endif
+  xd->cfl.store_y = 0;
   av1_frame_init_quantizer(cpi);
 
-#if CONFIG_PVQ
-  // For pass 1 of 2-pass encoding, init here for PVQ for now.
-  {
-    pvq_q.buf_len = 5000;
-    CHECK_MEM_ERROR(cm, pvq_q.buf,
-                    aom_malloc(pvq_q.buf_len * sizeof(PVQ_INFO)));
-    pvq_q.curr_pos = 0;
-    x->pvq_coded = 0;
-
-    x->pvq_q = &pvq_q;
-
-    // TODO(yushin): Since this init step is also called in 2nd pass,
-    // or 1-pass encoding, consider factoring out it as a function.
-    // TODO(yushin)
-    // If activity masking is enabled, change below to OD_HVS_QM
-    x->daala_enc.qm = OD_FLAT_QM;  // Hard coded. Enc/dec required to sync.
-    x->daala_enc.pvq_norm_lambda = OD_PVQ_LAMBDA;
-    x->daala_enc.pvq_norm_lambda_dc = OD_PVQ_LAMBDA;
-
-    od_init_qm(x->daala_enc.state.qm, x->daala_enc.state.qm_inv,
-               x->daala_enc.qm == OD_HVS_QM ? OD_QM8_Q4_HVS : OD_QM8_Q4_FLAT);
-#if !CONFIG_ANS
-    od_ec_enc_init(&x->daala_enc.w.ec, 65025);
-    od_ec_enc_reset(&x->daala_enc.w.ec);
-#else
-#error "CONFIG_PVQ currently requires !CONFIG_ANS."
-#endif
-  }
-#endif
-
-  for (i = 0; i < MAX_MB_PLANE; ++i) {
+  for (i = 0; i < num_planes; ++i) {
     p[i].coeff = ctx->coeff[i];
     p[i].qcoeff = ctx->qcoeff[i];
     pd[i].dqcoeff = ctx->dqcoeff[i];
-#if CONFIG_PVQ
-    pd[i].pvq_ref_coeff = ctx->pvq_ref_coeff[i];
-#endif
     p[i].eobs = ctx->eobs[i];
-#if CONFIG_LV_MAP
     p[i].txb_entropy_ctx = ctx->txb_entropy_ctx[i];
-#endif
   }
 
   av1_init_mv_probs(cm);
-#if CONFIG_ADAPT_SCAN
-  av1_init_scan_order(cm);
-  av1_deliver_eob_threshold(cm, xd);
-#endif
-  av1_convolve_init(cm);
-#if CONFIG_PVQ
-  od_adapt_ctx_reset(&pvq_context, 0);
-  x->daala_enc.state.adapt = &pvq_context;
-#endif  // CONFIG_PVQ
+  av1_init_lv_map(cm);
   av1_initialize_rd_consts(cpi);
 
   // Tiling is ignored in the first pass.
@@ -610,7 +597,7 @@ void av1_first_pass(AV1_COMP *cpi, const struct lookahead_entry *source) {
   uv_mb_height = 16 >> (new_yv12->y_height > new_yv12->uv_height);
 
   for (mb_row = 0; mb_row < cm->mb_rows; ++mb_row) {
-    MV best_ref_mv = { 0, 0 };
+    MV best_ref_mv = kZeroMv;
 
     // Reset above block coeffs.
     xd->up_available = (mb_row != 0);
@@ -636,31 +623,28 @@ void av1_first_pass(AV1_COMP *cpi, const struct lookahead_entry *source) {
 
       aom_clear_system_state();
 
+      const int idx_str = xd->mi_stride * mb_row * mb_scale + mb_col * mb_scale;
+      xd->mi = cm->mi_grid_visible + idx_str;
+      xd->mi[0] = cm->mi + idx_str;
       xd->plane[0].dst.buf = new_yv12->y_buffer + recon_yoffset;
       xd->plane[1].dst.buf = new_yv12->u_buffer + recon_uvoffset;
       xd->plane[2].dst.buf = new_yv12->v_buffer + recon_uvoffset;
       xd->left_available = (mb_col != 0);
-      xd->mi[0]->mbmi.sb_type = bsize;
-      xd->mi[0]->mbmi.ref_frame[0] = INTRA_FRAME;
+      xd->mi[0]->sb_type = bsize;
+      xd->mi[0]->ref_frame[0] = INTRA_FRAME;
       set_mi_row_col(xd, &tile, mb_row * mb_scale, mi_size_high[bsize],
-                     mb_col * mb_scale, mi_size_wide[bsize],
-#if CONFIG_DEPENDENT_HORZTILES
-                     cm->dependent_horz_tiles,
-#endif  // CONFIG_DEPENDENT_HORZTILES
-                     cm->mi_rows, cm->mi_cols);
+                     mb_col * mb_scale, mi_size_wide[bsize], cm->mi_rows,
+                     cm->mi_cols);
 
-      set_plane_n4(xd, mi_size_wide[bsize], mi_size_high[bsize]);
+      set_plane_n4(xd, mi_size_wide[bsize], mi_size_high[bsize], num_planes);
 
       // Do intra 16x16 prediction.
-      xd->mi[0]->mbmi.segment_id = 0;
-#if CONFIG_SUPERTX
-      xd->mi[0]->mbmi.segment_id_supertx = 0;
-#endif  // CONFIG_SUPERTX
-      xd->lossless[xd->mi[0]->mbmi.segment_id] = (qindex == 0);
-      xd->mi[0]->mbmi.mode = DC_PRED;
-      xd->mi[0]->mbmi.tx_size =
+      xd->mi[0]->segment_id = 0;
+      xd->lossless[xd->mi[0]->segment_id] = (qindex == 0);
+      xd->mi[0]->mode = DC_PRED;
+      xd->mi[0]->tx_size =
           use_dc_pred ? (bsize >= BLOCK_16X16 ? TX_16X16 : TX_8X8) : TX_4X4;
-      av1_encode_intra_block_plane(cm, x, bsize, 0, 0, mb_row * 2, mb_col * 2);
+      av1_encode_intra_block_plane(cpi, x, bsize, 0, 0, mb_row * 2, mb_col * 2);
       this_error = aom_get_mb_ss(x->plane[0].src_diff);
 
       // Keep a record of blocks that have almost no intra error residual
@@ -674,20 +658,18 @@ void av1_first_pass(AV1_COMP *cpi, const struct lookahead_entry *source) {
         image_data_start_row = mb_row;
       }
 
-#if CONFIG_HIGHBITDEPTH
-      if (cm->use_highbitdepth) {
-        switch (cm->bit_depth) {
+      if (seq_params->use_highbitdepth) {
+        switch (seq_params->bit_depth) {
           case AOM_BITS_8: break;
           case AOM_BITS_10: this_error >>= 4; break;
           case AOM_BITS_12: this_error >>= 8; break;
           default:
             assert(0 &&
-                   "cm->bit_depth should be AOM_BITS_8, "
+                   "seq_params->bit_depth should be AOM_BITS_8, "
                    "AOM_BITS_10 or AOM_BITS_12");
             return;
         }
       }
-#endif  // CONFIG_HIGHBITDEPTH
 
       aom_clear_system_state();
       log_intra = log(this_error + 1.0);
@@ -696,14 +678,10 @@ void av1_first_pass(AV1_COMP *cpi, const struct lookahead_entry *source) {
       else
         intra_factor += 1.0;
 
-#if CONFIG_HIGHBITDEPTH
-      if (cm->use_highbitdepth)
+      if (seq_params->use_highbitdepth)
         level_sample = CONVERT_TO_SHORTPTR(x->plane[0].src.buf)[0];
       else
         level_sample = x->plane[0].src.buf[0];
-#else
-      level_sample = x->plane[0].src.buf[0];
-#endif
       if ((level_sample < DARK_THRESH) && (log_intra < 9.0))
         brightness_factor += 1.0 + (0.01 * (DARK_THRESH - level_sample));
       else
@@ -721,6 +699,15 @@ void av1_first_pass(AV1_COMP *cpi, const struct lookahead_entry *source) {
       // Accumulate the intra error.
       intra_error += (int64_t)this_error;
 
+      int stride = x->plane[0].src.stride;
+      uint8_t *buf = x->plane[0].src.buf;
+      for (int r8 = 0; r8 < 2; ++r8)
+        for (int c8 = 0; c8 < 2; ++c8) {
+          int hbd = xd->cur_buf->flags & YV12_FLAG_HIGHBITDEPTH;
+          frame_avg_wavelet_energy += av1_haar_ac_sad_8x8_uint8_input(
+              buf + c8 * 8 + r8 * 8 * stride, stride, hbd);
+        }
+
 #if CONFIG_FP_MB_STATS
       if (cpi->use_fp_mb_stats) {
         // initialization
@@ -737,11 +724,10 @@ void av1_first_pass(AV1_COMP *cpi, const struct lookahead_entry *source) {
       if (!frame_is_intra_only(cm)) {  // Do a motion search
         int tmp_err, motion_error, raw_motion_error;
         // Assume 0,0 motion with no mv overhead.
-        MV mv = { 0, 0 }, tmp_mv = { 0, 0 };
+        MV mv = kZeroMv, tmp_mv = kZeroMv;
         struct buf_2d unscaled_last_source_buf_2d;
 
         xd->plane[0].pre[0].buf = first_ref_buf->y_buffer + recon_yoffset;
-#if CONFIG_HIGHBITDEPTH
         if (xd->cur_buf->flags & YV12_FLAG_HIGHBITDEPTH) {
           motion_error = highbd_get_prediction_error(
               bsize, &x->plane[0].src, &xd->plane[0].pre[0], xd->bd);
@@ -749,10 +735,6 @@ void av1_first_pass(AV1_COMP *cpi, const struct lookahead_entry *source) {
           motion_error = get_prediction_error(bsize, &x->plane[0].src,
                                               &xd->plane[0].pre[0]);
         }
-#else
-        motion_error =
-            get_prediction_error(bsize, &x->plane[0].src, &xd->plane[0].pre[0]);
-#endif  // CONFIG_HIGHBITDEPTH
 
         // Compute the motion error of the 0,0 motion using the last source
         // frame as the reference. Skip the further motion search on
@@ -761,7 +743,6 @@ void av1_first_pass(AV1_COMP *cpi, const struct lookahead_entry *source) {
             cpi->unscaled_last_source->y_buffer + recon_yoffset;
         unscaled_last_source_buf_2d.stride =
             cpi->unscaled_last_source->y_stride;
-#if CONFIG_HIGHBITDEPTH
         if (xd->cur_buf->flags & YV12_FLAG_HIGHBITDEPTH) {
           raw_motion_error = highbd_get_prediction_error(
               bsize, &x->plane[0].src, &unscaled_last_source_buf_2d, xd->bd);
@@ -769,10 +750,6 @@ void av1_first_pass(AV1_COMP *cpi, const struct lookahead_entry *source) {
           raw_motion_error = get_prediction_error(bsize, &x->plane[0].src,
                                                   &unscaled_last_source_buf_2d);
         }
-#else
-        raw_motion_error = get_prediction_error(bsize, &x->plane[0].src,
-                                                &unscaled_last_source_buf_2d);
-#endif  // CONFIG_HIGHBITDEPTH
 
         // TODO(pengchong): Replace the hard-coded threshold
         if (raw_motion_error > 25) {
@@ -784,7 +761,7 @@ void av1_first_pass(AV1_COMP *cpi, const struct lookahead_entry *source) {
           // 0,0 based search as well.
           if (!is_zero_mv(&best_ref_mv)) {
             tmp_err = INT_MAX;
-            first_pass_motion_search(cpi, x, &zero_mv, &tmp_mv, &tmp_err);
+            first_pass_motion_search(cpi, x, &kZeroMv, &tmp_mv, &tmp_err);
 
             if (tmp_err < motion_error) {
               motion_error = tmp_err;
@@ -798,7 +775,6 @@ void av1_first_pass(AV1_COMP *cpi, const struct lookahead_entry *source) {
             int gf_motion_error;
 
             xd->plane[0].pre[0].buf = gld_yv12->y_buffer + recon_yoffset;
-#if CONFIG_HIGHBITDEPTH
             if (xd->cur_buf->flags & YV12_FLAG_HIGHBITDEPTH) {
               gf_motion_error = highbd_get_prediction_error(
                   bsize, &x->plane[0].src, &xd->plane[0].pre[0], xd->bd);
@@ -806,12 +782,8 @@ void av1_first_pass(AV1_COMP *cpi, const struct lookahead_entry *source) {
               gf_motion_error = get_prediction_error(bsize, &x->plane[0].src,
                                                      &xd->plane[0].pre[0]);
             }
-#else
-            gf_motion_error = get_prediction_error(bsize, &x->plane[0].src,
-                                                   &xd->plane[0].pre[0]);
-#endif  // CONFIG_HIGHBITDEPTH
 
-            first_pass_motion_search(cpi, x, &zero_mv, &tmp_mv,
+            first_pass_motion_search(cpi, x, &kZeroMv, &tmp_mv,
                                      &gf_motion_error);
 
             if (gf_motion_error < motion_error && gf_motion_error < this_error)
@@ -875,11 +847,11 @@ void av1_first_pass(AV1_COMP *cpi, const struct lookahead_entry *source) {
           mv.row *= 8;
           mv.col *= 8;
           this_error = motion_error;
-          xd->mi[0]->mbmi.mode = NEWMV;
-          xd->mi[0]->mbmi.mv[0].as_mv = mv;
-          xd->mi[0]->mbmi.tx_size = TX_4X4;
-          xd->mi[0]->mbmi.ref_frame[0] = LAST_FRAME;
-          xd->mi[0]->mbmi.ref_frame[1] = NONE_FRAME;
+          xd->mi[0]->mode = NEWMV;
+          xd->mi[0]->mv[0].as_mv = mv;
+          xd->mi[0]->tx_size = TX_4X4;
+          xd->mi[0]->ref_frame[0] = LAST_FRAME;
+          xd->mi[0]->ref_frame[1] = NONE_FRAME;
           av1_build_inter_predictors_sby(cm, xd, mb_row * mb_scale,
                                          mb_col * mb_scale, NULL, bsize);
           av1_encode_sby_pass1(cm, x, bsize);
@@ -968,6 +940,7 @@ void av1_first_pass(AV1_COMP *cpi, const struct lookahead_entry *source) {
             }
           }
         }
+        raw_motion_err_list[raw_motion_err_counts++] = raw_motion_error;
       } else {
         sr_coded_error += (int64_t)this_error;
       }
@@ -981,7 +954,6 @@ void av1_first_pass(AV1_COMP *cpi, const struct lookahead_entry *source) {
       recon_yoffset += 16;
       recon_uvoffset += uv_mb_height;
     }
-
     // Adjust to the next row of MBs.
     x->plane[0].src.buf += 16 * x->plane[0].src.stride - 16 * cm->mb_cols;
     x->plane[1].src.buf +=
@@ -991,20 +963,9 @@ void av1_first_pass(AV1_COMP *cpi, const struct lookahead_entry *source) {
 
     aom_clear_system_state();
   }
-
-#if CONFIG_PVQ
-#if !CONFIG_ANS
-  od_ec_enc_clear(&x->daala_enc.w.ec);
-#else
-#error "CONFIG_PVQ currently requires !CONFIG_ANS."
-#endif
-
-  x->pvq_q->last_pos = x->pvq_q->curr_pos;
-  x->pvq_q->curr_pos = 0;
-  x->pvq_q = NULL;
-
-  aom_free(pvq_q.buf);
-#endif
+  const double raw_err_stdev =
+      raw_motion_error_stdev(raw_motion_err_list, raw_motion_err_counts);
+  aom_free(raw_motion_err_list);
 
   // Clamp the image start to rows/2. This number of rows is discarded top
   // and bottom as dead data so rows / 2 means the frame is blank.
@@ -1038,6 +999,7 @@ void av1_first_pass(AV1_COMP *cpi, const struct lookahead_entry *source) {
     fps.coded_error = (double)(coded_error >> 8) + min_err;
     fps.sr_coded_error = (double)(sr_coded_error >> 8) + min_err;
     fps.intra_error = (double)(intra_error >> 8) + min_err;
+    fps.frame_avg_wavelet_energy = (double)frame_avg_wavelet_energy;
     fps.count = 1.0;
     fps.pcnt_inter = (double)intercount / num_mbs;
     fps.pcnt_second_ref = (double)second_ref_count / num_mbs;
@@ -1045,6 +1007,7 @@ void av1_first_pass(AV1_COMP *cpi, const struct lookahead_entry *source) {
     fps.intra_skip_pct = (double)intra_skip_count / num_mbs;
     fps.inactive_zone_rows = (double)image_data_start_row;
     fps.inactive_zone_cols = (double)0;  // TODO(paulwilkins): fix
+    fps.raw_error_stdev = raw_err_stdev;
 
     if (mvcount > 0) {
       fps.MVr = (double)sum_mvr / mvcount;
@@ -1096,41 +1059,29 @@ void av1_first_pass(AV1_COMP *cpi, const struct lookahead_entry *source) {
        ((twopass->this_frame_stats.intra_error /
          DOUBLE_DIVIDE_CHECK(twopass->this_frame_stats.coded_error)) > 2.0))) {
     if (gld_yv12 != NULL) {
-#if CONFIG_EXT_REFS
-      ref_cnt_fb(pool->frame_bufs, &cm->ref_frame_map[cpi->gld_fb_idx],
-                 cm->ref_frame_map[cpi->lst_fb_idxes[LAST_FRAME - LAST_FRAME]]);
-#else
-      ref_cnt_fb(pool->frame_bufs, &cm->ref_frame_map[cpi->gld_fb_idx],
-                 cm->ref_frame_map[cpi->lst_fb_idx]);
-#endif  // CONFIG_EXT_REFS
+      ref_cnt_fb(pool->frame_bufs,
+                 &cm->ref_frame_map[cpi->ref_fb_idx[GOLDEN_FRAME - 1]],
+                 cm->ref_frame_map[cpi->ref_fb_idx[LAST_FRAME - 1]]);
     }
     twopass->sr_update_lag = 1;
   } else {
     ++twopass->sr_update_lag;
   }
 
-  aom_extend_frame_borders(new_yv12);
+  aom_extend_frame_borders(new_yv12, num_planes);
 
-// The frame we just compressed now becomes the last frame.
-#if CONFIG_EXT_REFS
+  // The frame we just compressed now becomes the last frame.
   ref_cnt_fb(pool->frame_bufs,
-             &cm->ref_frame_map[cpi->lst_fb_idxes[LAST_FRAME - LAST_FRAME]],
+             &cm->ref_frame_map[cpi->ref_fb_idx[LAST_FRAME - 1]],
              cm->new_fb_idx);
-#else
-  ref_cnt_fb(pool->frame_bufs, &cm->ref_frame_map[cpi->lst_fb_idx],
-             cm->new_fb_idx);
-#endif  // CONFIG_EXT_REFS
 
   // Special case for the first frame. Copy into the GF buffer as a second
   // reference.
-  if (cm->current_video_frame == 0 && cpi->gld_fb_idx != INVALID_IDX) {
-#if CONFIG_EXT_REFS
-    ref_cnt_fb(pool->frame_bufs, &cm->ref_frame_map[cpi->gld_fb_idx],
-               cm->ref_frame_map[cpi->lst_fb_idxes[LAST_FRAME - LAST_FRAME]]);
-#else
-    ref_cnt_fb(pool->frame_bufs, &cm->ref_frame_map[cpi->gld_fb_idx],
-               cm->ref_frame_map[cpi->lst_fb_idx]);
-#endif  // CONFIG_EXT_REFS
+  if (cm->current_video_frame == 0 &&
+      cpi->ref_fb_idx[GOLDEN_FRAME - 1] != INVALID_IDX) {
+    ref_cnt_fb(pool->frame_bufs,
+               &cm->ref_frame_map[cpi->ref_fb_idx[GOLDEN_FRAME - 1]],
+               cm->ref_frame_map[cpi->ref_fb_idx[LAST_FRAME - 1]]);
   }
 
   // Use this to see what the first pass reconstruction looks like.
@@ -1186,7 +1137,7 @@ static int get_twopass_worst_quality(const AV1_COMP *cpi,
                             : cpi->common.MBs;
     const int active_mbs = AOMMAX(1, num_mbs - (int)(num_mbs * inactive_zone));
     const double av_err_per_mb = section_err / active_mbs;
-    const double speed_term = 1.0 + 0.04 * oxcf->speed;
+    const double speed_term = 1.0;
     double ediv_size_correction;
     const int target_norm_bits_per_mb =
         (int)((uint64_t)section_target_bandwidth << BPER_MB_NORMBITS) /
@@ -1209,10 +1160,10 @@ static int get_twopass_worst_quality(const AV1_COMP *cpi,
     for (q = rc->best_quality; q < rc->worst_quality; ++q) {
       const double factor = calc_correction_factor(
           av_err_per_mb, ERR_DIVISOR - ediv_size_correction, FACTOR_PT_LOW,
-          FACTOR_PT_HIGH, q, cpi->common.bit_depth);
+          FACTOR_PT_HIGH, q, cpi->common.seq_params.bit_depth);
       const int bits_per_mb = av1_rc_bits_per_mb(
           INTER_FRAME, q, factor * speed_term * group_weight_factor,
-          cpi->common.bit_depth);
+          cpi->common.seq_params.bit_depth);
       if (bits_per_mb <= target_norm_bits_per_mb) break;
     }
 
@@ -1230,27 +1181,6 @@ static void setup_rf_level_maxq(AV1_COMP *cpi) {
     rc->rf_level_maxq[i] = AOMMAX(rc->worst_quality + qdelta, rc->best_quality);
   }
 }
-
-void av1_calculate_next_scaled_size(const AV1_COMP *cpi,
-                                    int *scaled_frame_width,
-                                    int *scaled_frame_height) {
-  *scaled_frame_width =
-      cpi->oxcf.width * cpi->resize_next_scale_num / cpi->resize_next_scale_den;
-  *scaled_frame_height = cpi->oxcf.height * cpi->resize_next_scale_num /
-                         cpi->resize_next_scale_den;
-}
-
-#if CONFIG_FRAME_SUPERRES
-void av1_calculate_superres_size(const AV1_COMP *cpi, int *encoded_width,
-                                 int *encoded_height) {
-  *encoded_width = cpi->oxcf.scaled_frame_width *
-                   cpi->common.superres_scale_numerator /
-                   SUPERRES_SCALE_DENOMINATOR;
-  *encoded_height = cpi->oxcf.scaled_frame_height *
-                    cpi->common.superres_scale_numerator /
-                    SUPERRES_SCALE_DENOMINATOR;
-}
-#endif  // CONFIG_FRAME_SUPERRES
 
 void av1_init_second_pass(AV1_COMP *cpi) {
   const AV1EncoderConfig *const oxcf = &cpi->oxcf;
@@ -1451,7 +1381,7 @@ static double calc_frame_boost(AV1_COMP *cpi, const FIRSTPASS_STATS *this_frame,
                                double this_frame_mv_in_out, double max_boost) {
   double frame_boost;
   const double lq = av1_convert_qindex_to_q(
-      cpi->rc.avg_frame_qindex[INTER_FRAME], cpi->common.bit_depth);
+      cpi->rc.avg_frame_qindex[INTER_FRAME], cpi->common.seq_params.bit_depth);
   const double boost_q_correction = AOMMIN((0.5 + (lq * 0.015)), 1.5);
   int num_mbs = (cpi->oxcf.resize_mode != RESIZE_NONE) ? cpi->initial_mbs
                                                        : cpi->common.MBs;
@@ -1635,20 +1565,580 @@ static int calculate_boost_bits(int frame_count, int boost,
                 0);
 }
 
-#if !CONFIG_EXT_REFS
-// Current limit on maximum number of active arfs in a GF/ARF group.
-#define MAX_ACTIVE_ARFS 2
-#define ARF_SLOT1 2
-#define ARF_SLOT2 3
-// This function indirects the choice of buffers for arfs.
-// At the moment the values are fixed but this may change as part of
-// the integration process with other codec features that swap buffers around.
-static void get_arf_buffer_indices(unsigned char *arf_buffer_indices) {
-  arf_buffer_indices[0] = ARF_SLOT1;
-  arf_buffer_indices[1] = ARF_SLOT2;
+#if USE_SYMM_MULTI_LAYER
+// #define CHCEK_GF_PARAMETER
+#ifdef CHCEK_GF_PARAMETER
+void check_frame_params(GF_GROUP *const gf_group, int gf_interval,
+                        int frame_nums) {
+  static const char *update_type_strings[] = {
+    "KF_UPDATE",          "LF_UPDATE",      "GF_UPDATE",
+    "ARF_UPDATE",         "OVERLAY_UPDATE", "BRF_UPDATE",
+    "LAST_BIPRED_UPDATE", "BIPRED_UPDATE",  "INTNL_OVERLAY_UPDATE",
+    "INTNL_ARF_UPDATE"
+  };
+  FILE *fid = fopen("GF_PARAMS.txt", "a");
+
+  fprintf(fid, "\n{%d}\n", gf_interval);
+  for (int i = 0; i <= frame_nums; ++i) {
+    fprintf(fid, "%s %d %d %d %d\n",
+            update_type_strings[gf_group->update_type[i]],
+            gf_group->arf_src_offset[i], gf_group->arf_pos_in_gf[i],
+            gf_group->arf_update_idx[i], gf_group->pyramid_level[i]);
+  }
+
+  fprintf(fid, "number of nodes in each level: \n");
+  for (int i = 0; i < MAX_PYRAMID_LVL; ++i) {
+    fprintf(fid, "lvl %d: %d ", i, gf_group->pyramid_lvl_nodes[i]);
+  }
+  fprintf(fid, "\n");
+  fclose(fid);
 }
+#endif  // CHCEK_GF_PARAMETER
+static int update_type_2_rf_level(FRAME_UPDATE_TYPE update_type) {
+  // Derive rf_level from update_type
+  switch (update_type) {
+    case LF_UPDATE: return INTER_NORMAL;
+    case ARF_UPDATE: return GF_ARF_STD;
+    case OVERLAY_UPDATE: return INTER_NORMAL;
+    case BRF_UPDATE: return GF_ARF_LOW;
+    case LAST_BIPRED_UPDATE: return INTER_NORMAL;
+    case BIPRED_UPDATE: return INTER_NORMAL;
+    case INTNL_ARF_UPDATE: return GF_ARF_LOW;
+    case INTNL_OVERLAY_UPDATE: return INTER_NORMAL;
+    default: return INTER_NORMAL;
+  }
+}
+
+static void set_multi_layer_params(GF_GROUP *const gf_group, int l, int r,
+                                   int *frame_ind, int arf_ind, int level) {
+  if (r - l < 4) {
+    while (++l < r) {
+      // leaf nodes, not a look-ahead frame
+      gf_group->update_type[*frame_ind] = LF_UPDATE;
+      gf_group->arf_src_offset[*frame_ind] = 0;
+      gf_group->arf_pos_in_gf[*frame_ind] = 0;
+      gf_group->arf_update_idx[*frame_ind] = arf_ind;
+      gf_group->pyramid_level[*frame_ind] = 0;
+      ++gf_group->pyramid_lvl_nodes[0];
+      ++(*frame_ind);
+    }
+  } else {
+    int m = (l + r) / 2;
+    int arf_pos_in_gf = *frame_ind;
+
+    gf_group->update_type[*frame_ind] = INTNL_ARF_UPDATE;
+    gf_group->arf_src_offset[*frame_ind] = m - l - 1;
+    gf_group->arf_pos_in_gf[*frame_ind] = 0;
+    gf_group->arf_update_idx[*frame_ind] = 1;  // mark all internal ARF 1
+    gf_group->pyramid_level[*frame_ind] = level;
+    ++gf_group->pyramid_lvl_nodes[level];
+    ++(*frame_ind);
+
+    // set parameters for frames displayed before this frame
+    set_multi_layer_params(gf_group, l, m, frame_ind, 1, level - 1);
+
+    // for overlay frames, we need to record the position of its corresponding
+    // arf frames for bit allocation
+    gf_group->update_type[*frame_ind] = INTNL_OVERLAY_UPDATE;
+    gf_group->arf_src_offset[*frame_ind] = 0;
+    gf_group->arf_pos_in_gf[*frame_ind] = arf_pos_in_gf;
+    gf_group->arf_update_idx[*frame_ind] = 1;
+    gf_group->pyramid_level[*frame_ind] = 0;
+    ++(*frame_ind);
+
+    // set parameters for frames displayed after this frame
+    set_multi_layer_params(gf_group, m, r, frame_ind, arf_ind, level - 1);
+  }
+}
+
+static INLINE unsigned char get_pyramid_height(int pyramid_width) {
+  assert(pyramid_width <= 16 && pyramid_width >= 4 &&
+         "invalid gf interval for pyramid structure");
+
+  return pyramid_width > 12 ? 4 : (pyramid_width > 6 ? 3 : 2);
+}
+
+static int construct_multi_layer_gf_structure(GF_GROUP *const gf_group,
+                                              const int gf_interval) {
+  int frame_index = 0;
+  gf_group->pyramid_height = get_pyramid_height(gf_interval);
+
+  assert(gf_group->pyramid_height <= MAX_PYRAMID_LVL);
+
+  av1_zero_array(gf_group->pyramid_lvl_nodes, MAX_PYRAMID_LVL);
+
+  // At the beginning of each GF group it will be a key or overlay frame,
+  gf_group->update_type[frame_index] = OVERLAY_UPDATE;
+  gf_group->arf_src_offset[frame_index] = 0;
+  gf_group->arf_pos_in_gf[frame_index] = 0;
+  gf_group->arf_update_idx[frame_index] = 0;
+  gf_group->pyramid_level[frame_index] = 0;
+  ++frame_index;
+
+  // ALT0
+  gf_group->update_type[frame_index] = ARF_UPDATE;
+  gf_group->arf_src_offset[frame_index] = gf_interval - 1;
+  gf_group->arf_pos_in_gf[frame_index] = 0;
+  gf_group->arf_update_idx[frame_index] = 0;
+  gf_group->pyramid_level[frame_index] = gf_group->pyramid_height;
+  ++frame_index;
+
+  // set parameters for the rest of the frames
+  set_multi_layer_params(gf_group, 0, gf_interval, &frame_index, 0,
+                         gf_group->pyramid_height - 1);
+  return frame_index;
+}
+
+void define_customized_gf_group_structure(AV1_COMP *cpi) {
+  RATE_CONTROL *const rc = &cpi->rc;
+  TWO_PASS *const twopass = &cpi->twopass;
+  GF_GROUP *const gf_group = &twopass->gf_group;
+  const int key_frame = cpi->common.frame_type == KEY_FRAME;
+
+  assert(rc->baseline_gf_interval >= 4 &&
+         rc->baseline_gf_interval <= MAX_PYRAMID_SIZE);
+
+  const int gf_update_frames =
+      construct_multi_layer_gf_structure(gf_group, rc->baseline_gf_interval);
+  int frame_index;
+
+  cpi->num_extra_arfs = 0;
+
+  for (frame_index = 0; frame_index < gf_update_frames; ++frame_index) {
+    // Set unused variables to default values
+    gf_group->bidir_pred_enabled[frame_index] = 0;
+    gf_group->brf_src_offset[frame_index] = 0;
+
+    // Special handle for the first frame for assigning update_type
+    if (frame_index == 0) {
+      // For key frames the frame target rate is already set and it
+      // is also the golden frame.
+      if (key_frame) {
+        gf_group->update_type[frame_index] = KF_UPDATE;
+        continue;
+      }
+
+      if (rc->source_alt_ref_active) {
+        gf_group->update_type[frame_index] = OVERLAY_UPDATE;
+      } else {
+        gf_group->update_type[frame_index] = GF_UPDATE;
+      }
+    } else {
+      if (gf_group->update_type[frame_index] == INTNL_ARF_UPDATE)
+        ++cpi->num_extra_arfs;
+    }
+
+    // Assign rf level based on update type
+    gf_group->rf_level[frame_index] =
+        update_type_2_rf_level(gf_group->update_type[frame_index]);
+  }
+
+  // NOTE: We need to configure the frame at the end of the sequence + 1 that
+  //       will be the start frame for the next group. Otherwise prior to the
+  //       call to av1_rc_get_second_pass_params() the data will be undefined.
+  if (rc->source_alt_ref_pending) {
+    gf_group->update_type[frame_index] = OVERLAY_UPDATE;
+    gf_group->rf_level[frame_index] = INTER_NORMAL;
+  } else {
+    gf_group->update_type[frame_index] = GF_UPDATE;
+    gf_group->rf_level[frame_index] = GF_ARF_STD;
+  }
+
+  gf_group->bidir_pred_enabled[frame_index] = 0;
+  gf_group->brf_src_offset[frame_index] = 0;
+  gf_group->arf_update_idx[frame_index] = 0;
+  // This value is only used for INTNL_OVERLAY_UPDATE
+  gf_group->arf_pos_in_gf[frame_index] = 0;
+
+  // This parameter is useless?
+  gf_group->arf_ref_idx[frame_index] = 0;
+#ifdef CHCEK_GF_PARAMETER
+  check_frame_params(gf_group, rc->baseline_gf_interval, gf_update_frames);
+#endif
+}
+
+// It is an example of how to define a GF stucture manually. The function will
+// result in exactly the same GF group structure as
+// define_customized_gf_group_structure() when rc->baseline_gf_interval == 4
+#if USE_MANUAL_GF4_STRUCT
+#define GF_INTERVAL_4 4
+static const unsigned char gf4_multi_layer_params[][GF_FRAME_PARAMS] = {
+  {
+      // gf_group->index == 0 (Frame 0)
+      // It can also be KEY frame. Will assign the proper value
+      // in define_gf_group_structure
+      OVERLAY_UPDATE,  // update_type (default value)
+      0,               // arf_src_offset
+      0,               // arf_pos_in_gf
+      0                // arf_update_idx
+  },
+  {
+      // gf_group->index == 1 (Frame 4)
+      ARF_UPDATE,         // update_type
+      GF_INTERVAL_4 - 1,  // arf_src_offset
+      0,                  // arf_pos_in_gf
+      0                   // arf_update_idx
+  },
+  {
+      // gf_group->index == 2 (Frame 2)
+      INTNL_ARF_UPDATE,          // update_type
+      (GF_INTERVAL_4 >> 1) - 1,  // arf_src_offset
+      0,                         // arf_pos_in_gf
+      0                          // arf_update_idx
+  },
+  {
+      // gf_group->index == 3 (Frame 1)
+      LAST_BIPRED_UPDATE,  // update_type
+      0,                   // arf_src_offset
+      0,                   // arf_pos_in_gf
+      0                    // arf_update_idx
+  },
+
+  {
+      // gf_group->index == 4 (Frame 2 - OVERLAY)
+      INTNL_OVERLAY_UPDATE,  // update_type
+      0,                     // arf_src_offset
+      2,                     // arf_pos_in_gf
+      0                      // arf_update_idx
+  },
+  {
+      // gf_group->index == 5 (Frame 3)
+      LF_UPDATE,  // update_type
+      0,          // arf_src_offset
+      0,          // arf_pos_in_gf
+      1           // arf_update_idx
+  }
+};
+
+static int define_gf_group_structure_4(AV1_COMP *cpi) {
+  RATE_CONTROL *const rc = &cpi->rc;
+  TWO_PASS *const twopass = &cpi->twopass;
+  GF_GROUP *const gf_group = &twopass->gf_group;
+  const int key_frame = cpi->common.frame_type == KEY_FRAME;
+
+  assert(rc->baseline_gf_interval == GF_INTERVAL_4);
+
+  const int gf_update_frames = rc->baseline_gf_interval + 2;
+  int frame_index;
+
+  for (frame_index = 0; frame_index < gf_update_frames; ++frame_index) {
+    int param_idx = 0;
+
+    gf_group->bidir_pred_enabled[frame_index] = 0;
+
+    if (frame_index == 0) {
+      // gf_group->arf_src_offset[frame_index] = 0;
+      gf_group->brf_src_offset[frame_index] = 0;
+      gf_group->bidir_pred_enabled[frame_index] = 0;
+
+      // For key frames the frame target rate is already set and it
+      // is also the golden frame.
+      if (key_frame) continue;
+
+      gf_group->update_type[frame_index] =
+          gf4_multi_layer_params[frame_index][param_idx++];
+
+      if (rc->source_alt_ref_active) {
+        gf_group->update_type[frame_index] = OVERLAY_UPDATE;
+      } else {
+        gf_group->update_type[frame_index] = GF_UPDATE;
+      }
+      param_idx++;
+    } else {
+      gf_group->update_type[frame_index] =
+          gf4_multi_layer_params[frame_index][param_idx++];
+    }
+
+    // setup other parameters
+    gf_group->rf_level[frame_index] =
+        update_type_2_rf_level(gf_group->update_type[frame_index]);
+
+    // == arf_src_offset ==
+    gf_group->arf_src_offset[frame_index] =
+        gf4_multi_layer_params[frame_index][param_idx++];
+
+    // == arf_pos_in_gf ==
+    gf_group->arf_pos_in_gf[frame_index] =
+        gf4_multi_layer_params[frame_index][param_idx++];
+
+    // == arf_update_idx ==
+    gf_group->brf_src_offset[frame_index] =
+        gf4_multi_layer_params[frame_index][param_idx];
+  }
+
+  // NOTE: We need to configure the frame at the end of the sequence + 1 that
+  //       will be the start frame for the next group. Otherwise prior to the
+  //       call to av1_rc_get_second_pass_params() the data will be undefined.
+  gf_group->arf_update_idx[frame_index] = 0;
+  gf_group->arf_ref_idx[frame_index] = 0;
+
+  if (rc->source_alt_ref_pending) {
+    gf_group->update_type[frame_index] = OVERLAY_UPDATE;
+    gf_group->rf_level[frame_index] = INTER_NORMAL;
+
+  } else {
+    gf_group->update_type[frame_index] = GF_UPDATE;
+    gf_group->rf_level[frame_index] = GF_ARF_STD;
+  }
+
+  gf_group->bidir_pred_enabled[frame_index] = 0;
+  gf_group->brf_src_offset[frame_index] = 0;
+
+  // This value is only used for INTNL_OVERLAY_UPDATE
+  gf_group->arf_pos_in_gf[frame_index] = 0;
+
+  return gf_update_frames;
+}
+#endif  // USE_MANUAL_GF4_STRUCT
+#endif  // USE_SYMM_MULTI_LAYER
+
+static void define_gf_group_structure(AV1_COMP *cpi) {
+  RATE_CONTROL *const rc = &cpi->rc;
+
+#if USE_SYMM_MULTI_LAYER
+  const int valid_customized_gf_length =
+      rc->baseline_gf_interval >= 4 &&
+      rc->baseline_gf_interval <= MAX_PYRAMID_SIZE;
+  // used the new structure only if extra_arf is allowed
+  if (valid_customized_gf_length && rc->source_alt_ref_pending &&
+      cpi->extra_arf_allowed > 0) {
+#if USE_MANUAL_GF4_STRUCT
+    if (rc->baseline_gf_interval == 4)
+      define_gf_group_structure_4(cpi);
+    else
+#endif
+      define_customized_gf_group_structure(cpi);
+    cpi->new_bwdref_update_rule = 1;
+    return;
+  } else {
+    cpi->new_bwdref_update_rule = 0;
+  }
 #endif
 
+  TWO_PASS *const twopass = &cpi->twopass;
+  GF_GROUP *const gf_group = &twopass->gf_group;
+  int i;
+  int frame_index = 0;
+  const int key_frame = cpi->common.frame_type == KEY_FRAME;
+
+  // The use of bi-predictive frames are only enabled when following 3
+  // conditions are met:
+  // (1) ALTREF is enabled;
+  // (2) The bi-predictive group interval is at least 2; and
+  // (3) The bi-predictive group interval is strictly smaller than the
+  //     golden group interval.
+  const int is_bipred_enabled =
+      cpi->extra_arf_allowed && rc->source_alt_ref_pending &&
+      rc->bipred_group_interval &&
+      rc->bipred_group_interval <=
+          (rc->baseline_gf_interval - rc->source_alt_ref_pending);
+  int bipred_group_end = 0;
+  int bipred_frame_index = 0;
+
+  const unsigned char ext_arf_interval =
+      (unsigned char)(rc->baseline_gf_interval / (cpi->num_extra_arfs + 1) - 1);
+  int which_arf = cpi->num_extra_arfs;
+  int subgroup_interval[MAX_EXT_ARFS + 1];
+  int is_sg_bipred_enabled = is_bipred_enabled;
+  int accumulative_subgroup_interval = 0;
+
+  // For key frames the frame target rate is already set and it
+  // is also the golden frame.
+  // === [frame_index == 0] ===
+  if (!key_frame) {
+    if (rc->source_alt_ref_active) {
+      gf_group->update_type[frame_index] = OVERLAY_UPDATE;
+      gf_group->rf_level[frame_index] = INTER_NORMAL;
+    } else {
+      gf_group->update_type[frame_index] = GF_UPDATE;
+      gf_group->rf_level[frame_index] = GF_ARF_STD;
+    }
+    gf_group->arf_update_idx[frame_index] = 0;
+    gf_group->arf_ref_idx[frame_index] = 0;
+  }
+
+  gf_group->bidir_pred_enabled[frame_index] = 0;
+  gf_group->brf_src_offset[frame_index] = 0;
+
+  frame_index++;
+
+  bipred_frame_index++;
+
+  // === [frame_index == 1] ===
+  if (rc->source_alt_ref_pending) {
+    gf_group->update_type[frame_index] = ARF_UPDATE;
+    gf_group->rf_level[frame_index] = GF_ARF_STD;
+    gf_group->arf_src_offset[frame_index] =
+        (unsigned char)(rc->baseline_gf_interval - 1);
+
+    gf_group->arf_update_idx[frame_index] = 0;
+    gf_group->arf_ref_idx[frame_index] = 0;
+
+    gf_group->bidir_pred_enabled[frame_index] = 0;
+    gf_group->brf_src_offset[frame_index] = 0;
+    // NOTE: "bidir_pred_frame_index" stays unchanged for ARF_UPDATE frames.
+
+    // Work out the ARFs' positions in this gf group
+    // NOTE(weitinglin): ALT_REFs' are indexed inversely, but coded in display
+    // order (except for the original ARF). In the example of three ALT_REF's,
+    // We index ALTREF's as: KEY ----- ALT2 ----- ALT1 ----- ALT0
+    // but code them in the following order:
+    // KEY-ALT0-ALT2 ----- OVERLAY2-ALT1 ----- OVERLAY1 ----- OVERLAY0
+    //
+    // arf_pos_for_ovrly[]: Position for OVERLAY
+    // arf_pos_in_gf[]:     Position for ALTREF
+    cpi->arf_pos_for_ovrly[0] = frame_index + cpi->num_extra_arfs +
+                                gf_group->arf_src_offset[frame_index] + 1;
+    for (i = 0; i < cpi->num_extra_arfs; ++i) {
+      cpi->arf_pos_for_ovrly[i + 1] =
+          frame_index + (cpi->num_extra_arfs - i) * (ext_arf_interval + 2);
+      subgroup_interval[i] = cpi->arf_pos_for_ovrly[i] -
+                             cpi->arf_pos_for_ovrly[i + 1] - (i == 0 ? 1 : 2);
+    }
+    subgroup_interval[cpi->num_extra_arfs] =
+        cpi->arf_pos_for_ovrly[cpi->num_extra_arfs] - frame_index -
+        (cpi->num_extra_arfs == 0 ? 1 : 2);
+
+    ++frame_index;
+
+    // Insert an extra ARF
+    // === [frame_index == 2] ===
+    if (cpi->num_extra_arfs) {
+      gf_group->update_type[frame_index] = INTNL_ARF_UPDATE;
+      gf_group->rf_level[frame_index] = GF_ARF_LOW;
+      gf_group->arf_src_offset[frame_index] = ext_arf_interval;
+
+      gf_group->arf_update_idx[frame_index] = which_arf;
+      gf_group->arf_ref_idx[frame_index] = 0;
+      ++frame_index;
+    }
+    accumulative_subgroup_interval += subgroup_interval[cpi->num_extra_arfs];
+  }
+
+  for (i = 0; i < rc->baseline_gf_interval - rc->source_alt_ref_pending; ++i) {
+    gf_group->arf_update_idx[frame_index] = which_arf;
+    gf_group->arf_ref_idx[frame_index] = which_arf;
+
+    // If we are going to have ARFs, check whether we can have BWDREF in this
+    // subgroup, and further, whether we can have ARF subgroup which contains
+    // the BWDREF subgroup but contained within the GF group:
+    //
+    // GF group --> ARF subgroup --> BWDREF subgroup
+    if (rc->source_alt_ref_pending) {
+      is_sg_bipred_enabled =
+          is_bipred_enabled &&
+          (subgroup_interval[which_arf] > rc->bipred_group_interval);
+    }
+
+    // NOTE: BIDIR_PRED is only enabled when the length of the bi-predictive
+    //       frame group interval is strictly smaller than that of the GOLDEN
+    //       FRAME group interval.
+    // TODO(zoeliu): Currently BIDIR_PRED is only enabled when alt-ref is on.
+    if (is_sg_bipred_enabled && !bipred_group_end) {
+      const int cur_brf_src_offset = rc->bipred_group_interval - 1;
+
+      if (bipred_frame_index == 1) {
+        // --- BRF_UPDATE ---
+        gf_group->update_type[frame_index] = BRF_UPDATE;
+        gf_group->rf_level[frame_index] = GF_ARF_LOW;
+        gf_group->brf_src_offset[frame_index] = cur_brf_src_offset;
+      } else if (bipred_frame_index == rc->bipred_group_interval) {
+        // --- LAST_BIPRED_UPDATE ---
+        gf_group->update_type[frame_index] = LAST_BIPRED_UPDATE;
+        gf_group->rf_level[frame_index] = INTER_NORMAL;
+        gf_group->brf_src_offset[frame_index] = 0;
+
+        // Reset the bi-predictive frame index.
+        bipred_frame_index = 0;
+      } else {
+        // --- BIPRED_UPDATE ---
+        gf_group->update_type[frame_index] = BIPRED_UPDATE;
+        gf_group->rf_level[frame_index] = INTER_NORMAL;
+        gf_group->brf_src_offset[frame_index] = 0;
+      }
+      gf_group->bidir_pred_enabled[frame_index] = 1;
+
+      bipred_frame_index++;
+      // Check whether the next bi-predictive frame group would entirely be
+      // included within the current golden frame group.
+      // In addition, we need to avoid coding a BRF right before an ARF.
+      if (bipred_frame_index == 1 &&
+          (i + 2 + cur_brf_src_offset) >= accumulative_subgroup_interval) {
+        bipred_group_end = 1;
+      }
+    } else {
+      gf_group->update_type[frame_index] = LF_UPDATE;
+      gf_group->rf_level[frame_index] = INTER_NORMAL;
+      gf_group->bidir_pred_enabled[frame_index] = 0;
+      gf_group->brf_src_offset[frame_index] = 0;
+    }
+
+    ++frame_index;
+
+    // Check if we need to update the ARF.
+    if (is_sg_bipred_enabled && cpi->num_extra_arfs && which_arf > 0 &&
+        frame_index > cpi->arf_pos_for_ovrly[which_arf]) {
+      --which_arf;
+      accumulative_subgroup_interval += subgroup_interval[which_arf] + 1;
+
+      // Meet the new subgroup; Reset the bipred_group_end flag.
+      bipred_group_end = 0;
+      // Insert another extra ARF after the overlay frame
+      if (which_arf) {
+        gf_group->update_type[frame_index] = INTNL_ARF_UPDATE;
+        gf_group->rf_level[frame_index] = GF_ARF_LOW;
+        gf_group->arf_src_offset[frame_index] = ext_arf_interval;
+
+        gf_group->arf_update_idx[frame_index] = which_arf;
+        gf_group->arf_ref_idx[frame_index] = 0;
+        ++frame_index;
+      }
+    }
+  }
+
+  // NOTE: We need to configure the frame at the end of the sequence + 1 that
+  //       will be the start frame for the next group. Otherwise prior to the
+  //       call to av1_rc_get_second_pass_params() the data will be undefined.
+  gf_group->arf_update_idx[frame_index] = 0;
+  gf_group->arf_ref_idx[frame_index] = 0;
+
+  if (rc->source_alt_ref_pending) {
+    gf_group->update_type[frame_index] = OVERLAY_UPDATE;
+    gf_group->rf_level[frame_index] = INTER_NORMAL;
+
+    cpi->arf_pos_in_gf[0] = 1;
+    if (cpi->num_extra_arfs) {
+      // Overwrite the update_type for extra-ARF's corresponding internal
+      // OVERLAY's: Change from LF_UPDATE to INTNL_OVERLAY_UPDATE.
+      for (i = cpi->num_extra_arfs; i > 0; --i) {
+        cpi->arf_pos_in_gf[i] =
+            (i == cpi->num_extra_arfs ? 2 : cpi->arf_pos_for_ovrly[i + 1] + 1);
+
+        gf_group->update_type[cpi->arf_pos_for_ovrly[i]] = INTNL_OVERLAY_UPDATE;
+        gf_group->rf_level[cpi->arf_pos_for_ovrly[i]] = INTER_NORMAL;
+      }
+    }
+  } else {
+    gf_group->update_type[frame_index] = GF_UPDATE;
+    gf_group->rf_level[frame_index] = GF_ARF_STD;
+  }
+
+  gf_group->bidir_pred_enabled[frame_index] = 0;
+  gf_group->brf_src_offset[frame_index] = 0;
+}
+
+#if USE_SYMM_MULTI_LAYER
+#define LEAF_REDUCTION_FACTOR 0.75f
+#define LVL_3_BOOST_FACTOR 0.8f
+#define LVL_2_BOOST_FACTOR 0.3f
+
+static float_t lvl_budget_factor[MAX_PYRAMID_LVL - 1][MAX_PYRAMID_LVL - 1] = {
+  { 1, 0, 0 },
+  { LVL_3_BOOST_FACTOR, 0, 0 },  // Leaking budget works better
+  { LVL_3_BOOST_FACTOR, (1 - LVL_3_BOOST_FACTOR) * LVL_2_BOOST_FACTOR,
+    (1 - LVL_3_BOOST_FACTOR) * (1 - LVL_2_BOOST_FACTOR) }
+};
+#endif  // USE_SYMM_MULTI_LAYER
 static void allocate_gf_group_bits(AV1_COMP *cpi, int64_t gf_group_bits,
                                    double group_error, int gf_arf_bits) {
   RATE_CONTROL *const rc = &cpi->rc;
@@ -1664,71 +2154,26 @@ static void allocate_gf_group_bits(AV1_COMP *cpi, int64_t gf_group_bits,
   int64_t total_group_bits = gf_group_bits;
   double modified_err = 0.0;
   double err_fraction;
-  int mid_boost_bits = 0;
-#if CONFIG_EXT_REFS
-  // The use of bi-predictive frames are only enabled when following 3
-  // conditions are met:
-  // (1) Alt-ref is enabled;
-  // (2) The bi-predictive group interval is at least 2; and
-  // (3) The bi-predictive group interval is strictly smaller than the
-  //     golden group interval.
-  const int is_bipred_enabled =
-      rc->source_alt_ref_pending && rc->bipred_group_interval &&
-      rc->bipred_group_interval <=
-          (rc->baseline_gf_interval - rc->source_alt_ref_pending);
-  int bipred_group_end = 0;
-  int bipred_frame_index = 0;
-
-  int arf_pos[MAX_EXT_ARFS + 1];
-  const unsigned char ext_arf_interval =
-      (unsigned char)(rc->baseline_gf_interval / (cpi->num_extra_arfs + 1) - 1);
-  int which_arf = cpi->num_extra_arfs;
-  int subgroup_interval[MAX_EXT_ARFS + 1];
   int ext_arf_boost[MAX_EXT_ARFS];
-  int is_sg_bipred_enabled = is_bipred_enabled;
-  int accumulative_subgroup_interval = 0;
-#else
-  int mid_frame_idx;
-  unsigned char arf_buffer_indices[MAX_ACTIVE_ARFS];
-#endif  // CONFIG_EXT_REFS
 
-#if CONFIG_EXT_REFS
+  define_gf_group_structure(cpi);
+
   av1_zero_array(ext_arf_boost, MAX_EXT_ARFS);
-#endif  // CONFIG_EXT_REFS
 
   key_frame = cpi->common.frame_type == KEY_FRAME;
 
-#if !CONFIG_EXT_REFS
-  get_arf_buffer_indices(arf_buffer_indices);
-#endif  // !CONFIG_EXT_REFS
-
   // For key frames the frame target rate is already set and it
   // is also the golden frame.
+  // === [frame_index == 0] ===
   if (!key_frame) {
-    if (rc->source_alt_ref_active) {
-      gf_group->update_type[frame_index] = OVERLAY_UPDATE;
-      gf_group->rf_level[frame_index] = INTER_NORMAL;
+    if (rc->source_alt_ref_active)
       gf_group->bit_allocation[frame_index] = 0;
-    } else {
-      gf_group->update_type[frame_index] = GF_UPDATE;
-      gf_group->rf_level[frame_index] = GF_ARF_STD;
+    else
       gf_group->bit_allocation[frame_index] = gf_arf_bits;
-    }
-#if CONFIG_EXT_REFS
-    gf_group->arf_update_idx[frame_index] = 0;
-    gf_group->arf_ref_idx[frame_index] = 0;
-#else
-    gf_group->arf_update_idx[frame_index] = arf_buffer_indices[0];
-    gf_group->arf_ref_idx[frame_index] = arf_buffer_indices[0];
-#endif  // CONFIG_EXT_REFS
+
     // Step over the golden frame / overlay frame
     if (EOF == input_stats(twopass, &frame_stats)) return;
   }
-
-#if CONFIG_EXT_REFS
-  gf_group->bidir_pred_enabled[frame_index] = 0;
-  gf_group->brf_src_offset[frame_index] = 0;
-#endif  // CONFIG_EXT_REFS
 
   // Deduct the boost bits for arf (or gf if it is not a key frame)
   // from the group total.
@@ -1736,92 +2181,23 @@ static void allocate_gf_group_bits(AV1_COMP *cpi, int64_t gf_group_bits,
 
   frame_index++;
 
-#if CONFIG_EXT_REFS
-  bipred_frame_index++;
-#endif  // CONFIG_EXT_REFS
-
   // Store the bits to spend on the ARF if there is one.
+  // === [frame_index == 1] ===
   if (rc->source_alt_ref_pending) {
-    gf_group->update_type[frame_index] = ARF_UPDATE;
-    gf_group->rf_level[frame_index] = GF_ARF_STD;
     gf_group->bit_allocation[frame_index] = gf_arf_bits;
-
-    gf_group->arf_src_offset[frame_index] =
-        (unsigned char)(rc->baseline_gf_interval - 1);
-
-#if CONFIG_EXT_REFS
-    gf_group->arf_update_idx[frame_index] = 0;
-    gf_group->arf_ref_idx[frame_index] = 0;
-
-    gf_group->bidir_pred_enabled[frame_index] = 0;
-    gf_group->brf_src_offset[frame_index] = 0;
-// NOTE: "bidir_pred_frame_index" stays unchanged for ARF_UPDATE frames.
-#else
-    gf_group->arf_update_idx[frame_index] = arf_buffer_indices[0];
-    gf_group->arf_ref_idx[frame_index] =
-        arf_buffer_indices[cpi->multi_arf_last_grp_enabled &&
-                           rc->source_alt_ref_active];
-#endif  // CONFIG_EXT_REFS
-
-#if CONFIG_EXT_REFS
-    // Work out the ARFs' positions in this gf group
-    // NOTE(weitinglin): ALT_REFs' are indexed inversely, but coded in display
-    // order (except for the original ARF). In the example of three ALT_REF's,
-    // We index ALTREF's as: KEY ----- ALT2 ----- ALT1 ----- ALT0
-    // but code them in the following order:
-    // KEY-ALT0-ALT2 ----- OVERLAY2-ALT1 ----- OVERLAY1 ----- OVERLAY0
-    arf_pos[0] =
-        frame_index + cpi->num_extra_arfs + gf_group->arf_src_offset[1] + 1;
-    for (i = 0; i < cpi->num_extra_arfs; ++i) {
-      arf_pos[i + 1] =
-          frame_index + (cpi->num_extra_arfs - i) * (ext_arf_interval + 2);
-      subgroup_interval[i] = arf_pos[i] - arf_pos[i + 1] - (i == 0 ? 1 : 2);
-    }
-    subgroup_interval[cpi->num_extra_arfs] = arf_pos[cpi->num_extra_arfs] -
-                                             frame_index -
-                                             (cpi->num_extra_arfs == 0 ? 1 : 2);
-#endif  // CONFIG_EXT_REFS
 
     ++frame_index;
 
-#if CONFIG_EXT_REFS
-    // Insert an extra ARF
+    // Skip all the extra-ARF's right after ARF at the starting segment of
+    // the current GF group.
     if (cpi->num_extra_arfs) {
-      gf_group->update_type[frame_index] = ARF_UPDATE;
-      // Note (weitinglin): GF_ARF_LOW is also used as an identifier
-      //                    for internal ALT_REF's:
-      gf_group->rf_level[frame_index] = GF_ARF_LOW;
-      gf_group->arf_src_offset[frame_index] = ext_arf_interval;
-      gf_group->arf_update_idx[frame_index] = which_arf;
-      gf_group->arf_ref_idx[frame_index] = 0;
-      ++frame_index;
+      while (gf_group->update_type[frame_index] == INTNL_ARF_UPDATE)
+        ++frame_index;
     }
-    accumulative_subgroup_interval += subgroup_interval[cpi->num_extra_arfs];
-#else
-    if (cpi->multi_arf_enabled) {
-      // Set aside a slot for a level 1 arf.
-      gf_group->update_type[frame_index] = ARF_UPDATE;
-      gf_group->rf_level[frame_index] = GF_ARF_LOW;
-      gf_group->arf_src_offset[frame_index] =
-          (unsigned char)((rc->baseline_gf_interval >> 1) - 1);
-      gf_group->arf_update_idx[frame_index] = arf_buffer_indices[1];
-      gf_group->arf_ref_idx[frame_index] = arf_buffer_indices[0];
-      ++frame_index;
-    }
-#endif  // CONFIG_EXT_ARFS
   }
-
-#if !CONFIG_EXT_REFS
-  // Define middle frame
-  mid_frame_idx = frame_index + (rc->baseline_gf_interval >> 1) - 1;
-#endif  // !CONFIG_EXT_REFS
 
   // Allocate bits to the other frames in the group.
   for (i = 0; i < rc->baseline_gf_interval - rc->source_alt_ref_pending; ++i) {
-#if !CONFIG_EXT_REFS
-    int arf_idx = 0;
-#endif  // !CONFIG_EXT_REFS
-
     if (EOF == input_stats(twopass, &frame_stats)) break;
 
     modified_err = calculate_modified_err(cpi, twopass, oxcf, &frame_stats);
@@ -1833,172 +2209,90 @@ static void allocate_gf_group_bits(AV1_COMP *cpi, int64_t gf_group_bits,
 
     target_frame_size = (int)((double)total_group_bits * err_fraction);
 
-    if (rc->source_alt_ref_pending && cpi->multi_arf_enabled) {
-      mid_boost_bits += (target_frame_size >> 4);
-      target_frame_size -= (target_frame_size >> 4);
-#if !CONFIG_EXT_REFS
-      if (frame_index <= mid_frame_idx) arf_idx = 1;
-#endif  // !CONFIG_EXT_REFS
-    }
-
-#if CONFIG_EXT_REFS
-    gf_group->arf_update_idx[frame_index] = which_arf;
-    gf_group->arf_ref_idx[frame_index] = which_arf;
-#else
-    gf_group->arf_update_idx[frame_index] = arf_buffer_indices[arf_idx];
-    gf_group->arf_ref_idx[frame_index] = arf_buffer_indices[arf_idx];
-#endif  // CONFIG_EXT_REFS
-
     target_frame_size =
         clamp(target_frame_size, 0, AOMMIN(max_bits, (int)total_group_bits));
 
-#if CONFIG_EXT_REFS
-    // If we are going to have ARFs, check if we can have BWDREF in this
-    // subgroup.
-    if (rc->source_alt_ref_pending) {
-      is_sg_bipred_enabled =
-          is_bipred_enabled &&
-          (subgroup_interval[which_arf] > rc->bipred_group_interval);
-    }
-
-    // NOTE: BIDIR_PRED is only enabled when the length of the bi-predictive
-    //       frame group interval is strictly smaller than that of the GOLDEN
-    //       FRAME group interval.
-    // TODO(zoeliu): Currently BIDIR_PRED is only enabled when alt-ref is on.
-    if (is_sg_bipred_enabled && !bipred_group_end) {
-      const int cur_brf_src_offset = rc->bipred_group_interval - 1;
-
-      // --- BRF_UPDATE ---
-      if (bipred_frame_index == 1) {
-        gf_group->update_type[frame_index] = BRF_UPDATE;
-        gf_group->bidir_pred_enabled[frame_index] = 1;
-        gf_group->brf_src_offset[frame_index] = cur_brf_src_offset;
-        // --- LAST_BIPRED_UPDATE ---
-      } else if (bipred_frame_index == rc->bipred_group_interval) {
-        gf_group->update_type[frame_index] = LAST_BIPRED_UPDATE;
-        gf_group->bidir_pred_enabled[frame_index] = 1;
-        gf_group->brf_src_offset[frame_index] = 0;
-        // Reset the bi-predictive frame index.
-        bipred_frame_index = 0;
-        // --- BIPRED_UPDATE ---
-      } else {
-        gf_group->update_type[frame_index] = BIPRED_UPDATE;
-        gf_group->bidir_pred_enabled[frame_index] = 1;
-        gf_group->brf_src_offset[frame_index] = 0;
-      }
-
-      bipred_frame_index++;
-      // Check whether the next bi-predictive frame group would entirely be
-      // included within the current golden frame group.
-      // In addition, we need to avoid coding a BRF right before an ARF.
-      if (bipred_frame_index == 1 &&
-          (i + 2 + cur_brf_src_offset) >= accumulative_subgroup_interval) {
-        bipred_group_end = 1;
-      }
-    } else {
-#endif  // CONFIG_EXT_REFS
-      gf_group->update_type[frame_index] = LF_UPDATE;
-#if CONFIG_EXT_REFS
-      gf_group->bidir_pred_enabled[frame_index] = 0;
-      gf_group->brf_src_offset[frame_index] = 0;
-    }
-#endif  // CONFIG_EXT_REFS
-
-#if CONFIG_EXT_REFS
     if (gf_group->update_type[frame_index] == BRF_UPDATE) {
       // Boost up the allocated bits on BWDREF_FRAME
-      gf_group->rf_level[frame_index] = GF_ARF_LOW;
       gf_group->bit_allocation[frame_index] =
           target_frame_size + (target_frame_size >> 2);
     } else if (gf_group->update_type[frame_index] == LAST_BIPRED_UPDATE) {
       // Press down the allocated bits on LAST_BIPRED_UPDATE frames
-      gf_group->rf_level[frame_index] = INTER_NORMAL;
       gf_group->bit_allocation[frame_index] =
           target_frame_size - (target_frame_size >> 1);
     } else if (gf_group->update_type[frame_index] == BIPRED_UPDATE) {
       // TODO(zoeliu): To investigate whether the allocated bits on
       // BIPRED_UPDATE frames need to be further adjusted.
-      gf_group->rf_level[frame_index] = INTER_NORMAL;
       gf_group->bit_allocation[frame_index] = target_frame_size;
+#if USE_SYMM_MULTI_LAYER
+    } else if (cpi->new_bwdref_update_rule &&
+               gf_group->update_type[frame_index] == INTNL_OVERLAY_UPDATE) {
+      assert(gf_group->pyramid_height <= MAX_PYRAMID_LVL &&
+             gf_group->pyramid_height >= 0 &&
+             "non-valid height for a pyramid structure");
+
+      int arf_pos = gf_group->arf_pos_in_gf[frame_index];
+      gf_group->bit_allocation[frame_index] = 0;
+
+      gf_group->bit_allocation[arf_pos] = target_frame_size;
+#if MULTI_LVL_BOOST_VBR_CQ
+      const int pyr_h = gf_group->pyramid_height - 2;
+      const int this_lvl = gf_group->pyramid_level[arf_pos];
+      const int dist2top = gf_group->pyramid_height - 1 - this_lvl;
+
+      const float_t budget =
+          LEAF_REDUCTION_FACTOR * gf_group->pyramid_lvl_nodes[0];
+      const float_t lvl_boost = budget * lvl_budget_factor[pyr_h][dist2top] /
+                                gf_group->pyramid_lvl_nodes[this_lvl];
+
+      gf_group->bit_allocation[arf_pos] += (int)(target_frame_size * lvl_boost);
+#endif  // MULTI_LVL_BOOST_VBR_CQ
+#endif  // USE_SYMM_MULTI_LAYER
     } else {
-#endif  // CONFIG_EXT_REFS
-      gf_group->rf_level[frame_index] = INTER_NORMAL;
+      assert(gf_group->update_type[frame_index] == LF_UPDATE ||
+             gf_group->update_type[frame_index] == INTNL_OVERLAY_UPDATE);
       gf_group->bit_allocation[frame_index] = target_frame_size;
-#if CONFIG_EXT_REFS
+#if MULTI_LVL_BOOST_VBR_CQ
+      if (cpi->new_bwdref_update_rule) {
+        gf_group->bit_allocation[frame_index] -=
+            (int)(target_frame_size * LEAF_REDUCTION_FACTOR);
+      }
+#endif  // MULTI_LVL_BOOST_VBR_CQ
     }
-#endif  // CONFIG_EXT_REFS
 
     ++frame_index;
 
-#if CONFIG_EXT_REFS
-    // Check if we need to update the ARF
-    if (is_sg_bipred_enabled && cpi->num_extra_arfs && which_arf > 0 &&
-        frame_index > arf_pos[which_arf]) {
-      --which_arf;
-      accumulative_subgroup_interval += subgroup_interval[which_arf] + 1;
-      // Meet the new subgroup. Reset the bipred_group_end flag;
-      bipred_group_end = 0;
-      // Insert another extra ARF after the overlay frame
-      if (which_arf) {
-        gf_group->update_type[frame_index] = ARF_UPDATE;
-        gf_group->rf_level[frame_index] = GF_ARF_LOW;
-        gf_group->arf_src_offset[frame_index] = ext_arf_interval;
-        gf_group->arf_update_idx[frame_index] = which_arf;
-        gf_group->arf_ref_idx[frame_index] = 0;
-        ++frame_index;
-      }
-    }
-#endif  // CONFIG_EXT_REFS
-  }
-
-// Note:
-// We need to configure the frame at the end of the sequence + 1 that will be
-// the start frame for the next group. Otherwise prior to the call to
-// av1_rc_get_second_pass_params() the data will be undefined.
-#if CONFIG_EXT_REFS
-  gf_group->arf_update_idx[frame_index] = 0;
-  gf_group->arf_ref_idx[frame_index] = 0;
-#else
-  gf_group->arf_update_idx[frame_index] = arf_buffer_indices[0];
-  gf_group->arf_ref_idx[frame_index] = arf_buffer_indices[0];
-#endif  // CONFIG_EXT_REFS
-
-  if (rc->source_alt_ref_pending) {
-    gf_group->update_type[frame_index] = OVERLAY_UPDATE;
-    gf_group->rf_level[frame_index] = INTER_NORMAL;
-
-#if CONFIG_EXT_REFS
+    // Skip all the extra-ARF's.
     if (cpi->num_extra_arfs) {
-      for (i = cpi->num_extra_arfs; i > 0; --i) {
-        int arf_pos_in_gf = (i == cpi->num_extra_arfs ? 2 : arf_pos[i + 1] + 1);
-        gf_group->bit_allocation[arf_pos_in_gf] =
-            gf_group->bit_allocation[arf_pos[i]];
-        gf_group->update_type[arf_pos[i]] = INTNL_OVERLAY_UPDATE;
-        gf_group->bit_allocation[arf_pos[i]] = 0;
-        gf_group->rf_level[arf_pos[i]] = INTER_NORMAL;
-      }
+      while (gf_group->update_type[frame_index] == INTNL_ARF_UPDATE)
+        ++frame_index;
     }
-#else
-    // Final setup for second arf and its overlay.
-    if (cpi->multi_arf_enabled) {
-      gf_group->bit_allocation[2] =
-          gf_group->bit_allocation[mid_frame_idx] + mid_boost_bits;
-      gf_group->update_type[mid_frame_idx] = OVERLAY_UPDATE;
-      gf_group->bit_allocation[mid_frame_idx] = 0;
-    }
-#endif  // CONFIG_EXT_REFS
-  } else {
-    gf_group->update_type[frame_index] = GF_UPDATE;
-    gf_group->rf_level[frame_index] = GF_ARF_STD;
   }
 
-#if CONFIG_EXT_REFS
-  gf_group->bidir_pred_enabled[frame_index] = 0;
-  gf_group->brf_src_offset[frame_index] = 0;
-#endif  // CONFIG_EXT_REFS
+#if USE_SYMM_MULTI_LAYER
+  if (cpi->new_bwdref_update_rule == 0 && rc->source_alt_ref_pending) {
+#else
+  if (rc->source_alt_ref_pending) {
+#endif
+    if (cpi->num_extra_arfs) {
+      // NOTE: For bit allocation, move the allocated bits associated with
+      //       INTNL_OVERLAY_UPDATE to the corresponding INTNL_ARF_UPDATE.
+      //       i > 0 for extra-ARF's and i == 0 for ARF:
+      //         arf_pos_for_ovrly[i]: Position for INTNL_OVERLAY_UPDATE
+      //         arf_pos_in_gf[i]: Position for INTNL_ARF_UPDATE
+      for (i = cpi->num_extra_arfs; i > 0; --i) {
+        assert(gf_group->update_type[cpi->arf_pos_for_ovrly[i]] ==
+               INTNL_OVERLAY_UPDATE);
 
-  // Note whether multi-arf was enabled this group for next time.
-  cpi->multi_arf_last_grp_enabled = cpi->multi_arf_enabled;
+        // Encoder's choice:
+        //   Set show_existing_frame == 1 for all extra-ARF's, and hence
+        //   allocate zero bit for both all internal OVERLAY frames.
+        gf_group->bit_allocation[cpi->arf_pos_in_gf[i]] =
+            gf_group->bit_allocation[cpi->arf_pos_for_ovrly[i]];
+        gf_group->bit_allocation[cpi->arf_pos_for_ovrly[i]] = 0;
+      }
+    }
+  }
 }
 
 // Analyse and define a gf/arf group.
@@ -2012,7 +2306,12 @@ static void define_gf_group(AV1_COMP *cpi, FIRSTPASS_STATS *this_frame) {
   int i;
 
   double boost_score = 0.0;
+#if !CONFIG_FIX_GF_LENGTH
   double old_boost_score = 0.0;
+  double mv_ratio_accumulator_thresh;
+  int active_max_gf_interval;
+  int active_min_gf_interval;
+#endif
   double gf_group_err = 0.0;
 #if GROUP_ADAPTIVE_MAXQ
   double gf_group_raw_error = 0.0;
@@ -2032,19 +2331,19 @@ static void define_gf_group(AV1_COMP *cpi, FIRSTPASS_STATS *this_frame) {
   double this_frame_mv_in_out = 0.0;
   double mv_in_out_accumulator = 0.0;
   double abs_mv_in_out_accumulator = 0.0;
-  double mv_ratio_accumulator_thresh;
+
   unsigned int allow_alt_ref = is_altref_enabled(cpi);
 
   int f_boost = 0;
   int b_boost = 0;
   int flash_detected;
-  int active_max_gf_interval;
-  int active_min_gf_interval;
   int64_t gf_group_bits;
   double gf_group_error_left;
   int gf_arf_bits;
   const int is_key_frame = frame_is_intra_only(cm);
   const int arf_active_or_kf = is_key_frame || rc->source_alt_ref_active;
+
+  cpi->extra_arf_allowed = 1;
 
   // Reset the GF group data structures unless this is a key
   // frame in which case it will already have been done.
@@ -2072,39 +2371,38 @@ static void define_gf_group(AV1_COMP *cpi, FIRSTPASS_STATS *this_frame) {
     gf_group_skip_pct -= this_frame->intra_skip_pct;
     gf_group_inactive_zone_rows -= this_frame->inactive_zone_rows;
   }
-
+#if !CONFIG_FIX_GF_LENGTH
   // Motion breakout threshold for loop below depends on image size.
   mv_ratio_accumulator_thresh =
       (cpi->initial_height + cpi->initial_width) / 4.0;
-
   // Set a maximum and minimum interval for the GF group.
   // If the image appears almost completely static we can extend beyond this.
   {
-    int int_max_q = (int)(av1_convert_qindex_to_q(twopass->active_worst_quality,
-                                                  cpi->common.bit_depth));
-    int int_lbq = (int)(av1_convert_qindex_to_q(rc->last_boosted_qindex,
-                                                cpi->common.bit_depth));
+    int int_max_q = (int)(av1_convert_qindex_to_q(
+        twopass->active_worst_quality, cpi->common.seq_params.bit_depth));
+    int int_lbq = (int)(av1_convert_qindex_to_q(
+        rc->last_boosted_qindex, cpi->common.seq_params.bit_depth));
 
     active_min_gf_interval = rc->min_gf_interval + AOMMIN(2, int_max_q / 200);
     if (active_min_gf_interval > rc->max_gf_interval)
       active_min_gf_interval = rc->max_gf_interval;
 
-    if (cpi->multi_arf_allowed) {
-      active_max_gf_interval = rc->max_gf_interval;
-    } else {
-      // The value chosen depends on the active Q range. At low Q we have
-      // bits to spare and are better with a smaller interval and smaller boost.
-      // At high Q when there are few bits to spare we are better with a longer
-      // interval to spread the cost of the GF.
-      active_max_gf_interval = 12 + AOMMIN(4, (int_lbq / 6));
+    // The value chosen depends on the active Q range. At low Q we have
+    // bits to spare and are better with a smaller interval and smaller boost.
+    // At high Q when there are few bits to spare we are better with a longer
+    // interval to spread the cost of the GF.
+    active_max_gf_interval = 12 + AOMMIN(4, (int_lbq / 6));
 
-      // We have: active_min_gf_interval <= rc->max_gf_interval
-      if (active_max_gf_interval < active_min_gf_interval)
-        active_max_gf_interval = active_min_gf_interval;
-      else if (active_max_gf_interval > rc->max_gf_interval)
-        active_max_gf_interval = rc->max_gf_interval;
-    }
+    // We have: active_min_gf_interval <= rc->max_gf_interval
+    if (active_max_gf_interval < active_min_gf_interval)
+      active_max_gf_interval = active_min_gf_interval;
+    else if (active_max_gf_interval > rc->max_gf_interval)
+      active_max_gf_interval = rc->max_gf_interval;
   }
+#endif  // !CONFIG_FIX_GF_LENGTH
+  double avg_sr_coded_error = 0;
+  double avg_raw_err_stdev = 0;
+  int non_zero_stdev_count = 0;
 
   i = 0;
   while (i < rc->static_scene_max_gf_interval && i < rc->frames_to_key) {
@@ -2129,6 +2427,12 @@ static void define_gf_group(AV1_COMP *cpi, FIRSTPASS_STATS *this_frame) {
     accumulate_frame_motion_stats(
         &next_frame, &this_frame_mv_in_out, &mv_in_out_accumulator,
         &abs_mv_in_out_accumulator, &mv_ratio_accumulator);
+    // sum up the metric values of current gf group
+    avg_sr_coded_error += next_frame.sr_coded_error;
+    if (fabs(next_frame.raw_error_stdev) > 0.000001) {
+      non_zero_stdev_count++;
+      avg_raw_err_stdev += next_frame.raw_error_stdev;
+    }
 
     // Accumulate the effect of prediction quality decay.
     if (!flash_detected) {
@@ -2154,7 +2458,10 @@ static void define_gf_group(AV1_COMP *cpi, FIRSTPASS_STATS *this_frame) {
     boost_score +=
         decay_accumulator *
         calc_frame_boost(cpi, &next_frame, this_frame_mv_in_out, GF_MAX_BOOST);
-
+#if CONFIG_FIX_GF_LENGTH
+    if (i == (FIXED_GF_LENGTH + 1)) break;
+#else
+    // Skip breaking condition for CONFIG_FIX_GF_LENGTH
     // Break out conditions.
     if (
         // Break at active_max_gf_interval unless almost totally static.
@@ -2168,56 +2475,166 @@ static void define_gf_group(AV1_COMP *cpi, FIRSTPASS_STATS *this_frame) {
              (abs_mv_in_out_accumulator > 3.0) ||
              (mv_in_out_accumulator < -2.0) ||
              ((boost_score - old_boost_score) < BOOST_BREAKOUT)))) {
-      boost_score = old_boost_score;
-      break;
+      // If GF group interval is < 12, we force it to be 8. Otherwise,
+      // if it is >= 12, we keep it as is.
+      // NOTE: 'i' is 1 more than the GF group interval candidate that is being
+      //       checked.
+      if (i == (8 + 1) || i >= (12 + 1)) {
+        boost_score = old_boost_score;
+        break;
+      }
     }
-
-    *this_frame = next_frame;
     old_boost_score = boost_score;
+#endif  // CONFIG_FIX_GF_LENGTH
+    *this_frame = next_frame;
   }
-
   twopass->gf_zeromotion_pct = (int)(zero_motion_accumulator * 1000.0);
 
   // Was the group length constrained by the requirement for a new KF?
   rc->constrained_gf_group = (i >= rc->frames_to_key) ? 1 : 0;
+
+  const int num_mbs = (cpi->oxcf.resize_mode != RESIZE_NONE) ? cpi->initial_mbs
+                                                             : cpi->common.MBs;
+  assert(num_mbs > 0);
+  if (i) avg_sr_coded_error /= i;
+
+  if (non_zero_stdev_count) avg_raw_err_stdev /= non_zero_stdev_count;
+
+  // Disable extra altrefs and backward refs for "still" gf group:
+  //   zero_motion_accumulator: minimum percentage of (0,0) motion;
+  //   avg_sr_coded_error:      average of the SSE per pixel of each frame;
+  //   avg_raw_err_stdev:       average of the standard deviation of (0,0)
+  //                            motion error per block of each frame.
+  const int disable_bwd_extarf =
+      (zero_motion_accumulator > MIN_ZERO_MOTION &&
+       avg_sr_coded_error / num_mbs < MAX_SR_CODED_ERROR &&
+       avg_raw_err_stdev < MAX_RAW_ERR_VAR);
+
+  if (disable_bwd_extarf) cpi->extra_arf_allowed = 0;
+
+#define REDUCE_GF_LENGTH_THRESH 4
+#define REDUCE_GF_LENGTH_TO_KEY_THRESH 9
+#define REDUCE_GF_LENGTH_BY 1
+  int alt_offset = 0;
+#if REDUCE_LAST_GF_LENGTH
+  // TODO(weitinglin): The length reduction stretagy is tweaking using AOM_Q
+  // mode, and hurting the performance of VBR mode. We need to investigate how
+  // to adjust GF length for other modes.
+
+  int allow_gf_length_reduction =
+      cpi->oxcf.rc_mode == AOM_Q || cpi->extra_arf_allowed == 0;
+
+  // We are going to have an alt ref, but we don't have do adjustment for
+  // lossless mode
+  if (allow_alt_ref && allow_gf_length_reduction &&
+      (i < cpi->oxcf.lag_in_frames) && (i >= rc->min_gf_interval) &&
+      !is_lossless_requested(&cpi->oxcf)) {
+    // adjust length of this gf group if one of the following condition met
+    // 1: only one overlay frame left and this gf is too long
+    // 2: next gf group is too short to have arf compared to the current gf
+
+    // maximum length of next gf group
+    const int next_gf_len = rc->frames_to_key - i;
+    const int single_overlay_left =
+        next_gf_len == 0 && i > REDUCE_GF_LENGTH_THRESH;
+    // the next gf is probably going to have a ARF but it will be shorter than
+    // this gf
+    const int unbalanced_gf =
+        i > REDUCE_GF_LENGTH_TO_KEY_THRESH &&
+        next_gf_len + 1 < REDUCE_GF_LENGTH_TO_KEY_THRESH &&
+        next_gf_len + 1 >= rc->min_gf_interval;
+
+    if (single_overlay_left || unbalanced_gf) {
+      // Note: Tried roll_back = DIVIDE_AND_ROUND(i, 8), but is does not work
+      // better in the current setting
+      const int roll_back = REDUCE_GF_LENGTH_BY;
+      alt_offset = -roll_back;
+      i -= roll_back;
+    }
+  }
+#endif
 
   // Should we use the alternate reference frame.
   if (allow_alt_ref && (i < cpi->oxcf.lag_in_frames) &&
       (i >= rc->min_gf_interval)) {
     // Calculate the boost for alt ref.
     rc->gfu_boost =
-        calc_arf_boost(cpi, 0, (i - 1), (i - 1), &f_boost, &b_boost);
+        calc_arf_boost(cpi, alt_offset, (i - 1), (i - 1), &f_boost, &b_boost);
     rc->source_alt_ref_pending = 1;
 
-    // Test to see if multi arf is appropriate.
-    cpi->multi_arf_enabled =
-        (cpi->multi_arf_allowed && (rc->baseline_gf_interval >= 6) &&
-         (zero_motion_accumulator < 0.995))
-            ? 1
-            : 0;
+    // do not replace ARFs with overlay frames, and keep it as GOLDEN_REF
+    cpi->preserve_arf_as_gld = 1;
   } else {
     rc->gfu_boost = AOMMAX((int)boost_score, MIN_ARF_GF_BOOST);
     rc->source_alt_ref_pending = 0;
+    cpi->preserve_arf_as_gld = 0;
   }
 
   // Set the interval until the next gf.
-  rc->baseline_gf_interval = i - (is_key_frame || rc->source_alt_ref_pending);
+  // If forward keyframes are enabled, ensure the final gf group obeys the
+  // MIN_FWD_KF_INTERVAL.
+  if (cpi->oxcf.fwd_kf_enabled &&
+      ((twopass->stats_in - i + rc->frames_to_key) < twopass->stats_in_end)) {
+    if (i == rc->frames_to_key) {
+      rc->baseline_gf_interval = i;
+      // if the last gf group will be smaller than MIN_FWD_KF_INTERVAL
+    } else if ((rc->frames_to_key - i <
+                AOMMAX(MIN_FWD_KF_INTERVAL, rc->min_gf_interval)) &&
+               (rc->frames_to_key != i)) {
+      // if possible, merge the last two gf groups
+      if (rc->frames_to_key <= MAX_PYRAMID_SIZE) {
+        rc->baseline_gf_interval = rc->frames_to_key;
+        // if merging the last two gf groups creates a group that is too long,
+        // split them and force the last gf group to be the MIN_FWD_KF_INTERVAL
+      } else {
+        rc->baseline_gf_interval = rc->frames_to_key - MIN_FWD_KF_INTERVAL;
+      }
+    } else {
+      rc->baseline_gf_interval =
+          i - (is_key_frame || rc->source_alt_ref_pending);
+    }
+  } else {
+    rc->baseline_gf_interval = i - (is_key_frame || rc->source_alt_ref_pending);
+  }
 
-#if CONFIG_EXT_REFS
-  // Compute how many extra alt_refs we can have
-  cpi->num_extra_arfs = get_number_of_extra_arfs(rc->baseline_gf_interval,
-                                                 rc->source_alt_ref_pending);
+#if REDUCE_LAST_ALT_BOOST
+#define LAST_ALR_BOOST_FACTOR 0.2f
+  rc->arf_boost_factor = 1.0;
+  if (rc->source_alt_ref_pending && !is_lossless_requested(&cpi->oxcf)) {
+    // Reduce the boost of altref in the last gf group
+    if (rc->frames_to_key - i == REDUCE_GF_LENGTH_BY ||
+        rc->frames_to_key - i == 0) {
+      rc->arf_boost_factor = LAST_ALR_BOOST_FACTOR;
+    }
+  }
+#endif
+
+  if (!cpi->extra_arf_allowed) {
+    cpi->num_extra_arfs = 0;
+  } else {
+#if USE_SYMM_MULTI_LAYER
+    if (rc->baseline_gf_interval == 4 && rc->source_alt_ref_pending)
+      cpi->num_extra_arfs = 1;
+    else
+      cpi->num_extra_arfs = get_number_of_extra_arfs(
+          rc->baseline_gf_interval, rc->source_alt_ref_pending);
+#else
+    // Compute how many extra alt_refs we can have
+    cpi->num_extra_arfs = get_number_of_extra_arfs(rc->baseline_gf_interval,
+                                                   rc->source_alt_ref_pending);
+#endif  // USE_SYMM_MULTI_LAYER
+  }
+
+#if !USE_SYMM_MULTI_LAYER
   // Currently at maximum two extra ARFs' are allowed
   assert(cpi->num_extra_arfs <= MAX_EXT_ARFS);
-#endif  // CONFIG_EXT_REFS
+#endif
 
   rc->frames_till_gf_update_due = rc->baseline_gf_interval;
 
-#if CONFIG_EXT_REFS
   rc->bipred_group_interval = BFG_INTERVAL;
   // The minimum bi-predictive frame group interval is 2.
   if (rc->bipred_group_interval < 2) rc->bipred_group_interval = 0;
-#endif  // CONFIG_EXT_REFS
 
   // Reset the file position.
   reset_fpf_position(twopass, start_pos);
@@ -2290,12 +2707,6 @@ static void define_gf_group(AV1_COMP *cpi, FIRSTPASS_STATS *this_frame) {
   if (cpi->common.frame_type != KEY_FRAME) {
     twopass->section_intra_rating = calculate_section_intra_ratio(
         start_pos, twopass->stats_in_end, rc->baseline_gf_interval);
-  }
-
-  if (oxcf->resize_mode == RESIZE_DYNAMIC) {
-    // Default to starting GF groups at normal frame size.
-    // TODO(afergs): Make a function for this
-    cpi->resize_next_scale_num = cpi->resize_next_scale_den;
   }
 }
 
@@ -2443,7 +2854,6 @@ static void find_next_key_frame(AV1_COMP *cpi, FIRSTPASS_STATS *this_frame) {
   // Clear the alt ref active flag and last group multi arf flags as they
   // can never be set for a key frame.
   rc->source_alt_ref_active = 0;
-  cpi->multi_arf_last_grp_enabled = 0;
 
   // KF is always a GF so clear frames till next gf counter.
   rc->frames_till_gf_update_due = 0;
@@ -2569,6 +2979,11 @@ static void find_next_key_frame(AV1_COMP *cpi, FIRSTPASS_STATS *this_frame) {
   // how many bits to spend on it.
   decay_accumulator = 1.0;
   boost_score = 0.0;
+  const double kf_max_boost =
+      cpi->oxcf.rc_mode == AOM_Q
+          ? AOMMIN(AOMMAX(rc->frames_to_key * 2.0, KF_MIN_FRAME_BOOST),
+                   KF_MAX_FRAME_BOOST)
+          : KF_MAX_FRAME_BOOST;
   for (i = 0; i < (rc->frames_to_key - 1); ++i) {
     if (EOF == input_stats(twopass, &next_frame)) break;
 
@@ -2580,7 +2995,7 @@ static void find_next_key_frame(AV1_COMP *cpi, FIRSTPASS_STATS *this_frame) {
     if ((i <= rc->max_gf_interval) ||
         ((i <= (rc->max_gf_interval * 4)) && (decay_accumulator > 0.5))) {
       const double frame_boost =
-          calc_frame_boost(cpi, this_frame, 0, KF_MAX_BOOST);
+          calc_frame_boost(cpi, this_frame, 0, kf_max_boost);
 
       // How fast is prediction quality decaying.
       if (!detect_flash(twopass, 0)) {
@@ -2594,7 +3009,8 @@ static void find_next_key_frame(AV1_COMP *cpi, FIRSTPASS_STATS *this_frame) {
       boost_score += (decay_accumulator * frame_boost);
     }
   }
-  av_decay_accumulator /= (double)loop_decay_counter;
+  if (loop_decay_counter > 0)
+    av_decay_accumulator /= (double)loop_decay_counter;
 
   reset_fpf_position(twopass, start_position);
 
@@ -2613,6 +3029,8 @@ static void find_next_key_frame(AV1_COMP *cpi, FIRSTPASS_STATS *this_frame) {
   // Work out how many bits to allocate for the key frame itself.
   kf_bits = calculate_boost_bits((rc->frames_to_key - 1), rc->kf_boost,
                                  twopass->kf_group_bits);
+  // printf("kf boost = %d kf_bits = %d kf_zeromotion_pct = %d\n", rc->kf_boost,
+  //        kf_bits, twopass->kf_zeromotion_pct);
 
   // Work out the fraction of the kf group bits reserved for the inter frames
   // within the group after discounting the bits for the kf itself.
@@ -2638,113 +3056,84 @@ static void find_next_key_frame(AV1_COMP *cpi, FIRSTPASS_STATS *this_frame) {
   // The count of bits left is adjusted elsewhere based on real coded frame
   // sizes.
   twopass->modified_error_left -= kf_group_err;
-
-  if (oxcf->resize_mode == RESIZE_DYNAMIC) {
-    // Default to normal-sized frame on keyframes.
-    // TODO(afergs): Make a function for this
-    cpi->resize_next_scale_num = cpi->resize_next_scale_den;
-  }
 }
 
 // Define the reference buffers that will be updated post encode.
 static void configure_buffer_updates(AV1_COMP *cpi) {
   TWO_PASS *const twopass = &cpi->twopass;
 
-  // Wei-Ting: Should we define another function to take care of
+  // NOTE(weitinglin): Should we define another function to take care of
   // cpi->rc.is_$Source_Type to make this function as it is in the comment?
 
   cpi->rc.is_src_frame_alt_ref = 0;
-#if CONFIG_EXT_REFS
   cpi->rc.is_bwd_ref_frame = 0;
   cpi->rc.is_last_bipred_frame = 0;
   cpi->rc.is_bipred_frame = 0;
   cpi->rc.is_src_frame_ext_arf = 0;
-#endif  // CONFIG_EXT_REFS
 
   switch (twopass->gf_group.update_type[twopass->gf_group.index]) {
     case KF_UPDATE:
-#if CONFIG_EXT_REFS
-      cpi->refresh_bwd_ref_frame = 1;
-#endif  // CONFIG_EXT_REFS
       cpi->refresh_last_frame = 1;
       cpi->refresh_golden_frame = 1;
+      cpi->refresh_bwd_ref_frame = 1;
+      cpi->refresh_alt2_ref_frame = 1;
       cpi->refresh_alt_ref_frame = 1;
       break;
 
     case LF_UPDATE:
-#if CONFIG_EXT_REFS
-      // If we have extra ALT_REFs, we can use the farthest ALT (ALT0) as
-      // the BWD_REF.
-      if (cpi->num_extra_arfs) {
-        int tmp = cpi->bwd_fb_idx;
-
-        cpi->bwd_fb_idx = cpi->alt_fb_idx;
-        cpi->alt_fb_idx = cpi->arf_map[0];
-        cpi->arf_map[0] = tmp;
-
-        cpi->rc.is_bwd_ref_frame = 1;
-      } else {
-        cpi->rc.is_bwd_ref_frame = 0;
-      }
-#endif  // CONFIG_EXT_REFS
       cpi->refresh_last_frame = 1;
       cpi->refresh_golden_frame = 0;
+      cpi->refresh_bwd_ref_frame = 0;
+      cpi->refresh_alt2_ref_frame = 0;
       cpi->refresh_alt_ref_frame = 0;
       break;
 
     case GF_UPDATE:
-#if CONFIG_EXT_REFS
-      cpi->refresh_bwd_ref_frame = 0;
-#endif  // CONFIG_EXT_REFS
+      // TODO(zoeliu): To further investigate whether 'refresh_last_frame' is
+      //               needed.
       cpi->refresh_last_frame = 1;
       cpi->refresh_golden_frame = 1;
+      cpi->refresh_bwd_ref_frame = 0;
+      cpi->refresh_alt2_ref_frame = 0;
       cpi->refresh_alt_ref_frame = 0;
       break;
 
     case OVERLAY_UPDATE:
       cpi->refresh_last_frame = 0;
       cpi->refresh_golden_frame = 1;
-#if CONFIG_EXT_REFS
       cpi->refresh_bwd_ref_frame = 0;
-#endif  // CONFIG_EXT_REFS
+      cpi->refresh_alt2_ref_frame = 0;
       cpi->refresh_alt_ref_frame = 0;
+
       cpi->rc.is_src_frame_alt_ref = 1;
       break;
 
     case ARF_UPDATE:
-#if CONFIG_EXT_REFS
-      cpi->refresh_bwd_ref_frame = 1;
-#endif  // CONFIG_EXT_REFS
       cpi->refresh_last_frame = 0;
       cpi->refresh_golden_frame = 0;
+      // NOTE: BWDREF does not get updated along with ALTREF_FRAME.
+      cpi->refresh_bwd_ref_frame = 0;
+      cpi->refresh_alt2_ref_frame = 0;
       cpi->refresh_alt_ref_frame = 1;
       break;
 
-#if CONFIG_EXT_REFS
     case BRF_UPDATE:
       cpi->refresh_last_frame = 0;
       cpi->refresh_golden_frame = 0;
       cpi->refresh_bwd_ref_frame = 1;
+      cpi->refresh_alt2_ref_frame = 0;
       cpi->refresh_alt_ref_frame = 0;
-      cpi->rc.is_bwd_ref_frame = 1;
-      if (cpi->num_extra_arfs) {
-        // Allow BRF use the farthest ALT_REF (ALT0) as BWD_REF by swapping
-        // the virtual indices.
-        // NOTE: The indices will be swapped back after this frame is encoded
-        //       (in av1_update_reference_frames()).
-        int tmp = cpi->bwd_fb_idx;
 
-        cpi->bwd_fb_idx = cpi->alt_fb_idx;
-        cpi->alt_fb_idx = cpi->arf_map[0];
-        cpi->arf_map[0] = tmp;
-      }
+      cpi->rc.is_bwd_ref_frame = 1;
       break;
 
     case LAST_BIPRED_UPDATE:
-      cpi->refresh_last_frame = 0;
+      cpi->refresh_last_frame = 1;
       cpi->refresh_golden_frame = 0;
       cpi->refresh_bwd_ref_frame = 0;
+      cpi->refresh_alt2_ref_frame = 0;
       cpi->refresh_alt_ref_frame = 0;
+
       cpi->rc.is_last_bipred_frame = 1;
       break;
 
@@ -2752,7 +3141,9 @@ static void configure_buffer_updates(AV1_COMP *cpi) {
       cpi->refresh_last_frame = 1;
       cpi->refresh_golden_frame = 0;
       cpi->refresh_bwd_ref_frame = 0;
+      cpi->refresh_alt2_ref_frame = 0;
       cpi->refresh_alt_ref_frame = 0;
+
       cpi->rc.is_bipred_frame = 1;
       break;
 
@@ -2760,13 +3151,76 @@ static void configure_buffer_updates(AV1_COMP *cpi) {
       cpi->refresh_last_frame = 1;
       cpi->refresh_golden_frame = 0;
       cpi->refresh_bwd_ref_frame = 0;
+      cpi->refresh_alt2_ref_frame = 0;
       cpi->refresh_alt_ref_frame = 0;
+
       cpi->rc.is_src_frame_alt_ref = 1;
       cpi->rc.is_src_frame_ext_arf = 1;
       break;
-#endif  // CONFIG_EXT_REFS
+
+    case INTNL_ARF_UPDATE:
+      cpi->refresh_last_frame = 0;
+      cpi->refresh_golden_frame = 0;
+#if USE_SYMM_MULTI_LAYER
+      if (cpi->new_bwdref_update_rule == 1) {
+        cpi->refresh_bwd_ref_frame = 1;
+        cpi->refresh_alt2_ref_frame = 0;
+      } else {
+#endif
+        cpi->refresh_bwd_ref_frame = 0;
+        cpi->refresh_alt2_ref_frame = 1;
+#if USE_SYMM_MULTI_LAYER
+      }
+#endif
+      cpi->refresh_alt_ref_frame = 0;
+      break;
 
     default: assert(0); break;
+  }
+}
+
+void av1_configure_buffer_updates_firstpass(AV1_COMP *cpi,
+                                            FRAME_UPDATE_TYPE update_type) {
+  RATE_CONTROL *rc = &cpi->rc;
+
+  cpi->refresh_last_frame = 1;
+  cpi->refresh_golden_frame = 0;
+  cpi->refresh_bwd_ref_frame = 0;
+  cpi->refresh_alt2_ref_frame = 0;
+  cpi->refresh_alt_ref_frame = 0;
+
+  rc->is_bwd_ref_frame = 0;
+
+  switch (update_type) {
+    case ARF_UPDATE:
+      cpi->refresh_alt_ref_frame = 1;
+      cpi->refresh_last_frame = 0;
+      cpi->refresh_golden_frame = 0;
+      cpi->refresh_bwd_ref_frame = 0;
+      cpi->refresh_alt2_ref_frame = 0;
+
+      rc->is_src_frame_alt_ref = 0;
+      break;
+    case INTNL_ARF_UPDATE:
+      cpi->refresh_alt2_ref_frame = 1;
+      cpi->refresh_last_frame = 0;
+      cpi->refresh_golden_frame = 0;
+      cpi->refresh_bwd_ref_frame = 0;
+      cpi->refresh_alt_ref_frame = 0;
+      rc->is_src_frame_alt_ref = 0;
+      rc->is_src_frame_ext_arf = 0;
+
+      break;
+    case BIPRED_UPDATE:
+      cpi->refresh_bwd_ref_frame = 1;
+      cpi->refresh_last_frame = 0;
+      cpi->refresh_golden_frame = 0;
+      cpi->refresh_alt2_ref_frame = 0;
+      cpi->refresh_alt_ref_frame = 0;
+
+      rc->is_bwd_ref_frame = 1;
+      break;
+    default: break;
   }
 }
 
@@ -2805,13 +3259,19 @@ void av1_rc_get_second_pass_params(AV1_COMP *cpi) {
 
   // If this is an arf frame then we dont want to read the stats file or
   // advance the input pointer as we already have what we need.
-  if (gf_group->update_type[gf_group->index] == ARF_UPDATE) {
+  if (gf_group->update_type[gf_group->index] == ARF_UPDATE ||
+      gf_group->update_type[gf_group->index] == INTNL_ARF_UPDATE) {
     configure_buffer_updates(cpi);
     target_rate = gf_group->bit_allocation[gf_group->index];
     target_rate = av1_rc_clamp_pframe_target_size(cpi, target_rate);
     rc->base_frame_target = target_rate;
 
-    cm->frame_type = INTER_FRAME;
+    if (cpi->no_show_kf) {
+      assert(gf_group->update_type[gf_group->index] == ARF_UPDATE);
+      cm->frame_type = KEY_FRAME;
+    } else {
+      cm->frame_type = INTER_FRAME;
+    }
 
     // Do the firstpass stats indicate that this frame is skippable for the
     // partition search?
@@ -2846,7 +3306,7 @@ void av1_rc_get_second_pass_params(AV1_COMP *cpi) {
     twopass->baseline_active_worst_quality = tmp_q;
     rc->ni_av_qi = tmp_q;
     rc->last_q[INTER_FRAME] = tmp_q;
-    rc->avg_q = av1_convert_qindex_to_q(tmp_q, cm->bit_depth);
+    rc->avg_q = av1_convert_qindex_to_q(tmp_q, cm->seq_params.bit_depth);
     rc->avg_frame_qindex[INTER_FRAME] = tmp_q;
     rc->last_q[KEY_FRAME] = (tmp_q + cpi->oxcf.best_allowed_q) / 2;
     rc->avg_frame_qindex[KEY_FRAME] = rc->last_q[KEY_FRAME];
@@ -2883,7 +3343,7 @@ void av1_rc_get_second_pass_params(AV1_COMP *cpi) {
       FILE *fpfile;
       fpfile = fopen("arf.stt", "a");
       ++arf_count;
-      fprintf(fpfile, "%10d %10ld %10d %10d %10ld\n", cm->current_video_frame,
+      fprintf(fpfile, "%10d %10d %10d %10d %10d\n", cm->current_video_frame,
               rc->frames_till_gf_update_due, rc->kf_boost, arf_count,
               rc->gfu_boost);
 
@@ -2915,8 +3375,9 @@ void av1_rc_get_second_pass_params(AV1_COMP *cpi) {
                             : cpi->common.MBs;
     // The multiplication by 256 reverses a scaling factor of (>> 8)
     // applied when combining MB error values for the frame.
-    twopass->mb_av_energy =
-        log(((this_frame.intra_error * 256.0) / num_mbs) + 1.0);
+    twopass->mb_av_energy = log((this_frame.intra_error / num_mbs) + 1.0);
+    twopass->frame_avg_haar_energy =
+        log((this_frame.frame_avg_wavelet_energy / num_mbs) + 1.0);
   }
 
   // Update the total stats remaining structure.
@@ -2953,9 +3414,6 @@ void av1_twopass_postencode_update(AV1_COMP *cpi) {
     twopass->last_kfgroup_zeromotion_pct = twopass->kf_zeromotion_pct;
   }
   twopass->kf_group_bits = AOMMAX(twopass->kf_group_bits, 0);
-
-  // Increment the gf group index ready for the next frame.
-  ++twopass->gf_group.index;
 
   // If the rate control is drifting consider adjustment to min or maxq.
   if ((cpi->oxcf.rc_mode != AOM_Q) &&

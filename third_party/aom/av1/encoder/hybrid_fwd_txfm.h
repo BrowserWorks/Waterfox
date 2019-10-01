@@ -9,36 +9,23 @@
  * PATENTS file, you can obtain it at www.aomedia.org/license/patent.
  */
 
-#ifndef AV1_ENCODER_HYBRID_FWD_TXFM_H_
-#define AV1_ENCODER_HYBRID_FWD_TXFM_H_
+#ifndef AOM_AV1_ENCODER_HYBRID_FWD_TXFM_H_
+#define AOM_AV1_ENCODER_HYBRID_FWD_TXFM_H_
 
-#include "./aom_config.h"
-
-typedef enum FWD_TXFM_OPT { FWD_TXFM_OPT_NORMAL } FWD_TXFM_OPT;
-
-typedef struct FWD_TXFM_PARAM {
-  TX_TYPE tx_type;
-  TX_SIZE tx_size;
-  int lossless;
-#if CONFIG_HIGHBITDEPTH
-  int bd;
-#endif  // CONFIG_HIGHBITDEPTH
-} FWD_TXFM_PARAM;
+#include "config/aom_config.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 void av1_fwd_txfm(const int16_t *src_diff, tran_low_t *coeff, int diff_stride,
-                  FWD_TXFM_PARAM *fwd_txfm_param);
+                  TxfmParam *txfm_param);
 
-#if CONFIG_HIGHBITDEPTH
 void av1_highbd_fwd_txfm(const int16_t *src_diff, tran_low_t *coeff,
-                         int diff_stride, FWD_TXFM_PARAM *fwd_txfm_param);
-#endif  // CONFIG_HIGHBITDEPTH
+                         int diff_stride, TxfmParam *txfm_param);
 
 #ifdef __cplusplus
 }  // extern "C"
 #endif
 
-#endif  // AV1_ENCODER_HYBRID_FWD_TXFM_H_
+#endif  // AOM_AV1_ENCODER_HYBRID_FWD_TXFM_H_

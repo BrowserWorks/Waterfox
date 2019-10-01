@@ -9,8 +9,8 @@
  * PATENTS file, you can obtain it at www.aomedia.org/license/patent.
  */
 
-#ifndef AV1_ENCODER_RESIZE_H_
-#define AV1_ENCODER_RESIZE_H_
+#ifndef AOM_AV1_COMMON_RESIZE_H_
+#define AOM_AV1_COMMON_RESIZE_H_
 
 #include <stdio.h>
 #include "aom/aom_integer.h"
@@ -39,7 +39,6 @@ void av1_resize_frame444(const uint8_t *const y, int y_stride,
                          int oy_stride, uint8_t *ou, uint8_t *ov,
                          int ouv_stride, int oheight, int owidth);
 
-#if CONFIG_HIGHBITDEPTH
 void av1_highbd_resize_plane(const uint8_t *const input, int height, int width,
                              int in_stride, uint8_t *output, int height2,
                              int width2, int out_stride, int bd);
@@ -61,18 +60,53 @@ void av1_highbd_resize_frame444(const uint8_t *const y, int y_stride,
                                 uint8_t *oy, int oy_stride, uint8_t *ou,
                                 uint8_t *ov, int ouv_stride, int oheight,
                                 int owidth, int bd);
-#endif  // CONFIG_HIGHBITDEPTH
+void av1_resize_and_extend_frame(const YV12_BUFFER_CONFIG *src,
+                                 YV12_BUFFER_CONFIG *dst, int bd,
+                                 const int num_planes);
 
-YV12_BUFFER_CONFIG *av1_scale_if_required_fast(AV1_COMMON *cm,
-                                               YV12_BUFFER_CONFIG *unscaled,
-                                               YV12_BUFFER_CONFIG *scaled);
+void av1_upscale_normative_rows(const AV1_COMMON *cm, const uint8_t *src,
+                                int src_stride, uint8_t *dst, int dst_stride,
+                                int plane, int rows);
+void av1_upscale_normative_and_extend_frame(const AV1_COMMON *cm,
+                                            const YV12_BUFFER_CONFIG *src,
+                                            YV12_BUFFER_CONFIG *dst);
 
 YV12_BUFFER_CONFIG *av1_scale_if_required(AV1_COMMON *cm,
                                           YV12_BUFFER_CONFIG *unscaled,
                                           YV12_BUFFER_CONFIG *scaled);
 
+// Calculates the scaled dimensions from the given original dimensions and the
+// resize scale denominator.
+void av1_calculate_scaled_size(int *width, int *height, int resize_denom);
+
+// Similar to above, but calculates scaled dimensions after superres from the
+// given original dimensions and superres scale denominator.
+void av1_calculate_scaled_superres_size(int *width, int *height,
+                                        int superres_denom);
+
+// Inverse of av1_calculate_scaled_superres_size() above: calculates the
+// original dimensions from the given scaled dimensions and the scale
+// denominator.
+void av1_calculate_unscaled_superres_size(int *width, int *height, int denom);
+
+void av1_superres_upscale(AV1_COMMON *cm, BufferPool *const pool);
+
+// Returns 1 if a superres upscaled frame is scaled and 0 otherwise.
+static INLINE int av1_superres_scaled(const AV1_COMMON *cm) {
+  // Note: for some corner cases (e.g. cm->width of 1), there may be no scaling
+  // required even though cm->superres_scale_denominator != SCALE_NUMERATOR.
+  // So, the following check is more accurate.
+  return !(cm->width == cm->superres_upscaled_width);
+}
+
+#define UPSCALE_NORMATIVE_TAPS 8
+extern const int16_t av1_resize_filter_normative[1 << RS_SUBPEL_BITS]
+                                                [UPSCALE_NORMATIVE_TAPS];
+
+int32_t av1_get_upscale_convolve_step(int in_length, int out_length);
+
 #ifdef __cplusplus
 }  // extern "C"
 #endif
 
-#endif  // AV1_ENCODER_RESIZE_H_
+#endif  // AOM_AV1_COMMON_RESIZE_H_

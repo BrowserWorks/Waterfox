@@ -9,8 +9,8 @@
  * PATENTS file, you can obtain it at www.aomedia.org/license/patent.
  */
 
-#ifndef AV1_ENCODER_BITSTREAM_H_
-#define AV1_ENCODER_BITSTREAM_H_
+#ifndef AOM_AV1_ENCODER_BITSTREAM_H_
+#define AOM_AV1_ENCODER_BITSTREAM_H_
 
 #ifdef __cplusplus
 extern "C" {
@@ -18,36 +18,34 @@ extern "C" {
 
 #include "av1/encoder/encoder.h"
 
-#if CONFIG_REFERENCE_BUFFER
-void write_sequence_header(SequenceHeader *seq_params);
-#endif
+struct aom_write_bit_buffer;
 
-void av1_pack_bitstream(AV1_COMP *const cpi, uint8_t *dest, size_t *size);
+// Writes only the OBU Sequence Header payload, and returns the size of the
+// payload written to 'dst'. This function does not write the OBU header, the
+// optional extension, or the OBU size to 'dst'.
+uint32_t write_sequence_header_obu(AV1_COMP *cpi, uint8_t *const dst);
 
-void av1_encode_token_init(void);
+// Writes the OBU header byte, and the OBU header extension byte when
+// 'obu_extension' is non-zero. Returns number of bytes written to 'dst'.
+uint32_t write_obu_header(OBU_TYPE obu_type, int obu_extension,
+                          uint8_t *const dst);
+
+int write_uleb_obu_size(uint32_t obu_header_size, uint32_t obu_payload_size,
+                        uint8_t *dest);
+
+int av1_pack_bitstream(AV1_COMP *const cpi, uint8_t *dest, size_t *size);
 
 static INLINE int av1_preserve_existing_gf(AV1_COMP *cpi) {
-#if CONFIG_EXT_REFS
   // Do not swap gf and arf indices for internal overlay frames
-  return !cpi->multi_arf_allowed && cpi->rc.is_src_frame_alt_ref &&
-         !cpi->rc.is_src_frame_ext_arf;
-#else
-  return !cpi->multi_arf_allowed && cpi->refresh_golden_frame &&
-         cpi->rc.is_src_frame_alt_ref;
-#endif  // CONFIG_EXT_REFS
+  return cpi->rc.is_src_frame_alt_ref && !cpi->rc.is_src_frame_ext_arf;
 }
 
 void av1_write_tx_type(const AV1_COMMON *const cm, const MACROBLOCKD *xd,
-#if CONFIG_SUPERTX
-                       const int supertx_enabled,
-#endif
-#if CONFIG_TXK_SEL
-                       int block, int plane,
-#endif
+                       int blk_row, int blk_col, int plane, TX_SIZE tx_size,
                        aom_writer *w);
 
 #ifdef __cplusplus
 }  // extern "C"
 #endif
 
-#endif  // AV1_ENCODER_BITSTREAM_H_
+#endif  // AOM_AV1_ENCODER_BITSTREAM_H_

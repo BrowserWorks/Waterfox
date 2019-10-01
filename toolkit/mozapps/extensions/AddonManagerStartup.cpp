@@ -16,6 +16,7 @@
 #include "mozilla/Compression.h"
 #include "mozilla/FileUtils.h"
 #include "mozilla/Preferences.h"
+#include "mozilla/ResultExtensions.h"
 #include "mozilla/ScopeExit.h"
 #include "mozilla/Services.h"
 #include "mozilla/Unused.h"
@@ -36,40 +37,6 @@
 #include <stdlib.h>
 
 namespace mozilla {
-
-template <>
-class MOZ_MUST_USE_TYPE GenericErrorResult<nsresult>
-{
-  nsresult mErrorValue;
-
-  template<typename V, typename E2> friend class Result;
-
-public:
-  explicit GenericErrorResult(nsresult aErrorValue) : mErrorValue(aErrorValue) {}
-
-  operator nsresult() { return mErrorValue; }
-};
-
-static inline Result<Ok, nsresult>
-WrapNSResult(PRStatus aRv)
-{
-    if (aRv != PR_SUCCESS) {
-        return Err(NS_ERROR_FAILURE);
-    }
-    return Ok();
-}
-
-static inline Result<Ok, nsresult>
-WrapNSResult(nsresult aRv)
-{
-    if (NS_FAILED(aRv)) {
-        return Err(aRv);
-    }
-    return Ok();
-}
-
-#define NS_TRY(expr) MOZ_TRY(WrapNSResult(expr))
-
 
 using Compression::LZ4;
 using dom::ipc::StructuredCloneData;
@@ -138,7 +105,7 @@ ReadFile(nsIFile* file)
   nsCString result;
 
   AutoFDClose fd;
-  NS_TRY(file->OpenNSPRFileDesc(PR_RDONLY, 0, &fd.rwget()));
+  MOZ_TRY(file->OpenNSPRFileDesc(PR_RDONLY, 0, &fd.rwget()));
 
   auto size = PR_Seek64(fd, 0, PR_SEEK_END);
   PR_Seek64(fd, 0, PR_SEEK_SET);
@@ -254,13 +221,13 @@ GetJarCache()
   NS_ENSURE_TRUE(ios, Err(NS_ERROR_FAILURE));
 
   nsCOMPtr<nsIProtocolHandler> jarProto;
-  NS_TRY(ios->GetProtocolHandler("jar", getter_AddRefs(jarProto)));
+  MOZ_TRY(ios->GetProtocolHandler("jar", getter_AddRefs(jarProto)));
 
   nsCOMPtr<nsIJARProtocolHandler> jar = do_QueryInterface(jarProto);
   MOZ_ASSERT(jar);
 
   nsCOMPtr<nsIZipReaderCache> zipCache;
-  NS_TRY(jar->GetJARCache(getter_AddRefs(zipCache)));
+  MOZ_TRY(jar->GetJARCache(getter_AddRefs(zipCache)));
 
   return Move(zipCache);
 }
@@ -461,9 +428,9 @@ Addon::FullPath()
   }
 
   // If not an absolute path, fall back to a relative path from the location.
-  NS_TRY(NS_NewLocalFile(mLocation.Path(), false, getter_AddRefs(file)));
+  MOZ_TRY(NS_NewLocalFile(mLocation.Path(), false, getter_AddRefs(file)));
 
-  NS_TRY(file->AppendRelativePath(path));
+  MOZ_TRY(file->AppendRelativePath(path));
   return Move(file);
 }
 
@@ -556,7 +523,7 @@ AddonManagerStartup::AddInstallLocation(Addon& addon)
   MOZ_TRY_VAR(file, addon.FullPath());
 
   nsString path;
-  NS_TRY(file->GetPath(path));
+  MOZ_TRY(file->GetPath(path));
 
   auto type = addon.LocationType();
 
@@ -675,7 +642,7 @@ AddonManagerStartup::EncodeBlob(JS::HandleValue value, JSContext* cx, JS::Mutabl
   MOZ_TRY_VAR(lz4, EncodeLZ4(scData, STRUCTURED_CLONE_MAGIC));
 
   JS::RootedObject obj(cx);
-  NS_TRY(nsContentUtils::CreateArrayBuffer(cx, lz4, &obj.get()));
+  MOZ_TRY(nsContentUtils::CreateArrayBuffer(cx, lz4, &obj.get()));
 
   result.set(JS::ObjectValue(*obj));
   return NS_OK;
@@ -725,16 +692,16 @@ AddonManagerStartup::EnumerateZipFile(nsIFile* file, const nsACString& pattern,
   MOZ_TRY_VAR(zipCache, GetJarCache());
 
   nsCOMPtr<nsIZipReader> zip;
-  NS_TRY(zipCache->GetZip(file, getter_AddRefs(zip)));
+  MOZ_TRY(zipCache->GetZip(file, getter_AddRefs(zip)));
 
   nsCOMPtr<nsIUTF8StringEnumerator> entries;
-  NS_TRY(zip->FindEntries(pattern, getter_AddRefs(entries)));
+  MOZ_TRY(zip->FindEntries(pattern, getter_AddRefs(entries)));
 
   nsTArray<nsString> results;
   bool hasMore;
   while (NS_SUCCEEDED(entries->HasMore(&hasMore)) && hasMore) {
     nsAutoCString name;
-    NS_TRY(entries->GetNext(name));
+    MOZ_TRY(entries->GetNext(name));
 
     results.AppendElement(NS_ConvertUTF8toUTF16(name));
   }

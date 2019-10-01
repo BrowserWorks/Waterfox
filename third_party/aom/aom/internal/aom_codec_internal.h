@@ -38,11 +38,11 @@
  *       }
  *     </pre>
  *
- * Once initialized, the instance is manged using other functions from
+ * Once initialized, the instance is managed using other functions from
  * the aom_codec_* family.
  */
-#ifndef AOM_INTERNAL_AOM_CODEC_INTERNAL_H_
-#define AOM_INTERNAL_AOM_CODEC_INTERNAL_H_
+#ifndef AOM_AOM_INTERNAL_AOM_CODEC_INTERNAL_H_
+#define AOM_AOM_INTERNAL_AOM_CODEC_INTERNAL_H_
 #include "../aom_decoder.h"
 #include "../aom_encoder.h"
 #include <stdarg.h>
@@ -104,16 +104,15 @@ typedef aom_codec_err_t (*aom_codec_destroy_fn_t)(aom_codec_alg_priv_t *ctx);
  *
  * \param[in]      data    Pointer to a block of data to parse
  * \param[in]      data_sz Size of the data buffer
- * \param[in,out]  si      Pointer to stream info to update. The size member
- *                         \ref MUST be properly initialized, but \ref MAY be
- *                         clobbered by the algorithm. This parameter \ref MAY
- *                         be NULL.
+ * \param[in,out]  si      Pointer to stream info to update. The is_annexb
+ *                         member \ref MUST be properly initialized. This
+ *                         function sets the rest of the members.
  *
  * \retval #AOM_CODEC_OK
  *     Bitstream is parsable and stream information updated
  */
 typedef aom_codec_err_t (*aom_codec_peek_si_fn_t)(const uint8_t *data,
-                                                  unsigned int data_sz,
+                                                  size_t data_sz,
                                                   aom_codec_stream_info_t *si);
 
 /*!\brief Return information about the current stream.
@@ -121,10 +120,7 @@ typedef aom_codec_err_t (*aom_codec_peek_si_fn_t)(const uint8_t *data,
  * Returns information about the stream that has been parsed during decoding.
  *
  * \param[in]      ctx     Pointer to this instance's context
- * \param[in,out]  si      Pointer to stream info to update. The size member
- *                         \ref MUST be properly initialized, but \ref MAY be
- *                         clobbered by the algorithm. This parameter \ref MAY
- *                         be NULL.
+ * \param[in,out]  si      Pointer to stream info to update
  *
  * \retval #AOM_CODEC_OK
  *     Bitstream is parsable and stream information updated
@@ -195,9 +191,8 @@ typedef const struct aom_codec_ctrl_fn_map {
  */
 typedef aom_codec_err_t (*aom_codec_decode_fn_t)(aom_codec_alg_priv_t *ctx,
                                                  const uint8_t *data,
-                                                 unsigned int data_sz,
-                                                 void *user_priv,
-                                                 long deadline);
+                                                 size_t data_sz,
+                                                 void *user_priv);
 
 /*!\brief Decoded frames iterator
  *
@@ -252,8 +247,7 @@ typedef aom_codec_err_t (*aom_codec_encode_fn_t)(aom_codec_alg_priv_t *ctx,
                                                  const aom_image_t *img,
                                                  aom_codec_pts_t pts,
                                                  unsigned long duration,
-                                                 aom_enc_frame_flags_t flags,
-                                                 unsigned long deadline);
+                                                 aom_enc_frame_flags_t flags);
 typedef const aom_codec_cx_pkt_t *(*aom_codec_get_cx_data_fn_t)(
     aom_codec_alg_priv_t *ctx, aom_codec_iter_t *iter);
 
@@ -423,7 +417,7 @@ struct aom_internal_error_info {
   aom_codec_err_t error_code;
   int has_detail;
   char detail[80];
-  int setjmp;
+  int setjmp;  // Boolean: whether 'jmp' is valid.
   jmp_buf jmp;
 };
 
@@ -444,4 +438,4 @@ void aom_merge_corrupted_flag(int *corrupted, int value);
 }  // extern "C"
 #endif
 
-#endif  // AOM_INTERNAL_AOM_CODEC_INTERNAL_H_
+#endif  // AOM_AOM_INTERNAL_AOM_CODEC_INTERNAL_H_

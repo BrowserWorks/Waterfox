@@ -7,9 +7,10 @@
  * obtain it at www.aomedia.org/license/software. If the Alliance for Open
  * Media Patent License 1.0 was not distributed with this source code in the
  * PATENTS file, you can obtain it at www.aomedia.org/license/patent.
-*/
+ */
 
-#include "./aom_config.h"
+#include "config/aom_config.h"
+
 #include "third_party/googletest/src/googletest/include/gtest/gtest.h"
 #include "test/codec_factory.h"
 #include "test/encode_test_driver.h"
@@ -21,8 +22,8 @@
 namespace {
 
 class DatarateTestLarge
-    : public ::libaom_test::EncoderTest,
-      public ::libaom_test::CodecTestWith2Params<libaom_test::TestMode, int> {
+    : public ::libaom_test::CodecTestWith2Params<libaom_test::TestMode, int>,
+      public ::libaom_test::EncoderTest {
  public:
   DatarateTestLarge() : EncoderTest(GET_PARAM(0)) {}
 
@@ -89,8 +90,8 @@ class DatarateTestLarge
         duration * timebase_ * cfg_.rc_target_bitrate * 1000);
 
     // Buffer should not go negative.
-    ASSERT_GE(bits_in_buffer_model_, 0) << "Buffer Underrun at frame "
-                                        << pkt->data.frame.pts;
+    ASSERT_GE(bits_in_buffer_model_, 0)
+        << "Buffer Underrun at frame " << pkt->data.frame.pts;
 
     const size_t frame_size_in_bits = pkt->data.frame.sz * 8;
 
@@ -215,6 +216,7 @@ TEST_P(DatarateTestLarge, ChangingDropFrameThresh) {
   cfg_.rc_end_usage = AOM_CBR;
   cfg_.rc_target_bitrate = 200;
   cfg_.g_lag_in_frames = 0;
+  cfg_.g_error_resilient = 1;
   // TODO(marpan): Investigate datarate target failures with a smaller keyframe
   // interval (128).
   cfg_.kf_max_dist = 9999;

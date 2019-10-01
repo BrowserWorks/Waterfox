@@ -70,8 +70,7 @@ pub enum mp4parse_status {
     UNSUPPORTED = 3,
     EOF = 4,
     IO = 5,
-    TABLE_TOO_LARGE = 6,
-    OOM = 7,
+    OOM = 6,
 }
 
 #[allow(non_camel_case_types)]
@@ -96,6 +95,7 @@ pub enum mp4parse_codec {
     OPUS,
     AVC,
     VP9,
+    AV1,
     MP3,
     MP4V,
     JPEG,   // for QT JPEG atom in video track
@@ -310,11 +310,6 @@ pub unsafe extern fn mp4parse_log(enable: bool) {
     mp4parse::set_debug_mode(enable);
 }
 
-#[no_mangle]
-pub unsafe extern fn mp4parse_fallible_allocation(enable: bool) {
-    mp4parse::set_fallible_allocation_mode(enable);
-}
-
 /// Run the `mp4parse_parser*` allocated by `mp4parse_new()` until EOF or error.
 #[no_mangle]
 pub unsafe extern fn mp4parse_read(parser: *mut mp4parse_parser) -> mp4parse_status {
@@ -344,7 +339,6 @@ pub unsafe extern fn mp4parse_read(parser: *mut mp4parse_parser) -> mp4parse_sta
             (*parser).set_poisoned(true);
             mp4parse_status::IO
         },
-        Err(Error::TableTooLarge) => mp4parse_status::TABLE_TOO_LARGE,
         Err(Error::OutOfMemory) => mp4parse_status::OOM,
     }
 }
@@ -446,6 +440,8 @@ pub unsafe extern fn mp4parse_get_track_info(parser: *mut mp4parse_parser, track
         Some(SampleEntry::Video(ref video)) => match video.codec_specific {
             VideoCodecSpecific::VPxConfig(_) =>
                 mp4parse_codec::VP9,
+            VideoCodecSpecific::AV1Config(_) =>
+                mp4parse_codec::AV1,
             VideoCodecSpecific::AVCConfig(_) =>
                 mp4parse_codec::AVC,
             VideoCodecSpecific::ESDSConfig(_) => // MP4V (14496-2) video is unsupported.
@@ -925,10 +921,9 @@ fn create_sample_table(track: &Track, track_offset_time: i64) -> Option<Vec<mp4p
     // Mark the sync sample in sample_table according to 'stss'.
     if let Some(ref v) = track.stss {
         for iter in &v.samples {
-            if let Some(elem) = sample_table.get_mut((iter - 1) as usize) {
-                elem.sync = true;
-            } else {
-                return None;
+            match iter.checked_sub(1).and_then(|idx| { sample_table.get_mut(idx as usize) }) {
+                Some(elem) => elem.sync = true,
+                _ => return None,
             }
         }
     }

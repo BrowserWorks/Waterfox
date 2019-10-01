@@ -9,8 +9,8 @@
  * PATENTS file, you can obtain it at www.aomedia.org/license/patent.
  */
 
-#ifndef AV1_ENCODER_SPEED_FEATURES_H_
-#define AV1_ENCODER_SPEED_FEATURES_H_
+#ifndef AOM_AV1_ENCODER_SPEED_FEATURES_H_
+#define AOM_AV1_ENCODER_SPEED_FEATURES_H_
 
 #include "av1/common/enums.h"
 
@@ -20,64 +20,46 @@ extern "C" {
 
 enum {
   INTRA_ALL = (1 << DC_PRED) | (1 << V_PRED) | (1 << H_PRED) | (1 << D45_PRED) |
-              (1 << D135_PRED) | (1 << D117_PRED) | (1 << D153_PRED) |
-              (1 << D207_PRED) | (1 << D63_PRED) |
-#if CONFIG_ALT_INTRA
-              (1 << SMOOTH_PRED) |
-#if CONFIG_SMOOTH_HV
-              (1 << SMOOTH_V_PRED) | (1 << SMOOTH_H_PRED) |
-#endif  // CONFIG_SMOOTH_HV
-#endif  // CONFIG_ALT_INTRA
-              (1 << TM_PRED),
+              (1 << D135_PRED) | (1 << D113_PRED) | (1 << D157_PRED) |
+              (1 << D203_PRED) | (1 << D67_PRED) | (1 << SMOOTH_PRED) |
+              (1 << SMOOTH_V_PRED) | (1 << SMOOTH_H_PRED) | (1 << PAETH_PRED),
+  UV_INTRA_ALL =
+      (1 << UV_DC_PRED) | (1 << UV_V_PRED) | (1 << UV_H_PRED) |
+      (1 << UV_D45_PRED) | (1 << UV_D135_PRED) | (1 << UV_D113_PRED) |
+      (1 << UV_D157_PRED) | (1 << UV_D203_PRED) | (1 << UV_D67_PRED) |
+      (1 << UV_SMOOTH_PRED) | (1 << UV_SMOOTH_V_PRED) |
+      (1 << UV_SMOOTH_H_PRED) | (1 << UV_PAETH_PRED) | (1 << UV_CFL_PRED),
+  UV_INTRA_DC = (1 << UV_DC_PRED),
+  UV_INTRA_DC_CFL = (1 << UV_DC_PRED) | (1 << UV_CFL_PRED),
+  UV_INTRA_DC_TM = (1 << UV_DC_PRED) | (1 << UV_PAETH_PRED),
+  UV_INTRA_DC_PAETH_CFL =
+      (1 << UV_DC_PRED) | (1 << UV_PAETH_PRED) | (1 << UV_CFL_PRED),
+  UV_INTRA_DC_H_V = (1 << UV_DC_PRED) | (1 << UV_V_PRED) | (1 << UV_H_PRED),
+  UV_INTRA_DC_H_V_CFL = (1 << UV_DC_PRED) | (1 << UV_V_PRED) |
+                        (1 << UV_H_PRED) | (1 << UV_CFL_PRED),
+  UV_INTRA_DC_PAETH_H_V = (1 << UV_DC_PRED) | (1 << UV_PAETH_PRED) |
+                          (1 << UV_V_PRED) | (1 << UV_H_PRED),
+  UV_INTRA_DC_PAETH_H_V_CFL = (1 << UV_DC_PRED) | (1 << UV_PAETH_PRED) |
+                              (1 << UV_V_PRED) | (1 << UV_H_PRED) |
+                              (1 << UV_CFL_PRED),
   INTRA_DC = (1 << DC_PRED),
-  INTRA_DC_TM = (1 << DC_PRED) | (1 << TM_PRED),
+  INTRA_DC_TM = (1 << DC_PRED) | (1 << PAETH_PRED),
   INTRA_DC_H_V = (1 << DC_PRED) | (1 << V_PRED) | (1 << H_PRED),
-  INTRA_DC_TM_H_V =
-      (1 << DC_PRED) | (1 << TM_PRED) | (1 << V_PRED) | (1 << H_PRED)
+  INTRA_DC_PAETH_H_V =
+      (1 << DC_PRED) | (1 << PAETH_PRED) | (1 << V_PRED) | (1 << H_PRED)
 };
 
-#if CONFIG_EXT_INTER
 enum {
-  INTER_ALL = (1 << NEARESTMV) | (1 << NEARMV) | (1 << ZEROMV) | (1 << NEWMV) |
-              (1 << NEAREST_NEARESTMV) | (1 << NEAR_NEARMV) | (1 << NEW_NEWMV) |
-              (1 << NEAREST_NEWMV) | (1 << NEAR_NEWMV) | (1 << NEW_NEARMV) |
-              (1 << NEW_NEARESTMV) | (1 << ZERO_ZEROMV),
-  INTER_NEAREST = (1 << NEARESTMV) | (1 << NEAREST_NEARESTMV) |
-                  (1 << NEW_NEARESTMV) | (1 << NEAREST_NEWMV),
-  INTER_NEAREST_NEW = (1 << NEARESTMV) | (1 << NEWMV) |
-                      (1 << NEAREST_NEARESTMV) | (1 << NEW_NEWMV) |
-                      (1 << NEW_NEARESTMV) | (1 << NEAREST_NEWMV) |
-                      (1 << NEW_NEARMV) | (1 << NEAR_NEWMV),
-  INTER_NEAREST_ZERO = (1 << NEARESTMV) | (1 << ZEROMV) |
-                       (1 << NEAREST_NEARESTMV) | (1 << ZERO_ZEROMV) |
-                       (1 << NEAREST_NEWMV) | (1 << NEW_NEARESTMV),
-  INTER_NEAREST_NEW_ZERO = (1 << NEARESTMV) | (1 << ZEROMV) | (1 << NEWMV) |
-                           (1 << NEAREST_NEARESTMV) | (1 << ZERO_ZEROMV) |
-                           (1 << NEW_NEWMV) | (1 << NEW_NEARESTMV) |
-                           (1 << NEAREST_NEWMV) | (1 << NEW_NEARMV) |
-                           (1 << NEAR_NEWMV),
-  INTER_NEAREST_NEAR_NEW = (1 << NEARESTMV) | (1 << NEARMV) | (1 << NEWMV) |
-                           (1 << NEAREST_NEARESTMV) | (1 << NEW_NEWMV) |
-                           (1 << NEW_NEARESTMV) | (1 << NEAREST_NEWMV) |
-                           (1 << NEW_NEARMV) | (1 << NEAR_NEWMV) |
-                           (1 << NEAR_NEARMV),
-  INTER_NEAREST_NEAR_ZERO = (1 << NEARESTMV) | (1 << NEARMV) | (1 << ZEROMV) |
-                            (1 << NEAREST_NEARESTMV) | (1 << ZERO_ZEROMV) |
+  INTER_ALL = (1 << NEARESTMV) | (1 << NEARMV) | (1 << GLOBALMV) |
+              (1 << NEWMV) | (1 << NEAREST_NEARESTMV) | (1 << NEAR_NEARMV) |
+              (1 << NEW_NEWMV) | (1 << NEAREST_NEWMV) | (1 << NEAR_NEWMV) |
+              (1 << NEW_NEARMV) | (1 << NEW_NEARESTMV) | (1 << GLOBAL_GLOBALMV),
+  INTER_NEAREST_NEAR_ZERO = (1 << NEARESTMV) | (1 << NEARMV) | (1 << GLOBALMV) |
+                            (1 << NEAREST_NEARESTMV) | (1 << GLOBAL_GLOBALMV) |
                             (1 << NEAREST_NEWMV) | (1 << NEW_NEARESTMV) |
                             (1 << NEW_NEARMV) | (1 << NEAR_NEWMV) |
                             (1 << NEAR_NEARMV),
 };
-#else
-enum {
-  INTER_ALL = (1 << NEARESTMV) | (1 << NEARMV) | (1 << ZEROMV) | (1 << NEWMV),
-  INTER_NEAREST = (1 << NEARESTMV),
-  INTER_NEAREST_NEW = (1 << NEARESTMV) | (1 << NEWMV),
-  INTER_NEAREST_ZERO = (1 << NEARESTMV) | (1 << ZEROMV),
-  INTER_NEAREST_NEW_ZERO = (1 << NEARESTMV) | (1 << ZEROMV) | (1 << NEWMV),
-  INTER_NEAREST_NEAR_NEW = (1 << NEARESTMV) | (1 << NEARMV) | (1 << NEWMV),
-  INTER_NEAREST_NEAR_ZERO = (1 << NEARESTMV) | (1 << NEARMV) | (1 << ZEROMV),
-};
-#endif  // CONFIG_EXT_INTER
 
 enum {
   DISABLE_ALL_INTER_SPLIT = (1 << THR_COMP_GA) | (1 << THR_COMP_LA) |
@@ -90,6 +72,17 @@ enum {
   LAST_AND_INTRA_SPLIT_ONLY = (1 << THR_COMP_GA) | (1 << THR_COMP_LA) |
                               (1 << THR_ALTR) | (1 << THR_GOLD)
 };
+
+typedef enum {
+  TXFM_CODING_SF = 1,
+  INTER_PRED_SF = 2,
+  INTRA_PRED_SF = 4,
+  PARTITION_SF = 8,
+  LOOP_FILTER_SF = 16,
+  RD_SKIP_SF = 32,
+  RESERVE_2_SF = 64,
+  RESERVE_3_SF = 128,
+} DEV_SPEED_FEATURES;
 
 typedef enum {
   DIAMOND = 0,
@@ -121,14 +114,9 @@ typedef enum {
 } SUBPEL_SEARCH_METHODS;
 
 typedef enum {
-  NO_MOTION_THRESHOLD = 0,
-  LOW_MOTION_THRESHOLD = 7
-} MOTION_THRESHOLD;
-
-typedef enum {
   USE_FULL_RD = 0,
+  USE_FAST_RD,
   USE_LARGESTALL,
-  USE_TX_8X8
 } TX_SIZE_SEARCH_METHOD;
 
 typedef enum {
@@ -167,25 +155,33 @@ typedef enum {
 } MODE_SEARCH_SKIP_LOGIC;
 
 typedef enum {
-  FLAG_SKIP_EIGHTTAP_REGULAR = 1 << EIGHTTAP_REGULAR,
-  FLAG_SKIP_EIGHTTAP_SMOOTH = 1 << EIGHTTAP_SMOOTH,
-  FLAG_SKIP_MULTITAP_SHARP = 1 << MULTITAP_SHARP,
-} INTERP_FILTER_MASK;
-
-typedef enum {
   NO_PRUNE = 0,
   // eliminates one tx type in vertical and horizontal direction
   PRUNE_ONE = 1,
-#if CONFIG_EXT_TX
   // eliminates two tx types in each direction
   PRUNE_TWO = 2,
-#endif
+  // adaptively prunes the least perspective tx types out of all 16
+  // (tuned to provide negligible quality loss)
+  PRUNE_2D_ACCURATE = 3,
+  // similar, but applies much more aggressive pruning to get better speed-up
+  PRUNE_2D_FAST = 4,
 } TX_TYPE_PRUNE_MODE;
 
 typedef struct {
   TX_TYPE_PRUNE_MODE prune_mode;
   int fast_intra_tx_type_search;
   int fast_inter_tx_type_search;
+
+  // Use a skip flag prediction model to detect blocks with skip = 1 early
+  // and avoid doing full TX type search for such blocks.
+  int use_skip_flag_prediction;
+
+  // Threshold used by the ML based method to predict TX block split decisions.
+  int ml_tx_split_thresh;
+
+  // skip remaining transform type search when we found the rdcost of skip is
+  // better than applying transform
+  int skip_tx_search;
 } TX_TYPE_SEARCH;
 
 typedef enum {
@@ -197,16 +193,6 @@ typedef enum {
 
   REFERENCE_PARTITION
 } PARTITION_SEARCH_TYPE;
-
-typedef enum {
-  // Does a dry run to see if any of the contexts need to be updated or not,
-  // before the final run.
-  TWO_LOOP = 0,
-
-  // No dry run, also only half the coef contexts and bands are updated.
-  // The rest are not updated at all.
-  ONE_LOOP_REDUCED = 1
-} FAST_COEFF_UPDATE;
 
 typedef struct MV_SPEED_FEATURES {
   // Motion search method (Diamond, NSTEP, Hex, Big Diamond, Square, etc).
@@ -231,9 +217,6 @@ typedef struct MV_SPEED_FEATURES {
 
   // Control when to stop subpel search
   int subpel_force_stop;
-
-  // This variable sets the step_param used in full pel motion search.
-  int fullpel_search_step_param;
 } MV_SPEED_FEATURES;
 
 #define MAX_MESH_STEP 4
@@ -243,13 +226,29 @@ typedef struct MESH_PATTERN {
   int interval;
 } MESH_PATTERN;
 
-#if CONFIG_GLOBAL_MOTION
 typedef enum {
   GM_FULL_SEARCH,
   GM_REDUCED_REF_SEARCH,
   GM_DISABLE_SEARCH
 } GM_SEARCH_TYPE;
-#endif  // CONFIG_GLOBAL_MOTION
+
+typedef enum {
+  GM_ERRORADV_TR_0,
+  GM_ERRORADV_TR_1,
+  GM_ERRORADV_TR_2,
+  GM_ERRORADV_TR_TYPES,
+} GM_ERRORADV_TYPE;
+
+typedef enum {
+  NO_TRELLIS_OPT,         // No trellis optimization
+  FULL_TRELLIS_OPT,       // Trellis optimization in all stages
+  FINAL_PASS_TRELLIS_OPT  // Trellis optimization in only the final encode pass
+} TRELLIS_OPT_TYPE;
+
+typedef enum {
+  FULL_TXFM_RD,
+  LOW_TXFM_RD,
+} TXFM_RD_MODEL;
 
 typedef struct SPEED_FEATURES {
   MV_SPEED_FEATURES mv;
@@ -259,8 +258,11 @@ typedef struct SPEED_FEATURES {
 
   RECODE_LOOP_TYPE recode_loop;
 
-  // Trellis (dynamic programming) optimization of quantized values (+1, 0).
-  int optimize_coefficients;
+  // Trellis (dynamic programming) optimization of quantized values
+  TRELLIS_OPT_TYPE optimize_coefficients;
+
+  // Global motion warp error threshold
+  GM_ERRORADV_TYPE gm_erroradv_type;
 
   // Always set to 0. If on it enables 0 cost background transmission
   // (except for the initial transmission of the segmentation). The feature is
@@ -268,6 +270,14 @@ typedef struct SPEED_FEATURES {
   // backgrounds very to cheap to encode, and the segmentation we have
   // adds overhead.
   int static_segmentation;
+
+  // Limit the inter mode tested in the RD loop
+  int reduce_inter_modes;
+
+  // Do not compute the global motion parameters for a LAST2_FRAME or
+  // LAST3_FRAME if the GOLDEN_FRAME is closer and it has a non identity
+  // global model.
+  int selective_ref_gm;
 
   // If 1 we iterate finding a best reference for 2 ref frames together - via
   // a log search that iterates 4 times (check around mv for last for best
@@ -279,36 +289,87 @@ typedef struct SPEED_FEATURES {
   // mode to be evaluated. A high value means we will be faster.
   int adaptive_rd_thresh;
 
-  // Coefficient probability model approximation step size
-  int coeff_prob_appx_step;
-
-  // The threshold is to determine how slow the motino is, it is used when
-  // use_lastframe_partitioning is set to LAST_FRAME_PARTITION_LOW_MOTION
-  MOTION_THRESHOLD lf_motion_threshold;
-
   // Determine which method we use to determine transform size. We can choose
   // between options like full rd, largest for prediction size, largest
   // for intra and model coefs for the rest.
   TX_SIZE_SEARCH_METHOD tx_size_search_method;
 
-  // After looking at the first set of modes (set by index here), skip
-  // checking modes for reference frames that don't match the reference frame
-  // of the best so far.
-  int mode_skip_start;
+  // Init search depth for square and rectangular transform partitions.
+  // Values:
+  // 0 - search full tree, 1: search 1 level, 2: search the highest level only
+  int inter_tx_size_search_init_depth_sqr;
+  int inter_tx_size_search_init_depth_rect;
+  int intra_tx_size_search_init_depth_sqr;
+  int intra_tx_size_search_init_depth_rect;
+  // If any dimension of a coding block size above 64, always search the
+  // largest transform only, since the largest transform block size is 64x64.
+  int tx_size_search_lgr_block;
 
   PARTITION_SEARCH_TYPE partition_search_type;
 
   TX_TYPE_SEARCH tx_type_search;
 
+  // Skip split transform block partition when the collocated bigger block
+  // is selected as all zero coefficients.
+  int txb_split_cap;
+
+  // Shortcut the transform block partition and type search when the target
+  // rdcost is relatively lower.
+  // Values are 0 (not used) , or 1 - 2 with progressively increasing
+  // aggressiveness
+  int adaptive_txb_search_level;
+
+  // Prune level for tx_size_type search for inter based on rd model
+  // 0: no pruning
+  // 1-2: progressively increasing aggressiveness of pruning
+  int model_based_prune_tx_search_level;
+
+  // Model based breakout after interpolation filter search
+  // 0: no breakout
+  // 1: use model based rd breakout
+  int model_based_post_interp_filter_breakout;
+
   // Used if partition_search_type = FIXED_SIZE_PARTITION
   BLOCK_SIZE always_this_block_size;
 
-  // Skip rectangular partition test when partition type none gives better
-  // rd than partition type split.
-  int less_rectangular_check;
+  // Drop less likely to be picked reference frames in the RD search.
+  // Has three levels for now: 0, 1 and 2, where higher levels prune more
+  // aggressively than lower ones. (0 means no pruning).
+  int selective_ref_frame;
 
-  // Disable testing non square partitions. (eg 16x32)
-  int use_square_partition_only;
+  // Prune extended partition types search
+  // Can take values 0 - 2, 0 referring to no pruning, and 1 - 2 increasing
+  // aggressiveness of pruning in order.
+  int prune_ext_partition_types_search_level;
+
+  // Use a ML model to prune horz and vert partitions
+  int ml_prune_rect_partition;
+
+  // Use a ML model to prune horz_a, horz_b, vert_a and vert_b partitions.
+  int ml_prune_ab_partition;
+
+  // Use a ML model to prune horz4 and vert4 partitions.
+  int ml_prune_4_partition;
+
+  int fast_cdef_search;
+
+  // 2-pass coding block partition search
+  int two_pass_partition_search;
+
+  // Use the mode decisions made in the initial partition search to prune mode
+  // candidates, e.g. ref frames.
+  int mode_pruning_based_on_two_pass_partition_search;
+
+  // Skip rectangular partition test when partition type none gives better
+  // rd than partition type split. Can take values 0 - 2, 0 referring to no
+  // skipping, and 1 - 2 increasing aggressiveness of skipping in order.
+  int less_rectangular_check_level;
+
+  // Use square partition only beyond this block size.
+  BLOCK_SIZE use_square_partition_only_threshold;
+
+  // Prune reference frames for rectangular partitions.
+  int prune_ref_frame_for_rect_partitions;
 
   // Sets min and max partition sizes for this superblock based on the
   // same superblock in last encoded frame, and the left and above neighbor.
@@ -325,10 +386,6 @@ typedef struct SPEED_FEATURES {
   // Whether or not we allow partitions one smaller or one greater than the last
   // frame's partitioning. Only used if use_lastframe_partitioning is set.
   int adjust_partitioning_from_last_frame;
-
-  // How frequently we re do the partitioning from scratch. Only used if
-  // use_lastframe_partitioning is set.
-  int last_partitioning_redo_frequency;
 
   // Disables sub 8x8 blocksizes in different scenarios: Choices are to disable
   // it always, to allow it for only Last frame and Intra, disable it for all
@@ -352,8 +409,6 @@ typedef struct SPEED_FEATURES {
   // Pattern to be used for any exhaustive mesh searches.
   MESH_PATTERN mesh_patterns[MAX_MESH_STEP];
 
-  int schedule_mode_search;
-
   // Allows sub 8x8 modes to use the prediction filter that was determined
   // best for 8x8 mode. If set to 0 we always re check all the filters for
   // sizes less than 8x8, 1 means we check all filter modes if no 8x8 filter
@@ -363,19 +418,9 @@ typedef struct SPEED_FEATURES {
   // Adaptive prediction mode search
   int adaptive_mode_search;
 
-  // Chessboard pattern prediction filter type search
-  int cb_pred_filter_search;
-
   int cb_partition_search;
 
   int alt_ref_search_fp;
-
-  // Use finer quantizer in every other few frames that run variable block
-  // partition type search.
-  int force_frame_boost;
-
-  // Maximally allowed base quantization index fluctuation.
-  int max_delta_qindex;
 
   // Implements various heuristics to skip searching modes
   // The heuristics selected are based on  flags
@@ -386,38 +431,19 @@ typedef struct SPEED_FEATURES {
   // Choose a very large value (UINT_MAX) to use 8-tap always
   unsigned int disable_filter_search_var_thresh;
 
-#if CONFIG_EXT_INTER
   // A source variance threshold below which wedge search is disabled
   unsigned int disable_wedge_search_var_thresh;
 
   // Whether fast wedge sign estimate is used
   int fast_wedge_sign_estimate;
-#endif  // CONFIG_EXT_INTER
 
   // These bit masks allow you to enable or disable intra modes for each
   // transform size separately.
   int intra_y_mode_mask[TX_SIZES];
   int intra_uv_mode_mask[TX_SIZES];
 
-  // These bit masks allow you to enable or disable intra modes for each
-  // prediction block size separately.
-  int intra_y_mode_bsize_mask[BLOCK_SIZES];
-
-  // This variable enables an early break out of mode testing if the model for
-  // rd built from the prediction signal indicates a value that's much
-  // higher than the best rd we've seen so far.
-  int use_rd_breakout;
-
   // This feature controls how the loop filter level is determined.
   LPF_PICK_METHOD lpf_pick;
-
-  // This feature limits the number of coefficients updates we actually do
-  // by only looking at counts from 1/2 the bands.
-  FAST_COEFF_UPDATE use_fast_coef_updates;
-
-  // A binary mask indicating if NEARESTMV, NEARMV, ZEROMV, NEWMV
-  // modes are used in order from LSB to MSB for each BLOCK_SIZE.
-  int inter_mode_mask[BLOCK_SIZES];
 
   // This feature controls whether we do the expensive context update and
   // calculation in the rd coefficient costing loop.
@@ -432,31 +458,12 @@ typedef struct SPEED_FEATURES {
   // TODO(aconverse): Fold this into one of the other many mode skips
   BLOCK_SIZE max_intra_bsize;
 
-  // The frequency that we check if
-  // FIXED_PARTITION search type should be used.
-  int search_type_check_frequency;
-
-  // When partition is pre-set, the inter prediction result from pick_inter_mode
-  // can be reused in final block encoding process. It is enabled only for real-
-  // time mode speed 6.
-  int reuse_inter_pred_sby;
-
-  // default interp filter choice
-  InterpFilter default_interp_filter;
-
-  // Early termination in transform size search, which only applies while
-  // tx_size_search_method is USE_FULL_RD.
-  int tx_size_search_breakout;
-
-  // adaptive interp_filter search to allow skip of certain filter types.
-  int adaptive_interp_filter_search;
-
-  // mask for skip evaluation of certain interp_filter type.
-  INTERP_FILTER_MASK interp_filter_search_mask;
-
   // Partition search early breakout thresholds.
   int64_t partition_search_breakout_dist_thr;
   int partition_search_breakout_rate_thr;
+
+  // Thresholds for ML based partition search breakout.
+  int ml_partition_search_breakout_thresh[PARTITION_BLOCK_SIZES];
 
   // Allow skipping partition search for still image frame
   int allow_partition_search_skip;
@@ -464,16 +471,89 @@ typedef struct SPEED_FEATURES {
   // Fast approximation of av1_model_rd_from_var_lapndz
   int simple_model_rd_from_var;
 
-  // Do sub-pixel search in up-sampled reference frames
-  int use_upsampled_references;
+  // If true, sub-pixel search uses the exact convolve function used for final
+  // encoding and decoding; otherwise, it uses bilinear interpolation.
+  int use_accurate_subpel_search;
 
   // Whether to compute distortion in the image domain (slower but
   // more accurate), or in the transform domain (faster but less acurate).
+  // 0: use image domain
+  // 1: use transform domain in tx_type search, and use image domain for
+  // RD_STATS
+  // 2: use transform domain
   int use_transform_domain_distortion;
 
-#if CONFIG_GLOBAL_MOTION
   GM_SEARCH_TYPE gm_search_type;
-#endif  // CONFIG_GLOBAL_MOTION
+
+  // whether to disable the global motion recode loop
+  int gm_disable_recode;
+
+  // Do limited interpolation filter search for dual filters, since best choice
+  // usually includes EIGHTTAP_REGULAR.
+  int use_fast_interpolation_filter_search;
+
+  // Save results of interpolation_filter_search for a block
+  // Check mv and ref_frames before search, if they are same with previous
+  // saved results, it can be skipped.
+  int skip_repeat_interpolation_filter_search;
+
+  // Use a hash table to store previously computed optimized qcoeffs from
+  // expensive calls to optimize_txb.
+  int use_hash_based_trellis;
+
+  // flag to drop some ref frames in compound motion search
+  int drop_ref;
+
+  // flag to allow skipping intra mode for inter frame prediction
+  int skip_intra_in_interframe;
+
+  // Use hash table to store intra(keyframe only) txb transform search results
+  // to avoid repeated search on the same residue signal.
+  int use_intra_txb_hash;
+
+  // Use hash table to store inter txb transform search results
+  // to avoid repeated search on the same residue signal.
+  int use_inter_txb_hash;
+
+  // Use hash table to store macroblock RD search results
+  // to avoid repeated search on the same residue signal.
+  int use_mb_rd_hash;
+
+  // Calculate RD cost before doing optimize_b, and skip if the cost is large.
+  int optimize_b_precheck;
+
+  // Use model rd instead of transform search in jnt_comp
+  int jnt_comp_fast_tx_search;
+
+  // Skip mv search in jnt_comp
+  int jnt_comp_skip_mv_search;
+
+  // Decoder side speed feature to add penalty for use of dual-sgr filters.
+  // Takes values 0 - 10, 0 indicating no penalty and each additional level
+  // adding a penalty of 1%
+  int dual_sgr_penalty_level;
+
+  // Dynamically estimate final rd from prediction error and mode cost
+  int inter_mode_rd_model_estimation;
+
+  // Skip some ref frames in compound motion search by single motion search
+  // result. Has three levels for now: 0 referring to no skipping, and 1 - 3
+  // increasing aggressiveness of skipping in order.
+  // Note: The search order might affect the result. It is better to search same
+  // single inter mode as a group.
+  int prune_comp_search_by_single_result;
+
+  // Reuse the inter_intra_mode search result from NEARESTMV mode to other
+  // single ref modes
+  int reuse_inter_intra_mode;
+
+  // Set the full pixel search level of obmc
+  // 0: obmc_full_pixel_diamond
+  // 1: obmc_refining_search_sad (faster)
+  int obmc_full_pixel_search_level;
+
+  // flag to skip NEWMV mode in drl if the motion search result is the same
+  int skip_repeated_newmv;
 } SPEED_FEATURES;
 
 struct AV1_COMP;
@@ -485,4 +565,4 @@ void av1_set_speed_features_framesize_dependent(struct AV1_COMP *cpi);
 }  // extern "C"
 #endif
 
-#endif  // AV1_ENCODER_SPEED_FEATURES_H_
+#endif  // AOM_AV1_ENCODER_SPEED_FEATURES_H_

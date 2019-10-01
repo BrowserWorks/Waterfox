@@ -346,9 +346,15 @@ cglobal filter_block1d16_%1, 6, 6, 14, LOCAL_VARS_SIZE, \
     psraw         m0, 7
     psraw         m4, 7
 %ifidn %1, h8_add_src
+%if ARCH_X86=1 && CONFIG_PIC=1
+    pcmpeqb       m2, m2                  ;all ones
+    psrlw         m2, 8                   ;even_byte_mask
+%else
+    mova          m2, [GLOBAL(even_byte_mask)]
+%endif
     movu          m5, [srcq]
     mova          m7, m5
-    pand          m5, [even_byte_mask]
+    pand          m5, m2
     psrlw         m7, 8
     paddsw        m0, m5
     paddsw        m4, m7
@@ -369,17 +375,8 @@ cglobal filter_block1d16_%1, 6, 6, 14, LOCAL_VARS_SIZE, \
 
 INIT_XMM ssse3
 SUBPIX_HFILTER16 h8
-SUBPIX_HFILTER16 h8_avg
 SUBPIX_HFILTER8  h8
-SUBPIX_HFILTER8  h8_avg
 SUBPIX_HFILTER4  h8
-SUBPIX_HFILTER4  h8_avg
-
-%if CONFIG_LOOP_RESTORATION
-SUBPIX_HFILTER16 h8_add_src
-SUBPIX_HFILTER8  h8_add_src
-SUBPIX_HFILTER4  h8_add_src
-%endif
 
 ;-------------------------------------------------------------------------------
 
@@ -869,15 +866,5 @@ cglobal filter_block1d16_%1, 6, NUM_GENERAL_REG_USED, 16, LOCAL_VARS_SIZE, \
 
 INIT_XMM ssse3
 SUBPIX_VFILTER16     v8
-SUBPIX_VFILTER16 v8_avg
 SUBPIX_VFILTER       v8, 8
-SUBPIX_VFILTER   v8_avg, 8
 SUBPIX_VFILTER       v8, 4
-SUBPIX_VFILTER   v8_avg, 4
-
-%if (ARCH_X86 || X86_SUBPIX_VFILTER_PREFER_SLOW_CELERON) && \
-    CONFIG_LOOP_RESTORATION
-SUBPIX_VFILTER16 v8_add_src
-SUBPIX_VFILTER   v8_add_src, 8
-SUBPIX_VFILTER   v8_add_src, 4
-%endif

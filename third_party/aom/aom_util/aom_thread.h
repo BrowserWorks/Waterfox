@@ -14,10 +14,10 @@
 // Original source:
 //  https://chromium.googlesource.com/webm/libwebp
 
-#ifndef AOM_THREAD_H_
-#define AOM_THREAD_H_
+#ifndef AOM_AOM_UTIL_AOM_THREAD_H_
+#define AOM_AOM_UTIL_AOM_THREAD_H_
 
-#include "./aom_config.h"
+#include "config/aom_config.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -164,6 +164,23 @@ static INLINE int pthread_cond_signal(pthread_cond_t *const condition) {
   if (WaitForSingleObject(condition->waiting_sem_, 0) == WAIT_OBJECT_0) {
     // a thread is waiting in pthread_cond_wait: allow it to be notified
     ok = SetEvent(condition->signal_event_);
+    // wait until the event is consumed so the signaler cannot consume
+    // the event via its own pthread_cond_wait.
+    ok &= (WaitForSingleObject(condition->received_sem_, INFINITE) !=
+           WAIT_OBJECT_0);
+  }
+#endif
+  return !ok;
+}
+
+static INLINE int pthread_cond_broadcast(pthread_cond_t *const condition) {
+  int ok = 1;
+#ifdef USE_WINDOWS_CONDITION_VARIABLE
+  WakeAllConditionVariable(condition);
+#else
+  while (WaitForSingleObject(condition->waiting_sem_, 0) == WAIT_OBJECT_0) {
+    // a thread is waiting in pthread_cond_wait: allow it to be notified
+    ok &= SetEvent(condition->signal_event_);
     // wait until the event is consumed so the signaler cannot consume
     // the event via its own pthread_cond_wait.
     ok &= (WaitForSingleObject(condition->received_sem_, INFINITE) !=
@@ -352,7 +369,8 @@ typedef enum {
 } AVxWorkerStatus;
 
 // Function to be called by the worker thread. Takes two opaque pointers as
-// arguments (data1 and data2), and should return false in case of error.
+// arguments (data1 and data2). Should return true on success and return false
+// in case of error.
 typedef int (*AVxWorkerHook)(void *, void *);
 
 // Platform-dependent implementation details for the worker.
@@ -365,7 +383,7 @@ typedef struct {
   AVxWorkerHook hook;  // hook to call
   void *data1;         // first argument passed to 'hook'
   void *data2;         // second argument passed to 'hook'
-  int had_error;       // return value of the last call to 'hook'
+  int had_error;       // true if a call to 'hook' returned false
 } AVxWorker;
 
 // The interface for all thread-worker related functions. All these functions
@@ -409,4 +427,4 @@ const AVxWorkerInterface *aom_get_worker_interface(void);
 }  // extern "C"
 #endif
 
-#endif  // AOM_THREAD_H_
+#endif  // AOM_AOM_UTIL_AOM_THREAD_H_

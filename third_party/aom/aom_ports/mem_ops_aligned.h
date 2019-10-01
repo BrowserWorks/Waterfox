@@ -9,8 +9,8 @@
  * PATENTS file, you can obtain it at www.aomedia.org/license/patent.
  */
 
-#ifndef AOM_PORTS_MEM_OPS_ALIGNED_H_
-#define AOM_PORTS_MEM_OPS_ALIGNED_H_
+#ifndef AOM_AOM_PORTS_MEM_OPS_ALIGNED_H_
+#define AOM_AOM_PORTS_MEM_OPS_ALIGNED_H_
 
 #include "aom/aom_integer.h"
 
@@ -91,7 +91,8 @@
     *mem = (uint##sz##_t)raw;                                           \
   }
 
-#include "aom_config.h"
+#include "config/aom_config.h"
+
 #if CONFIG_BIG_ENDIAN
 #define mem_get_be_aligned_generic(sz) mem_get_ne_aligned_generic(be, sz)
 #define mem_get_sbe_aligned_generic(sz) mem_get_sne_aligned_generic(be, sz)
@@ -169,4 +170,4 @@ mem_put_le_aligned_generic(32)
 #undef swap_endian_32_se
 /* clang-format on */
 
-#endif  // AOM_PORTS_MEM_OPS_ALIGNED_H_
+#endif  // AOM_AOM_PORTS_MEM_OPS_ALIGNED_H_

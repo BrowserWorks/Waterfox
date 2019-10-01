@@ -9,10 +9,11 @@
  * PATENTS file, you can obtain it at www.aomedia.org/license/patent.
  */
 
-#ifndef AV1_COMMON_PRED_COMMON_H_
-#define AV1_COMMON_PRED_COMMON_H_
+#ifndef AOM_AV1_COMMON_PRED_COMMON_H_
+#define AOM_AV1_COMMON_PRED_COMMON_H_
 
 #include "av1/common/blockd.h"
+#include "av1/common/mvref_common.h"
 #include "av1/common/onyxc_int.h"
 #include "aom_dsp/aom_dsp_common.h"
 
@@ -39,233 +40,321 @@ static INLINE int get_segment_id(const AV1_COMMON *const cm,
   return segment_id;
 }
 
+static INLINE int av1_get_spatial_seg_pred(const AV1_COMMON *const cm,
+                                           const MACROBLOCKD *const xd,
+                                           int mi_row, int mi_col,
+                                           int *cdf_index) {
+  int prev_ul = -1;  // top left segment_id
+  int prev_l = -1;   // left segment_id
+  int prev_u = -1;   // top segment_id
+  if ((xd->up_available) && (xd->left_available)) {
+    prev_ul = get_segment_id(cm, cm->current_frame_seg_map, BLOCK_4X4,
+                             mi_row - 1, mi_col - 1);
+  }
+  if (xd->up_available) {
+    prev_u = get_segment_id(cm, cm->current_frame_seg_map, BLOCK_4X4,
+                            mi_row - 1, mi_col - 0);
+  }
+  if (xd->left_available) {
+    prev_l = get_segment_id(cm, cm->current_frame_seg_map, BLOCK_4X4,
+                            mi_row - 0, mi_col - 1);
+  }
+
+  // Pick CDF index based on number of matching/out-of-bounds segment IDs.
+  if (prev_ul < 0 || prev_u < 0 || prev_l < 0) /* Edge case */
+    *cdf_index = 0;
+  else if ((prev_ul == prev_u) && (prev_ul == prev_l))
+    *cdf_index = 2;
+  else if ((prev_ul == prev_u) || (prev_ul == prev_l) || (prev_u == prev_l))
+    *cdf_index = 1;
+  else
+    *cdf_index = 0;
+
+  // If 2 or more are identical returns that as predictor, otherwise prev_l.
+  if (prev_u == -1)  // edge case
+    return prev_l == -1 ? 0 : prev_l;
+  if (prev_l == -1)  // edge case
+    return prev_u;
+  return (prev_ul == prev_u) ? prev_u : prev_l;
+}
+
 static INLINE int av1_get_pred_context_seg_id(const MACROBLOCKD *xd) {
-  const MODE_INFO *const above_mi = xd->above_mi;
-  const MODE_INFO *const left_mi = xd->left_mi;
-  const int above_sip =
-      (above_mi != NULL) ? above_mi->mbmi.seg_id_predicted : 0;
-  const int left_sip = (left_mi != NULL) ? left_mi->mbmi.seg_id_predicted : 0;
+  const MB_MODE_INFO *const above_mi = xd->above_mbmi;
+  const MB_MODE_INFO *const left_mi = xd->left_mbmi;
+  const int above_sip = (above_mi != NULL) ? above_mi->seg_id_predicted : 0;
+  const int left_sip = (left_mi != NULL) ? left_mi->seg_id_predicted : 0;
 
   return above_sip + left_sip;
 }
 
-static INLINE aom_prob av1_get_pred_prob_seg_id(
-    const struct segmentation_probs *segp, const MACROBLOCKD *xd) {
-  return segp->pred_probs[av1_get_pred_context_seg_id(xd)];
+static INLINE int get_comp_index_context(const AV1_COMMON *cm,
+                                         const MACROBLOCKD *xd) {
+  MB_MODE_INFO *mbmi = xd->mi[0];
+  int bck_idx = cm->frame_refs[mbmi->ref_frame[0] - LAST_FRAME].idx;
+  int fwd_idx = cm->frame_refs[mbmi->ref_frame[1] - LAST_FRAME].idx;
+  int bck_frame_index = 0, fwd_frame_index = 0;
+  int cur_frame_index = cm->cur_frame->cur_frame_offset;
+
+  if (bck_idx >= 0)
+    bck_frame_index = cm->buffer_pool->frame_bufs[bck_idx].cur_frame_offset;
+
+  if (fwd_idx >= 0)
+    fwd_frame_index = cm->buffer_pool->frame_bufs[fwd_idx].cur_frame_offset;
+  int fwd = abs(get_relative_dist(cm, fwd_frame_index, cur_frame_index));
+  int bck = abs(get_relative_dist(cm, cur_frame_index, bck_frame_index));
+
+  const MB_MODE_INFO *const above_mi = xd->above_mbmi;
+  const MB_MODE_INFO *const left_mi = xd->left_mbmi;
+
+  int above_ctx = 0, left_ctx = 0;
+  const int offset = (fwd == bck);
+
+  if (above_mi) {
+    if (has_second_ref(above_mi))
+      above_ctx = above_mi->compound_idx;
+    else if (above_mi->ref_frame[0] == ALTREF_FRAME)
+      above_ctx = 1;
+  }
+
+  if (left_mi) {
+    if (has_second_ref(left_mi))
+      left_ctx = left_mi->compound_idx;
+    else if (left_mi->ref_frame[0] == ALTREF_FRAME)
+      left_ctx = 1;
+  }
+
+  return above_ctx + left_ctx + 3 * offset;
+}
+
+static INLINE int get_comp_group_idx_context(const MACROBLOCKD *xd) {
+  const MB_MODE_INFO *const above_mi = xd->above_mbmi;
+  const MB_MODE_INFO *const left_mi = xd->left_mbmi;
+  int above_ctx = 0, left_ctx = 0;
+
+  if (above_mi) {
+    if (has_second_ref(above_mi))
+      above_ctx = above_mi->comp_group_idx;
+    else if (above_mi->ref_frame[0] == ALTREF_FRAME)
+      above_ctx = 3;
+  }
+  if (left_mi) {
+    if (has_second_ref(left_mi))
+      left_ctx = left_mi->comp_group_idx;
+    else if (left_mi->ref_frame[0] == ALTREF_FRAME)
+      left_ctx = 3;
+  }
+
+  return AOMMIN(5, above_ctx + left_ctx);
+}
+
+static INLINE aom_cdf_prob *av1_get_pred_cdf_seg_id(
+    struct segmentation_probs *segp, const MACROBLOCKD *xd) {
+  return segp->pred_cdf[av1_get_pred_context_seg_id(xd)];
+}
+
+static INLINE int av1_get_skip_mode_context(const MACROBLOCKD *xd) {
+  const MB_MODE_INFO *const above_mi = xd->above_mbmi;
+  const MB_MODE_INFO *const left_mi = xd->left_mbmi;
+  const int above_skip_mode = above_mi ? above_mi->skip_mode : 0;
+  const int left_skip_mode = left_mi ? left_mi->skip_mode : 0;
+  return above_skip_mode + left_skip_mode;
 }
 
 static INLINE int av1_get_skip_context(const MACROBLOCKD *xd) {
-  const MODE_INFO *const above_mi = xd->above_mi;
-  const MODE_INFO *const left_mi = xd->left_mi;
-  const int above_skip = (above_mi != NULL) ? above_mi->mbmi.skip : 0;
-  const int left_skip = (left_mi != NULL) ? left_mi->mbmi.skip : 0;
+  const MB_MODE_INFO *const above_mi = xd->above_mbmi;
+  const MB_MODE_INFO *const left_mi = xd->left_mbmi;
+  const int above_skip = above_mi ? above_mi->skip : 0;
+  const int left_skip = left_mi ? left_mi->skip : 0;
   return above_skip + left_skip;
 }
 
-static INLINE aom_prob av1_get_skip_prob(const AV1_COMMON *cm,
-                                         const MACROBLOCKD *xd) {
-  return cm->fc->skip_probs[av1_get_skip_context(xd)];
-}
-
-#if CONFIG_DUAL_FILTER
 int av1_get_pred_context_switchable_interp(const MACROBLOCKD *xd, int dir);
-#else
-int av1_get_pred_context_switchable_interp(const MACROBLOCKD *xd);
-#endif
 
-#if CONFIG_EXT_INTRA
-#if CONFIG_INTRA_INTERP
-int av1_get_pred_context_intra_interp(const MACROBLOCKD *xd);
-#endif  // CONFIG_INTRA_INTERP
-#endif  // CONFIG_EXT_INTRA
-
-#if CONFIG_PALETTE && CONFIG_PALETTE_DELTA_ENCODING
 // Get a list of palette base colors that are used in the above and left blocks,
 // referred to as "color cache". The return value is the number of colors in the
 // cache (<= 2 * PALETTE_MAX_SIZE). The color values are stored in "cache"
 // in ascending order.
-int av1_get_palette_cache(const MODE_INFO *above_mi, const MODE_INFO *left_mi,
-                          int plane, uint16_t *cache);
-#endif  // CONFIG_PALETTE && CONFIG_PALETTE_DELTA_ENCODING
+int av1_get_palette_cache(const MACROBLOCKD *const xd, int plane,
+                          uint16_t *cache);
+
+static INLINE int av1_get_palette_bsize_ctx(BLOCK_SIZE bsize) {
+  return num_pels_log2_lookup[bsize] - num_pels_log2_lookup[BLOCK_8X8];
+}
+
+static INLINE int av1_get_palette_mode_ctx(const MACROBLOCKD *xd) {
+  const MB_MODE_INFO *const above_mi = xd->above_mbmi;
+  const MB_MODE_INFO *const left_mi = xd->left_mbmi;
+  int ctx = 0;
+  if (above_mi) ctx += (above_mi->palette_mode_info.palette_size[0] > 0);
+  if (left_mi) ctx += (left_mi->palette_mode_info.palette_size[0] > 0);
+  return ctx;
+}
 
 int av1_get_intra_inter_context(const MACROBLOCKD *xd);
 
-static INLINE aom_prob av1_get_intra_inter_prob(const AV1_COMMON *cm,
-                                                const MACROBLOCKD *xd) {
-  return cm->fc->intra_inter_prob[av1_get_intra_inter_context(xd)];
+int av1_get_reference_mode_context(const MACROBLOCKD *xd);
+
+static INLINE aom_cdf_prob *av1_get_reference_mode_cdf(const MACROBLOCKD *xd) {
+  return xd->tile_ctx->comp_inter_cdf[av1_get_reference_mode_context(xd)];
 }
 
-int av1_get_reference_mode_context(const AV1_COMMON *cm, const MACROBLOCKD *xd);
+int av1_get_comp_reference_type_context(const MACROBLOCKD *xd);
 
-static INLINE aom_prob av1_get_reference_mode_prob(const AV1_COMMON *cm,
-                                                   const MACROBLOCKD *xd) {
-  return cm->fc->comp_inter_prob[av1_get_reference_mode_context(cm, xd)];
+// == Uni-directional contexts ==
+
+int av1_get_pred_context_uni_comp_ref_p(const MACROBLOCKD *xd);
+
+int av1_get_pred_context_uni_comp_ref_p1(const MACROBLOCKD *xd);
+
+int av1_get_pred_context_uni_comp_ref_p2(const MACROBLOCKD *xd);
+
+static INLINE aom_cdf_prob *av1_get_comp_reference_type_cdf(
+    const MACROBLOCKD *xd) {
+  const int pred_context = av1_get_comp_reference_type_context(xd);
+  return xd->tile_ctx->comp_ref_type_cdf[pred_context];
 }
 
-int av1_get_pred_context_comp_ref_p(const AV1_COMMON *cm,
-                                    const MACROBLOCKD *xd);
-
-static INLINE aom_prob av1_get_pred_prob_comp_ref_p(const AV1_COMMON *cm,
-                                                    const MACROBLOCKD *xd) {
-  const int pred_context = av1_get_pred_context_comp_ref_p(cm, xd);
-  return cm->fc->comp_ref_prob[pred_context][0];
+static INLINE aom_cdf_prob *av1_get_pred_cdf_uni_comp_ref_p(
+    const MACROBLOCKD *xd) {
+  const int pred_context = av1_get_pred_context_uni_comp_ref_p(xd);
+  return xd->tile_ctx->uni_comp_ref_cdf[pred_context][0];
 }
 
-#if CONFIG_EXT_REFS
-int av1_get_pred_context_comp_ref_p1(const AV1_COMMON *cm,
-                                     const MACROBLOCKD *xd);
-
-static INLINE aom_prob av1_get_pred_prob_comp_ref_p1(const AV1_COMMON *cm,
-                                                     const MACROBLOCKD *xd) {
-  const int pred_context = av1_get_pred_context_comp_ref_p1(cm, xd);
-  return cm->fc->comp_ref_prob[pred_context][1];
+static INLINE aom_cdf_prob *av1_get_pred_cdf_uni_comp_ref_p1(
+    const MACROBLOCKD *xd) {
+  const int pred_context = av1_get_pred_context_uni_comp_ref_p1(xd);
+  return xd->tile_ctx->uni_comp_ref_cdf[pred_context][1];
 }
 
-int av1_get_pred_context_comp_ref_p2(const AV1_COMMON *cm,
-                                     const MACROBLOCKD *xd);
-
-static INLINE aom_prob av1_get_pred_prob_comp_ref_p2(const AV1_COMMON *cm,
-                                                     const MACROBLOCKD *xd) {
-  const int pred_context = av1_get_pred_context_comp_ref_p2(cm, xd);
-  return cm->fc->comp_ref_prob[pred_context][2];
+static INLINE aom_cdf_prob *av1_get_pred_cdf_uni_comp_ref_p2(
+    const MACROBLOCKD *xd) {
+  const int pred_context = av1_get_pred_context_uni_comp_ref_p2(xd);
+  return xd->tile_ctx->uni_comp_ref_cdf[pred_context][2];
 }
 
-int av1_get_pred_context_comp_bwdref_p(const AV1_COMMON *cm,
-                                       const MACROBLOCKD *xd);
+// == Bi-directional contexts ==
 
-static INLINE aom_prob av1_get_pred_prob_comp_bwdref_p(const AV1_COMMON *cm,
-                                                       const MACROBLOCKD *xd) {
-  const int pred_context = av1_get_pred_context_comp_bwdref_p(cm, xd);
-  return cm->fc->comp_bwdref_prob[pred_context][0];
+int av1_get_pred_context_comp_ref_p(const MACROBLOCKD *xd);
+
+int av1_get_pred_context_comp_ref_p1(const MACROBLOCKD *xd);
+
+int av1_get_pred_context_comp_ref_p2(const MACROBLOCKD *xd);
+
+int av1_get_pred_context_comp_bwdref_p(const MACROBLOCKD *xd);
+
+int av1_get_pred_context_comp_bwdref_p1(const MACROBLOCKD *xd);
+
+static INLINE aom_cdf_prob *av1_get_pred_cdf_comp_ref_p(const MACROBLOCKD *xd) {
+  const int pred_context = av1_get_pred_context_comp_ref_p(xd);
+  return xd->tile_ctx->comp_ref_cdf[pred_context][0];
 }
-#endif  // CONFIG_EXT_REFS
+
+static INLINE aom_cdf_prob *av1_get_pred_cdf_comp_ref_p1(
+    const MACROBLOCKD *xd) {
+  const int pred_context = av1_get_pred_context_comp_ref_p1(xd);
+  return xd->tile_ctx->comp_ref_cdf[pred_context][1];
+}
+
+static INLINE aom_cdf_prob *av1_get_pred_cdf_comp_ref_p2(
+    const MACROBLOCKD *xd) {
+  const int pred_context = av1_get_pred_context_comp_ref_p2(xd);
+  return xd->tile_ctx->comp_ref_cdf[pred_context][2];
+}
+
+static INLINE aom_cdf_prob *av1_get_pred_cdf_comp_bwdref_p(
+    const MACROBLOCKD *xd) {
+  const int pred_context = av1_get_pred_context_comp_bwdref_p(xd);
+  return xd->tile_ctx->comp_bwdref_cdf[pred_context][0];
+}
+
+static INLINE aom_cdf_prob *av1_get_pred_cdf_comp_bwdref_p1(
+    const MACROBLOCKD *xd) {
+  const int pred_context = av1_get_pred_context_comp_bwdref_p1(xd);
+  return xd->tile_ctx->comp_bwdref_cdf[pred_context][1];
+}
+
+// == Single contexts ==
 
 int av1_get_pred_context_single_ref_p1(const MACROBLOCKD *xd);
 
-static INLINE aom_prob av1_get_pred_prob_single_ref_p1(const AV1_COMMON *cm,
-                                                       const MACROBLOCKD *xd) {
-  return cm->fc->single_ref_prob[av1_get_pred_context_single_ref_p1(xd)][0];
-}
-
 int av1_get_pred_context_single_ref_p2(const MACROBLOCKD *xd);
 
-static INLINE aom_prob av1_get_pred_prob_single_ref_p2(const AV1_COMMON *cm,
-                                                       const MACROBLOCKD *xd) {
-  return cm->fc->single_ref_prob[av1_get_pred_context_single_ref_p2(xd)][1];
-}
-
-#if CONFIG_EXT_REFS
 int av1_get_pred_context_single_ref_p3(const MACROBLOCKD *xd);
-
-static INLINE aom_prob av1_get_pred_prob_single_ref_p3(const AV1_COMMON *cm,
-                                                       const MACROBLOCKD *xd) {
-  return cm->fc->single_ref_prob[av1_get_pred_context_single_ref_p3(xd)][2];
-}
 
 int av1_get_pred_context_single_ref_p4(const MACROBLOCKD *xd);
 
-static INLINE aom_prob av1_get_pred_prob_single_ref_p4(const AV1_COMMON *cm,
-                                                       const MACROBLOCKD *xd) {
-  return cm->fc->single_ref_prob[av1_get_pred_context_single_ref_p4(xd)][3];
-}
-
 int av1_get_pred_context_single_ref_p5(const MACROBLOCKD *xd);
 
-static INLINE aom_prob av1_get_pred_prob_single_ref_p5(const AV1_COMMON *cm,
-                                                       const MACROBLOCKD *xd) {
-  return cm->fc->single_ref_prob[av1_get_pred_context_single_ref_p5(xd)][4];
-}
-#endif  // CONFIG_EXT_REFS
+int av1_get_pred_context_single_ref_p6(const MACROBLOCKD *xd);
 
-#if CONFIG_EXT_INTER && CONFIG_COMPOUND_SINGLEREF
-int av1_get_inter_mode_context(const MACROBLOCKD *xd);
-
-static INLINE aom_prob av1_get_inter_mode_prob(const AV1_COMMON *cm,
-                                               const MACROBLOCKD *xd) {
-  return cm->fc->comp_inter_mode_prob[av1_get_inter_mode_context(xd)];
+static INLINE aom_cdf_prob *av1_get_pred_cdf_single_ref_p1(
+    const MACROBLOCKD *xd) {
+  return xd->tile_ctx
+      ->single_ref_cdf[av1_get_pred_context_single_ref_p1(xd)][0];
 }
-#endif  // CONFIG_EXT_INTER && CONFIG_COMPOUND_SINGLEREF
+static INLINE aom_cdf_prob *av1_get_pred_cdf_single_ref_p2(
+    const MACROBLOCKD *xd) {
+  return xd->tile_ctx
+      ->single_ref_cdf[av1_get_pred_context_single_ref_p2(xd)][1];
+}
+static INLINE aom_cdf_prob *av1_get_pred_cdf_single_ref_p3(
+    const MACROBLOCKD *xd) {
+  return xd->tile_ctx
+      ->single_ref_cdf[av1_get_pred_context_single_ref_p3(xd)][2];
+}
+static INLINE aom_cdf_prob *av1_get_pred_cdf_single_ref_p4(
+    const MACROBLOCKD *xd) {
+  return xd->tile_ctx
+      ->single_ref_cdf[av1_get_pred_context_single_ref_p4(xd)][3];
+}
+static INLINE aom_cdf_prob *av1_get_pred_cdf_single_ref_p5(
+    const MACROBLOCKD *xd) {
+  return xd->tile_ctx
+      ->single_ref_cdf[av1_get_pred_context_single_ref_p5(xd)][4];
+}
+static INLINE aom_cdf_prob *av1_get_pred_cdf_single_ref_p6(
+    const MACROBLOCKD *xd) {
+  return xd->tile_ctx
+      ->single_ref_cdf[av1_get_pred_context_single_ref_p6(xd)][5];
+}
 
 // Returns a context number for the given MB prediction signal
 // The mode info data structure has a one element border above and to the
 // left of the entries corresponding to real blocks.
 // The prediction flags in these dummy entries are initialized to 0.
 static INLINE int get_tx_size_context(const MACROBLOCKD *xd) {
-  const int max_tx_size = max_txsize_lookup[xd->mi[0]->mbmi.sb_type];
+  const MB_MODE_INFO *mbmi = xd->mi[0];
   const MB_MODE_INFO *const above_mbmi = xd->above_mbmi;
   const MB_MODE_INFO *const left_mbmi = xd->left_mbmi;
+  const TX_SIZE max_tx_size = max_txsize_rect_lookup[mbmi->sb_type];
+  const int max_tx_wide = tx_size_wide[max_tx_size];
+  const int max_tx_high = tx_size_high[max_tx_size];
   const int has_above = xd->up_available;
   const int has_left = xd->left_available;
-  int above_ctx = (has_above && !above_mbmi->skip)
-                      ? (int)txsize_sqr_map[above_mbmi->tx_size]
-                      : max_tx_size;
-  int left_ctx = (has_left && !left_mbmi->skip)
-                     ? (int)txsize_sqr_map[left_mbmi->tx_size]
-                     : max_tx_size;
 
-  if (!has_left) left_ctx = above_ctx;
+  int above = xd->above_txfm_context[0] >= max_tx_wide;
+  int left = xd->left_txfm_context[0] >= max_tx_high;
 
-  if (!has_above) above_ctx = left_ctx;
-  return (above_ctx + left_ctx) > max_tx_size + TX_SIZE_LUMA_MIN;
+  if (has_above)
+    if (is_inter_block(above_mbmi))
+      above = block_size_wide[above_mbmi->sb_type] >= max_tx_wide;
+
+  if (has_left)
+    if (is_inter_block(left_mbmi))
+      left = block_size_high[left_mbmi->sb_type] >= max_tx_high;
+
+  if (has_above && has_left)
+    return (above + left);
+  else if (has_above)
+    return above;
+  else if (has_left)
+    return left;
+  else
+    return 0;
 }
-
-#if CONFIG_VAR_TX
-static void update_tx_counts(AV1_COMMON *cm, MACROBLOCKD *xd,
-                             MB_MODE_INFO *mbmi, BLOCK_SIZE plane_bsize,
-                             TX_SIZE tx_size, int blk_row, int blk_col,
-                             TX_SIZE max_tx_size, int ctx) {
-  const struct macroblockd_plane *const pd = &xd->plane[0];
-  const BLOCK_SIZE bsize = txsize_to_bsize[tx_size];
-  const int tx_row = blk_row >> (1 - pd->subsampling_y);
-  const int tx_col = blk_col >> (1 - pd->subsampling_x);
-  const TX_SIZE plane_tx_size = mbmi->inter_tx_size[tx_row][tx_col];
-  const int max_blocks_high = max_block_high(xd, plane_bsize, 0);
-  const int max_blocks_wide = max_block_wide(xd, plane_bsize, 0);
-
-  if (blk_row >= max_blocks_high || blk_col >= max_blocks_wide) return;
-
-  if (tx_size == plane_tx_size) {
-    int depth;
-    depth = tx_size_to_depth(tx_size);
-    ++xd->counts->tx_size[max_tx_size - TX_SIZE_CTX_MIN][ctx][depth];
-    mbmi->tx_size = tx_size;
-  } else {
-    int bsl = b_width_log2_lookup[bsize];
-    int i;
-
-    assert(bsl > 0);
-    --bsl;
-
-    for (i = 0; i < 4; ++i) {
-      const int offsetr = blk_row + ((i >> 1) << bsl);
-      const int offsetc = blk_col + ((i & 0x01) << bsl);
-
-      if (offsetr >= max_blocks_high || offsetc >= max_blocks_wide) continue;
-      update_tx_counts(cm, xd, mbmi, plane_bsize, (TX_SIZE)(tx_size - 1),
-                       offsetr, offsetc, max_tx_size, ctx);
-    }
-  }
-}
-
-static INLINE void inter_block_tx_count_update(AV1_COMMON *cm, MACROBLOCKD *xd,
-                                               MB_MODE_INFO *mbmi,
-                                               BLOCK_SIZE plane_bsize,
-                                               int ctx) {
-  const int mi_width = block_size_wide[plane_bsize] >> tx_size_wide_log2[0];
-  const int mi_height = block_size_high[plane_bsize] >> tx_size_wide_log2[0];
-  TX_SIZE max_tx_size = max_txsize_lookup[plane_bsize];
-  int bh = tx_size_wide_unit[max_tx_size];
-  int idx, idy;
-
-  for (idy = 0; idy < mi_height; idy += bh)
-    for (idx = 0; idx < mi_width; idx += bh)
-      update_tx_counts(cm, xd, mbmi, plane_bsize, max_tx_size, idy, idx,
-                       max_tx_size, ctx);
-}
-#endif
 
 #ifdef __cplusplus
 }  // extern "C"
 #endif
 
-#endif  // AV1_COMMON_PRED_COMMON_H_
+#endif  // AOM_AV1_COMMON_PRED_COMMON_H_

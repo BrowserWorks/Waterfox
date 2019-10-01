@@ -48,6 +48,15 @@ enum IdentifierType {
   IDTYPE_ALLOWED = 1,
 };
 
+enum EmojiPresentation {
+  TextOnly = 0,
+  TextDefault = 1,
+  EmojiDefault = 2
+};
+
+const uint32_t kVariationSelector15 = 0xFE0E; // text presentation
+const uint32_t kVariationSelector16 = 0xFE0F; // emoji presentation
+
 #if ENABLE_INTL_API // ICU is available, so simply forward to its API
 
 extern const hb_unicode_general_category_t sICUtoHBcategory[];
@@ -168,6 +177,19 @@ IsEastAsianWidthFWH(uint32_t aCh)
       return false;
   }
   return false;
+}
+
+inline EmojiPresentation
+GetEmojiPresentation(uint32_t aCh)
+{
+  if (!u_hasBinaryProperty(aCh, UCHAR_EMOJI)) {
+    return TextOnly;
+  }
+
+  if (u_hasBinaryProperty(aCh, UCHAR_EMOJI_PRESENTATION)) {
+    return EmojiDefault;
+  }
+  return TextDefault;
 }
 
 inline bool

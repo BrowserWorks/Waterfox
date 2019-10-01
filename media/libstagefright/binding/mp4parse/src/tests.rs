@@ -1023,7 +1023,7 @@ fn max_table_limit() {
     let mut stream = iter.next_box().unwrap().unwrap();
     let mut track = super::Track::new(0);
     match super::read_edts(&mut stream, &mut track) {
-        Err(Error::TableTooLarge) => (),
+        Err(Error::OutOfMemory) => (),
         Ok(_) => panic!("expected an error result"),
         _ => panic!("expected a different error result"),
     }
@@ -1075,5 +1075,55 @@ fn unknown_audio_sample_entry() {
     match super::read_audio_sample_entry(&mut stream) {
         Ok((super::CodecType::Unknown, super::SampleEntry::Unknown)) => (),
         _ => panic!("expected a different error result"),
+    }
+}
+
+#[test]
+fn read_esds_invalid_descriptor() {
+    // tag 0x06, 0xff, 0x7f is incorrect.
+    let esds =
+        vec![
+                  0x03, 0x80, 0x80, 0x80, 0x22, 0x00, 0x00,
+            0x00, 0x04, 0x80, 0x80, 0x80, 0x14, 0x40, 0x01,
+            0x00, 0x04, 0x00, 0x00, 0x00, 0xfa, 0x00, 0x00,
+            0x00, 0xfa, 0x00, 0x05, 0x80, 0x80, 0x80, 0x02,
+            0xe8, 0x35, 0x06, 0xff, 0x7f, 0x00, 0x00, 0x02,
+        ];
+
+    let mut stream = make_box(BoxSize::Auto, b"esds", |s| {
+        s.B32(0) // reserved
+         .append_bytes(esds.as_slice())
+    });
+    let mut iter = super::BoxIter::new(&mut stream);
+    let mut stream = iter.next_box().unwrap().unwrap();
+
+    match super::read_esds(&mut stream) {
+        Err(Error::InvalidData(s)) => assert_eq!(s, "Invalid descriptor."),
+        _ => panic!("unexpected result with invalid descriptor"),
+    }
+}
+
+#[test]
+fn read_invalid_pssh() {
+    // invalid pssh header length
+    let pssh =
+        vec![
+                              0x00, 0x00, 0x00, 0x01, 0x70,
+            0x73, 0x73, 0x68, 0x01, 0x00, 0x00, 0x00, 0x10,
+            0x77, 0xef, 0xec, 0xc0, 0xb2, 0x4d, 0x02, 0xac,
+            0xe3, 0x3c, 0x1e, 0x52, 0xe2, 0xfb, 0x4b, 0x00,
+            0x00, 0x00, 0x02, 0x7e, 0x57, 0x1d, 0x01, 0x7e,
+        ];
+
+    let mut stream = make_box(BoxSize::Auto, b"moov", |s| {
+        s.append_bytes(pssh.as_slice())
+    });
+    let mut iter = super::BoxIter::new(&mut stream);
+    let mut stream = iter.next_box().unwrap().unwrap();
+    let mut context = super::MediaContext::new();
+
+    match super::read_moov(&mut stream, &mut context) {
+        Err(Error::InvalidData(s)) => assert_eq!(s, "read_buf size exceeds BUF_SIZE_LIMIT"),
+        _ => panic!("unexpected result with invalid descriptor"),
     }
 }

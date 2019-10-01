@@ -8,8 +8,8 @@
  * Media Patent License 1.0 was not distributed with this source code in the
  * PATENTS file, you can obtain it at www.aomedia.org/license/patent.
  */
-#ifndef TEST_VIDEO_SOURCE_H_
-#define TEST_VIDEO_SOURCE_H_
+#ifndef AOM_TEST_VIDEO_SOURCE_H_
+#define AOM_TEST_VIDEO_SOURCE_H_
 
 #if defined(_WIN32)
 #undef NOMINMAX
@@ -71,7 +71,10 @@ static FILE *GetTempOutFile(std::string *file_name) {
   }
   return NULL;
 #else
-  return tmpfile();
+  char name_template[] = "/tmp/libaomtest.XXXXXX";
+  const int fd = mkstemp(name_template);
+  *file_name = name_template;
+  return fdopen(fd, "wb+");
 #endif
 }
 
@@ -253,4 +256,4 @@ class CompressedVideoSource {
 
 }  // namespace libaom_test
 
-#endif  // TEST_VIDEO_SOURCE_H_
+#endif  // AOM_TEST_VIDEO_SOURCE_H_

@@ -8,13 +8,13 @@
  * Media Patent License 1.0 was not distributed with this source code in the
  * PATENTS file, you can obtain it at www.aomedia.org/license/patent.
  */
-#ifndef TEST_Y4M_VIDEO_SOURCE_H_
-#define TEST_Y4M_VIDEO_SOURCE_H_
+#ifndef AOM_TEST_Y4M_VIDEO_SOURCE_H_
+#define AOM_TEST_Y4M_VIDEO_SOURCE_H_
 #include <algorithm>
 #include <string>
 
+#include "common/y4minput.h"
 #include "test/video_source.h"
-#include "./y4minput.h"
 
 namespace libaom_test {
 
@@ -35,8 +35,8 @@ class Y4mVideoSource : public VideoSource {
   virtual void OpenSource() {
     CloseSource();
     input_file_ = OpenTestDataFile(file_name_);
-    ASSERT_TRUE(input_file_ != NULL) << "Input file open failed. Filename: "
-                                     << file_name_;
+    ASSERT_TRUE(input_file_ != NULL)
+        << "Input file open failed. Filename: " << file_name_;
   }
 
   virtual void ReadSourceToStart() {
@@ -120,4 +120,4 @@ class Y4mVideoSource : public VideoSource {
 
 }  // namespace libaom_test
 
-#endif  // TEST_Y4M_VIDEO_SOURCE_H_
+#endif  // AOM_TEST_Y4M_VIDEO_SOURCE_H_

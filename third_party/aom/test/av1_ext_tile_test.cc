@@ -30,11 +30,11 @@ const int kTIleSizeInPixels = (kTileSize << 6);
 const int kImgWidth = 704;
 const int kImgHeight = 576;
 
-// This test tests "tile_encoding_mode = TILE_VR" case. The TILE_NORMAL case is
-// tested by the tile_independence test.
+// This test tests large scale tile coding case. Non-large-scale tile coding
+// is tested by the tile_independence test.
 class AV1ExtTileTest
-    : public ::libaom_test::EncoderTest,
-      public ::libaom_test::CodecTestWith2Params<libaom_test::TestMode, int> {
+    : public ::libaom_test::CodecTestWith2Params<libaom_test::TestMode, int>,
+      public ::libaom_test::EncoderTest {
  protected:
   AV1ExtTileTest()
       : EncoderTest(GET_PARAM(0)), encoding_mode_(GET_PARAM(1)),
@@ -43,8 +43,11 @@ class AV1ExtTileTest
     aom_codec_dec_cfg_t cfg = aom_codec_dec_cfg_t();
     cfg.w = kImgWidth;
     cfg.h = kImgHeight;
+    cfg.allow_lowbitdepth = 1;
 
     decoder_ = codec_->CreateDecoder(cfg, 0);
+    decoder_->Control(AV1_SET_TILE_MODE, 1);
+    decoder_->Control(AV1D_EXT_TILE_DEBUG, 1);
     decoder_->Control(AV1_SET_DECODE_TILE_ROW, -1);
     decoder_->Control(AV1_SET_DECODE_TILE_COL, -1);
 
@@ -80,14 +83,14 @@ class AV1ExtTileTest
       encoder->Control(AOME_SET_ENABLEAUTOALTREF, 0);
       encoder->Control(AV1E_SET_FRAME_PARALLEL_DECODING, 1);
 
-      // The tile size is 64x64.
-      encoder->Control(AV1E_SET_TILE_COLUMNS, kTileSize);
-      encoder->Control(AV1E_SET_TILE_ROWS, kTileSize);
-      encoder->Control(AV1E_SET_TILE_ENCODING_MODE, 1);  // TILE_VR
-#if CONFIG_EXT_PARTITION
+      // TODO(yunqingwang): test single_tile_decoding = 0.
+      encoder->Control(AV1E_SET_SINGLE_TILE_DECODING, 1);
       // Always use 64x64 max partition.
       encoder->Control(AV1E_SET_SUPERBLOCK_SIZE, AOM_SUPERBLOCK_SIZE_64X64);
-#endif
+      // Set tile_columns and tile_rows to MAX values, which guarantees the tile
+      // size of 64 x 64 pixels(i.e. 1 SB) for <= 4k resolution.
+      encoder->Control(AV1E_SET_TILE_COLUMNS, 6);
+      encoder->Control(AV1E_SET_TILE_ROWS, 6);
     }
 
     if (video->frame() == 1) {
@@ -169,6 +172,23 @@ class AV1ExtTileTest
     }
   }
 
+  void TestRoundTrip() {
+    ::libaom_test::I420VideoSource video(
+        "hantro_collage_w352h288.yuv", kImgWidth, kImgHeight, 30, 1, 0, kLimit);
+    cfg_.rc_target_bitrate = 500;
+    cfg_.g_error_resilient = AOM_ERROR_RESILIENT_DEFAULT;
+    cfg_.large_scale_tile = 1;
+    cfg_.g_lag_in_frames = 0;
+    cfg_.g_threads = 1;
+
+    // Tile encoding
+    init_flags_ = AOM_CODEC_USE_PSNR;
+    ASSERT_NO_FATAL_FAILURE(RunLoop(&video));
+
+    // Compare to check if two vectors are equal.
+    ASSERT_EQ(md5_, tile_md5_);
+  }
+
   ::libaom_test::TestMode encoding_mode_;
   int set_cpu_used_;
   ::libaom_test::Decoder *decoder_;
@@ -177,24 +197,19 @@ class AV1ExtTileTest
   std::vector<std::string> tile_md5_;
 };
 
-TEST_P(AV1ExtTileTest, DecoderResultTest) {
-  ::libaom_test::I420VideoSource video("hantro_collage_w352h288.yuv", kImgWidth,
-                                       kImgHeight, 30, 1, 0, kLimit);
-  cfg_.rc_target_bitrate = 500;
-  cfg_.g_error_resilient = AOM_ERROR_RESILIENT_DEFAULT;
-  cfg_.g_lag_in_frames = 0;
-  cfg_.g_threads = 1;
-
-  // Tile encoding
-  init_flags_ = AOM_CODEC_USE_PSNR;
-  ASSERT_NO_FATAL_FAILURE(RunLoop(&video));
-
-  // Compare to check if two vectors are equal.
-  ASSERT_EQ(md5_, tile_md5_);
-}
+TEST_P(AV1ExtTileTest, DecoderResultTest) { TestRoundTrip(); }
 
 AV1_INSTANTIATE_TEST_CASE(
     // Now only test 2-pass mode.
     AV1ExtTileTest, ::testing::Values(::libaom_test::kTwoPassGood),
-    ::testing::Range(0, 4));
+    ::testing::Range(1, 4));
+
+class AV1ExtTileTestLarge : public AV1ExtTileTest {};
+
+TEST_P(AV1ExtTileTestLarge, DecoderResultTest) { TestRoundTrip(); }
+
+AV1_INSTANTIATE_TEST_CASE(
+    // Now only test 2-pass mode.
+    AV1ExtTileTestLarge, ::testing::Values(::libaom_test::kTwoPassGood),
+    ::testing::Range(0, 1));
 }  // namespace

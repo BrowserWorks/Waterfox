@@ -9,17 +9,19 @@
  * PATENTS file, you can obtain it at www.aomedia.org/license/patent.
  */
 
-#ifndef AOM_DSP_BINARY_CODES_WRITER_H_
-#define AOM_DSP_BINARY_CODES_WRITER_H_
+#ifndef AOM_AOM_DSP_BINARY_CODES_WRITER_H_
+#define AOM_AOM_DSP_BINARY_CODES_WRITER_H_
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 #include <assert.h>
-#include "./aom_config.h"
+#include "config/aom_config.h"
+
 #include "aom/aom_integer.h"
 #include "aom_dsp/bitwriter.h"
+#include "aom_dsp/bitwriter_buffer.h"
 
 // Codes a symbol v in [-2^mag_bits, 2^mag_bits]
 // mag_bits is number of bits for magnitude. The alphabet is of size
@@ -31,12 +33,6 @@ void aom_write_primitive_symmetric(aom_writer *w, int16_t v,
 
 // Encodes a value v in [0, n-1] quasi-uniformly
 void aom_write_primitive_quniform(aom_writer *w, uint16_t n, uint16_t v);
-
-// Encodes a value v in [0, n-1] based on a reference ref also in [0, n-1]
-// The closest p values of v from ref are coded using a p-ary quasi-unoform
-// short code while the remaining n-p values are coded with a longer code.
-void aom_write_primitive_refbilevel(aom_writer *w, uint16_t n, uint16_t p,
-                                    uint16_t ref, uint16_t v);
 
 // Finite subexponential code that codes a symbol v in [0, n-1] with parameter k
 void aom_write_primitive_subexpfin(aom_writer *w, uint16_t n, uint16_t k,
@@ -53,11 +49,13 @@ void aom_write_signed_primitive_refsubexpfin(aom_writer *w, uint16_t n,
                                              uint16_t k, int16_t ref,
                                              int16_t v);
 
+void aom_wb_write_signed_primitive_refsubexpfin(struct aom_write_bit_buffer *wb,
+                                                uint16_t n, uint16_t k,
+                                                int16_t ref, int16_t v);
+
 // Functions that counts bits for the above primitives
 int aom_count_primitive_symmetric(int16_t v, unsigned int mag_bits);
 int aom_count_primitive_quniform(uint16_t n, uint16_t v);
-int aom_count_primitive_refbilevel(uint16_t n, uint16_t p, uint16_t ref,
-                                   uint16_t v);
 int aom_count_primitive_subexpfin(uint16_t n, uint16_t k, uint16_t v);
 int aom_count_primitive_refsubexpfin(uint16_t n, uint16_t k, uint16_t ref,
                                      uint16_t v);
@@ -67,4 +65,4 @@ int aom_count_signed_primitive_refsubexpfin(uint16_t n, uint16_t k, int16_t ref,
 }  // extern "C"
 #endif
 
-#endif  // AOM_DSP_BINARY_CODES_WRITER_H_
+#endif  // AOM_AOM_DSP_BINARY_CODES_WRITER_H_

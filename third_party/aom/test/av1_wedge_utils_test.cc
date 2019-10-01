@@ -11,10 +11,9 @@
 
 #include "third_party/googletest/src/googletest/include/gtest/gtest.h"
 
-#include "./aom_config.h"
-
-#include "./aom_dsp_rtcd.h"
-#include "./av1_rtcd.h"
+#include "config/aom_config.h"
+#include "config/aom_dsp_rtcd.h"
+#include "config/av1_rtcd.h"
 
 #include "aom_dsp/aom_dsp_common.h"
 
@@ -100,7 +99,7 @@ TEST_F(WedgeUtilsSSEFuncTest, ResidualBlendingEquiv) {
       p1[j] = clamp(s[j] + rng_(33) - 16, 0, UINT8_MAX);
     }
 
-    aom_blend_a64_mask(p, w, p0, w, p1, w, m, w, h, w, 0, 0);
+    aom_blend_a64_mask(p, w, p0, w, p1, w, m, w, w, h, 0, 0);
 
     aom_subtract_block(h, w, r0, w, s, w, p0, w);
     aom_subtract_block(h, w, r1, w, s, w, p1, w);
@@ -218,14 +217,6 @@ TEST_P(WedgeUtilsSSEOptTest, ExtremeValues) {
   }
 }
 
-#if HAVE_SSE2
-INSTANTIATE_TEST_CASE_P(
-    SSE2, WedgeUtilsSSEOptTest,
-    ::testing::Values(TestFuncsFSSE(av1_wedge_sse_from_residuals_c,
-                                    av1_wedge_sse_from_residuals_sse2)));
-
-#endif  // HAVE_SSE2
-
 //////////////////////////////////////////////////////////////////////////////
 // av1_wedge_sign_from_residuals
 //////////////////////////////////////////////////////////////////////////////
@@ -326,15 +317,6 @@ TEST_P(WedgeUtilsSignOptTest, ExtremeValues) {
   }
 }
 
-#if HAVE_SSE2
-
-INSTANTIATE_TEST_CASE_P(
-    SSE2, WedgeUtilsSignOptTest,
-    ::testing::Values(TestFuncsFSign(av1_wedge_sign_from_residuals_c,
-                                     av1_wedge_sign_from_residuals_sse2)));
-
-#endif  // HAVE_SSE2
-
 //////////////////////////////////////////////////////////////////////////////
 // av1_wedge_compute_delta_squares
 //////////////////////////////////////////////////////////////////////////////
@@ -372,12 +354,37 @@ TEST_P(WedgeUtilsDeltaSquaresOptTest, RandomValues) {
 }
 
 #if HAVE_SSE2
+INSTANTIATE_TEST_CASE_P(
+    SSE2, WedgeUtilsSSEOptTest,
+    ::testing::Values(TestFuncsFSSE(av1_wedge_sse_from_residuals_c,
+                                    av1_wedge_sse_from_residuals_sse2)));
+
+INSTANTIATE_TEST_CASE_P(
+    SSE2, WedgeUtilsSignOptTest,
+    ::testing::Values(TestFuncsFSign(av1_wedge_sign_from_residuals_c,
+                                     av1_wedge_sign_from_residuals_sse2)));
 
 INSTANTIATE_TEST_CASE_P(
     SSE2, WedgeUtilsDeltaSquaresOptTest,
     ::testing::Values(TestFuncsFDS(av1_wedge_compute_delta_squares_c,
                                    av1_wedge_compute_delta_squares_sse2)));
-
 #endif  // HAVE_SSE2
+
+#if HAVE_AVX2
+INSTANTIATE_TEST_CASE_P(
+    AVX2, WedgeUtilsSSEOptTest,
+    ::testing::Values(TestFuncsFSSE(av1_wedge_sse_from_residuals_sse2,
+                                    av1_wedge_sse_from_residuals_avx2)));
+
+INSTANTIATE_TEST_CASE_P(
+    AVX2, WedgeUtilsSignOptTest,
+    ::testing::Values(TestFuncsFSign(av1_wedge_sign_from_residuals_sse2,
+                                     av1_wedge_sign_from_residuals_avx2)));
+
+INSTANTIATE_TEST_CASE_P(
+    AVX2, WedgeUtilsDeltaSquaresOptTest,
+    ::testing::Values(TestFuncsFDS(av1_wedge_compute_delta_squares_sse2,
+                                   av1_wedge_compute_delta_squares_avx2)));
+#endif  // HAVE_AVX2
 
 }  // namespace

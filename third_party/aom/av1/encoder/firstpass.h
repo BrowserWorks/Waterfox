@@ -9,9 +9,11 @@
  * PATENTS file, you can obtain it at www.aomedia.org/license/patent.
  */
 
-#ifndef AV1_ENCODER_FIRSTPASS_H_
-#define AV1_ENCODER_FIRSTPASS_H_
+#ifndef AOM_AV1_ENCODER_FIRSTPASS_H_
+#define AOM_AV1_ENCODER_FIRSTPASS_H_
 
+#include "av1/common/enums.h"
+#include "av1/common/onyxc_int.h"
 #include "av1/encoder/lookahead.h"
 #include "av1/encoder/ratectrl.h"
 
@@ -40,17 +42,19 @@ typedef struct {
 } FIRSTPASS_MB_STATS;
 #endif
 
-#if CONFIG_EXT_REFS
 // Length of the bi-predictive frame group (BFG)
 // NOTE: Currently each BFG contains one backward ref (BWF) frame plus a certain
 //       number of bi-predictive frames.
 #define BFG_INTERVAL 2
-// The maximum number of extra ALT_REF's
-// NOTE: This number cannot be greater than 2 or the reference frame buffer will
-//       overflow.
-#define MAX_EXT_ARFS 2
+// The maximum number of extra ALTREF's except ALTREF_FRAME
+#define MAX_EXT_ARFS (REF_FRAMES - BWDREF_FRAME - 1)
+
 #define MIN_EXT_ARF_INTERVAL 4
-#endif  // CONFIG_EXT_REFS
+
+#define MIN_ZERO_MOTION 0.95
+#define MAX_SR_CODED_ERROR 40
+#define MAX_RAW_ERR_VAR 2000
+#define MIN_MV_IN_OUT 0.4
 
 #define VLOW_MOTION_THRESHOLD 950
 
@@ -58,6 +62,7 @@ typedef struct {
   double frame;
   double weight;
   double intra_error;
+  double frame_avg_wavelet_energy;
   double coded_error;
   double sr_coded_error;
   double pcnt_inter;
@@ -77,6 +82,8 @@ typedef struct {
   double new_mv_count;
   double duration;
   double count;
+  // standard deviation for (0, 0) motion prediction error
+  double raw_error_stdev;
 } FIRSTPASS_STATS;
 
 typedef enum {
@@ -85,15 +92,12 @@ typedef enum {
   GF_UPDATE = 2,
   ARF_UPDATE = 3,
   OVERLAY_UPDATE = 4,
-#if CONFIG_EXT_REFS
   BRF_UPDATE = 5,            // Backward Reference Frame
   LAST_BIPRED_UPDATE = 6,    // Last Bi-predictive Frame
   BIPRED_UPDATE = 7,         // Bi-predictive Frame, but not the last one
   INTNL_OVERLAY_UPDATE = 8,  // Internal Overlay Frame
-  FRAME_UPDATE_TYPES = 9
-#else
-  FRAME_UPDATE_TYPES = 5
-#endif  // CONFIG_EXT_REFS
+  INTNL_ARF_UPDATE = 9,      // Internal Altref Frame (candidate for ALTREF2)
+  FRAME_UPDATE_TYPES = 10
 } FRAME_UPDATE_TYPE;
 
 #define FC_ANIMATION_THRESH 0.15
@@ -110,10 +114,17 @@ typedef struct {
   unsigned char arf_src_offset[(MAX_LAG_BUFFERS * 2) + 1];
   unsigned char arf_update_idx[(MAX_LAG_BUFFERS * 2) + 1];
   unsigned char arf_ref_idx[(MAX_LAG_BUFFERS * 2) + 1];
-#if CONFIG_EXT_REFS
+#if USE_SYMM_MULTI_LAYER
+  unsigned char arf_pos_in_gf[(MAX_LAG_BUFFERS * 2) + 1];
+  unsigned char pyramid_level[(MAX_LAG_BUFFERS * 2) + 1];
+  unsigned char pyramid_height;
+  unsigned char pyramid_lvl_nodes[MAX_PYRAMID_LVL];
+#endif
   unsigned char brf_src_offset[(MAX_LAG_BUFFERS * 2) + 1];
   unsigned char bidir_pred_enabled[(MAX_LAG_BUFFERS * 2) + 1];
-#endif  // CONFIG_EXT_REFS
+  unsigned char ref_fb_idx_map[(MAX_LAG_BUFFERS * 2) + 1][REF_FRAMES];
+  unsigned char refresh_idx[(MAX_LAG_BUFFERS * 2) + 1];
+  unsigned char refresh_flag[(MAX_LAG_BUFFERS * 2) + 1];
   int bit_allocation[(MAX_LAG_BUFFERS * 2) + 1];
 } GF_GROUP;
 
@@ -131,6 +142,7 @@ typedef struct {
   double modified_error_max;
   double modified_error_left;
   double mb_av_energy;
+  double frame_avg_haar_energy;
 
 #if CONFIG_FP_MB_STATS
   uint8_t *frame_mb_stats_buf;
@@ -172,24 +184,12 @@ void av1_end_first_pass(struct AV1_COMP *cpi);
 
 void av1_init_second_pass(struct AV1_COMP *cpi);
 void av1_rc_get_second_pass_params(struct AV1_COMP *cpi);
-void av1_twopass_postencode_update(struct AV1_COMP *cpi);
+void av1_configure_buffer_updates_firstpass(struct AV1_COMP *cpi,
+                                            FRAME_UPDATE_TYPE update_type);
 
 // Post encode update of the rate control parameters for 2-pass
 void av1_twopass_postencode_update(struct AV1_COMP *cpi);
 
-void av1_calculate_next_scaled_size(const struct AV1_COMP *cpi,
-                                    int *scaled_frame_width,
-                                    int *scaled_frame_height);
-
-#if CONFIG_FRAME_SUPERRES
-// This is the size after superress scaling, which could be 1:1.
-// Superres scaling happens after regular downscaling.
-// TODO(afergs): Limit overall reduction to 1/2 of the original size
-void av1_calculate_superres_size(const struct AV1_COMP *cpi, int *encoded_width,
-                                 int *encoded_height);
-#endif  // CONFIG_FRAME_SUPERRES
-
-#if CONFIG_EXT_REFS
 static INLINE int get_number_of_extra_arfs(int interval, int arf_pending) {
   if (arf_pending && MAX_EXT_ARFS > 0)
     return interval >= MIN_EXT_ARF_INTERVAL * (MAX_EXT_ARFS + 1)
@@ -200,10 +200,9 @@ static INLINE int get_number_of_extra_arfs(int interval, int arf_pending) {
   else
     return 0;
 }
-#endif  // CONFIG_EXT_REFS
 
 #ifdef __cplusplus
 }  // extern "C"
 #endif
 
-#endif  // AV1_ENCODER_FIRSTPASS_H_
+#endif  // AOM_AV1_ENCODER_FIRSTPASS_H_

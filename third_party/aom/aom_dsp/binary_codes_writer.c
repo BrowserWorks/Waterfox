@@ -10,6 +10,7 @@
  */
 
 #include "aom_dsp/bitwriter.h"
+#include "aom_dsp/binary_codes_writer.h"
 
 #include "av1/common/common.h"
 
@@ -58,7 +59,7 @@ int aom_count_primitive_symmetric(int16_t v, unsigned int abs_bits) {
 // Encodes a value v in [0, n-1] quasi-uniformly
 void aom_write_primitive_quniform(aom_writer *w, uint16_t n, uint16_t v) {
   if (n <= 1) return;
-  const int l = get_msb(n - 1) + 1;
+  const int l = get_msb(n) + 1;
   const int m = (1 << l) - n;
   if (v < m) {
     aom_write_literal(w, v, l - 1);
@@ -68,66 +69,24 @@ void aom_write_primitive_quniform(aom_writer *w, uint16_t n, uint16_t v) {
   }
 }
 
+static void aom_wb_write_primitive_quniform(struct aom_write_bit_buffer *wb,
+                                            uint16_t n, uint16_t v) {
+  if (n <= 1) return;
+  const int l = get_msb(n) + 1;
+  const int m = (1 << l) - n;
+  if (v < m) {
+    aom_wb_write_literal(wb, v, l - 1);
+  } else {
+    aom_wb_write_literal(wb, m + ((v - m) >> 1), l - 1);
+    aom_wb_write_bit(wb, (v - m) & 1);
+  }
+}
+
 int aom_count_primitive_quniform(uint16_t n, uint16_t v) {
   if (n <= 1) return 0;
-  const int l = get_msb(n - 1) + 1;
+  const int l = get_msb(n) + 1;
   const int m = (1 << l) - n;
   return v < m ? l - 1 : l;
-}
-
-// Encodes a value v in [0, n-1] based on a reference ref also in [0, n-1]
-// The closest p values of v from ref are coded using a p-ary quasi-unoform
-// short code while the remaining n-p values are coded with a longer code.
-void aom_write_primitive_refbilevel(aom_writer *w, uint16_t n, uint16_t p,
-                                    uint16_t ref, uint16_t v) {
-  if (n <= 1) return;
-  assert(p > 0 && p <= n);
-  assert(ref < n);
-  int lolimit = ref - p / 2;
-  int hilimit = lolimit + p - 1;
-  if (lolimit < 0) {
-    lolimit = 0;
-    hilimit = p - 1;
-  } else if (hilimit >= n) {
-    hilimit = n - 1;
-    lolimit = n - p;
-  }
-  if (v >= lolimit && v <= hilimit) {
-    aom_write_bit(w, 1);
-    v = v - lolimit;
-    aom_write_primitive_quniform(w, p, v);
-  } else {
-    aom_write_bit(w, 0);
-    if (v > hilimit) v -= p;
-    aom_write_primitive_quniform(w, n - p, v);
-  }
-}
-
-int aom_count_primitive_refbilevel(uint16_t n, uint16_t p, uint16_t ref,
-                                   uint16_t v) {
-  if (n <= 1) return 0;
-  assert(p > 0 && p <= n);
-  assert(ref < n);
-  int lolimit = ref - p / 2;
-  int hilimit = lolimit + p - 1;
-  if (lolimit < 0) {
-    lolimit = 0;
-    hilimit = p - 1;
-  } else if (hilimit >= n) {
-    hilimit = n - 1;
-    lolimit = n - p;
-  }
-  int count = 0;
-  if (v >= lolimit && v <= hilimit) {
-    count++;
-    v = v - lolimit;
-    count += aom_count_primitive_quniform(p, v);
-  } else {
-    count++;
-    if (v > hilimit) v -= p;
-    count += aom_count_primitive_quniform(n - p, v);
-  }
-  return count;
 }
 
 // Finite subexponential code that codes a symbol v in [0, n-1] with parameter k
@@ -149,6 +108,31 @@ void aom_write_primitive_subexpfin(aom_writer *w, uint16_t n, uint16_t k,
         mk += a;
       } else {
         aom_write_literal(w, v - mk, b);
+        break;
+      }
+    }
+  }
+}
+
+static void aom_wb_write_primitive_subexpfin(struct aom_write_bit_buffer *wb,
+                                             uint16_t n, uint16_t k,
+                                             uint16_t v) {
+  int i = 0;
+  int mk = 0;
+  while (1) {
+    int b = (i ? k + i - 1 : k);
+    int a = (1 << b);
+    if (n <= mk + 3 * a) {
+      aom_wb_write_primitive_quniform(wb, n - mk, v - mk);
+      break;
+    } else {
+      int t = (v >= mk + a);
+      aom_wb_write_bit(wb, t);
+      if (t) {
+        i = i + 1;
+        mk += a;
+      } else {
+        aom_wb_write_literal(wb, v - mk, b);
         break;
       }
     }
@@ -184,17 +168,32 @@ int aom_count_primitive_subexpfin(uint16_t n, uint16_t k, uint16_t v) {
 // based on a reference ref also in [0, n-1].
 // Recenters symbol around r first and then uses a finite subexponential code.
 void aom_write_primitive_refsubexpfin(aom_writer *w, uint16_t n, uint16_t k,
-                                      int16_t ref, int16_t v) {
+                                      uint16_t ref, uint16_t v) {
   aom_write_primitive_subexpfin(w, n, k, recenter_finite_nonneg(n, ref, v));
 }
 
+static void aom_wb_write_primitive_refsubexpfin(struct aom_write_bit_buffer *wb,
+                                                uint16_t n, uint16_t k,
+                                                uint16_t ref, uint16_t v) {
+  aom_wb_write_primitive_subexpfin(wb, n, k, recenter_finite_nonneg(n, ref, v));
+}
+
 void aom_write_signed_primitive_refsubexpfin(aom_writer *w, uint16_t n,
-                                             uint16_t k, uint16_t ref,
-                                             uint16_t v) {
+                                             uint16_t k, int16_t ref,
+                                             int16_t v) {
   ref += n - 1;
   v += n - 1;
   const uint16_t scaled_n = (n << 1) - 1;
   aom_write_primitive_refsubexpfin(w, scaled_n, k, ref, v);
+}
+
+void aom_wb_write_signed_primitive_refsubexpfin(struct aom_write_bit_buffer *wb,
+                                                uint16_t n, uint16_t k,
+                                                int16_t ref, int16_t v) {
+  ref += n - 1;
+  v += n - 1;
+  const uint16_t scaled_n = (n << 1) - 1;
+  aom_wb_write_primitive_refsubexpfin(wb, scaled_n, k, ref, v);
 }
 
 int aom_count_primitive_refsubexpfin(uint16_t n, uint16_t k, uint16_t ref,

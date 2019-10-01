@@ -9,11 +9,13 @@
  * PATENTS file, you can obtain it at www.aomedia.org/license/patent.
  */
 
-#ifndef TEST_DECODE_TEST_DRIVER_H_
-#define TEST_DECODE_TEST_DRIVER_H_
+#ifndef AOM_TEST_DECODE_TEST_DRIVER_H_
+#define AOM_TEST_DECODE_TEST_DRIVER_H_
 #include <cstring>
 #include "third_party/googletest/src/googletest/include/gtest/gtest.h"
-#include "./aom_config.h"
+
+#include "config/aom_config.h"
+
 #include "aom/aom_decoder.h"
 
 namespace libaom_test {
@@ -93,8 +95,6 @@ class Decoder {
     return aom_codec_iface_name(CodecInterface());
   }
 
-  bool IsVP8() const;
-
   bool IsAV1() const;
 
   aom_codec_ctx_t *GetDecoder() { return &decoder_; }
@@ -134,6 +134,7 @@ class DecoderTest {
 
   // Hook to be called to handle decode result. Return true to continue.
   virtual bool HandleDecodeResult(const aom_codec_err_t res_dec,
+                                  const CompressedVideoSource & /*video*/,
                                   Decoder *decoder) {
     EXPECT_EQ(AOM_CODEC_OK, res_dec) << decoder->DecodeError();
     return AOM_CODEC_OK == res_dec;
@@ -161,4 +162,4 @@ class DecoderTest {
 
 }  // namespace libaom_test
 
-#endif  // TEST_DECODE_TEST_DRIVER_H_
+#endif  // AOM_TEST_DECODE_TEST_DRIVER_H_

@@ -9,8 +9,8 @@
  * PATENTS file, you can obtain it at www.aomedia.org/license/patent.
  */
 
-#if !defined(_entenc_H)
-#define _entenc_H (1)
+#ifndef AOM_AOM_DSP_ENTENC_H_
+#define AOM_AOM_DSP_ENTENC_H_
 #include <stddef.h>
 #include "aom_dsp/entcode.h"
 
@@ -30,12 +30,6 @@ struct od_ec_enc {
   unsigned char *buf;
   /*The size of the buffer.*/
   uint32_t storage;
-  /*The offset at which the last byte containing raw bits was written.*/
-  uint32_t end_offs;
-  /*Bits that will be read from/written at the end.*/
-  od_ec_window end_window;
-  /*Number of valid bits in end_window.*/
-  int nend_bits;
   /*A buffer for output bytes with their associated carry flags.*/
   uint16_t *precarry_buf;
   /*The size of the pre-carry buffer.*/
@@ -88,4 +82,4 @@ void od_ec_enc_rollback(od_ec_enc *dst, const od_ec_enc *src);
 }  // extern "C"
 #endif
 
-#endif
+#endif  // AOM_AOM_DSP_ENTENC_H_

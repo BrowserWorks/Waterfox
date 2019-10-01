@@ -17,11 +17,15 @@ int aom_daala_reader_init(daala_reader *r, const uint8_t *buffer, int size) {
   }
   r->buffer_end = buffer + size;
   r->buffer = buffer;
-  od_ec_dec_init(&r->ec, buffer, size - 1);
+  od_ec_dec_init(&r->ec, buffer, size);
 #if CONFIG_ACCOUNTING
   r->accounting = NULL;
 #endif
   return 0;
+}
+
+const uint8_t *aom_daala_reader_find_begin(daala_reader *r) {
+  return r->buffer;
 }
 
 const uint8_t *aom_daala_reader_find_end(daala_reader *r) {
@@ -34,4 +38,10 @@ uint32_t aom_daala_reader_tell(const daala_reader *r) {
 
 uint32_t aom_daala_reader_tell_frac(const daala_reader *r) {
   return od_ec_dec_tell_frac(&r->ec);
+}
+
+int aom_daala_reader_has_overflowed(const daala_reader *r) {
+  const uint32_t tell_bits = aom_daala_reader_tell(r);
+  const uint32_t tell_bytes = (tell_bits + 7) >> 3;
+  return ((ptrdiff_t)tell_bytes > r->buffer_end - r->buffer);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Alliance for Open Media. All rights reserved
+ * Copyright (c) 2018, Alliance for Open Media. All rights reserved
  *
  * This source code is subject to the terms of the BSD 2 Clause License and
  * the Alliance for Open Media Patent License 1.0. If the BSD 2 Clause License
@@ -9,198 +9,191 @@
  * PATENTS file, you can obtain it at www.aomedia.org/license/patent.
  */
 
-#ifndef AOM_DSP_X86_TXFM_COMMON_AVX2_H
-#define AOM_DSP_X86_TXFM_COMMON_AVX2_H
+#ifndef AOM_AOM_DSP_X86_TXFM_COMMON_AVX2_H_
+#define AOM_AOM_DSP_X86_TXFM_COMMON_AVX2_H_
 
-#include <immintrin.h>
+#include <emmintrin.h>
+#include "aom/aom_integer.h"
+#include "aom_dsp/x86/synonyms.h"
 
-#include "aom_dsp/txfm_common.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-#define pair256_set_epi16(a, b)                                            \
-  _mm256_set_epi16((int16_t)(b), (int16_t)(a), (int16_t)(b), (int16_t)(a), \
-                   (int16_t)(b), (int16_t)(a), (int16_t)(b), (int16_t)(a), \
-                   (int16_t)(b), (int16_t)(a), (int16_t)(b), (int16_t)(a), \
-                   (int16_t)(b), (int16_t)(a), (int16_t)(b), (int16_t)(a))
+typedef void (*transform_1d_avx2)(const __m256i *input, __m256i *output,
+                                  int8_t cos_bit);
 
-#define pair256_set_epi32(a, b)                                                \
-  _mm256_set_epi32((int)(b), (int)(a), (int)(b), (int)(a), (int)(b), (int)(a), \
-                   (int)(b), (int)(a))
-
-static INLINE void mm256_reverse_epi16(__m256i *u) {
-  const __m256i control = _mm256_set_epi16(
-      0x0100, 0x0302, 0x0504, 0x0706, 0x0908, 0x0B0A, 0x0D0C, 0x0F0E, 0x0100,
-      0x0302, 0x0504, 0x0706, 0x0908, 0x0B0A, 0x0D0C, 0x0F0E);
-  __m256i v = _mm256_shuffle_epi8(*u, control);
-  *u = _mm256_permute2x128_si256(v, v, 1);
+static INLINE __m256i pair_set_w16_epi16(int16_t a, int16_t b) {
+  return _mm256_set1_epi32(
+      (int32_t)(((uint16_t)(a)) | (((uint32_t)(b)) << 16)));
 }
 
-// Note: in and out could have the same value
-static INLINE void mm256_transpose_16x16(const __m256i *in, __m256i *out) {
-  __m256i tr0_0 = _mm256_unpacklo_epi16(in[0], in[1]);
-  __m256i tr0_1 = _mm256_unpackhi_epi16(in[0], in[1]);
-  __m256i tr0_2 = _mm256_unpacklo_epi16(in[2], in[3]);
-  __m256i tr0_3 = _mm256_unpackhi_epi16(in[2], in[3]);
-  __m256i tr0_4 = _mm256_unpacklo_epi16(in[4], in[5]);
-  __m256i tr0_5 = _mm256_unpackhi_epi16(in[4], in[5]);
-  __m256i tr0_6 = _mm256_unpacklo_epi16(in[6], in[7]);
-  __m256i tr0_7 = _mm256_unpackhi_epi16(in[6], in[7]);
+static INLINE void btf_16_w16_avx2(const __m256i w0, const __m256i w1,
+                                   __m256i *in0, __m256i *in1, const __m256i _r,
+                                   const int32_t cos_bit) {
+  __m256i t0 = _mm256_unpacklo_epi16(*in0, *in1);
+  __m256i t1 = _mm256_unpackhi_epi16(*in0, *in1);
+  __m256i u0 = _mm256_madd_epi16(t0, w0);
+  __m256i u1 = _mm256_madd_epi16(t1, w0);
+  __m256i v0 = _mm256_madd_epi16(t0, w1);
+  __m256i v1 = _mm256_madd_epi16(t1, w1);
 
-  __m256i tr0_8 = _mm256_unpacklo_epi16(in[8], in[9]);
-  __m256i tr0_9 = _mm256_unpackhi_epi16(in[8], in[9]);
-  __m256i tr0_a = _mm256_unpacklo_epi16(in[10], in[11]);
-  __m256i tr0_b = _mm256_unpackhi_epi16(in[10], in[11]);
-  __m256i tr0_c = _mm256_unpacklo_epi16(in[12], in[13]);
-  __m256i tr0_d = _mm256_unpackhi_epi16(in[12], in[13]);
-  __m256i tr0_e = _mm256_unpacklo_epi16(in[14], in[15]);
-  __m256i tr0_f = _mm256_unpackhi_epi16(in[14], in[15]);
+  __m256i a0 = _mm256_add_epi32(u0, _r);
+  __m256i a1 = _mm256_add_epi32(u1, _r);
+  __m256i b0 = _mm256_add_epi32(v0, _r);
+  __m256i b1 = _mm256_add_epi32(v1, _r);
 
-  // 00 10 01 11 02 12 03 13  08 18 09 19 0a 1a 0b 1b
-  // 04 14 05 15 06 16 07 17  0c 1c 0d 1d 0e 1e 0f 1f
-  // 20 30 21 31 22 32 23 33  28 38 29 39 2a 3a 2b 3b
-  // 24 34 25 35 26 36 27 37  2c 3c 2d 3d 2e 3e 2f 3f
-  // 40 50 41 51 42 52 43 53  48 58 49 59 4a 5a 4b 5b
-  // 44 54 45 55 46 56 47 57  4c 5c 4d 5d 4e 5e 4f 5f
-  // 60 70 61 71 62 72 63 73  68 78 69 79 6a 7a 6b 7b
-  // 64 74 65 75 66 76 67 77  6c 7c 6d 7d 6e 7e 6f 7f
+  __m256i c0 = _mm256_srai_epi32(a0, cos_bit);
+  __m256i c1 = _mm256_srai_epi32(a1, cos_bit);
+  __m256i d0 = _mm256_srai_epi32(b0, cos_bit);
+  __m256i d1 = _mm256_srai_epi32(b1, cos_bit);
 
-  // 80 90 81 91 82 92 83 93  88 98 89 99 8a 9a 8b 9b
-  // 84 94 85 95 86 96 87 97  8c 9c 8d 9d 8e 9e 8f 9f
-  // a0 b0 a1 b1 a2 b2 a3 b3  a8 b8 a9 b9 aa ba ab bb
-  // a4 b4 a5 b5 a6 b6 a7 b7  ac bc ad bd ae be af bf
-  // c0 d0 c1 d1 c2 d2 c3 d3  c8 d8 c9 d9 ca da cb db
-  // c4 d4 c5 d5 c6 d6 c7 d7  cc dc cd dd ce de cf df
-  // e0 f0 e1 f1 e2 f2 e3 f3  e8 f8 e9 f9 ea fa eb fb
-  // e4 f4 e5 f5 e6 f6 e7 f7  ec fc ed fd ee fe ef ff
-
-  __m256i tr1_0 = _mm256_unpacklo_epi32(tr0_0, tr0_2);
-  __m256i tr1_1 = _mm256_unpackhi_epi32(tr0_0, tr0_2);
-  __m256i tr1_2 = _mm256_unpacklo_epi32(tr0_1, tr0_3);
-  __m256i tr1_3 = _mm256_unpackhi_epi32(tr0_1, tr0_3);
-  __m256i tr1_4 = _mm256_unpacklo_epi32(tr0_4, tr0_6);
-  __m256i tr1_5 = _mm256_unpackhi_epi32(tr0_4, tr0_6);
-  __m256i tr1_6 = _mm256_unpacklo_epi32(tr0_5, tr0_7);
-  __m256i tr1_7 = _mm256_unpackhi_epi32(tr0_5, tr0_7);
-
-  __m256i tr1_8 = _mm256_unpacklo_epi32(tr0_8, tr0_a);
-  __m256i tr1_9 = _mm256_unpackhi_epi32(tr0_8, tr0_a);
-  __m256i tr1_a = _mm256_unpacklo_epi32(tr0_9, tr0_b);
-  __m256i tr1_b = _mm256_unpackhi_epi32(tr0_9, tr0_b);
-  __m256i tr1_c = _mm256_unpacklo_epi32(tr0_c, tr0_e);
-  __m256i tr1_d = _mm256_unpackhi_epi32(tr0_c, tr0_e);
-  __m256i tr1_e = _mm256_unpacklo_epi32(tr0_d, tr0_f);
-  __m256i tr1_f = _mm256_unpackhi_epi32(tr0_d, tr0_f);
-
-  // 00 10 20 30 01 11 21 31  08 18 28 38 09 19 29 39
-  // 02 12 22 32 03 13 23 33  0a 1a 2a 3a 0b 1b 2b 3b
-  // 04 14 24 34 05 15 25 35  0c 1c 2c 3c 0d 1d 2d 3d
-  // 06 16 26 36 07 17 27 37  0e 1e 2e 3e 0f 1f 2f 3f
-  // 40 50 60 70 41 51 61 71  48 58 68 78 49 59 69 79
-  // 42 52 62 72 43 53 63 73  4a 5a 6a 7a 4b 5b 6b 7b
-  // 44 54 64 74 45 55 65 75  4c 5c 6c 7c 4d 5d 6d 7d
-  // 46 56 66 76 47 57 67 77  4e 5e 6e 7e 4f 5f 6f 7f
-
-  // 80 90 a0 b0 81 91 a1 b1  88 98 a8 b8 89 99 a9 b9
-  // 82 92 a2 b2 83 93 a3 b3  8a 9a aa ba 8b 9b ab bb
-  // 84 94 a4 b4 85 95 a5 b5  8c 9c ac bc 8d 9d ad bd
-  // 86 96 a6 b6 87 97 a7 b7  8e ae 9e be 8f 9f af bf
-  // c0 d0 e0 f0 c1 d1 e1 f1  c8 d8 e8 f8 c9 d9 e9 f9
-  // c2 d2 e2 f2 c3 d3 e3 f3  ca da ea fa cb db eb fb
-  // c4 d4 e4 f4 c5 d5 e5 f5  cc dc ef fc cd dd ed fd
-  // c6 d6 e6 f6 c7 d7 e7 f7  ce de ee fe cf df ef ff
-
-  tr0_0 = _mm256_unpacklo_epi64(tr1_0, tr1_4);
-  tr0_1 = _mm256_unpackhi_epi64(tr1_0, tr1_4);
-  tr0_2 = _mm256_unpacklo_epi64(tr1_1, tr1_5);
-  tr0_3 = _mm256_unpackhi_epi64(tr1_1, tr1_5);
-  tr0_4 = _mm256_unpacklo_epi64(tr1_2, tr1_6);
-  tr0_5 = _mm256_unpackhi_epi64(tr1_2, tr1_6);
-  tr0_6 = _mm256_unpacklo_epi64(tr1_3, tr1_7);
-  tr0_7 = _mm256_unpackhi_epi64(tr1_3, tr1_7);
-
-  tr0_8 = _mm256_unpacklo_epi64(tr1_8, tr1_c);
-  tr0_9 = _mm256_unpackhi_epi64(tr1_8, tr1_c);
-  tr0_a = _mm256_unpacklo_epi64(tr1_9, tr1_d);
-  tr0_b = _mm256_unpackhi_epi64(tr1_9, tr1_d);
-  tr0_c = _mm256_unpacklo_epi64(tr1_a, tr1_e);
-  tr0_d = _mm256_unpackhi_epi64(tr1_a, tr1_e);
-  tr0_e = _mm256_unpacklo_epi64(tr1_b, tr1_f);
-  tr0_f = _mm256_unpackhi_epi64(tr1_b, tr1_f);
-
-  // 00 10 20 30 40 50 60 70  08 18 28 38 48 58 68 78
-  // 01 11 21 31 41 51 61 71  09 19 29 39 49 59 69 79
-  // 02 12 22 32 42 52 62 72  0a 1a 2a 3a 4a 5a 6a 7a
-  // 03 13 23 33 43 53 63 73  0b 1b 2b 3b 4b 5b 6b 7b
-  // 04 14 24 34 44 54 64 74  0c 1c 2c 3c 4c 5c 6c 7c
-  // 05 15 25 35 45 55 65 75  0d 1d 2d 3d 4d 5d 6d 7d
-  // 06 16 26 36 46 56 66 76  0e 1e 2e 3e 4e 5e 6e 7e
-  // 07 17 27 37 47 57 67 77  0f 1f 2f 3f 4f 5f 6f 7f
-
-  // 80 90 a0 b0 c0 d0 e0 f0  88 98 a8 b8 c8 d8 e8 f8
-  // 81 91 a1 b1 c1 d1 e1 f1  89 99 a9 b9 c9 d9 e9 f9
-  // 82 92 a2 b2 c2 d2 e2 f2  8a 9a aa ba ca da ea fa
-  // 83 93 a3 b3 c3 d3 e3 f3  8b 9b ab bb cb db eb fb
-  // 84 94 a4 b4 c4 d4 e4 f4  8c 9c ac bc cc dc ef fc
-  // 85 95 a5 b5 c5 d5 e5 f5  8d 9d ad bd cd dd ed fd
-  // 86 96 a6 b6 c6 d6 e6 f6  8e ae 9e be ce de ee fe
-  // 87 97 a7 b7 c7 d7 e7 f7  8f 9f af bf cf df ef ff
-
-  out[0] = _mm256_permute2x128_si256(tr0_0, tr0_8, 0x20);  // 0010 0000
-  out[8] = _mm256_permute2x128_si256(tr0_0, tr0_8, 0x31);  // 0011 0001
-  out[1] = _mm256_permute2x128_si256(tr0_1, tr0_9, 0x20);
-  out[9] = _mm256_permute2x128_si256(tr0_1, tr0_9, 0x31);
-  out[2] = _mm256_permute2x128_si256(tr0_2, tr0_a, 0x20);
-  out[10] = _mm256_permute2x128_si256(tr0_2, tr0_a, 0x31);
-  out[3] = _mm256_permute2x128_si256(tr0_3, tr0_b, 0x20);
-  out[11] = _mm256_permute2x128_si256(tr0_3, tr0_b, 0x31);
-
-  out[4] = _mm256_permute2x128_si256(tr0_4, tr0_c, 0x20);
-  out[12] = _mm256_permute2x128_si256(tr0_4, tr0_c, 0x31);
-  out[5] = _mm256_permute2x128_si256(tr0_5, tr0_d, 0x20);
-  out[13] = _mm256_permute2x128_si256(tr0_5, tr0_d, 0x31);
-  out[6] = _mm256_permute2x128_si256(tr0_6, tr0_e, 0x20);
-  out[14] = _mm256_permute2x128_si256(tr0_6, tr0_e, 0x31);
-  out[7] = _mm256_permute2x128_si256(tr0_7, tr0_f, 0x20);
-  out[15] = _mm256_permute2x128_si256(tr0_7, tr0_f, 0x31);
+  *in0 = _mm256_packs_epi32(c0, c1);
+  *in1 = _mm256_packs_epi32(d0, d1);
 }
 
-static INLINE __m256i butter_fly(const __m256i *a0, const __m256i *a1,
-                                 const __m256i *cospi) {
-  const __m256i dct_rounding = _mm256_set1_epi32(DCT_CONST_ROUNDING);
-  __m256i y0 = _mm256_madd_epi16(*a0, *cospi);
-  __m256i y1 = _mm256_madd_epi16(*a1, *cospi);
-
-  y0 = _mm256_add_epi32(y0, dct_rounding);
-  y1 = _mm256_add_epi32(y1, dct_rounding);
-  y0 = _mm256_srai_epi32(y0, DCT_CONST_BITS);
-  y1 = _mm256_srai_epi32(y1, DCT_CONST_BITS);
-
-  return _mm256_packs_epi32(y0, y1);
+static INLINE void btf_16_adds_subs_avx2(__m256i *in0, __m256i *in1) {
+  const __m256i _in0 = *in0;
+  const __m256i _in1 = *in1;
+  *in0 = _mm256_adds_epi16(_in0, _in1);
+  *in1 = _mm256_subs_epi16(_in0, _in1);
 }
 
-static INLINE void txfm_scaling16_avx2(const int16_t c, __m256i *in) {
-  const __m256i zero = _mm256_setzero_si256();
-  const __m256i sqrt2_epi16 = _mm256_set1_epi16(c);
-  const __m256i dct_const_rounding = _mm256_set1_epi32(DCT_CONST_ROUNDING);
-  __m256i u0, u1;
-  int i = 0;
+static INLINE void btf_32_add_sub_avx2(__m256i *in0, __m256i *in1) {
+  const __m256i _in0 = *in0;
+  const __m256i _in1 = *in1;
+  *in0 = _mm256_add_epi32(_in0, _in1);
+  *in1 = _mm256_sub_epi32(_in0, _in1);
+}
 
-  while (i < 16) {
-    in[i] = _mm256_slli_epi16(in[i], 1);
+static INLINE void btf_16_adds_subs_out_avx2(__m256i *out0, __m256i *out1,
+                                             __m256i in0, __m256i in1) {
+  const __m256i _in0 = in0;
+  const __m256i _in1 = in1;
+  *out0 = _mm256_adds_epi16(_in0, _in1);
+  *out1 = _mm256_subs_epi16(_in0, _in1);
+}
 
-    u0 = _mm256_unpacklo_epi16(zero, in[i]);
-    u1 = _mm256_unpackhi_epi16(zero, in[i]);
+static INLINE void btf_32_add_sub_out_avx2(__m256i *out0, __m256i *out1,
+                                           __m256i in0, __m256i in1) {
+  const __m256i _in0 = in0;
+  const __m256i _in1 = in1;
+  *out0 = _mm256_add_epi32(_in0, _in1);
+  *out1 = _mm256_sub_epi32(_in0, _in1);
+}
 
-    u0 = _mm256_madd_epi16(u0, sqrt2_epi16);
-    u1 = _mm256_madd_epi16(u1, sqrt2_epi16);
+static INLINE __m256i load_16bit_to_16bit_avx2(const int16_t *a) {
+  return _mm256_load_si256((const __m256i *)a);
+}
 
-    u0 = _mm256_add_epi32(u0, dct_const_rounding);
-    u1 = _mm256_add_epi32(u1, dct_const_rounding);
-
-    u0 = _mm256_srai_epi32(u0, DCT_CONST_BITS);
-    u1 = _mm256_srai_epi32(u1, DCT_CONST_BITS);
-    in[i] = _mm256_packs_epi32(u0, u1);
-    i++;
+static INLINE void load_buffer_16bit_to_16bit_avx2(const int16_t *in,
+                                                   int stride, __m256i *out,
+                                                   int out_size) {
+  for (int i = 0; i < out_size; ++i) {
+    out[i] = load_16bit_to_16bit_avx2(in + i * stride);
   }
 }
 
-#endif  // AOM_DSP_X86_TXFM_COMMON_AVX2_H
+static INLINE void load_buffer_16bit_to_16bit_flip_avx2(const int16_t *in,
+                                                        int stride,
+                                                        __m256i *out,
+                                                        int out_size) {
+  for (int i = 0; i < out_size; ++i) {
+    out[out_size - i - 1] = load_16bit_to_16bit_avx2(in + i * stride);
+  }
+}
+
+static INLINE __m256i load_32bit_to_16bit_w16_avx2(const int32_t *a) {
+  const __m256i a_low = _mm256_lddqu_si256((const __m256i *)a);
+  const __m256i b = _mm256_packs_epi32(a_low, *(const __m256i *)(a + 8));
+  return _mm256_permute4x64_epi64(b, 0xD8);
+}
+
+static INLINE void load_buffer_32bit_to_16bit_w16_avx2(const int32_t *in,
+                                                       int stride, __m256i *out,
+                                                       int out_size) {
+  for (int i = 0; i < out_size; ++i) {
+    out[i] = load_32bit_to_16bit_w16_avx2(in + i * stride);
+  }
+}
+
+static INLINE void transpose_16bit_16x16_avx2(const __m256i *const in,
+                                              __m256i *const out) {
+  // Unpack 16 bit elements. Goes from:
+  // in[0]: 00 01 02 03  08 09 0a 0b  04 05 06 07  0c 0d 0e 0f
+  // in[1]: 10 11 12 13  18 19 1a 1b  14 15 16 17  1c 1d 1e 1f
+  // in[2]: 20 21 22 23  28 29 2a 2b  24 25 26 27  2c 2d 2e 2f
+  // in[3]: 30 31 32 33  38 39 3a 3b  34 35 36 37  3c 3d 3e 3f
+  // in[4]: 40 41 42 43  48 49 4a 4b  44 45 46 47  4c 4d 4e 4f
+  // in[5]: 50 51 52 53  58 59 5a 5b  54 55 56 57  5c 5d 5e 5f
+  // in[6]: 60 61 62 63  68 69 6a 6b  64 65 66 67  6c 6d 6e 6f
+  // in[7]: 70 71 72 73  78 79 7a 7b  74 75 76 77  7c 7d 7e 7f
+  // in[8]: 80 81 82 83  88 89 8a 8b  84 85 86 87  8c 8d 8e 8f
+  // to:
+  // a0:    00 10 01 11  02 12 03 13  04 14 05 15  06 16 07 17
+  // a1:    20 30 21 31  22 32 23 33  24 34 25 35  26 36 27 37
+  // a2:    40 50 41 51  42 52 43 53  44 54 45 55  46 56 47 57
+  // a3:    60 70 61 71  62 72 63 73  64 74 65 75  66 76 67 77
+  // ...
+  __m256i a[16];
+  for (int i = 0; i < 16; i += 2) {
+    a[i / 2 + 0] = _mm256_unpacklo_epi16(in[i], in[i + 1]);
+    a[i / 2 + 8] = _mm256_unpackhi_epi16(in[i], in[i + 1]);
+  }
+  __m256i b[16];
+  for (int i = 0; i < 16; i += 2) {
+    b[i / 2 + 0] = _mm256_unpacklo_epi32(a[i], a[i + 1]);
+    b[i / 2 + 8] = _mm256_unpackhi_epi32(a[i], a[i + 1]);
+  }
+  __m256i c[16];
+  for (int i = 0; i < 16; i += 2) {
+    c[i / 2 + 0] = _mm256_unpacklo_epi64(b[i], b[i + 1]);
+    c[i / 2 + 8] = _mm256_unpackhi_epi64(b[i], b[i + 1]);
+  }
+  out[0 + 0] = _mm256_permute2x128_si256(c[0], c[1], 0x20);
+  out[1 + 0] = _mm256_permute2x128_si256(c[8], c[9], 0x20);
+  out[2 + 0] = _mm256_permute2x128_si256(c[4], c[5], 0x20);
+  out[3 + 0] = _mm256_permute2x128_si256(c[12], c[13], 0x20);
+
+  out[0 + 8] = _mm256_permute2x128_si256(c[0], c[1], 0x31);
+  out[1 + 8] = _mm256_permute2x128_si256(c[8], c[9], 0x31);
+  out[2 + 8] = _mm256_permute2x128_si256(c[4], c[5], 0x31);
+  out[3 + 8] = _mm256_permute2x128_si256(c[12], c[13], 0x31);
+
+  out[4 + 0] = _mm256_permute2x128_si256(c[0 + 2], c[1 + 2], 0x20);
+  out[5 + 0] = _mm256_permute2x128_si256(c[8 + 2], c[9 + 2], 0x20);
+  out[6 + 0] = _mm256_permute2x128_si256(c[4 + 2], c[5 + 2], 0x20);
+  out[7 + 0] = _mm256_permute2x128_si256(c[12 + 2], c[13 + 2], 0x20);
+
+  out[4 + 8] = _mm256_permute2x128_si256(c[0 + 2], c[1 + 2], 0x31);
+  out[5 + 8] = _mm256_permute2x128_si256(c[8 + 2], c[9 + 2], 0x31);
+  out[6 + 8] = _mm256_permute2x128_si256(c[4 + 2], c[5 + 2], 0x31);
+  out[7 + 8] = _mm256_permute2x128_si256(c[12 + 2], c[13 + 2], 0x31);
+}
+
+static INLINE void flip_buf_avx2(__m256i *in, __m256i *out, int size) {
+  for (int i = 0; i < size; ++i) {
+    out[size - i - 1] = in[i];
+  }
+}
+
+static INLINE void round_shift_16bit_w16_avx2(__m256i *in, int size, int bit) {
+  if (bit < 0) {
+    bit = -bit;
+    __m256i round = _mm256_set1_epi16(1 << (bit - 1));
+    for (int i = 0; i < size; ++i) {
+      in[i] = _mm256_adds_epi16(in[i], round);
+      in[i] = _mm256_srai_epi16(in[i], bit);
+    }
+  } else if (bit > 0) {
+    for (int i = 0; i < size; ++i) {
+      in[i] = _mm256_slli_epi16(in[i], bit);
+    }
+  }
+}
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif  // AOM_AOM_DSP_X86_TXFM_COMMON_AVX2_H_

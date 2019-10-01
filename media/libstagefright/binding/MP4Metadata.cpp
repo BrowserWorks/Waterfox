@@ -763,13 +763,11 @@ MP4MetadataRust::Init()
     mp4parse_log(true);
   }
 
-  mp4parse_fallible_allocation(true);
-
   mp4parse_status rv = mp4parse_read(mRustParser.get());
   MOZ_LOG(sLog, LogLevel::Debug, ("rust parser returned %d\n", rv));
   Telemetry::Accumulate(Telemetry::MEDIA_RUST_MP4PARSE_SUCCESS,
                         rv == mp4parse_status_OK);
-  if (rv != mp4parse_status_OK && rv != mp4parse_status_TABLE_TOO_LARGE) {
+  if (rv != mp4parse_status_OK && rv != mp4parse_status_OOM) {
     MOZ_LOG(sLog, LogLevel::Info, ("Rust mp4 parser fails to parse this stream."));
     MOZ_ASSERT(rv > 0);
     Telemetry::Accumulate(Telemetry::MEDIA_RUST_MP4PARSE_ERROR_CODE, rv);
@@ -903,6 +901,7 @@ MP4MetadataRust::GetTrackInfo(mozilla::TrackInfo::TrackType aType,
     case mp4parse_codec_FLAC: codec_string = "flac"; break;
     case mp4parse_codec_AVC: codec_string = "h.264"; break;
     case mp4parse_codec_VP9: codec_string = "vp9"; break;
+    case mp4parse_codec_AV1: codec_string = "av1"; break;
     case mp4parse_codec_MP3: codec_string = "mp3"; break;
     case mp4parse_codec_MP4V: codec_string = "mp4v"; break;
     case mp4parse_codec_JPEG: codec_string = "jpeg"; break;

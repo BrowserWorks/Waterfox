@@ -8,8 +8,8 @@
  * Media Patent License 1.0 was not distributed with this source code in the
  * PATENTS file, you can obtain it at www.aomedia.org/license/patent.
  */
-#ifndef AOM_AOM_DECODER_H_
-#define AOM_AOM_DECODER_H_
+#ifndef AOM_AOM_AOM_DECODER_H_
+#define AOM_AOM_AOM_DECODER_H_
 
 /*!\defgroup decoder Decoder Algorithm Interface
  * \ingroup codec
@@ -30,8 +30,8 @@
 extern "C" {
 #endif
 
-#include "./aom_codec.h"
-#include "./aom_frame_buffer.h"
+#include "aom/aom_codec.h"
+#include "aom/aom_frame_buffer.h"
 
 /*!\brief Current ABI version number
  *
@@ -55,8 +55,6 @@ extern "C" {
 #define AOM_CODEC_CAP_PUT_SLICE 0x10000 /**< Will issue put_slice callbacks */
 #define AOM_CODEC_CAP_PUT_FRAME 0x20000 /**< Will issue put_frame callbacks */
 #define AOM_CODEC_CAP_POSTPROC 0x40000  /**< Can postprocess decoded frame */
-/*!\brief Can conceal errors due to packet loss */
-#define AOM_CODEC_CAP_ERROR_CONCEALMENT 0x80000
 /*!\brief Can receive encoded frames one fragment at a time */
 #define AOM_CODEC_CAP_INPUT_FRAGMENTS 0x100000
 
@@ -73,13 +71,9 @@ extern "C" {
 #define AOM_CODEC_CAP_EXTERNAL_FRAME_BUFFER 0x400000
 
 #define AOM_CODEC_USE_POSTPROC 0x10000 /**< Postprocess decoded frame */
-/*!\brief Conceal errors in decoded frames */
-#define AOM_CODEC_USE_ERROR_CONCEALMENT 0x20000
 /*!\brief The input frame should be passed to the decoder one fragment at a
  * time */
 #define AOM_CODEC_USE_INPUT_FRAGMENTS 0x40000
-/*!\brief Enable frame-based multi-threading */
-#define AOM_CODEC_USE_FRAME_THREADING 0x80000
 
 /*!\brief Stream properties
  *
@@ -87,9 +81,12 @@ extern "C" {
  * stream.
  */
 typedef struct aom_codec_stream_info {
-  unsigned int w;     /**< Width (or 0 for unknown/default) */
-  unsigned int h;     /**< Height (or 0 for unknown/default) */
-  unsigned int is_kf; /**< Current frame is a keyframe */
+  unsigned int w;                      /**< Width (or 0 for unknown/default) */
+  unsigned int h;                      /**< Height (or 0 for unknown/default) */
+  unsigned int is_kf;                  /**< Current frame is a keyframe */
+  unsigned int number_spatial_layers;  /**< Number of spatial layers */
+  unsigned int number_temporal_layers; /**< Number of temporal layers */
+  unsigned int is_annexb;              /**< Is Bitstream in Annex-B format */
 } aom_codec_stream_info_t;
 
 /* REQUIRED FUNCTIONS
@@ -107,7 +104,9 @@ typedef struct aom_codec_dec_cfg {
   unsigned int threads; /**< Maximum number of threads to use, default 1 */
   unsigned int w;       /**< Width */
   unsigned int h;       /**< Height */
-} aom_codec_dec_cfg_t;  /**< alias for struct aom_codec_dec_cfg */
+  unsigned int allow_lowbitdepth; /**< Allow use of low-bitdepth coding path */
+  cfg_options_t cfg;              /**< Options defined per config attributes */
+} aom_codec_dec_cfg_t;            /**< alias for struct aom_codec_dec_cfg */
 
 /*!\brief Initialize a decoder instance
  *
@@ -152,7 +151,9 @@ aom_codec_err_t aom_codec_dec_init_ver(aom_codec_ctx_t *ctx,
  * \param[in]      iface   Pointer to the algorithm interface
  * \param[in]      data    Pointer to a block of data to parse
  * \param[in]      data_sz Size of the data buffer
- * \param[in,out]  si      Pointer to stream info to update.
+ * \param[in,out]  si      Pointer to stream info to update. The is_annexb
+ *                         member \ref MUST be properly initialized. This
+ *                         function sets the rest of the members.
  *
  * \retval #AOM_CODEC_OK
  *     Bitstream is parsable and stream information updated.
@@ -163,8 +164,7 @@ aom_codec_err_t aom_codec_dec_init_ver(aom_codec_ctx_t *ctx,
  *     buffer was too short.
  */
 aom_codec_err_t aom_codec_peek_stream_info(aom_codec_iface_t *iface,
-                                           const uint8_t *data,
-                                           unsigned int data_sz,
+                                           const uint8_t *data, size_t data_sz,
                                            aom_codec_stream_info_t *si);
 
 /*!\brief Return information about the current stream.
@@ -206,8 +206,6 @@ aom_codec_err_t aom_codec_get_stream_info(aom_codec_ctx_t *ctx,
  * \param[in] data_sz      Size of the coded data, in bytes.
  * \param[in] user_priv    Application specific data to associate with
  *                         this frame.
- * \param[in] deadline     Soft deadline the decoder should attempt to meet,
- *                         in us. Set to zero for unlimited.
  *
  * \return Returns #AOM_CODEC_OK if the coded data was processed completely
  *         and future pictures can be decoded without error. Otherwise,
@@ -215,8 +213,7 @@ aom_codec_err_t aom_codec_get_stream_info(aom_codec_ctx_t *ctx,
  *         for recoverability capabilities.
  */
 aom_codec_err_t aom_codec_decode(aom_codec_ctx_t *ctx, const uint8_t *data,
-                                 unsigned int data_sz, void *user_priv,
-                                 long deadline);
+                                 size_t data_sz, void *user_priv);
 
 /*!\brief Decoded frames iterator
  *
@@ -364,4 +361,4 @@ aom_codec_err_t aom_codec_set_frame_buffer_functions(
 #ifdef __cplusplus
 }
 #endif
-#endif  // AOM_AOM_DECODER_H_
+#endif  // AOM_AOM_AOM_DECODER_H_

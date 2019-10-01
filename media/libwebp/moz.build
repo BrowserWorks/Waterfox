@@ -8,18 +8,18 @@ with Files('**'):
     BUG_COMPONENT = ('Core', 'ImageLib')
 
 EXPORTS.webp += [
-    'webp/decode.h',
-    'webp/demux.h',
-    'webp/mux_types.h',
-    'webp/types.h',
+    'src/webp/decode.h',
+    'src/webp/demux.h',
+    'src/webp/mux_types.h',
+    'src/webp/types.h',
 ]
 
 DIRS += [
-    'dec',
-    'demux',
-    'dsp',
-    'moz',
-    'utils',
+    'src/dec',
+    'src/demux',
+    'src/dsp',
+    'src/moz',
+    'src/utils',
 ]
 
 FINAL_LIBRARY = 'gkmedias'

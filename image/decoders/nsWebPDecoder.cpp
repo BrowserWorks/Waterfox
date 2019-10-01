@@ -19,10 +19,6 @@ static LazyLogModule sWebPLog("WebPDecoder");
 
 nsWebPDecoder::nsWebPDecoder(RasterImage* aImage)
   : Decoder(aImage)
-  , mLexer(Transition::ToUnbuffered(State::FINISHED_WEBP_DATA,
-                                    State::WEBP_DATA,
-                                    SIZE_MAX),
-           Transition::TerminateSuccess())
   , mDecoder(nullptr)
   , mBlend(BlendMethod::OVER)
   , mDisposal(DisposalMethod::KEEP)
@@ -30,6 +26,13 @@ nsWebPDecoder::nsWebPDecoder(RasterImage* aImage)
   , mFormat(SurfaceFormat::B8G8R8X8)
   , mLastRow(0)
   , mCurrentFrame(0)
+  , mData(nullptr)
+  , mLength(0)
+  , mIteratorComplete(false)
+  , mNeedDemuxer(true)
+  , mGotColorProfile(false)
+  , mInProfile(nullptr)
+  , mTransform(nullptr)
 {
   MOZ_LOG(sWebPLog, LogLevel::Debug,
       ("[this=%p] nsWebPDecoder::nsWebPDecoder", this));
@@ -39,27 +42,161 @@ nsWebPDecoder::~nsWebPDecoder()
 {
   MOZ_LOG(sWebPLog, LogLevel::Debug,
       ("[this=%p] nsWebPDecoder::~nsWebPDecoder", this));
-  WebPIDelete(mDecoder);
+  if (mDecoder) {
+    WebPIDelete(mDecoder);
+    WebPFreeDecBuffer(&mBuffer);
+  }
+  if (mInProfile) {
+    // mTransform belongs to us only if mInProfile is non-null
+    if (mTransform) {
+      qcms_transform_release(mTransform);
+    }
+    qcms_profile_release(mInProfile);
+  }
+}
+
+LexerResult
+nsWebPDecoder::ReadData()
+{
+  MOZ_ASSERT(mData);
+  MOZ_ASSERT(mLength > 0);
+
+  WebPDemuxer* demuxer = nullptr;
+  bool complete = mIteratorComplete;
+
+  if (mNeedDemuxer) {
+    WebPDemuxState state;
+    WebPData fragment;
+    fragment.bytes = mData;
+    fragment.size = mLength;
+
+    demuxer = WebPDemuxPartial(&fragment, &state);
+    if (state == WEBP_DEMUX_PARSE_ERROR) {
+      MOZ_LOG(sWebPLog, LogLevel::Error,
+          ("[this=%p] nsWebPDecoder::ReadData -- demux parse error\n", this));
+      WebPDemuxDelete(demuxer);
+      return LexerResult(TerminalState::FAILURE);
+    }
+
+    if (state == WEBP_DEMUX_PARSING_HEADER) {
+      WebPDemuxDelete(demuxer);
+      return LexerResult(Yield::NEED_MORE_DATA);
+    }
+
+    if (!demuxer) {
+      MOZ_LOG(sWebPLog, LogLevel::Error,
+          ("[this=%p] nsWebPDecoder::ReadData -- no demuxer\n", this));
+      return LexerResult(TerminalState::FAILURE);
+    }
+
+    complete = complete || state == WEBP_DEMUX_DONE;
+  }
+
+  LexerResult rv(TerminalState::FAILURE);
+  if (!HasSize()) {
+    rv = ReadHeader(demuxer, complete);
+  } else {
+    rv = ReadPayload(demuxer, complete);
+  }
+
+  WebPDemuxDelete(demuxer);
+  return rv;
 }
 
 LexerResult
 nsWebPDecoder::DoDecode(SourceBufferIterator& aIterator, IResumable* aOnResume)
 {
+  while (true) {
+    SourceBufferIterator::State state = SourceBufferIterator::COMPLETE;
+    if (!mIteratorComplete) {
+      state = aIterator.AdvanceOrScheduleResume(SIZE_MAX, aOnResume);
+
+      // We need to remember since we can't advance a complete iterator.
+      mIteratorComplete = state == SourceBufferIterator::COMPLETE;
+    }
+
+    if (state == SourceBufferIterator::WAITING) {
+      return LexerResult(Yield::NEED_MORE_DATA);
+    }
+
+    LexerResult rv = UpdateBuffer(aIterator, state);
+    if (rv.is<Yield>() && rv.as<Yield>() == Yield::NEED_MORE_DATA) {
+      // We need to check the iterator to see if more is available before
+      // giving up unless we are already complete.
+      if (mIteratorComplete) {
+        MOZ_LOG(sWebPLog, LogLevel::Error,
+            ("[this=%p] nsWebPDecoder::DoDecode -- read all data, "
+             "but needs more\n", this));
+        return LexerResult(TerminalState::FAILURE);
+      }
+      continue;
+    }
+
+    return rv;
+  }
+}
+
+LexerResult
+nsWebPDecoder::UpdateBuffer(SourceBufferIterator& aIterator,
+                            SourceBufferIterator::State aState)
+{
   MOZ_ASSERT(!HasError(), "Shouldn't call DoDecode after error!");
 
-  return mLexer.Lex(aIterator, aOnResume,
-                    [=](State aState, const char* aData, size_t aLength) {
-    switch (aState) {
-      case State::WEBP_DATA:
-        if (!HasSize()) {
-          return ReadHeader(aData, aLength);
-        }
-        return ReadPayload(aData, aLength);
-      case State::FINISHED_WEBP_DATA:
-        return FinishedData();
+  switch (aState) {
+    case SourceBufferIterator::READY:
+      if(!aIterator.IsContiguous()) {
+        //We need to buffer. This should be rare, but expensive.
+        break;
+      }
+      if (!mData) {
+        // For as long as we hold onto an iterator, we know the data pointers
+        // to the chunks cannot change underneath us, so save the pointer to
+        // the first block.
+        MOZ_ASSERT(mLength == 0);
+        mData = reinterpret_cast<const uint8_t*>(aIterator.Data());
+      }
+      mLength += aIterator.Length();
+      return ReadData();
+    case SourceBufferIterator::COMPLETE:
+      return ReadData();
+    default:
+      MOZ_LOG(sWebPLog, LogLevel::Error,
+          ("[this=%p] nsWebPDecoder::DoDecode -- bad state\n", this));
+      return LexerResult(TerminalState::FAILURE);
+  }
+
+  // We need to buffer. If we have no data buffered, we need to get everything
+  // from the first chunk of the source buffer before appending the new data.
+  if (mBufferedData.empty()) {
+    MOZ_ASSERT(mData);
+    MOZ_ASSERT(mLength > 0);
+
+    if (!mBufferedData.append(mData, mLength)) {
+      MOZ_LOG(sWebPLog, LogLevel::Error,
+          ("[this=%p] nsWebPDecoder::DoDecode -- oom, initialize %zu\n",
+           this, mLength));
+      return LexerResult(TerminalState::FAILURE);
     }
-    MOZ_CRASH("Unknown State");
-  });
+
+    MOZ_LOG(sWebPLog, LogLevel::Debug,
+        ("[this=%p] nsWebPDecoder::DoDecode -- buffered %zu bytes\n",
+         this, mLength));
+  }
+
+  // Append the incremental data from the iterator.
+  if (!mBufferedData.append(aIterator.Data(), aIterator.Length())) {
+    MOZ_LOG(sWebPLog, LogLevel::Error,
+        ("[this=%p] nsWebPDecoder::DoDecode -- oom, append %zu on %zu\n",
+         this, aIterator.Length(), mBufferedData.length()));
+    return LexerResult(TerminalState::FAILURE);
+  }
+
+  MOZ_LOG(sWebPLog, LogLevel::Debug,
+      ("[this=%p] nsWebPDecoder::DoDecode -- buffered %zu -> %zu bytes\n",
+       this, aIterator.Length(), mBufferedData.length()));
+  mData = mBufferedData.begin();
+  mLength = mBufferedData.length();
+  return ReadData();
 }
 
 nsresult
@@ -69,13 +206,22 @@ nsWebPDecoder::CreateFrame(const nsIntRect& aFrameRect)
   MOZ_ASSERT(!mDecoder);
 
   MOZ_LOG(sWebPLog, LogLevel::Debug,
-      ("[this=%p] nsWebPDecoder::CreateFrame -- frame %u, %d x %d\n",
-       this, mCurrentFrame, aFrameRect.width, aFrameRect.height));
+      ("[this=%p] nsWebPDecoder::CreateFrame -- frame %u, (%d, %d) %d x %d\n",
+       this, mCurrentFrame, aFrameRect.x, aFrameRect.y,
+       aFrameRect.width, aFrameRect.height));
+
+  if (aFrameRect.width <= 0 || aFrameRect.height <= 0) {
+    MOZ_LOG(sWebPLog, LogLevel::Error,
+        ("[this=%p] nsWebPDecoder::CreateFrame -- bad frame rect\n",
+         this));
+    return NS_ERROR_FAILURE;
+  }
 
   // If this is our first frame in an animation and it doesn't cover the
   // full frame, then we are transparent even if there is no alpha
   if (mCurrentFrame == 0 && !aFrameRect.IsEqualEdges(FullFrame())) {
     MOZ_ASSERT(HasAnimation());
+    mFormat = SurfaceFormat::B8G8R8A8;
     PostHasTransparency();
   }
 
@@ -90,16 +236,22 @@ nsWebPDecoder::CreateFrame(const nsIntRect& aFrameRect)
     return NS_ERROR_FAILURE;
   }
 
+  SurfacePipeFlags pipeFlags = SurfacePipeFlags();
+
+  AnimationParams animParams {
+    aFrameRect, mTimeout, mCurrentFrame, mBlend, mDisposal
+  };
+
   Maybe<SurfacePipe> pipe = SurfacePipeFactory::CreateSurfacePipe(this,
-      mCurrentFrame, Size(), OutputSize(), aFrameRect,
-      mFormat, SurfacePipeFlags());
+      Size(), OutputSize(), aFrameRect, mFormat, Some(animParams), pipeFlags);
   if (!pipe) {
     MOZ_LOG(sWebPLog, LogLevel::Error,
         ("[this=%p] nsWebPDecoder::CreateFrame -- no pipe\n", this));
     return NS_ERROR_FAILURE;
   }
 
-  mPipe = Move(*pipe);
+  mFrameRect = aFrameRect;
+  mPipe = std::move(*pipe);
   return NS_OK;
 }
 
@@ -118,154 +270,149 @@ nsWebPDecoder::EndFrame()
        this, mCurrentFrame, (int)opacity, (int)mDisposal,
        mTimeout.AsEncodedValueDeprecated(), (int)mBlend));
 
-  PostFrameStop(opacity, mDisposal, mTimeout, mBlend);
-  WebPFreeDecBuffer(&mBuffer);
+  PostFrameStop(opacity);
   WebPIDelete(mDecoder);
+  WebPFreeDecBuffer(&mBuffer);
   mDecoder = nullptr;
   mLastRow = 0;
   ++mCurrentFrame;
 }
 
-nsresult
-nsWebPDecoder::GetDataBuffer(const uint8_t*& aData, size_t& aLength)
+void
+nsWebPDecoder::ApplyColorProfile(const char* aProfile, size_t aLength)
 {
-  if (!mData.empty() && mData.begin() != aData) {
-    if (!mData.append(aData, aLength)) {
-      MOZ_LOG(sWebPLog, LogLevel::Error,
-          ("[this=%p] nsWebPDecoder::GetDataBuffer -- oom, append %zu on %zu\n",
-           this, aLength, mData.length()));
-      return NS_ERROR_OUT_OF_MEMORY;
-    }
-    aData = mData.begin();
-    aLength = mData.length();
-  }
-  return NS_OK;
-}
+  MOZ_ASSERT(!mGotColorProfile);
+  mGotColorProfile = true;
 
-nsresult
-nsWebPDecoder::SaveDataBuffer(const uint8_t* aData, size_t aLength)
-{
-  if (mData.empty() && !mData.append(aData, aLength)) {
+  if (GetSurfaceFlags() & SurfaceFlags::NO_COLORSPACE_CONVERSION) {
+    return;
+  }
+
+  auto mode = gfxPlatform::GetCMSMode();
+  if (mode == eCMSMode_Off || (mode == eCMSMode_TaggedOnly && !aProfile)) {
+    return;
+  }
+
+  if (!aProfile || !gfxPlatform::GetCMSOutputProfile()) {
+    MOZ_LOG(sWebPLog, LogLevel::Debug,
+      ("[this=%p] nsWebPDecoder::ApplyColorProfile -- not tagged or no output "
+       "profile , use sRGB transform\n", this));
+    mTransform = gfxPlatform::GetCMSRGBATransform();
+    return;
+  }
+
+  mInProfile = qcms_profile_from_memory(aProfile, aLength);
+  if (!mInProfile) {
     MOZ_LOG(sWebPLog, LogLevel::Error,
-        ("[this=%p] nsWebPDecoder::SaveDataBuffer -- oom, append %zu on %zu\n",
-         this, aLength, mData.length()));
-    return NS_ERROR_OUT_OF_MEMORY;
+      ("[this=%p] nsWebPDecoder::ApplyColorProfile -- bad color profile\n",
+       this));
+    return;
   }
-  return NS_OK;
+
+  // Calculate rendering intent.
+  int intent = gfxPlatform::GetRenderingIntent();
+  if (intent == -1) {
+    intent = qcms_profile_get_rendering_intent(mInProfile);
+  }
+
+  // Create the color management transform.
+  mTransform = qcms_transform_create(mInProfile,
+                                     QCMS_DATA_RGBA_8,
+                                     gfxPlatform::GetCMSOutputProfile(),
+                                     QCMS_DATA_RGBA_8,
+                                     (qcms_intent)intent);
+  MOZ_LOG(sWebPLog, LogLevel::Debug,
+    ("[this=%p] nsWebPDecoder::ApplyColorProfile -- use tagged "
+     "transform\n", this));
 }
 
-LexerTransition<nsWebPDecoder::State>
-nsWebPDecoder::ReadHeader(const char* aData, size_t aLength)
+LexerResult
+nsWebPDecoder::ReadHeader(WebPDemuxer* aDemuxer,
+                          bool aIsComplete)
 {
+  MOZ_ASSERT(aDemuxer);
+
   MOZ_LOG(sWebPLog, LogLevel::Debug,
-      ("[this=%p] nsWebPDecoder::ReadHeader -- %zu bytes\n", this, aLength));
+      ("[this=%p] nsWebPDecoder::ReadHeader -- %zu bytes\n", this, mLength));
 
-  // XXX(aosmond): In an ideal world, we could request the lexer to do this
-  // buffering for us (and in turn the underlying SourceBuffer). That way we
-  // could avoid extra copies during the decode and just do
-  // SourceBuffer::Compact on each iteration. For a typical WebP image we
-  // can hope that we will get the full header in the first packet, but
-  // for animated images we will end up buffering the whole stream if it
-  // not already fully received and contiguous.
-  auto data = (const uint8_t*)aData;
-  size_t length = aLength;
-  if (NS_FAILED(GetDataBuffer(data, length))) {
-    return Transition::TerminateFailure();
-  }
+  uint32_t flags = WebPDemuxGetI(aDemuxer, WEBP_FF_FORMAT_FLAGS);
 
-  WebPBitstreamFeatures features;
-  VP8StatusCode status = WebPGetFeatures(data, length, &features);
-  switch (status) {
-    case VP8_STATUS_OK:
-      break;
-    case VP8_STATUS_NOT_ENOUGH_DATA:
-      if (NS_FAILED(SaveDataBuffer(data, length))) {
-        return Transition::TerminateFailure();
+  if (!IsMetadataDecode() && !mGotColorProfile) {
+    if (flags & WebPFeatureFlags::ICCP_FLAG) {
+      WebPChunkIterator iter;
+      if (!WebPDemuxGetChunk(aDemuxer, "ICCP", 1, &iter)) {
+        return aIsComplete ? LexerResult(TerminalState::FAILURE)
+                           : LexerResult(Yield::NEED_MORE_DATA);
       }
-      return Transition::ContinueUnbuffered(State::WEBP_DATA);
-    default:
-      MOZ_LOG(sWebPLog, LogLevel::Error,
-          ("[this=%p] nsWebPDecoder::ReadHeader -- parse error %d\n",
-           this, status));
-      return Transition::TerminateFailure();
+
+      ApplyColorProfile(reinterpret_cast<const char*>(iter.chunk.bytes),
+                        iter.chunk.size);
+      WebPDemuxReleaseChunkIterator(&iter);
+    } else {
+      ApplyColorProfile(nullptr, 0);
+    }
   }
 
-  if (features.has_animation) {
+  if (flags & WebPFeatureFlags::ANIMATION_FLAG) {
     // A metadata decode expects to get the correct first frame timeout which
     // sadly is not provided by the normal WebP header parsing.
-    WebPDemuxState state;
-    WebPData fragment;
-    fragment.bytes = data;
-    fragment.size = length;
-    WebPDemuxer* demuxer = WebPDemuxPartial(&fragment, &state);
-    if (!demuxer || state == WEBP_DEMUX_PARSE_ERROR) {
-      MOZ_LOG(sWebPLog, LogLevel::Error,
-          ("[this=%p] nsWebPDecoder::ReadHeader -- demux parse error\n", this));
-      WebPDemuxDelete(demuxer);
-      return Transition::TerminateFailure();
-    }
-
     WebPIterator iter;
-    if (!WebPDemuxGetFrame(demuxer, 1, &iter)) {
-      WebPDemuxDelete(demuxer);
-      if (state == WEBP_DEMUX_DONE) {
-        MOZ_LOG(sWebPLog, LogLevel::Error,
-            ("[this=%p] nsWebPDecoder::ReadHeader -- demux parse error\n",
-             this));
-        return Transition::TerminateFailure();
-      }
-      if (NS_FAILED(SaveDataBuffer(data, length))) {
-        return Transition::TerminateFailure();
-      }
-      return Transition::ContinueUnbuffered(State::WEBP_DATA);
+    if (!WebPDemuxGetFrame(aDemuxer, 1, &iter)) {
+      return aIsComplete ? LexerResult(TerminalState::FAILURE)
+                         : LexerResult(Yield::NEED_MORE_DATA);
     }
 
     PostIsAnimated(FrameTimeout::FromRawMilliseconds(iter.duration));
     WebPDemuxReleaseIterator(&iter);
-    WebPDemuxDelete(demuxer);
+  } else {
+    // Single frames don't need a demuxer to be created.
+    mNeedDemuxer = false;
   }
 
-  MOZ_LOG(sWebPLog, LogLevel::Debug,
-      ("[this=%p] nsWebPDecoder::ReadHeader -- %d x %d, alpha %d, "
-       "animation %d, format %d, metadata decode %d, first frame decode %d\n",
-       this, features.width, features.height, features.has_alpha,
-       features.has_animation, features.format, IsMetadataDecode(),
-       IsFirstFrameDecode()));
+  uint32_t width = WebPDemuxGetI(aDemuxer, WEBP_FF_CANVAS_WIDTH);
+  uint32_t height = WebPDemuxGetI(aDemuxer, WEBP_FF_CANVAS_HEIGHT);
+  if (width > INT32_MAX || height > INT32_MAX) {
+    return LexerResult(TerminalState::FAILURE);
+  }
 
-  PostSize(features.width, features.height);
-  if (features.has_alpha) {
+  PostSize(width, height);
+
+  bool alpha = flags & WebPFeatureFlags::ALPHA_FLAG;
+  if (alpha) {
     mFormat = SurfaceFormat::B8G8R8A8;
     PostHasTransparency();
   }
 
+  MOZ_LOG(sWebPLog, LogLevel::Debug,
+      ("[this=%p] nsWebPDecoder::ReadHeader -- %u x %u, alpha %d, "
+       "animation %d, metadata decode %d, first frame decode %d\n",
+       this, width, height, alpha, HasAnimation(),
+       IsMetadataDecode(), IsFirstFrameDecode()));
+
   if (IsMetadataDecode()) {
-    return Transition::TerminateSuccess();
+    return LexerResult(TerminalState::SUCCESS);
   }
 
-  auto transition = ReadPayload((const char*)data, length);
-  if (!features.has_animation) {
-    mData.clearAndFree();
-  }
-  return transition;
+  return ReadPayload(aDemuxer, aIsComplete);
 }
 
-LexerTransition<nsWebPDecoder::State>
-nsWebPDecoder::ReadPayload(const char* aData, size_t aLength)
+LexerResult
+nsWebPDecoder::ReadPayload(WebPDemuxer* aDemuxer,
+                           bool aIsComplete)
 {
-  auto data = (const uint8_t*)aData;
   if (!HasAnimation()) {
-    auto rv = ReadSingle(data, aLength, true, FullFrame());
-    if (rv.NextStateIsTerminal() &&
-        rv.NextStateAsTerminal() == TerminalState::SUCCESS) {
+    auto rv = ReadSingle(mData, mLength, FullFrame());
+    if (rv.is<TerminalState>() &&
+        rv.as<TerminalState>() == TerminalState::SUCCESS) {
       PostDecodeDone();
     }
     return rv;
   }
-  return ReadMultiple(data, aLength);
+  return ReadMultiple(aDemuxer, aIsComplete);
 }
 
-LexerTransition<nsWebPDecoder::State>
-nsWebPDecoder::ReadSingle(const uint8_t* aData, size_t aLength, bool aAppend, const IntRect& aFrameRect)
+LexerResult
+nsWebPDecoder::ReadSingle(const uint8_t* aData, size_t aLength, const IntRect& aFrameRect)
 {
   MOZ_ASSERT(!IsMetadataDecode());
   MOZ_ASSERT(aData);
@@ -275,125 +422,120 @@ nsWebPDecoder::ReadSingle(const uint8_t* aData, size_t aLength, bool aAppend, co
       ("[this=%p] nsWebPDecoder::ReadSingle -- %zu bytes\n", this, aLength));
 
   if (!mDecoder && NS_FAILED(CreateFrame(aFrameRect))) {
-    return Transition::TerminateFailure();
+    return LexerResult(TerminalState::FAILURE);
   }
 
-  // XXX(aosmond): The demux API can be used for single images according to the
-  // documentation. If WebPIAppend is not any more efficient in its buffering
-  // than what we do for animated images, we should just combine the use cases.
   bool complete;
-  VP8StatusCode status;
-  if (aAppend) {
-    status = WebPIAppend(mDecoder, aData, aLength);
-  } else {
-    status = WebPIUpdate(mDecoder, aData, aLength);
-  }
-  switch (status) {
-    case VP8_STATUS_OK:
-      complete = true;
-      break;
-    case VP8_STATUS_SUSPENDED:
-      complete = false;
-      break;
-    default:
-      MOZ_LOG(sWebPLog, LogLevel::Error,
-          ("[this=%p] nsWebPDecoder::ReadSingle -- append error %d\n",
-           this, status));
-      return Transition::TerminateFailure();
-  }
-
-  int lastRow = -1;
-  int width = 0;
-  int height = 0;
-  int stride = 0;
-  const uint8_t* rowStart = WebPIDecGetRGB(mDecoder, &lastRow, &width, &height, &stride);
-  if (!rowStart || lastRow == -1) {
-    return Transition::ContinueUnbuffered(State::WEBP_DATA);
-  }
-
-  if (width <= 0 || height <= 0 || stride <= 0) {
-    MOZ_LOG(sWebPLog, LogLevel::Error,
-        ("[this=%p] nsWebPDecoder::ReadSingle -- bad (w,h,s) = (%d, %d, %d)\n",
-         this, width, height, stride));
-    return Transition::TerminateFailure();
-  }
-
-  for (int row = mLastRow; row < lastRow; row++) {
-    const uint8_t* src = rowStart + row * stride;
-    auto result = mPipe.WritePixelsToRow<uint32_t>([&]() -> NextPixel<uint32_t> {
-      MOZ_ASSERT(mFormat == SurfaceFormat::B8G8R8A8 || src[3] == 0xFF);
-      const uint32_t pixel = gfxPackedPixel(src[3], src[0], src[1], src[2]);
-      src += 4;
-      return AsVariant(pixel);
-    });
-    MOZ_ASSERT(result != WriteState::FAILURE);
-    MOZ_ASSERT_IF(result == WriteState::FINISHED, complete && row == lastRow - 1);
-
-    if (result == WriteState::FAILURE) {
-      MOZ_LOG(sWebPLog, LogLevel::Error,
-          ("[this=%p] nsWebPDecoder::ReadSingle -- write pixels error\n",
-           this));
-      return Transition::TerminateFailure();
+  do {
+    VP8StatusCode status = WebPIUpdate(mDecoder, aData, aLength);
+    switch (status) {
+      case VP8_STATUS_OK:
+        complete = true;
+        break;
+      case VP8_STATUS_SUSPENDED:
+        complete = false;
+        break;
+      default:
+        MOZ_LOG(sWebPLog, LogLevel::Error,
+            ("[this=%p] nsWebPDecoder::ReadSingle -- append error %d\n",
+             this, status));
+        return LexerResult(TerminalState::FAILURE);
     }
-  }
 
-  if (mLastRow != lastRow) {
+    int lastRow = -1;
+    int width = 0;
+    int height = 0;
+    int stride = 0;
+    uint8_t* rowStart = WebPIDecGetRGB(mDecoder, &lastRow, &width, &height, &stride);
+
+    MOZ_LOG(sWebPLog, LogLevel::Debug,
+        ("[this=%p] nsWebPDecoder::ReadSingle -- complete %d, read %d rows, "
+         "has %d rows available\n", this, complete, mLastRow, lastRow));
+
+    if (!rowStart || lastRow == -1 || lastRow == mLastRow) {
+      return LexerResult(Yield::NEED_MORE_DATA);
+    }
+
+    if (width != mFrameRect.width || height != mFrameRect.height ||
+        stride < mFrameRect.width * 4 ||
+        lastRow > mFrameRect.height) {
+      MOZ_LOG(sWebPLog, LogLevel::Error,
+          ("[this=%p] nsWebPDecoder::ReadSingle -- bad (w,h,s) = (%d, %d, %d)\n",
+           this, width, height, stride));
+      return LexerResult(TerminalState::FAILURE);
+    }
+
+    const bool noPremultiply =
+      bool(GetSurfaceFlags() & SurfaceFlags::NO_PREMULTIPLY_ALPHA);
+
+    for (int row = mLastRow; row < lastRow; row++) {
+      uint8_t* src = rowStart + row * stride;
+      if (mTransform) {
+        qcms_transform_data(mTransform, src, src, width);
+      }
+
+      WriteState result;
+      if (noPremultiply) {
+        result = mPipe.WritePixelsToRow<uint32_t>([&]() -> NextPixel<uint32_t> {
+          MOZ_ASSERT(mFormat == SurfaceFormat::B8G8R8A8 || src[3] == 0xFF);
+          const uint32_t pixel =
+            gfxPackedPixelNoPreMultiply(src[3], src[0], src[1], src[2]);
+          src += 4;
+          return AsVariant(pixel);
+        });
+      } else {
+        result = mPipe.WritePixelsToRow<uint32_t>([&]() -> NextPixel<uint32_t> {
+          MOZ_ASSERT(mFormat == SurfaceFormat::B8G8R8A8 || src[3] == 0xFF);
+          const uint32_t pixel = gfxPackedPixel(src[3], src[0], src[1], src[2]);
+          src += 4;
+          return AsVariant(pixel);
+        });
+      }
+
+      Maybe<SurfaceInvalidRect> invalidRect = mPipe.TakeInvalidRect();
+      if (invalidRect) {
+        PostInvalidation(invalidRect->mInputSpaceRect,
+            Some(invalidRect->mOutputSpaceRect));
+      }
+
+      if (result == WriteState::FAILURE) {
+        MOZ_LOG(sWebPLog, LogLevel::Error,
+            ("[this=%p] nsWebPDecoder::ReadSingle -- write pixels error\n",
+             this));
+        return LexerResult(TerminalState::FAILURE);
+      }
+
+      if (result == WriteState::FINISHED) {
+        MOZ_ASSERT(row == lastRow - 1, "There was more data to read?");
+        complete = true;
+        break;
+      }
+    }
+
     mLastRow = lastRow;
-
-    Maybe<SurfaceInvalidRect> invalidRect = mPipe.TakeInvalidRect();
-    if (invalidRect) {
-      PostInvalidation(invalidRect->mInputSpaceRect,
-          Some(invalidRect->mOutputSpaceRect));
-    }
-  }
+  } while (!complete);
 
   if (!complete) {
-    return Transition::ContinueUnbuffered(State::WEBP_DATA);
+    return LexerResult(Yield::NEED_MORE_DATA);
   }
 
   EndFrame();
-  return Transition::TerminateSuccess();
+  return LexerResult(TerminalState::SUCCESS);
 }
 
-LexerTransition<nsWebPDecoder::State>
-nsWebPDecoder::ReadMultiple(const uint8_t* aData, size_t aLength)
+LexerResult
+nsWebPDecoder::ReadMultiple(WebPDemuxer* aDemuxer, bool aIsComplete)
 {
   MOZ_ASSERT(!IsMetadataDecode());
-  MOZ_ASSERT(aData);
+  MOZ_ASSERT(aDemuxer);
 
   MOZ_LOG(sWebPLog, LogLevel::Debug,
-      ("[this=%p] nsWebPDecoder::ReadMultiple -- %zu bytes\n", this, aLength));
+      ("[this=%p] nsWebPDecoder::ReadMultiple\n", this));
 
-  auto data = aData;
-  size_t length = aLength;
-  if (NS_FAILED(GetDataBuffer(data, length))) {
-    return Transition::TerminateFailure();
-  }
-
-  WebPDemuxState state;
-  WebPData fragment;
-  fragment.bytes = data;
-  fragment.size = length;
-  WebPDemuxer* demuxer = WebPDemuxPartial(&fragment, &state);
-  if (!demuxer) {
-    MOZ_LOG(sWebPLog, LogLevel::Error,
-        ("[this=%p] nsWebPDecoder::ReadMultiple -- create demuxer error\n",
-         this));
-    return Transition::TerminateFailure();
-  }
-
-  if (state == WEBP_DEMUX_PARSE_ERROR) {
-    MOZ_LOG(sWebPLog, LogLevel::Error,
-        ("[this=%p] nsWebPDecoder::ReadMultiple -- demuxer parse error\n",
-         this));
-    WebPDemuxDelete(demuxer);
-    return Transition::TerminateFailure();
-  }
-
-  bool complete = false;
+  bool complete = aIsComplete;
   WebPIterator iter;
-  auto rv = Transition::ContinueUnbuffered(State::WEBP_DATA);
-  if (WebPDemuxGetFrame(demuxer, mCurrentFrame + 1, &iter)) {
+  auto rv = LexerResult(Yield::NEED_MORE_DATA);
+  if (WebPDemuxGetFrame(aDemuxer, mCurrentFrame + 1, &iter)) {
     switch (iter.blend_method) {
       case WEBP_MUX_BLEND:
         mBlend = BlendMethod::OVER;
@@ -418,50 +560,33 @@ nsWebPDecoder::ReadMultiple(const uint8_t* aData, size_t aLength)
         break;
     }
 
-    mFormat = iter.has_alpha ? SurfaceFormat::B8G8R8A8 : SurfaceFormat::B8G8R8X8;
+    mFormat = iter.has_alpha || mCurrentFrame > 0 ? SurfaceFormat::B8G8R8A8
+                                                  : SurfaceFormat::B8G8R8X8;
     mTimeout = FrameTimeout::FromRawMilliseconds(iter.duration);
     nsIntRect frameRect(iter.x_offset, iter.y_offset, iter.width, iter.height);
 
-    rv = ReadSingle(iter.fragment.bytes, iter.fragment.size, false, frameRect);
-    complete = state == WEBP_DEMUX_DONE && !WebPDemuxNextFrame(&iter);
+    rv = ReadSingle(iter.fragment.bytes, iter.fragment.size, frameRect);
+    complete = complete && !WebPDemuxNextFrame(&iter);
     WebPDemuxReleaseIterator(&iter);
   }
 
-  if (rv.NextStateIsTerminal()) {
-    if (rv.NextStateAsTerminal() == TerminalState::SUCCESS) {
-      // If we extracted one frame, and it is not the last, we need to yield to
-      // the lexer to allow the upper layers to acknowledge the frame.
-      if (!complete && !IsFirstFrameDecode()) {
-        // The resume point is determined by whether or not we had to buffer.
-        // If we have yet to buffer, we want to resume at the same point,
-        // otherwise our internal buffer has everything we need and we want
-        // to resume having consumed all of the current fragment.
-        rv = Transition::ContinueUnbufferedAfterYield(State::WEBP_DATA,
-                 mData.empty() ? 0 : aLength);
-      } else {
-        uint32_t loopCount = WebPDemuxGetI(demuxer, WEBP_FF_LOOP_COUNT);
+  if (rv.is<TerminalState>() &&
+      rv.as<TerminalState>() == TerminalState::SUCCESS) {
+    // If we extracted one frame, and it is not the last, we need to yield to
+    // the lexer to allow the upper layers to acknowledge the frame.
+    if (!complete && !IsFirstFrameDecode()) {
+      rv = LexerResult(Yield::OUTPUT_AVAILABLE);
+    } else {
+      uint32_t loopCount = WebPDemuxGetI(aDemuxer, WEBP_FF_LOOP_COUNT);
 
-        MOZ_LOG(sWebPLog, LogLevel::Debug,
-          ("[this=%p] nsWebPDecoder::ReadMultiple -- loop count %u\n",
-           this, loopCount));
-        PostDecodeDone(loopCount - 1);
-      }
+      MOZ_LOG(sWebPLog, LogLevel::Debug,
+        ("[this=%p] nsWebPDecoder::ReadMultiple -- loop count %u\n",
+         this, loopCount));
+      PostDecodeDone(loopCount - 1);
     }
-  } else if (NS_FAILED(SaveDataBuffer(data, length))) {
-    rv = Transition::TerminateFailure();
   }
 
-  WebPDemuxDelete(demuxer);
   return rv;
-}
-
-LexerTransition<nsWebPDecoder::State>
-nsWebPDecoder::FinishedData()
-{
-  // Since we set up an unbuffered read for SIZE_MAX bytes, if we actually read
-  // all that data something is really wrong.
-  MOZ_ASSERT_UNREACHABLE("Read the entire address space?");
-  return Transition::TerminateFailure();
 }
 
 } // namespace image

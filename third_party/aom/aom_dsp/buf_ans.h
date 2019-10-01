@@ -9,14 +9,15 @@
  * PATENTS file, you can obtain it at www.aomedia.org/license/patent.
  */
 
-#ifndef AOM_DSP_BUF_ANS_H_
-#define AOM_DSP_BUF_ANS_H_
+#ifndef AOM_AOM_DSP_BUF_ANS_H_
+#define AOM_AOM_DSP_BUF_ANS_H_
 // Buffered forward ANS writer.
 // Symbols are written to the writer in forward (decode) order and serialized
 // backwards due to ANS's stack like behavior.
 
 #include <assert.h>
-#include "./aom_config.h"
+#include "config/aom_config.h"
+
 #include "aom/aom_integer.h"
 #include "aom_dsp/ans.h"
 #include "aom_dsp/answriter.h"
@@ -46,6 +47,8 @@ struct BufAnsCoder {
 #if ANS_MAX_SYMBOLS
   int window_size;
 #endif
+  int pos;  // Dummy variable to store the output buffer after closing
+  uint8_t allow_update_cdf;
 };
 
 // Allocate a buffered ANS coder to store size symbols.
@@ -54,7 +57,7 @@ struct BufAnsCoder {
 // When ANS_MAX_SYMBOLS is turned off, size is merely an initial hint and the
 // buffer will grow on demand
 void aom_buf_ans_alloc(struct BufAnsCoder *c,
-                       struct aom_internal_error_info *error, int hint);
+                       struct aom_internal_error_info *error);
 
 void aom_buf_ans_free(struct BufAnsCoder *c);
 
@@ -130,4 +133,4 @@ static INLINE int buf_ans_write_end(struct BufAnsCoder *const c) {
 #ifdef __cplusplus
 }  // extern "C"
 #endif  // __cplusplus
-#endif  // AOM_DSP_BUF_ANS_H_
+#endif  // AOM_AOM_DSP_BUF_ANS_H_

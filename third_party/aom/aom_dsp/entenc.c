@@ -9,13 +9,19 @@
  * PATENTS file, you can obtain it at www.aomedia.org/license/patent.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "./config.h"
-#endif
-
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
+#include <assert.h>
 #include "aom_dsp/entenc.h"
+#include "aom_dsp/prob.h"
+
+#if OD_MEASURE_EC_OVERHEAD
+#if !defined(M_LOG2E)
+#define M_LOG2E (1.4426950408889634073599246810019)
+#endif
+#define OD_LOG2(x) (M_LOG2E * log(x))
+#endif  // OD_MEASURE_EC_OVERHEAD
 
 /*A range encoder.
   See entdec.c and the references for implementation details \cite{Mar79,MNW98}.
@@ -53,7 +59,8 @@ static void od_ec_enc_normalize(od_ec_enc *enc, od_ec_window low,
   int c;
   int s;
   c = enc->cnt;
-  OD_ASSERT(rng <= 65535U);
+  assert(rng <= 65535U);
+  // The number of leading zeros in the 16-bit binary representation of rng.
   d = 16 - OD_ILOG_NZ(rng);
   s = c + d;
   /*TODO: Right now we flush every time we have at least one byte available.
@@ -83,13 +90,13 @@ static void od_ec_enc_normalize(od_ec_enc *enc, od_ec_window low,
     c += 16;
     m = (1 << c) - 1;
     if (s >= 8) {
-      OD_ASSERT(offs < storage);
+      assert(offs < storage);
       buf[offs++] = (uint16_t)(low >> c);
       low &= m;
       c -= 8;
       m >>= 8;
     }
-    OD_ASSERT(offs < storage);
+    assert(offs < storage);
     buf[offs++] = (uint16_t)(low >> c);
     s = c + d - 24;
     low &= m;
@@ -120,9 +127,6 @@ void od_ec_enc_init(od_ec_enc *enc, uint32_t size) {
 
 /*Reinitializes the encoder.*/
 void od_ec_enc_reset(od_ec_enc *enc) {
-  enc->end_offs = 0;
-  enc->end_window = 0;
-  enc->nend_bits = 0;
   enc->offs = 0;
   enc->low = 0;
   enc->rng = 0x8000;
@@ -143,146 +147,85 @@ void od_ec_enc_clear(od_ec_enc *enc) {
 }
 
 /*Encodes a symbol given its frequency in Q15.
-  fl: The cumulative frequency of all symbols that come before the one to be
-       encoded.
-  fh: The cumulative frequency of all symbols up to and including the one to
-       be encoded.
-  {EC_SMALLMUL} Both values are 32768 minus that.*/
-static void od_ec_encode_q15(od_ec_enc *enc, unsigned fl, unsigned fh) {
+  fl: CDF_PROB_TOP minus the cumulative frequency of all symbols that come
+  before the
+       one to be encoded.
+  fh: CDF_PROB_TOP minus the cumulative frequency of all symbols up to and
+  including
+       the one to be encoded.*/
+static void od_ec_encode_q15(od_ec_enc *enc, unsigned fl, unsigned fh, int s,
+                             int nsyms) {
   od_ec_window l;
   unsigned r;
   unsigned u;
   unsigned v;
   l = enc->low;
   r = enc->rng;
-  OD_ASSERT(32768U <= r);
-#if CONFIG_EC_SMALLMUL
-  OD_ASSERT(fh < fl);
-  OD_ASSERT(fl <= 32768U);
-  if (fl < 32768U) {
-    u = (r >> 8) * (uint32_t)fl >> 7;
-    v = (r >> 8) * (uint32_t)fh >> 7;
+  assert(32768U <= r);
+  assert(fh <= fl);
+  assert(fl <= 32768U);
+  assert(7 - EC_PROB_SHIFT - CDF_SHIFT >= 0);
+  const int N = nsyms - 1;
+  if (fl < CDF_PROB_TOP) {
+    u = ((r >> 8) * (uint32_t)(fl >> EC_PROB_SHIFT) >>
+         (7 - EC_PROB_SHIFT - CDF_SHIFT)) +
+        EC_MIN_PROB * (N - (s - 1));
+    v = ((r >> 8) * (uint32_t)(fh >> EC_PROB_SHIFT) >>
+         (7 - EC_PROB_SHIFT - CDF_SHIFT)) +
+        EC_MIN_PROB * (N - (s + 0));
     l += r - u;
     r = u - v;
   } else {
-    r -= (r >> 8) * (uint32_t)fh >> 7;
+    r -= ((r >> 8) * (uint32_t)(fh >> EC_PROB_SHIFT) >>
+          (7 - EC_PROB_SHIFT - CDF_SHIFT)) +
+         EC_MIN_PROB * (N - (s + 0));
   }
-#else
-  OD_ASSERT(fl < fh);
-  OD_ASSERT(fh <= 32768U);
-  u = fl * (uint32_t)r >> 15;
-  v = fh * (uint32_t)r >> 15;
-  r = v - u;
-  l += u;
-#endif
   od_ec_enc_normalize(enc, l, r);
 #if OD_MEASURE_EC_OVERHEAD
-  enc->entropy -= OD_LOG2((double)(OD_ICDF(fh) - OD_ICDF(fl)) / 32768.);
+  enc->entropy -= OD_LOG2((double)(OD_ICDF(fh) - OD_ICDF(fl)) / CDF_PROB_TOP.);
   enc->nb_symbols++;
 #endif
 }
 
 /*Encode a single binary value.
   val: The value to encode (0 or 1).
-  {EC_SMALLMUL} f: The probability that the val is one, scaled by 32768.
-  {else} f: The probability that val is zero, scaled by 32768.*/
+  f: The probability that the val is one, scaled by 32768.*/
 void od_ec_encode_bool_q15(od_ec_enc *enc, int val, unsigned f) {
   od_ec_window l;
   unsigned r;
   unsigned v;
-  OD_ASSERT(0 < f);
-  OD_ASSERT(f < 32768U);
+  assert(0 < f);
+  assert(f < 32768U);
   l = enc->low;
   r = enc->rng;
-  OD_ASSERT(32768U <= r);
-#if CONFIG_EC_SMALLMUL
-  v = (r >> 8) * (uint32_t)f >> 7;
+  assert(32768U <= r);
+  v = ((r >> 8) * (uint32_t)(f >> EC_PROB_SHIFT) >> (7 - EC_PROB_SHIFT));
+  v += EC_MIN_PROB;
   if (val) l += r - v;
   r = val ? v : r - v;
-#else
-  v = f * (uint32_t)r >> 15;
-  if (val) l += v;
-  r = val ? r - v : v;
-#endif
   od_ec_enc_normalize(enc, l, r);
 #if OD_MEASURE_EC_OVERHEAD
-  enc->entropy -=
-      OD_LOG2((double)(val ? 32768 - OD_ICDF(f) : OD_ICDF(f)) / 32768.);
+  enc->entropy -= OD_LOG2((double)(val ? f : (32768 - f)) / 32768.);
   enc->nb_symbols++;
 #endif
 }
 
 /*Encodes a symbol given a cumulative distribution function (CDF) table in Q15.
   s: The index of the symbol to encode.
-  cdf: The CDF, such that symbol s falls in the range
-        [s > 0 ? cdf[s - 1] : 0, cdf[s]).
-       The values must be monotonically non-decreasing, and the last value
-        must be exactly 32768.
+  icdf: 32768 minus the CDF, such that symbol s falls in the range
+         [s > 0 ? (32768 - icdf[s - 1]) : 0, 32768 - icdf[s]).
+        The values must be monotonically decreasing, and icdf[nsyms - 1] must
+         be 0.
   nsyms: The number of symbols in the alphabet.
          This should be at most 16.*/
-void od_ec_encode_cdf_q15(od_ec_enc *enc, int s, const uint16_t *cdf,
+void od_ec_encode_cdf_q15(od_ec_enc *enc, int s, const uint16_t *icdf,
                           int nsyms) {
   (void)nsyms;
-  OD_ASSERT(s >= 0);
-  OD_ASSERT(s < nsyms);
-  OD_ASSERT(cdf[nsyms - 1] == OD_ICDF(32768U));
-  od_ec_encode_q15(enc, s > 0 ? cdf[s - 1] : OD_ICDF(0), cdf[s]);
+  assert(s >= 0);
+  assert(s < nsyms);
+  assert(icdf[nsyms - 1] == OD_ICDF(CDF_PROB_TOP));
+  od_ec_encode_q15(enc, s > 0 ? icdf[s - 1] : OD_ICDF(0), icdf[s], s, nsyms);
 }
-
-#if CONFIG_RAWBITS
-/*Encodes a sequence of raw bits in the stream.
-  fl: The bits to encode.
-  ftb: The number of bits to encode.
-       This must be between 0 and 25, inclusive.*/
-void od_ec_enc_bits(od_ec_enc *enc, uint32_t fl, unsigned ftb) {
-  od_ec_window end_window;
-  int nend_bits;
-  OD_ASSERT(ftb <= 25);
-  OD_ASSERT(fl < (uint32_t)1 << ftb);
-#if OD_MEASURE_EC_OVERHEAD
-  enc->entropy += ftb;
-#endif
-  end_window = enc->end_window;
-  nend_bits = enc->nend_bits;
-  if (nend_bits + ftb > OD_EC_WINDOW_SIZE) {
-    unsigned char *buf;
-    uint32_t storage;
-    uint32_t end_offs;
-    buf = enc->buf;
-    storage = enc->storage;
-    end_offs = enc->end_offs;
-    if (end_offs + (OD_EC_WINDOW_SIZE >> 3) >= storage) {
-      unsigned char *new_buf;
-      uint32_t new_storage;
-      new_storage = 2 * storage + (OD_EC_WINDOW_SIZE >> 3);
-      new_buf = (unsigned char *)malloc(sizeof(*new_buf) * new_storage);
-      if (new_buf == NULL) {
-        enc->error = -1;
-        enc->end_offs = 0;
-        return;
-      }
-      OD_COPY(new_buf + new_storage - end_offs, buf + storage - end_offs,
-              end_offs);
-      storage = new_storage;
-      free(buf);
-      enc->buf = buf = new_buf;
-      enc->storage = storage;
-    }
-    do {
-      OD_ASSERT(end_offs < storage);
-      buf[storage - ++end_offs] = (unsigned char)end_window;
-      end_window >>= 8;
-      nend_bits -= 8;
-    } while (nend_bits >= 8);
-    enc->end_offs = end_offs;
-  }
-  OD_ASSERT(nend_bits + ftb <= OD_EC_WINDOW_SIZE);
-  end_window |= (od_ec_window)fl << nend_bits;
-  nend_bits += ftb;
-  enc->end_window = end_window;
-  enc->nend_bits = nend_bits;
-}
-#endif
 
 /*Overwrites a few bits at the very start of an existing stream, after they
    have already been encoded.
@@ -301,9 +244,9 @@ void od_ec_enc_bits(od_ec_enc *enc, uint32_t fl, unsigned ftb) {
 void od_ec_enc_patch_initial_bits(od_ec_enc *enc, unsigned val, int nbits) {
   int shift;
   unsigned mask;
-  OD_ASSERT(nbits >= 0);
-  OD_ASSERT(nbits <= 8);
-  OD_ASSERT(val < 1U << nbits);
+  assert(nbits >= 0);
+  assert(nbits <= 8);
+  assert(val < 1U << nbits);
   shift = 8 - nbits;
   mask = ((1U << nbits) - 1) << shift;
   if (enc->offs > 0) {
@@ -335,12 +278,9 @@ unsigned char *od_ec_enc_done(od_ec_enc *enc, uint32_t *nbytes) {
   uint32_t storage;
   uint16_t *buf;
   uint32_t offs;
-  uint32_t end_offs;
-  int nend_bits;
   od_ec_window m;
   od_ec_window e;
   od_ec_window l;
-  unsigned r;
   int c;
   int s;
   if (enc->error) return NULL;
@@ -358,16 +298,10 @@ unsigned char *od_ec_enc_done(od_ec_enc *enc, uint32_t *nbytes) {
   /*We output the minimum number of bits that ensures that the symbols encoded
      thus far will be decoded correctly regardless of the bits that follow.*/
   l = enc->low;
-  r = enc->rng;
   c = enc->cnt;
-  s = 9;
-  m = 0x7FFF;
-  e = (l + m) & ~m;
-  while ((e | m) >= l + r) {
-    s++;
-    m >>= 1;
-    e = (l + m) & ~m;
-  }
+  s = 10;
+  m = 0x3FFF;
+  e = ((l + m) & ~m) | (m + 1);
   s += c;
   offs = enc->offs;
   buf = enc->precarry_buf;
@@ -386,7 +320,7 @@ unsigned char *od_ec_enc_done(od_ec_enc *enc, uint32_t *nbytes) {
     }
     n = (1 << (c + 16)) - 1;
     do {
-      OD_ASSERT(offs < storage);
+      assert(offs < storage);
       buf[offs++] = (uint16_t)(e >> (c + 16));
       e &= n;
       s -= 8;
@@ -394,49 +328,31 @@ unsigned char *od_ec_enc_done(od_ec_enc *enc, uint32_t *nbytes) {
       n >>= 8;
     } while (s > 0);
   }
-  /*Make sure there's enough room for the entropy-coded bits and the raw
-     bits.*/
+  /*Make sure there's enough room for the entropy-coded bits.*/
   out = enc->buf;
   storage = enc->storage;
-  end_offs = enc->end_offs;
-  e = enc->end_window;
-  nend_bits = enc->nend_bits;
-  s = -s;
-  c = OD_MAXI((nend_bits - s + 7) >> 3, 0);
-  if (offs + end_offs + c > storage) {
-    storage = offs + end_offs + c;
+  c = OD_MAXI((s + 7) >> 3, 0);
+  if (offs + c > storage) {
+    storage = offs + c;
     out = (unsigned char *)realloc(out, sizeof(*out) * storage);
     if (out == NULL) {
       enc->error = -1;
       return NULL;
     }
-    OD_MOVE(out + storage - end_offs, out + enc->storage - end_offs, end_offs);
     enc->buf = out;
     enc->storage = storage;
   }
-  /*If we have buffered raw bits, flush them as well.*/
-  while (nend_bits > s) {
-    OD_ASSERT(end_offs < storage);
-    out[storage - ++end_offs] = (unsigned char)e;
-    e >>= 8;
-    nend_bits -= 8;
-  }
-  *nbytes = offs + end_offs;
+  *nbytes = offs;
   /*Perform carry propagation.*/
-  OD_ASSERT(offs + end_offs <= storage);
-  out = out + storage - (offs + end_offs);
+  assert(offs <= storage);
+  out = out + storage - offs;
   c = 0;
-  end_offs = offs;
   while (offs > 0) {
     offs--;
     c = buf[offs] + c;
     out[offs] = (unsigned char)c;
     c >>= 8;
   }
-  /*Add any remaining raw bits to the last byte.
-    There is guaranteed to be enough room, because nend_bits <= s.*/
-  OD_ASSERT(nend_bits <= 0 || end_offs > 0);
-  if (nend_bits > 0) out[end_offs - 1] |= (unsigned char)e;
   /*Note: Unless there's an allocation error, if you keep encoding into the
      current buffer and call this function again later, everything will work
      just fine (you won't get a new packet out, but you will get a single
@@ -458,7 +374,7 @@ unsigned char *od_ec_enc_done(od_ec_enc *enc, uint32_t *nbytes) {
 int od_ec_enc_tell(const od_ec_enc *enc) {
   /*The 10 here counteracts the offset of -9 baked into cnt, and adds 1 extra
      bit, which we reserve for terminating the stream.*/
-  return (enc->offs + enc->end_offs) * 8 + enc->cnt + enc->nend_bits + 10;
+  return (enc->cnt + 10) + enc->offs * 8;
 }
 
 /*Returns the number of bits "used" by the encoded symbols so far.
@@ -493,8 +409,8 @@ void od_ec_enc_rollback(od_ec_enc *dst, const od_ec_enc *src) {
   uint32_t storage;
   uint16_t *precarry_buf;
   uint32_t precarry_storage;
-  OD_ASSERT(dst->storage >= src->storage);
-  OD_ASSERT(dst->precarry_storage >= src->precarry_storage);
+  assert(dst->storage >= src->storage);
+  assert(dst->precarry_storage >= src->precarry_storage);
   buf = dst->buf;
   storage = dst->storage;
   precarry_buf = dst->precarry_buf;

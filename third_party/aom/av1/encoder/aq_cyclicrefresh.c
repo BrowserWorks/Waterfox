@@ -39,7 +39,7 @@ struct CYCLIC_REFRESH {
   // RD mult. parameters for segment 1.
   int rdmult;
   // Cyclic refresh map.
-  signed char *map;
+  int8_t *map;
   // Map of the last q a block was coded at.
   uint8_t *last_coded_q_map;
   // Thresholds applied to the projected rate/distortion of the coding block,
@@ -80,9 +80,11 @@ CYCLIC_REFRESH *av1_cyclic_refresh_alloc(int mi_rows, int mi_cols) {
 }
 
 void av1_cyclic_refresh_free(CYCLIC_REFRESH *cr) {
-  aom_free(cr->map);
-  aom_free(cr->last_coded_q_map);
-  aom_free(cr);
+  if (cr != NULL) {
+    aom_free(cr->map);
+    aom_free(cr->last_coded_q_map);
+    aom_free(cr);
+  }
 }
 
 // Check if we should turn off cyclic refresh based on bitrate condition.
@@ -137,8 +139,9 @@ static int candidate_refresh_aq(const CYCLIC_REFRESH *cr,
 static int compute_deltaq(const AV1_COMP *cpi, int q, double rate_factor) {
   const CYCLIC_REFRESH *const cr = cpi->cyclic_refresh;
   const RATE_CONTROL *const rc = &cpi->rc;
-  int deltaq = av1_compute_qdelta_by_rate(rc, cpi->common.frame_type, q,
-                                          rate_factor, cpi->common.bit_depth);
+  int deltaq =
+      av1_compute_qdelta_by_rate(rc, cpi->common.frame_type, q, rate_factor,
+                                 cpi->common.seq_params.bit_depth);
   if ((-deltaq) > cr->max_qdelta_perc * q / 100) {
     deltaq = -cr->max_qdelta_perc * q / 100;
   }
@@ -164,15 +167,16 @@ int av1_cyclic_refresh_estimate_bits_at_q(const AV1_COMP *cpi,
   estimated_bits =
       (int)((1.0 - weight_segment1 - weight_segment2) *
                 av1_estimate_bits_at_q(cm->frame_type, cm->base_qindex, mbs,
-                                       correction_factor, cm->bit_depth) +
-            weight_segment1 *
-                av1_estimate_bits_at_q(cm->frame_type,
-                                       cm->base_qindex + cr->qindex_delta[1],
-                                       mbs, correction_factor, cm->bit_depth) +
-            weight_segment2 *
-                av1_estimate_bits_at_q(cm->frame_type,
-                                       cm->base_qindex + cr->qindex_delta[2],
-                                       mbs, correction_factor, cm->bit_depth));
+                                       correction_factor,
+                                       cm->seq_params.bit_depth) +
+            weight_segment1 * av1_estimate_bits_at_q(
+                                  cm->frame_type,
+                                  cm->base_qindex + cr->qindex_delta[1], mbs,
+                                  correction_factor, cm->seq_params.bit_depth) +
+            weight_segment2 * av1_estimate_bits_at_q(
+                                  cm->frame_type,
+                                  cm->base_qindex + cr->qindex_delta[2], mbs,
+                                  correction_factor, cm->seq_params.bit_depth));
   return estimated_bits;
 }
 
@@ -197,12 +201,13 @@ int av1_cyclic_refresh_rc_bits_per_mb(const AV1_COMP *cpi, int i,
   // Compute delta-q corresponding to qindex i.
   int deltaq = compute_deltaq(cpi, i, cr->rate_ratio_qdelta);
   // Take segment weighted average for bits per mb.
-  bits_per_mb = (int)((1.0 - weight_segment) *
-                          av1_rc_bits_per_mb(cm->frame_type, i,
-                                             correction_factor, cm->bit_depth) +
-                      weight_segment *
-                          av1_rc_bits_per_mb(cm->frame_type, i + deltaq,
-                                             correction_factor, cm->bit_depth));
+  bits_per_mb =
+      (int)((1.0 - weight_segment) *
+                av1_rc_bits_per_mb(cm->frame_type, i, correction_factor,
+                                   cm->seq_params.bit_depth) +
+            weight_segment * av1_rc_bits_per_mb(cm->frame_type, i + deltaq,
+                                                correction_factor,
+                                                cm->seq_params.bit_depth));
   return bits_per_mb;
 }
 
@@ -320,7 +325,7 @@ void av1_cyclic_refresh_check_golden_update(AV1_COMP *const cpi) {
   double fraction_low = 0.0;
   int low_content_frame = 0;
 
-  MODE_INFO **mi;
+  MB_MODE_INFO **mi;
   RATE_CONTROL *const rc = &cpi->rc;
   const int rows = cm->mi_rows, cols = cm->mi_cols;
   int cnt1 = 0, cnt2 = 0;
@@ -330,12 +335,12 @@ void av1_cyclic_refresh_check_golden_update(AV1_COMP *const cpi) {
     mi = cm->mi_grid_visible + mi_row * cm->mi_stride;
 
     for (mi_col = 0; mi_col < cols; mi_col++) {
-      int16_t abs_mvr = mi[0]->mbmi.mv[0].as_mv.row >= 0
-                            ? mi[0]->mbmi.mv[0].as_mv.row
-                            : -1 * mi[0]->mbmi.mv[0].as_mv.row;
-      int16_t abs_mvc = mi[0]->mbmi.mv[0].as_mv.col >= 0
-                            ? mi[0]->mbmi.mv[0].as_mv.col
-                            : -1 * mi[0]->mbmi.mv[0].as_mv.col;
+      int16_t abs_mvr = mi[0]->mv[0].as_mv.row >= 0
+                            ? mi[0]->mv[0].as_mv.row
+                            : -1 * mi[0]->mv[0].as_mv.row;
+      int16_t abs_mvc = mi[0]->mv[0].as_mv.col >= 0
+                            ? mi[0]->mv[0].as_mv.col
+                            : -1 * mi[0]->mv[0].as_mv.col;
 
       // Calculate the motion of the background.
       if (abs_mvr <= 16 && abs_mvc <= 16) {
@@ -352,10 +357,7 @@ void av1_cyclic_refresh_check_golden_update(AV1_COMP *const cpi) {
   // For video conference clips, if the background has high motion in current
   // frame because of the camera movement, set this frame as the golden frame.
   // Use 70% and 5% as the thresholds for golden frame refreshing.
-  // Also, force this frame as a golden update frame if this frame will change
-  // the resolution (av1_resize_pending != 0).
-  if (av1_resize_pending(cpi) ||
-      (cnt1 * 10 > (70 * rows * cols) && cnt2 * 20 < cnt1)) {
+  if (cnt1 * 10 > (70 * rows * cols) && cnt2 * 20 < cnt1) {
     av1_cyclic_refresh_set_golden_update(cpi);
     rc->frames_till_gf_update_due = rc->baseline_gf_interval;
 
@@ -392,14 +394,17 @@ static void cyclic_refresh_update_map(AV1_COMP *const cpi) {
   int i, block_count, bl_index, sb_rows, sb_cols, sbs_in_frame;
   int xmis, ymis, x, y;
   memset(seg_map, CR_SEGMENT_ID_BASE, cm->mi_rows * cm->mi_cols);
-  sb_cols = (cm->mi_cols + cm->mib_size - 1) / cm->mib_size;
-  sb_rows = (cm->mi_rows + cm->mib_size - 1) / cm->mib_size;
+  sb_cols =
+      (cm->mi_cols + cm->seq_params.mib_size - 1) / cm->seq_params.mib_size;
+  sb_rows =
+      (cm->mi_rows + cm->seq_params.mib_size - 1) / cm->seq_params.mib_size;
   sbs_in_frame = sb_cols * sb_rows;
   // Number of target blocks to get the q delta (segment 1).
   block_count = cr->percent_refresh * cm->mi_rows * cm->mi_cols / 100;
   // Set the segmentation map: cycle through the superblocks, starting at
   // cr->mb_index, and stopping when either block_count blocks have been found
   // to be refreshed, or we have passed through whole frame.
+  if (cr->sb_index >= sbs_in_frame) cr->sb_index = 0;
   assert(cr->sb_index < sbs_in_frame);
   i = cr->sb_index;
   cr->target_num_seg_blocks = 0;
@@ -408,8 +413,8 @@ static void cyclic_refresh_update_map(AV1_COMP *const cpi) {
     // Get the mi_row/mi_col corresponding to superblock index i.
     int sb_row_index = (i / sb_cols);
     int sb_col_index = i - sb_row_index * sb_cols;
-    int mi_row = sb_row_index * cm->mib_size;
-    int mi_col = sb_col_index * cm->mib_size;
+    int mi_row = sb_row_index * cm->seq_params.mib_size;
+    int mi_col = sb_col_index * cm->seq_params.mib_size;
     int qindex_thresh =
         cpi->oxcf.content == AOM_CONTENT_SCREEN
             ? av1_get_qindex(&cm->seg, CR_SEGMENT_ID_BOOST2, cm->base_qindex)
@@ -418,14 +423,14 @@ static void cyclic_refresh_update_map(AV1_COMP *const cpi) {
     assert(mi_col >= 0 && mi_col < cm->mi_cols);
     bl_index = mi_row * cm->mi_cols + mi_col;
     // Loop through all MI blocks in superblock and update map.
-    xmis = AOMMIN(cm->mi_cols - mi_col, cm->mib_size);
-    ymis = AOMMIN(cm->mi_rows - mi_row, cm->mib_size);
+    xmis = AOMMIN(cm->mi_cols - mi_col, cm->seq_params.mib_size);
+    ymis = AOMMIN(cm->mi_rows - mi_row, cm->seq_params.mib_size);
     for (y = 0; y < ymis; y++) {
       for (x = 0; x < xmis; x++) {
         const int bl_index2 = bl_index + y * cm->mi_cols + x;
         // If the block is as a candidate for clean up then mark it
         // for possible boost/refresh (segment 1). The segment id may get
-        // reset to 0 later if block gets coded anything other than ZEROMV.
+        // reset to 0 later if block gets coded anything other than GLOBALMV.
         if (cr->map[bl_index2] == 0) {
           if (cr->last_coded_q_map[bl_index2] > qindex_thresh) sum_map++;
         } else if (cr->map[bl_index2] < 0) {
@@ -481,6 +486,16 @@ void av1_cyclic_refresh_setup(AV1_COMP *const cpi) {
   CYCLIC_REFRESH *const cr = cpi->cyclic_refresh;
   struct segmentation *const seg = &cm->seg;
   const int apply_cyclic_refresh = apply_cyclic_refresh_bitrate(cm, rc);
+  int resolution_change =
+      cm->prev_frame && (cm->width != cm->prev_frame->width ||
+                         cm->height != cm->prev_frame->height);
+  if (resolution_change) {
+    memset(cpi->segmentation_map, 0, cm->mi_rows * cm->mi_cols);
+    av1_clearall_segfeatures(seg);
+    aom_clear_system_state();
+    av1_disable_segmentation(seg);
+    return;
+  }
   if (cm->current_video_frame == 0) cr->low_content_avg = 0.0;
   // Don't apply refresh on key frame or enhancement layer frames.
   if (!apply_cyclic_refresh || cm->frame_type == KEY_FRAME) {
@@ -497,7 +512,8 @@ void av1_cyclic_refresh_setup(AV1_COMP *const cpi) {
   } else {
     int qindex_delta = 0;
     int qindex2;
-    const double q = av1_convert_qindex_to_q(cm->base_qindex, cm->bit_depth);
+    const double q =
+        av1_convert_qindex_to_q(cm->base_qindex, cm->seq_params.bit_depth);
     aom_clear_system_state();
     // Set rate threshold to some multiple (set to 2 for now) of the target
     // rate (target is given by sb64_target_rate and scaled by 256).
@@ -511,8 +527,6 @@ void av1_cyclic_refresh_setup(AV1_COMP *const cpi) {
     // Clear down the segment map.
     av1_enable_segmentation(&cm->seg);
     av1_clearall_segfeatures(seg);
-    // Select delta coding method.
-    seg->abs_delta = SEGMENT_DELTADATA;
 
     // Note: setting temporal_update has no effect, as the seg-map coding method
     // (temporal or spatial) is determined in

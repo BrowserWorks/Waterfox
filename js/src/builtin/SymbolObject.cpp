@@ -33,6 +33,7 @@ SymbolObject::create(JSContext* cx, JS::HandleSymbol symbol)
 }
 
 const JSPropertySpec SymbolObject::properties[] = {
+    JS_PSG("description", descriptionGetter, 0),
     JS_PS_END
 };
 
@@ -233,6 +234,34 @@ SymbolObject::toPrimitive(JSContext* cx, unsigned argc, Value* vp)
     // The specification gives exactly the same algorithm for @@toPrimitive as
     // for valueOf, so reuse the valueOf implementation.
     return CallNonGenericMethod<IsSymbol, valueOf_impl>(cx, args);
+}
+
+// ES2019 Stage 4 Draft / November 28, 2018
+// Symbol description accessor
+// See: https://tc39.github.io/proposal-Symbol-description/
+bool
+SymbolObject::descriptionGetter_impl(JSContext* cx, const CallArgs& args)
+{
+    // Get symbol object pointer.
+    HandleValue thisv = args.thisv();
+    MOZ_ASSERT(IsSymbol(thisv));
+    Rooted<Symbol*> sym(cx, thisv.isSymbol()
+                            ? thisv.toSymbol()
+                            : thisv.toObject().as<SymbolObject>().unbox());
+
+    // Return the symbol's description if present, otherwise return undefined.
+    if (JSString* str = sym->description())
+        args.rval().setString(str);
+    else
+        args.rval().setUndefined();
+    return true;
+}
+
+bool
+SymbolObject::descriptionGetter(JSContext* cx, unsigned argc, Value* vp)
+{
+    CallArgs args = CallArgsFromVp(argc, vp);
+    return CallNonGenericMethod<IsSymbol, descriptionGetter_impl>(cx, args);
 }
 
 JSObject*

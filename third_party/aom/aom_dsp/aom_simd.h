@@ -9,8 +9,8 @@
  * PATENTS file, you can obtain it at www.aomedia.org/license/patent.
  */
 
-#ifndef AOM_DSP_AOM_AOM_SIMD_H_
-#define AOM_DSP_AOM_AOM_SIMD_H_
+#ifndef AOM_AOM_DSP_AOM_SIMD_H_
+#define AOM_AOM_DSP_AOM_SIMD_H_
 
 #include <stdint.h>
 
@@ -18,8 +18,9 @@
 #include <intrin.h>
 #endif
 
-#include "./aom_config.h"
-#include "./aom_simd_inline.h"
+#include "config/aom_config.h"
+
+#include "aom_dsp/aom_simd_inline.h"
 
 #define SIMD_CHECK 1  // Sanity checks in C equivalents
 
@@ -34,4 +35,4 @@
 #include "simd/v256_intrinsics.h"
 #endif
 
-#endif  // AOM_DSP_AOM_AOM_SIMD_H_
+#endif  // AOM_AOM_DSP_AOM_SIMD_H_

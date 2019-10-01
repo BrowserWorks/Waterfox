@@ -9,8 +9,8 @@
  * PATENTS file, you can obtain it at www.aomedia.org/license/patent.
  */
 
-#ifndef AOM_DSP_AOM_FILTER_H_
-#define AOM_DSP_AOM_FILTER_H_
+#ifndef AOM_AOM_DSP_AOM_FILTER_H_
+#define AOM_AOM_DSP_AOM_FILTER_H_
 
 #include "aom/aom_integer.h"
 
@@ -24,6 +24,19 @@ extern "C" {
 #define SUBPEL_MASK ((1 << SUBPEL_BITS) - 1)
 #define SUBPEL_SHIFTS (1 << SUBPEL_BITS)
 #define SUBPEL_TAPS 8
+
+#define SCALE_SUBPEL_BITS 10
+#define SCALE_SUBPEL_SHIFTS (1 << SCALE_SUBPEL_BITS)
+#define SCALE_SUBPEL_MASK (SCALE_SUBPEL_SHIFTS - 1)
+#define SCALE_EXTRA_BITS (SCALE_SUBPEL_BITS - SUBPEL_BITS)
+#define SCALE_EXTRA_OFF ((1 << SCALE_EXTRA_BITS) / 2)
+
+#define RS_SUBPEL_BITS 6
+#define RS_SUBPEL_MASK ((1 << RS_SUBPEL_BITS) - 1)
+#define RS_SCALE_SUBPEL_BITS 14
+#define RS_SCALE_SUBPEL_MASK ((1 << RS_SCALE_SUBPEL_BITS) - 1)
+#define RS_SCALE_EXTRA_BITS (RS_SCALE_SUBPEL_BITS - RS_SUBPEL_BITS)
+#define RS_SCALE_EXTRA_OFF (1 << (RS_SCALE_EXTRA_BITS - 1))
 
 typedef int16_t InterpKernel[SUBPEL_TAPS];
 
@@ -40,4 +53,4 @@ static const uint8_t bilinear_filters_2t[BIL_SUBPEL_SHIFTS][2] = {
 }  // extern "C"
 #endif
 
-#endif  // AOM_DSP_AOM_FILTER_H_
+#endif  // AOM_AOM_DSP_AOM_FILTER_H_

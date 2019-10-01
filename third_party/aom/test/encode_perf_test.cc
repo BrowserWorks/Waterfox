@@ -7,12 +7,14 @@
  * obtain it at www.aomedia.org/license/software. If the Alliance for Open
  * Media Patent License 1.0 was not distributed with this source code in the
  * PATENTS file, you can obtain it at www.aomedia.org/license/patent.
-*/
+ */
 
 #include <string>
 #include "third_party/googletest/src/googletest/include/gtest/gtest.h"
-#include "./aom_config.h"
-#include "./aom_version.h"
+
+#include "config/aom_config.h"
+#include "config/aom_version.h"
+
 #include "test/codec_factory.h"
 #include "test/encode_test_driver.h"
 #include "test/i420_video_source.h"
@@ -53,11 +55,9 @@ const EncodePerfTestVideo kAV1EncodePerfTestVectors[] = {
 const int kEncodePerfTestSpeeds[] = { 5, 6, 7, 8 };
 const int kEncodePerfTestThreads[] = { 1, 2, 4 };
 
-#define NELEMENTS(x) (sizeof((x)) / sizeof((x)[0]))
-
 class AV1EncodePerfTest
-    : public ::libaom_test::EncoderTest,
-      public ::libaom_test::CodecTestWithParam<libaom_test::TestMode> {
+    : public ::libaom_test::CodecTestWithParam<libaom_test::TestMode>,
+      public ::libaom_test::EncoderTest {
  protected:
   AV1EncodePerfTest()
       : EncoderTest(GET_PARAM(0)), min_psnr_(kMaxPsnr), nframes_(0),
@@ -78,7 +78,6 @@ class AV1EncodePerfTest
     cfg_.rc_buf_sz = 1000;
     cfg_.rc_buf_initial_sz = 500;
     cfg_.rc_buf_optimal_sz = 600;
-    cfg_.rc_resize_allowed = 0;
     cfg_.rc_end_usage = AOM_CBR;
     cfg_.g_error_resilient = 1;
     cfg_.g_threads = threads_;

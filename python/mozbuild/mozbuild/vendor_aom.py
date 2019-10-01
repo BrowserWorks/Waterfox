@@ -12,17 +12,22 @@ from mozbuild.base import (
 )
 import mozfile
 import mozpack.path as mozpath
+import os
 import requests
 import re
 import sys
 import tarfile
+from urlparse import urlparse
 
 class VendorAOM(MozbuildObject):
-    base_url = 'https://aomedia.googlesource.com/aom/'
-
-    def upstream_url(self, revision):
+    def upstream_snapshot(self, revision):
         '''Construct a url for a tarball snapshot of the given revision.'''
-        return mozpath.join(self.base_url, '+archive', revision + '.tar.gz')
+        if 'googlesource' in self.repo_url:
+            return mozpath.join(self.repo_url, '+archive', revision + '.tar.gz')
+        elif 'github' in self.repo_url:
+            return mozpath.join(self.repo_url, 'archive', revision + '.tar.gz')
+        else:
+            raise ValueError('Unknown git host, no snapshot lookup method')
 
     def upstream_commit(self, revision):
         '''Convert a revision to a git commit and timestamp.
@@ -30,7 +35,27 @@ class VendorAOM(MozbuildObject):
         Ask the upstream repo to convert the requested revision to
         a git commit id and timestamp, so we can be precise in
         what we're vendoring.'''
-        url = mozpath.join(self.base_url, '+', revision + '?format=JSON')
+        if 'googlesource' in self.repo_url:
+            return self.upstream_googlesource_commit(revision)
+        elif 'github' in self.repo_url:
+            return self.upstream_github_commit(revision)
+        else:
+            raise ValueError('Unknown git host, no commit lookup method')
+
+    def upstream_validate(self, url):
+        '''Validate repository urls to make sure we can handle them.'''
+        host = urlparse(url).netloc
+        valid_domains = ('googlesource.com', 'github.com')
+        if not any(filter(lambda domain: domain in host, valid_domains)):
+            self.log(logging.ERROR, 'upstream_url', {},
+                     '''Unsupported git host %s; cannot fetch snapshots.
+
+Please set a repository url with --repo on either googlesource or github.''' % host)
+            sys.exit(1)
+
+    def upstream_googlesource_commit(self, revision):
+        '''Query gitiles for a git commit and timestamp.'''
+        url = mozpath.join(self.repo_url, '+', revision + '?format=JSON')
         self.log(logging.INFO, 'fetch', {'url': url},
                  'Fetching commit id from {url}')
         req = requests.get(url)
@@ -38,21 +63,31 @@ class VendorAOM(MozbuildObject):
         try:
             info = req.json()
         except ValueError as e:
-            if 'No JSON object' in e.message:
-                # As of 2017 May, googlesource sends 4 garbage characters
-                # at the beginning of the json response. Work around this.
-                # https://bugs.chromium.org/p/chromium/issues/detail?id=718550
-                import json
-                info = json.loads(req.text[4:])
-            else:
-                raise
+            # As of 2017 May, googlesource sends 4 garbage characters
+            # at the beginning of the json response. Work around this.
+            # https://bugs.chromium.org/p/chromium/issues/detail?id=718550
+            import json
+            info = json.loads(req.text[4:])
         return (info['commit'], info['committer']['time'])
+
+    def upstream_github_commit(self, revision):
+        '''Query the github api for a git commit id and timestamp.'''
+        github_api = 'https://api.github.com/'
+        repo = urlparse(self.repo_url).path[1:]
+        url = mozpath.join(github_api, 'repos', repo, 'commits', revision)
+        self.log(logging.INFO, 'fetch', {'url': url},
+                 'Fetching commit id from {url}')
+        req = requests.get(url)
+        req.raise_for_status()
+        info = req.json()
+        return (info['sha'], info['commit']['committer']['date'])
 
     def fetch_and_unpack(self, revision, target):
         '''Fetch and unpack upstream source'''
-        url = self.upstream_url(revision)
+        url = self.upstream_snapshot(revision)
         self.log(logging.INFO, 'fetch', {'url': url}, 'Fetching {url}')
-        filename = 'libaom-' + revision + '.tar.gz'
+        prefix = 'aom-' + revision
+        filename = prefix + '.tar.gz'
         with open(filename, 'wb') as f:
             req = requests.get(url, stream=True)
             for data in req.iter_content(4096):
@@ -67,6 +102,12 @@ class VendorAOM(MozbuildObject):
         mozfile.remove(target)
         self.log(logging.INFO, 'unpack', {}, 'Unpacking upstream files.')
         tar.extractall(target)
+        # Github puts everything properly down a directory; move it up.
+        if all(map(lambda name: name.startswith(prefix), tar.getnames())):
+            tardir = mozpath.join(target, prefix)
+            os.system('mv %s/* %s/.* %s' % (tardir, tardir, target))
+            os.rmdir(tardir)
+        # Remove the tarball.
         mozfile.remove(filename)
 
     def update_readme(self, revision, timestamp, target):
@@ -82,45 +123,14 @@ class VendorAOM(MozbuildObject):
         else:
             new_readme = '%s\n\n%s %s.' % (readme, prefix, revision)
 
+        prefix = 'The last update was pulled from'
+        new_readme = re.sub(prefix + ' https*://.*',
+                            prefix + ' %s' % self.repo_url,
+                            new_readme)
+
         if readme != new_readme:
             with open(filename, 'w') as f:
                 f.write(new_readme)
-
-    def update_mimetype(self, revision):
-        '''Update source tree references to the aom revision.
-
-        While the av1 bitstream is unstable, we track the git revision
-        of the reference implementation we're building, and are careful
-        to build with default feature flags. This lets us answer whether
-        a particular bitstream will be playable by comparing the encode-
-        side hash as part of the mime type.
-        '''
-        filename = mozpath.join(self.topsrcdir,
-                'dom/media/platforms/agnostic/AOMDecoder.cpp')
-        with open(filename) as f:
-            source = f.read()
-
-        new_source = ''
-        pattern = re.compile('version.AppendLiteral\("([a-f0-9]{40})"\);')
-        match = pattern.search(source)
-        if match:
-            old_revision = match.group(1)
-            if old_revision == revision:
-                # Nothing to update.
-                return
-            new_source = pattern.sub('version.AppendLiteral("%s");' % revision,
-                                     source)
-        if not match or new_source == source:
-            self.log(logging.ERROR, 'hash_update', {},
-                     '''Couldn't update commit hash in
-    {file}.
-Please check manually and update the vendor script.
-                     '''.format(file=filename))
-            sys.exit(1)
-
-        with open(filename, 'w') as f:
-            f.write(new_source)
-
 
     def clean_upstream(self, target):
         '''Remove files we don't want to import.'''
@@ -143,7 +153,7 @@ Please check manually and update the vendor script.
         self.log(logging.INFO, 'rm_confg_dir', {}, 'rm -rf %s' % config_dir)
         mozfile.remove(config_dir)
         self.run_process(args=['./generate_sources_mozbuild.sh'],
-                         cwd=target)
+                         cwd=target, log_name='generate_sources')
 
     def check_modified_files(self):
         '''
@@ -162,7 +172,7 @@ Please commit or stash these changes before vendoring, or re-run with `--ignore-
 '''.format(files='\n'.join(sorted(modified))))
             sys.exit(1)
 
-    def vendor(self, revision, ignore_modified=False):
+    def vendor(self, revision, repo, ignore_modified=False):
         self.populate_logger()
         self.log_manager.enable_unstructured()
 
@@ -170,6 +180,12 @@ Please commit or stash these changes before vendoring, or re-run with `--ignore-
             self.check_modified_files()
         if not revision:
             revision = 'master'
+        if repo:
+            self.repo_url = repo
+        else:
+            self.repo_url = 'https://aomedia.googlesource.com/aom/'
+        self.upstream_validate(self.repo_url)
+
         commit, timestamp = self.upstream_commit(revision)
 
         vendor_dir = mozpath.join(self.topsrcdir, 'third_party/aom')
@@ -181,9 +197,6 @@ Please commit or stash these changes before vendoring, or re-run with `--ignore-
         self.log(logging.INFO, 'generate_sources', {},
                  '''Generating build files...''')
         self.generate_sources(glue_dir)
-        self.log(logging.INFO, 'update_source', {},
-                 '''Updating mimetype extension.''')
-        self.update_mimetype(commit)
         self.log(logging.INFO, 'update_readme', {},
                  '''Updating README_MOZILLA.''')
         self.update_readme(commit, timestamp, glue_dir)

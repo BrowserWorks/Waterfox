@@ -272,6 +272,10 @@ static const char *FourCC2MIME(uint32_t fourcc) {
         case FOURCC('v', 'p', '0', '9'):
             return MEDIA_MIMETYPE_VIDEO_VP9;
 
+        case FOURCC('a', 'v', '0', '1'):
+        case FOURCC('.', 'a', 'v', '1'):
+            return MEDIA_MIMETYPE_VIDEO_AV1;
+
         default:
             ALOGE("Unknown MIME type %08x", fourcc);
             return NULL;
@@ -1349,6 +1353,8 @@ status_t MPEG4Extractor::parseChunk(off64_t *offset, int depth) {
         case FOURCC('a', 'v', 'c', '1'):
         case FOURCC('a', 'v', 'c', '3'):
         case FOURCC('V', 'P', '6', 'F'):
+        case FOURCC('a', 'v', '0', '1'):
+        case FOURCC('.', 'a', 'v', '1'):
         {
             mHasVideo = true;
 

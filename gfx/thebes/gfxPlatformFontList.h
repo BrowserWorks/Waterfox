@@ -425,6 +425,15 @@ protected:
                             eFontPrefLang aPrefLang,
                             nsTArray<RefPtr<gfxFontFamily>>* aGenericFamilies);
 
+    void
+    ResolveEmojiFontNames(nsTArray<RefPtr<gfxFontFamily>>* aGenericFamilies);
+
+    void
+    GetFontFamiliesFromGenericFamilies(
+        nsTArray<nsString>& aGenericFamilies,
+        nsIAtom* aLangGroup,
+        nsTArray<RefPtr<gfxFontFamily>>* aFontFamilies);
+
     virtual nsresult InitFontListForPlatform() = 0;
 
     void ApplyWhitelist();
@@ -480,6 +489,8 @@ protected:
     mozilla::RangedArray<PrefFontsForLangGroup,
                          eFontPrefLang_First,
                          eFontPrefLang_Count> mLangGroupPrefFonts;
+
+    mozilla::UniquePtr<PrefFontList> mEmojiPrefFont;
 
     // when system-wide font lookup fails for a character, cache it to skip future searches
     gfxSparseBitSet mCodepointsWithNoFonts;

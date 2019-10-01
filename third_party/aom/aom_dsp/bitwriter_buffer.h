@@ -9,8 +9,8 @@
  * PATENTS file, you can obtain it at www.aomedia.org/license/patent.
  */
 
-#ifndef AOM_DSP_BITWRITER_BUFFER_H_
-#define AOM_DSP_BITWRITER_BUFFER_H_
+#ifndef AOM_AOM_DSP_BITWRITER_BUFFER_H_
+#define AOM_AOM_DSP_BITWRITER_BUFFER_H_
 
 #include "aom/aom_integer.h"
 
@@ -23,6 +23,8 @@ struct aom_write_bit_buffer {
   uint32_t bit_offset;
 };
 
+int aom_wb_is_byte_aligned(const struct aom_write_bit_buffer *wb);
+
 uint32_t aom_wb_bytes_written(const struct aom_write_bit_buffer *wb);
 
 void aom_wb_write_bit(struct aom_write_bit_buffer *wb, int bit);
@@ -31,14 +33,19 @@ void aom_wb_overwrite_bit(struct aom_write_bit_buffer *wb, int bit);
 
 void aom_wb_write_literal(struct aom_write_bit_buffer *wb, int data, int bits);
 
+void aom_wb_write_unsigned_literal(struct aom_write_bit_buffer *wb,
+                                   uint32_t data, int bits);
+
 void aom_wb_overwrite_literal(struct aom_write_bit_buffer *wb, int data,
                               int bits);
 
 void aom_wb_write_inv_signed_literal(struct aom_write_bit_buffer *wb, int data,
                                      int bits);
 
+void aom_wb_write_uvlc(struct aom_write_bit_buffer *wb, uint32_t v);
+
 #ifdef __cplusplus
 }  // extern "C"
 #endif
 
-#endif  // AOM_DSP_BITWRITER_BUFFER_H_
+#endif  // AOM_AOM_DSP_BITWRITER_BUFFER_H_

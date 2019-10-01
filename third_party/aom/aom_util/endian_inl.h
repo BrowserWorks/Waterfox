@@ -11,11 +11,13 @@
 //
 // Endian related functions.
 
-#ifndef AOM_UTIL_ENDIAN_INL_H_
-#define AOM_UTIL_ENDIAN_INL_H_
+#ifndef AOM_AOM_UTIL_ENDIAN_INL_H_
+#define AOM_AOM_UTIL_ENDIAN_INL_H_
 
 #include <stdlib.h>
-#include "./aom_config.h"
+
+#include "config/aom_config.h"
+
 #include "aom/aom_integer.h"
 
 #if defined(__GNUC__)
@@ -117,4 +119,4 @@ static INLINE uint64_t BSwap64(uint64_t x) {
 #endif  // HAVE_BUILTIN_BSWAP64
 }
 
-#endif  // AOM_UTIL_ENDIAN_INL_H_
+#endif  // AOM_AOM_UTIL_ENDIAN_INL_H_

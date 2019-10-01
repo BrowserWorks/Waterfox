@@ -8,9 +8,9 @@
 
 #include "nsGridContainerFrame.h"
 
-#include <algorithm> // for std::stable_sort
 #include <functional>
 #include <limits>
+#include <stdlib.h> // for div()
 #include "gfxContext.h"
 #include "mozilla/CSSAlignUtils.h"
 #include "mozilla/CSSOrderAwareFrameIterator.h"
@@ -122,43 +122,6 @@ ResolveToDefiniteSize(const nsStyleCoord& aCoord, nscoord aPercentBasis)
   }
   return std::max(nscoord(0),
                   nsRuleNode::ComputeCoordPercentCalc(aCoord, aPercentBasis));
-}
-
-static bool
-GetPercentSizeParts(const nsStyleCoord& aCoord, nscoord* aLength, float* aPercent)
-{
-  switch (aCoord.GetUnit()) {
-    case eStyleUnit_Percent:
-      *aLength = 0;
-      *aPercent = aCoord.GetPercentValue();
-      return true;
-    case eStyleUnit_Calc: {
-      nsStyleCoord::Calc* calc = aCoord.GetCalcValue();
-      *aLength = calc->mLength;
-      *aPercent = calc->mPercent;
-      return true;
-    }
-    default:
-      return false;
-  }
-}
-
-static void
-ResolvePercentSizeParts(const nsStyleCoord& aCoord, nscoord aPercentBasis,
-                        nscoord* aLength, float* aPercent)
-{
-  MOZ_ASSERT(aCoord.IsCoordPercentCalcUnit());
-  if (aPercentBasis != NS_UNCONSTRAINEDSIZE) {
-    *aLength = std::max(nscoord(0),
-                        nsRuleNode::ComputeCoordPercentCalc(aCoord,
-                                                            aPercentBasis));
-    *aPercent = 0.0f;
-    return;
-  }
-  if (!GetPercentSizeParts(aCoord, aLength, aPercent)) {
-    *aLength = aCoord.ToLength();
-    *aPercent = 0.0f;
-  }
 }
 
 // Synthesize a baseline from a border box.  For an alphabetical baseline
@@ -479,9 +442,6 @@ struct nsGridContainerFrame::LineRange
                  mEnd > mStart, "invalid line range");
       mEnd -= aNumRemovedTracks[mEnd];
     }
-    if (mStart == mEnd) {
-      mEnd = nsGridContainerFrame::kAutoLine;
-    }
   }
   /**
    * Return the contribution of this line range for step 2 in
@@ -611,6 +571,8 @@ struct nsGridContainerFrame::GridItemInfo
 
   // Return true if we should apply Automatic Minimum Size to this item.
   // https://drafts.csswg.org/css-grid/#min-size-auto
+  // @note the caller should also check that the item spans at least one track
+  // that has a min track sizing function that is 'auto' before applying it.
   bool ShouldApplyAutoMinSize(WritingMode aContainerWM,
                               LogicalAxis aContainerAxis,
                               nscoord aPercentageBasis) const
@@ -919,7 +881,7 @@ struct nsGridContainerFrame::TrackSizingFunctions
       return 1;
     }
     nscoord repeatTrackSize = 0;
-    // Note that the repeat() track size is included in |sum| in this loop.
+    // Note that one repeat() track size is included in |sum| in this loop.
     nscoord sum = 0;
     const nscoord percentBasis = aSize;
     for (uint32_t i = 0; i < numTracks; ++i) {
@@ -936,54 +898,31 @@ struct nsGridContainerFrame::TrackSizingFunctions
       }
       nscoord trackSize = ::ResolveToDefiniteSize(*coord, percentBasis);
       if (i == mRepeatAutoStart) {
-        if (percentBasis != NS_UNCONSTRAINEDSIZE) {
-          // Use a minimum 1px for the repeat() track-size.
-          if (trackSize < AppUnitsPerCSSPixel()) {
-            trackSize = AppUnitsPerCSSPixel();
-          }
+        // Use a minimum 1px for the repeat() track-size.
+        if (trackSize < AppUnitsPerCSSPixel()) {
+          trackSize = AppUnitsPerCSSPixel();
         }
         repeatTrackSize = trackSize;
       }
       sum += trackSize;
     }
-    nscoord gridGap;
-    float percentSum = 0.0f;
-    float gridGapPercent;
-    ResolvePercentSizeParts(aGridGap, percentBasis, &gridGap, &gridGapPercent);
+    nscoord gridGap = nsLayoutUtils::ResolveGapToLength(aGridGap, aSize);
     if (numTracks > 1) {
       // Add grid-gaps for all the tracks including the repeat() track.
       sum += gridGap * (numTracks - 1);
-      percentSum = gridGapPercent * (numTracks - 1);
     }
     // Calculate the max number of tracks that fits without overflow.
     nscoord available = maxFill != NS_UNCONSTRAINEDSIZE ? maxFill : aMinSize;
-    nscoord size = nsLayoutUtils::AddPercents(sum, percentSum);
-    if (available - size < 0) {
+    nscoord spaceToFill = available - sum;
+    if (spaceToFill <= 0) {
       // "if any number of repetitions would overflow, then 1 repetition"
       return 1;
     }
-    uint32_t numRepeatTracks = 1;
-    bool exactFit = false;
-    while (true) {
-      sum += gridGap + repeatTrackSize;
-      percentSum += gridGapPercent;
-      nscoord newSize = nsLayoutUtils::AddPercents(sum, percentSum);
-      if (newSize <= size) {
-        // Adding more repeat-tracks won't make forward progress.
-        return numRepeatTracks;
-      }
-      size = newSize;
-      nscoord remaining = available - size;
-      exactFit = remaining == 0;
-      if (remaining >= 0) {
-        ++numRepeatTracks;
-      }
-      if (remaining <= 0) {
-        break;
-      }
-    }
-
-    if (!exactFit && maxFill == NS_UNCONSTRAINEDSIZE) {
+    // Calculate the max number of tracks that fits without overflow.
+    div_t q = div(spaceToFill, repeatTrackSize + gridGap);
+    // The +1 here is for the one repeat track we already accounted for above.
+    uint32_t numRepeatTracks = q.quot + 1;
+    if (q.rem != 0 && maxFill == NS_UNCONSTRAINEDSIZE) {
       // "Otherwise, if the grid container has a definite min size in
       // the relevant axis, the number of repetitions is the largest possible
       // positive integer that fulfills that minimum requirement."
@@ -1095,15 +1034,9 @@ struct nsGridContainerFrame::Tracks
                   nscoord                     aContentBoxSize);
 
   /**
-   * Return true if aRange spans at least one track with an intrinsic sizing
-   * function and does not span any tracks with a <flex> max-sizing function.
-   * @param aRange the span of tracks to check
-   * @param aState will be set to the union of the state bits of all the spanned
-   *               tracks, unless a flex track is found - then it only contains
-   *               the union of the tracks up to and including the flex track.
+   * Return the union of the state bits for the tracks in aRange.
    */
-  bool HasIntrinsicButNoFlexSizingInRange(const LineRange&      aRange,
-                                          TrackSize::StateBits* aState) const;
+   TrackSize::StateBits StateBitsForRange(const LineRange& aRange) const;
 
   // Some data we collect for aligning baseline-aligned items.
   struct ItemBaselineData
@@ -1524,13 +1457,6 @@ struct nsGridContainerFrame::Tracks
                            WritingMode            aWM,
                            const LogicalSize&     aContainerSize);
 
-  /**
-   * Return the intrinsic size by back-computing percentages as:
-   * IntrinsicSize = SumOfCoordSizes / (1 - SumOfPercentages).
-   */
-  nscoord BackComputedIntrinsicSize(const TrackSizingFunctions& aFunctions,
-                                    const nsStyleCoord& aGridGap) const;
-
   nscoord GridLineEdge(uint32_t aLine, GridLineSide aSide) const
   {
     if (MOZ_UNLIKELY(mSizes.IsEmpty())) {
@@ -1840,11 +1766,10 @@ struct MOZ_STACK_CLASS nsGridContainerFrame::GridReflowInput
   }
 
   /**
-   * Calculate our track sizes.  If the given aContentBox block-axis size is
-   * unconstrained, it is assigned to the resulting intrinsic block-axis size.
+   * Calculate our track sizes.
    */
   void CalculateTrackSizes(const Grid&        aGrid,
-                           LogicalSize&       aContentBox,
+                           const LogicalSize& aContentBox,
                            SizingConstraint   aConstraint);
 
   /**
@@ -2330,7 +2255,7 @@ struct MOZ_STACK_CLASS nsGridContainerFrame::Grid
 void
 nsGridContainerFrame::GridReflowInput::CalculateTrackSizes(
   const Grid&        aGrid,
-  LogicalSize&       aContentBox,
+  const LogicalSize& aContentBox,
   SizingConstraint   aConstraint)
 {
   mCols.Initialize(mColFunctions, mGridStyle->mGridColumnGap,
@@ -2348,12 +2273,6 @@ nsGridContainerFrame::GridReflowInput::CalculateTrackSizes(
   mRows.CalculateSizes(*this, mGridItems, mRowFunctions,
                        aContentBox.BSize(mWM), &GridArea::mRows,
                        aConstraint);
-  if (aContentBox.BSize(mWM) == NS_AUTOHEIGHT) {
-    aContentBox.BSize(mWM) =
-      mRows.BackComputedIntrinsicSize(mRowFunctions, mGridStyle->mGridRowGap);
-    mRows.mGridGap =
-      ::ResolveToDefiniteSize(mGridStyle->mGridRowGap, aContentBox.BSize(mWM));
-  }
 }
 
 /**
@@ -3436,7 +3355,7 @@ nsGridContainerFrame::Tracks::Initialize(
                                         aFunctions.MinSizingFor(i),
                                         aFunctions.MaxSizingFor(i));
   }
-  mGridGap = ::ResolveToDefiniteSize(aGridGap, aContentBoxSize);
+  mGridGap = nsLayoutUtils::ResolveGapToLength(aGridGap, aContentBoxSize);
   mContentBoxSize = aContentBoxSize;
 }
 
@@ -3527,8 +3446,7 @@ ContentContribution(const GridItemInfo&       aGridItem,
   PhysicalAxis axis(aCBWM.PhysicalAxis(aAxis));
   nscoord size = nsLayoutUtils::IntrinsicForAxis(axis, aRC, child, aConstraint,
                    aPercentageBasis,
-                   aFlags | nsLayoutUtils::BAIL_IF_REFLOW_NEEDED |
-                            nsLayoutUtils::ADD_PERCENTS,
+                   aFlags | nsLayoutUtils::BAIL_IF_REFLOW_NEEDED,
                    aMinSizeClamp);
   if (size == NS_INTRINSIC_WIDTH_UNKNOWN) {
     // We need to reflow the child to find its BSize contribution.
@@ -3565,15 +3483,7 @@ ContentContribution(const GridItemInfo&       aGridItem,
     LogicalSize availableSize(childWM, availISize, availBSize);
     size = ::MeasuringReflow(child, aState.mReflowInput, aRC, availableSize,
                              cbSize, iMinSizeClamp, bMinSizeClamp);
-    nsIFrame::IntrinsicISizeOffsetData offsets = child->IntrinsicBSizeOffsets();
-    size += offsets.hMargin;
-    auto percent = offsets.hPctMargin;
-    if (availBSize == NS_UNCONSTRAINEDSIZE) {
-      // We always want to add in percent padding too, unless we already did so
-      // using a resolved column size above.
-      percent += offsets.hPctPadding;
-    }
-    size = nsLayoutUtils::AddPercents(size, percent);
+    size += child->GetLogicalUsedMargin(childWM).BStartEnd(childWM);
     nscoord overflow = size - aMinSizeClamp;
     if (MOZ_UNLIKELY(overflow > 0)) {
       nscoord contentSize = child->ContentBSize(childWM);
@@ -3678,6 +3588,10 @@ MinSize(const GridItemInfo&    aGridItem,
     return s;
   }
 
+  if (aCache->mPercentageBasis.isNothing()) {
+    aCache->mPercentageBasis.emplace(aState.PercentageBasisFor(aAxis, aGridItem));
+  }
+
   // https://drafts.csswg.org/css-grid/#min-size-auto
   // This calculates the min-content contribution from either a definite
   // min-width (or min-height depending on aAxis), or the "specified /
@@ -3691,7 +3605,8 @@ MinSize(const GridItemInfo&    aGridItem,
              "baseline offset should be zero when not baseline-aligned");
   nscoord sz = aGridItem.mBaselineOffset[aAxis] +
     nsLayoutUtils::MinSizeContributionForAxis(axis, aRC, child,
-                                              nsLayoutUtils::MIN_ISIZE);
+                                              nsLayoutUtils::MIN_ISIZE,
+                                              *aCache->mPercentageBasis);
   const nsStyleCoord& style = axis == eAxisHorizontal ? stylePos->mMinWidth
                                                       : stylePos->mMinHeight;
   auto unit = style.GetUnit();
@@ -3700,9 +3615,6 @@ MinSize(const GridItemInfo&    aGridItem,
        child->StyleDisplay()->mOverflowX == NS_STYLE_OVERFLOW_VISIBLE)) {
     // Now calculate the "content size" part and return whichever is smaller.
     MOZ_ASSERT(unit != eStyleUnit_Enumerated || sz == NS_UNCONSTRAINEDSIZE);
-    if (aCache->mPercentageBasis.isNothing()) {
-      aCache->mPercentageBasis.emplace(aState.PercentageBasisFor(aAxis, aGridItem));
-    }
     sz = std::min(sz, ContentContribution(aGridItem, aState, aRC, aCBWM, aAxis,
                                           aCache->mPercentageBasis,
                                           nsLayoutUtils::MIN_ISIZE,
@@ -3739,28 +3651,17 @@ nsGridContainerFrame::Tracks::CalculateSizes(
   }
 }
 
-bool
-nsGridContainerFrame::Tracks::HasIntrinsicButNoFlexSizingInRange(
-  const LineRange&      aRange,
-  TrackSize::StateBits* aState) const
+TrackSize::StateBits
+nsGridContainerFrame::Tracks::StateBitsForRange(const LineRange& aRange) const
 {
   MOZ_ASSERT(!aRange.IsAuto(), "must have a definite range");
+  TrackSize::StateBits state = TrackSize::StateBits(0);
   const uint32_t start = aRange.mStart;
   const uint32_t end = aRange.mEnd;
-  const TrackSize::StateBits selector =
-    TrackSize::eIntrinsicMinSizing | TrackSize::eIntrinsicMaxSizing;
-  bool foundIntrinsic = false;
   for (uint32_t i = start; i < end; ++i) {
-    TrackSize::StateBits state = mSizes[i].mState;
-    *aState |= state;
-    if (state & TrackSize::eFlexMaxSizing) {
-      return false;
-    }
-    if (state & selector) {
-      foundIntrinsic = true;
-    }
+    state |= mSizes[i].mState;
   }
-  return foundIntrinsic;
+  return state;
 }
 
 bool
@@ -3775,6 +3676,13 @@ nsGridContainerFrame::Tracks::ResolveIntrinsicSizeStep1(
   CachedIntrinsicSizes cache;
   TrackSize& sz = mSizes[aRange.mStart];
   WritingMode wm = aState.mWM;
+
+  // Check if we need to apply "Automatic Minimum Size" and cache it.
+  if ((sz.mState & TrackSize::eAutoMinSizing) &&
+      aGridItem.ShouldApplyAutoMinSize(wm, mAxis, aPercentageBasis)) {
+    aGridItem.mState[mAxis] |= ItemState::eApplyAutoMinSize;
+  }
+
   // Calculate data for "Automatic Minimum Size" clamping, if needed.
   bool needed = ((sz.mState & TrackSize::eIntrinsicMinSizing) ||
                  aConstraint == SizingConstraint::eNoConstraint) &&
@@ -4182,14 +4090,8 @@ nsGridContainerFrame::Tracks::ResolveIntrinsicSize(
   iter.Reset();
   for (; !iter.AtEnd(); iter.Next()) {
     auto& gridItem = aGridItems[iter.ItemIndex()];
-
-    // Check if we need to apply "Automatic Minimum Size" and cache it.
     MOZ_ASSERT(!(gridItem.mState[mAxis] & ItemState::eApplyAutoMinSize),
                "Why is eApplyAutoMinSize set already?");
-    if (gridItem.ShouldApplyAutoMinSize(wm, mAxis, aPercentageBasis)) {
-      gridItem.mState[mAxis] |= ItemState::eApplyAutoMinSize;
-    }
-
     const GridArea& area = gridItem.mArea;
     const LineRange& lineRange = area.*aRange;
     uint32_t span = lineRange.Extent();
@@ -4200,8 +4102,17 @@ nsGridContainerFrame::Tracks::ResolveIntrinsicSize(
         gridItem.mState[mAxis] |= ItemState::eIsFlexing;
       }
     } else {
-      TrackSize::StateBits state = TrackSize::StateBits(0);
-      if (HasIntrinsicButNoFlexSizingInRange(lineRange, &state)) {
+      TrackSize::StateBits state = StateBitsForRange(lineRange);
+
+      // Check if we need to apply "Automatic Minimum Size" and cache it.
+      if ((state & TrackSize::eAutoMinSizing) &&
+          gridItem.ShouldApplyAutoMinSize(wm, mAxis, aPercentageBasis)) {
+        gridItem.mState[mAxis] |= ItemState::eApplyAutoMinSize;
+      }
+
+      if ((state & (TrackSize::eIntrinsicMinSizing |
+                    TrackSize::eIntrinsicMaxSizing)) &&
+          !(state & TrackSize::eFlexMaxSizing)) {
         // Collect data for Step 2.
         maxSpan = std::max(maxSpan, span);
         if (span >= stateBitsPerSpan.Length()) {
@@ -4764,36 +4675,6 @@ nsGridContainerFrame::Tracks::AlignJustifyContent(
   MOZ_ASSERT(!roundingError, "we didn't distribute all rounding error?");
 }
 
-nscoord
-nsGridContainerFrame::Tracks::BackComputedIntrinsicSize(
-  const TrackSizingFunctions& aFunctions,
-  const nsStyleCoord& aGridGap) const
-{
-  // Sum up the current sizes (where percentage tracks were treated as 'auto')
-  // in 'size'.
-  nscoord size = 0;
-  for (size_t i = 0, len = mSizes.Length(); i < len; ++i) {
-    size += mSizes[i].mBase;
-  }
-
-  // Add grid-gap contributions to 'size' and calculate a 'percent' sum.
-  float percent = 0.0f;
-  size_t numTracks = mSizes.Length();
-  if (numTracks > 1) {
-    const size_t gridGapCount = numTracks - 1;
-    nscoord gridGapLength;
-    float gridGapPercent;
-    if (::GetPercentSizeParts(aGridGap, &gridGapLength, &gridGapPercent)) {
-      percent = gridGapCount * gridGapPercent;
-    } else {
-      gridGapLength = aGridGap.ToLength();
-    }
-    size += gridGapCount * gridGapLength;
-  }
-
-  return std::max(0, nsLayoutUtils::AddPercents(size, percent));
-}
-
 void
 nsGridContainerFrame::LineRange::ToPositionAndLength(
   const nsTArray<TrackSize>& aTrackSizes, nscoord* aPos, nscoord* aLength) const
@@ -4843,10 +4724,15 @@ nsGridContainerFrame::LineRange::ToPositionAndLengthForAbsPos(
                             : GridLineSide::eBeforeGridGap;
       nscoord endPos = aTracks.GridLineEdge(mEnd, side);
       *aLength = std::max(aGridOrigin + endPos, 0);
-    } else {
+    } else if (MOZ_LIKELY(mStart != mEnd)) {
       nscoord pos;
       ToPositionAndLength(aTracks.mSizes, &pos, aLength);
       *aPos = aGridOrigin + pos;
+    } else {
+      // The grid area only covers removed 'auto-fit' tracks.
+      nscoord pos = aTracks.GridLineEdge(mStart, GridLineSide::eBeforeGridGap);
+      *aPos = aGridOrigin + pos;
+      *aLength = nscoord(0);
     }
   }
 }
@@ -5962,7 +5848,7 @@ nsGridContainerFrame::Reflow(nsPresContext*           aPresContext,
   LogicalSize computedSize(wm, computedISize, computedBSize);
 
   nscoord consumedBSize = 0;
-  nscoord bSize;
+  nscoord bSize = 0;
   if (!prevInFlow) {
     Grid grid;
     grid.PlaceGridItems(gridReflowInput, aReflowInput.ComputedMinSize(),
@@ -5970,7 +5856,12 @@ nsGridContainerFrame::Reflow(nsPresContext*           aPresContext,
 
     gridReflowInput.CalculateTrackSizes(grid, computedSize,
                                         SizingConstraint::eNoConstraint);
-    bSize = computedSize.BSize(wm);
+    // Note: we can't use GridLineEdge here since we haven't calculated
+    // the rows' mPosition yet (happens in AlignJustifyContent below).
+    for (const auto& sz : gridReflowInput.mRows.mSizes) {
+      bSize += sz.mBase;
+    }
+    bSize += gridReflowInput.mRows.SumOfGridGaps();
   } else {
     consumedBSize = ConsumedBSize(wm);
     gridReflowInput.InitializeForContinuation(this, consumedBSize);
@@ -6369,8 +6260,14 @@ nsGridContainerFrame::IntrinsicISize(gfxContext* aRenderingContext,
   state.mCols.CalculateSizes(state, state.mGridItems, state.mColFunctions,
                              NS_UNCONSTRAINEDSIZE, &GridArea::mCols,
                              constraint);
-  return state.mCols.BackComputedIntrinsicSize(state.mColFunctions,
-                                               state.mGridStyle->mGridColumnGap);
+  state.mCols.mGridGap =
+    nsLayoutUtils::ResolveGapToLength(state.mGridStyle->mGridColumnGap,
+                                      NS_UNCONSTRAINEDSIZE);
+  nscoord length = 0;
+  for (const TrackSize& sz : state.mCols.mSizes) {
+    length += sz.mBase;
+  }
+  return length + state.mCols.SumOfGridGaps();
 }
 
 nscoord

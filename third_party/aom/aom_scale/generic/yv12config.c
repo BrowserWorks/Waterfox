@@ -11,13 +11,14 @@
 
 #include <assert.h>
 
-#include "aom_scale/yv12config.h"
 #include "aom_mem/aom_mem.h"
 #include "aom_ports/mem.h"
+#include "aom_scale/yv12config.h"
+#include "av1/common/enums.h"
 
 /****************************************************************************
-*  Exports
-****************************************************************************/
+ *  Exports
+ ****************************************************************************/
 
 /****************************************************************************
  *
@@ -25,7 +26,6 @@
 #define yv12_align_addr(addr, align) \
   (void *)(((size_t)(addr) + ((align)-1)) & (size_t) - (align))
 
-#if CONFIG_AV1
 // TODO(jkoleszar): Maybe replace this with struct aom_image
 
 int aom_free_frame_buffer(YV12_BUFFER_CONFIG *ybf) {
@@ -33,10 +33,7 @@ int aom_free_frame_buffer(YV12_BUFFER_CONFIG *ybf) {
     if (ybf->buffer_alloc_sz > 0) {
       aom_free(ybf->buffer_alloc);
     }
-
-#if CONFIG_HIGHBITDEPTH && CONFIG_GLOBAL_MOTION
-    if (ybf->y_buffer_8bit) free(ybf->y_buffer_8bit);
-#endif
+    if (ybf->y_buffer_8bit) aom_free(ybf->y_buffer_8bit);
 
     /* buffer_alloc isn't accessed by most functions.  Rather y_buffer,
       u_buffer and v_buffer point to buffer_alloc and are used.  Clear out
@@ -50,13 +47,14 @@ int aom_free_frame_buffer(YV12_BUFFER_CONFIG *ybf) {
 }
 
 int aom_realloc_frame_buffer(YV12_BUFFER_CONFIG *ybf, int width, int height,
-                             int ss_x, int ss_y,
-#if CONFIG_HIGHBITDEPTH
-                             int use_highbitdepth,
-#endif
+                             int ss_x, int ss_y, int use_highbitdepth,
                              int border, int byte_alignment,
                              aom_codec_frame_buffer_t *fb,
                              aom_get_frame_buffer_cb_fn_t cb, void *cb_priv) {
+#if CONFIG_SIZE_LIMIT
+  if (width > DECODE_WIDTH_LIMIT || height > DECODE_HEIGHT_LIMIT) return -1;
+#endif
+
   if (ybf) {
     const int aom_byte_align = (byte_alignment == 0) ? 1 : byte_alignment;
     const int aligned_width = (width + 7) & ~7;
@@ -72,14 +70,21 @@ int aom_realloc_frame_buffer(YV12_BUFFER_CONFIG *ybf, int width, int height,
     const uint64_t uvplane_size =
         (uv_height + 2 * uv_border_h) * (uint64_t)uv_stride + byte_alignment;
 
-#if CONFIG_HIGHBITDEPTH
     const uint64_t frame_size =
         (1 + use_highbitdepth) * (yplane_size + 2 * uvplane_size);
-#else
-    const uint64_t frame_size = yplane_size + 2 * uvplane_size;
-#endif  // CONFIG_HIGHBITDEPTH
 
     uint8_t *buf = NULL;
+
+#if defined AOM_MAX_ALLOCABLE_MEMORY
+    // The size of ybf->buffer_alloc.
+    uint64_t alloc_size = frame_size;
+    // The size of ybf->y_buffer_8bit.
+    if (use_highbitdepth) alloc_size += yplane_size;
+    // The decoder may allocate REF_FRAMES frame buffers in the frame buffer
+    // pool. Bound the total amount of allocated memory as if these REF_FRAMES
+    // frame buffers were allocated in a single allocation.
+    if (alloc_size > AOM_MAX_ALLOCABLE_MEMORY / REF_FRAMES) return -1;
+#endif
 
     if (cb != NULL) {
       const int align_addr_extra_size = 31;
@@ -101,7 +106,7 @@ int aom_realloc_frame_buffer(YV12_BUFFER_CONFIG *ybf, int width, int height,
       // This memset is needed for fixing the issue of using uninitialized
       // value in msan test. It will cause a perf loss, so only do this for
       // msan test.
-      memset(ybf->buffer_alloc, 0, (int)frame_size);
+      memset(ybf->buffer_alloc, 0, (size_t)frame_size);
 #endif
 #endif
     } else if (frame_size > (size_t)ybf->buffer_alloc_sz) {
@@ -147,7 +152,6 @@ int aom_realloc_frame_buffer(YV12_BUFFER_CONFIG *ybf, int width, int height,
     ybf->subsampling_y = ss_y;
 
     buf = ybf->buffer_alloc;
-#if CONFIG_HIGHBITDEPTH
     if (use_highbitdepth) {
       // Store uint16 addresses when using 16bit framebuffers
       buf = CONVERT_TO_BYTEPTR(ybf->buffer_alloc);
@@ -155,7 +159,6 @@ int aom_realloc_frame_buffer(YV12_BUFFER_CONFIG *ybf, int width, int height,
     } else {
       ybf->flags = 0;
     }
-#endif  // CONFIG_HIGHBITDEPTH
 
     ybf->y_buffer = (uint8_t *)yv12_align_addr(
         buf + (border * y_stride) + border, aom_byte_align);
@@ -167,12 +170,19 @@ int aom_realloc_frame_buffer(YV12_BUFFER_CONFIG *ybf, int width, int height,
                                        (uv_border_h * uv_stride) + uv_border_w,
                                    aom_byte_align);
 
-#if CONFIG_HIGHBITDEPTH && CONFIG_GLOBAL_MOTION
-    if (ybf->y_buffer_8bit) {
-      free(ybf->y_buffer_8bit);
-      ybf->y_buffer_8bit = NULL;
+    ybf->use_external_reference_buffers = 0;
+
+    if (use_highbitdepth) {
+      if (ybf->y_buffer_8bit) aom_free(ybf->y_buffer_8bit);
+      ybf->y_buffer_8bit = (uint8_t *)aom_memalign(32, (size_t)yplane_size);
+      if (!ybf->y_buffer_8bit) return -1;
+    } else {
+      if (ybf->y_buffer_8bit) {
+        aom_free(ybf->y_buffer_8bit);
+        ybf->y_buffer_8bit = NULL;
+        ybf->buf_8bit_valid = 0;
+      }
     }
-#endif
 
     ybf->corrupted = 0; /* assume not corrupted by errors */
     return 0;
@@ -181,19 +191,13 @@ int aom_realloc_frame_buffer(YV12_BUFFER_CONFIG *ybf, int width, int height,
 }
 
 int aom_alloc_frame_buffer(YV12_BUFFER_CONFIG *ybf, int width, int height,
-                           int ss_x, int ss_y,
-#if CONFIG_HIGHBITDEPTH
-                           int use_highbitdepth,
-#endif
-                           int border, int byte_alignment) {
+                           int ss_x, int ss_y, int use_highbitdepth, int border,
+                           int byte_alignment) {
   if (ybf) {
     aom_free_frame_buffer(ybf);
     return aom_realloc_frame_buffer(ybf, width, height, ss_x, ss_y,
-#if CONFIG_HIGHBITDEPTH
-                                    use_highbitdepth,
-#endif
-                                    border, byte_alignment, NULL, NULL, NULL);
+                                    use_highbitdepth, border, byte_alignment,
+                                    NULL, NULL, NULL);
   }
   return -2;
 }
-#endif

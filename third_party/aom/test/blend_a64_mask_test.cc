@@ -17,11 +17,11 @@
 #include "test/register_state_check.h"
 #include "test/function_equivalence_test.h"
 
-#include "./aom_config.h"
-#include "./aom_dsp_rtcd.h"
-#include "aom/aom_integer.h"
+#include "config/aom_config.h"
+#include "config/aom_dsp_rtcd.h"
+#include "config/av1_rtcd.h"
 
-#include "./av1_rtcd.h"
+#include "aom/aom_integer.h"
 
 #include "av1/common/enums.h"
 
@@ -31,8 +31,8 @@ using libaom_test::FunctionEquivalenceTest;
 
 namespace {
 
-template <typename F, typename T>
-class BlendA64MaskTest : public FunctionEquivalenceTest<F> {
+template <typename BlendA64Func, typename SrcPixel, typename DstPixel>
+class BlendA64MaskTest : public FunctionEquivalenceTest<BlendA64Func> {
  protected:
   static const int kIterations = 10000;
   static const int kMaxWidth = MAX_SB_SIZE * 5;  // * 5 to cover longer strides
@@ -43,14 +43,51 @@ class BlendA64MaskTest : public FunctionEquivalenceTest<F> {
 
   virtual ~BlendA64MaskTest() {}
 
-  virtual void Execute(const T *p_src0, const T *p_src1) = 0;
+  virtual void Execute(const SrcPixel *p_src0, const SrcPixel *p_src1,
+                       int run_times) = 0;
 
-  void Common() {
-    w_ = 1 << this->rng_(MAX_SB_SIZE_LOG2 + 1);
-    h_ = 1 << this->rng_(MAX_SB_SIZE_LOG2 + 1);
+  template <typename Pixel>
+  void GetSources(Pixel **src0, Pixel **src1, Pixel * /*dst*/, int run_times) {
+    if (run_times > 1) {
+      *src0 = src0_;
+      *src1 = src1_;
+      return;
+    }
+    switch (this->rng_(3)) {
+      case 0:  // Separate sources
+        *src0 = src0_;
+        *src1 = src1_;
+        break;
+      case 1:  // src0 == dst
+        *src0 = dst_tst_;
+        src0_stride_ = dst_stride_;
+        src0_offset_ = dst_offset_;
+        *src1 = src1_;
+        break;
+      case 2:  // src1 == dst
+        *src0 = src0_;
+        *src1 = dst_tst_;
+        src1_stride_ = dst_stride_;
+        src1_offset_ = dst_offset_;
+        break;
+      default: FAIL();
+    }
+  }
 
-    subx_ = this->rng_(2);
-    suby_ = this->rng_(2);
+  void GetSources(uint16_t **src0, uint16_t **src1, uint8_t * /*dst*/,
+                  int /*run_times*/) {
+    *src0 = src0_;
+    *src1 = src1_;
+  }
+
+  uint8_t Rand1() { return this->rng_.Rand8() & 1; }
+
+  void RunOneTest(int block_size, int subx, int suby, int run_times) {
+    w_ = block_size_wide[block_size];
+    h_ = block_size_high[block_size];
+    run_times = run_times > 1 ? run_times / w_ : 1;
+    subx_ = subx;
+    suby_ = suby;
 
     dst_offset_ = this->rng_(33);
     dst_stride_ = this->rng_(kMaxWidth + 1 - w_) + w_;
@@ -64,49 +101,42 @@ class BlendA64MaskTest : public FunctionEquivalenceTest<F> {
     mask_stride_ =
         this->rng_(kMaxWidth + 1 - w_ * (subx_ ? 2 : 1)) + w_ * (subx_ ? 2 : 1);
 
-    T *p_src0;
-    T *p_src1;
+    SrcPixel *p_src0;
+    SrcPixel *p_src1;
 
-    switch (this->rng_(3)) {
-      case 0:  // Separate sources
-        p_src0 = src0_;
-        p_src1 = src1_;
-        break;
-      case 1:  // src0 == dst
-        p_src0 = dst_tst_;
-        src0_stride_ = dst_stride_;
-        src0_offset_ = dst_offset_;
-        p_src1 = src1_;
-        break;
-      case 2:  // src1 == dst
-        p_src0 = src0_;
-        p_src1 = dst_tst_;
-        src1_stride_ = dst_stride_;
-        src1_offset_ = dst_offset_;
-        break;
-      default: FAIL();
-    }
+    p_src0 = src0_;
+    p_src1 = src1_;
 
-    Execute(p_src0, p_src1);
+    GetSources(&p_src0, &p_src1, &dst_ref_[0], run_times);
+
+    Execute(p_src0, p_src1, run_times);
 
     for (int r = 0; r < h_; ++r) {
       for (int c = 0; c < w_; ++c) {
         ASSERT_EQ(dst_ref_[dst_offset_ + r * dst_stride_ + c],
-                  dst_tst_[dst_offset_ + r * dst_stride_ + c]);
+                  dst_tst_[dst_offset_ + r * dst_stride_ + c])
+            << w_ << "x" << h_ << " subx " << subx_ << " suby " << suby_
+            << " r: " << r << " c: " << c;
       }
     }
   }
 
-  T dst_ref_[kBufSize];
-  T dst_tst_[kBufSize];
+  void RunTest(int block_size, int run_times) {
+    subx_ = Rand1();
+    suby_ = Rand1();
+    RunOneTest(block_size, subx_, suby_, run_times);
+  }
+
+  DstPixel dst_ref_[kBufSize];
+  DstPixel dst_tst_[kBufSize];
   uint32_t dst_stride_;
   uint32_t dst_offset_;
 
-  T src0_[kBufSize];
+  SrcPixel src0_[kBufSize];
   uint32_t src0_stride_;
   uint32_t src0_offset_;
 
-  T src1_[kBufSize];
+  SrcPixel src1_[kBufSize];
   uint32_t src1_stride_;
   uint32_t src1_offset_;
 
@@ -127,24 +157,42 @@ class BlendA64MaskTest : public FunctionEquivalenceTest<F> {
 typedef void (*F8B)(uint8_t *dst, uint32_t dst_stride, const uint8_t *src0,
                     uint32_t src0_stride, const uint8_t *src1,
                     uint32_t src1_stride, const uint8_t *mask,
-                    uint32_t mask_stride, int h, int w, int suby, int subx);
+                    uint32_t mask_stride, int w, int h, int subx, int suby);
 typedef libaom_test::FuncParam<F8B> TestFuncs;
 
-class BlendA64MaskTest8B : public BlendA64MaskTest<F8B, uint8_t> {
+class BlendA64MaskTest8B : public BlendA64MaskTest<F8B, uint8_t, uint8_t> {
  protected:
-  void Execute(const uint8_t *p_src0, const uint8_t *p_src1) {
-    params_.ref_func(dst_ref_ + dst_offset_, dst_stride_, p_src0 + src0_offset_,
-                     src0_stride_, p_src1 + src1_offset_, src1_stride_, mask_,
-                     kMaxMaskWidth, h_, w_, suby_, subx_);
-    ASM_REGISTER_STATE_CHECK(params_.tst_func(
-        dst_tst_ + dst_offset_, dst_stride_, p_src0 + src0_offset_,
-        src0_stride_, p_src1 + src1_offset_, src1_stride_, mask_, kMaxMaskWidth,
-        h_, w_, suby_, subx_));
+  void Execute(const uint8_t *p_src0, const uint8_t *p_src1, int run_times) {
+    aom_usec_timer timer;
+    aom_usec_timer_start(&timer);
+    for (int i = 0; i < run_times; ++i) {
+      params_.ref_func(dst_ref_ + dst_offset_, dst_stride_,
+                       p_src0 + src0_offset_, src0_stride_,
+                       p_src1 + src1_offset_, src1_stride_, mask_,
+                       kMaxMaskWidth, w_, h_, subx_, suby_);
+    }
+    aom_usec_timer_mark(&timer);
+    const double time1 = static_cast<double>(aom_usec_timer_elapsed(&timer));
+    aom_usec_timer_start(&timer);
+    for (int i = 0; i < run_times; ++i) {
+      params_.tst_func(dst_tst_ + dst_offset_, dst_stride_,
+                       p_src0 + src0_offset_, src0_stride_,
+                       p_src1 + src1_offset_, src1_stride_, mask_,
+                       kMaxMaskWidth, w_, h_, subx_, suby_);
+    }
+    aom_usec_timer_mark(&timer);
+    const double time2 = static_cast<double>(aom_usec_timer_elapsed(&timer));
+    if (run_times > 1) {
+      printf("%3dx%-3d subx %d suby %d :%7.2f/%7.2fns", w_, h_, subx_, suby_,
+             time1, time2);
+      printf("(%3.2f)\n", time1 / time2);
+    }
   }
 };
 
 TEST_P(BlendA64MaskTest8B, RandomValues) {
   for (int iter = 0; iter < kIterations && !HasFatalFailure(); ++iter) {
+    int bsize = rng_.Rand8() % BLOCK_SIZES_ALL;
     for (int i = 0; i < kBufSize; ++i) {
       dst_ref_[i] = rng_.Rand8();
       dst_tst_[i] = rng_.Rand8();
@@ -156,12 +204,13 @@ TEST_P(BlendA64MaskTest8B, RandomValues) {
     for (int i = 0; i < kMaxMaskSize; ++i)
       mask_[i] = rng_(AOM_BLEND_A64_MAX_ALPHA + 1);
 
-    Common();
+    RunTest(bsize, 1);
   }
 }
 
 TEST_P(BlendA64MaskTest8B, ExtremeValues) {
   for (int iter = 0; iter < kIterations && !HasFatalFailure(); ++iter) {
+    int bsize = rng_.Rand8() % BLOCK_SIZES_ALL;
     for (int i = 0; i < kBufSize; ++i) {
       dst_ref_[i] = rng_(2) + 254;
       dst_tst_[i] = rng_(2) + 254;
@@ -172,17 +221,146 @@ TEST_P(BlendA64MaskTest8B, ExtremeValues) {
     for (int i = 0; i < kMaxMaskSize; ++i)
       mask_[i] = rng_(2) + AOM_BLEND_A64_MAX_ALPHA - 1;
 
-    Common();
+    RunTest(bsize, 1);
   }
 }
+TEST_P(BlendA64MaskTest8B, DISABLED_Speed) {
+  const int kRunTimes = 10000000;
+  for (int bsize = 0; bsize < BLOCK_SIZES_ALL; ++bsize) {
+    for (int i = 0; i < kBufSize; ++i) {
+      dst_ref_[i] = rng_.Rand8();
+      dst_tst_[i] = rng_.Rand8();
 
+      src0_[i] = rng_.Rand8();
+      src1_[i] = rng_.Rand8();
+    }
+
+    for (int i = 0; i < kMaxMaskSize; ++i)
+      mask_[i] = rng_(AOM_BLEND_A64_MAX_ALPHA + 1);
+
+    RunOneTest(bsize, 1, 1, kRunTimes);
+    RunOneTest(bsize, 1, 0, kRunTimes);
+    RunOneTest(bsize, 0, 1, kRunTimes);
+    RunOneTest(bsize, 0, 0, kRunTimes);
+  }
+}
 #if HAVE_SSE4_1
 INSTANTIATE_TEST_CASE_P(SSE4_1, BlendA64MaskTest8B,
                         ::testing::Values(TestFuncs(
                             aom_blend_a64_mask_c, aom_blend_a64_mask_sse4_1)));
+#endif  // HAVE_AVX2
+
+#if HAVE_AVX2
+INSTANTIATE_TEST_CASE_P(AVX2, BlendA64MaskTest8B,
+                        ::testing::Values(TestFuncs(aom_blend_a64_mask_sse4_1,
+                                                    aom_blend_a64_mask_avx2)));
 #endif  // HAVE_SSE4_1
 
-#if CONFIG_HIGHBITDEPTH
+//////////////////////////////////////////////////////////////////////////////
+// 8 bit _d16 version
+//////////////////////////////////////////////////////////////////////////////
+
+typedef void (*F8B_D16)(uint8_t *dst, uint32_t dst_stride, const uint16_t *src0,
+                        uint32_t src0_stride, const uint16_t *src1,
+                        uint32_t src1_stride, const uint8_t *mask,
+                        uint32_t mask_stride, int w, int h, int subx, int suby,
+                        ConvolveParams *conv_params);
+typedef libaom_test::FuncParam<F8B_D16> TestFuncs_d16;
+
+class BlendA64MaskTest8B_d16
+    : public BlendA64MaskTest<F8B_D16, uint16_t, uint8_t> {
+ protected:
+  // max number of bits used by the source
+  static const int kSrcMaxBitsMask = 0x3fff;
+
+  void Execute(const uint16_t *p_src0, const uint16_t *p_src1, int run_times) {
+    ConvolveParams conv_params;
+    conv_params.round_0 = ROUND0_BITS;
+    conv_params.round_1 = COMPOUND_ROUND1_BITS;
+    aom_usec_timer timer;
+    aom_usec_timer_start(&timer);
+    for (int i = 0; i < run_times; ++i) {
+      params_.ref_func(dst_ref_ + dst_offset_, dst_stride_,
+                       p_src0 + src0_offset_, src0_stride_,
+                       p_src1 + src1_offset_, src1_stride_, mask_,
+                       kMaxMaskWidth, w_, h_, subx_, suby_, &conv_params);
+    }
+    aom_usec_timer_mark(&timer);
+    const double time1 = static_cast<double>(aom_usec_timer_elapsed(&timer));
+    aom_usec_timer_start(&timer);
+    for (int i = 0; i < run_times; ++i) {
+      params_.tst_func(dst_tst_ + dst_offset_, dst_stride_,
+                       p_src0 + src0_offset_, src0_stride_,
+                       p_src1 + src1_offset_, src1_stride_, mask_,
+                       kMaxMaskWidth, w_, h_, subx_, suby_, &conv_params);
+    }
+    aom_usec_timer_mark(&timer);
+    const double time2 = static_cast<double>(aom_usec_timer_elapsed(&timer));
+    if (run_times > 1) {
+      printf("%3dx%-3d subx %d suby %d :%7.2f/%7.2fns", w_, h_, subx_, suby_,
+             time1, time2);
+      printf("(%3.2f)\n", time1 / time2);
+    }
+  }
+};
+
+TEST_P(BlendA64MaskTest8B_d16, RandomValues) {
+  for (int iter = 0; iter < kIterations && !HasFatalFailure(); ++iter) {
+    int bsize = rng_.Rand8() % BLOCK_SIZES_ALL;
+    for (int i = 0; i < kBufSize; ++i) {
+      dst_ref_[i] = rng_.Rand8();
+      dst_tst_[i] = rng_.Rand8();
+
+      src0_[i] = rng_.Rand16() & kSrcMaxBitsMask;
+      src1_[i] = rng_.Rand16() & kSrcMaxBitsMask;
+    }
+
+    for (int i = 0; i < kMaxMaskSize; ++i)
+      mask_[i] = rng_(AOM_BLEND_A64_MAX_ALPHA + 1);
+
+    RunTest(bsize, 1);
+  }
+}
+
+TEST_P(BlendA64MaskTest8B_d16, ExtremeValues) {
+  for (int iter = 0; iter < kIterations && !HasFatalFailure(); ++iter) {
+    int bsize = rng_.Rand8() % BLOCK_SIZES_ALL;
+    for (int i = 0; i < kBufSize; ++i) {
+      dst_ref_[i] = 255;
+      dst_tst_[i] = 255;
+
+      src0_[i] = kSrcMaxBitsMask;
+      src1_[i] = kSrcMaxBitsMask;
+    }
+
+    for (int i = 0; i < kMaxMaskSize; ++i)
+      mask_[i] = AOM_BLEND_A64_MAX_ALPHA - 1;
+
+    RunTest(bsize, 1);
+  }
+}
+
+#if HAVE_SSE4_1
+INSTANTIATE_TEST_CASE_P(
+    SSE4_1, BlendA64MaskTest8B_d16,
+    ::testing::Values(TestFuncs_d16(aom_lowbd_blend_a64_d16_mask_c,
+                                    aom_lowbd_blend_a64_d16_mask_sse4_1)));
+#endif  // HAVE_SSE4_1
+
+#if HAVE_AVX2
+INSTANTIATE_TEST_CASE_P(
+    AVX2, BlendA64MaskTest8B_d16,
+    ::testing::Values(TestFuncs_d16(aom_lowbd_blend_a64_d16_mask_c,
+                                    aom_lowbd_blend_a64_d16_mask_avx2)));
+#endif  // HAVE_AVX2
+
+#if HAVE_NEON
+INSTANTIATE_TEST_CASE_P(
+    NEON, BlendA64MaskTest8B_d16,
+    ::testing::Values(TestFuncs_d16(aom_lowbd_blend_a64_d16_mask_c,
+                                    aom_lowbd_blend_a64_d16_mask_neon)));
+#endif  // HAVE_NEON
+
 //////////////////////////////////////////////////////////////////////////////
 // High bit-depth version
 //////////////////////////////////////////////////////////////////////////////
@@ -190,22 +368,37 @@ INSTANTIATE_TEST_CASE_P(SSE4_1, BlendA64MaskTest8B,
 typedef void (*FHBD)(uint8_t *dst, uint32_t dst_stride, const uint8_t *src0,
                      uint32_t src0_stride, const uint8_t *src1,
                      uint32_t src1_stride, const uint8_t *mask,
-                     uint32_t mask_stride, int h, int w, int suby, int subx,
+                     uint32_t mask_stride, int w, int h, int subx, int suby,
                      int bd);
 typedef libaom_test::FuncParam<FHBD> TestFuncsHBD;
 
-class BlendA64MaskTestHBD : public BlendA64MaskTest<FHBD, uint16_t> {
+class BlendA64MaskTestHBD : public BlendA64MaskTest<FHBD, uint16_t, uint16_t> {
  protected:
-  void Execute(const uint16_t *p_src0, const uint16_t *p_src1) {
-    params_.ref_func(CONVERT_TO_BYTEPTR(dst_ref_ + dst_offset_), dst_stride_,
-                     CONVERT_TO_BYTEPTR(p_src0 + src0_offset_), src0_stride_,
-                     CONVERT_TO_BYTEPTR(p_src1 + src1_offset_), src1_stride_,
-                     mask_, kMaxMaskWidth, h_, w_, suby_, subx_, bit_depth_);
-    ASM_REGISTER_STATE_CHECK(params_.tst_func(
-        CONVERT_TO_BYTEPTR(dst_tst_ + dst_offset_), dst_stride_,
-        CONVERT_TO_BYTEPTR(p_src0 + src0_offset_), src0_stride_,
-        CONVERT_TO_BYTEPTR(p_src1 + src1_offset_), src1_stride_, mask_,
-        kMaxMaskWidth, h_, w_, suby_, subx_, bit_depth_));
+  void Execute(const uint16_t *p_src0, const uint16_t *p_src1, int run_times) {
+    aom_usec_timer timer;
+    aom_usec_timer_start(&timer);
+    for (int i = 0; i < run_times; ++i) {
+      params_.ref_func(CONVERT_TO_BYTEPTR(dst_ref_ + dst_offset_), dst_stride_,
+                       CONVERT_TO_BYTEPTR(p_src0 + src0_offset_), src0_stride_,
+                       CONVERT_TO_BYTEPTR(p_src1 + src1_offset_), src1_stride_,
+                       mask_, kMaxMaskWidth, w_, h_, subx_, suby_, bit_depth_);
+    }
+    aom_usec_timer_mark(&timer);
+    const double time1 = static_cast<double>(aom_usec_timer_elapsed(&timer));
+    aom_usec_timer_start(&timer);
+    for (int i = 0; i < run_times; ++i) {
+      params_.tst_func(CONVERT_TO_BYTEPTR(dst_tst_ + dst_offset_), dst_stride_,
+                       CONVERT_TO_BYTEPTR(p_src0 + src0_offset_), src0_stride_,
+                       CONVERT_TO_BYTEPTR(p_src1 + src1_offset_), src1_stride_,
+                       mask_, kMaxMaskWidth, w_, h_, subx_, suby_, bit_depth_);
+    }
+    aom_usec_timer_mark(&timer);
+    const double time2 = static_cast<double>(aom_usec_timer_elapsed(&timer));
+    if (run_times > 1) {
+      printf("%3dx%-3d subx %d suby %d :%7.2f/%7.2fns", w_, h_, subx_, suby_,
+             time1, time2);
+      printf("(%3.2f)\n", time1 / time2);
+    }
   }
 
   int bit_depth_;
@@ -213,6 +406,7 @@ class BlendA64MaskTestHBD : public BlendA64MaskTest<FHBD, uint16_t> {
 
 TEST_P(BlendA64MaskTestHBD, RandomValues) {
   for (int iter = 0; iter < kIterations && !HasFatalFailure(); ++iter) {
+    int bsize = rng_.Rand8() % BLOCK_SIZES_ALL;
     switch (rng_(3)) {
       case 0: bit_depth_ = 8; break;
       case 1: bit_depth_ = 10; break;
@@ -231,12 +425,13 @@ TEST_P(BlendA64MaskTestHBD, RandomValues) {
     for (int i = 0; i < kMaxMaskSize; ++i)
       mask_[i] = rng_(AOM_BLEND_A64_MAX_ALPHA + 1);
 
-    Common();
+    RunTest(bsize, 1);
   }
 }
 
 TEST_P(BlendA64MaskTestHBD, ExtremeValues) {
   for (int iter = 0; iter < 1000 && !HasFatalFailure(); ++iter) {
+    int bsize = rng_.Rand8() % BLOCK_SIZES_ALL;
     switch (rng_(3)) {
       case 0: bit_depth_ = 8; break;
       case 1: bit_depth_ = 10; break;
@@ -256,7 +451,7 @@ TEST_P(BlendA64MaskTestHBD, ExtremeValues) {
     for (int i = 0; i < kMaxMaskSize; ++i)
       mask_[i] = rng_(2) + AOM_BLEND_A64_MAX_ALPHA - 1;
 
-    Common();
+    RunTest(bsize, 1);
   }
 }
 
@@ -266,5 +461,123 @@ INSTANTIATE_TEST_CASE_P(
     ::testing::Values(TestFuncsHBD(aom_highbd_blend_a64_mask_c,
                                    aom_highbd_blend_a64_mask_sse4_1)));
 #endif  // HAVE_SSE4_1
-#endif  // CONFIG_HIGHBITDEPTH
+
+//////////////////////////////////////////////////////////////////////////////
+// HBD _d16 version
+//////////////////////////////////////////////////////////////////////////////
+
+typedef void (*FHBD_D16)(uint8_t *dst, uint32_t dst_stride,
+                         const CONV_BUF_TYPE *src0, uint32_t src0_stride,
+                         const CONV_BUF_TYPE *src1, uint32_t src1_stride,
+                         const uint8_t *mask, uint32_t mask_stride, int w,
+                         int h, int subx, int suby, ConvolveParams *conv_params,
+                         const int bd);
+typedef libaom_test::FuncParam<FHBD_D16> TestFuncsHBD_d16;
+
+class BlendA64MaskTestHBD_d16
+    : public BlendA64MaskTest<FHBD_D16, uint16_t, uint16_t> {
+ protected:
+  // max number of bits used by the source
+  static const int kSrcMaxBitsMask = (1 << 14) - 1;
+  static const int kSrcMaxBitsMaskHBD = (1 << 16) - 1;
+
+  void Execute(const uint16_t *p_src0, const uint16_t *p_src1, int run_times) {
+    ConvolveParams conv_params;
+    conv_params.round_0 = (bit_depth_ == 12) ? ROUND0_BITS + 2 : ROUND0_BITS;
+    conv_params.round_1 = COMPOUND_ROUND1_BITS;
+    aom_usec_timer timer;
+    aom_usec_timer_start(&timer);
+    for (int i = 0; i < run_times; ++i) {
+      params_.ref_func(CONVERT_TO_BYTEPTR(dst_ref_ + dst_offset_), dst_stride_,
+                       p_src0 + src0_offset_, src0_stride_,
+                       p_src1 + src1_offset_, src1_stride_, mask_,
+                       kMaxMaskWidth, w_, h_, subx_, suby_, &conv_params,
+                       bit_depth_);
+    }
+    if (params_.tst_func) {
+      aom_usec_timer_mark(&timer);
+      const double time1 = static_cast<double>(aom_usec_timer_elapsed(&timer));
+      aom_usec_timer_start(&timer);
+      for (int i = 0; i < run_times; ++i) {
+        params_.tst_func(CONVERT_TO_BYTEPTR(dst_tst_ + dst_offset_),
+                         dst_stride_, p_src0 + src0_offset_, src0_stride_,
+                         p_src1 + src1_offset_, src1_stride_, mask_,
+                         kMaxMaskWidth, w_, h_, subx_, suby_, &conv_params,
+                         bit_depth_);
+      }
+      aom_usec_timer_mark(&timer);
+      const double time2 = static_cast<double>(aom_usec_timer_elapsed(&timer));
+      if (run_times > 1) {
+        printf("%3dx%-3d subx %d suby %d :%7.2f/%7.2fns", w_, h_, subx_, suby_,
+               time1, time2);
+        printf("(%3.2f)\n", time1 / time2);
+      }
+    }
+  }
+
+  int bit_depth_;
+  int src_max_bits_mask_;
+};
+
+TEST_P(BlendA64MaskTestHBD_d16, RandomValues) {
+  if (params_.tst_func == NULL) return;
+  for (int iter = 0; iter < kIterations && !HasFatalFailure(); ++iter) {
+    int bsize = rng_.Rand8() % BLOCK_SIZES_ALL;
+    switch (rng_(3)) {
+      case 0: bit_depth_ = 8; break;
+      case 1: bit_depth_ = 10; break;
+      default: bit_depth_ = 12; break;
+    }
+    src_max_bits_mask_ =
+        (bit_depth_ == 8) ? kSrcMaxBitsMask : kSrcMaxBitsMaskHBD;
+
+    for (int i = 0; i < kBufSize; ++i) {
+      dst_ref_[i] = rng_.Rand8();
+      dst_tst_[i] = rng_.Rand8();
+
+      src0_[i] = rng_.Rand16() & src_max_bits_mask_;
+      src1_[i] = rng_.Rand16() & src_max_bits_mask_;
+    }
+
+    for (int i = 0; i < kMaxMaskSize; ++i)
+      mask_[i] = rng_(AOM_BLEND_A64_MAX_ALPHA + 1);
+
+    RunTest(bsize, 1);
+  }
+}
+// TODO (Scott LaVarnway), fix this test
+TEST_P(BlendA64MaskTestHBD_d16, DISABLED_SaturatedValues) {
+  for (int bsize = 0; bsize < BLOCK_SIZES_ALL; ++bsize) {
+    for (bit_depth_ = 8; bit_depth_ <= 12; bit_depth_ += 2) {
+      src_max_bits_mask_ =
+          (bit_depth_ == 8) ? kSrcMaxBitsMask : kSrcMaxBitsMaskHBD;
+
+      for (int i = 0; i < kBufSize; ++i) {
+        dst_ref_[i] = 0;
+        dst_tst_[i] = (1 << bit_depth_) - 1;
+
+        src0_[i] = src_max_bits_mask_;
+        src1_[i] = src_max_bits_mask_;
+      }
+
+      for (int i = 0; i < kMaxMaskSize; ++i) mask_[i] = AOM_BLEND_A64_MAX_ALPHA;
+
+      RunTest(bsize, 1);
+    }
+  }
+}
+
+INSTANTIATE_TEST_CASE_P(
+    C, BlendA64MaskTestHBD_d16,
+    ::testing::Values(TestFuncsHBD_d16(aom_highbd_blend_a64_d16_mask_c, NULL)));
+
+// TODO(slavarnway): Enable the following in the avx2 commit. (56501)
+#if 0
+#if HAVE_AVX2
+INSTANTIATE_TEST_CASE_P(
+    SSE4_1, BlendA64MaskTestHBD,
+    ::testing::Values(TestFuncsHBD(aom_highbd_blend_a64_mask_c,
+                                   aom_highbd_blend_a64_mask_avx2)));
+#endif  // HAVE_AVX2
+#endif
 }  // namespace

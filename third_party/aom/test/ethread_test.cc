@@ -7,7 +7,7 @@
  * obtain it at www.aomedia.org/license/software. If the Alliance for Open
  * Media Patent License 1.0 was not distributed with this source code in the
  * PATENTS file, you can obtain it at www.aomedia.org/license/patent.
-*/
+ */
 
 #include <string>
 #include <vector>
@@ -16,27 +16,28 @@
 #include "test/encode_test_driver.h"
 #include "test/md5_helper.h"
 #include "test/util.h"
-#include "test/y4m_video_source.h"
+#include "test/yuv_video_source.h"
 
 namespace {
 class AVxEncoderThreadTest
-    : public ::libaom_test::EncoderTest,
-      public ::libaom_test::CodecTestWith2Params<libaom_test::TestMode, int> {
+    : public ::libaom_test::CodecTestWith4Params<libaom_test::TestMode, int,
+                                                 int, int>,
+      public ::libaom_test::EncoderTest {
  protected:
   AVxEncoderThreadTest()
       : EncoderTest(GET_PARAM(0)), encoder_initialized_(false),
-        encoding_mode_(GET_PARAM(1)), set_cpu_used_(GET_PARAM(2)) {
+        encoding_mode_(GET_PARAM(1)), set_cpu_used_(GET_PARAM(2)),
+        tile_cols_(GET_PARAM(3)), tile_rows_(GET_PARAM(4)) {
     init_flags_ = AOM_CODEC_USE_PSNR;
     aom_codec_dec_cfg_t cfg = aom_codec_dec_cfg_t();
     cfg.w = 1280;
     cfg.h = 720;
+    cfg.allow_lowbitdepth = 1;
     decoder_ = codec_->CreateDecoder(cfg, 0);
-#if CONFIG_AV1 && CONFIG_EXT_TILE
     if (decoder_->IsAV1()) {
       decoder_->Control(AV1_SET_DECODE_TILE_ROW, -1);
       decoder_->Control(AV1_SET_DECODE_TILE_COL, -1);
     }
-#endif
 
     size_enc_.clear();
     md5_dec_.clear();
@@ -49,7 +50,7 @@ class AVxEncoderThreadTest
     SetMode(encoding_mode_);
 
     if (encoding_mode_ != ::libaom_test::kRealTime) {
-      cfg_.g_lag_in_frames = 3;
+      cfg_.g_lag_in_frames = 5;
       cfg_.rc_end_usage = AOM_VBR;
       cfg_.rc_2pass_vbr_minsection_pct = 5;
       cfg_.rc_2pass_vbr_maxsection_pct = 2000;
@@ -69,24 +70,9 @@ class AVxEncoderThreadTest
   virtual void PreEncodeFrameHook(::libaom_test::VideoSource * /*video*/,
                                   ::libaom_test::Encoder *encoder) {
     if (!encoder_initialized_) {
-#if CONFIG_AV1 && CONFIG_EXT_TILE
-      encoder->Control(AV1E_SET_TILE_COLUMNS, 1);
-      if (codec_ == &libaom_test::kAV1) {
-        // TODO(geza): Start using multiple tile rows when the multi-threaded
-        // encoder can handle them
-        encoder->Control(AV1E_SET_TILE_ROWS, 32);
-      } else {
-        encoder->Control(AV1E_SET_TILE_ROWS, 0);
-      }
-#else
-      // Encode 4 tile columns.
-      encoder->Control(AV1E_SET_TILE_COLUMNS, 2);
-      encoder->Control(AV1E_SET_TILE_ROWS, 0);
-#endif  // CONFIG_AV1 && CONFIG_EXT_TILE
-#if CONFIG_LOOPFILTERING_ACROSS_TILES
-      encoder->Control(AV1E_SET_TILE_LOOPFILTER, 0);
-#endif  // CONFIG_LOOPFILTERING_ACROSS_TILES
+      SetTileSize(encoder);
       encoder->Control(AOME_SET_CPUUSED, set_cpu_used_);
+      encoder->Control(AV1E_SET_ROW_MT, row_mt_);
       if (encoding_mode_ != ::libaom_test::kRealTime) {
         encoder->Control(AOME_SET_ENABLEAUTOALTREF, 1);
         encoder->Control(AOME_SET_ARNR_MAXFRAMES, 7);
@@ -98,6 +84,11 @@ class AVxEncoderThreadTest
       }
       encoder_initialized_ = true;
     }
+  }
+
+  virtual void SetTileSize(libaom_test::Encoder *encoder) {
+    encoder->Control(AV1E_SET_TILE_COLUMNS, tile_cols_);
+    encoder->Control(AV1E_SET_TILE_ROWS, tile_rows_);
   }
 
   virtual void FramePktHook(const aom_codec_cx_pkt_t *pkt) {
@@ -124,10 +115,12 @@ class AVxEncoderThreadTest
   }
 
   void DoTest() {
-    ::libaom_test::Y4mVideoSource video("niklas_1280_720_30.y4m", 15, 18);
+    ::libaom_test::YUVVideoSource video(
+        "niklas_640_480_30.yuv", AOM_IMG_FMT_I420, 640, 480, 30, 1, 15, 21);
     cfg_.rc_target_bitrate = 1000;
 
     // Encode using single thread.
+    row_mt_ = 0;
     cfg_.g_threads = 1;
     init_flags_ = AOM_CODEC_USE_PSNR;
     ASSERT_NO_FATAL_FAILURE(RunLoop(&video));
@@ -158,31 +151,123 @@ class AVxEncoderThreadTest
     ASSERT_EQ(single_thr_size_enc, multi_thr_size_enc);
     ASSERT_EQ(single_thr_md5_enc, multi_thr_md5_enc);
     ASSERT_EQ(single_thr_md5_dec, multi_thr_md5_dec);
+
+    // Encode using multiple threads row-mt enabled.
+    row_mt_ = 1;
+    cfg_.g_threads = 2;
+    ASSERT_NO_FATAL_FAILURE(RunLoop(&video));
+    std::vector<size_t> multi_thr2_row_mt_size_enc;
+    std::vector<std::string> multi_thr2_row_mt_md5_enc;
+    std::vector<std::string> multi_thr2_row_mt_md5_dec;
+    multi_thr2_row_mt_size_enc = size_enc_;
+    multi_thr2_row_mt_md5_enc = md5_enc_;
+    multi_thr2_row_mt_md5_dec = md5_dec_;
+    size_enc_.clear();
+    md5_enc_.clear();
+    md5_dec_.clear();
+
+    // Disable threads=3 test for now to reduce the time so that the nightly
+    // test would not time out.
+    // cfg_.g_threads = 3;
+    // ASSERT_NO_FATAL_FAILURE(RunLoop(&video));
+    // std::vector<size_t> multi_thr3_row_mt_size_enc;
+    // std::vector<std::string> multi_thr3_row_mt_md5_enc;
+    // std::vector<std::string> multi_thr3_row_mt_md5_dec;
+    // multi_thr3_row_mt_size_enc = size_enc_;
+    // multi_thr3_row_mt_md5_enc = md5_enc_;
+    // multi_thr3_row_mt_md5_dec = md5_dec_;
+    // size_enc_.clear();
+    // md5_enc_.clear();
+    // md5_dec_.clear();
+    // Check that the vectors are equal.
+    // ASSERT_EQ(multi_thr3_row_mt_size_enc, multi_thr2_row_mt_size_enc);
+    // ASSERT_EQ(multi_thr3_row_mt_md5_enc, multi_thr2_row_mt_md5_enc);
+    // ASSERT_EQ(multi_thr3_row_mt_md5_dec, multi_thr2_row_mt_md5_dec);
+
+    cfg_.g_threads = 4;
+    ASSERT_NO_FATAL_FAILURE(RunLoop(&video));
+    std::vector<size_t> multi_thr4_row_mt_size_enc;
+    std::vector<std::string> multi_thr4_row_mt_md5_enc;
+    std::vector<std::string> multi_thr4_row_mt_md5_dec;
+    multi_thr4_row_mt_size_enc = size_enc_;
+    multi_thr4_row_mt_md5_enc = md5_enc_;
+    multi_thr4_row_mt_md5_dec = md5_dec_;
+    size_enc_.clear();
+    md5_enc_.clear();
+    md5_dec_.clear();
+
+    // Check that the vectors are equal.
+    ASSERT_EQ(multi_thr4_row_mt_size_enc, multi_thr2_row_mt_size_enc);
+    ASSERT_EQ(multi_thr4_row_mt_md5_enc, multi_thr2_row_mt_md5_enc);
+    ASSERT_EQ(multi_thr4_row_mt_md5_dec, multi_thr2_row_mt_md5_dec);
   }
 
   bool encoder_initialized_;
   ::libaom_test::TestMode encoding_mode_;
   int set_cpu_used_;
+  int tile_cols_;
+  int tile_rows_;
+  int row_mt_;
   ::libaom_test::Decoder *decoder_;
   std::vector<size_t> size_enc_;
   std::vector<std::string> md5_enc_;
   std::vector<std::string> md5_dec_;
 };
 
-TEST_P(AVxEncoderThreadTest, EncoderResultTest) { DoTest(); }
+TEST_P(AVxEncoderThreadTest, EncoderResultTest) {
+  cfg_.large_scale_tile = 0;
+  decoder_->Control(AV1_SET_TILE_MODE, 0);
+  DoTest();
+}
 
 class AVxEncoderThreadTestLarge : public AVxEncoderThreadTest {};
 
-TEST_P(AVxEncoderThreadTestLarge, EncoderResultTest) { DoTest(); }
+TEST_P(AVxEncoderThreadTestLarge, EncoderResultTest) {
+  cfg_.large_scale_tile = 0;
+  decoder_->Control(AV1_SET_TILE_MODE, 0);
+  DoTest();
+}
 
 // For AV1, only test speed 0 to 3.
+// Here test cpu_used 2 and 3
 AV1_INSTANTIATE_TEST_CASE(AVxEncoderThreadTest,
-                          ::testing::Values(::libaom_test::kTwoPassGood,
-                                            ::libaom_test::kOnePassGood),
-                          ::testing::Range(2, 4));
+                          ::testing::Values(::libaom_test::kTwoPassGood),
+                          ::testing::Range(2, 4), ::testing::Values(0, 2),
+                          ::testing::Values(0, 1));
 
+// Test cpu_used 0 and 1.
 AV1_INSTANTIATE_TEST_CASE(AVxEncoderThreadTestLarge,
                           ::testing::Values(::libaom_test::kTwoPassGood,
                                             ::libaom_test::kOnePassGood),
-                          ::testing::Range(0, 2));
+                          ::testing::Range(0, 2), ::testing::Values(0, 1, 2, 6),
+                          ::testing::Values(0, 1, 2, 6));
+
+class AVxEncoderThreadLSTest : public AVxEncoderThreadTest {
+  virtual void SetTileSize(libaom_test::Encoder *encoder) {
+    encoder->Control(AV1E_SET_TILE_COLUMNS, tile_cols_);
+    encoder->Control(AV1E_SET_TILE_ROWS, tile_rows_);
+  }
+};
+
+TEST_P(AVxEncoderThreadLSTest, EncoderResultTest) {
+  cfg_.large_scale_tile = 1;
+  decoder_->Control(AV1_SET_TILE_MODE, 1);
+  decoder_->Control(AV1D_EXT_TILE_DEBUG, 1);
+  DoTest();
+}
+
+class AVxEncoderThreadLSTestLarge : public AVxEncoderThreadLSTest {};
+
+TEST_P(AVxEncoderThreadLSTestLarge, EncoderResultTest) {
+  cfg_.large_scale_tile = 1;
+  decoder_->Control(AV1_SET_TILE_MODE, 1);
+  decoder_->Control(AV1D_EXT_TILE_DEBUG, 1);
+  DoTest();
+}
+
+AV1_INSTANTIATE_TEST_CASE(AVxEncoderThreadLSTestLarge,
+                          ::testing::Values(::libaom_test::kTwoPassGood,
+                                            ::libaom_test::kOnePassGood),
+                          ::testing::Range(0, 4), ::testing::Values(0, 6),
+                          ::testing::Values(0, 6));
 }  // namespace

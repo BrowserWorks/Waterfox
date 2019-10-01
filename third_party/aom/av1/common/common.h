@@ -9,8 +9,8 @@
  * PATENTS file, you can obtain it at www.aomedia.org/license/patent.
  */
 
-#ifndef AV1_COMMON_COMMON_H_
-#define AV1_COMMON_COMMON_H_
+#ifndef AOM_AV1_COMMON_COMMON_H_
+#define AOM_AV1_COMMON_COMMON_H_
 
 /* Interface header for common constant data structures and lookup tables */
 
@@ -20,6 +20,7 @@
 #include "aom_mem/aom_mem.h"
 #include "aom/aom_integer.h"
 #include "aom_ports/bitops.h"
+#include "config/aom_config.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -50,15 +51,13 @@ static INLINE int get_unsigned_bits(unsigned int num_values) {
 
 #define CHECK_MEM_ERROR(cm, lval, expr) \
   AOM_CHECK_MEM_ERROR(&cm->error, lval, expr)
-// TODO(yaowu: validate the usage of these codes or develop new ones.)
-#define AV1_SYNC_CODE_0 0x49
-#define AV1_SYNC_CODE_1 0x83
-#define AV1_SYNC_CODE_2 0x43
 
 #define AOM_FRAME_MARKER 0x2
+
+#define AV1_MIN_TILE_SIZE_BYTES 1
 
 #ifdef __cplusplus
 }  // extern "C"
 #endif
 
-#endif  // AV1_COMMON_COMMON_H_
+#endif  // AOM_AV1_COMMON_COMMON_H_

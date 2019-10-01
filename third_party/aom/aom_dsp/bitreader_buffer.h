@@ -9,8 +9,8 @@
  * PATENTS file, you can obtain it at www.aomedia.org/license/patent.
  */
 
-#ifndef AOM_DSP_BITREADER_BUFFER_H_
-#define AOM_DSP_BITREADER_BUFFER_H_
+#ifndef AOM_AOM_DSP_BITREADER_BUFFER_H_
+#define AOM_AOM_DSP_BITREADER_BUFFER_H_
 
 #include <limits.h>
 
@@ -31,18 +31,20 @@ struct aom_read_bit_buffer {
   aom_rb_error_handler error_handler;
 };
 
-size_t aom_rb_bytes_read(struct aom_read_bit_buffer *rb);
+size_t aom_rb_bytes_read(const struct aom_read_bit_buffer *rb);
 
 int aom_rb_read_bit(struct aom_read_bit_buffer *rb);
 
 int aom_rb_read_literal(struct aom_read_bit_buffer *rb, int bits);
 
-int aom_rb_read_signed_literal(struct aom_read_bit_buffer *rb, int bits);
+uint32_t aom_rb_read_unsigned_literal(struct aom_read_bit_buffer *rb, int bits);
 
 int aom_rb_read_inv_signed_literal(struct aom_read_bit_buffer *rb, int bits);
+
+uint32_t aom_rb_read_uvlc(struct aom_read_bit_buffer *rb);
 
 #ifdef __cplusplus
 }  // extern "C"
 #endif
 
-#endif  // AOM_DSP_BITREADER_BUFFER_H_
+#endif  // AOM_AOM_DSP_BITREADER_BUFFER_H_

@@ -13,10 +13,12 @@
  * \brief Provides the high level interface to wrap encoder algorithms.
  *
  */
-#include "./aom_config.h"
+#include "config/aom_config.h"
 
 #if HAVE_FEXCEPT
+#ifndef _GNU_SOURCE
 #define _GNU_SOURCE
+#endif
 #include <fenv.h>
 #endif
 
@@ -45,9 +47,6 @@ aom_codec_err_t aom_codec_enc_init_ver(aom_codec_ctx_t *ctx,
   else if (!(iface->caps & AOM_CODEC_CAP_ENCODER))
     res = AOM_CODEC_INCAPABLE;
   else if ((flags & AOM_CODEC_USE_PSNR) && !(iface->caps & AOM_CODEC_CAP_PSNR))
-    res = AOM_CODEC_INCAPABLE;
-  else if ((flags & AOM_CODEC_USE_OUTPUT_PARTITION) &&
-           !(iface->caps & AOM_CODEC_CAP_OUTPUT_PARTITION))
     res = AOM_CODEC_INCAPABLE;
   else {
     ctx->iface = iface;
@@ -80,9 +79,6 @@ aom_codec_err_t aom_codec_enc_init_multi_ver(
   else if (!(iface->caps & AOM_CODEC_CAP_ENCODER))
     res = AOM_CODEC_INCAPABLE;
   else if ((flags & AOM_CODEC_USE_PSNR) && !(iface->caps & AOM_CODEC_CAP_PSNR))
-    res = AOM_CODEC_INCAPABLE;
-  else if ((flags & AOM_CODEC_USE_OUTPUT_PARTITION) &&
-           !(iface->caps & AOM_CODEC_CAP_OUTPUT_PARTITION))
     res = AOM_CODEC_INCAPABLE;
   else {
     int i;
@@ -171,13 +167,13 @@ aom_codec_err_t aom_codec_enc_config_default(aom_codec_iface_t *iface,
     }
   }
 
+  /* default values */
+  if (cfg) {
+    cfg->cfg.ext_partition = 1;
+  }
+
   return res;
 }
-
-/* clang-format off */
-#define FLOATING_POINT_BEGIN_SCOPE do {
-#define FLOATING_POINT_END_SCOPE } while (0);
-/* clang-format on */
 
 #if ARCH_X86 || ARCH_X86_64
 /* On X86, disable the x87 unit's internal 80 bit precision for better
@@ -201,20 +197,21 @@ aom_codec_err_t aom_codec_enc_config_default(aom_codec_iface_t *iface,
 #define FLOATING_POINT_RESTORE_EXCEPTIONS
 #endif  // HAVE_FEXCEPT && CONFIG_DEBUG
 
+/* clang-format off */
 #define FLOATING_POINT_INIT    \
-  FLOATING_POINT_BEGIN_SCOPE   \
+  do {                         \
   FLOATING_POINT_SET_PRECISION \
   FLOATING_POINT_SET_EXCEPTIONS
 
 #define FLOATING_POINT_RESTORE      \
   FLOATING_POINT_RESTORE_EXCEPTIONS \
   FLOATING_POINT_RESTORE_PRECISION  \
-  FLOATING_POINT_END_SCOPE
+  } while (0);
+/* clang-format on */
 
 aom_codec_err_t aom_codec_encode(aom_codec_ctx_t *ctx, const aom_image_t *img,
                                  aom_codec_pts_t pts, unsigned long duration,
-                                 aom_enc_frame_flags_t flags,
-                                 unsigned long deadline) {
+                                 aom_enc_frame_flags_t flags) {
   aom_codec_err_t res = AOM_CODEC_OK;
 
   if (!ctx || (img && !duration))
@@ -232,8 +229,8 @@ aom_codec_err_t aom_codec_encode(aom_codec_ctx_t *ctx, const aom_image_t *img,
     FLOATING_POINT_INIT
 
     if (num_enc == 1)
-      res = ctx->iface->enc.encode(get_alg_priv(ctx), img, pts, duration, flags,
-                                   deadline);
+      res =
+          ctx->iface->enc.encode(get_alg_priv(ctx), img, pts, duration, flags);
     else {
       /* Multi-resolution encoding:
        * Encode multi-levels in reverse order. For example,
@@ -247,7 +244,7 @@ aom_codec_err_t aom_codec_encode(aom_codec_ctx_t *ctx, const aom_image_t *img,
 
       for (i = num_enc - 1; i >= 0; i--) {
         if ((res = ctx->iface->enc.encode(get_alg_priv(ctx), img, pts, duration,
-                                          flags, deadline)))
+                                          flags)))
           break;
 
         ctx--;

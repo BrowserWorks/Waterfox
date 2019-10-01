@@ -439,6 +439,7 @@ if (IsCSSPropertyPrefEnabled("layout.css.prefixes.webkit")) {
 
     // Initial side/corner/point (valid only for -moz/-webkit prefixed):
     "-webkit-linear-gradient(left, red, blue)",
+    "-webkit-linear-gradient(bottom, red, blue)",
     "-webkit-linear-gradient(right top, red, blue)",
     "-webkit-linear-gradient(top right, red, blue)",
     "-webkit-radial-gradient(right, red, blue)",
@@ -660,6 +661,7 @@ if (IsCSSPropertyPrefEnabled("layout.css.prefixes.gradients")) {
     "-moz-linear-gradient(left 35px, red, blue)",
     "-moz-linear-gradient(10% 10em, red, blue)",
     "-moz-linear-gradient(44px top, red, blue)",
+    "-moz-linear-gradient(bottom, red, blue)",
 
     "-moz-linear-gradient(0px, red, blue)",
     "-moz-linear-gradient(0, red, blue)",
@@ -1538,18 +1540,19 @@ var gCSSProperties = {
     domProp: "columnGap",
     inherited: false,
     type: CSS_TYPE_LONGHAND,
-    initial_values: [ "normal", "1em", "calc(-2em + 3em)" ],
-    other_values: [ "2px", "4em",
+    initial_values: [ "normal" ],
+    other_values: [ "2px", "1em", "4em", "3%", "calc(3%)", "calc(1em - 3%)",
       "calc(2px)",
       "calc(-2px)",
       "calc(0px)",
       "calc(0pt)",
       "calc(5em)",
+      "calc(-2em + 3em)",
       "calc(3*25px)",
       "calc(25px*3)",
       "calc(3*25px + 5em)",
     ],
-    invalid_values: [ "3%", "-1px", "4" ]
+    invalid_values: [ "-3%", "-1px", "4" ]
   },
   "-moz-column-gap": {
     domProp: "MozColumnGap",

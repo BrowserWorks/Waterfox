@@ -15,8 +15,9 @@
 #include "test/function_equivalence_test.h"
 #include "test/register_state_check.h"
 
-#include "./aom_config.h"
-#include "./aom_dsp_rtcd.h"
+#include "config/aom_config.h"
+#include "config/aom_dsp_rtcd.h"
+
 #include "aom/aom_integer.h"
 
 #define MAX_SB_SQUARE (MAX_SB_SIZE * MAX_SB_SIZE)
@@ -92,14 +93,48 @@ TEST_P(ObmcVarianceTest, ExtremeValues) {
   }
 }
 
+TEST_P(ObmcVarianceTest, DISABLED_Speed) {
+  DECLARE_ALIGNED(32, uint8_t, pre[MAX_SB_SQUARE]);
+  DECLARE_ALIGNED(32, int32_t, wsrc[MAX_SB_SQUARE]);
+  DECLARE_ALIGNED(32, int32_t, mask[MAX_SB_SQUARE]);
+
+  const int pre_stride = this->rng_(MAX_SB_SIZE + 1);
+
+  for (int i = 0; i < MAX_SB_SQUARE; ++i) {
+    pre[i] = this->rng_.Rand8();
+    wsrc[i] = this->rng_.Rand8() * this->rng_(kMaskMax * kMaskMax + 1);
+    mask[i] = this->rng_(kMaskMax * kMaskMax + 1);
+  }
+
+  const int num_loops = 1000000;
+  unsigned int ref_sse, tst_sse;
+  aom_usec_timer ref_timer, test_timer;
+
+  aom_usec_timer_start(&ref_timer);
+  for (int i = 0; i < num_loops; ++i) {
+    params_.ref_func(pre, pre_stride, wsrc, mask, &ref_sse);
+  }
+  aom_usec_timer_mark(&ref_timer);
+  const int elapsed_time_c =
+      static_cast<int>(aom_usec_timer_elapsed(&ref_timer));
+
+  aom_usec_timer_start(&test_timer);
+  for (int i = 0; i < num_loops; ++i) {
+    params_.tst_func(pre, pre_stride, wsrc, mask, &tst_sse);
+  }
+  aom_usec_timer_mark(&test_timer);
+  const int elapsed_time_simd =
+      static_cast<int>(aom_usec_timer_elapsed(&test_timer));
+
+  printf("c_time=%d \t simd_time=%d \t gain=%d \n", elapsed_time_c,
+         elapsed_time_simd, (elapsed_time_c / elapsed_time_simd));
+}
+
 #if HAVE_SSE4_1
-#if CONFIG_MOTION_VAR
 const ObmcVarianceTest::ParamType sse4_functions[] = {
-#if CONFIG_EXT_PARTITION
   TestFuncs(aom_obmc_variance128x128_c, aom_obmc_variance128x128_sse4_1),
   TestFuncs(aom_obmc_variance128x64_c, aom_obmc_variance128x64_sse4_1),
   TestFuncs(aom_obmc_variance64x128_c, aom_obmc_variance64x128_sse4_1),
-#endif  // CONFIG_EXT_PARTITION
   TestFuncs(aom_obmc_variance64x64_c, aom_obmc_variance64x64_sse4_1),
   TestFuncs(aom_obmc_variance64x32_c, aom_obmc_variance64x32_sse4_1),
   TestFuncs(aom_obmc_variance32x64_c, aom_obmc_variance32x64_sse4_1),
@@ -117,14 +152,36 @@ const ObmcVarianceTest::ParamType sse4_functions[] = {
 
 INSTANTIATE_TEST_CASE_P(SSE4_1, ObmcVarianceTest,
                         ::testing::ValuesIn(sse4_functions));
-#endif  // CONFIG_MOTION_VAR
 #endif  // HAVE_SSE4_1
+
+#if HAVE_AVX2
+const ObmcVarianceTest::ParamType avx2_functions[] = {
+  TestFuncs(aom_obmc_variance128x128_c, aom_obmc_variance128x128_avx2),
+  TestFuncs(aom_obmc_variance128x64_c, aom_obmc_variance128x64_avx2),
+  TestFuncs(aom_obmc_variance64x128_c, aom_obmc_variance64x128_avx2),
+  TestFuncs(aom_obmc_variance64x64_c, aom_obmc_variance64x64_avx2),
+  TestFuncs(aom_obmc_variance64x32_c, aom_obmc_variance64x32_avx2),
+  TestFuncs(aom_obmc_variance32x64_c, aom_obmc_variance32x64_avx2),
+  TestFuncs(aom_obmc_variance32x32_c, aom_obmc_variance32x32_avx2),
+  TestFuncs(aom_obmc_variance32x16_c, aom_obmc_variance32x16_avx2),
+  TestFuncs(aom_obmc_variance16x32_c, aom_obmc_variance16x32_avx2),
+  TestFuncs(aom_obmc_variance16x16_c, aom_obmc_variance16x16_avx2),
+  TestFuncs(aom_obmc_variance16x8_c, aom_obmc_variance16x8_avx2),
+  TestFuncs(aom_obmc_variance8x16_c, aom_obmc_variance8x16_avx2),
+  TestFuncs(aom_obmc_variance8x8_c, aom_obmc_variance8x8_avx2),
+  TestFuncs(aom_obmc_variance8x4_c, aom_obmc_variance8x4_avx2),
+  TestFuncs(aom_obmc_variance4x8_c, aom_obmc_variance4x8_sse4_1),
+  TestFuncs(aom_obmc_variance4x4_c, aom_obmc_variance4x4_sse4_1)
+};
+
+INSTANTIATE_TEST_CASE_P(AVX2, ObmcVarianceTest,
+                        ::testing::ValuesIn(avx2_functions));
+#endif  // HAVE_AVX2
 
 ////////////////////////////////////////////////////////////////////////////////
 // High bit-depth
 ////////////////////////////////////////////////////////////////////////////////
 
-#if CONFIG_HIGHBITDEPTH
 class ObmcVarianceHBDTest : public FunctionEquivalenceTest<ObmcVarF> {};
 
 TEST_P(ObmcVarianceHBDTest, RandomValues) {
@@ -183,16 +240,13 @@ TEST_P(ObmcVarianceHBDTest, ExtremeValues) {
 }
 
 #if HAVE_SSE4_1
-#if CONFIG_MOTION_VAR
 ObmcVarianceHBDTest::ParamType sse4_functions_hbd[] = {
-#if CONFIG_EXT_PARTITION
   TestFuncs(aom_highbd_obmc_variance128x128_c,
             aom_highbd_obmc_variance128x128_sse4_1, 8),
   TestFuncs(aom_highbd_obmc_variance128x64_c,
             aom_highbd_obmc_variance128x64_sse4_1, 8),
   TestFuncs(aom_highbd_obmc_variance64x128_c,
             aom_highbd_obmc_variance64x128_sse4_1, 8),
-#endif  // CONFIG_EXT_PARTITION
   TestFuncs(aom_highbd_obmc_variance64x64_c,
             aom_highbd_obmc_variance64x64_sse4_1, 8),
   TestFuncs(aom_highbd_obmc_variance64x32_c,
@@ -219,14 +273,12 @@ ObmcVarianceHBDTest::ParamType sse4_functions_hbd[] = {
             8),
   TestFuncs(aom_highbd_obmc_variance4x4_c, aom_highbd_obmc_variance4x4_sse4_1,
             8),
-#if CONFIG_EXT_PARTITION
   TestFuncs(aom_highbd_10_obmc_variance128x128_c,
             aom_highbd_10_obmc_variance128x128_sse4_1, 10),
   TestFuncs(aom_highbd_10_obmc_variance128x64_c,
             aom_highbd_10_obmc_variance128x64_sse4_1, 10),
   TestFuncs(aom_highbd_10_obmc_variance64x128_c,
             aom_highbd_10_obmc_variance64x128_sse4_1, 10),
-#endif  // CONFIG_EXT_PARTITION
   TestFuncs(aom_highbd_10_obmc_variance64x64_c,
             aom_highbd_10_obmc_variance64x64_sse4_1, 10),
   TestFuncs(aom_highbd_10_obmc_variance64x32_c,
@@ -253,14 +305,12 @@ ObmcVarianceHBDTest::ParamType sse4_functions_hbd[] = {
             aom_highbd_10_obmc_variance4x8_sse4_1, 10),
   TestFuncs(aom_highbd_10_obmc_variance4x4_c,
             aom_highbd_10_obmc_variance4x4_sse4_1, 10),
-#if CONFIG_EXT_PARTITION
   TestFuncs(aom_highbd_12_obmc_variance128x128_c,
             aom_highbd_12_obmc_variance128x128_sse4_1, 12),
   TestFuncs(aom_highbd_12_obmc_variance128x64_c,
             aom_highbd_12_obmc_variance128x64_sse4_1, 12),
   TestFuncs(aom_highbd_12_obmc_variance64x128_c,
             aom_highbd_12_obmc_variance64x128_sse4_1, 12),
-#endif  // CONFIG_EXT_PARTITION
   TestFuncs(aom_highbd_12_obmc_variance64x64_c,
             aom_highbd_12_obmc_variance64x64_sse4_1, 12),
   TestFuncs(aom_highbd_12_obmc_variance64x32_c,
@@ -291,7 +341,5 @@ ObmcVarianceHBDTest::ParamType sse4_functions_hbd[] = {
 
 INSTANTIATE_TEST_CASE_P(SSE4_1, ObmcVarianceHBDTest,
                         ::testing::ValuesIn(sse4_functions_hbd));
-#endif  // CONFIG_MOTION_VAR
 #endif  // HAVE_SSE4_1
-#endif  // CONFIG_HIGHBITDEPTH
 }  // namespace

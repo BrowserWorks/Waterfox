@@ -9,11 +9,13 @@
  * PATENTS file, you can obtain it at www.aomedia.org/license/patent.
  */
 
-#ifndef TEST_REGISTER_STATE_CHECK_H_
-#define TEST_REGISTER_STATE_CHECK_H_
+#ifndef AOM_TEST_REGISTER_STATE_CHECK_H_
+#define AOM_TEST_REGISTER_STATE_CHECK_H_
 
 #include "third_party/googletest/src/googletest/include/gtest/gtest.h"
-#include "./aom_config.h"
+
+#include "config/aom_config.h"
+
 #include "aom/aom_integer.h"
 
 // ASM_REGISTER_STATE_CHECK(asm_function)
@@ -29,7 +31,7 @@
 //   See platform implementations of RegisterStateCheckXXX for details.
 //
 
-#if defined(_WIN64)
+#if defined(_WIN64) && ARCH_X86_64
 
 #undef NOMINMAX
 #define NOMINMAX
@@ -49,7 +51,7 @@ namespace libaom_test {
 class RegisterStateCheck {
  public:
   RegisterStateCheck() { initialized_ = StoreRegisters(&pre_context_); }
-  ~RegisterStateCheck() { EXPECT_TRUE(Check()); }
+  ~RegisterStateCheck() { Check(); }
 
  private:
   static bool StoreRegisters(CONTEXT *const context) {
@@ -62,10 +64,10 @@ class RegisterStateCheck {
   }
 
   // Compares the register state. Returns true if the states match.
-  bool Check() const {
-    if (!initialized_) return false;
+  void Check() const {
+    ASSERT_TRUE(initialized_);
     CONTEXT post_context;
-    if (!StoreRegisters(&post_context)) return false;
+    ASSERT_TRUE(StoreRegisters(&post_context));
 
     const M128A *xmm_pre = &pre_context_.Xmm6;
     const M128A *xmm_post = &post_context.Xmm6;
@@ -74,59 +76,10 @@ class RegisterStateCheck {
       ++xmm_pre;
       ++xmm_post;
     }
-    return !testing::Test::HasNonfatalFailure();
   }
 
   bool initialized_;
   CONTEXT pre_context_;
-};
-
-#define ASM_REGISTER_STATE_CHECK(statement)    \
-  do {                                         \
-    libaom_test::RegisterStateCheck reg_check; \
-    statement;                                 \
-  } while (false)
-
-}  // namespace libaom_test
-
-#elif defined(CONFIG_SHARED) && defined(HAVE_NEON_ASM) && !CONFIG_SHARED && \
-    HAVE_NEON_ASM && CONFIG_AV1
-
-extern "C" {
-// Save the d8-d15 registers into store.
-void aom_push_neon(int64_t *store);
-}
-
-namespace libaom_test {
-
-// Compares the state of d8-d15 at construction with their state at
-// destruction. These registers should be preserved by the callee on
-// arm platform.
-class RegisterStateCheck {
- public:
-  RegisterStateCheck() { initialized_ = StoreRegisters(pre_store_); }
-  ~RegisterStateCheck() { EXPECT_TRUE(Check()); }
-
- private:
-  static bool StoreRegisters(int64_t store[8]) {
-    aom_push_neon(store);
-    return true;
-  }
-
-  // Compares the register state. Returns true if the states match.
-  bool Check() const {
-    if (!initialized_) return false;
-    int64_t post_store[8];
-    aom_push_neon(post_store);
-    for (int i = 0; i < 8; ++i) {
-      EXPECT_EQ(pre_store_[i], post_store[i]) << "d" << i + 8
-                                              << " has been modified";
-    }
-    return !testing::Test::HasNonfatalFailure();
-  }
-
-  bool initialized_;
-  int64_t pre_store_[8];
 };
 
 #define ASM_REGISTER_STATE_CHECK(statement)    \
@@ -146,7 +99,7 @@ class RegisterStateCheck {};
 
 }  // namespace libaom_test
 
-#endif  // _WIN64
+#endif  // _WIN64 && ARCH_X86_64
 
 #if ARCH_X86 || ARCH_X86_64
 #if defined(__GNUC__)
@@ -159,12 +112,12 @@ class RegisterStateCheckMMX {
   RegisterStateCheckMMX() {
     __asm__ volatile("fstenv %0" : "=rm"(pre_fpu_env_));
   }
-  ~RegisterStateCheckMMX() { EXPECT_TRUE(Check()); }
+  ~RegisterStateCheckMMX() { Check(); }
 
  private:
   // Checks the FPU tag word pre/post execution, returning false if not cleared
   // to 0xffff.
-  bool Check() const {
+  void Check() const {
     EXPECT_EQ(0xffff, pre_fpu_env_[4])
         << "FPU was in an inconsistent state prior to call";
 
@@ -172,7 +125,6 @@ class RegisterStateCheckMMX {
     __asm__ volatile("fstenv %0" : "=rm"(post_fpu_env));
     EXPECT_EQ(0xffff, post_fpu_env[4])
         << "FPU was left in an inconsistent state after call";
-    return !testing::Test::HasNonfatalFailure();
   }
 
   uint16_t pre_fpu_env_[14];
@@ -193,4 +145,4 @@ class RegisterStateCheckMMX {
 #define API_REGISTER_STATE_CHECK ASM_REGISTER_STATE_CHECK
 #endif
 
-#endif  // TEST_REGISTER_STATE_CHECK_H_
+#endif  // AOM_TEST_REGISTER_STATE_CHECK_H_

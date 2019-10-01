@@ -7,10 +7,11 @@
  * obtain it at www.aomedia.org/license/software. If the Alliance for Open
  * Media Patent License 1.0 was not distributed with this source code in the
  * PATENTS file, you can obtain it at www.aomedia.org/license/patent.
-*/
+ */
 
 #include <climits>
 #include <vector>
+#include "aom_dsp/aom_dsp_common.h"
 #include "third_party/googletest/src/googletest/include/gtest/gtest.h"
 #include "test/codec_factory.h"
 #include "test/encode_test_driver.h"
@@ -149,83 +150,8 @@ void ScaleForFrameNumber(unsigned int frame, unsigned int initial_w,
     *h = initial_h;
     return;
   }
+  // Go down very low
   if (frame < 120) {
-    *w = initial_w * 3 / 4;
-    *h = initial_h * 3 / 4;
-    return;
-  }
-  if (frame < 130) {
-    *w = initial_w / 2;
-    *h = initial_h / 2;
-    return;
-  }
-  if (frame < 140) {
-    *w = initial_w * 3 / 4;
-    *h = initial_h * 3 / 4;
-    return;
-  }
-  if (frame < 150) {
-    *w = initial_w;
-    *h = initial_h;
-    return;
-  }
-  if (frame < 160) {
-    *w = initial_w * 3 / 4;
-    *h = initial_h * 3 / 4;
-    return;
-  }
-  if (frame < 170) {
-    *w = initial_w / 2;
-    *h = initial_h / 2;
-    return;
-  }
-  if (frame < 180) {
-    *w = initial_w * 3 / 4;
-    *h = initial_h * 3 / 4;
-    return;
-  }
-  if (frame < 190) {
-    *w = initial_w;
-    *h = initial_h;
-    return;
-  }
-  if (frame < 200) {
-    *w = initial_w * 3 / 4;
-    *h = initial_h * 3 / 4;
-    return;
-  }
-  if (frame < 210) {
-    *w = initial_w / 2;
-    *h = initial_h / 2;
-    return;
-  }
-  if (frame < 220) {
-    *w = initial_w * 3 / 4;
-    *h = initial_h * 3 / 4;
-    return;
-  }
-  if (frame < 230) {
-    *w = initial_w;
-    *h = initial_h;
-    return;
-  }
-  if (frame < 240) {
-    *w = initial_w * 3 / 4;
-    *h = initial_h * 3 / 4;
-    return;
-  }
-  if (frame < 250) {
-    *w = initial_w / 2;
-    *h = initial_h / 2;
-    return;
-  }
-  if (frame < 260) {
-    *w = initial_w;
-    *h = initial_h;
-    return;
-  }
-  // Go down very low.
-  if (frame < 270) {
     *w = initial_w / 4;
     *h = initial_h / 4;
     return;
@@ -233,7 +159,7 @@ void ScaleForFrameNumber(unsigned int frame, unsigned int initial_w,
   if (flag_codec == 1) {
     // Cases that only works for AV1.
     // For AV1: Swap width and height of original.
-    if (frame < 320) {
+    if (frame < 140) {
       *w = initial_h;
       *h = initial_w;
       return;
@@ -247,7 +173,7 @@ class ResizingVideoSource : public ::libaom_test::DummyVideoSource {
  public:
   ResizingVideoSource() {
     SetSize(kInitialWidth, kInitialHeight);
-    limit_ = 350;
+    limit_ = 150;
   }
   int flag_codec_;
   virtual ~ResizingVideoSource() {}
@@ -265,8 +191,8 @@ class ResizingVideoSource : public ::libaom_test::DummyVideoSource {
 };
 
 class ResizeTest
-    : public ::libaom_test::EncoderTest,
-      public ::libaom_test::CodecTestWithParam<libaom_test::TestMode> {
+    : public ::libaom_test::CodecTestWithParam<libaom_test::TestMode>,
+      public ::libaom_test::EncoderTest {
  protected:
   ResizeTest() : EncoderTest(GET_PARAM(0)) {}
 
@@ -289,7 +215,14 @@ TEST_P(ResizeTest, TestExternalResizeWorks) {
   ResizingVideoSource video;
   video.flag_codec_ = 0;
   cfg_.g_lag_in_frames = 0;
+  // We use max(kInitialWidth, kInitialHeight) because during the test
+  // the width and height of the frame are swapped
+  cfg_.g_forced_max_frame_width = cfg_.g_forced_max_frame_height =
+      AOMMAX(kInitialWidth, kInitialHeight);
   ASSERT_NO_FATAL_FAILURE(RunLoop(&video));
+
+  // Check we decoded the same number of frames as we attempted to encode
+  ASSERT_EQ(frame_info_list_.size(), video.limit());
 
   for (std::vector<FrameInfo>::const_iterator info = frame_info_list_.begin();
        info != frame_info_list_.end(); ++info) {
@@ -298,26 +231,26 @@ TEST_P(ResizeTest, TestExternalResizeWorks) {
     unsigned int expected_h;
     ScaleForFrameNumber(frame, kInitialWidth, kInitialHeight, &expected_w,
                         &expected_h, 0);
-    EXPECT_EQ(expected_w, info->w) << "Frame " << frame
-                                   << " had unexpected width";
-    EXPECT_EQ(expected_h, info->h) << "Frame " << frame
-                                   << " had unexpected height";
+    EXPECT_EQ(expected_w, info->w)
+        << "Frame " << frame << " had unexpected width";
+    EXPECT_EQ(expected_h, info->h)
+        << "Frame " << frame << " had unexpected height";
   }
 }
 
 const unsigned int kStepDownFrame = 3;
 const unsigned int kStepUpFrame = 6;
 
-class ResizeInternalTest : public ResizeTest {
+class ResizeInternalTestLarge : public ResizeTest {
  protected:
 #if WRITE_COMPRESSED_STREAM
-  ResizeInternalTest()
+  ResizeInternalTestLarge()
       : ResizeTest(), frame0_psnr_(0.0), outfile_(NULL), out_frames_(0) {}
 #else
-  ResizeInternalTest() : ResizeTest(), frame0_psnr_(0.0) {}
+  ResizeInternalTestLarge() : ResizeTest(), frame0_psnr_(0.0) {}
 #endif
 
-  virtual ~ResizeInternalTest() {}
+  virtual ~ResizeInternalTestLarge() {}
 
   virtual void BeginPassHook(unsigned int /*pass*/) {
 #if WRITE_COMPRESSED_STREAM
@@ -351,11 +284,11 @@ class ResizeInternalTest : public ResizeTest {
         encoder->Config(&cfg_);
       }
     } else {
-      if (video->frame() == kStepDownFrame) {
+      if (video->frame() >= kStepDownFrame && video->frame() < kStepUpFrame) {
         struct aom_scaling_mode mode = { AOME_FOURFIVE, AOME_THREEFIVE };
         encoder->Control(AOME_SET_SCALEMODE, &mode);
       }
-      if (video->frame() == kStepUpFrame) {
+      if (video->frame() >= kStepUpFrame) {
         struct aom_scaling_mode mode = { AOME_NORMAL, AOME_NORMAL };
         encoder->Control(AOME_SET_SCALEMODE, &mode);
       }
@@ -364,7 +297,7 @@ class ResizeInternalTest : public ResizeTest {
 
   virtual void PSNRPktHook(const aom_codec_cx_pkt_t *pkt) {
     if (frame0_psnr_ == 0.) frame0_psnr_ = pkt->data.psnr.psnr[0];
-    EXPECT_NEAR(pkt->data.psnr.psnr[0], frame0_psnr_, 2.0);
+    EXPECT_NEAR(pkt->data.psnr.psnr[0], frame0_psnr_, 2.5);
   }
 
 #if WRITE_COMPRESSED_STREAM
@@ -388,7 +321,7 @@ class ResizeInternalTest : public ResizeTest {
 #endif
 };
 
-TEST_P(ResizeInternalTest, TestInternalResizeWorks) {
+TEST_P(ResizeInternalTestLarge, TestInternalResizeWorks) {
   ::libaom_test::I420VideoSource video("hantro_collage_w352h288.yuv", 352, 288,
                                        30, 1, 0, 10);
   init_flags_ = AOM_CODEC_USE_PSNR;
@@ -406,6 +339,9 @@ TEST_P(ResizeInternalTest, TestInternalResizeWorks) {
 
   for (std::vector<FrameInfo>::const_iterator info = frame_info_list_.begin();
        info != frame_info_list_.end(); ++info) {
+  }
+  for (std::vector<FrameInfo>::const_iterator info = frame_info_list_.begin();
+       info != frame_info_list_.end(); ++info) {
     const aom_codec_pts_t pts = info->pts;
     if (pts >= kStepDownFrame && pts < kStepUpFrame) {
       ASSERT_EQ(282U, info->w) << "Frame " << pts << " had unexpected width";
@@ -417,7 +353,7 @@ TEST_P(ResizeInternalTest, TestInternalResizeWorks) {
   }
 }
 
-TEST_P(ResizeInternalTest, TestInternalResizeChangeConfig) {
+TEST_P(ResizeInternalTestLarge, TestInternalResizeChangeConfig) {
   ::libaom_test::I420VideoSource video("hantro_collage_w352h288.yuv", 352, 288,
                                        30, 1, 0, 10);
   cfg_.g_w = 352;
@@ -427,8 +363,8 @@ TEST_P(ResizeInternalTest, TestInternalResizeChangeConfig) {
 }
 
 class ResizeRealtimeTest
-    : public ::libaom_test::EncoderTest,
-      public ::libaom_test::CodecTestWith2Params<libaom_test::TestMode, int> {
+    : public ::libaom_test::CodecTestWith2Params<libaom_test::TestMode, int>,
+      public ::libaom_test::EncoderTest {
  protected:
   ResizeRealtimeTest() : EncoderTest(GET_PARAM(0)) {}
   virtual ~ResizeRealtimeTest() {}
@@ -480,12 +416,14 @@ class ResizeRealtimeTest
     cfg_.kf_min_dist = cfg_.kf_max_dist = 3000;
     // Enable dropped frames.
     cfg_.rc_dropframe_thresh = 1;
-    // Enable error_resilience mode.
-    cfg_.g_error_resilient = 1;
-    // Enable dynamic resizing.
-    cfg_.rc_resize_allowed = 1;
+    // Disable error_resilience mode.
+    cfg_.g_error_resilient = 0;
     // Run at low bitrate.
     cfg_.rc_target_bitrate = 200;
+    // We use max(kInitialWidth, kInitialHeight) because during the test
+    // the width and height of the frame are swapped
+    cfg_.g_forced_max_frame_width = cfg_.g_forced_max_frame_height =
+        AOMMAX(kInitialWidth, kInitialHeight);
   }
 
   std::vector<FrameInfo> frame_info_list_;
@@ -499,12 +437,13 @@ TEST_P(ResizeRealtimeTest, TestExternalResizeWorks) {
   ResizingVideoSource video;
   video.flag_codec_ = 1;
   DefaultConfig();
-  // Disable internal resize for this test.
-  cfg_.rc_resize_allowed = 0;
   change_bitrate_ = false;
   mismatch_psnr_ = 0.0;
   mismatch_nframes_ = 0;
   ASSERT_NO_FATAL_FAILURE(RunLoop(&video));
+
+  // Check we decoded the same number of frames as we attempted to encode
+  ASSERT_EQ(frame_info_list_.size(), video.limit());
 
   for (std::vector<FrameInfo>::const_iterator info = frame_info_list_.begin();
        info != frame_info_list_.end(); ++info) {
@@ -513,10 +452,10 @@ TEST_P(ResizeRealtimeTest, TestExternalResizeWorks) {
     unsigned int expected_h;
     ScaleForFrameNumber(frame, kInitialWidth, kInitialHeight, &expected_w,
                         &expected_h, 1);
-    EXPECT_EQ(expected_w, info->w) << "Frame " << frame
-                                   << " had unexpected width";
-    EXPECT_EQ(expected_h, info->h) << "Frame " << frame
-                                   << " had unexpected height";
+    EXPECT_EQ(expected_w, info->w)
+        << "Frame " << frame << " had unexpected width";
+    EXPECT_EQ(expected_h, info->h)
+        << "Frame " << frame << " had unexpected height";
     EXPECT_EQ(static_cast<unsigned int>(0), GetMismatchFrames());
   }
 }
@@ -524,7 +463,7 @@ TEST_P(ResizeRealtimeTest, TestExternalResizeWorks) {
 // Verify the dynamic resizer behavior for real time, 1 pass CBR mode.
 // Run at low bitrate, with resize_allowed = 1, and verify that we get
 // one resize down event.
-TEST_P(ResizeRealtimeTest, TestInternalResizeDown) {
+TEST_P(ResizeRealtimeTest, DISABLED_TestInternalResizeDown) {
   ::libaom_test::I420VideoSource video("hantro_collage_w352h288.yuv", 352, 288,
                                        30, 1, 0, 299);
   DefaultConfig();
@@ -562,7 +501,7 @@ TEST_P(ResizeRealtimeTest, TestInternalResizeDown) {
 // Verify the dynamic resizer behavior for real time, 1 pass CBR mode.
 // Start at low target bitrate, raise the bitrate in the middle of the clip,
 // scaling-up should occur after bitrate changed.
-TEST_P(ResizeRealtimeTest, TestInternalResizeDownUpChangeBitRate) {
+TEST_P(ResizeRealtimeTest, DISABLED_TestInternalResizeDownUpChangeBitRate) {
   ::libaom_test::I420VideoSource video("hantro_collage_w352h288.yuv", 352, 288,
                                        30, 1, 0, 359);
   DefaultConfig();
@@ -607,12 +546,6 @@ TEST_P(ResizeRealtimeTest, TestInternalResizeDownUpChangeBitRate) {
 #endif
 }
 
-aom_img_fmt_t CspForFrameNumber(int frame) {
-  if (frame < 10) return AOM_IMG_FMT_I420;
-  if (frame < 20) return AOM_IMG_FMT_I444;
-  return AOM_IMG_FMT_I420;
-}
-
 class ResizeCspTest : public ResizeTest {
  protected:
 #if WRITE_COMPRESSED_STREAM
@@ -639,20 +572,6 @@ class ResizeCspTest : public ResizeTest {
       outfile_ = NULL;
     }
 #endif
-  }
-
-  virtual void PreEncodeFrameHook(libaom_test::VideoSource *video,
-                                  libaom_test::Encoder *encoder) {
-    if (CspForFrameNumber(video->frame()) != AOM_IMG_FMT_I420 &&
-        cfg_.g_profile != 1) {
-      cfg_.g_profile = 1;
-      encoder->Config(&cfg_);
-    }
-    if (CspForFrameNumber(video->frame()) == AOM_IMG_FMT_I420 &&
-        cfg_.g_profile != 0) {
-      cfg_.g_profile = 0;
-      encoder->Config(&cfg_);
-    }
   }
 
   virtual void PSNRPktHook(const aom_codec_cx_pkt_t *pkt) {
@@ -682,33 +601,39 @@ class ResizeCspTest : public ResizeTest {
 
 class ResizingCspVideoSource : public ::libaom_test::DummyVideoSource {
  public:
-  ResizingCspVideoSource() {
+  explicit ResizingCspVideoSource(aom_img_fmt_t image_format) {
     SetSize(kInitialWidth, kInitialHeight);
+    SetImageFormat(image_format);
     limit_ = 30;
   }
 
   virtual ~ResizingCspVideoSource() {}
-
- protected:
-  virtual void Next() {
-    ++frame_;
-    SetImageFormat(CspForFrameNumber(frame_));
-    FillFrame();
-  }
 };
 
+#if (defined(DISABLE_TRELLISQ_SEARCH) && DISABLE_TRELLISQ_SEARCH)
+TEST_P(ResizeCspTest, DISABLED_TestResizeCspWorks) {
+#else
 TEST_P(ResizeCspTest, TestResizeCspWorks) {
-  ResizingCspVideoSource video;
-  init_flags_ = AOM_CODEC_USE_PSNR;
-  cfg_.rc_min_quantizer = cfg_.rc_max_quantizer = 48;
-  cfg_.g_lag_in_frames = 0;
-  ASSERT_NO_FATAL_FAILURE(RunLoop(&video));
+#endif
+  const aom_img_fmt_t image_formats[] = { AOM_IMG_FMT_I420, AOM_IMG_FMT_I444 };
+  for (size_t i = 0; i < GTEST_ARRAY_SIZE_(image_formats); ++i) {
+    ResizingCspVideoSource video(image_formats[i]);
+    init_flags_ = AOM_CODEC_USE_PSNR;
+    cfg_.rc_min_quantizer = cfg_.rc_max_quantizer = 48;
+    cfg_.g_lag_in_frames = 0;
+    cfg_.g_profile = (image_formats[i] == AOM_IMG_FMT_I420) ? 0 : 1;
+    ASSERT_NO_FATAL_FAILURE(RunLoop(&video));
+
+    // Check we decoded the same number of frames as we attempted to encode
+    ASSERT_EQ(frame_info_list_.size(), video.limit());
+    frame_info_list_.clear();
+  }
 }
 
 AV1_INSTANTIATE_TEST_CASE(ResizeTest,
                           ::testing::Values(::libaom_test::kRealTime));
-AV1_INSTANTIATE_TEST_CASE(ResizeInternalTest,
-                          ::testing::Values(::libaom_test::kOnePassBest));
+AV1_INSTANTIATE_TEST_CASE(ResizeInternalTestLarge,
+                          ::testing::Values(::libaom_test::kOnePassGood));
 AV1_INSTANTIATE_TEST_CASE(ResizeRealtimeTest,
                           ::testing::Values(::libaom_test::kRealTime),
                           ::testing::Range(5, 9));

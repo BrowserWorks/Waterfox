@@ -9,8 +9,8 @@
  * PATENTS file, you can obtain it at www.aomedia.org/license/patent.
  */
 
-#ifndef AV1_ENCODER_PICKLPF_H_
-#define AV1_ENCODER_PICKLPF_H_
+#ifndef AOM_AV1_ENCODER_PICKLPF_H_
+#define AOM_AV1_ENCODER_PICKLPF_H_
 
 #ifdef __cplusplus
 extern "C" {
@@ -21,12 +21,10 @@ extern "C" {
 struct yv12_buffer_config;
 struct AV1_COMP;
 int av1_get_max_filter_level(const AV1_COMP *cpi);
-int av1_search_filter_level(const YV12_BUFFER_CONFIG *sd, AV1_COMP *cpi,
-                            int partial_frame, double *err);
 void av1_pick_filter_level(const struct yv12_buffer_config *sd,
                            struct AV1_COMP *cpi, LPF_PICK_METHOD method);
 #ifdef __cplusplus
 }  // extern "C"
 #endif
 
-#endif  // AV1_ENCODER_PICKLPF_H_
+#endif  // AOM_AV1_ENCODER_PICKLPF_H_
