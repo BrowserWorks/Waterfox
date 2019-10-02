@@ -163,7 +163,7 @@ pref("app.update.staging.enabled", true);
 
 // Update service URL:
 // OLD: https://www.waterfox.net/update/%PRODUCT%/%VERSION%/%BUILD_ID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/%OS_VERSION%/%SYSTEM_CAPABILITIES%/%DISTRIBUTION%/%DISTRIBUTION_VERSION%/update.xml
-pref("app.update.url", "https://www.waterfox.net/update/%PRODUCT%/%VERSION%/%CHANNEL%/%OS%/update.xml");
+pref("app.update.url", "https://www.waterfox.net/update/%PRODUCT%/%DISPLAY_VERSION%/%CHANNEL%/%OS%/update.xml");
 // app.update.url.manual is in branding section
 // app.update.url.details is in branding section
 
