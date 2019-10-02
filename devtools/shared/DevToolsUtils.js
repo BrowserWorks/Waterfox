@@ -8,7 +8,7 @@
 
 /* General utilities used throughout devtools. */
 
-var { Ci, Cu, components } = require("chrome");
+var { Cc, Ci, Cu, components } = require("chrome");
 var Services = require("Services");
 var flags = require("./flags");
 var {
