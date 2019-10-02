@@ -139,7 +139,8 @@ queue.map(task => {
   }
 
   // Windows is slow.
-  if (task.platform == "windows2012-64" && task.tests == "chains") {
+  if ((task.platform == "windows2012-32" || task.platform == "windows2012-64") &&
+      task.tests == "chains") {
     task.maxRunTime = 7200;
   }
 
