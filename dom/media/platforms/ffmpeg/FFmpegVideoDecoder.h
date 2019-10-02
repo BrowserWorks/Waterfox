@@ -60,6 +60,9 @@ private:
                        DecodedData& aResults);
   MediaResult DoDecode(MediaRawData* aSample, uint8_t* aData, int aSize,
                        bool* aGotFrame, DecodedData& aResults);
+  MediaResult CreateImage(int64_t aOffset, int64_t aPts, int64_t aDuration,
+                          MediaDataDecoder::DecodedData& aResults);
+
   void OutputDelayedFrames();
 
   /**
