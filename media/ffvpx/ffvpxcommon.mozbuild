@@ -10,7 +10,6 @@ ASFLAGS += ['-I%s/media/ffvpx' % TOPSRCDIR]
 
 if CONFIG['FFVPX_ASFLAGS']:
     USE_YASM = True
-
     if CONFIG['OS_ARCH'] == 'WINNT':
        # Fix inline symbols and math defines for windows.
         DEFINES['_USE_MATH_DEFINES'] = True
@@ -22,7 +21,7 @@ if CONFIG['FFVPX_ASFLAGS']:
         else:
             ASFLAGS += ['-Pconfig_win64.asm']
     elif CONFIG['OS_ARCH'] == 'Darwin':
-        # 32/64-bit macosx assemblers need to prefix symbols with an underscore.
+        # 64-bit macosx assemblers need to prefix symbols with an underscore.
         ASFLAGS += [
             '-Pconfig_darwin64.asm',
             '-DPREFIX'
@@ -40,7 +39,6 @@ if CONFIG['FFVPX_ASFLAGS']:
             '-DHAVE_AVX2_INTERNAL=0',
             '-DHAVE_AVX2_EXTERNAL=0',
         ]
-
 
 LOCAL_INCLUDES += ['/media/ffvpx']
 
@@ -102,6 +100,7 @@ elif CONFIG['_MSC_VER']:
         '-we4013', '-wd4100', '-wd4214', '-wd4307', '-wd4273', '-wd4554',
     ]
     LOCAL_INCLUDES += ['/media/ffvpx/compat/atomics/win32']
+
 DEFINES['HAVE_AV_CONFIG_H'] = True
 
 if CONFIG['MOZ_DEBUG']:

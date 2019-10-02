@@ -16,20 +16,20 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-/**
- * @file
- * Null bitstream filter -- pass the input through unchanged.
- */
+#ifndef AVCODEC_MPEGVIDEODATA_H
+#define AVCODEC_MPEGVIDEODATA_H
 
-#include "avcodec.h"
-#include "bsf.h"
+#include <stdint.h>
 
-static int null_filter(AVBSFContext *ctx, AVPacket *pkt)
-{
-    return ff_bsf_get_packet_ref(ctx, pkt);
-}
+/* encoding scans */
+extern const uint8_t ff_alternate_horizontal_scan[64];
+extern const uint8_t ff_alternate_vertical_scan[64];
 
-const AVBitStreamFilter ff_null_bsf = {
-    .name           = "null",
-    .filter         = null_filter,
-};
+extern const uint8_t ff_mpeg1_dc_scale_table[128];
+extern const uint8_t * const ff_mpeg2_dc_scale_table[4];
+
+extern const uint8_t ff_mpeg2_non_linear_qscale[32];
+
+extern const uint8_t ff_default_chroma_qscale_table[32];
+
+#endif /* AVCODEC_MPEGVIDEODATA_H */

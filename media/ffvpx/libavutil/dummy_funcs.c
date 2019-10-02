@@ -5,22 +5,27 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "avutil.h"
+#include "hwcontext.h"
 
 // cpu_internal.c
 int ff_get_cpu_flags_aarch64(void) { return 0; }
+#if !defined(__arm__)
 int ff_get_cpu_flags_arm(void) { return 0; }
+#endif
 int ff_get_cpu_flags_ppc(void) { return 0; }
 
 // float_dsp.c
 #include "float_dsp.h"
 void ff_float_dsp_init_aarch64(AVFloatDSPContext *fdsp) {}
-void ff_float_dsp_init_arm(AVFloatDSPContext *fdsp) {}
 void ff_float_dsp_init_ppc(AVFloatDSPContext *fdsp, int strict) {}
 void ff_float_dsp_init_mips(AVFloatDSPContext *fdsp) {}
-
-int av_hwframe_get_buffer(struct AVBufferRef* hwframe_ref, struct AVFrame* frame, int flags) { return 0; }
+#if !defined(__arm__)
+void ff_float_dsp_init_arm(AVFloatDSPContext *fdsp) {}
+#endif
 
 // cpu.c
 size_t ff_get_cpu_max_align_aarch64() { return 0; }
-size_t ff_get_cpu_max_align_arm() { return 0; }
 size_t ff_get_cpu_max_align_ppc() { return 0; }
+#if !defined(__arm__)
+size_t ff_get_cpu_max_align_arm() { return 0; }
+#endif
