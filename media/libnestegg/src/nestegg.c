@@ -88,6 +88,7 @@
 #define ID_PIXEL_CROP_RIGHT         0x54dd
 #define ID_DISPLAY_WIDTH            0x54b0
 #define ID_DISPLAY_HEIGHT           0x54ba
+#define ID_COLOUR                   0x55b0
 
 /* Audio Elements */
 #define ID_AUDIO                    0xe1
@@ -115,6 +116,25 @@
 #define ID_CONTENT_ENC_KEY_ID       0x47e2
 #define ID_CONTENT_ENC_AES_SETTINGS 0x47e7
 #define ID_AES_SETTINGS_CIPHER_MODE 0x47e8
+
+/* Colour Elements */
+#define ID_MATRIX_COEFFICIENTS      0x55b1
+#define ID_RANGE                    0x55b9
+#define ID_TRANSFER_CHARACTERISTICS 0x55ba
+#define ID_PRIMARIES                0x55bb
+#define ID_MASTERING_METADATA       0x55d0
+
+/* MasteringMetadata Elements */
+#define ID_PRIMARY_R_CHROMATICITY_X   0x55d1
+#define ID_PRIMARY_R_CHROMATICITY_Y   0x55d2
+#define ID_PRIMARY_G_CHROMATICITY_X   0x55d3
+#define ID_PRIMARY_G_CHROMATICITY_Y   0x55d4
+#define ID_PRIMARY_B_CHROMATICITY_X   0x55d5
+#define ID_PRIMARY_B_CHROMATICITY_Y   0x55d6
+#define ID_WHITE_POINT_CHROMATICITY_X 0x55d7
+#define ID_WHITE_POINT_CHROMATICITY_Y 0x55d8
+#define ID_LUMINANCE_MAX              0x55d9
+#define ID_LUMINANCE_MIN              0x55da
 
 /* EBML Types */
 enum ebml_type_enum {
@@ -234,6 +254,27 @@ struct info {
   struct ebml_type duration;
 };
 
+struct mastering_metadata {
+  struct ebml_type primary_r_chromacity_x;
+  struct ebml_type primary_r_chromacity_y;
+  struct ebml_type primary_g_chromacity_x;
+  struct ebml_type primary_g_chromacity_y;
+  struct ebml_type primary_b_chromacity_x;
+  struct ebml_type primary_b_chromacity_y;
+  struct ebml_type white_point_chromaticity_x;
+  struct ebml_type white_point_chromaticity_y;
+  struct ebml_type luminance_max;
+  struct ebml_type luminance_min;
+};
+
+struct colour {
+  struct ebml_type matrix_coefficients;
+  struct ebml_type range;
+  struct ebml_type transfer_characteristics;
+  struct ebml_type primaries;
+  struct mastering_metadata mastering_metadata;
+};
+
 struct video {
   struct ebml_type stereo_mode;
   struct ebml_type alpha_mode;
@@ -245,6 +286,7 @@ struct video {
   struct ebml_type pixel_crop_right;
   struct ebml_type display_width;
   struct ebml_type display_height;
+  struct colour colour;
 };
 
 struct audio {
@@ -452,6 +494,29 @@ static struct ebml_element_desc ne_info_elements[] = {
   E_LAST
 };
 
+static struct ebml_element_desc ne_mastering_metadata_elements[] = {
+  E_FIELD(ID_PRIMARY_R_CHROMATICITY_X, TYPE_FLOAT, struct mastering_metadata, primary_r_chromacity_x),
+  E_FIELD(ID_PRIMARY_R_CHROMATICITY_Y, TYPE_FLOAT, struct mastering_metadata, primary_r_chromacity_y),
+  E_FIELD(ID_PRIMARY_G_CHROMATICITY_X, TYPE_FLOAT, struct mastering_metadata, primary_g_chromacity_x),
+  E_FIELD(ID_PRIMARY_G_CHROMATICITY_Y, TYPE_FLOAT, struct mastering_metadata, primary_g_chromacity_y),
+  E_FIELD(ID_PRIMARY_B_CHROMATICITY_X, TYPE_FLOAT, struct mastering_metadata, primary_b_chromacity_x),
+  E_FIELD(ID_PRIMARY_B_CHROMATICITY_Y, TYPE_FLOAT, struct mastering_metadata, primary_b_chromacity_y),
+  E_FIELD(ID_WHITE_POINT_CHROMATICITY_X, TYPE_FLOAT, struct mastering_metadata, white_point_chromaticity_x),
+  E_FIELD(ID_WHITE_POINT_CHROMATICITY_Y, TYPE_FLOAT, struct mastering_metadata, white_point_chromaticity_y),
+  E_FIELD(ID_LUMINANCE_MAX, TYPE_FLOAT, struct mastering_metadata, luminance_max),
+  E_FIELD(ID_LUMINANCE_MIN, TYPE_FLOAT, struct mastering_metadata, luminance_min),
+  E_LAST
+};
+
+static struct ebml_element_desc ne_colour_elements[] = {
+  E_FIELD(ID_MATRIX_COEFFICIENTS, TYPE_UINT, struct colour, matrix_coefficients),
+  E_FIELD(ID_RANGE, TYPE_UINT, struct colour, range),
+  E_FIELD(ID_TRANSFER_CHARACTERISTICS, TYPE_UINT, struct colour, transfer_characteristics),
+  E_FIELD(ID_PRIMARIES, TYPE_UINT, struct colour, primaries),
+  E_SINGLE_MASTER(ID_MASTERING_METADATA, TYPE_MASTER, struct colour, mastering_metadata),
+  E_LAST
+};
+
 static struct ebml_element_desc ne_video_elements[] = {
   E_FIELD(ID_STEREO_MODE, TYPE_UINT, struct video, stereo_mode),
   E_FIELD(ID_ALPHA_MODE, TYPE_UINT, struct video, alpha_mode),
@@ -463,6 +528,7 @@ static struct ebml_element_desc ne_video_elements[] = {
   E_FIELD(ID_PIXEL_CROP_RIGHT, TYPE_UINT, struct video, pixel_crop_right),
   E_FIELD(ID_DISPLAY_WIDTH, TYPE_UINT, struct video, display_width),
   E_FIELD(ID_DISPLAY_HEIGHT, TYPE_UINT, struct video, display_height),
+  E_SINGLE_MASTER(ID_COLOUR, TYPE_MASTER, struct video, colour),
   E_LAST
 };
 
@@ -768,7 +834,15 @@ ne_read_float(nestegg_io * io, double * val, uint64_t length)
 {
   union {
     uint64_t u;
-    float f;
+    struct {
+#if __FLOAT_WORD_ORDER__ == __ORDER_BIG_ENDIAN__
+      uint32_t _pad;
+      float f;
+#else
+      float f;
+      uint32_t _pad;
+#endif
+    } f;
     double d;
   } value;
   int r;
@@ -780,7 +854,7 @@ ne_read_float(nestegg_io * io, double * val, uint64_t length)
   if (r != 1)
     return r;
   if (length == 4)
-    *val = value.f;
+    *val = value.f.f;
   else
     *val = value.d;
   return 1;
@@ -1052,9 +1126,9 @@ ne_read_simple(nestegg * ctx, struct ebml_element_desc * desc, size_t length)
   storage = (struct ebml_type *) (ctx->ancestor->data + desc->offset);
 
   if (storage->read) {
-    ctx->log(ctx, NESTEGG_LOG_DEBUG, "element %llx (%s) already read, skipping",
-             desc->id, desc->name);
-    return 0;
+    ctx->log(ctx, NESTEGG_LOG_DEBUG, "element %llx (%s) already read, skipping %u",
+             desc->id, desc->name, length);
+    return ne_io_read_skip(ctx->io, length);
   }
 
   storage->type = desc->type;
@@ -1642,6 +1716,11 @@ ne_read_block(nestegg * ctx, uint64_t block_id, uint64_t block_size, nestegg_pac
     } else {
       encryption_size = 0;
     }
+    if (encryption_size > frame_sizes[i]) {
+      ne_free_frame(f);
+      nestegg_free_packet(pkt);
+      return -1;
+    }
     data_size = frame_sizes[i] - encryption_size;
     /* Encryption parsed */
     f->data = ne_alloc(data_size);
@@ -1955,17 +2034,18 @@ static int
 ne_buffer_read(void * buffer, size_t length, void * userdata)
 {
   struct io_buffer * iob = userdata;
-
-  int rv = 1;
   size_t available = iob->length - iob->offset;
 
-  if (available < length)
+  if (available == 0)
     return 0;
+
+  if (available < length)
+    return -1;
 
   memcpy(buffer, iob->buffer + iob->offset, length);
   iob->offset += length;
 
-  return rv;
+  return 1;
 }
 
 static int
@@ -2072,6 +2152,17 @@ ne_match_webm(nestegg_io io, int64_t max_offset)
   nestegg_destroy(ctx);
 
   return 1;
+}
+
+static void
+ne_free_block_additions(struct block_additional * block_additional)
+{
+  while (block_additional) {
+    struct block_additional * tmp = block_additional;
+    block_additional = block_additional->next;
+    free(tmp->data);
+    free(tmp);
+  }
 }
 
 int
@@ -2347,10 +2438,10 @@ nestegg_track_type(nestegg * ctx, unsigned int track)
   if (ne_get_uint(entry->type, &type) != 0)
     return -1;
 
-  if (type & TRACK_TYPE_VIDEO)
+  if (type == TRACK_TYPE_VIDEO)
     return NESTEGG_TRACK_VIDEO;
 
-  if (type & TRACK_TYPE_AUDIO)
+  if (type == TRACK_TYPE_AUDIO)
     return NESTEGG_TRACK_AUDIO;
 
   return NESTEGG_TRACK_UNKNOWN;
@@ -2509,6 +2600,7 @@ nestegg_track_video_params(nestegg * ctx, unsigned int track,
 {
   struct track_entry * entry;
   uint64_t value;
+  double fvalue;
 
   memset(params, 0, sizeof(*params));
 
@@ -2560,6 +2652,62 @@ nestegg_track_video_params(nestegg * ctx, unsigned int track,
   value = params->height;
   ne_get_uint(entry->video.display_height, &value);
   params->display_height = value;
+
+  value = 2;
+  ne_get_uint(entry->video.colour.matrix_coefficients, &value);
+  params->matrix_coefficients = value;
+
+  value = 0;
+  ne_get_uint(entry->video.colour.range, &value);
+  params->range = value;
+
+  value = 2;
+  ne_get_uint(entry->video.colour.transfer_characteristics, &value);
+  params->transfer_characteristics = value;
+
+  value = 2;
+  ne_get_uint(entry->video.colour.primaries, &value);
+  params->primaries = value;
+
+  fvalue = strtod("NaN", NULL);
+  ne_get_float(entry->video.colour.mastering_metadata.primary_r_chromacity_x, &fvalue);
+  params->primary_r_chromacity_x = fvalue;
+
+  fvalue = strtod("NaN", NULL);
+  ne_get_float(entry->video.colour.mastering_metadata.primary_r_chromacity_y, &fvalue);
+  params->primary_r_chromacity_y = fvalue;
+
+  fvalue = strtod("NaN", NULL);
+  ne_get_float(entry->video.colour.mastering_metadata.primary_g_chromacity_x, &fvalue);
+  params->primary_g_chromacity_x = fvalue;
+
+  fvalue = strtod("NaN", NULL);
+  ne_get_float(entry->video.colour.mastering_metadata.primary_g_chromacity_y, &fvalue);
+  params->primary_g_chromacity_y = fvalue;
+
+  fvalue = strtod("NaN", NULL);
+  ne_get_float(entry->video.colour.mastering_metadata.primary_b_chromacity_x, &fvalue);
+  params->primary_b_chromacity_x = fvalue;
+
+  fvalue = strtod("NaN", NULL);
+  ne_get_float(entry->video.colour.mastering_metadata.primary_b_chromacity_y, &fvalue);
+  params->primary_b_chromacity_y = fvalue;
+
+  fvalue = strtod("NaN", NULL);
+  ne_get_float(entry->video.colour.mastering_metadata.white_point_chromaticity_x, &fvalue);
+  params->white_point_chromaticity_x = fvalue;
+
+  fvalue = strtod("NaN", NULL);
+  ne_get_float(entry->video.colour.mastering_metadata.white_point_chromaticity_y, &fvalue);
+  params->white_point_chromaticity_y = fvalue;
+
+  fvalue = strtod("NaN", NULL);
+  ne_get_float(entry->video.colour.mastering_metadata.luminance_max, &fvalue);
+  params->luminance_max = fvalue;
+
+  fvalue = strtod("NaN", NULL);
+  ne_get_float(entry->video.colour.mastering_metadata.luminance_min, &fvalue);
+  params->luminance_min = fvalue;
 
   return 0;
 }
@@ -2789,7 +2937,7 @@ nestegg_read_packet(nestegg * ctx, nestegg_packet ** pkt)
       while (ne_io_tell(ctx->io) < block_group_end) {
         r = ne_read_element(ctx, &id, &size);
         if (r != 1) {
-          free(block_additional);
+          ne_free_block_additions(block_additional);
           if (*pkt) {
             nestegg_free_packet(*pkt);
             *pkt = NULL;
@@ -2799,9 +2947,14 @@ nestegg_read_packet(nestegg * ctx, nestegg_packet ** pkt)
 
         switch (id) {
         case ID_BLOCK: {
+          if (*pkt) {
+            ctx->log(ctx, NESTEGG_LOG_DEBUG,
+                     "read_packet: multiple Blocks in BlockGroup, dropping previously read Block");
+            nestegg_free_packet(*pkt);
+          }
           r = ne_read_block(ctx, id, size, pkt);
           if (r != 1) {
-            free(block_additional);
+            ne_free_block_additions(block_additional);
             if (*pkt) {
               nestegg_free_packet(*pkt);
               *pkt = NULL;
@@ -2815,7 +2968,7 @@ nestegg_read_packet(nestegg * ctx, nestegg_packet ** pkt)
         case ID_BLOCK_DURATION: {
           r = ne_read_uint(ctx->io, &block_duration, size);
           if (r != 1) {
-            free(block_additional);
+            ne_free_block_additions(block_additional);
             if (*pkt) {
               nestegg_free_packet(*pkt);
               *pkt = NULL;
@@ -2824,7 +2977,7 @@ nestegg_read_packet(nestegg * ctx, nestegg_packet ** pkt)
           }
           tc_scale = ne_get_timecode_scale(ctx);
           if (tc_scale == 0) {
-            free(block_additional);
+            ne_free_block_additions(block_additional);
             if (*pkt) {
               nestegg_free_packet(*pkt);
               *pkt = NULL;
@@ -2838,7 +2991,7 @@ nestegg_read_packet(nestegg * ctx, nestegg_packet ** pkt)
         case ID_DISCARD_PADDING: {
           r = ne_read_int(ctx->io, &discard_padding, size);
           if (r != 1) {
-            free(block_additional);
+            ne_free_block_additions(block_additional);
             if (*pkt) {
               nestegg_free_packet(*pkt);
               *pkt = NULL;
@@ -2851,7 +3004,7 @@ nestegg_read_packet(nestegg * ctx, nestegg_packet ** pkt)
         case ID_BLOCK_ADDITIONS: {
           /* There should only be one BlockAdditions; treat multiple as an error. */
           if (block_additional) {
-            free(block_additional);
+            ne_free_block_additions(block_additional);
             if (*pkt) {
               nestegg_free_packet(*pkt);
               *pkt = NULL;
@@ -2860,7 +3013,7 @@ nestegg_read_packet(nestegg * ctx, nestegg_packet ** pkt)
           }
           r = ne_read_block_additions(ctx, size, &block_additional);
           if (r != 1) {
-            free(block_additional);
+            ne_free_block_additions(block_additional);
             if (*pkt) {
               nestegg_free_packet(*pkt);
               *pkt = NULL;
@@ -2872,7 +3025,7 @@ nestegg_read_packet(nestegg * ctx, nestegg_packet ** pkt)
         case ID_REFERENCE_BLOCK: {
           r = ne_read_int(ctx->io, &reference_block, size);
           if (r != 1) {
-            free(block_additional);
+            ne_free_block_additions(block_additional);
             if (*pkt) {
               nestegg_free_packet(*pkt);
               *pkt = NULL;
@@ -2889,7 +3042,7 @@ nestegg_read_packet(nestegg * ctx, nestegg_packet ** pkt)
                      "read_packet: unknown element %llx in BlockGroup", id);
           r = ne_io_read_skip(ctx->io, size);
           if (r != 1) {
-            free(block_additional);
+            ne_free_block_additions(block_additional);
             if (*pkt) {
               nestegg_free_packet(*pkt);
               *pkt = NULL;
@@ -2913,7 +3066,7 @@ nestegg_read_packet(nestegg * ctx, nestegg_packet ** pkt)
              predictive frames and no keyframes */
           (*pkt)->keyframe = NESTEGG_PACKET_HAS_KEYFRAME_FALSE;
       } else {
-        free(block_additional);
+        ne_free_block_additions(block_additional);
       }
       break;
     }
@@ -2932,7 +3085,6 @@ void
 nestegg_free_packet(nestegg_packet * pkt)
 {
   struct frame * frame;
-  struct block_additional * block_additional;
 
   while (pkt->frame) {
     frame = pkt->frame;
@@ -2941,12 +3093,7 @@ nestegg_free_packet(nestegg_packet * pkt)
     ne_free_frame(frame);
   }
 
-  while (pkt->block_additional) {
-    block_additional = pkt->block_additional;
-    pkt->block_additional = block_additional->next;
-    free(block_additional->data);
-    free(block_additional);
-  }
+  ne_free_block_additions(pkt->block_additional);
 
   free(pkt);
 }
