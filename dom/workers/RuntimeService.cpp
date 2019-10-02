@@ -824,7 +824,7 @@ static bool PreserveWrapper(JSContext* cx, JS::HandleObject obj) {
 }
 
 JSObject* Wrap(JSContext* cx, JS::HandleObject existing, JS::HandleObject obj) {
-  JSObject* targetGlobal = JS::CurrentGlobalOrNull(cx);
+  JS::RootedObject targetGlobal(cx, JS::CurrentGlobalOrNull(cx));
   if (!IsWorkerDebuggerGlobal(targetGlobal) &&
       !IsWorkerDebuggerSandbox(targetGlobal)) {
     JS_ReportErrorASCII(
@@ -833,7 +833,7 @@ JSObject* Wrap(JSContext* cx, JS::HandleObject existing, JS::HandleObject obj) {
   }
 
   // Note: the JS engine unwraps CCWs before calling this callback.
-  JSObject* originGlobal = JS::GetNonCCWObjectGlobal(obj);
+  JS::RootedObject originGlobal(cx, JS::GetNonCCWObjectGlobal(obj));
 
   const js::Wrapper* wrapper = nullptr;
   if (IsWorkerDebuggerGlobal(originGlobal) ||
