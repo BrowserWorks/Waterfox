@@ -5,7 +5,7 @@
 /* import-globals-from ../../../../../toolkit/components/extensions/test/mochitest/head_webrequest.js */
 loadTestSubscript("head_webrequest.js");
 
-ChromeUtils.import("resource://testing-common/HiddenFrame.jsm", this);
+ChromeUtils.import("resource://gre/modules/HiddenFrame.jsm", this);
 const XUL_NS = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
 
 SimpleTest.requestCompleteLog();
@@ -17,6 +17,9 @@ function createHiddenBrowser(url) {
       let doc = subframe.document;
       let browser = doc.createElementNS(XUL_NS, "browser");
       browser.setAttribute("type", "content");
+      if (Services.appinfo.browserTabsRemoteAutostart) {
+        browser.setAttribute("remote", "true");
+      }
       browser.setAttribute("disableglobalhistory", "true");
       browser.setAttribute("src", url);
 

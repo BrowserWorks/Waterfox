@@ -17,6 +17,10 @@ add_task(async function() {
 });
 
 async function performTest() {
+  await SpecialPowers.pushPrefEnv({
+    set: [["security.allow_unsafe_parent_loads", true]],
+  });
+
   const [host, , doc] = await createHost(
     "bottom",
     "data:text/html," + "<h1>browser_outputParser.js</h1><div></div>"

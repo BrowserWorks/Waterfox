@@ -578,7 +578,9 @@ class MacroAssemblerX64 : public MacroAssemblerX86Shared {
   }
   void loadPrivate(const Address& src, Register dest) {
     loadPtr(src, dest);
+#if !defined(JS_UNALIGNED_PRIVATE_VALUES)
     shlq(Imm32(1), dest);
+#endif
   }
   void load32(AbsoluteAddress address, Register dest) {
     if (X86Encoding::IsAddressImmediate(address.addr)) {
@@ -757,7 +759,9 @@ class MacroAssemblerX64 : public MacroAssemblerX86Shared {
   }
   void unboxPrivate(const ValueOperand& src, const Register dest) {
     movq(src.valueReg(), dest);
+#if !defined(JS_UNALIGNED_PRIVATE_VALUES)
     shlq(Imm32(1), dest);
+#endif
   }
 
   void notBoolean(const ValueOperand& val) { xorq(Imm32(1), val.valueReg()); }

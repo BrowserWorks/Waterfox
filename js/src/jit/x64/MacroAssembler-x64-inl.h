@@ -566,6 +566,9 @@ void MacroAssembler::branchPtr(Condition cond, wasm::SymbolicAddress lhs,
 
 void MacroAssembler::branchPrivatePtr(Condition cond, const Address& lhs,
                                       Register rhs, Label* label) {
+#if defined(JS_UNALIGNED_PRIVATE_VALUES)
+  branchPtr(cond, lhs, rhs, label);
+#else
   ScratchRegisterScope scratch(*this);
   if (rhs != scratch) {
     movePtr(rhs, scratch);
@@ -573,6 +576,7 @@ void MacroAssembler::branchPrivatePtr(Condition cond, const Address& lhs,
   // Instead of unboxing lhs, box rhs and do direct comparison with lhs.
   rshiftPtr(Imm32(1), scratch);
   branchPtr(cond, lhs, scratch, label);
+#endif
 }
 
 void MacroAssembler::branchTruncateFloat32ToPtr(FloatRegister src,

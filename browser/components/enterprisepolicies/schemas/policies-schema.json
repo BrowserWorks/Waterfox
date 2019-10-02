@@ -292,9 +292,14 @@
         },
         "Locked": {
           "type": "boolean"
+        },
+        "Cryptomining": {
+          "type": "boolean"
+        },
+        "Fingerprinting": {
+          "type": "boolean"
         }
-      },
-      "required": ["Value"]
+      }
     },
 
     "Extensions": {
@@ -492,12 +497,20 @@
       "type": "boolean"
     },
 
+    "OfferToSaveLoginsDefault": {
+      "type": "boolean"
+    },
+
     "OverrideFirstRunPage": {
       "type": "URLorEmpty"
     },
 
     "OverridePostUpdatePage": {
       "type": "URLorEmpty"
+    },
+
+    "PasswordManagerEnabled": {
+      "type": "boolean"
     },
 
     "Permissions": {

@@ -151,7 +151,6 @@ class OutputStreamManager {
   nsTArray<UniquePtr<OutputStreamData>> mStreams;
   nsTArray<Pair<TrackID, MediaSegment::Type>> mLiveTracks;
   Canonical<PrincipalHandle> mPrincipalHandle;
-  nsCOMPtr<nsIPrincipal> mPrincipal;
   const CORSMode mCORSMode;
   TrackID mNextTrackID;
   bool mPlaying;

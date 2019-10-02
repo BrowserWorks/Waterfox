@@ -553,3 +553,15 @@ js_option('--enable-wasm-private-reftypes',
 
 set_config('WASM_PRIVATE_REFTYPES', depends_if('--enable-wasm-private-reftypes')(lambda x: True))
 set_define('WASM_PRIVATE_REFTYPES', depends_if('--enable-wasm-private-reftypes')(lambda x: True))
+
+# Support for unaligned private values.
+# This is the default in Firefox 70. It is backported to ESR68 under a compile
+# option for the use of embedders. It is not part of the standard Firefox build.
+# ==============================================================================
+
+js_option('--enable-unaligned-private-values',
+          default=False,
+          help='{Enable|disable} unaligned private pointers in JS values')
+
+set_define('JS_UNALIGNED_PRIVATE_VALUES',
+           depends_if('--enable-unaligned-private-values')(lambda x: True))

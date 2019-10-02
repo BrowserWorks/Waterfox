@@ -52,7 +52,6 @@ const char* const sExecutableExts[] = {
   ".ins",
   ".isp",
   ".jar",         // java application bundle
-  ".jnlp",
   ".js",
   ".jse",
   ".lnk",

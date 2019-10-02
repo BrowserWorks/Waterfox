@@ -52,7 +52,7 @@ define(function(require, exports, module) {
     render() {
       return input({
         className: "searchBox devtools-filterinput",
-        placeholder: JSONView.Locale.$STR("jsonViewer.filterJSON"),
+        placeholder: JSONView.Locale["jsonViewer.filterJSON"],
         onChange: this.onSearch,
       });
     }

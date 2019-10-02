@@ -25,11 +25,6 @@ public class LocalFirstRunPanelProvider implements FirstRunPanelConfigProviderSt
                             onboardingUtil.getWelcomeSubtext(),
                             R.drawable.firstrun_welcome2);
                 case PRIVACY:
-                case LAST_PRIVACY:
-                    return new PanelConfig(type, useLocalValues, resources.getString(R.string.firstrun_panel_title_privacy),
-                            FirstrunPanel.NO_MESSAGE,
-                            onboardingUtil.getPrivacySubtext(),
-                            R.drawable.firstrun_private2);
                 case CUSTOMIZE:
                 case LAST_CUSTOMIZE:
                     throw new IllegalArgumentException("Onboarding will not show the addons screen anymore");
@@ -38,6 +33,11 @@ public class LocalFirstRunPanelProvider implements FirstRunPanelConfigProviderSt
                             FirstrunPanel.NO_MESSAGE,
                             onboardingUtil.getSyncSubtext(),
                             onboardingUtil.getSyncImageResId());
+                case SEND_TAB:
+                    return new PanelConfig(type, useLocalValues, context.getString(R.string.firstrun_sendtab_title),
+                            FirstrunPanel.NO_MESSAGE,
+                            context.getString(R.string.firstrun_sendtab_message),
+                            R.drawable.firstrun_sendtab);
                 default:    // This will also be the case for "WELCOME"
                     return new PanelConfig(type, useLocalValues, resources.getString(R.string.firstrun_panel_title_welcome),
                             onboardingUtil.getWelcomeMessage(),

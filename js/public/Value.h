@@ -827,12 +827,18 @@ union alignas(8) Value {
    */
 
   void setPrivate(void* ptr) {
-    MOZ_ASSERT((uintptr_t(ptr) & 1) == 0);
 #if defined(JS_NUNBOX32)
     s_.tag_ = JSValueTag(0);
     s_.payload_.ptr_ = ptr;
 #elif defined(JS_PUNBOX64)
+# if defined(JS_UNALIGNED_PRIVATE_VALUES)
+    // ptr must be a valid user-mode pointer, with the top 16 bits clear.
+    MOZ_ASSERT((uintptr_t(ptr) & 0xFFFF000000000000ULL) == 0);
+    asBits_ = uintptr_t(ptr);
+# else
+    MOZ_ASSERT((uintptr_t(ptr) & 1) == 0);
     asBits_ = uintptr_t(ptr) >> 1;
+# endif
 #endif
     MOZ_ASSERT(isDouble());
   }
@@ -842,8 +848,13 @@ union alignas(8) Value {
 #if defined(JS_NUNBOX32)
     return s_.payload_.ptr_;
 #elif defined(JS_PUNBOX64)
-    MOZ_ASSERT((asBits_ & 0x8000000000000000ULL) == 0);
+# if defined(JS_UNALIGNED_PRIVATE_VALUES)
+    // This must be a valid user-mode pointer, with the top 16 bits clear.
+    MOZ_ASSERT((asBits_ & 0xFFFF000000000000ULL) == 0);
+    return reinterpret_cast<void*>(asBits_);
+# else
     return reinterpret_cast<void*>(asBits_ << 1);
+# endif
 #endif
   }
 

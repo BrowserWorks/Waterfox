@@ -90,6 +90,20 @@ const POLICIES_TESTS = [
     },
   },
 
+  {
+    policies: {
+      EnableTrackingProtection: {
+        Cryptomining: true,
+        Fingerprinting: true,
+        Locked: true,
+      },
+    },
+    lockedPrefs: {
+      "privacy.trackingprotection.cryptomining.enabled": true,
+      "privacy.trackingprotection.fingerprinting.enabled": true,
+    },
+  },
+
   // POLICY: OverrideFirstRunPage
   {
     policies: { OverrideFirstRunPage: "https://www.example.com/" },
@@ -440,6 +454,16 @@ const POLICIES_TESTS = [
     lockedPrefs: {
       "browser.newtabpage.activity-stream.feeds.snippets": false,
       "browser.newtabpage.activity-stream.feeds.section.topstories": false,
+    },
+  },
+
+  // POLICY: OfferToSaveLoginsDefault
+  {
+    policies: {
+      OfferToSaveLoginsDefault: false,
+    },
+    unlockedPrefs: {
+      "signon.rememberSignons": false,
     },
   },
 ];

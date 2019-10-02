@@ -67,7 +67,6 @@ public class OnboardingResources {
     private String[] privacySubtexts;
     private String[] syncTitles;
     private String[] syncSubtexts;
-    private String[] syncAccountButtons;
     private int[] syncImageResIds;
 
     private OnboardingResources(final Context context) {
@@ -118,10 +117,6 @@ public class OnboardingResources {
         return syncSubtexts[currentVersion.ordinal()];
     }
 
-    public String getSyncButtonText() {
-        return syncAccountButtons[currentVersion.ordinal()];
-    }
-
     public int getSyncImageResId() {
         return syncImageResIds[currentVersion.ordinal()];
     }
@@ -158,8 +153,7 @@ public class OnboardingResources {
         final String englishSyncSubtext = "Sync the things you save on mobile to Firefox for desktop, privately and securely.";
         final String englishSyncButton = "Turn on Sync";
         final boolean areSyncStringsLocalized =
-                !englishSyncSubtext.equals(syncSubtexts[newStringIndex]) &&
-                !englishSyncButton.equals(syncAccountButtons[newStringIndex]);
+                !englishSyncSubtext.equals(syncSubtexts[newStringIndex]);
 
         areStringsLocalized = areWelcomeStringsLocalized && arePrivacyStringsLocalized && areSyncStringsLocalized;
         if (!areStringsLocalized) {
@@ -175,8 +169,7 @@ public class OnboardingResources {
             final String englishSyncUpdatedSubtext = "Sign in to your account to get the most out of " + AppConstants.MOZ_APP_BASENAME;
             final String englishSyncUpdatedButton = "Sign in to " + AppConstants.MOZ_APP_BASENAME;
             final boolean areUpdatedSyncStringsLocalized =
-                    !englishSyncUpdatedSubtext.equals(syncSubtexts[updatedStringIndex]) &&
-                    !englishSyncUpdatedButton.equals(syncAccountButtons[updatedStringIndex]);
+                    !englishSyncUpdatedSubtext.equals(syncSubtexts[updatedStringIndex]);
 
             if (areUpdatedSyncStringsLocalized) {
                 currentVersion = Version.UPDATED;
@@ -208,25 +201,19 @@ public class OnboardingResources {
         syncTitles = new String[] {
                 context.getString(R.string.firstrun_sync_title),
                 context.getString(R.string.firstrun_sync_title),
-                context.getString(R.string.updatednewfirstrun_sync_title),
+                context.getString(R.string.firstrun_sync_title),
         };
 
         syncSubtexts = new String[] {
                 context.getString(R.string.firstrun_sync_subtext),
                 context.getString(R.string.newfirstrun_sync_subtext),
-                context.getString(R.string.updatednewfirstrun_sync_subtext),
-        };
-
-        syncAccountButtons = new String[] {
-                context.getString(R.string.firstrun_signin_button),
-                context.getString(R.string.newfirstrun_signin_button),
-                context.getString(R.string.updatednewfirstrun_signin_button),
+                context.getString(R.string.firstrun_sync_message),
         };
 
         syncImageResIds = new int[] {
                 R.drawable.firstrun_sync,
                 R.drawable.firstrun_sync2,
-                R.drawable.firstrun_account,
+                R.drawable.firstrun_sync2,
         };
     }
 }

@@ -1300,6 +1300,9 @@ bool CompilerConstraintInstance<T>::generateTypeConstraint(
   }
 
   AutoSweepObjectGroup sweep(property.object()->maybeGroup());
+  if (property.object()->maybeGroup()->unknownProperties(sweep)) {
+    return false;
+  }
   if (!data.constraintHolds(sweep, cx, property, expected)) {
     return false;
   }
@@ -1356,7 +1359,9 @@ HeapTypeSetKey TypeSet::ObjectKey::property(jsid id) {
   property.id_ = id;
   if (ObjectGroup* group = maybeGroup()) {
     AutoSweepObjectGroup sweep(group);
-    property.maybeTypes_ = group->maybeGetProperty(sweep, id);
+    if (!group->unknownProperties(sweep)) {
+      property.maybeTypes_ = group->maybeGetProperty(sweep, id);
+    }
   }
 
   return property;

@@ -10,6 +10,7 @@ import java.util.concurrent.CountDownLatch;
 import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.fxa.authenticator.AccountPickler;
 import org.mozilla.gecko.fxa.authenticator.AndroidFxAccount;
+import org.mozilla.gecko.fxa.login.State;
 import org.mozilla.gecko.fxa.sync.FxAccountSyncStatusHelper;
 import org.mozilla.gecko.sync.ThreadPool;
 import org.mozilla.gecko.sync.Utils;
@@ -34,6 +35,22 @@ public class FirefoxAccounts {
    */
   public static boolean firefoxAccountsExist(final Context context) {
     return getFirefoxAccounts(context).length > 0;
+  }
+
+  /**
+   * Returns true is a FirefoxAcount exists and is signed in, false otherwise. By signed in we expect
+   * that the user has no remaining needed action in order to complete the authentication flow (e.g. Needs to
+   * confirm e-mail, password, etc.)
+   * @param context Android context.
+   * @return true if the configured account is available and completely signed in, false otherwise.
+   */
+  public static boolean firefoxAccountExistsAndSignedIn(final Context context) {
+    if (!firefoxAccountsExist(context)) {
+      return false;
+    }
+
+    AndroidFxAccount fxAccount = AndroidFxAccount.fromContext(context);
+    return fxAccount != null &&  fxAccount.getState().getNeededAction() == State.Action.None;
   }
 
   /**
