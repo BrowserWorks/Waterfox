@@ -4,6 +4,7 @@
 if test `uname -s` = Darwin; then
 ac_add_options --enable-optimize="-O2 -march=core2 -mtune=core2 -w"
 ac_add_options --enable-macos-target=10.9
+ac_add_options --with-macos-sdk=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk
 mk_add_options AUTOCONF=/usr/local/Cellar/autoconf213/2.13/bin/autoconf213
 # Windows 10 Specific Options
 elif test `uname -s` = MINGW32_NT-6.2; then
@@ -18,7 +19,7 @@ export WIN_UCRT_REDIST_DIR="/c/Program Files (x86)/Windows Kits/10/Redist/ucrt/D
 elif test `uname -s` = Linux; then
 export CC=clang
 export CXX=clang++
-ac_add_options --enable-optimize="-O2 -msse3 -march=nocona -mtune=nocona -w"
+ac_add_options --enable-optimize="-O2 -march=nocona -mtune=nocona -w"
 ac_add_options --target=x86_64-pc-linux-gnu
 ac_add_options --enable-pulseaudio
 ac_add_options --enable-alsa
@@ -42,7 +43,6 @@ ac_add_options --disable-tests
 ac_add_options --disable-verify-mar
 
 ac_add_options --enable-application=browser
-ac_add_options --enable-ccache=sccache
 ac_add_options --enable-lto
 # Stick to the same channel as Dev Edition would be
 ac_add_options --enable-update-channel=aurora
