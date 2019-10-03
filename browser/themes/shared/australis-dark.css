@@ -74,7 +74,7 @@
 }
 
 /* Match height of new tab button (right svg) on hover */
-.tabs-newtab-button {
+#new-tab-button {
   margin: 0 !important;
 }
 
@@ -112,8 +112,8 @@
   margin-top: 0px !important;
 }
 
-#new-tab-button,
-.tabs-newtab-button {
+#tabs-newtab-button,
+#new-tab-button {
   width: calc(36px + 30px) !important;
   margin-inline-start: -15px !important;
   margin-top: 1px !important;
@@ -148,20 +148,21 @@
 }
 
 #TabsToolbar[brighttext] > #tabbrowser-tabs > .tabbrowser-tab:hover > .tab-stack > .tab-background:not([selected="true"]),
-.tabs-newtab-button:hover,
-.tabs-newtab-button:hover::before,
-.tabs-newtab-button:hover::after {
+#tabs-newtab-button:hover,
+#tabs-newtab-button:hover::before,
+#tabs-newtab-button:hover::after {
   background-color: transparent !important;
 }
 
 /* New tab hover customizations */
-.tabbrowser-tab:hover > .tab-stack > .tab-background:not([selected="true"]), .tabs-newtab-button:hover {
+.tabbrowser-tab:hover > .tab-stack > .tab-background:not([selected="true"]),
+#tabs-newtab-button:hover {
   background-position: 0px 2px, 30px 4px , 36px 2px !important;
   background-repeat: no-repeat !important;
   background-size: 30px 30px, calc(100% - (2 * 30px)) 30px, 30px !important;
 }
 
-.tabs-newtab-button:hover > .toolbarbutton-icon {
+#tabs-newtab-button:hover > .toolbarbutton-icon {
   background: none !important;
   background-color: transparent !important;
 }
@@ -245,6 +246,6 @@
   background-image: var(--background-hover-middle) !important;
 }
 
-.tabs-newtab-button:hover {
+#tabs-newtab-button:hover {
   background-image: var(--newtab-hover) !important;
 }

@@ -1470,18 +1470,6 @@ CustomizeMode.prototype = {
       // so the restore defaults / undo reset button is updated correctly.
       this._nextThemeChangeUserTriggered = true;
       panel.hidePopup();
-      let sss = Components.classes["@mozilla.org/content/style-sheet-service;1"]
-                          .getService(Components.interfaces.nsIStyleSheetService);
-      let ios = Components.classes["@mozilla.org/network/io-service;1"]
-                          .getService(Components.interfaces.nsIIOService);
-      let australisDark = ios.newURI("chrome://browser/skin/australis-dark.css", null, null);
-      if (Services.prefs.getCharPref("extensions.activeThemeID", "default-theme@mozilla.org") == "default-theme@mozilla.org") {
-        sss.unregisterSheet(australisDark, sss.USER_SHEET);
-      } else if (Services.prefs.getCharPref("extensions.activeThemeID", "default-theme@mozilla.org") == "firefox-compact-light@mozilla.org") {
-        sss.unregisterSheet(australisDark, sss.USER_SHEET);
-      } else if (Services.prefs.getCharPref("extensions.activeThemeID", "default-theme@mozilla.org") == "firefox-compact-dark@mozilla.org") {
-        sss.loadAndRegisterSheet(australisDark, sss.USER_SHEET);
-      }
     };
 
     let doc = this.window.document;

@@ -64,12 +64,6 @@ if (AppConstants.MOZ_ALLOW_LEGACY_EXTENSIONS || Cu.isInAutomation) {
 
 if (AppConstants.MOZ_DEV_EDITION) {
   makeConstant("DEFAULT_THEME_ID", "firefox-compact-dark@mozilla.org");
-  let sss = Components.classes["@mozilla.org/content/style-sheet-service;1"]
-                      .getService(Components.interfaces.nsIStyleSheetService);
-  let ios = Components.classes["@mozilla.org/network/io-service;1"]
-                      .getService(Components.interfaces.nsIIOService);
-  let australisDark = ios.newURI("chrome://browser/skin/australis-dark.css", null, null);
-  sss.loadAndRegisterSheet(australisDark, sss.USER_SHEET);
 } else {
   makeConstant("DEFAULT_THEME_ID", "default-theme@mozilla.org");
 }
