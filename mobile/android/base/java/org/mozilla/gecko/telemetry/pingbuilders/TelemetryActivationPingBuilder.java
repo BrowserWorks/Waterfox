@@ -38,7 +38,7 @@ public class TelemetryActivationPingBuilder extends TelemetryPingBuilder {
     private static final int VERSION_VALUE = 1;
 
     private static final String IDENTIFIER = "identifier";
-    private static final String CLIENT_ID = "clientId";
+    private static final String CLIENT_ID = "client_id";
     private static final String MANUFACTURER = "manufacturer";
     private static final String MODEL = "model";
     private static final String DISTRIBUTION_ID = "distribution_id";
