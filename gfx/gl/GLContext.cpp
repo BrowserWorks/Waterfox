@@ -3004,7 +3004,8 @@ GetBytesPerTexel(GLenum format, GLenum type)
         }
     } else if (type == LOCAL_GL_UNSIGNED_SHORT_4_4_4_4 ||
                type == LOCAL_GL_UNSIGNED_SHORT_5_5_5_1 ||
-               type == LOCAL_GL_UNSIGNED_SHORT_5_6_5)
+               type == LOCAL_GL_UNSIGNED_SHORT_5_6_5 ||
+               type == LOCAL_GL_UNSIGNED_SHORT)
     {
         return 2;
     }

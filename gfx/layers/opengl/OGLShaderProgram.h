@@ -212,10 +212,12 @@ public:
 class ShaderConfigOGL
 {
 public:
-  ShaderConfigOGL() :
-    mFeatures(0),
-    mCompositionOp(gfx::CompositionOp::OP_OVER)
-  {}
+  ShaderConfigOGL()
+    : mFeatures(0)
+    , mMultiplier(1)
+    , mCompositionOp(gfx::CompositionOp::OP_OVER)
+  {
+  }
 
   void SetRenderColor(bool aEnabled);
   void SetTextureTarget(GLenum aTarget);
@@ -232,15 +234,21 @@ public:
   void SetCompositionOp(gfx::CompositionOp aOp);
   void SetNoPremultipliedAlpha();
   void SetDynamicGeometry(bool aEnabled);
+  void SetColorMultiplier(uint32_t aMultiplier);
 
-  bool operator< (const ShaderConfigOGL& other) const {
+  bool operator< (const ShaderConfigOGL& other) const
+  {
     return mFeatures < other.mFeatures ||
            (mFeatures == other.mFeatures &&
-            (int)mCompositionOp < (int)other.mCompositionOp);
+            (int)mCompositionOp < (int)other.mCompositionOp) ||
+           (mFeatures == other.mFeatures &&
+            (int)mCompositionOp == (int)other.mCompositionOp &&
+            mMultiplier < other.mMultiplier);
   }
 
 public:
-  void SetFeature(int aBitmask, bool aState) {
+  void SetFeature(int aBitmask, bool aState)
+  {
     if (aState)
       mFeatures |= aBitmask;
     else
@@ -248,6 +256,7 @@ public:
   }
 
   int mFeatures;
+  uint32_t mMultiplier;
   gfx::CompositionOp mCompositionOp;
 };
 
