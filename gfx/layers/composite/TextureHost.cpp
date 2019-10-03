@@ -602,8 +602,8 @@ BufferTextureHost::AddWRImage(wr::WebRenderAPI* aAPI,
     MOZ_ASSERT(aImageKeys.length() == 3);
 
     const layers::YCbCrDescriptor& desc = mDescriptor.get_YCbCrDescriptor();
-    wr::ImageDescriptor yDescriptor(desc.ySize(), desc.ySize().width, gfx::SurfaceFormat::A8);
-    wr::ImageDescriptor cbcrDescriptor(desc.cbCrSize(), desc.cbCrSize().width, gfx::SurfaceFormat::A8);
+    wr::ImageDescriptor yDescriptor(desc.ySize(), desc.yStride(), gfx::SurfaceFormat::A8);
+    wr::ImageDescriptor cbcrDescriptor(desc.cbCrSize(), desc.cbCrStride(), gfx::SurfaceFormat::A8);;
     aAPI->AddExternalImage(aImageKeys[0],
                            yDescriptor,
                            aExtID,
