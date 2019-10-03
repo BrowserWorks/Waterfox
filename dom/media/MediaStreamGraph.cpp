@@ -2934,6 +2934,7 @@ void SourceMediaStream::EndAllTrackAndFinish() {
 
 void SourceMediaStream::RemoveAllDirectListenersImpl() {
   GraphImpl()->AssertOnGraphThreadOrNotRunning();
+  MutexAutoLock lock(mMutex);
 
   auto directListeners(mDirectTrackListeners);
   for (auto& l : directListeners) {
