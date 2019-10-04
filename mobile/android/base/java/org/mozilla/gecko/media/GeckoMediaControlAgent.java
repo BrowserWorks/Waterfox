@@ -495,6 +495,7 @@ public class GeckoMediaControlAgent {
                 paint);
 
         coverArt.compress(Bitmap.CompressFormat.PNG, 100, stream);
+        coverArt.recycle();
         return stream.toByteArray();
     }
 

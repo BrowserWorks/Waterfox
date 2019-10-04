@@ -181,6 +181,7 @@ public final class DynamicToolbarAnimator {
                     final int[] pixels = new int[bm.getByteCount() / 4];
                     bm.getPixels(pixels, /* offset */ 0, /* stride */ width,
                                  /* x */ 0, /* y */ 0, width, height);
+                    bm.recycle();
                     mCompositor.sendToolbarPixelsToCompositor(width, height, pixels);
                 } catch (final Throwable e) {
                     Log.e(LOGTAG, "Cannot get toolbar pixels", e);
