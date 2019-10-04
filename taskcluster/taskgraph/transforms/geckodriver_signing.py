@@ -87,6 +87,26 @@ def make_repackage_signing_description(config, jobs):
             'treeherder': treeherder,
         }
 
+        if build_platform.startswith('macosx'):
+            worker_type = task['worker-type']
+            worker_type_alias_map = {
+                'scriptworker-k8s/gecko-t-signing': 'mac-depsigning',
+                'scriptworker-k8s/gecko-3-signing': 'mac-signing',
+                'scriptworker-k8s/gecko-t-signing-dev': 'mac-depsigning',
+                'scriptworker-k8s/gecko-3-signing-dev': 'mac-signing',
+            }
+
+            assert worker_type in worker_type_alias_map, \
+                (
+                    "Make sure to adjust the below worker_type_alias logic for "
+                    "mac if you change the signing workerType aliases!"
+                    " ({} not found in mapping)".format(worker_type)
+                )
+            worker_type = worker_type_alias_map[worker_type]
+
+            task['worker-type'] = worker_type_alias_map[task['worker-type']]
+            task['worker']['mac-behavior'] = 'mac_geckodriver'
+
         yield task
 
 
