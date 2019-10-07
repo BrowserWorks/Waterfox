@@ -11,7 +11,6 @@ import org.mozilla.gecko.AppConstants;
 import org.mozilla.gecko.GeckoProfile;
 import org.mozilla.gecko.GeckoSharedPrefs;
 import org.mozilla.gecko.Locales;
-import org.mozilla.gecko.distribution.DistributionStoreCallback;
 import org.mozilla.gecko.telemetry.TelemetryOutgoingPing;
 import org.mozilla.gecko.util.DateUtil;
 import org.mozilla.gecko.util.StringUtils;
@@ -72,11 +71,6 @@ public class TelemetryActivationPingBuilder extends TelemetryPingBuilder {
         payload.put(CHANNEL, AppConstants.ANDROID_PACKAGE_NAME);
 
         SharedPreferences prefs = GeckoSharedPrefs.forApp(context);
-        final String distributionId = prefs.getString(DistributionStoreCallback.PREF_DISTRIBUTION_ID, null);
-        if (distributionId != null) {
-            payload.put(DISTRIBUTION_ID, distributionId);
-        }
-
         prefs.edit().putString(PREFS_ACTIVATION_ID, docID).apply();
     }
 
@@ -128,6 +122,11 @@ public class TelemetryActivationPingBuilder extends TelemetryPingBuilder {
             throw new IllegalArgumentException("Expected non-null clientID");
         }
         payload.put(CLIENT_ID, clientID);
+        return this;
+    }
+
+    public TelemetryActivationPingBuilder setOptDistributionID(@NonNull final String distributionID) {
+        payload.put(DISTRIBUTION_ID, distributionID);
         return this;
     }
 

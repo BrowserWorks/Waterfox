@@ -1,20 +1,20 @@
 package org.mozilla.gecko.telemetry;
 
 import android.content.Context;
-import android.os.Bundle;
+import android.content.SharedPreferences;
 import android.support.annotation.WorkerThread;
 import android.util.Log;
 
-import org.mozilla.gecko.AppConstants;
 import org.mozilla.gecko.BrowserApp;
 import org.mozilla.gecko.GeckoProfile;
+import org.mozilla.gecko.GeckoSharedPrefs;
 import org.mozilla.gecko.GeckoThread;
 import org.mozilla.gecko.delegates.BrowserAppDelegate;
+import org.mozilla.gecko.distribution.DistributionStoreCallback;
 import org.mozilla.gecko.telemetry.pingbuilders.TelemetryActivationPingBuilder;
 import org.mozilla.gecko.util.StringUtils;
 import org.mozilla.gecko.util.ThreadUtils;
 
-import java.io.IOException;
 import java.lang.reflect.Method;
 
 /**
@@ -42,10 +42,6 @@ public class TelemetryActivationPingDelegate extends BrowserAppDelegate {
     }
 
     private void uploadActivationPing(final BrowserApp activity) {
-        if (!AppConstants.MOZ_ANDROID_GCM) {
-            return;
-        }
-
         if (TelemetryActivationPingBuilder.activationPingAlreadySent(activity)) {
             return;
         }
@@ -66,7 +62,7 @@ public class TelemetryActivationPingDelegate extends BrowserAppDelegate {
                 final Class<?> clazz = Class.forName("org.mozilla.gecko.advertising.AdvertisingUtil");
                 final Method getAdvertisingId = clazz.getMethod("getAdvertisingId", Context.class);
                 identifier = (String) getAdvertisingId.invoke(null, activity);
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 Log.w(LOGTAG, "Unable to get identifier: " + e);
             }
 
@@ -74,13 +70,14 @@ public class TelemetryActivationPingDelegate extends BrowserAppDelegate {
             String clientID = null;
             try {
                 clientID = profile.getClientId();
-            } catch (final IOException e) {
+            } catch (final Exception e) {
                 Log.w(LOGTAG, "Unable to get client ID: " + e);
-                if (identifier == null) {
-                    //Activation ping is mandatory to be sent with either the identifier or the clientID.
-                    Log.d(LOGTAG, "Activation ping failed to send - both identifier and clientID were unable to be retrieved.");
-                    return;
-                }
+            }
+
+            if (identifier == null && clientID == null) {
+                //Activation ping is mandatory to be sent with either the identifier or the clientID.
+                Log.d(LOGTAG, "Activation ping failed to send - both identifier and clientID were unable to be retrieved.");
+                return;
             }
 
             final TelemetryActivationPingBuilder pingBuilder = new TelemetryActivationPingBuilder(activity);
@@ -88,6 +85,12 @@ public class TelemetryActivationPingDelegate extends BrowserAppDelegate {
                 pingBuilder.setIdentifier(identifier);
             } else {
                 pingBuilder.setClientID(clientID);
+            }
+
+            final SharedPreferences sharedPrefs = GeckoSharedPrefs.forProfileName(activity, profile.getName());
+            final String distributionId = sharedPrefs.getString(DistributionStoreCallback.PREF_DISTRIBUTION_ID, null);
+            if (distributionId != null) {
+                pingBuilder.setOptDistributionID(distributionId);
             }
 
             pingBuilder.setProfileCreationDate(TelemetryActivationPingBuilder.getProfileCreationDate(activity, profile));
