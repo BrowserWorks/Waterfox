@@ -49,7 +49,7 @@ const AVAILABLE_UA_OVERRIDES = [
       blocks: [...getMatchPatternsForGoogleURL("www.google", "serviceworker")],
       permanentPref: "enable_enhanced_search",
       telemetryKey: "enhancedSearch",
-      experiment: "enhanced-search",
+      experiment: ["enhanced-search", "enhanced-search-control"],
       uaTransformer: originalUA => {
         return UAHelpers.getDeviceAppropriateChromeUA();
       },
