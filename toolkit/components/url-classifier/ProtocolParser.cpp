@@ -135,7 +135,9 @@ ProtocolParserV2::AppendStream(const nsACString& aData)
     return mUpdateStatus;
 
   nsresult rv;
-  mPending.Append(aData);
+  if (!mPending.Append(aData, mozilla::fallible)) {
+    return NS_ERROR_OUT_OF_MEMORY;
+  }
 #ifdef MOZ_SAFEBROWSING_DUMP_FAILED_UPDATES
   mRawUpdate.Append(aData);
 #endif
@@ -756,7 +758,9 @@ nsresult
 ProtocolParserProtobuf::AppendStream(const nsACString& aData)
 {
   // Protobuf data cannot be parsed progressively. Just save the incoming data.
-  mPending.Append(aData);
+  if (!mPending.Append(aData, mozilla::fallible)) {
+    return NS_ERROR_OUT_OF_MEMORY;
+  }
   return NS_OK;
 }
 
