@@ -501,10 +501,10 @@ public:
   bool PrivacyRequested() const { return mPrivacyRequested; }
 
   NS_IMETHODIMP GetFingerprint(char** fingerprint);
-  void GetFingerprint(nsAString& fingerprint)
-  {
-    char *tmp;
-    GetFingerprint(&tmp);
+  void GetFingerprint(nsAString& fingerprint) {
+    char* tmp;
+    nsresult rv = GetFingerprint(&tmp);
+    NS_ENSURE_SUCCESS_VOID(rv);
     fingerprint.AssignASCII(tmp);
     delete[] tmp;
   }
