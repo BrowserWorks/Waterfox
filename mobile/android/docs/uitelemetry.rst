@@ -282,6 +282,32 @@ Methods
 ``widget``
   Action triggered from a widget placed on the homescreen.
 
+Buttons
+-------
+``preferences``
+  Button action triggered by the "Sign in" Settings menu item.
+
+``notification``
+  Button action triggered by signing in from a Leanplum notification.
+
+``firstrun-welcome``
+  Button action triggered by the Onboarding "WELCOME" panel's "Sign up" button.
+
+``firstrun-sync``
+  Button action triggered by the Onboarding "SYNC" panel's "Sign up" button.
+
+``firstrun-sendtab``
+  Button action triggered by the Onboarding "SEND TAB" panel's "Sign up" button.
+
+``awesomescreen-signin``
+  Button action triggered by the Awesomescreen's "Sign in" link.
+
+``awesomescreen-signup``
+  Button action triggered by the Awesomescreen's "Sign up" button.
+
+``awesomescreen-signup-dismiss``
+  Button action triggered by dismissing the Awesomescreen's "Welcome to Firefox" panel
+
 Sessions
 --------
 ``activitystream.1``
