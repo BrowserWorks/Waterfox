@@ -1201,6 +1201,8 @@ IDBDatabase::LastRelease()
 
   CloseInternal();
 
+  ExpireFileActors(/* aExpireAll */ true);
+
   if (mBackgroundActor) {
     mBackgroundActor->SendDeleteMeInternal();
     MOZ_ASSERT(!mBackgroundActor, "SendDeleteMeInternal should have cleared!");
