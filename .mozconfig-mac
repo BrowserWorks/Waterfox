@@ -1,0 +1,54 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+CROSS_CCTOOLS_PATH=$topsrcdir/../osxcross/target
+CROSS_SYSROOT=$CROSS_CCTOOLS_PATH/SDK/MacOSX10.11.sdk
+CROSS_PRIVATE_FRAMEWORKS=$CROSS_SYSROOT/System/Library/PrivateFrameworks
+FLAGS="-target x86_64-apple-darwin15 -B $CROSS_CCTOOLS_PATH/bin -isysroot $CROSS_SYSROOT"
+
+export BINDGEN_CFLAGS="$FLAGS"
+export CC="$CROSS_CCTOOLS_PATH/bin/o64-clang $FLAGS"
+export CPP="$CROSS_CCTOOLS_PATH/bin/o64-clang $FLAGS -E"
+export CXX="$CROSS_CCTOOLS_PATH/bin/o64-clang++ $FLAGS"
+export DMG_TOOL=/usr/local/bin/dmg
+export DSYMUTIL=$CROSS_CCTOOLS_PATH/bin/dsymutil
+export HFS_TOOL=hfsplus
+export HOST_CC="$CROSS_CCTOOLS_PATH/bin/o64-clang"
+export HOST_CFLAGS="-g"
+export HOST_CPP="$CROSS_CCTOOLS_PATH/bin/o64-clang -E"
+export HOST_CXX="$CROSS_CCTOOLS_PATH/bin/o64-clang++"
+export HOST_CXXFLAGS="-g"
+export HOST_LDFLAGS="-g"
+export LDFLAGS="-Wl,-syslibroot,$CROSS_SYSROOT -Wl,-dead_strip"
+export LLVMCONFIG=/usr/local/bin/llvm-config
+export MKFSHFS=mkfs.hfs
+export TOOLCHAIN_PREFIX=$CROSS_CCTOOLS_PATH/bin/x86_64-apple-darwin15-
+
+mk_add_options "export LD_LIBRARY_PATH=/usr/local/lib/"
+mk_add_options "export REAL_DSYMUTIL=$CROSS_CCTOOLS_PATH/bin/dsymutil"
+
+ac_add_options --disable-crashreporter
+ac_add_options --disable-js-shell
+ac_add_options --disable-maintenance-service
+ac_add_options --disable-profiling
+ac_add_options --disable-signmar
+ac_add_options --disable-stylo
+ac_add_options --disable-tests
+ac_add_options --disable-verify-mar
+
+ac_add_options --enable-av1
+ac_add_options --enable-optimize="-O2 -march=core2 -mtune=core2 -w"
+ac_add_options --enable-release
+ac_add_options --enable-update-channel=release
+ac_add_options --enable-updater
+
+ac_add_options --target=x86_64-apple-darwin
+ac_add_options --with-app-basename=Waterfox
+ac_add_options --with-app-name=waterfox
+ac_add_options --with-branding=browser/branding/unofficial
+ac_add_options --with-distribution-id=org.waterfoxproject
+ac_add_options --with-macos-private-frameworks=$CROSS_PRIVATE_FRAMEWORKS
+ac_add_options --with-macos-sdk=$CROSS_SYSROOT
+
+
