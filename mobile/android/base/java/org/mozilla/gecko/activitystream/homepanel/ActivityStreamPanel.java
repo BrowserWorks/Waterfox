@@ -13,7 +13,6 @@ import android.support.annotation.NonNull;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.Loader;
-import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.AttributeSet;
 import android.widget.FrameLayout;
@@ -74,7 +73,7 @@ public class ActivityStreamPanel extends FrameLayout {
 
         contentRecyclerView = findViewById(R.id.activity_stream_main_recyclerview);
         contentRecyclerView.setAdapter(adapter);
-        contentRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+        contentRecyclerView.setLayoutManager(new NpaLinearLayoutManager(getContext()));
         contentRecyclerView.setHasFixedSize(true);
         // Override item animations to avoid horrible topsites refreshing
         contentRecyclerView.setItemAnimator(new StreamItemAnimator());
