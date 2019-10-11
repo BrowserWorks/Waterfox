@@ -10,6 +10,7 @@ import android.content.res.Resources;
 import android.support.annotation.NonNull;
 
 import org.mozilla.gecko.R;
+import org.mozilla.gecko.fxa.FxAccountConstants;
 import org.mozilla.gecko.util.OnboardingResources;
 
 public class LocalFirstRunPanelProvider implements FirstRunPanelConfigProviderStrategy {
@@ -23,7 +24,8 @@ public class LocalFirstRunPanelProvider implements FirstRunPanelConfigProviderSt
                     return new PanelConfig(type, useLocalValues, resources.getString(R.string.firstrun_panel_title_welcome),
                             onboardingUtil.getWelcomeMessage(),
                             onboardingUtil.getWelcomeSubtext(),
-                            R.drawable.firstrun_welcome2);
+                            R.drawable.firstrun_welcome2,
+                            FxAccountConstants.ENDPOINT_FIRSTRUN + "-welcome");
                 case PRIVACY:
                 case CUSTOMIZE:
                 case LAST_CUSTOMIZE:
@@ -32,17 +34,20 @@ public class LocalFirstRunPanelProvider implements FirstRunPanelConfigProviderSt
                     return new PanelConfig(type, useLocalValues, onboardingUtil.getSyncTitle(),
                             FirstrunPanel.NO_MESSAGE,
                             onboardingUtil.getSyncSubtext(),
-                            onboardingUtil.getSyncImageResId());
+                            onboardingUtil.getSyncImageResId(),
+                            FxAccountConstants.ENDPOINT_FIRSTRUN + "-sync");
                 case SEND_TAB:
                     return new PanelConfig(type, useLocalValues, context.getString(R.string.firstrun_sendtab_title),
                             FirstrunPanel.NO_MESSAGE,
                             context.getString(R.string.firstrun_sendtab_message),
-                            R.drawable.firstrun_sendtab);
+                            R.drawable.firstrun_sendtab,
+                            FxAccountConstants.ENDPOINT_FIRSTRUN + "-sendtab");
                 default:    // This will also be the case for "WELCOME"
                     return new PanelConfig(type, useLocalValues, resources.getString(R.string.firstrun_panel_title_welcome),
                             onboardingUtil.getWelcomeMessage(),
                             onboardingUtil.getWelcomeSubtext(),
-                            R.drawable.firstrun_welcome2);
+                            R.drawable.firstrun_welcome2,
+                            FxAccountConstants.ENDPOINT_FIRSTRUN + "-welcome");
             }
 
         // Show the previous Onboarding experience. Same old screens, imagery and strings.
