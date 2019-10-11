@@ -103,6 +103,8 @@ var UpdateUtils = {
             return Services.appinfo.appBuildID;
           case "BUILD_TARGET":
             return Services.appinfo.OS + "_" + this.ABI;
+          case "DISPLAY_VERSION":
+            return AppConstants.MOZ_APP_VERSION_DISPLAY;
           case "OS":
             return Services.appinfo.OS;
           case "OS_VERSION":
