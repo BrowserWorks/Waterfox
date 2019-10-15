@@ -1480,7 +1480,7 @@ pref("ui.key.menuAccessKeyFocuses", true);
 #ifdef NIGHTLY_BUILD
 pref("media.eme.vp9-in-mp4.enabled", true);
 #else
-pref("media.eme.vp9-in-mp4.enabled", false);
+pref("media.eme.vp9-in-mp4.enabled", true);
 #endif
 
 pref("media.eme.hdcp-policy-check.enabled", false);
