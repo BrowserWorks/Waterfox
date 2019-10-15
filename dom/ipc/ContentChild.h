@@ -525,7 +525,8 @@ class ContentChild final : public PContentChild,
 
   POfflineCacheUpdateChild* AllocPOfflineCacheUpdateChild(
       const URIParams& manifestURI, const URIParams& documentURI,
-      const PrincipalInfo& aLoadingPrincipalInfo, const bool& stickDocument);
+      const PrincipalInfo& aLoadingPrincipalInfo, const bool& stickDocument,
+      const CookieSettingsArgs& aCookieSettingsArgs);
 
   bool DeallocPOfflineCacheUpdateChild(
       POfflineCacheUpdateChild* offlineCacheUpdate);
