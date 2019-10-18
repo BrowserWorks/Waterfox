@@ -81,6 +81,14 @@ let HomePage = {
     return getHomepagePref(true);
   },
 
+  /**
+   * @returns {string}
+   *   Returns the original application homepage URL (not from prefs).
+   */
+  getOriginalDefault() {
+    return kDefaultHomePage;
+  },
+
   get overridden() {
     return Services.prefs.prefHasUserValue(kPrefName);
   },

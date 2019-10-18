@@ -1141,12 +1141,13 @@ nsresult nsHostResolver::ResolveHost(const nsACString& aHost, uint16_t type,
         }
       }
     }
-  }
 
-  if (result) {
-    if (callback->isInList()) {
+    if (result && callback->isInList()) {
       callback->remove();
     }
+  }  // lock
+
+  if (result) {
     callback->OnResolveHostComplete(this, result, status);
   }
 

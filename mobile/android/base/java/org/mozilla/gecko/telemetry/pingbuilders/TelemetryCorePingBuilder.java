@@ -115,6 +115,8 @@ public class TelemetryCorePingBuilder extends TelemetryPingBuilder {
             payload.put(GeckoApp.PREFS_ENHANCED_SEARCH_USAGE, searchUsed);
             final boolean searchReady = prefs.getBoolean(GeckoApp.PREFS_ENHANCED_SEARCH_READY, false);
             payload.put(GeckoApp.PREFS_ENHANCED_SEARCH_READY, searchReady);
+            final String searchVersion = prefs.getString(GeckoApp.PREFS_ENHANCED_SEARCH_VERSION, "");
+            payload.put(GeckoApp.PREFS_ENHANCED_SEARCH_VERSION, searchVersion);
         }
     }
 

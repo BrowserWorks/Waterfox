@@ -4,11 +4,13 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Build;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+import android.support.annotation.WorkerThread;
 
 import org.mozilla.gecko.AppConstants;
+import org.mozilla.gecko.GeckoProfile;
 import org.mozilla.gecko.GeckoSharedPrefs;
 import org.mozilla.gecko.Locales;
-import org.mozilla.gecko.distribution.DistributionStoreCallback;
 import org.mozilla.gecko.telemetry.TelemetryOutgoingPing;
 import org.mozilla.gecko.util.DateUtil;
 import org.mozilla.gecko.util.StringUtils;
@@ -17,6 +19,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Locale;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Builds a {@link TelemetryOutgoingPing} representing a activation ping.
@@ -35,7 +38,7 @@ public class TelemetryActivationPingBuilder extends TelemetryPingBuilder {
     private static final int VERSION_VALUE = 1;
 
     private static final String IDENTIFIER = "identifier";
-    private static final String CLIENT_ID = "clientId";
+    private static final String CLIENT_ID = "client_id";
     private static final String MANUFACTURER = "manufacturer";
     private static final String MODEL = "model";
     private static final String DISTRIBUTION_ID = "distribution_id";
@@ -43,6 +46,7 @@ public class TelemetryActivationPingBuilder extends TelemetryPingBuilder {
     private static final String OS_ATTR = "os";
     private static final String OS_VERSION = "osversion";
     private static final String PING_CREATION_DATE = "created";
+    private static final String PROFILE_CREATION_DATE = "profile_date";
     private static final String TIMEZONE_OFFSET = "tz";
     private static final String APP_NAME = "app_name";
     private static final String CHANNEL = "channel";
@@ -67,11 +71,6 @@ public class TelemetryActivationPingBuilder extends TelemetryPingBuilder {
         payload.put(CHANNEL, AppConstants.ANDROID_PACKAGE_NAME);
 
         SharedPreferences prefs = GeckoSharedPrefs.forApp(context);
-        final String distributionId = prefs.getString(DistributionStoreCallback.PREF_DISTRIBUTION_ID, null);
-        if (distributionId != null) {
-            payload.put(DISTRIBUTION_ID, distributionId);
-        }
-
         prefs.edit().putString(PREFS_ACTIVATION_ID, docID).apply();
     }
 
@@ -124,5 +123,34 @@ public class TelemetryActivationPingBuilder extends TelemetryPingBuilder {
         }
         payload.put(CLIENT_ID, clientID);
         return this;
+    }
+
+    public TelemetryActivationPingBuilder setOptDistributionID(@NonNull final String distributionID) {
+        payload.put(DISTRIBUTION_ID, distributionID);
+        return this;
+    }
+
+    /**
+     * @param date The profile creation date in days to the unix epoch (not millis!), or null if there is an error.
+     */
+    public TelemetryActivationPingBuilder setProfileCreationDate(@Nullable final Long date) {
+        if (date != null && date < 0) {
+            throw new IllegalArgumentException("Expect positive date value. Received: " + date);
+        }
+        payload.put(PROFILE_CREATION_DATE, date);
+        return this;
+    }
+
+    /**
+     * @return the profile creation date in the format expected by
+     *         {@link TelemetryActivationPingBuilder#setProfileCreationDate(Long)}.
+     */
+    @WorkerThread
+    public static Long getProfileCreationDate(final Context context, final GeckoProfile profile) {
+        final long profileMillis = profile.getAndPersistProfileCreationDate(context);
+        if (profileMillis < 0) {
+            return null;
+        }
+        return (long) Math.floor((double) profileMillis / TimeUnit.DAYS.toMillis(1));
     }
 }

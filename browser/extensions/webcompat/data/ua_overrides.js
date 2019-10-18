@@ -49,7 +49,7 @@ const AVAILABLE_UA_OVERRIDES = [
       blocks: [...getMatchPatternsForGoogleURL("www.google", "serviceworker")],
       permanentPref: "enable_enhanced_search",
       telemetryKey: "enhancedSearch",
-      experiment: "enhanced-search",
+      experiment: ["enhanced-search", "enhanced-search-control"],
       uaTransformer: originalUA => {
         return UAHelpers.getDeviceAppropriateChromeUA();
       },
@@ -141,6 +141,28 @@ const AVAILABLE_UA_OVERRIDES = [
         return (
           UAHelpers.getPrefix(originalUA) +
           " AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36"
+        );
+      },
+    },
+  },
+  {
+    /*
+     * Bug 1582582 - sling.com - UA override for sling.com
+     * WebCompat issue #17804 - https://webcompat.com/issues/17804
+     *
+     * sling.com blocks Firefox users showing unsupported browser message.
+     * When spoofing as Chrome playing content works fine
+     */
+    id: "bug1582582",
+    platform: "desktop",
+    domain: "sling.com",
+    bug: "1582582",
+    config: {
+      matches: ["https://watch.sling.com/*", "https://www.sling.com/*"],
+      uaTransformer: originalUA => {
+        return (
+          UAHelpers.getPrefix(originalUA) +
+          " AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.132 Safari/537.36"
         );
       },
     },

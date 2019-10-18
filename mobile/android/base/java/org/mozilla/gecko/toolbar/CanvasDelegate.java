@@ -54,6 +54,7 @@ class CanvasDelegate {
 
         offscreen.prepareToDraw();
         canvas.drawBitmap(offscreen, 0, 0, null);
+        offscreen.recycle();
     }
 
     void setShader(Shader shader) {

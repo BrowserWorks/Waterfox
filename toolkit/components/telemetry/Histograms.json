@@ -8525,8 +8525,8 @@
   "PRINT_PREVIEW_OPENED_COUNT": {
     "record_in_processes": ["main", "content"],
     "alert_emails": ["carnold@mozilla.org"],
-    "bug_numbers": [1275570],
-    "expires_in_version": "60",
+    "bug_numbers": [1275570, 1568968],
+    "expires_in_version": "never",
     "kind": "count",
     "releaseChannelCollection": "opt-out",
     "description": "A counter incremented every time the browser enters print preview."
@@ -8534,8 +8534,8 @@
   "PRINT_PREVIEW_SIMPLIFY_PAGE_OPENED_COUNT": {
     "record_in_processes": ["main", "content"],
     "alert_emails": ["carnold@mozilla.org"],
-    "bug_numbers": [1275570],
-    "expires_in_version": "60",
+    "bug_numbers": [1275570, 1568968],
+    "expires_in_version": "never",
     "kind": "count",
     "releaseChannelCollection": "opt-out",
     "description": "A counter incremented every time the browser enters simplified mode on print preview."
@@ -8543,8 +8543,8 @@
   "PRINT_PREVIEW_SIMPLIFY_PAGE_UNAVAILABLE_COUNT": {
     "record_in_processes": ["main", "content"],
      "alert_emails": ["carnold@mozilla.org"],
-     "bug_numbers": [1287587],
-     "expires_in_version": "60",
+     "bug_numbers": [1287587, 1568968],
+     "expires_in_version": "never",
      "kind": "count",
      "releaseChannelCollection": "opt-out",
      "description": "A counter incremented every time the simplified mode is unavailable on print preview."
@@ -8552,8 +8552,8 @@
   "PRINT_DIALOG_OPENED_COUNT": {
     "record_in_processes": ["main", "content"],
     "alert_emails": ["carnold@mozilla.org"],
-    "bug_numbers": [1306624],
-    "expires_in_version": "60",
+    "bug_numbers": [1306624, 1568968],
+    "expires_in_version": "never",
     "kind": "count",
     "keyed": true,
     "releaseChannelCollection": "opt-out",
@@ -8562,8 +8562,8 @@
   "PRINT_COUNT": {
     "record_in_processes": ["main", "content"],
      "alert_emails": ["carnold@mozilla.org"],
-     "bug_numbers": [1287587],
-     "expires_in_version": "60",
+     "bug_numbers": [1287587, 1568968],
+     "expires_in_version": "never",
      "kind": "count",
      "keyed": true,
      "releaseChannelCollection": "opt-out",

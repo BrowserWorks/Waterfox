@@ -19,6 +19,7 @@ public class PanelConfig {
     private final String message;
     private final String text;
     private final int image;
+    private String entrypoint;
 
     public PanelConfig(TYPE type, boolean useLocalValues, String title, String message, String text, int image) {
         this.type = type;
@@ -27,6 +28,16 @@ public class PanelConfig {
         this.message = message;
         this.text = text;
         this.image = image;
+    }
+
+    public PanelConfig(TYPE type, boolean useLocalValues, String title, String message, String text, int image, String entrypoint) {
+        this.type = type;
+        this.useLocalValues = useLocalValues;
+        this.title = title;
+        this.message = message;
+        this.text = text;
+        this.image = image;
+        this.entrypoint = entrypoint;
     }
 
     public String getClassName() {
@@ -68,5 +79,9 @@ public class PanelConfig {
 
     public int getImage() {
         return image;
+    }
+
+    public String getEntrypoint() {
+        return entrypoint;
     }
 }

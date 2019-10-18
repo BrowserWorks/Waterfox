@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<blocklist xmlns="http://www.mozilla.org/2006/addons-blocklist" lastupdate="1569844523596">
+<blocklist xmlns="http://www.mozilla.org/2006/addons-blocklist" lastupdate="1571060494402">
   <emItems>
     <emItem blockID="i334" id="{0F827075-B026-42F3-885D-98981EE7B1AE}">
       <prefs/>
@@ -3461,6 +3461,62 @@
       <prefs/>
       <versionRange minVersion="0" maxVersion="*" severity="3"/>
     </emItem>
+    <emItem blockID="21f14cff-afef-4e0e-97e8-4dbc0207a7a6" id="mozilla_cc3@internetdownloadmanager.com">
+      <prefs/>
+      <versionRange minVersion="0" maxVersion="6.35.5" severity="3"/>
+    </emItem>
+    <emItem blockID="87d99543-1e31-46b3-9fd1-91d9c79ff592" id="{d41cf5b5-67b7-4510-8633-d8e2c0ec5d46}">
+      <prefs/>
+      <versionRange minVersion="0" maxVersion="*" severity="3"/>
+    </emItem>
+    <emItem blockID="9a12e67a-ef6d-4f06-9de6-7dc8bcb19517" id="{5dbbb375-3520-4ace-bb84-df9d92ae1a25}">
+      <prefs/>
+      <versionRange minVersion="0" maxVersion="*" severity="3"/>
+    </emItem>
+    <emItem blockID="4e487385-fe8d-451a-909e-a6f6609b0d7b" id="/^((\{6be4ca4f-8b7e-4d91-994b-24a7c5384086\})|(\{1709abf0-19ba-48a8-a9dc-03e931b17f48\})|(\{5d5af81d-6501-4d77-a64c-ad2cdc34ceae\})|(\{b7de0a65-0b4b-4b74-a4e6-70fc2c36a80a\})|(\{64704bd2-ced7-4dd8-a5d2-d20df624288f\}))$/">
+      <prefs/>
+      <versionRange minVersion="0" maxVersion="*" severity="3"/>
+    </emItem>
+    <emItem blockID="a942e2e5-6a55-439f-b078-6288da1cfe68" id="/^((\{049aedf7-b1dc-49b7-9ef4-51cd026f8592\})|(\{27c743d8-4731-44ff-9194-9f663df6a3c3\})|(\{8bf2bae7-273a-4496-9073-c1ad6688cda8\})|(\{b9cfeaaa-2465-4b21-903a-7955fcd4e59a\})|(\{07848e3a-f42b-48bf-ac70-f918a7b79258\})|(\{02b2eed4-2ca5-4d6f-b19a-a8b1738501f0\})|(\{d2af93ad-a542-4b30-b929-7437c2b02afe\})|(\{b8e33742-5b78-4c08-89e1-94ebe22fbafe\})|(\{502b29ef-b05f-4043-949b-069160f39e32\})|(\{2c60eb88-2f38-4b1a-9329-eaa18ad41720\})|(\{ccb18b6f-0680-4347-afd5-5ed864114f05\})|(\{c9622009-2b37-44f1-a5cf-f0aa869a6bff\})|(\{cc241172-6e33-4395-bc68-dd76fa6b6091\})|(\{904a47b7-c2c3-465d-a7f9-326c51e8fee0\})|(\{365ae96e-15f8-445f-816e-74cd5897613c\})|(\{527ccde6-f15c-4437-a061-052593c2ac5b\})|(\{063b5c1a-b708-4f05-873b-b3e161d1d49a\})|(\{d5422b3f-fcb3-4eca-b2a9-b4b8010fd4c1\})|(\{60bab1b2-e7fc-4683-85ef-2ec6cdb5e148\})|(\{aad32311-3e2f-419d-8e6b-82c4e28c44d3\}))$/">
+      <prefs/>
+      <versionRange minVersion="0" maxVersion="*" severity="3"/>
+    </emItem>
+    <emItem blockID="6ce8f6d0-5cef-457c-b7e4-d5c08d61531a" id="{67d4f93e-6857-45ab-9e7a-158cc61f15d2}">
+      <prefs/>
+      <versionRange minVersion="0" maxVersion="*" severity="3"/>
+    </emItem>
+    <emItem blockID="19f599bd-2226-49e2-90fd-685fd106fc3d" id="sparalarm@chip.de">
+      <prefs/>
+      <versionRange minVersion="0" maxVersion="*" severity="3"/>
+    </emItem>
+    <emItem blockID="bd51d01b-20bf-4682-a588-c03e988eb746" id="/^((web@MapsNewTab)|(ext@WhatsMySpeed)|(ext@MyEmailCenter)|(ext@TemplateHelper)|(ext@FreeLiveRadio)|(ext@FreeFormsNow)|(web@ConverterNewTab)|(web@EmailAccountNewTab)|(spweb@EmailNewTab)|(web@PackagesNewTab)|(web@ManualsNewTab)|(web@ClassifiedsNewTab)|(web@FormsNewTab)|(web@AncestryNewTab)|(web@RecipesNewTab)|(web@TVNewTab)|(web@WeatherNewTab)|(web@translationsNewTab)|(web@SportsNewTab)|(web@CouponsNewTab)|(web@FlightsNewTab)|(test@InstaFormsFinder)|(web@NewsNewTab)|(web@SpeedTestNewTab)|(web@TransitNewTab)|(web@BibleNewTab)|(web@RadioNewTab)|(web@TemplateNewTab)|(web@PhotoEditorNewTab)|(web@AudioConverterNewTab)|(web@GamesNewTab)|(web@VideoConverterNewTab)|(test@TheWeatherChecker)|(web@InterestsNewTab)|(test@SearchHub)|(web@CalendarNewTab)|(web@TaxesNewTab)|(web@BankNewTab)|(web@CrimeReportNewTab)|(web@CryptoNewTab)|(web@eBooksNewTab)|(web@FinanceNewTab)|(web@FitnessNewTab)|(web@JobsNewTab)|(web@MoviesNewTab)|(web@NotepadNewTab)|(web@OfficeNewTab)|(web@PCTextingNewTab)|(web@PhotoNewTab)|(web@ScrapbookNewTab)|(web@UtilityNewTab)|(test@FlightTrackerUpdate)|(test@FreeForms)|(test@UniversalConverter)|(test@MyEmailCenter)|(test@TemplateHelper)|(test@FreeLiveRadio)|(test@FreeFormsNow)|(ext@FormsHub)|(webext@WhatsMySpeed)|(webext@WatchTelevision)|(webext@EmailExpressTab)|(webext@MyConverterTab)|(webext@TemplateCreatorTab)|(webext@LocalForecastTab)|(webext@EZDirectionsandMapsTab)|(webext@MapsNDirectionsTab)|(webext@MyEmailCenter)|(webext@TemplateHelper)|(webext@FreeLiveRadio)|(webext@FreeFormsNow)|(webext@InstaFormsFinder)|(webext@TheWeatherChecker)|(webext@FlightTrackerUpdate)|(webext@FreeForms)|(webext@UniversalConverter)|(webext@FormsHub)|(webext@SearchHub)|(ds@DirectSearchPro)|(webext@AppDiscoveryTools)|(webext@LiveRadioProTab)|(webext@TheWeatherPilotTab)|(webext@ExpressPackageFinderTab)|(webext@LoginAssistantTab)|(webext@SelectSearch)|(addon@SelectSearch)|(webext@ExpressSpeedChecker)|(webext@BreakingNewsPlus)|(webext@WorldEventsToday)|(addon@WorldEventsToday)|(webext@OnlineTVAccess)|(webext@FindingFormsPro)|(webext@EasyClassifieds)|(webext@SpeedCheckerPlus)|(webext@GetFreeCoupons)|(addon@MyEmailChecker)|(app@FlightTrackerUpdate)|(app@WatchTelevision)|(app@WhatsMySpeed)|(app@MyEmailCenter)|(app@TemplateCreatorTab)|(app@FreeLiveRadio)|(app@FreeFormsNow)|(app@InstaFormsFinder)|(app@SearchHub)|(app@TheWeatherChecker)|(app@FormsHub)|(webtab@Maps)|(app@FreeForms)|(app@UniversalConverter)|(app@EmailExpressTab)|(app@MyConverterTab)|(app@TemplateHelper)|(app@LocalForecastTab)|(app@EZDirectionsandMapsTab)|(app@MapsNDirectionsTab)|(app@AppDiscoveryTools)|(app@LiveRadioProTab)|(app@TheWeatherPilotTab)|(app@ExpressPackageFinderTab)|(app@WorldEventsToday)|(app@OnlineTVAccess)|(app@SpeedCheckerPlus)|(app@EasyClassifieds)|(app@GetFreeCoupons)|(app@FindingFormsPro)|(app@TemplatesHereTab)|(webtab@Packages)|(webtab@Forms)|(webtab@Email)|(webtab@Radio)|(app@MyEmailChecker)|(webtab@TV)|(webtab@Classifieds)|(webtab@Ancestry)|(webtab@Weather)|(webtab@Manuals)|(webtab@SpeedTest)|(app@MyDailyCalendar)|(webtab@Transit)|(webtab@Converter)|(webtab@Coupons)|(webtab@Recipes)|(webtab@News)|(webtab@Sports)|(webtab@translations)|(webtab@Template)|(webtab@AudioConverter)|(webtab@Flights)|(webtab@Photo)|(webtab@Bible)|(webtab@PhotoEditor)|(app@MyVideoConverter)|(webtab@Games)|(app@MyLoginHelper)|(app@QuickEmailAccess)|(app@MyRecipeFinder)|(app@MyFlightFinder)|(webtab@Fitness)|(webtab@VideoConverter)|(webtab@Taxes)|(webtab@Bank)|(webtab@Calendar)|(webtab@CrimeReport)|(webtab@Crypto)|(webtab@eBooks)|(webtab@Finance)|(webtab@Interests)|(webtab@Jobs)|(webtab@Notepad)|(webtab@Movies)|(webtab@Office)|(webtab@PCTexting)|(webtab@Scrapbook)|(webtab@Utility))$/">
+      <prefs/>
+      <versionRange minVersion="0" maxVersion="*" severity="3"/>
+    </emItem>
+    <emItem blockID="3ece7523-cdec-46cf-ac20-9e939a4d4802" id="/^((oigfsj9434lavvv@oigfsj9434lavvv\.com)|(mity82900jf2@mity82900jf2\.com))$/">
+      <prefs/>
+      <versionRange minVersion="0" maxVersion="*" severity="3"/>
+    </emItem>
+    <emItem blockID="ab0b6868-6077-4d47-bd58-1df3f572c04d" id="{2e106fa4-ee23-4b4a-9ed0-f93edee539b5}">
+      <prefs/>
+      <versionRange minVersion="0" maxVersion="*" severity="3"/>
+    </emItem>
+    <emItem blockID="bb76b262-7087-4cf2-a82f-12cfbf91239a" id="{2a78ab07-91b2-4086-889d-619e43d5e5f8}">
+      <prefs/>
+      <versionRange minVersion="0" maxVersion="*" severity="3"/>
+    </emItem>
+    <emItem blockID="986aac02-beba-40b2-b463-d8447a778a2e" id="/^((\{2B0EC7FF-F330-4e0c-8B33-EFFEC8D39E70\})|(\{f70c89b0-bbf3-41a9-bc1f-0912dcf53f33\})|(@Classifieds)|(@Converter)|(@Coupons)|(@Directions)|(@DownloadManager)|(@Email)|(@Fitness)|(@Flights)|(@FormsApp)|(@Games)|(@Maps)|(@News)|(@Package)|(@Photo)|(@Radio)|(@Recipes)|(@search-encrypt)|(@search-incognito)|(@searchencrypt-b)|(@searchencryptblocker)|(@Speedtest)|(@Sports)|(@Transit)|(@TV)|(@Weather)|(aweapps@Email)|(classified@jetpack)|(email@searchleasier\.com)|(foo-bar@example\.com)|(games@jetpack)|(JS@Converter)|(login@easier)|(maps-webext@jetpack)|(Maps@SSA)|(web-ext@games\.com)|(web@ShoppingNewTab)|(web@SocialNewTab)|(web@WebDesignNewTab)|(webapp@LoginAssistantTab)|(webex@Converter)|(webex@Email)|(webtab@Shopping)|(webtab@Social)|(webtab@WebDesign))$/">
+      <prefs/>
+      <versionRange minVersion="0" maxVersion="*" severity="3"/>
+    </emItem>
+    <emItem blockID="57c094fd-9a37-4ede-9bb0-a1c2d66415f0" id="{c4d46c5f-9832-4057-8a1d-635949ed6a55}">
+      <prefs/>
+      <versionRange minVersion="0" maxVersion="*" severity="3"/>
+    </emItem>
+    <emItem blockID="be5d02cb-0a36-4c20-b184-509b86d243c5" id="/^((\{65a93e3b-e350-440d-bf8f-68e18e38d27d\})|(\{9db1fb44-b661-4719-9d90-67af3e6a314c\}))$/">
+      <prefs/>
+      <versionRange minVersion="0" maxVersion="*" severity="3"/>
+    </emItem>
   </emItems>
   <pluginItems>
     <pluginItem blockID="p332">
@@ -3496,12 +3552,12 @@
     <pluginItem blockID="49b843cc-a8fc-4ede-be0c-a0da56d0214f" os="Linux">
       <match name="filename" exp="libflashplayer\.so"/>
       <infoURL>https://get.adobe.com/flashplayer/</infoURL>
-      <versionRange maxVersion="32.0.0.223" minVersion="0" severity="0" vulnerabilitystatus="1"/>
+      <versionRange maxVersion="32.0.0.238" minVersion="0" severity="0" vulnerabilitystatus="1"/>
     </pluginItem>
     <pluginItem blockID="832dc9ff-3314-4df2-abcf-7bd65a645371">
       <match name="filename" exp="(NPSWF32.*\.dll)|(NPSWF64.*\.dll)|(Flash\ Player\.plugin)"/>
       <infoURL>https://get.adobe.com/flashplayer/</infoURL>
-      <versionRange maxVersion="32.0.0.223" minVersion="0" severity="0" vulnerabilitystatus="1"/>
+      <versionRange maxVersion="32.0.0.238" minVersion="0" severity="0" vulnerabilitystatus="1"/>
     </pluginItem>
   </pluginItems>
   <gfxItems>

@@ -310,13 +310,16 @@ void ScrollAnchorContainer::ApplyAdjustments() {
   if (!mAnchorNode || mAnchorNodeIsDirty ||
       mScrollFrame->HasPendingScrollRestoration() ||
       mScrollFrame->IsProcessingAsyncScroll()) {
-    mSuppressAnchorAdjustment = false;
     ANCHOR_LOG(
         "Ignoring post-reflow (anchor=%p, dirty=%d, pendingRestoration=%d, "
         "asyncScroll=%d container=%p).\n",
         mAnchorNode, mAnchorNodeIsDirty,
         mScrollFrame->HasPendingScrollRestoration(),
         mScrollFrame->IsProcessingAsyncScroll(), this);
+    if (mSuppressAnchorAdjustment) {
+      mSuppressAnchorAdjustment = false;
+      InvalidateAnchor();
+    }
     return;
   }
 

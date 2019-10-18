@@ -16,6 +16,7 @@ XPCOMUtils.defineLazyModuleGetters(this, {
   ClientID: "resource://gre/modules/ClientID.jsm",
   DeferredTask: "resource://gre/modules/DeferredTask.jsm",
   E10SUtils: "resource://gre/modules/E10SUtils.jsm",
+  ExtensionCommon: "resource://gre/modules/ExtensionCommon.jsm",
   ExtensionParent: "resource://gre/modules/ExtensionParent.jsm",
   ExtensionPermissions: "resource://gre/modules/ExtensionPermissions.jsm",
   PrivateBrowsingUtils: "resource://gre/modules/PrivateBrowsingUtils.jsm",
@@ -532,6 +533,7 @@ class PanelList extends HTMLElement {
     super();
     this.attachShadow({ mode: "open" });
     this.shadowRoot.appendChild(importTemplate("panel-list"));
+    this.setAttribute("role", "menu");
   }
 
   attributeChangedCallback(name, oldVal, newVal) {
@@ -627,14 +629,12 @@ class PanelList extends HTMLElement {
     this.setAttribute("valign", valign);
     this.parentNode.style.overflow = "";
     this.removeAttribute("showing");
-
-    // Send the shown event after the next paint.
-    requestAnimationFrame(() => this.sendEvent("shown"));
   }
 
   addHideListeners() {
     // Hide when a panel-item is clicked in the list.
     this.addEventListener("click", this);
+    document.addEventListener("keydown", this);
     // Hide when a click is initiated outside the panel.
     document.addEventListener("mousedown", this);
     // Hide if focus changes and the panel isn't in focus.
@@ -649,6 +649,7 @@ class PanelList extends HTMLElement {
 
   removeHideListeners() {
     this.removeEventListener("click", this);
+    document.removeEventListener("keydown", this);
     document.removeEventListener("mousedown", this);
     document.removeEventListener("focusin", this);
     window.removeEventListener("resize", this);
@@ -677,6 +678,53 @@ class PanelList extends HTMLElement {
           e.stopPropagation();
         }
         break;
+      case "keydown":
+        if (e.key === "ArrowDown" || e.key === "ArrowUp" || e.key === "Tab") {
+          // Ignore tabbing with a modifer other than shift.
+          if (e.key === "Tab" && (e.altKey || e.ctrlKey || e.metaKey)) {
+            return;
+          }
+
+          // Don't scroll the page or let the regular tab order take effect.
+          e.preventDefault();
+
+          // Keep moving to the next/previous element sibling until we find a
+          // panel-item that isn't hidden.
+          let moveForward =
+            e.key === "ArrowDown" || (e.key === "Tab" && !e.shiftKey);
+
+          // If the menu is opened with the mouse, the active element might be
+          // somewhere else in the document. In that case we should ignore it
+          // to avoid walking unrelated DOM nodes.
+          this.walker.currentNode = this.contains(document.activeElement)
+            ? document.activeElement
+            : this;
+          let nextItem = moveForward
+            ? this.walker.nextNode()
+            : this.walker.previousNode();
+
+          // If the next item wasn't found, try looping to the top/bottom.
+          if (!nextItem) {
+            this.walker.currentNode = this;
+            if (moveForward) {
+              nextItem = this.walker.firstChild();
+            } else {
+              nextItem = this.walker.lastChild();
+            }
+          }
+
+          if (nextItem) {
+            nextItem.focus();
+          }
+          break;
+        } else if (e.key === "Escape") {
+          let { triggeringEvent } = this;
+          this.hide();
+          if (triggeringEvent && triggeringEvent.target) {
+            triggeringEvent.target.focus();
+          }
+        }
+        break;
       case "mousedown":
       case "focusin":
         // There will be a focusin after the mousedown that opens the panel
@@ -701,12 +749,48 @@ class PanelList extends HTMLElement {
     }
   }
 
-  onShow() {
-    this.setAlign();
+  get walker() {
+    if (!this._walker) {
+      this._walker = document.createTreeWalker(this, NodeFilter.SHOW_ELEMENT, {
+        acceptNode: node => {
+          if (node.disabled || node.hidden || node.localName !== "panel-item") {
+            return NodeFilter.FILTER_REJECT;
+          }
+
+          return NodeFilter.FILTER_ACCEPT;
+        },
+      });
+    }
+    return this._walker;
+  }
+
+  async onShow() {
+    let { triggeringEvent } = this;
+
     this.addHideListeners();
+    await this.setAlign();
+
+    // Wait until the next paint for the alignment to be set and panel to be
+    // visible.
+    requestAnimationFrame(() => {
+      // Focus the first visible panel-item if we were opened with the keyboard.
+      if (
+        triggeringEvent &&
+        triggeringEvent.mozInputSource === MouseEvent.MOZ_SOURCE_KEYBOARD
+      ) {
+        this.walker.currentNode = this;
+        let firstItem = this.walker.nextNode();
+        if (firstItem) {
+          firstItem.focus();
+        }
+      }
+
+      this.sendEvent("shown");
+    });
   }
 
   onHide() {
+    requestAnimationFrame(() => this.sendEvent("hidden"));
     this.removeHideListeners();
   }
 
@@ -722,6 +806,7 @@ class PanelItem extends HTMLElement {
     this.attachShadow({ mode: "open" });
     this.shadowRoot.appendChild(importTemplate("panel-item"));
     this.button = this.shadowRoot.querySelector("button");
+    this.button.setAttribute("role", "menuitem");
   }
 
   get disabled() {
@@ -738,6 +823,10 @@ class PanelItem extends HTMLElement {
 
   set checked(val) {
     this.toggleAttribute("checked", val);
+  }
+
+  focus() {
+    this.button.focus();
   }
 }
 customElements.define("panel-item", PanelItem);
@@ -1326,7 +1415,8 @@ class AddonDetails extends HTMLElement {
     }
 
     // Hide the tab group if "details" is the only visible button.
-    this.tabGroup.hidden = Array.from(this.tabGroup.children).every(button => {
+    let tabGroupButtons = this.tabGroup.querySelectorAll("named-deck-button");
+    this.tabGroup.hidden = Array.from(tabGroupButtons).every(button => {
       return button.name == "details" || button.hidden;
     });
 
@@ -1636,7 +1726,7 @@ class AddonCard extends HTMLElement {
             openOptionsInTab(addon.optionsURL);
           } else if (getOptionsType(addon) == "inline") {
             this.recordActionEvent("preferences", "inline");
-            loadViewFn("detail", this.addon.id, "preferences");
+            loadViewFn(`detail/${this.addon.id}/preferences`, e);
           }
           break;
         case "remove":
@@ -1663,7 +1753,7 @@ class AddonCard extends HTMLElement {
           }
           break;
         case "expand":
-          loadViewFn("detail", this.addon.id);
+          loadViewFn(`detail/${this.addon.id}`, e);
           break;
         case "more-options":
           // Open panel on click from the keyboard.
@@ -1692,7 +1782,7 @@ class AddonCard extends HTMLElement {
         default:
           // Handle a click on the card itself.
           if (!this.expanded) {
-            loadViewFn("detail", this.addon.id);
+            loadViewFn(`detail/${this.addon.id}`, e);
           } else if (
             e.target.localName == "a" &&
             e.target.getAttribute("data-telemetry-name")
@@ -1749,6 +1839,9 @@ class AddonCard extends HTMLElement {
       if (action == "more-options") {
         this.panel.toggle(e);
       }
+    } else if (e.type === "shown" || e.type === "hidden") {
+      let panelOpen = e.type === "shown";
+      this.optionsButton.setAttribute("aria-expanded", panelOpen);
     }
   }
 
@@ -1760,12 +1853,16 @@ class AddonCard extends HTMLElement {
     this.addEventListener("change", this);
     this.addEventListener("click", this);
     this.addEventListener("mousedown", this);
+    this.panel.addEventListener("shown", this);
+    this.panel.addEventListener("hidden", this);
   }
 
   removeListeners() {
     this.removeEventListener("change", this);
     this.removeEventListener("click", this);
     this.removeEventListener("mousedown", this);
+    this.panel.removeEventListener("shown", this);
+    this.panel.removeEventListener("hidden", this);
   }
 
   onNewInstall(install) {
@@ -1843,7 +1940,7 @@ class AddonCard extends HTMLElement {
     }
 
     // Update the name.
-    let name = card.querySelector(".addon-name");
+    let name = this.addonNameEl;
     let showVersionInName = Services.prefs.getBoolPref("extensions.addonVersionInfo", true);
     let versionString = this.updateInstall && this.matches('[current-view="updates"] addon-card') ?
                         this.updateInstall.version : addon.version;
@@ -1945,13 +2042,32 @@ class AddonCard extends HTMLElement {
       throw new Error("addon-card must be initialized with setAddon()");
     }
 
-    this.card = importTemplate("card").firstElementChild;
+    let headingId = ExtensionCommon.makeWidgetId(`${addon.name}-heading`);
+    this.setAttribute("aria-labelledby", headingId);
     this.setAttribute("addon-id", addon.id);
+
+    this.card = importTemplate("card").firstElementChild;
+
+    let nameContainer = this.card.querySelector(".addon-name-container");
+    let headingLevel = this.expanded ? "h1" : "h3";
+    let nameHeading = document.createElement(headingLevel);
+    nameHeading.classList.add("addon-name");
+    if (!this.expanded) {
+      let name = document.createElement("a");
+      name.classList.add("addon-name-link");
+      name.href = `addons://detail/${addon.id}`;
+      nameHeading.appendChild(name);
+      this.addonNameEl = name;
+    } else {
+      this.addonNameEl = nameHeading;
+    }
+    nameContainer.prepend(nameHeading);
 
     let panelType = addon.type == "plugin" ? "plugin-options" : "addon-options";
     this.options = document.createElement(panelType);
     this.options.render();
     this.card.querySelector(".more-options-menu").appendChild(this.options);
+    this.optionsButton = this.card.querySelector(".more-options-button");
 
     // Set the contents.
     this.update();
@@ -1970,6 +2086,10 @@ class AddonCard extends HTMLElement {
     }
 
     this.appendChild(this.card);
+
+    if (this.expanded && this.keyboardNavigation) {
+      requestAnimationFrame(() => this.optionsButton.focus());
+    }
 
     // Return the promise of details rendering to wait on in DetailView.
     return doneRenderPromise;
@@ -2145,7 +2265,7 @@ class RecommendedAddonCard extends HTMLElement {
           action: "manage",
           addon: this.discoAddon,
         });
-        loadViewFn("detail", this.addonId);
+        loadViewFn(`detail/${this.addonId}`, event);
         break;
       default:
         if (event.target.matches(".disco-addon-author a[href]")) {
@@ -2912,11 +3032,12 @@ class ListView {
 }
 
 class DetailView {
-  constructor({ param, root }) {
+  constructor({ isKeyboardNavigation, param, root }) {
     let [id, selectedTab] = param.split("/");
     this.id = id;
     this.selectedTab = selectedTab;
     this.root = root;
+    this.isKeyboardNavigation = isKeyboardNavigation;
   }
 
   async render() {
@@ -2933,10 +3054,11 @@ class DetailView {
     setCategoryFn(addon.type);
 
     // Go back to the list view when the add-on is removed.
-    card.addEventListener("remove", () => loadViewFn("list", addon.type));
+    card.addEventListener("remove", () => loadViewFn(`list/${addon.type}`));
 
     card.setAddon(addon);
     card.expand();
+    card.keyboardNavigation = this.isKeyboardNavigation;
     await card.render();
     if (
       this.selectedTab === "preferences" &&
@@ -3042,13 +3164,17 @@ function initialize(opts) {
  * resolve once the view has been updated to conform with other about:addons
  * views.
  */
-async function show(type, param) {
+async function show(type, param, { isKeyboardNavigation }) {
   let container = document.createElement("div");
   container.setAttribute("current-view", type);
   if (type == "list") {
     await new ListView({ param, root: container }).render();
   } else if (type == "detail") {
-    await new DetailView({ param, root: container }).render();
+    await new DetailView({
+      isKeyboardNavigation,
+      param,
+      root: container,
+    }).render();
   } else if (type == "discover") {
     let discoverView = new DiscoveryView();
     let elem = discoverView.render();

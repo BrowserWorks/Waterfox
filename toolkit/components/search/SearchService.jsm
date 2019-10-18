@@ -1052,7 +1052,7 @@ SearchService.prototype = {
     } else {
       let engineList = this._enginesToLocales(engines);
       for (let [id, locales] of engineList) {
-        await this.ensureBuiltinExtension(id, locales);
+        await this.ensureBuiltinExtension(id, locales, isReload);
       }
 
       SearchUtils.log(
@@ -1082,7 +1082,7 @@ SearchService.prototype = {
    * @returns {Promise} A promise, resolved successfully once the
    * extension is installed and registered by the SearchService.
    */
-  async ensureBuiltinExtension(id, locales = [DEFAULT_TAG]) {
+  async ensureBuiltinExtension(id, locales = [DEFAULT_TAG], isReload = false) {
     SearchUtils.log("ensureBuiltinExtension: " + id);
     try {
       let policy = WebExtensionPolicy.getByID(id);
@@ -1095,7 +1095,12 @@ SearchService.prototype = {
       // On startup the extension may have not finished parsing the
       // manifest, wait for that here.
       await policy.readyPromise;
-      await this._installExtensionEngine(policy.extension, locales);
+      await this._installExtensionEngine(
+        policy.extension,
+        locales,
+        false,
+        isReload
+      );
       SearchUtils.log("ensureBuiltinExtension: " + id + " installed.");
     } catch (err) {
       Cu.reportError(
@@ -1153,6 +1158,7 @@ SearchService.prototype = {
     // There's no point in already reloading the list of engines, when the service
     // hasn't even initialized yet.
     if (!gInitialized) {
+      SearchUtils.log("Ignoring maybeReloadEngines() as inside init()");
       return;
     }
 
@@ -1245,6 +1251,22 @@ SearchService.prototype = {
         }
 
         await this._loadEngines(cache);
+
+        // If we've got this far, but the application is now shutting down,
+        // then we need to abandon any further work, especially not writing
+        // the cache. We do this, because the add-on manager has also
+        // started shutting down and as a result, we might have an incomplete
+        // picture of the installed search engines. Writing the cache at
+        // this stage would potentially mean the user would loose their engine
+        // data.
+        // We will however, rebuild the cache on next start up if we detect
+        // it is necessary.
+        if (Services.startup.shuttingDown) {
+          SearchUtils.log("_reInit: abandoning reInit due to shutting down");
+          this._initObservers.reject();
+          return;
+        }
+
         // Make sure the current list of engines is persisted.
         await this._buildCache();
 
@@ -1926,7 +1948,7 @@ SearchService.prototype = {
 
   // nsISearchService
   async init(skipRegionCheck = false) {
-    SearchUtils.log("SearchService.init");
+    SearchUtils.log("SearchService.init: " + skipRegionCheck);
     if (this._initStarted) {
       if (!skipRegionCheck) {
         await this._ensureKnownRegionPromise;
@@ -2090,7 +2112,8 @@ SearchService.prototype = {
     description,
     method,
     template,
-    extensionID
+    extensionID,
+    isReload = false
   ) {
     SearchUtils.log('addEngineWithDetails: Adding "' + name + '".');
     let isCurrent = false;
@@ -2098,6 +2121,7 @@ SearchService.prototype = {
 
     if (iconURL && typeof iconURL == "object") {
       params = iconURL;
+      isReload = alias;
     } else {
       params = {
         iconURL,
@@ -2123,7 +2147,16 @@ SearchService.prototype = {
       SearchUtils.fail("Invalid template passed to addEngineWithDetails!");
     }
     let existingEngine = this._engines[name];
-    if (existingEngine) {
+    if (
+      existingEngine &&
+      existingEngine._loadPath.startsWith("[distribution]")
+    ) {
+      SearchUtils.fail(
+        "Not loading engine due to having a distribution engine with the same name",
+        Cr.NS_ERROR_FILE_ALREADY_EXISTS
+      );
+    }
+    if (!isReload && existingEngine) {
       if (
         params.extensionID &&
         existingEngine._loadPath.startsWith(
@@ -2151,6 +2184,9 @@ SearchService.prototype = {
     if (params.extensionID) {
       newEngine._loadPath += ":" + params.extensionID;
     }
+    if (isReload && newEngine.name in this._engines) {
+      newEngine._engineToUpdate = this._engines[newEngine.name];
+    }
 
     this._addEngineToStore(newEngine);
     if (isCurrent) {
@@ -2174,7 +2210,7 @@ SearchService.prototype = {
     return this._installExtensionEngine(extension, [DEFAULT_TAG]);
   },
 
-  async _installExtensionEngine(extension, locales, initEngine) {
+  async _installExtensionEngine(extension, locales, initEngine, isReload) {
     SearchUtils.log("installExtensionEngine: " + extension.id);
 
     let installLocale = async locale => {
@@ -2186,7 +2222,8 @@ SearchService.prototype = {
         extension,
         manifest,
         locale,
-        initEngine
+        initEngine,
+        isReload
       );
     };
 
@@ -2207,7 +2244,8 @@ SearchService.prototype = {
     extension,
     manifest,
     locale = DEFAULT_TAG,
-    initEngine = false
+    initEngine = false,
+    isReload = false
   ) {
     let { IconDetails } = ExtensionParent;
 
@@ -2266,7 +2304,7 @@ SearchService.prototype = {
       initEngine,
     };
 
-    return this.addEngineWithDetails(params.name, params);
+    return this.addEngineWithDetails(params.name, params, isReload);
   },
 
   async addEngine(engineURL, iconURL, confirm, extensionID) {
@@ -2946,11 +2984,21 @@ SearchService.prototype = {
       case TOPIC_LOCALES_CHANGE:
         // Locale changed. Re-init. We rely on observers, because we can't
         // return this promise to anyone.
-        // FYI, This is also used by the search tests to do an async reinit.
-        // Locales are removed during shutdown, so ignore this message
-        if (!Services.startup.shuttingDown) {
-          this._reInit(verb);
-        }
+
+        // At the time of writing, when the user does a "Apply and Restart" for
+        // a new language the preferences code triggers the locales change and
+        // restart straight after, so we delay the check, which means we should
+        // be able to avoid the reInit on shutdown, and we'll rebuild the cache
+        // on next start instead.
+        // This also helps to avoid issues with the add-on manager shutting
+        // down at the same time (see _reInit for more info).
+        Services.tm.dispatchToMainThread(() => {
+          // FYI, This is also used by the search tests to do an async reinit.
+          // Locales are removed during shutdown, so ignore this message
+          if (!Services.startup.shuttingDown) {
+            this._reInit(verb);
+          }
+        });
         break;
     }
   },
@@ -3031,6 +3079,21 @@ SearchService.prototype = {
       "Search service: shutting down",
       () =>
         (async () => {
+          // If we are in initialization or re-initialization, then don't attempt
+          // to save the cache. It is likely that shutdown will have caused the
+          // add-on manager to stop, which can cause initialization to fail.
+          // Hence at that stage, we could have a broken cache which we don't
+          // want to write.
+          // The good news is, that if we don't write the cache here, we'll
+          // detect the out-of-date cache on next state, and automatically
+          // rebuild it.
+          if (!gInitialized || gReinitializing) {
+            SearchUtils.log(
+              "not saving cache on shutdown due to initializing."
+            );
+            return;
+          }
+
           if (this._batchTask) {
             shutdownState.step = "Finalizing batched task";
             try {
