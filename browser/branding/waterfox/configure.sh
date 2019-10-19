@@ -3,7 +3,7 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 MOZ_APP_DISPLAYNAME="Waterfox Current"
-MOZ_APP_REMOTINGNAME=waterfox
+MOZ_APP_REMOTINGNAME=waterfox-current
 MOZ_DEV_EDITION=1
 MOZ_TELEMETRY_REPORTING=
 MOZ_TELEMETRY_ON_BY_DEFAULT=
