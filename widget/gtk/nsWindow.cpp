@@ -71,6 +71,7 @@
 
 #include "mozilla/Assertions.h"
 #include "mozilla/Likely.h"
+#include "mozilla/Move.h"
 #include "mozilla/Preferences.h"
 #include "nsIPrefService.h"
 #include "nsIServiceManager.h"
@@ -5065,6 +5066,10 @@ void nsWindow::SetWindowDecoration(nsBorderStyle aStyle) {
 
 void nsWindow::HideWindowChrome(bool aShouldHide) {
   SetWindowDecoration(aShouldHide ? eBorderStyle_none : mBorderStyle);
+}
+
+void nsWindow::SetMenuBar(UniquePtr<nsMenuBar> aMenuBar) {
+  mMenuBar = std::move(aMenuBar);
 }
 
 bool nsWindow::CheckForRollup(gdouble aMouseX, gdouble aMouseY, bool aIsWheel,

@@ -78,6 +78,11 @@ LOCAL_INCLUDES += [
 
 include('/ipc/chromium/chromium-config.mozbuild')
 
+if 'gtk' in CONFIG['MOZ_WIDGET_TOOLKIT']:
+    LOCAL_INCLUDES += [
+        '/widget/gtk',
+    ]
+
 FINAL_LIBRARY = 'xul'
 
 if CONFIG['CC_TYPE'] in ('clang', 'gcc'):

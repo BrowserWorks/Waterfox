@@ -38,6 +38,8 @@
 
 #include "IMContextWrapper.h"
 
+#include "nsMenuBar.h"
+
 #undef LOG
 #ifdef MOZ_LOGGING
 
@@ -170,6 +172,8 @@ class nsWindow final : public nsBaseWidget {
   virtual nsresult MakeFullScreen(bool aFullScreen,
                                   nsIScreen* aTargetScreen = nullptr) override;
   virtual void HideWindowChrome(bool aShouldHide) override;
+
+  void SetMenuBar(mozilla::UniquePtr<nsMenuBar> aMenuBar);
 
   /**
    * GetLastUserInputTime returns a timestamp for the most recent user input
@@ -633,6 +637,8 @@ class nsWindow final : public nsBaseWidget {
 
   mozilla::UniquePtr<mozilla::CurrentX11TimeGetter> mCurrentTimeGetter;
   static CSDSupportLevel sCSDSupportLevel;
+
+  mozilla::UniquePtr<nsMenuBar> mMenuBar;
 };
 
 #endif /* __nsWindow_h__ */
