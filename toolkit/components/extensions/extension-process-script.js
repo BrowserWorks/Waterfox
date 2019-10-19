@@ -303,7 +303,7 @@ ExtensionManager = {
       policy = new WebExtensionPolicy({
         id: data.id,
         mozExtensionHostname: data.uuid,
-        name: extension.name,
+        name: data.name,
         baseURL: data.resourceURL,
 
         permissions: Array.from(data.permissions),
