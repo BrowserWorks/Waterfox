@@ -1086,16 +1086,14 @@ IDBObjectStore::AppendIndexUpdateInfo(
       JS::RootedId indexId(aCx);
       if (NS_WARN_IF(!JS_IndexToId(aCx, arrayIndex, &indexId))) {
         IDB_REPORT_INTERNAL_ERR();
-        aRv->Throw(NS_ERROR_DOM_INDEXEDDB_UNKNOWN_ERR);
-        return;
+        return NS_ERROR_DOM_INDEXEDDB_UNKNOWN_ERR;
       }
 
       bool hasOwnProperty;
       if (NS_WARN_IF(
               !JS_HasOwnPropertyById(aCx, array, indexId, &hasOwnProperty))) {
         IDB_REPORT_INTERNAL_ERR();
-        aRv->Throw(NS_ERROR_DOM_INDEXEDDB_UNKNOWN_ERR);
-        return;
+        return NS_ERROR_DOM_INDEXEDDB_UNKNOWN_ERR;
       }
 
       if (!hasOwnProperty) {
