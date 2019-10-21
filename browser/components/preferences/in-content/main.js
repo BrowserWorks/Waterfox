@@ -176,7 +176,7 @@ var gMainPane = {
 	  	selectedLocale.value = Services.prefs.getCharPref('general.useragent.locale');
 	  }
   },
-  
+
   updateLocale: function ()
   {
     let alertsService = Cc["@mozilla.org/alerts-service;1"].getService(Ci.nsIAlertsService);
@@ -184,13 +184,17 @@ var gMainPane = {
     let contentLocaleUpdate = selectedLocale + ",en-us,en";
     let contentLocaleUpdated = contentLocaleUpdate.toLowerCase();
 
-    if (selectedLocale === Services.prefs.getCharPref('general.useragent.locale')) return;
-	
+    if (selectedLocale === Services.prefs.getCharPref('general.useragent.locale'))
+    {
+      document.getElementById("confirmBrowserLanguage").hidden = "true";
+      return;
+    }
+
     if (selectedLocale != "") {
       Services.prefs.setCharPref('general.useragent.locale', selectedLocale);
       Services.prefs.setCharPref('intl.accept_languages', contentLocaleUpdated);
       Services.prefs.setBoolPref('intl.locale.matchOS', false);
-      alertsService.showAlertNotification("",  "Restart Waterfox", "You'll need to restart Waterfox to see your selected locale.");
+      document.getElementById("confirmBrowserLanguage").hidden = "";
     }
   },
   _updateLocale: function (e)
@@ -199,7 +203,7 @@ var gMainPane = {
 		  this.updateLocale();
     }
 },
-    
+
   enableE10SChange() {
     if ((AppConstants.E10S_TESTING_ONLY) && (!AppConstants.isPlatformAndVersionAtMost("macosx", 13))) {
       let e10sCheckbox = document.getElementById("e10sAutoStart");

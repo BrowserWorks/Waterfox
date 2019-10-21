@@ -349,6 +349,20 @@
       <menuitem value="zh-TW" label="Chinese (Traditional) - 正體中文 (繁體)"/>
     </menupopup>
   </menulist>
+<hbox id="confirmBrowserLanguage" class="message-bar" align="center" hidden="true">
+    <image class="message-bar-icon" />
+    <vbox class="message-bar-content-container" align="stretch" flex="1">
+        <hbox class="message-bar-content" flex="1" align="center">
+            <description class="message-bar-description" flex="1">You'll need to restart Waterfox to see your selected locale.</description>
+            <button class="message-bar-button" label="Restart" oncommand="restartBrowser();">
+                <hbox class="box-inherit button-box" align="center" pack="center" flex="1" anonid="button-box">
+                    <image class="button-icon" />
+                    <label class="button-text" value="Restart" />
+                </hbox>
+            </button>
+        </hbox>
+    </vbox>
+</hbox>
 </groupbox>
 
 <!-- Downloads -->

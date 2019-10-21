@@ -976,4 +976,4 @@ you can use these alternative items. Otherwise, their values should be empty.  -
 <!ENTITY copyTabURL.label "Copy Tab URL">
 <!ENTITY copyAllTabURLs.label "Copy All Tab URLs">
 
-<!ENTITY newNone10sWindow.label "Open in new non-e10s window">
+<!ENTITY openNewNone10sWindow.label "Open in new non-e10s window">

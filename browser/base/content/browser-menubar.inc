@@ -105,7 +105,7 @@
                           oncommand="BrowserOffline.toggleOfflineStatus();"/>
                 <menuitem id="app_restartBrowser"
 						              label="&restartBrowser.label;"
-                          oncommand="PanelUI.restartBrowser();"/>
+                          oncommand="restartBrowser();"/>
                 <menuitem id="menu_FileQuitItem"
 #ifdef XP_WIN
                           label="&quitApplicationCmdWin2.label;"

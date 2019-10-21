@@ -98,7 +98,7 @@
                 tbattr="tabbrowser-multiple"
                 oncommand="gBrowser.replaceTabWithWindow(TabContextMenu.contextTab);"/>
 #ifdef E10S_TESTING_ONLY
-      <menuitem id="context_openNonRemoteWindow" label="&newNone10sWindow.label;"
+      <menuitem id="context_openNonRemoteWindow" label="&openNewNone10sWindow.label;"
                 tbattr="tabbrowser-remote"
                 hidden="true"
                 oncommand="gBrowser.openNonRemoteWindow(TabContextMenu.contextTab);"/>

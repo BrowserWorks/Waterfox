@@ -65,7 +65,7 @@
           <toolbarbutton id="panelUI_menu_restartBrowser"
 					                label="&restartBrowser.label;"
                           tooltiptext="&restartBrowser.label;"
-					                oncommand="PanelUI.restartBrowser();"/>
+					                oncommand="restartBrowser();"/>
           <toolbarseparator/>
           <toolbarbutton id="PanelUI-quit"
 #ifdef XP_WIN
