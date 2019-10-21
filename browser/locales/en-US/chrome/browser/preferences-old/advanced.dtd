@@ -148,3 +148,13 @@ available. -->
                                          "Learn how to check if multiprocess is enabled">
 <!ENTITY allowHWAccel.label              "Use hardware acceleration when available">
 <!ENTITY allowHWAccel.accesskey          "r">
+
+<!ENTITY featuresTab.label               "Features">
+<!ENTITY cleanFastRestartCache.label     "Clear fast restart cache on browser restart">
+<!ENTITY restartOptions.label            "Restart">
+<!ENTITY restart_reqconfirmation.label   "Require restart confirmation">
+<!ENTITY restart_paneluibtn.label        "Show button in PanelUI">
+<!ENTITY tabContextMenu.label            "Tab Context Menu">
+<!ENTITY copyTabURLOptions.label         "Show copy tab url menu item">
+<!ENTITY copyAllTabURLsOptions.label     "Show copy all tab urls menu item">
+<!ENTITY duplicateTabOptions.label       "Show duplicate tab menu item">

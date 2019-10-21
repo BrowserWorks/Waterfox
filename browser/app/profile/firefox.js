@@ -1708,3 +1708,18 @@ pref("browser.onboarding.updatetour", "");
 
 // Preference that allows individual users to disable Screenshots.
 // pref("extensions.screenshots.disabled", true);
+
+
+// Set bool pref for restart browser purgecache enabled.
+pref("browser.restart.purgecache", true);
+
+// Set bool pref for restart browser confirmation.
+pref("browser.restart.requireconfirm", false);
+
+// Set bool pref for restart browser panelUI button
+pref("browser.restart.showpanelmenubtn", false);
+
+// Set prefs for tab context menu copying url options
+pref("browser.tabs.copyurl", true);
+pref("browser.tabs.copyurl.activetab", true);
+pref("browser.tabs.copyallurls", true);
