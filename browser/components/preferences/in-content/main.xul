@@ -252,7 +252,7 @@
 <groupbox id="localeGroup"
           data-category="paneGeneral"
           hidden="true">
-  <caption><label>Locale Select</label></caption>
+  <caption><label>&localeSelect.label;</label></caption>
   <menulist id="localeSelect">
     <menupopup>
       <menuitem value="ach" label="Acholi - Acholi"/>

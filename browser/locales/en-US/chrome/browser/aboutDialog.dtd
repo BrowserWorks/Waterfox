@@ -104,3 +104,6 @@
      example: You are currently on the _Stable_ update channel. -->
 <!ENTITY channel.description.start  "You are currently on the ">
 <!ENTITY channel.description.end    " update channel. ">
+
+<!ENTITY bottomLinks.privacyPolicy "Privacy Policy">
+<!ENTITY bottomLinks.legalTerms "Legal and Terms">
