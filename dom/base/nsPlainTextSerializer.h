@@ -92,6 +92,7 @@ class nsPlainTextSerializer final : public nsIContentSerializer {
   void Write(const nsAString& aString);
   bool IsInPre();
   bool IsInOL();
+  bool IsInOlOrUl() const;
   bool IsCurrentNodeConverted();
   bool MustSuppressLeaf();
 

@@ -612,12 +612,12 @@ nsresult nsPlainTextSerializer::DoOpenContainer(nsAtom* aTag) {
     }
   } else if (aTag == nsGkAtoms::ul) {
     // Indent here to support nested lists, which aren't included in li :-(
-    EnsureVerticalSpace(mULCount + mOLStackIndex == 0 ? 1 : 0);
+    EnsureVerticalSpace(IsInOlOrUl() ? 0 : 1);
     // Must end the current line before we change indention
     mIndent += kIndentSizeList;
     mULCount++;
   } else if (aTag == nsGkAtoms::ol) {
-    EnsureVerticalSpace(mULCount + mOLStackIndex == 0 ? 1 : 0);
+    EnsureVerticalSpace(IsInOlOrUl() ? 0 : 1);
     if (mFlags & nsIDocumentEncoder::OutputFormatted) {
       // Must end the current line before we change indention
       if (mOLStackIndex < OLStackSize) {
@@ -846,7 +846,8 @@ nsresult nsPlainTextSerializer::DoCloseContainer(nsAtom* aTag) {
   } else if (aTag == nsGkAtoms::ul) {
     FlushLine();
     mIndent -= kIndentSizeList;
-    if (--mULCount + mOLStackIndex == 0) {
+    --mULCount;
+    if (!IsInOlOrUl()) {
       mFloatingLines = 1;
       mLineBreakDue = true;
     }
@@ -855,7 +856,7 @@ nsresult nsPlainTextSerializer::DoCloseContainer(nsAtom* aTag) {
     mIndent -= kIndentSizeList;
     NS_ASSERTION(mOLStackIndex, "Wrong OLStack level!");
     mOLStackIndex--;
-    if (mULCount + mOLStackIndex == 0) {
+    if (!IsInOlOrUl()) {
       mFloatingLines = 1;
       mLineBreakDue = true;
     }
@@ -1740,6 +1741,10 @@ bool nsPlainTextSerializer::IsInOL() {
   }
   // We may reach here for orphan LI's.
   return false;
+}
+
+bool nsPlainTextSerializer::IsInOlOrUl() const {
+  return (mULCount > 0) || (mOLStackIndex > 0);
 }
 
 /*
