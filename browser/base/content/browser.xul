@@ -142,6 +142,10 @@
                 oncommand="duplicateTabIn(TabContextMenu.contextTab, 'tab');"/>
       <menuitem id="context_duplicateTabs" data-lazy-l10n-id="duplicate-tabs"
                 oncommand="TabContextMenu.duplicateSelectedTabs();"/>
+      <menuitem id="context_copyCurrentTabUrl" data-lazy-l10n-id="copy-tab-url"
+                oncommand="copyCurrentTabUrl(TabContextMenu.contextTab.linkedBrowser.currentURI.spec);"/>
+      <menuitem id="context_copyAllTabUrls" data-lazy-l10n-id="copy-all-tab-urls"
+                oncommand="copyAllTabUrls();"/>
       <menuseparator/>
       <menuitem id="context_selectAllTabs" data-lazy-l10n-id="select-all-tabs"
                 oncommand="gBrowser.selectAllTabs();"/>

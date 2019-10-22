@@ -1198,3 +1198,25 @@ function updateFileMenuImportUIVisibility(id) {
     command.setAttribute("disabled", "true");
   }
 }
+
+function restartBrowser() {
+  let RestartMsg = Services.strings.createBundle("chrome://browser/locale/browser.properties");
+  try {
+        if (Services.prefs.getBoolPref("browser.restart.requireconfirm")) {
+          if (Services.prompt.confirm(null, RestartMsg.formatStringFromName("restartPromptTitle.label", [Services.strings.createBundle("chrome://branding/locale/brand.properties").GetStringFromName("brandShortName")], 1),
+          RestartMsg.formatStringFromName("restartPromptQuestion.label", [Services.strings.createBundle("chrome://branding/locale/brand.properties").GetStringFromName("brandShortName")], 1))) {
+              if (Services.prefs.getBoolPref("browser.restart.purgecache")) {
+                  Services.appinfo.invalidateCachesOnRestart();
+              }
+              Services.startup.quit(Services.startup.eRestart | Services.startup.eAttemptQuit);
+          }
+      } else {
+          if (Services.prefs.getBoolPref("browser.restart.purgecache")) {
+              Services.appinfo.invalidateCachesOnRestart();
+          }
+          Services.startup.quit(Services.startup.eRestart | Services.startup.eAttemptQuit);
+      }
+  } catch (e) {
+      throw new Error("We're sorry but something has gone wrong with 'restartBrowser' " + e);
+  }
+};

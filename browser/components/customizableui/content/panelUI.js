@@ -276,6 +276,15 @@ const PanelUI = {
     switch (aEvent.type) {
       case "popupshowing":
         updateEditUIVisibility();
+        try {
+          if (!Services.prefs.getBoolPref("browser.restart.showpanelmenubtn")) {
+            document.getElementById("appMenu-restart-button").hidden = true;
+          } else {
+            document.getElementById("appMenu-restart-button").hidden = false;
+          }
+        } catch (e) {
+          throw new Error("We're sorry but something has gone wrong with 'browser.restart.showpanelmenubtn'" + e);
+        }
       // Fall through
       case "popupshown":
         if (aEvent.type == "popupshown") {
