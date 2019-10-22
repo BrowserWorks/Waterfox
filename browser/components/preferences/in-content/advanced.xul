@@ -59,6 +59,9 @@
     <preference id="browser.tabs.copyurl"
 						   name="browser.tabs.copyurl"
                type="bool"/>
+    <preference id="browser.tabs.copyurl.activetab"
+						   name="browser.tabs.copyurl.activetab"
+               type="bool"/>
 	  <preference id="browser.tabs.copyallurls"
 						   name="browser.tabs.copyallurls"
                type="bool"/>
@@ -455,6 +458,8 @@
               preference="browser.tabs.duplicateTab"/>
         	 <checkbox id="browser.tabs.copyurl" label="&copyTabURLOptions.label;"
 							preference="browser.tabs.copyurl"/>
+           <checkbox id="browser.tabs.copyurl.activetab" label="&copyActiveTabURL.label;"
+							preference="browser.tabs.copyurl.activetab"/>
 					<checkbox id="browser.tabs.copyallurls" label="&copyAllTabURLsOptions.label;"
               preference="browser.tabs.copyallurls"/>
         </groupbox>

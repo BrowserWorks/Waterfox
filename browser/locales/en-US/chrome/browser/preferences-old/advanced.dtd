@@ -158,3 +158,4 @@ available. -->
 <!ENTITY copyTabURLOptions.label         "Show copy tab url menu item">
 <!ENTITY copyAllTabURLsOptions.label     "Show copy all tab urls menu item">
 <!ENTITY duplicateTabOptions.label       "Show duplicate tab menu item">
+<!ENTITY copyActiveTabURL.label          "Copy URL only from active tab">
