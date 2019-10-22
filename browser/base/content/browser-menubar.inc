@@ -100,6 +100,9 @@
                           accesskey="&goOfflineCmd.accesskey;"
                           type="checkbox"
                           command="cmd_toggleOfflineStatus"/>
+                <menuitem id="app_restartBrowser"
+						              label="&restartMenu.label;"
+                          oncommand="restartBrowser();"/>
                 <menuitem id="menu_FileQuitItem"
 #ifdef XP_WIN
                           label="&quitApplicationCmdWin2.label;"

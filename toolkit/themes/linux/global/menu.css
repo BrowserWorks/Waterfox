@@ -180,3 +180,7 @@ menuitem[type="radio"] {
 menuseparator {
   -moz-appearance: menuseparator;
 }
+
+#menu_FileRestartItem {
+  display: none !important;
+}

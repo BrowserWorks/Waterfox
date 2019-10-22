@@ -1890,3 +1890,18 @@ pref("corroborator.enabled", false);
 #else
 pref("corroborator.enabled", true);
 #endif
+
+// Set bool pref for restart browser purgecache enabled.
+pref("browser.restart.purgecache", true);
+
+// Set bool pref for restart browser confirmation.
+pref("browser.restart.requireconfirm", false);
+
+// Set bool pref for restart browser panelUI button
+pref("browser.restart.showpanelmenubtn", false);
+
+// Set prefs for tab context menu options
+pref("browser.tabs.duplicateTab", true);
+pref("browser.tabs.copyurl", true);
+pref("browser.tabs.copyurl.activetab", true);
+pref("browser.tabs.copyallurls", true);

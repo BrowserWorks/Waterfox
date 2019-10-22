@@ -167,3 +167,7 @@ menuseparator {
   margin: 5px 0;
   padding: 1px 0;
 }
+
+#menu_FileRestartItem {
+  display: none !important;
+}

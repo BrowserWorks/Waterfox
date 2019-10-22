@@ -160,6 +160,27 @@ startup-restore-previous-session =
 startup-restore-warn-on-quit =
     .label = Warn you when quitting the browser
 
+restart-paneluibtn =
+    .label = Show restart button in PanelUI
+
+clean-fast-restart-cache =
+    .label = Clear fast restart cache on browser restart
+
+restart-reqconfirmation =
+    .label = Require restart confirmation
+
+duplicate-tab-options =
+    .label = Show duplicate tab menu item
+
+copy-tab-url-options =
+    .label = Show copy tab url menu item
+
+copy-active-tab-url-options =
+    .label = Copy URL only from active tab
+
+copy-all-tab-urls-options =
+    .label = Show copy all tab urls menu item
+
 disable-extension =
     .label = Disable Extension
 
@@ -873,7 +894,7 @@ content-blocking-cookies-label =
   .label = Cookies
   .accesskey = C
 
-content-blocking-expand-section = 
+content-blocking-expand-section =
   .tooltiptext = More information
 
 # Cryptomining refers to using scripts on websites that can use a computer’s resources to mine cryptocurrency without a user’s knowledge.
