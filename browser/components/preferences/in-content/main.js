@@ -173,7 +173,14 @@ var gMainPane = {
   getDefaultLocale: function(){
 	  let selectedLocale = document.getElementById("localeSelect");
 	  if (selectedLocale){
-	  	selectedLocale.value = Services.prefs.getCharPref('general.useragent.locale');
+      if (Services.prefs.getBoolPref('intl.locale.matchOS') == true)
+      {
+        selectedLocale.value = Services.locale.getAppLocaleAsLangTag();
+      }
+      else
+      {
+        selectedLocale.value = Services.prefs.getCharPref('general.useragent.locale');
+      }
 	  }
   },
 
@@ -193,7 +200,10 @@ var gMainPane = {
     if (selectedLocale != "") {
       Services.prefs.setCharPref('general.useragent.locale', selectedLocale);
       Services.prefs.setCharPref('intl.accept_languages', contentLocaleUpdated);
-      Services.prefs.setBoolPref('intl.locale.matchOS', false);
+      if (Services.prefs.getBoolPref('intl.locale.matchOS') == true)
+      {
+        Services.prefs.setBoolPref('intl.locale.matchOS', false);
+      }
       document.getElementById("confirmBrowserLanguage").hidden = "";
     }
   },
