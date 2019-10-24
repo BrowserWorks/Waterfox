@@ -398,7 +398,6 @@ def verify_index(config, index):
     ),
 
     # worker features that should be enabled
-    Required('relengapi-proxy'): bool,
     Required('chain-of-trust'): bool,
     Required('taskcluster-proxy'): bool,
     Required('allow-ptrace'): bool,
@@ -507,9 +506,6 @@ def build_docker_worker_payload(config, task, task_def):
             raise Exception("unknown docker image type")
 
     features = {}
-
-    if worker.get('relengapi-proxy'):
-        features['relengAPIProxy'] = True
 
     if worker.get('taskcluster-proxy'):
         features['taskclusterProxy'] = True
@@ -1374,7 +1370,6 @@ def set_defaults(config, tasks):
 
         worker = task['worker']
         if worker['implementation'] in ('docker-worker',):
-            worker.setdefault('relengapi-proxy', False)
             worker.setdefault('chain-of-trust', False)
             worker.setdefault('taskcluster-proxy', False)
             worker.setdefault('allow-ptrace', False)
