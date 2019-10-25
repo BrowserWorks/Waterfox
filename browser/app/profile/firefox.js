@@ -1320,6 +1320,8 @@ pref("browser.newtabpage.activity-stream.improvesearch.topSiteSearchShortcuts", 
 // ASRouter provider configuration
 pref("browser.newtabpage.activity-stream.asrouter.providers.cfr", "{\"id\":\"cfr\",\"enabled\":false,\"type\":\"local\",\"localProvider\":\"CFRMessageProvider\",\"frequency\":{\"custom\":[{\"period\":\"daily\",\"cap\":1}]},\"categories\":[\"cfrAddons\",\"cfrFeatures\"]}", locked);
 pref("browser.newtabpage.activity-stream.asrouter.providers.snippets", "[]", locked);
+pref("browser.newtabpage.activity-stream.asrouter.userprefs.cfr.addons", false, locked);
+pref("browser.newtabpage.activity-stream.asrouter.userprefs.cfr.features", false, locked);
 
 // The pref controls if search hand-off is enabled for Activity Stream.
 #ifdef NIGHTLY_BUILD
