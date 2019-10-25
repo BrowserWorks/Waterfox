@@ -151,7 +151,7 @@ available. -->
 
 <!ENTITY featuresTab.label               "Features">
 <!ENTITY cleanFastRestartCache.label     "Clear fast restart cache on browser restart">
-<!ENTITY restartOptions.label            "Restart">
+<!ENTITY restartOptions.label            "Restart Menu Item">
 <!ENTITY restart_reqconfirmation.label   "Require restart confirmation">
 <!ENTITY restart_paneluibtn.label        "Show button in PanelUI">
 <!ENTITY tabContextMenu.label            "Tab Context Menu">
