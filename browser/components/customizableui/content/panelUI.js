@@ -277,13 +277,13 @@ const PanelUI = {
       case "popupshowing":
         updateEditUIVisibility();
         try {
-          if (!Services.prefs.getBoolPref("browser.restart.showpanelmenubtn")) {
+          if (!Services.prefs.getBoolPref("browser.restart_menu.showpanelmenubtn")) {
             document.getElementById("appMenu-restart-button").hidden = true;
           } else {
             document.getElementById("appMenu-restart-button").hidden = false;
           }
         } catch (e) {
-          throw new Error("We're sorry but something has gone wrong with 'browser.restart.showpanelmenubtn'" + e);
+          throw new Error("We're sorry but something has gone wrong with 'browser.restart_menu.showpanelmenubtn'" + e);
         }
       // Fall through
       case "popupshown":

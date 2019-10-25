@@ -1087,3 +1087,7 @@ choose-download-folder-title = Choose Download Folder:
 #   $service-name (String) - Name of a cloud storage provider like Dropbox, Google Drive, etc...
 save-files-to-cloud-storage =
     .label = Save files to { $service-name }
+
+restart-header = Restart Menu Item
+
+tabContextMenu-header = Tab Context Menu
