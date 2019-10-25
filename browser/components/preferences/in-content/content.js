@@ -151,6 +151,56 @@ var gContentPane = {
                     "resizable=yes", params);
   },
 
+   // IMAGES
+
+  /**
+   * Converts the value of the permissions.default.image preference into a
+   * Boolean value for use in determining the state of the "load images"
+   * checkbox, returning true if images should be loaded and false otherwise.
+   */
+  readLoadImages: function() {
+    var pref = document.getElementById("permissions.default.image");
+    return (pref.value == 1 || pref.value == 3);
+  },
+
+  /**
+   * Returns the "load images" preference value which maps to the state of the
+   * preferences UI.
+   */
+  writeLoadImages: function() {
+    return (document.getElementById("loadImages").checked) ? 1 : 2;
+  },
+
+  /**
+   * Displays image exception preferences for which websites can and cannot
+   * load images.
+   */
+  showImageExceptions: function() {
+    var bundlePreferences = document.getElementById("bundlePreferences");
+    var params = {
+					blockVisible: true,
+					sessionVisible: false,
+					allowVisible: true,
+					prefilledHost: "",
+					permissionType: "image"};
+    params.windowTitle = bundlePreferences.getString("imagepermissionstitle");
+    params.introText = bundlePreferences.getString("imagepermissionstext");
+
+    gSubDialog.open("chrome://browser/content/preferences/permissions.xul",
+                    null, params);
+  },
+
+  // JAVASCRIPT
+
+  /**
+   * Displays the advanced JavaScript preferences for enabling or disabling
+   * various annoying behaviors.
+   */
+  showAdvancedJS: function() {
+    gSubDialog.open("chrome://browser/content/preferences/advanced-scripts.xul",
+                    "resizable=no", null);
+  },
+
   // FONTS
 
   /**
