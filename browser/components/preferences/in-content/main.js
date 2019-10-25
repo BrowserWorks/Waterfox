@@ -103,9 +103,17 @@ Preferences.addAll([
   { id: "browser.startup.page", type: "int" },
   { id: "browser.privatebrowsing.autostart", type: "bool" },
   { id: "browser.sessionstore.warnOnQuit", type: "bool" },
-  { id: "browser.restart.purgecache", type: "bool" },
-  { id: "browser.restart.requireconfirm", type: "bool" },
-  { id: "browser.restart.showpanelmenubtn", type: "bool" },
+
+  // Restart Menu Item
+  { id: "browser.restart_menu.purgecache", type: "bool" },
+  { id: "browser.restart_menu.requireconfirm", type: "bool" },
+  { id: "browser.restart_menu.showpanelmenubtn", type: "bool" },
+
+  // Tab Context Menu
+  { id: "browser.tabs.duplicateTab", type: "bool" },
+  { id: "browser.tabs.copyurl", type: "bool" },
+  { id: "browser.tabs.copyurl.activetab", type: "bool" },
+  { id: "browser.tabs.copyallurls", type: "bool" },
 
   // Downloads
   { id: "browser.download.useDownloadDir", type: "bool" },
@@ -138,10 +146,6 @@ Preferences.addAll([
   { id: "browser.tabs.warnOnOpen", type: "bool" },
   { id: "browser.sessionstore.restore_on_demand", type: "bool" },
   { id: "browser.ctrlTab.recentlyUsedOrder", type: "bool" },
-  { id: "browser.tabs.duplicateTab", type: "bool" },
-  { id: "browser.tabs.copyurl", type: "bool" },
-  { id: "browser.tabs.copyurl.activetab", type: "bool" },
-  { id: "browser.tabs.copyallurls", type: "bool" },
 
   // Fonts
   { id: "font.language.group", type: "wstring" },
