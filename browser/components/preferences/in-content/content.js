@@ -201,6 +201,21 @@ var gContentPane = {
                     "resizable=no", null);
   },
 
+  showScriptExceptions: function() {
+    var bundlePreferences = document.getElementById("bundlePreferences");
+    var params = {
+					blockVisible: true,
+					sessionVisible: false,
+					allowVisible: true,
+					prefilledHost: "",
+					permissionType: "script"};
+    params.windowTitle = bundlePreferences.getString("scriptpermissionstitle");
+    params.introText = bundlePreferences.getString("scriptpermissionstext");
+
+    gSubDialog.open("chrome://browser/content/preferences/permissions.xul",
+                    null, params);
+  },
+
   // FONTS
 
   /**
