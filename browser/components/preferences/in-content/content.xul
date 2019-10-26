@@ -11,6 +11,11 @@
               name="media.eme.enabled"
               type="bool"/>
 
+  <!-- Notifications -->
+  <preference id="dom.webnotifications.enabled"
+              name="dom.webnotifications.enabled"
+              type="bool"/>
+
   <!-- Popups -->
   <preference id="dom.disable_open_during_load"
               name="dom.disable_open_during_load"
@@ -84,14 +89,15 @@
     <rows>
       <row id="notificationsPolicyRow" align="center">
         <hbox align="start">
-          <label id="notificationsPolicy">&notificationsPolicyDesc4.label;</label>
+          <checkbox id="enableNotifications" preference="dom.webnotifications.enabled"
+                    label="&enableNotifications.label;"/>
           <label id="notificationsPolicyLearnMore"
                  class="learnMore text-link"
                  value="&notificationsPolicyLearnMore.label;"/>
         </hbox>
         <hbox pack="end">
-          <button id="notificationsPolicyButton" label="&notificationsPolicyButton.label;"
-                  accesskey="&notificationsPolicyButton.accesskey;"/>
+          <button label="&popupExceptions.label;"
+                  oncommand="gContentPane.showNotificationExceptions();"/>
         </hbox>
       </row>
       <row id="notificationsDoNotDisturbRow" hidden="true">

@@ -70,3 +70,5 @@
 <!ENTITY raiseLowerWindows.label "Raise or lower windows">
 <!ENTITY disableContextMenus.label "Disable or replace context menus">
 <!ENTITY scripts.label "Scripts">
+
+<!ENTITY enableNotifications.label "Allow notifications">
