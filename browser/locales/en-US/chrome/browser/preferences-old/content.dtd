@@ -71,4 +71,4 @@
 <!ENTITY disableContextMenus.label "Disable or replace context menus">
 <!ENTITY scripts.label "Scripts">
 
-<!ENTITY enableNotifications.label "Allow notifications">
+<!ENTITY enableNotifications.label "Enable notifications">
