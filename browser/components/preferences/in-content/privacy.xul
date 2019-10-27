@@ -792,6 +792,47 @@
     </hbox>
   </vbox>
 
+  <hbox data-subcategory="permissions-images">
+      <checkbox id="loadImages" class="tail-with-learn-more"
+                data-l10n-id="loadImages-checkbox"
+                preference="permissions.default.image"
+                onsyncfrompreference="return gPrivacyPane.readLoadImages();"
+                onsynctopreference="return gPrivacyPane.writeLoadImages();"
+                flex="1"/>
+    <!-- Please don't remove the wrapping hbox/vbox/box for these elements. It's used to properly compute the search tooltip position. -->
+    <hbox>
+      <button id="imagesPolicyButton"
+              is="highlightable-button"
+              class="accessory-button"
+              oncommand="gPrivacyPane.showImageExceptions();"
+              data-l10n-id="permissions-block-popups-exceptions"
+              search-l10n-ids="
+                permissions-address,
+                permissions-button-cancel.label,
+                permissions-button-ok.label,
+                permissions-exceptions-image-window.title,
+                permissions-exceptions-image-desc
+              " />
+    </hbox>
+  </hbox>
+
+  <hbox data-subcategory="permissions-scripts">
+      <checkbox id="enableJavaScript" class="tail-with-learn-more"
+                data-l10n-id="enableJavaScript-checkbox"
+                preference="javascript.enabled"
+                onsyncfrompreference="return gPrivacyPane.updateButtons('advancedJSButton',
+                                                                        'javascript.enabled');"
+                flex="1"/>
+    <!-- Please don't remove the wrapping hbox/vbox/box for these elements. It's used to properly compute the search tooltip position. -->
+    <hbox>
+      <button id="advancedJSButton"
+              data-l10n-id="advanced-fonts"
+              is="highlightable-button"
+              class="accessory-button"
+              oncommand="gPrivacyPane.showAdvancedJS();"/>
+    </hbox>
+  </hbox>
+
 </groupbox>
 
 <!-- Firefox Data Collection and Use -->

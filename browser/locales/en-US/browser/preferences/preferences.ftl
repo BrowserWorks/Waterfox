@@ -1091,3 +1091,9 @@ save-files-to-cloud-storage =
 restart-header = Restart Menu Item
 
 tabContextMenu-header = Tab Context Menu
+
+loadImages-checkbox =
+    .label = Load images automatically
+
+enableJavaScript-checkbox =
+    .label = Enable JavaScript
