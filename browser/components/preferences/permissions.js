@@ -36,6 +36,10 @@ const permissionExceptionsL10n = {
     window: "permissions-exceptions-image-window",
     description: "permissions-exceptions-image-desc",
   },
+  script: {
+    window: "permissions-exceptions-script-window",
+    description: "permissions-exceptions-script-desc",
+  },
 };
 
 function Permission(principal, type, capability) {
