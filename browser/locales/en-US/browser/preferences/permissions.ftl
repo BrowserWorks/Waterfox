@@ -162,15 +162,6 @@ permissions-exceptions-image-desc = You can specify which websites are allowed t
 advancedJSDialog =
     .title = Advanced JavaScript Settings
 
-moveResizePopupWindows =
-    .label = Move or resize popup windows
-
-raiseLowerWindows =
-    .label = Raise or lower windows
-
-disableContextMenus =
-    .label = Disable or replace context menus
-
 allowScripts =
     .value = Allow scripts to:
 
