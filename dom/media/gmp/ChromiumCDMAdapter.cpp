@@ -219,7 +219,7 @@ QueryDosDeviceWHook(LPCWSTR lpDeviceName, LPWSTR lpTargetPath, DWORD ucchMax)
   PodCopy(lpTargetPath, device.c_str(), device.size());
   lpTargetPath[device.size()] = 0;
   GMP_LOG("QueryDosDeviceWHook %S -> %S", lpDeviceName, lpTargetPath);
-  return name.size();
+  return device.size();
 }
 
 static std::vector<std::wstring>
