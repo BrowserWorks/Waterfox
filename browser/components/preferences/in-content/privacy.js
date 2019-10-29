@@ -2256,4 +2256,15 @@ var gPrivacyPane = {
     gSubDialog.open("chrome://browser/content/preferences/advanced-scripts.xul",
                     "resizable=no", null);
   },
+
+  showScriptExceptions: function() {
+    var params = {
+					blockVisible: true,
+					sessionVisible: false,
+					allowVisible: true,
+					prefilledHost: "",
+					permissionType: "script"};
+    gSubDialog.open("chrome://browser/content/preferences/permissions.xul",
+                    null, params);
+  },
 };

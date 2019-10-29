@@ -824,13 +824,24 @@
                                                                         'javascript.enabled');"
                 flex="1"/>
     <!-- Please don't remove the wrapping hbox/vbox/box for these elements. It's used to properly compute the search tooltip position. -->
-    <hbox>
+    <vbox>
       <button id="advancedJSButton"
               data-l10n-id="advanced-fonts"
               is="highlightable-button"
               class="accessory-button"
               oncommand="gPrivacyPane.showAdvancedJS();"/>
-    </hbox>
+      <button data-l10n-id="permissions-block-popups-exceptions"
+              is="highlightable-button"
+              class="accessory-button"
+              search-l10n-ids="
+                permissions-address,
+                permissions-button-cancel.label,
+                permissions-button-ok.label,
+                permissions-exceptions-script-window.title,
+                permissions-exceptions-script-desc,
+              "
+              oncommand="gPrivacyPane.showScriptExceptions();"/>
+    </vbox>
   </hbox>
 
 </groupbox>
