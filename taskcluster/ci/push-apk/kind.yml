@@ -46,6 +46,10 @@ jobs:
                     # See https://github.com/mozilla-releng/pushapkscript#aurora-beta-release-vs-alpha-beta-production
                     production: beta
                     staging: alpha
+        worker-type:
+            by-release-level:
+                production: scriptworker-k8s/gecko-3-pushapk
+                staging: scriptworker-k8s/gecko-1-pushapk
         treeherder:
             symbol: pub(gp-n)
 
