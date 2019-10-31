@@ -5204,7 +5204,7 @@ pref("extensions.webextensions.enablePerformanceCounters", true);
 pref("extensions.webextensions.performanceCountersMaxAge", 5000);
 
 // The HTML about:addons page.
-pref("extensions.htmlaboutaddons.enabled", true);
+pref("extensions.htmlaboutaddons.enabled", false);
 // Whether to allow the inline options browser in HTML about:addons page.
 pref("extensions.htmlaboutaddons.inline-options.enabled", true);
 // Show recommendations on the extension and theme list views.
