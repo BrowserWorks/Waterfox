@@ -165,6 +165,12 @@ Preferences.addAll([
   { id: "dom.disable_window_move_resize", type: "bool", inverted: true, instantApply: true },
   { id: "dom.disable_window_flip", type: "bool", inverted: true, instantApply: true },
 
+  // Referer
+  { id: "network.http.sendRefererHeader", type: "int" },
+
+  // WebRTC P2P
+  { id: "media.peerconnection.enabled", type: "bool" },
+
 ]);
 
 // Study opt out
