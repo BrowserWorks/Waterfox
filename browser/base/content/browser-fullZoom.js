@@ -96,6 +96,7 @@ var FullZoom = {
         let browser = this._getTargetedBrowser(event);
         this._ignorePendingZoomAccesses(browser);
         this._applyZoomToPref(browser);
+        updateZoomStatus();
         break;
     }
   },

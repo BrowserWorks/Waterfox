@@ -1789,6 +1789,8 @@ var gBrowserInit = {
     this._setInitialFocus();
 
     showFxaToolbarMenu(gFxaToolbarEnabled);
+
+    updateZoomStatus();
   },
 
   onLoad() {
@@ -1906,6 +1908,15 @@ var gBrowserInit = {
       document.getElementById("key_privatebrowsing").remove();
     }
 
+    let customizableBundle = Services.strings.createBundle("chrome://browser/locale/customizableui/customizableWidgets.properties");
+    windowRoot.ownerGlobal.document.querySelector('.toolbar-statusbar #sidebar-button').setAttribute("tooltiptext",customizableBundle.GetStringFromName("sidebar-button.tooltiptext2"));
+    windowRoot.ownerGlobal.document.querySelector('.page-zoom-controls .reset-zoom').setAttribute("tooltiptext",GetDynamicShortcutTooltipText("appMenu-zoomReset-button"))
+    windowRoot.ownerGlobal.document.querySelector('.page-zoom-controls #zoomoutsb').setAttribute("tooltiptext", GetDynamicShortcutTooltipText("appMenu-zoomReduce-button"))
+    windowRoot.ownerGlobal.document.querySelector('.page-zoom-controls #zoominsb').setAttribute("tooltiptext", GetDynamicShortcutTooltipText("appMenu-zoomEnlarge-button"))
+    windowRoot.ownerGlobal.document.querySelector('.page-zoom-controls #fullscreensb').setAttribute("tooltiptext",GetDynamicShortcutTooltipText("fullscreen-button"))
+    toggleStatusBar();
+    showBtnRange();
+    updateZoomStatus();
     this._loadHandled = true;
   },
 
@@ -2091,6 +2102,8 @@ var gBrowserInit = {
     });
 
     CaptivePortalWatcher.delayedStartup();
+
+    updateZoomStatus();
 
     this.delayedStartupFinished = true;
 
@@ -3990,6 +4003,17 @@ function getDefaultHomePage() {
 
 function BrowserFullScreen() {
   window.fullScreen = !window.fullScreen;
+  if (Services.prefs.getIntPref("browser.statusbar.mode") == 2)
+  {
+    if (window.fullScreen)
+    {
+      windowRoot.ownerGlobal.document.querySelector(".toolbar-statusbar").style.display = "none";
+    }
+    else
+    {
+      windowRoot.ownerGlobal.document.querySelector(".toolbar-statusbar").style.display = "flex";
+    }
+  }
 }
 
 function getWebNavigation() {
@@ -6064,6 +6088,7 @@ var XULBrowserWindow = {
   ) {
     if (FullZoom.updateBackgroundTabs) {
       FullZoom.onLocationChange(gBrowser.currentURI, true);
+      updateZoomStatus();
     }
 
     CombinedStopReload.onTabSwitch();
@@ -6619,6 +6644,8 @@ var TabsProgressListener = {
     gBrowser.getNotificationBox(aBrowser).removeTransientNotifications();
 
     FullZoom.onLocationChange(aLocationURI, false, aBrowser);
+
+    updateZoomStatus();
 
     ContentBlocking.onLocationChange();
   },

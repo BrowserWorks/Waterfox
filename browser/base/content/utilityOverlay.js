@@ -1220,3 +1220,81 @@ function restartBrowser() {
       throw new Error("We're sorry but something has gone wrong with 'restartBrowser' " + e);
   }
 };
+
+function setZoom() {
+  var zoomrange = document.getElementById("zoom-range-status");
+  FullZoom.setZoom(parseFloat(zoomrange.value));
+  var zoomValue = ZoomManager.getZoomForBrowser(gBrowser) * 100;
+  document.querySelector(".zoom-percent-status").textContent = parseInt(zoomValue) + " %";
+
+  if (parseInt(zoomValue) != 100){
+    document.querySelector('.reset-zoom.button-textonly').disabled = "";
+  }
+  else
+  {
+    document.querySelector('.reset-zoom.button-textonly').disabled = "true";
+  }
+}
+
+function resetZoomStatus() {
+  var zoomrange = document.getElementById("zoom-range-status");
+  var zoompercent = document.querySelector(".zoom-percent-status");
+  zoomrange.value = 1;
+  zoompercent.textContent = "100 %";
+  document.querySelector('.reset-zoom.button-textonly').disabled = "true";
+}
+
+
+function updateZoomStatus() {
+  var zoomValue =  windowRoot.ownerGlobal.ZoomManager.getZoomForBrowser(windowRoot.ownerGlobal.gBrowser)
+  windowRoot.ownerGlobal.document.querySelector('#zoom-range-status').value = zoomValue;
+  var zoomPercentValue = parseInt(zoomValue * 100);
+  windowRoot.ownerGlobal.document.querySelector('.zoom-percent-status').textContent = zoomPercentValue +' %';
+  if (zoomPercentValue != 100){
+    windowRoot.ownerGlobal.document.querySelector('.reset-zoom.button-textonly').disabled = "";
+  }
+  else
+  {
+    windowRoot.ownerGlobal.document.querySelector('.reset-zoom.button-textonly').disabled = "true";
+  }
+}
+
+function toggleStatusBar() {
+  if (Services.prefs.getIntPref("browser.statusbar.mode") == 2) {
+    windowRoot.ownerGlobal.document.getElementById("statuspanel").hidden = true;
+    windowRoot.ownerGlobal.document.querySelector(".toolbar-statusbar").style.display = "flex";
+    windowRoot.ownerGlobal.document.querySelector("#urlbar-zoom-button").style.display = "none";
+    windowRoot.ownerGlobal.document.querySelector("#pageActionSeparator").style.display = "none";
+  }
+  else if (Services.prefs.getIntPref("browser.statusbar.mode") == 1) {
+    windowRoot.ownerGlobal.document.querySelector(".toolbar-statusbar").style.display = "none";
+    windowRoot.ownerGlobal.document.querySelector("#urlbar-zoom-button").style.display = "";
+    windowRoot.ownerGlobal.document.getElementById("statuspanel").hidden = "";
+    windowRoot.ownerGlobal.document.querySelector("#pageActionSeparator").style.display = "";
+    windowRoot.ownerGlobal.document.querySelector("#pageActionSeparator").style.visibility = "visible";
+  }
+  else if (Services.prefs.getIntPref("browser.statusbar.mode") == 0) {
+    windowRoot.ownerGlobal.document.querySelector(".toolbar-statusbar").style.display = "none";
+    windowRoot.ownerGlobal.document.getElementById("statuspanel").hidden = true;
+    windowRoot.ownerGlobal.document.querySelector("#urlbar-zoom-button").style.display = "";
+    windowRoot.ownerGlobal.document.querySelector("#pageActionSeparator").style.display = "";
+    windowRoot.ownerGlobal.document.querySelector("#pageActionSeparator").style.visibility = "visible";
+  }
+}
+
+function showBtnRange() {
+  if(windowRoot.ownerGlobal.document.querySelector(".toolbar-statusbar").style.display == "flex")
+  {
+    if(Services.prefs.getBoolPref("browser.statusbar.showbtn", true)) {
+      windowRoot.ownerGlobal.document.querySelector("#zoomoutsb").style.display = "initial";
+      windowRoot.ownerGlobal.document.querySelector("#zoominsb").style.display = "initial";
+      windowRoot.ownerGlobal.document.querySelector("#zoom-range-status").style.display = "none";
+    }
+    else
+    {
+      windowRoot.ownerGlobal.document.querySelector("#zoomoutsb").style.display = "none";
+      windowRoot.ownerGlobal.document.querySelector("#zoominsb").style.display = "none";
+      windowRoot.ownerGlobal.document.querySelector("#zoom-range-status").style.display = "initial";
+    }
+  }
+}

@@ -74,10 +74,10 @@
     <command id="Browser:NextTab" oncommand="gBrowser.tabContainer.advanceSelectedTab(1, true);"/>
     <command id="Browser:PrevTab" oncommand="gBrowser.tabContainer.advanceSelectedTab(-1, true);"/>
     <command id="Browser:ShowAllTabs" oncommand="gTabsPanel.showAllTabsPanel();"/>
-    <command id="cmd_fullZoomReduce"  oncommand="FullZoom.reduce()"/>
-    <command id="cmd_fullZoomEnlarge" oncommand="FullZoom.enlarge()"/>
-    <command id="cmd_fullZoomReset"   oncommand="FullZoom.reset()"/>
-    <command id="cmd_fullZoomToggle"  oncommand="ZoomManager.toggleZoom();"/>
+    <command id="cmd_fullZoomReduce"  oncommand="FullZoom.reduce(); updateZoomStatus();"/>
+    <command id="cmd_fullZoomEnlarge" oncommand="FullZoom.enlarge(); updateZoomStatus();"/>
+    <command id="cmd_fullZoomReset"   oncommand="FullZoom.reset(); resetZoomStatus();"/>
+    <command id="cmd_fullZoomToggle"  oncommand="ZoomManager.toggleZoom(); updateZoomStatus();"/>
     <command id="cmd_gestureRotateLeft" oncommand="gGestureSupport.rotate(event.sourceEvent)"/>
     <command id="cmd_gestureRotateRight" oncommand="gGestureSupport.rotate(event.sourceEvent)"/>
     <command id="cmd_gestureRotateEnd" oncommand="gGestureSupport.rotateEnd()"/>
