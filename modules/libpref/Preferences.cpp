@@ -3334,18 +3334,10 @@ static Maybe<bool> TelemetryPrefValue() {
     return Nothing();
   }
 
-  // Determine the correct default for toolkit.telemetry.enabled. If this
-  // build has MOZ_TELEMETRY_ON_BY_DEFAULT *or* we're on the beta channel,
-  // telemetry is on by default, otherwise not. This is necessary so that
-  // beta users who are testing final release builds don't flipflop defaults.
-#  ifdef MOZ_TELEMETRY_ON_BY_DEFAULT
-  return Some(true);
-#  else
-  nsAutoCString channelPrefValue;
-  Unused << Preferences::GetCString(kChannelPref, channelPrefValue,
-                                    PrefValueKind::Default);
-  return Some(channelPrefValue.EqualsLiteral("beta"));
-#  endif
+  // Determine the correct default for toolkit.telemetry.enabled
+
+  // Waterfox doesn't do telemetry
+  return Some(false);
 }
 
 /* static */
@@ -3366,32 +3358,7 @@ static bool TelemetryPrefValue() {
   // toolkit.telemetry.enabled determines whether we send "extended" data.
   // We only want extended data from pre-release channels due to size.
 
-  NS_NAMED_LITERAL_CSTRING(channel, MOZ_STRINGIFY(MOZ_UPDATE_CHANNEL));
-
-  // Easy cases: Nightly, Aurora, Beta.
-  if (channel.EqualsLiteral("nightly") || channel.EqualsLiteral("aurora") ||
-      channel.EqualsLiteral("beta")) {
-    return true;
-  }
-
-#  ifndef MOZILLA_OFFICIAL
-  // Local developer builds: non-official builds on the "default" channel.
-  if (channel.EqualsLiteral("default")) {
-    return true;
-  }
-#  endif
-
-  // Release Candidate builds: builds that think they are release builds, but
-  // are shipped to beta users.
-  if (channel.EqualsLiteral("release")) {
-    nsAutoCString channelPrefValue;
-    Unused << Preferences::GetCString(kChannelPref, channelPrefValue,
-                                      PrefValueKind::Default);
-    if (channelPrefValue.EqualsLiteral("beta")) {
-      return true;
-    }
-  }
-
+  // Waterfox doesn't do telemetry
   return false;
 }
 
