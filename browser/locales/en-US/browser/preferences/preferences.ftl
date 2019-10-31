@@ -1097,3 +1097,18 @@ loadImages-checkbox =
 
 enableJavaScript-checkbox =
     .label = Enable JavaScript
+
+sendRefererHeaderopt0 =
+    .label = Never send the referrer header
+
+sendRefererHeaderopt1 =
+    .label = Send the referrer header only when clicking on links and similar elements
+
+sendRefererHeaderopt2 =
+    .label = Send the referrer header on all requests (Default)
+
+webrtcp2preference =
+    .label = Enable WebRTC peer connection
+
+new-tab-thumbnail =
+    .label = Disable thumbnail capturing on new tab page

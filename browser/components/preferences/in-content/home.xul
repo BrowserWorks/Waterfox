@@ -85,6 +85,11 @@
     </menulist>
   </hbox>
 
+  <hbox id="pagethumbnails">
+        <checkbox id="browser.pagethumbnails.capturing_disabled" data-l10n-id="new-tab-thumbnail"
+              preference="browser.pagethumbnails.capturing_disabled"/>
+  </hbox>
+
   <hbox id="browserHomePageExtensionContent"
         align="center" hidden="true" class="extension-controlled">
     <description control="disableHomePageExtension" flex="1" />
