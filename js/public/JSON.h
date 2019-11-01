@@ -16,12 +16,12 @@
 
 #include "js/RootingAPI.h"  // JS::Handle, JS::MutableHandle
 
-struct JSContext;
-class JSObject;
-class JSString;
+struct JS_PUBLIC_API JSContext;
+class JS_PUBLIC_API JSObject;
+class JS_PUBLIC_API JSString;
 
 namespace JS {
-union Value;
+union JS_PUBLIC_API Value;
 }
 
 using JSONWriteCallback = bool (*)(const char16_t* buf, uint32_t len,

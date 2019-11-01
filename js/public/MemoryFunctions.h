@@ -15,8 +15,8 @@
 
 #include "jstypes.h"  // JS_PUBLIC_API
 
-struct JSContext;
-struct JSRuntime;
+struct JS_PUBLIC_API JSContext;
+struct JS_PUBLIC_API JSRuntime;
 
 struct JSFreeOp {
  protected:

@@ -9,13 +9,14 @@
 
 #include "mozilla/LinkedList.h"
 
+#include "jstypes.h"
 #include "gc/Barrier.h"
 #include "gc/DeletePolicy.h"
 #include "gc/Zone.h"
 #include "js/HashTable.h"
 
 namespace JS {
-class Zone;
+class JS_PUBLIC_API Zone;
 }  // namespace JS
 
 namespace js {

@@ -19,7 +19,7 @@
 #include "js/UniquePtr.h"
 #include "js/Utility.h"
 
-struct JSFreeOp;
+struct JS_PUBLIC_API JSFreeOp;
 class JS_PUBLIC_API JSTracer;
 
 namespace js {

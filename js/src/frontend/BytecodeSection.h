@@ -13,6 +13,7 @@
 #include <stddef.h>  // ptrdiff_t, size_t
 #include <stdint.h>  // uint16_t, int32_t, uint32_t
 
+#include "jstypes.h"                   // JS_PUBLIC_API
 #include "NamespaceImports.h"          // ValueVector
 #include "frontend/JumpList.h"         // JumpTarget
 #include "frontend/NameCollections.h"  // AtomIndexMap, PooledMapPtr
@@ -26,7 +27,7 @@
 #include "vm/JSScript.h"               // JSTryNote, JSTryNoteKind, ScopeNote
 #include "vm/Opcodes.h"                // JSOP_*
 
-struct JSContext;
+struct JS_PUBLIC_API JSContext;
 
 namespace js {
 

@@ -9,10 +9,11 @@
 
 #include "jsapi.h"
 
+#include "jstypes.h"
 #include "vm/NativeObject.h"
 
 namespace JS {
-union Value;
+union JS_PUBLIC_API Value;
 }  // namespace JS
 
 namespace js {

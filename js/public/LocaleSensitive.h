@@ -16,12 +16,12 @@
 #include "js/RootingAPI.h"  // JS::Handle, JS::MutableHandle
 #include "js/Utility.h"     // JS::UniqueChars
 
-struct JSContext;
-struct JSRuntime;
-class JSString;
+struct JS_PUBLIC_API JSContext;
+struct JS_PUBLIC_API JSRuntime;
+class JS_PUBLIC_API JSString;
 
 namespace JS {
-union Value;
+union JS_PUBLIC_API Value;
 }
 
 /**

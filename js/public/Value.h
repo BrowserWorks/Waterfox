@@ -27,7 +27,7 @@
 #include "js/Utility.h"
 
 namespace JS {
-union Value;
+union JS_PUBLIC_API Value;
 }
 
 /* JS::Value can store a full int32_t. */
