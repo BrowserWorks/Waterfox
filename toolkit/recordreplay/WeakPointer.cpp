@@ -33,7 +33,7 @@ static UniquePtr<JS::PersistentRootedObject> NewRoot(JSObject* aJSObj) {
 extern "C" {
 
 MOZ_EXPORT void RecordReplayInterface_SetWeakPointerJSRoot(const void* aPtr,
-                                                           JSObject* aJSObj) {
+                                                           void* aJSObj) {
   MOZ_RELEASE_ASSERT(IsReplaying());
 
   StaticMutexAutoLock lock(gWeakPointerMutex);
@@ -41,13 +41,13 @@ MOZ_EXPORT void RecordReplayInterface_SetWeakPointerJSRoot(const void* aPtr,
   auto iter = gWeakPointerRootMap->find(aPtr);
   if (iter != gWeakPointerRootMap->end()) {
     if (aJSObj) {
-      *iter->second = aJSObj;
+      *iter->second = static_cast<JSObject*>(aJSObj);
     } else {
       gWeakPointerRootMap->erase(aPtr);
     }
   } else if (aJSObj) {
-    gWeakPointerRootMap->insert(
-        WeakPointerRootMap::value_type(aPtr, NewRoot(aJSObj)));
+    gWeakPointerRootMap->insert(WeakPointerRootMap::value_type(
+        aPtr, NewRoot(static_cast<JSObject*>(aJSObj))));
   }
 }
 
