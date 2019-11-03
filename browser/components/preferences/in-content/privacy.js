@@ -2222,8 +2222,8 @@ var gPrivacyPane = {
    * checkbox, returning true if images should be loaded and false otherwise.
    */
   readLoadImages() {
-    var pref = document.getElementById("permissions.default.image");
-    return (pref.value == 1 || pref.value == 3);
+    var pref = Services.prefs.getIntPref("permissions.default.image");
+    return (pref == 1 || pref == 3);
   },
 
   /**
