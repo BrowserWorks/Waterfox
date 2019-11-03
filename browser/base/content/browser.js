@@ -1917,6 +1917,10 @@ var gBrowserInit = {
     toggleStatusBar();
     showBtnRange();
     updateZoomStatus();
+    if (Services.prefs.getStringPref("browser.tabBar.position") != "topAboveAB")
+    {
+      moveTabBar();
+    }
     this._loadHandled = true;
   },
 

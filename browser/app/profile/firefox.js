@@ -1915,4 +1915,8 @@ pref("browser.pagethumbnails.capturing_disabled", false);
 // 2 - show Status Bar
 pref("browser.statusbar.mode", 2);
 
+// Don't use buttons in zoom range control in Status Bar
 pref("browser.statusbar.showbtn", false);
+
+// Tab Bar position
+pref("browser.tabBar.position", "topAboveAB");

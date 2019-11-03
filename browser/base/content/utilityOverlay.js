@@ -1298,3 +1298,19 @@ function showBtnRange() {
     }
   }
 }
+
+function moveTabBar()
+{
+  if(Services.prefs.getStringPref("browser.tabBar.position") == "topUnderAB")
+  {
+    windowRoot.ownerGlobal.document.querySelector("#navigator-toolbox").appendChild(windowRoot.ownerGlobal.document.querySelector("#TabsToolbar"));
+  }
+  else if (Services.prefs.getStringPref("browser.tabBar.position") == "bottom")
+  {
+    windowRoot.ownerGlobal.document.querySelector("#browser-bottombox").insertAdjacentElement('afterbegin', windowRoot.ownerGlobal.document.querySelector("#TabsToolbar"));
+  }
+  else if (Services.prefs.getStringPref("browser.tabBar.position") == "topAboveAB")
+  {
+    windowRoot.ownerGlobal.document.querySelector("#navigator-toolbox").insertAdjacentElement('afterbegin', windowRoot.ownerGlobal.document.querySelector("#TabsToolbar"));
+  }
+}
