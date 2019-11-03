@@ -62,20 +62,6 @@
 #endif
 </groupbox>
 
-<!-- Restart Menu Item preferences -->
-<groupbox id="restartGroup"
-          data-category="paneGeneral"
-          hidden="true">
-  <label><html:h2 data-l10n-id="restart-header"/></label>
-
-  <checkbox id="browser.restart_menu.showpanelmenubtn" data-l10n-id="restart-paneluibtn"
-							preference="browser.restart_menu.showpanelmenubtn"/>
-  <checkbox id="browser.restart_menu.purgecache" data-l10n-id="clean-fast-restart-cache"
-            preference="browser.restart_menu.purgecache"/>
-  <checkbox id="browser.restart_menu.requireconfirm" data-l10n-id="restart-reqconfirmation"
-            preference="browser.restart_menu.requireconfirm"/>
- </groupbox>
-
 <!-- Tab preferences -->
 <groupbox data-category="paneGeneral"
           hidden="true">
@@ -134,23 +120,6 @@
         </hbox>
       </hbox>
     </vbox>
-</groupbox>
-
-<groupbox id="tabContextMenuGroup"
-          data-category="paneGeneral"
-          hidden="true">
-    <label><html:h2 data-l10n-id="tabContextMenu-header"/></label>
-    <checkbox id="browser.tabs.duplicateTab" data-l10n-id="duplicate-tab-options"
-     preference="browser.tabs.duplicateTab"/>
-
-	 <checkbox id="browser.tabs.copyurl" data-l10n-id="copy-tab-url-options"
-			preference="browser.tabs.copyurl"/>
-
-  <checkbox id="browser.tabs.copyurl.activetab" data-l10n-id="copy-active-tab-url-options"
-			preference="browser.tabs.copyurl.activetab"/>
-
-	<checkbox id="browser.tabs.copyallurls" data-l10n-id="copy-all-tab-urls-options"
-     preference="browser.tabs.copyallurls"/>
 </groupbox>
 
 <hbox id="languageAndAppearanceCategory"
@@ -304,6 +273,21 @@
   </hbox>
 </groupbox>
 
+<!-- Restart Menu Item preferences -->
+<groupbox id="restartGroup"
+          data-category="paneGeneral"
+          hidden="true">
+  <label><html:h2 data-l10n-id="restart-header"/></label>
+
+  <checkbox id="browser.restart_menu.showpanelmenubtn" data-l10n-id="restart-paneluibtn"
+							preference="browser.restart_menu.showpanelmenubtn"/>
+  <checkbox id="browser.restart_menu.purgecache" data-l10n-id="clean-fast-restart-cache"
+            preference="browser.restart_menu.purgecache"/>
+  <checkbox id="browser.restart_menu.requireconfirm" data-l10n-id="restart-reqconfirmation"
+            preference="browser.restart_menu.requireconfirm"/>
+ </groupbox>
+
+<!-- Status Bar preferences -->
 <groupbox id="statusBarGroup"
           data-category="paneGeneral"
           hidden="true">
@@ -324,6 +308,24 @@
                 data-l10n-id="show-btn-range"
                 onsyncfrompreference="showBtnRange();"/>
   </vbox>
+</groupbox>
+
+<!-- Tab Context Menu preferences -->
+<groupbox id="tabContextMenuGroup"
+          data-category="paneGeneral"
+          hidden="true">
+    <label><html:h2 data-l10n-id="tabContextMenu-header"/></label>
+    <checkbox id="browser.tabs.duplicateTab" data-l10n-id="duplicate-tab-options"
+     preference="browser.tabs.duplicateTab"/>
+
+	 <checkbox id="browser.tabs.copyurl" data-l10n-id="copy-tab-url-options"
+			preference="browser.tabs.copyurl"/>
+
+  <checkbox id="browser.tabs.copyurl.activetab" data-l10n-id="copy-active-tab-url-options"
+			preference="browser.tabs.copyurl.activetab"/>
+
+	<checkbox id="browser.tabs.copyallurls" data-l10n-id="copy-all-tab-urls-options"
+     preference="browser.tabs.copyallurls"/>
 </groupbox>
 
 <!-- Languages -->
