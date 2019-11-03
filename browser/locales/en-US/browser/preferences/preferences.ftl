@@ -1126,3 +1126,14 @@ hide-status-bar =
 
 show-btn-range =
     .label = Use buttons in range control
+
+tab-bar-position = Tab Bar Position
+
+tab-top-above-ab =
+    .label = Top above address bar
+
+tab-top-under-ab =
+    .label = Top under address bar
+
+tab-bottom =
+    .label = Bottom

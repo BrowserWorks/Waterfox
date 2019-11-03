@@ -120,6 +120,19 @@
         </hbox>
       </hbox>
     </vbox>
+
+    <label><html:h2 data-l10n-id="tab-bar-position"/></label>
+    <vbox id="tabBarPositionSettingsContainer">
+    <radiogroup id="tabBarPositionGroup" preference="browser.tabBar.position" onsyncfrompreference="moveTabBar();">
+      <radio value="topAboveAB"
+             data-l10n-id="tab-top-above-ab"/>
+      <radio value="topUnderAB"
+             data-l10n-id="tab-top-under-ab"/>
+      <radio value="bottom"
+             data-l10n-id="tab-bottom"/>
+    </radiogroup>
+    </vbox>
+
 </groupbox>
 
 <hbox id="languageAndAppearanceCategory"
