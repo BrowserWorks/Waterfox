@@ -66,6 +66,10 @@ jobs:
                     # XXX Change this value if google-play-track becomes rollout
                     production: null
                     staging: null
+        worker-type:
+            by-release-level:
+                production: scriptworker-k8s/gecko-3-pushapk
+                staging: scriptworker-k8s/gecko-1-pushapk
         treeherder:
             symbol: pub(gp-b)
 
