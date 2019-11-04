@@ -1283,8 +1283,7 @@ function toggleStatusBar() {
 }
 
 function showBtnRange() {
-  if(windowRoot.ownerGlobal.document.querySelector(".toolbar-statusbar").style.display == "flex")
-  {
+  if (Services.prefs.getIntPref("browser.statusbar.mode") == 2) {
     if(Services.prefs.getBoolPref("browser.statusbar.showbtn", true)) {
       windowRoot.ownerGlobal.document.querySelector("#zoomoutsb").style.display = "initial";
       windowRoot.ownerGlobal.document.querySelector("#zoominsb").style.display = "initial";
@@ -1304,13 +1303,16 @@ function moveTabBar()
   if(Services.prefs.getStringPref("browser.tabBar.position") == "topUnderAB")
   {
     windowRoot.ownerGlobal.document.querySelector("#navigator-toolbox").appendChild(windowRoot.ownerGlobal.document.querySelector("#TabsToolbar"));
+    windowRoot.ownerGlobal.gBrowser.setTabTitle(windowRoot.ownerGlobal.document.querySelector(".tabbrowser-tab[first-visible-tab]"));
   }
   else if (Services.prefs.getStringPref("browser.tabBar.position") == "bottom")
   {
     windowRoot.ownerGlobal.document.querySelector("#browser-bottombox").insertAdjacentElement('afterbegin', windowRoot.ownerGlobal.document.querySelector("#TabsToolbar"));
+    windowRoot.ownerGlobal.gBrowser.setTabTitle(windowRoot.ownerGlobal.document.querySelector(".tabbrowser-tab[first-visible-tab]"));
   }
   else if (Services.prefs.getStringPref("browser.tabBar.position") == "topAboveAB")
   {
     windowRoot.ownerGlobal.document.querySelector("#navigator-toolbox").insertAdjacentElement('afterbegin', windowRoot.ownerGlobal.document.querySelector("#TabsToolbar"));
+    windowRoot.ownerGlobal.gBrowser.setTabTitle(windowRoot.ownerGlobal.document.querySelector(".tabbrowser-tab[first-visible-tab]"));
   }
 }
