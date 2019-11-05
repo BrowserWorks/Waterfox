@@ -3416,7 +3416,7 @@ pref("svg.transform-box.enabled", true);
 # always enabled in the chrome process, regardless of this pref.)
 # Also, these keywords are currently not part of any spec, which is partly why
 # we disable them for web content.
-pref("svg.context-properties.content.enabled", false);
+pref("svg.context-properties.content.enabled", true);
 
 // Default font types and sizes by locale
 pref("font.default.ar", "sans-serif");
@@ -6073,7 +6073,7 @@ pref("fission.preserve_browsing_contexts", false);
 // user profile directory for these stylesheets:
 //  * userContent.css
 //  * userChrome.css
-pref("toolkit.legacyUserProfileCustomizations.stylesheets", false);
+pref("toolkit.legacyUserProfileCustomizations.stylesheets", true);
 
 // Enable support for XMLDocument.load and .async for webcompat (bug 1569102).
 pref("dom.xmldocument.load.enabled", true);
