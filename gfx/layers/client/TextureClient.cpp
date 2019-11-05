@@ -100,16 +100,16 @@ public:
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(TextureChild)
 
   TextureChild()
-  : mCompositableForwarder(nullptr)
-  , mTextureForwarder(nullptr)
-  , mTextureClient(nullptr)
-  , mTextureData(nullptr)
-  , mDestroyed(false)
-  , mMainThreadOnly(false)
-  , mIPCOpen(false)
-  , mOwnsTextureData(false)
-  , mOwnerCalledDestroy(false)
-  {}
+      : mCompositableForwarder(nullptr),
+        mTextureForwarder(nullptr),
+        mTextureClient(nullptr),
+        mTextureData(nullptr),
+        mDestroyed(false),
+        mMainThreadOnly(false),
+        mIPCOpen(false),
+        mOwnsTextureData(false),
+        mOwnerCalledDestroy(false),
+        mUsesImageBridge(false) {}
 
   mozilla::ipc::IPCResult Recv__delete__() override { return IPC_OK(); }
 
@@ -119,16 +119,24 @@ public:
 
   bool IPCOpen() const { return mIPCOpen; }
 
-  void Lock() const { if (mCompositableForwarder && mCompositableForwarder->GetTextureForwarder()->UsesImageBridge()) { mLock.Enter(); } }
+  void Lock() const {
+    if (mUsesImageBridge) {
+      mLock.Enter();
+    }
+  }
 
-  void Unlock() const { if (mCompositableForwarder && mCompositableForwarder->GetTextureForwarder()->UsesImageBridge()) { mLock.Leave(); } }
+  void Unlock() const {
+    if (mUsesImageBridge) {
+      mLock.Leave();
+    }
+  }
 
-private:
-
-  // AddIPDLReference and ReleaseIPDLReference are only to be called by CreateIPDLActor
-  // and DestroyIPDLActor, respectively. We intentionally make them private to prevent misuse.
-  // The purpose of these methods is to be aware of when the IPC system around this
-  // actor goes down: mIPCOpen is then set to false.
+ private:
+  // AddIPDLReference and ReleaseIPDLReference are only to be called by
+  // CreateIPDLActor and DestroyIPDLActor, respectively. We intentionally make
+  // them private to prevent misuse. The purpose of these methods is to be aware
+  // of when the IPC system around this actor goes down: mIPCOpen is then set to
+  // false.
   void AddIPDLReference() {
     MOZ_ASSERT(mIPCOpen == false);
     mIPCOpen = true;
@@ -220,6 +228,7 @@ private:
   bool mIPCOpen;
   bool mOwnsTextureData;
   bool mOwnerCalledDestroy;
+  bool mUsesImageBridge;
 
   friend class TextureClient;
   friend void DeallocateTextureClient(TextureDeallocParams params);
@@ -894,6 +903,7 @@ TextureClient::InitIPDLActor(CompositableForwarder* aForwarder)
         }
       }
       mActor->mCompositableForwarder = aForwarder;
+      mActor->mUsesImageBridge = aForwarder->GetTextureForwarder()->UsesImageBridge();
     }
     return true;
   }
