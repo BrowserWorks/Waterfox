@@ -20,8 +20,8 @@ job-defaults:
     shipping-product: fennec
     worker-type:
         by-release-level:
-            production: scriptworker-prov-v1/pushapk-v1
-            staging: scriptworker-prov-v1/dep-pushapk
+            production: scriptworker-k8s/gecko-3-pushapk
+            staging: scriptworker-k8s/gecko-1-pushapk
     worker:
         upstream-artifacts:  # see transforms
         implementation: push-apk
@@ -46,10 +46,6 @@ jobs:
                     # See https://github.com/mozilla-releng/pushapkscript#aurora-beta-release-vs-alpha-beta-production
                     production: beta
                     staging: alpha
-        worker-type:
-            by-release-level:
-                production: scriptworker-k8s/gecko-3-pushapk
-                staging: scriptworker-k8s/gecko-1-pushapk
         treeherder:
             symbol: pub(gp-n)
 
@@ -66,10 +62,6 @@ jobs:
                     # XXX Change this value if google-play-track becomes rollout
                     production: null
                     staging: null
-        worker-type:
-            by-release-level:
-                production: scriptworker-k8s/gecko-3-pushapk
-                staging: scriptworker-k8s/gecko-1-pushapk
         treeherder:
             symbol: pub(gp-b)
 
