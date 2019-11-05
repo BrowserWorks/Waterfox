@@ -224,9 +224,10 @@ PersistentBufferProviderShared::GetTexture(const Maybe<uint32_t>& aIndex)
 }
 
 already_AddRefed<gfx::DrawTarget>
-PersistentBufferProviderShared::BorrowDrawTarget(const gfx::IntRect& aPersistedRect)
-{
-  if (!mFwd->GetTextureForwarder()->IPCOpen()) {
+PersistentBufferProviderShared::BorrowDrawTarget(
+    const gfx::IntRect& aPersistedRect) {
+  if (!mFwd->GetTextureForwarder() ||
+      !mFwd->GetTextureForwarder()->IPCOpen()) {
     return nullptr;
   }
 
