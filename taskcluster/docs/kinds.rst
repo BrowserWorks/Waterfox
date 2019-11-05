@@ -309,7 +309,7 @@ Submits bouncer updates for releases.
 
 release-bouncer-sub-nazgul
 --------------------------
-Submits bouncer updates for releases, using new implementation of bouncer-admin (Nazgul).
+Submits bouncer updates for releases using new implementation of bouncer-admin (Nazgul)
 
 release-mark-as-shipped
 -----------------------
