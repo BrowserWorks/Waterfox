@@ -4,6 +4,8 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "ProxyAccessibleWrap.h"
+#include "Accessible-inl.h"
+
 #include "nsPersistentProperties.h"
 
 using namespace mozilla::a11y;
