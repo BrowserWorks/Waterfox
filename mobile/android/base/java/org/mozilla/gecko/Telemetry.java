@@ -20,6 +20,7 @@ import static org.mozilla.gecko.mma.MmaDelegate.OPENED_BOOKMARK;
 import static org.mozilla.gecko.mma.MmaDelegate.SAVED_BOOKMARK;
 import static org.mozilla.gecko.mma.MmaDelegate.SAVED_LOGIN_AND_PASSWORD;
 import static org.mozilla.gecko.mma.MmaDelegate.SCREENSHOT;
+import static org.mozilla.gecko.mma.MmaDelegate.SIGN_UP_DISMISS;
 
 
 @RobocopTarget
@@ -105,6 +106,8 @@ public class Telemetry {
             MmaDelegate.track(SCREENSHOT);
         } else if (eventName.equalsIgnoreCase(Event.ACTION.toString()) && method == Method.DOORHANGER && extras.equals("login-positive")) {
             MmaDelegate.track(SAVED_LOGIN_AND_PASSWORD);
+        } else if (eventName.equalsIgnoreCase(Event.ACTION.toString()) && method == Method.BUTTON && extras.equals("awesomescreen-signup-dismiss")) {
+            MmaDelegate.track(SIGN_UP_DISMISS);
         }
     }
 }
