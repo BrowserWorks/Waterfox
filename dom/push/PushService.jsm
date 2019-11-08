@@ -637,12 +637,16 @@ var PushService = {
       return;
     }
 
-    prefs.ignore("connection.enabled", this);
+    try {
+      prefs.ignore("connection.enabled", this);
 
-    Services.obs.removeObserver(this, "network:offline-status-changed");
-    Services.obs.removeObserver(this, "clear-origin-attributes-data");
-    Services.obs.removeObserver(this, "idle-daily");
-    Services.obs.removeObserver(this, "perm-changed");
+      Services.obs.removeObserver(this, "network:offline-status-changed");
+      Services.obs.removeObserver(this, "clear-origin-attributes-data");
+      Services.obs.removeObserver(this, "idle-daily");
+      Services.obs.removeObserver(this, "perm-changed");
+    } catch (e) {
+      console.error("stopObservers: ", e);
+    }
   },
 
   _shutdownService() {
