@@ -1137,3 +1137,19 @@ tab-top-under-ab =
 
 tab-bottom =
     .label = Bottom
+
+pane-webpages-title = Webpages
+category-webpages =
+    .tooltiptext = { pane-webpages-title }
+
+pane-appearance-title = Appearance
+category-appearance =
+    .tooltiptext = { pane-appearance-title }
+
+pane-downloads-title = Downloads & Updates
+category-downloads =
+    .tooltiptext = { pane-downloads-title }
+
+pane-all-title = Display All
+category-all =
+    .tooltiptext = { pane-all-title }

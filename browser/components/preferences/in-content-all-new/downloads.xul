@@ -1,0 +1,208 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+<!-- Downloads & Updates panel -->
+
+#ifdef MOZ_UPDATER
+  <script src="chrome://browser/content/aboutDialog-appUpdater.js"/>
+#endif
+
+<script src="chrome://browser/content/preferences/in-content-all-new/downloads.js"/>
+
+<html:template id="template-paneDownloads">
+
+<!--Downloads-->
+<groupbox id="downloadsGroup" data-category="paneDownloads" hidden="true">
+  <label><html:h2 data-l10n-id="download-header"/></label>
+
+  <radiogroup id="saveWhere"
+              preference="browser.download.useDownloadDir"
+              onsyncfrompreference="return gDownloadsPane.readUseDownloadDir();">
+    <hbox>
+      <radio id="saveTo"
+             value="true"
+             data-l10n-id="download-save-to"/>
+      <textbox id="downloadFolder" flex="1"
+               readonly="true"
+               aria-labelledby="saveTo"/>
+      <button id="chooseFolder"
+              is="highlightable-button"
+              class="accessory-button"
+              data-l10n-id="download-choose-folder"/>
+    </hbox>
+    <!-- Additional radio button added to support CloudStorage - Bug 1357171 -->
+    <radio id="saveToCloud"
+           value="true"
+           hidden="true"/>
+    <radio id="alwaysAsk"
+           value="false"
+           data-l10n-id="download-always-ask-where"/>
+  </radiogroup>
+</groupbox>
+
+
+#ifdef HAVE_SHELL_SERVICE
+  <stringbundle id="bundleShell" src="chrome://browser/locale/shellservice.properties"/>
+  <stringbundle id="bundleBrand" src="chrome://branding/locale/brand.properties"/>
+#endif
+
+<!-- Update -->
+<groupbox id="updateApp" data-category="paneDownloads" hidden="true">
+  <label><html:h2 data-l10n-id="update-application-title"/></label>
+
+  <label class="search-header" hidden="true"><html:h2 data-l10n-id="update-application-title"/></label>
+
+  <label data-l10n-id="update-application-description"/>
+  <hbox align="center">
+    <vbox flex="1">
+      <description id="updateAppInfo">
+        <html:a id="releasenotes" target="_blank" data-l10n-name="learn-more" class="learnMore text-link" hidden="true"/>
+      </description>
+      <description id="distribution" class="text-blurb" hidden="true"/>
+      <description id="distributionId" class="text-blurb" hidden="true"/>
+    </vbox>
+#ifdef MOZ_UPDATER
+    <spacer flex="1"/>
+    <!-- Please don't remove the wrapping hbox/vbox/box for these elements. It's used to properly compute the search tooltip position. -->
+    <vbox>
+      <button id="showUpdateHistory"
+              is="highlightable-button"
+              class="accessory-button"
+              data-l10n-id="update-history"
+              preference="app.update.disable_button.showUpdateHistory"
+              search-l10n-ids="
+                history-title,
+                history-intro
+              "/>
+    </vbox>
+#endif
+  </hbox>
+#ifdef MOZ_UPDATER
+  <vbox id="updateBox">
+    <deck id="updateDeck" orient="vertical">
+      <hbox id="checkForUpdates" align="start">
+        <spacer flex="1"/>
+        <button id="checkForUpdatesButton"
+                is="highlightable-button"
+                data-l10n-id="update-checkForUpdatesButton"
+                oncommand="gAppUpdater.checkForUpdates();"/>
+      </hbox>
+      <hbox id="downloadAndInstall" align="start">
+        <spacer flex="1"/>
+        <button id="downloadAndInstallButton"
+                is="highlightable-button"
+                oncommand="gAppUpdater.startDownload();"/>
+                <!-- label and accesskey will be filled by JS -->
+      </hbox>
+      <hbox id="apply" align="start">
+        <spacer flex="1"/>
+        <button id="updateButton"
+                is="highlightable-button"
+                data-l10n-id="update-updateButton"
+                oncommand="gAppUpdater.buttonRestartAfterDownload();"/>
+      </hbox>
+      <hbox id="checkingForUpdates" align="start">
+        <image class="update-throbber"/>
+        <label data-l10n-id="update-checkingForUpdates"></label>
+        <spacer flex="1"/>
+        <button data-l10n-id="update-checkForUpdatesButton"
+                is="highlightable-button"
+                disabled="true"/>
+      </hbox>
+      <hbox id="downloading" align="start" data-l10n-id="update-downloading">
+        <html:img class="update-throbber" src="chrome://global/skin/icons/loading.png" data-l10n-name="icon"/>
+        <label id="downloadStatus" data-l10n-name="download-status"/>
+      </hbox>
+      <hbox id="applying" align="start">
+        <image class="update-throbber"/>
+        <label data-l10n-id="update-applying"></label>
+      </hbox>
+      <hbox id="downloadFailed" align="start">
+        <label data-l10n-id="update-failed-main">
+          <html:a id="failedLink" target="_blank" class="learnMore text-link" data-l10n-name="failed-link-main"></html:a>
+        </label>
+        <spacer flex="1"/>
+        <button data-l10n-id="update-checkForUpdatesButton"
+                is="highlightable-button"
+                oncommand="gAppUpdater.checkForUpdates();"/>
+      </hbox>
+      <hbox id="policyDisabled" align="start">
+        <label data-l10n-id="update-adminDisabled"></label>
+        <spacer flex="1"/>
+        <button data-l10n-id="update-checkForUpdatesButton"
+                is="highlightable-button"
+                disabled="true"/>
+      </hbox>
+      <hbox id="noUpdatesFound" align="start">
+        <image class="face-smile"/>
+        <label data-l10n-id="update-noUpdatesFound"></label>
+        <spacer flex="1"/>
+        <button data-l10n-id="update-checkForUpdatesButton"
+                is="highlightable-button"
+                oncommand="gAppUpdater.checkForUpdates();"/>
+      </hbox>
+      <hbox id="otherInstanceHandlingUpdates" align="start">
+        <label data-l10n-id="update-otherInstanceHandlingUpdates"></label>
+        <spacer flex="1"/>
+        <button data-l10n-id="update-checkForUpdatesButton"
+                is="highlightable-button"
+                disabled="true"/>
+      </hbox>
+      <hbox id="manualUpdate" align="start">
+        <image class="face-sad"/>
+        <description flex="1" data-l10n-id="update-manual">
+          <label id="manualLink" data-l10n-name="manual-link" is="text-link"/>
+        </description>
+        <spacer flex="1"/>
+        <button data-l10n-id="update-checkForUpdatesButton"
+                is="highlightable-button"
+                disabled="true"/>
+      </hbox>
+      <hbox id="unsupportedSystem" align="start">
+        <description flex="1" data-l10n-id="update-unsupported">
+          <label id="unsupportedLink" class="learnMore" data-l10n-name="unsupported-link" is="text-link"></label>
+        </description>
+        <spacer flex="1"/>
+        <button data-l10n-id="update-checkForUpdatesButton"
+                is="highlightable-button"
+                disabled="true"/>
+      </hbox>
+      <hbox id="restarting" align="start">
+        <image class="update-throbber"/><label data-l10n-id="update-restarting"></label>
+        <spacer flex="1"/>
+        <button data-l10n-id="update-updateButton"
+                is="highlightable-button"
+                disabled="true"/>
+      </hbox>
+    </deck>
+  </vbox>
+#endif
+
+#ifdef MOZ_UPDATER
+  <description id="updateAllowDescription" data-l10n-id="update-application-allow-description"></description>
+  <vbox id="updateSettingsContainer">
+    <radiogroup id="updateRadioGroup">
+      <radio id="autoDesktop"
+             value="true"
+             data-l10n-id="update-application-auto"/>
+      <radio id="manualDesktop"
+             value="false"
+             data-l10n-id="update-application-check-choose"/>
+    </radiogroup>
+    <description id="updateSettingCrossUserWarning" hidden="true"
+                 data-l10n-id="update-application-warning-cross-user-setting">
+    </description>
+  </vbox>
+#ifdef MOZ_MAINTENANCE_SERVICE
+  <checkbox id="useService"
+            data-l10n-id="update-application-use-service"
+            preference="app.update.service.enabled"/>
+#endif
+#endif
+  <checkbox id="enableSearchUpdate"
+            data-l10n-id="update-enable-search-update"
+            preference="browser.search.update"/>
+</groupbox>
+
+</html:template>

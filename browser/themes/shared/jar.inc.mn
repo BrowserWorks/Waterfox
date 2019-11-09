@@ -270,3 +270,8 @@
   skin/classic/browser/privatebrowsing/favicon.svg             (../shared/privatebrowsing/favicon.svg)
   skin/classic/browser/privatebrowsing/private-browsing.svg    (../shared/privatebrowsing/private-browsing.svg)
   skin/classic/browser/privatebrowsing/tracking-protection.svg (../shared/privatebrowsing/tracking-protection.svg)
+  skin/classic/browser/preferences/in-content/all-new.css      (../shared/incontentprefs/all-new.css)
+  skin/classic/browser/preferences/in-content/appearance.svg   (../shared/incontentprefs/appearance.svg)
+  skin/classic/browser/preferences/in-content/tabs.svg         (../shared/incontentprefs/tabs.svg)
+  skin/classic/browser/preferences/in-content/webpages.svg     (../shared/incontentprefs/webpages.svg)
+  skin/classic/browser/preferences/in-content/all.svg          (../shared/incontentprefs/all.svg)

@@ -1922,3 +1922,6 @@ pref("browser.statusbar.showbtn", false);
 
 // Tab Bar position
 pref("browser.tabBar.position", "topAboveAB");
+
+// Use old preferences
+pref("browser.preferences.useAllNew", false);

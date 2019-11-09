@@ -1,0 +1,185 @@
+<?xml version="1.0"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this file,
+   - You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<?xml-stylesheet href="chrome://global/skin/global.css"?>
+
+<?xml-stylesheet href="chrome://browser/skin/preferences/preferences.css"?>
+<?xml-stylesheet href="chrome://global/skin/in-content/common.css"?>
+<?xml-stylesheet href="chrome://browser/skin/preferences/in-content/preferences.css"?>
+<?xml-stylesheet href="chrome://browser/skin/preferences/in-content-all-new/preferences.css"?>
+<?xml-stylesheet href="chrome://browser/content/preferences/handlers.css"?>
+<?xml-stylesheet href="chrome://browser/skin/preferences/applications.css"?>
+<?xml-stylesheet href="chrome://browser/skin/preferences/in-content/search.css"?>
+<?xml-stylesheet href="chrome://browser/skin/preferences/in-content/containers.css"?>
+<?xml-stylesheet href="chrome://browser/skin/preferences/in-content/privacy.css"?>
+<?xml-stylesheet href="chrome://browser/skin/preferences/in-content/all-new.css"?>
+
+<!DOCTYPE page>
+
+<page xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+  xmlns:html="http://www.w3.org/1999/xhtml" role="document" data-l10n-id="pref-page" data-l10n-attrs="title" id="all-new-settings">
+
+  <linkset>
+    <html:link rel="localization" href="branding/brand.ftl"/>
+    <html:link rel="localization" href="browser/branding/sync-brand.ftl"/>
+    <html:link rel="localization" href="browser/preferences/preferences.ftl"/>
+    <!-- Used by fontbuilder.js -->
+    <html:link rel="localization" href="browser/preferences/fonts.ftl"/>
+
+    <!-- Links below are only used for search-l10n-ids into subdialogs -->
+    <html:link rel="localization" href="browser/preferences/blocklists.ftl"/>
+    <html:link rel="localization" href="browser/preferences/clearSiteData.ftl"/>
+    <html:link rel="localization" href="browser/preferences/colors.ftl"/>
+    <html:link rel="localization" href="browser/preferences/connection.ftl"/>
+    <html:link rel="localization" href="browser/preferences/languages.ftl"/>
+    <html:link rel="localization" href="browser/preferences/permissions.ftl"/>
+    <html:link rel="localization" href="browser/preferences/selectBookmark.ftl"/>
+    <html:link rel="localization" href="browser/preferences/siteDataSettings.ftl"/>
+    <html:link rel="localization" href="browser/aboutDialog.ftl"/>
+    <html:link rel="localization" href="browser/sanitize.ftl"/>
+    <html:link rel="localization" href="toolkit/updates/history.ftl"/>
+    <html:link rel="localization" href="security/certificates/deviceManager.ftl"/>
+    <html:link rel="localization" href="security/certificates/certManager.ftl"/>
+  </linkset>
+
+  <html:link rel="shortcut icon" href="chrome://browser/skin/settings.svg"/>
+
+  <script src="chrome://browser/content/utilityOverlay.js"/>
+  <script src="chrome://global/content/preferencesBindings.js"/>
+  <script src="chrome://browser/content/preferences/in-content-all-new/preferences.js"/>
+  <script src="chrome://browser/content/preferences/in-content/extensionControlled.js"/>
+  <script src="chrome://browser/content/preferences/in-content/findInPage.js"/>
+  <script src="chrome://browser/content/preferences/in-content/subdialogs.js"/>
+
+  <stringbundle id="bundleBrand" src="chrome://branding/locale/brand.properties"/>
+  <stringbundle id="bundlePreferences" src="chrome://browser/locale/preferences/preferences.properties"/>
+  <stringbundle id="pkiBundle" src="chrome://pippki/locale/pippki.properties"/>
+  <stringbundle id="browserBundle" src="chrome://browser/locale/browser.properties"/>
+
+  <stack flex="1">
+    <hbox flex="1">
+
+      <vbox class="navigation">
+        <textbox is="search-textbox" id="searchInput" data-l10n-id="search-input-box" data-l10n-attrs="style" hidden="true" clickSelectsAll="true"/>
+        <!-- category list -->
+        <richlistbox id="categories">
+          <richlistitem id="category-general" class="category" value="paneGeneral" helpTopic="prefs-main" data-l10n-id="category-general" data-l10n-attrs="tooltiptext" align="center">
+            <image class="category-icon"/>
+            <label class="category-name" flex="1" data-l10n-id="pane-general-title"></label>
+          </richlistitem>
+
+          <richlistitem id="category-home" class="category" value="paneHome" helpTopic="prefs-home" data-l10n-id="category-home" data-l10n-attrs="tooltiptext" align="center" hidden="false">
+            <image class="category-icon"/>
+            <label class="category-name" flex="1" data-l10n-id="pane-home-title"></label>
+          </richlistitem>
+
+          <richlistitem id="category-tabs" class="category" value="paneTabs" helpTopic="prefs-main" data-l10n-id="category-tabs" data-l10n-attrs="tooltiptext" align="center">
+            <image class="category-icon"/>
+            <label class="category-name" flex="1" data-l10n-id="tabs-group-header"></label>
+          </richlistitem>
+
+          <richlistitem id="category-appearance" class="category" value="paneAppearance" helpTopic="prefs-main" data-l10n-id="category-appearance" data-l10n-attrs="tooltiptext" align="center">
+            <image class="category-icon"/>
+            <label class="category-name" flex="1" data-l10n-id="pane-appearance-title"></label>
+          </richlistitem>
+
+          <richlistitem id="category-downloads" class="category" value="paneDownloads" helpTopic="prefs-main" data-l10n-id="category-downloads" data-l10n-attrs="tooltiptext" align="center">
+            <image class="category-icon"/>
+            <label class="category-name" flex="1" data-l10n-id="pane-downloads-title"></label>
+          </richlistitem>
+
+          <richlistitem id="category-webpages" class="category" value="paneWebpages" helpTopic="prefs-main" data-l10n-id="category-webpages" data-l10n-attrs="tooltiptext" align="center">
+            <image class="category-icon"/>
+            <label class="category-name" flex="1" data-l10n-id="pane-webpages-title"></label>
+          </richlistitem>
+
+          <richlistitem id="category-search" class="category" value="paneSearch" helpTopic="prefs-search" data-l10n-id="category-search" data-l10n-attrs="tooltiptext" align="center">
+            <image class="category-icon"/>
+            <label class="category-name" flex="1" data-l10n-id="pane-search-title"></label>
+          </richlistitem>
+
+          <richlistitem id="category-privacy" class="category" value="panePrivacy" helpTopic="prefs-privacy" data-l10n-id="category-privacy" data-l10n-attrs="tooltiptext" align="center">
+            <image class="category-icon"/>
+            <label class="category-name" flex="1" data-l10n-id="pane-privacy-title"></label>
+          </richlistitem>
+
+          <richlistitem id="category-containers" class="category" value="paneContainers" helpTopic="prefs-containers" hidden="true"/>
+
+          <richlistitem id="category-sync" class="category" hidden="true" value="paneSync" helpTopic="prefs-weave" data-l10n-id="category-sync2" data-l10n-attrs="tooltiptext" align="center">
+            <image class="category-icon"/>
+            <label class="category-name" flex="1" data-l10n-id="pane-sync-title2"></label>
+          </richlistitem>
+
+          <richlistitem id="category-all" class="category" hidden="" value="paneAll" data-l10n-id="category-all" data-l10n-attrs="tooltiptext" align="center">
+            <image class="category-icon"/>
+            <label class="category-name" flex="1" data-l10n-id="pane-all-title"></label>
+          </richlistitem>
+        </richlistbox>
+
+        <spacer flex="1"/>
+
+        <hbox class="sidebar-footer-button" pack="center">
+          <label id="addonsButton" is="text-link">
+            <hbox align="center">
+              <image class="sidebar-footer-icon addons-icon"/>
+              <label class="sidebar-footer-label" flex="1" data-l10n-id="addons-button-label"></label>
+            </hbox>
+          </label>
+        </hbox>
+
+        <hbox class="sidebar-footer-button help-button" pack="center">
+          <!--<label id="helpButton" is="text-link">
+          <hbox align="center">
+            <image class="sidebar-footer-icon help-icon"/>
+            <label class="sidebar-footer-label" flex="1" data-l10n-id="help-button-label"></label>
+          </hbox>
+        </label> -->
+        </hbox>
+      </vbox>
+
+      <keyset>
+        <key data-l10n-id="focus-search" key="" modifiers="accel" id="focusSearch1" oncommand="gSearchResultsPane.searchInput.focus();"/>
+      </keyset>
+
+      <vbox class="main-content" flex="1" align="start">
+        <vbox class="pane-container">
+          <hbox id="policies-container" align="stretch" flex="1" hidden="true">
+            <hbox align="top">
+              <image class="info-icon"></image>
+            </hbox>
+            <hbox align="center" flex="1">
+              <label class="policies-label" flex="1" href="about:policies" useoriginprincipal="true" is="text-link" data-l10n-id="managed-notice"/>
+            </hbox>
+          </hbox>
+          <vbox id="mainPrefPane">
+#include searchResults.xul
+#include main.xul
+#include tabs.xul
+#include webpages.xul
+#include appearance.xul
+#include downloads.xul
+#include home.xul
+#include search.xul
+#include privacy.xul
+#include containers.xul
+#include sync.xul
+#include all.xul
+          </vbox>
+        </vbox>
+      </vbox>
+    </hbox>
+
+    <stack id="dialogStack" hidden="true"/>
+    <vbox id="dialogTemplate" class="dialogOverlay" align="center" pack="center" topmost="true" hidden="true">
+      <vbox class="dialogBox" pack="end" role="dialog" aria-labelledby="dialogTitle">
+        <hbox class="dialogTitleBar" align="center">
+          <label class="dialogTitle" flex="1"/>
+          <button class="dialogClose close-icon" data-l10n-id="close-button"/>
+        </hbox>
+        <browser class="dialogFrame" autoscroll="false" disablehistory="true"/>
+      </vbox>
+    </vbox>
+  </stack>
+</page>
