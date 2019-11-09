@@ -81,8 +81,11 @@ jobs:
                 - builds/taskcluster_base_windows.py
                 - builds/taskcluster_base_win64.py
                 - builds/taskcluster_sub_win64/debug.py
+            tooltool-downloads: internal
             extra-config:
                 mozconfig_variant: debug
+                "tooltool_servers": ['http://taskcluster/tooltool.mozilla-releng.net/']
+                'tooltool_url': 'http://taskcluster/tooltool.mozilla-releng.net/'
         toolchains:
             - win64-clang-cl
             - win64-rust
@@ -91,3 +94,4 @@ jobs:
             - win64-clang-tidy
             - win64-nasm
             - win64-node
+
