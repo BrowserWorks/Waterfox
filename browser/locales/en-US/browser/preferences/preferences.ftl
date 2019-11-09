@@ -1153,3 +1153,8 @@ category-downloads =
 pane-all-title = Display All
 category-all =
     .tooltiptext = { pane-all-title }
+
+settings-page = Settings Page
+
+display-all-new-prefs =
+    .label = Use all-new settings layout

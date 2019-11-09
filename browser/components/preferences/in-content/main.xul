@@ -302,6 +302,16 @@
   </hbox>
 </groupbox>
 
+<!-- Preferences preferences -->
+<groupbox id="preferencesGroup"
+          data-category="paneGeneral"
+          hidden="true">
+<label><html:h2 data-l10n-id="settings-page"/></label>
+
+  <checkbox id="browser.preferences.useAllNew" data-l10n-id="display-all-new-prefs"
+							preference="browser.preferences.useAllNew"/>
+</groupbox>
+
 <!-- Restart Menu Item preferences -->
 <groupbox id="restartGroup"
           data-category="paneGeneral"

@@ -109,6 +109,9 @@ Preferences.addAll([
   { id: "browser.restart_menu.requireconfirm", type: "bool" },
   { id: "browser.restart_menu.showpanelmenubtn", type: "bool" },
 
+  // Preferences layout
+  { id: "browser.preferences.useAllNew", type: "bool" },
+
   // Tab Context Menu
   { id: "browser.tabs.duplicateTab", type: "bool" },
   { id: "browser.tabs.copyurl", type: "bool" },
@@ -2834,6 +2837,7 @@ var gMainPane = {
     var currentDirPref = Preferences.get("browser.download.dir");
     return currentDirPref.value;
   },
+
 };
 
 gMainPane.initialized = new Promise(res => {
