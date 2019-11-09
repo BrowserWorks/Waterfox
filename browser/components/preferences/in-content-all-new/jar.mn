@@ -1,0 +1,16 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+browser.jar:
+   content/browser/preferences/in-content-all-new/preferences.js
+*  content/browser/preferences/in-content-all-new/preferences.xul
+
+   content/browser/preferences/in-content-all-new/main.js
+   content/browser/preferences/in-content-all-new/tabs.js
+   content/browser/preferences/in-content-all-new/webpages.js
+   content/browser/preferences/in-content-all-new/appearance.js
+   content/browser/preferences/in-content-all-new/downloads.js
+   content/browser/preferences/in-content-all-new/all.js
+   content/browser/preferences/in-content-all-new/syncDisconnect.xul
+   content/browser/preferences/in-content-all-new/fxaPairDevice.xul

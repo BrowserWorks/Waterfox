@@ -1,0 +1,76 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+@namespace url("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul");
+@namespace html url("http://www.w3.org/1999/xhtml");
+
+groupbox html|h2 {
+  border-bottom: 1px solid var(--in-content-border-color);
+  text-transform: uppercase;
+  letter-spacing: 0.4pt;
+  padding-bottom: 12px;
+  margin-bottom: 12px;
+}
+
+.main-content {
+  padding-top: 24px;
+  /* background: #343434;
+  color: #cdc8c0; */
+}
+
+#categories {
+  margin: 0 !important;
+}
+
+#searchInput {
+  margin-left: 15px;
+  margin-right: 15px;
+  width: 100px !important;
+  /* background-color: #262626 !important;
+  color: white !important; */
+}
+
+#mainPrefPane {
+  padding-top: 55px;
+}
+
+/* .navigation {
+  background: #2a2a2a;
+}
+
+#categories, #addonsButton {
+  color: #cdc8c0;
+}
+
+html|h1, #containersView {
+  color: inherit !important;
+}
+
+#browserContainersExtensionContent {
+  background: inherit !important;
+}
+
+textbox {
+  background-color: #262626 !important;
+} */
+
+#category-appearance > .category-icon {
+  list-style-image: url("chrome://browser/skin/preferences/in-content/appearance.svg");
+}
+
+#category-tabs > .category-icon {
+  list-style-image: url("chrome://browser/skin/preferences/in-content/tabs.svg");
+}
+
+#category-downloads > .category-icon {
+  list-style-image: url("chrome://browser/skin/downloads/download-icons.svg#arrow-with-bar");
+}
+
+#category-webpages > .category-icon {
+  list-style-image: url("chrome://browser/skin/preferences/in-content/webpages.svg");
+}
+
+#category-all > .category-icon {
+  list-style-image: url("chrome://browser/skin/preferences/in-content/all.svg");
+}

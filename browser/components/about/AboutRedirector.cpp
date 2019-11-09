@@ -21,6 +21,7 @@ namespace browser {
 
 NS_IMPL_ISUPPORTS(AboutRedirector, nsIAboutModule)
 
+bool AboutRedirector::sUseAllNewPreferences = false;
 bool AboutRedirector::sNewTabPageEnabled = false;
 bool AboutRedirector::sAboutLoginsEnabled = false;
 
@@ -145,6 +146,13 @@ AboutRedirector::NewChannel(nsIURI* aURI, nsILoadInfo* aLoadInfo,
   nsCOMPtr<nsIIOService> ioService = do_GetIOService(&rv);
   NS_ENSURE_SUCCESS(rv, rv);
 
+  static bool sPrefCacheInited = false;
+  if (!sPrefCacheInited) {
+    Preferences::AddBoolVarCache(&sUseAllNewPreferences,
+                                 "browser.preferences.useAllNew");
+    sPrefCacheInited = true;
+  }
+
   static bool sNTPEnabledCacheInited = false;
   if (!sNTPEnabledCacheInited) {
     Preferences::AddBoolVarCache(&AboutRedirector::sNewTabPageEnabled,
@@ -172,6 +180,9 @@ AboutRedirector::NewChannel(nsIURI* aURI, nsILoadInfo* aLoadInfo,
         NS_ENSURE_SUCCESS(rv, rv);
         rv = aboutNewTabService->GetDefaultURL(url);
         NS_ENSURE_SUCCESS(rv, rv);
+      }
+      else if (path.EqualsLiteral("preferences") && sUseAllNewPreferences) {
+        url.AssignASCII("chrome://browser/content/preferences/in-content-all-new/preferences.xul");
       }
 
       if (!sAboutLoginsEnabled && path.EqualsLiteral("logins")) {

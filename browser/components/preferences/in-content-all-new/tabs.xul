@@ -1,0 +1,103 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+<!-- Tabs panel -->
+
+<script src="chrome://browser/content/preferences/in-content-all-new/tabs.js"/>
+<html:template id="template-paneTabs">
+
+<!-- Tab preferences -->
+<groupbox data-category="paneTabs"
+          hidden="true">
+    <label><html:h2 data-l10n-id="tabs-group-header"/></label>
+
+    <checkbox id="ctrlTabRecentlyUsedOrder" data-l10n-id="ctrl-tab-recently-used-order"
+              preference="browser.ctrlTab.recentlyUsedOrder"
+              oncommand="Services.prefs.clearUserPref('browser.ctrlTab.migrated');"/>
+
+    <checkbox id="linkTargeting" data-l10n-id="open-new-link-as-tabs"
+              preference="browser.link.open_newwindow"
+              onsyncfrompreference="return gTabsPane.readLinkTarget();"
+              onsynctopreference="return gTabsPane.writeLinkTarget();"/>
+
+    <checkbox id="warnCloseMultiple" data-l10n-id="warn-on-close-multiple-tabs"
+              preference="browser.tabs.warnOnClose"/>
+
+    <checkbox id="warnOpenMany" data-l10n-id="warn-on-open-many-tabs"
+              preference="browser.tabs.warnOnOpen"/>
+
+    <checkbox id="switchToNewTabs" data-l10n-id="switch-links-to-new-tabs"
+              preference="browser.tabs.loadInBackground"/>
+
+#ifdef XP_WIN
+    <checkbox id="showTabsInTaskbar" data-l10n-id="show-tabs-in-taskbar"
+              preference="browser.taskbar.previews.enable"/>
+#endif
+
+    <vbox id="browserContainersbox" hidden="true">
+      <hbox id="browserContainersExtensionContent"
+            align="center" class="extension-controlled">
+        <description control="disableContainersExtension" flex="1" />
+        <button id="disableContainersExtension"
+                is="highlightable-button"
+                class="extension-controlled-button accessory-button"
+                data-l10n-id="disable-extension" />
+      </hbox>
+      <hbox align="center">
+        <checkbox id="browserContainersCheckbox"
+                  class="tail-with-learn-more"
+                  data-l10n-id="browser-containers-enabled"
+                  preference="privacy.userContext.enabled"
+                  onsyncfrompreference="return gTabsPane.readBrowserContainersCheckbox();"/>
+        <label id="browserContainersLearnMore" is="text-link" class="learnMore" data-l10n-id="browser-containers-learn-more"/>
+        <spacer flex="1"/>
+        <!-- Please don't remove the wrapping hbox/vbox/box for these elements. It's used to properly compute the search tooltip position. -->
+        <hbox>
+          <button id="browserContainersSettings"
+                  is="highlightable-button"
+                  class="accessory-button"
+                  data-l10n-id="browser-containers-settings"
+                  search-l10n-ids="containers-add-button.label,
+                    containers-preferences-button.label,
+                    containers-remove-button.label"
+                  />
+        </hbox>
+      </hbox>
+    </vbox>
+
+    <!-- Tab Bar Position preferences -->
+
+    <label>
+    <html:h3 data-l10n-id="tab-bar-position"/>
+    <vbox id="tabBarPositionSettingsContainer">
+    <radiogroup id="tabBarPositionGroup" preference="browser.tabBar.position" onsyncfrompreference="moveTabBar();">
+      <radio value="topAboveAB"
+             data-l10n-id="tab-top-above-ab"/>
+      <radio value="topUnderAB"
+             data-l10n-id="tab-top-under-ab"/>
+      <radio value="bottom"
+             data-l10n-id="tab-bottom"/>
+    </radiogroup>
+    </vbox>
+    </label>
+
+    <!-- Tab Context Menu preferences -->
+    <label><html:h3 data-l10n-id="tabContextMenu-header"/></label>
+    <vbox id="tabContextMenuSettingsContainer">
+      <checkbox id="browser.tabs.duplicateTab" data-l10n-id="duplicate-tab-options"
+                preference="browser.tabs.duplicateTab"/>
+
+	    <checkbox id="browser.tabs.copyurl" data-l10n-id="copy-tab-url-options"
+		          	preference="browser.tabs.copyurl"/>
+
+      <checkbox id="browser.tabs.copyurl.activetab" data-l10n-id="copy-active-tab-url-options"
+			          preference="browser.tabs.copyurl.activetab"/>
+
+	    <checkbox id="browser.tabs.copyallurls" data-l10n-id="copy-all-tab-urls-options"
+                preference="browser.tabs.copyallurls"/>
+    </vbox>
+
+</groupbox>
+
+</html:template>

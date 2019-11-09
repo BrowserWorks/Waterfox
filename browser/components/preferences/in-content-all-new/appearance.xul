@@ -1,0 +1,47 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+<!-- Appearance panel -->
+
+<script src="chrome://browser/content/preferences/in-content-all-new/appearance.js"/>
+<html:template id="template-paneAppearance">
+
+<!-- Restart Menu Item preferences -->
+<groupbox id="restartGroup"
+          data-category="paneAppearance"
+          hidden="true">
+  <label><html:h2 data-l10n-id="restart-header"/></label>
+
+  <checkbox id="browser.restart_menu.showpanelmenubtn" data-l10n-id="restart-paneluibtn"
+							preference="browser.restart_menu.showpanelmenubtn"/>
+  <checkbox id="browser.restart_menu.purgecache" data-l10n-id="clean-fast-restart-cache"
+            preference="browser.restart_menu.purgecache"/>
+  <checkbox id="browser.restart_menu.requireconfirm" data-l10n-id="restart-reqconfirmation"
+            preference="browser.restart_menu.requireconfirm"/>
+ </groupbox>
+
+<!-- Status Bar preferences -->
+<groupbox id="statusBarGroup"
+          data-category="paneAppearance"
+          hidden="true">
+  <label><html:h2 data-l10n-id="statusBar-header"/></label>
+  <vbox id="statusBarContainer">
+    <radiogroup id="statusBarRadioGroup" preference="browser.statusbar.mode" onsyncfrompreference="toggleStatusBar();">
+      <radio id="showStatusBar"
+             value="2"
+             data-l10n-id="show-status-bar"/>
+      <radio id="showStatusOverlay"
+             value="1"
+             data-l10n-id="show-status-overlay"/>
+      <radio id="hideStatusBar"
+             value="0"
+             data-l10n-id="hide-status-bar"/>
+    </radiogroup>
+    <checkbox id="showButtonsRange" preference="browser.statusbar.showbtn"
+                data-l10n-id="show-btn-range"
+                onsyncfrompreference="showBtnRange();"/>
+  </vbox>
+</groupbox>
+
+</html:template>
