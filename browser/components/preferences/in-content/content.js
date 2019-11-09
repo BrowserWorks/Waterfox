@@ -53,8 +53,6 @@ var gContentPane = {
 
     setEventListener("font.language.group", "change",
       gContentPane._rebuildFonts);
-    setEventListener("notificationsPolicyButton", "command",
-      gContentPane.showNotificationExceptions);
     setEventListener("popupPolicyButton", "command",
       gContentPane.showPopupExceptions);
     setEventListener("advancedFonts", "command",
@@ -119,18 +117,18 @@ var gContentPane = {
    * preferences can be set.
    */
   showNotificationExceptions() {
-    let bundlePreferences = document.getElementById("bundlePreferences");
-    let params = { permissionType: "desktop-notification" };
+    var bundlePreferences = document.getElementById("bundlePreferences");
+    var params = {
+      blockVisible: true,
+      sessionVisible: false,
+      allowVisible: true,
+      prefilledHost: "",
+      permissionType: "desktop-notification"};
     params.windowTitle = bundlePreferences.getString("notificationspermissionstitle");
     params.introText = bundlePreferences.getString("notificationspermissionstext4");
 
     gSubDialog.open("chrome://browser/content/preferences/permissions.xul",
                     "resizable=yes", params);
-
-    try {
-      Services.telemetry
-              .getHistogramById("WEB_NOTIFICATION_EXCEPTIONS_OPENED").add();
-    } catch (e) {}
   },
 
 
@@ -149,6 +147,71 @@ var gContentPane = {
 
     gSubDialog.open("chrome://browser/content/preferences/permissions.xul",
                     "resizable=yes", params);
+  },
+
+   // IMAGES
+
+  /**
+   * Converts the value of the permissions.default.image preference into a
+   * Boolean value for use in determining the state of the "load images"
+   * checkbox, returning true if images should be loaded and false otherwise.
+   */
+  readLoadImages: function() {
+    var pref = document.getElementById("permissions.default.image");
+    return (pref.value == 1 || pref.value == 3);
+  },
+
+  /**
+   * Returns the "load images" preference value which maps to the state of the
+   * preferences UI.
+   */
+  writeLoadImages: function() {
+    return (document.getElementById("loadImages").checked) ? 1 : 2;
+  },
+
+  /**
+   * Displays image exception preferences for which websites can and cannot
+   * load images.
+   */
+  showImageExceptions: function() {
+    var bundlePreferences = document.getElementById("bundlePreferences");
+    var params = {
+					blockVisible: true,
+					sessionVisible: false,
+					allowVisible: true,
+					prefilledHost: "",
+					permissionType: "image"};
+    params.windowTitle = bundlePreferences.getString("imagepermissionstitle");
+    params.introText = bundlePreferences.getString("imagepermissionstext");
+
+    gSubDialog.open("chrome://browser/content/preferences/permissions.xul",
+                    null, params);
+  },
+
+  // JAVASCRIPT
+
+  /**
+   * Displays the advanced JavaScript preferences for enabling or disabling
+   * various annoying behaviors.
+   */
+  showAdvancedJS: function() {
+    gSubDialog.open("chrome://browser/content/preferences/advanced-scripts.xul",
+                    "resizable=no", null);
+  },
+
+  showScriptExceptions: function() {
+    var bundlePreferences = document.getElementById("bundlePreferences");
+    var params = {
+					blockVisible: true,
+					sessionVisible: false,
+					allowVisible: true,
+					prefilledHost: "",
+					permissionType: "script"};
+    params.windowTitle = bundlePreferences.getString("scriptpermissionstitle");
+    params.introText = bundlePreferences.getString("scriptpermissionstext");
+
+    gSubDialog.open("chrome://browser/content/preferences/permissions.xul",
+                    null, params);
   },
 
   // FONTS
@@ -276,4 +339,15 @@ var gContentPane = {
   toggleDoNotDisturbNotifications(event) {
     AlertsServiceDND.manualDoNotDisturb = event.target.checked;
   },
+
+  toggleServiceWorkers() {
+    if (Services.prefs.getBoolPref("dom.webnotifications.enabled", true))
+    {
+      Services.prefs.setBoolPref("dom.serviceWorkers.enabled", true);
+    }
+    else
+    {
+      Services.prefs.setBoolPref("dom.serviceWorkers.enabled", false);
+    }
+  }
 };

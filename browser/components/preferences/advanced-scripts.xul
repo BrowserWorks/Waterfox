@@ -1,0 +1,40 @@
+<?xml version="1.0"?>
+
+<!-- -*- Mode: Java; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- -->
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Disable Javascript & Block Images Feature Dont Remove -->
+<!DOCTYPE prefwindow SYSTEM "chrome://browser/locale/preferences-old/content.dtd">
+
+<?xml-stylesheet href="chrome://global/skin/"?>
+
+<prefwindow id="AdvancedJSDialog" type="child"
+            xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+            title="&advancedJSDialog.title;"
+            dlgbuttons="accept,cancel">
+
+  <script type="application/javascript" src="chrome://browser/content/utilityOverlay.js"/>
+
+  <prefpane id="AdvancedJSDialogPane"
+            helpTopic="">
+
+    <preferences>
+     <preference id="dom.event.contextmenu.enabled"  name="dom.event.contextmenu.enabled"  type="bool" instantApply="true"/>
+     <preference id="dom.disable_window_move_resize" name="dom.disable_window_move_resize" type="bool" inverted="true" instantApply="true"/>
+     <preference id="dom.disable_window_flip"        name="dom.disable_window_flip"        type="bool" inverted="true" instantApply="true"/>
+    </preferences>
+
+    <stringbundle id="preferencesBundle" src="chrome://browser/locale/preferences/preferences.properties"/>
+
+    <description value="&allowScripts.label;"/>
+
+    <checkbox id="moveResizePopupWindows" label="&moveResizePopupWindows.label;"
+              preference="dom.disable_window_move_resize"/>
+    <checkbox id="raiseLowerWindows" label="&raiseLowerWindows.label;"
+              preference="dom.disable_window_flip"/>
+    <checkbox id="disableContextMenus" label="&disableContextMenus.label;"
+              preference="dom.event.contextmenu.enabled"/>
+
+  </prefpane>
+</prefwindow>

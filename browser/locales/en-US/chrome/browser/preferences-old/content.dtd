@@ -58,3 +58,17 @@
 <!ENTITY  playDRMContent.label         "Play DRM content">
 <!ENTITY  playDRMContent.accesskey     "P">
 <!ENTITY  playDRMContent.learnMore.label "Learn more">
+
+<!ENTITY  images.label "Images">
+<!ENTITY  loadImages.label "Load images automatically">
+
+<!ENTITY enableJavaScript.label "Enable JavaScript">
+
+<!ENTITY advancedJSDialog.title "Advanced JavaScript Settings">
+<!ENTITY allowScripts.label             "Allow scripts to:">
+<!ENTITY moveResizePopupWindows.label "Move or resize popup windows">
+<!ENTITY raiseLowerWindows.label "Raise or lower windows">
+<!ENTITY disableContextMenus.label "Disable or replace context menus">
+<!ENTITY scripts.label "Scripts">
+
+<!ENTITY enableNotifications.label "Enable notifications">

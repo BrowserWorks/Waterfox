@@ -111,3 +111,20 @@
 <!ENTITY  browserContainersEnabled.accesskey    "n">
 <!ENTITY  browserContainersSettings.label        "Settings…">
 <!ENTITY  browserContainersSettings.accesskey    "i">
+
+<!-- Geo Location Via Checkbox Tweak -->
+<!ENTITY  geographicalLocation.label            "Geographical Location">
+<!ENTITY  disableGeolocation.label            "Enable Geolocation">
+<!-- End Geo Location Via Checkbox Tweak -->
+
+<!-- Tracking sendRefererHeader Tweak -->
+<!ENTITY  sendRefererHeader.label            "Suppress HTTP Referrer Header">
+<!ENTITY  sendRefererHeaderopt0.label            "Never send the referrer header">
+<!ENTITY  sendRefererHeaderopt1.label            "Send the referrer header only when clicking on links and similar elements">
+<!ENTITY  sendRefererHeaderopt2.label            "Send the referrer header on all requests (Default)">
+<!-- End Tracking sendRefererHeader Tweak -->
+
+<!-- Toggle WebRTC P2P Connection (See:#959893) feature -->
+<!ENTITY webrtcp2group.description "WebRTC peer connection">
+<!ENTITY webrtcp2preference.label "Enable WebRTC peer connection">
+<!-- End Toggle WebRTC P2P Connection (See:#959893) feature -->

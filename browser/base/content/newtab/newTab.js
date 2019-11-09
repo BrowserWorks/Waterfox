@@ -28,6 +28,8 @@ var {
   gridPrefs: gGridPrefs
 } = NewTabUtils;
 
+const isSearchEnabled = Services.prefs.getBoolPref("browser.newtab.search.enabled");
+
 XPCOMUtils.defineLazyGetter(this, "gStringBundle", function() {
   return Services.strings.
     createBundle("chrome://browser/locale/newTab.properties");

@@ -76,6 +76,22 @@
   <preference id="browser.privatebrowsing.autostart"
               name="browser.privatebrowsing.autostart"
               type="bool"/>
+
+  <!-- Geolocation -->
+  <preference id="geo.enabled"
+              name="geo.enabled"
+              type="bool"/>
+
+   <!-- sendRefererHeader -->
+   <preference id="network.http.sendRefererHeader"
+               name="network.http.sendRefererHeader"
+               type="int"/>
+
+	<!-- WebRTC peer2peer -->
+    <preference id="media.peerconnection.enabled"
+                name="media.peerconnection.enabled"
+                type="bool"/>
+
 </preferences>
 
 <hbox id="header-privacy"
@@ -142,6 +158,46 @@
     >&doNotTrack.settings.label;</label>&doNotTrack.post.label;</description>
   </vbox>
 </groupbox>
+
+<!-- Tracking Geo Location -->
+<groupbox id="geoLocationEnabled"  flex="1" data-category="panePrivacy">
+    <caption label="&geographicalLocation.label;"/>
+    <vbox align="start">
+        <checkbox id="isGeoEnabled" label="&disableGeolocation.label;"
+        preference="geo.enabled"/>
+    </vbox>
+</groupbox>
+
+    <!-- sendRefererHeader -->
+<groupbox id="sendRefererHeader" data-category="panePrivacy">
+    <caption label="&sendRefererHeader.label;"/>
+    <vbox>
+        <label id="historyModeLabel"
+        control="historyMode">&historyHeader.pre.label;
+    </label>
+    <menulist id="doNotsendSecureXSiteReferrer"
+    preference="network.http.sendRefererHeader">
+    <menupopup>
+        <menuitem id="srhno" value="0" label="&sendRefererHeaderopt0.label;" />
+        <menuitem id="srhyes" value="1" label="&sendRefererHeaderopt1.label;" />
+        <menuitem id="srhdef" value="2" label="&sendRefererHeaderopt2.label;"/>
+    </menupopup>
+</menulist>
+</vbox>
+</groupbox>
+
+
+	<!-- WebRTC peer2peer -->
+<hbox flex="1" id="webrtcp2p" data-category="panePrivacy" hidden="true">
+    <groupbox id="webrtcp2penabled"  flex="1">
+        <caption label="&webrtcp2group.description;"/>
+        <hbox align="center">
+            <checkbox id="media.peerconnection.enabled" label="&webrtcp2preference.label;"
+            preference="media.peerconnection.enabled"/>
+            <label class="learnMore text-link" href="https://bugzilla.mozilla.org/show_bug.cgi?id=959893" value="&trackingProtectionLearnMore.label;"/>
+        </hbox>
+    </groupbox>
+</hbox>
 
 <!-- History -->
 <groupbox id="historyGroup" data-category="panePrivacy" hidden="true">

@@ -35,3 +35,4 @@ browser.jar:
     content/browser/preferences/siteListItem.xml
     content/browser/preferences/translation.xul
     content/browser/preferences/translation.js
+    content/browser/preferences/advanced-scripts.xul

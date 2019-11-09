@@ -43,6 +43,28 @@
               name="toolkit.telemetry.enabled"
               type="bool"/>
 #endif
+		<!-- Features Tab -->
+    <preference id="browser.restart.purgecache"
+						   name="browser.restart.purgecache"
+               type="bool"/>
+ 	  <preference id="browser.restart.requireconfirm"
+                name="browser.restart.requireconfirm"
+                type="bool"/>
+ 	  <preference id="browser.restart.showpanelmenubtn"
+						   name="browser.restart.showpanelmenubtn"
+               type="bool"/>
+    <preference id="browser.tabs.duplicateTab"
+						   name="browser.tabs.duplicateTab"
+               type="bool"/>
+    <preference id="browser.tabs.copyurl"
+						   name="browser.tabs.copyurl"
+               type="bool"/>
+    <preference id="browser.tabs.copyurl.activetab"
+						   name="browser.tabs.copyurl.activetab"
+               type="bool"/>
+	  <preference id="browser.tabs.copyallurls"
+						   name="browser.tabs.copyallurls"
+               type="bool"/>
 
   <!-- Data Choices tab -->
 #ifdef MOZ_CRASHREPORTER
@@ -135,6 +157,7 @@
     <tab id="networkTab" label="&networkTab.label;"/>
     <tab id="updateTab" label="&updateTab.label;"/>
     <tab id="encryptionTab" label="&certificateTab.label;"/>
+    <tab id="features" label="&featuresTab.label;"/>
   </tabs>
 
   <tabpanels flex="1">
@@ -417,6 +440,29 @@
                 preference="security.disable_button.openDeviceManager"/>
         <hbox flex="10"/>
       </hbox>
+    </tabpanel>
+    <tabpanel id="features" orient="vertical">
+        <!-- Restart Browser Settings -->
+        <groupbox id="alternateOptionsRestart" orient="vertical">
+            <caption label="&restartOptions.label;"/>
+            <checkbox id="browser.restart.showpanelmenubtn" label="&restart_paneluibtn.label;"
+							preference="browser.restart.showpanelmenubtn"/>
+            <checkbox id="browser.restart.purgecache" label="&cleanFastRestartCache.label;"
+            preference="browser.restart.purgecache"/>
+            <checkbox id="browser.restart.requireconfirm" label="&restart_reqconfirmation.label;"
+            preference="browser.restart.requireconfirm"/>
+        </groupbox>
+        <groupbox id="tabContextMenuOptions" orient="vertical">
+            <caption label="&tabContextMenu.label;"/>
+            <checkbox id="browser.tabs.duplicateTab" label="&duplicateTabOptions.label;"
+              preference="browser.tabs.duplicateTab"/>
+        	 <checkbox id="browser.tabs.copyurl" label="&copyTabURLOptions.label;"
+							preference="browser.tabs.copyurl"/>
+           <checkbox id="browser.tabs.copyurl.activetab" label="&copyActiveTabURL.label;"
+							preference="browser.tabs.copyurl.activetab"/>
+					<checkbox id="browser.tabs.copyallurls" label="&copyAllTabURLsOptions.label;"
+              preference="browser.tabs.copyallurls"/>
+        </groupbox>
     </tabpanel>
   </tabpanels>
 </tabbox>

@@ -61,6 +61,11 @@
                          closemenu="none"
                          tooltiptext="&appMenuHelp.tooltip;"
                          oncommand="PanelUI.showHelpView(this);"/>
+          <toolbarseparator id="restartSeparator"/>
+          <toolbarbutton id="panelUI_menu_restartBrowser"
+					                label="&restartBrowser.label;"
+                          tooltiptext="&restartBrowser.label;"
+					                oncommand="restartBrowser();"/>
           <toolbarseparator/>
           <toolbarbutton id="PanelUI-quit"
 #ifdef XP_WIN

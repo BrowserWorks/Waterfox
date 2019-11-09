@@ -111,6 +111,18 @@
                 name="browser.ctrlTab.previews"
                 type="bool"/>
 
+  <preference id="browser.newtabpage.enabled"
+              name="browser.newtabpage.enabled"
+              type="bool"/>
+
+  <preference id="browser.pagethumbnails.capturing_disabled"
+              name="browser.pagethumbnails.capturing_disabled"
+              type="bool"/>
+
+  <preference id="browser.newtab.search.enabled"
+              name="browser.newtab.search.enabled"
+              type="bool"/>
+
   <preference id="browser.preferences.defaultPerformanceSettings.enabled"
               name="browser.preferences.defaultPerformanceSettings.enabled"
               type="bool"/>
@@ -252,7 +264,7 @@
 <groupbox id="localeGroup"
           data-category="paneGeneral"
           hidden="true">
-  <caption><label>Locale Select</label></caption>
+  <caption><label>&localeSelect.label;</label></caption>
   <menulist id="localeSelect">
     <menupopup>
       <menuitem value="ach" label="Acholi - Acholi"/>
@@ -349,6 +361,20 @@
       <menuitem value="zh-TW" label="Chinese (Traditional) - 正體中文 (繁體)"/>
     </menupopup>
   </menulist>
+<hbox id="confirmBrowserLanguage" class="message-bar" align="center" hidden="true">
+    <image class="message-bar-icon" />
+    <vbox class="message-bar-content-container" align="stretch" flex="1">
+        <hbox class="message-bar-content" flex="1" align="center">
+            <description class="message-bar-description" flex="1">You'll need to restart Waterfox to see your selected locale.</description>
+            <button class="message-bar-button" label="Restart" oncommand="restartBrowser();">
+                <hbox class="box-inherit button-box" align="center" pack="center" flex="1" anonid="button-box">
+                    <image class="button-icon" />
+                    <label class="button-text" value="Restart" />
+                </hbox>
+            </button>
+        </hbox>
+    </vbox>
+</hbox>
 </groupbox>
 
 <!-- Downloads -->
@@ -429,6 +455,17 @@
               accesskey="&showTabsInTaskbar.accesskey;"
               preference="browser.taskbar.previews.enable"/>
 #endif
+</groupbox>
+
+<!-- New tab preferences -->
+<groupbox flex="1" data-category="paneGeneral">
+    <caption label="&newtabsoptions.label;"/>
+    <checkbox id="browser.newtabpage.enabled" label="&newtabenabled.label;"
+              preference="browser.newtabpage.enabled"/>
+    <checkbox id="browser.newtab.search.enabled" label="&newtabsearch.label;"
+              preference="browser.newtab.search.enabled"/>
+    <checkbox id="browser.pagethumbnails.capturing_disabled" label="&newtabthumbnail.label;"
+              preference="browser.pagethumbnails.capturing_disabled"/>
 </groupbox>
 
 <!-- Performance -->

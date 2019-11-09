@@ -80,8 +80,12 @@
       <menuitem id="context_reloadTab" label="&reloadTab.label;" accesskey="&reloadTab.accesskey;"
                 oncommand="gBrowser.reloadTab(TabContextMenu.contextTab);"/>
       <menuitem id="context_toggleMuteTab" oncommand="TabContextMenu.contextTab.toggleMuteAudio();"/>
-      <menuitem id="context_duplicateTab" label="Duplicate Tab" accesskey="D"
+      <menuitem id="context_duplicateTab" label="&duplicateTab.label;" accesskey="D"
                 oncommand="duplicateTabIn(TabContextMenu.contextTab, 'tab');"/>
+      <menuitem id="context_copyCurrentTabUrl" label="&copyTabURL.label;"
+                oncommand="copyCurrentTabUrl(TabContextMenu.contextTab.linkedBrowser.currentURI.spec);"/>
+      <menuitem id="context_copyAllTabUrls" label="&copyAllTabURLs.label;"
+                oncommand="copyAllTabUrls();"/>
       <menuseparator/>
       <menuitem id="context_pinTab" label="&pinTab.label;"
                 accesskey="&pinTab.accesskey;"
@@ -94,7 +98,7 @@
                 tbattr="tabbrowser-multiple"
                 oncommand="gBrowser.replaceTabWithWindow(TabContextMenu.contextTab);"/>
 #ifdef E10S_TESTING_ONLY
-      <menuitem id="context_openNonRemoteWindow" label="Open in new non-e10s window"
+      <menuitem id="context_openNonRemoteWindow" label="&openNewNone10sWindow.label;"
                 tbattr="tabbrowser-remote"
                 hidden="true"
                 oncommand="gBrowser.openNonRemoteWindow(TabContextMenu.contextTab);"/>

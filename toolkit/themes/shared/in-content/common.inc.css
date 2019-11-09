@@ -854,3 +854,50 @@ xul|treechildren::-moz-tree-cell-text {
 xul|treechildren::-moz-tree-cell-text(selected) {
   color: var(--in-content-selected-text);
 }
+
+/* Message bars */
+.message-bar {
+  background-color: #ededf0;
+  border-radius: 4px;
+  min-height: 32px;
+  -moz-box-align: center;
+  padding: 4px;
+}
+
+.message-bar-description {
+  margin: 2px 0;
+  line-height: 1.25;
+}
+
+/* The message-bar-button styles have extra specificity to override
+ * the defaults for buttons. */
+.message-bar-content > .message-bar-button {
+  background-color: rgba(12, 12, 13, 0.1);
+  border: none;
+  border-radius: 2px;
+  height: 24px;
+  margin-inline-start: 8px;
+  padding: 0 8px;
+}
+
+.message-bar-content > .message-bar-button:hover {
+  background-color: rgba(12, 12, 13, 0.2);
+}
+
+.message-bar-content > .message-bar-button:hover:active {
+  background-color: rgba(12, 12, 13, 0.3);
+}
+
+.message-bar-icon {
+  list-style-image: url("chrome://browser/skin/identity-icon.svg");
+  width: 24px;
+  height: 24px;
+  padding: 4px;
+  margin-inline-end: 4px;
+  -moz-context-properties: fill;
+  fill: currentColor;
+}
+
+#confirmBrowserLanguage {
+  margin-top: 5px;
+}

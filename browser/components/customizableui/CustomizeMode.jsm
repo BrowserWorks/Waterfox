@@ -395,6 +395,7 @@ CustomizeMode.prototype = {
       if (!gPhotonStructure) {
         document.getElementById("PanelUI-help").setAttribute("disabled", true);
         document.getElementById("PanelUI-quit").setAttribute("disabled", true);
+        document.getElementById("panelUI_menu_restartBrowser").setAttribute("disabled", true);
       }
 
       this._updateResetButton();
@@ -580,6 +581,7 @@ CustomizeMode.prototype = {
         // now we'd be setting an expando, which breaks the XBL property.
         document.getElementById("PanelUI-help").removeAttribute("disabled");
         document.getElementById("PanelUI-quit").removeAttribute("disabled");
+        document.getElementById("panelUI_menu_restartBrowser").removeAttribute("disabled");
         this.panelUIContents.removeAttribute("customize-transitioning");
       }
       let panelContextMenu = document.getElementById(kPanelItemContextMenu);

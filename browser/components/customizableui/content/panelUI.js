@@ -324,6 +324,17 @@ const PanelUI = {
       case "popupshowing":
         this._adjustLabelsForAutoHyphens();
         updateEditUIVisibility();
+        try {
+          if (!Services.prefs.getBoolPref("browser.restart.showpanelmenubtn")) {
+            document.getElementById("panelUI_menu_restartBrowser").hidden = true;
+            document.getElementById("restartSeparator").hidden = true;
+          } else {
+            document.getElementById("panelUI_menu_restartBrowser").hidden = false;
+            document.getElementById("restartSeparator").hidden = false;
+          }
+        } catch (e) {
+          throw new Error("We're sorry but something has gone wrong with 'browser.restart.showpanelmenubtn'" + e);
+        }
         // Fall through
       case "popupshown":
         if (gPhotonStructure && aEvent.type == "popupshown") {
