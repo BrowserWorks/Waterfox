@@ -15,7 +15,7 @@ from taskgraph.transforms.job.common import (
     docker_worker_add_artifacts,
     generic_worker_add_artifacts,
     generic_worker_hg_commands,
-    docker_worker_add_tooltool,
+    add_tooltool,
     support_vcs_checkout,
 )
 
@@ -51,7 +51,7 @@ def docker_worker_spidermonkey(config, job, taskdesc):
     })
 
     docker_worker_add_artifacts(config, job, taskdesc)
-    docker_worker_add_tooltool(config, job, taskdesc)
+    add_tooltool(config, job, taskdesc)
 
     env = worker.setdefault('env', {})
     env.update({

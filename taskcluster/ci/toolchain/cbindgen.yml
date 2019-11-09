@@ -51,5 +51,7 @@ win64-cbindgen:
     run:
         arguments: ['x86_64-pc-windows-msvc']
         toolchain-artifact: public/build/cbindgen.tar.bz2
+        tooltool-downloads: internal
     toolchains:
         - win64-rust-1.34
+

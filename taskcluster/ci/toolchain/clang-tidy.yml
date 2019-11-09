@@ -76,3 +76,5 @@ win64-clang-tidy:
             - 'build/build-clang/clang-tidy-win64.json'
             - 'taskcluster/scripts/misc/build-clang-windows-helper64.sh'
         toolchain-artifact: public/build/clang-tidy.tar.bz2
+        tooltool-downloads: internal
+

@@ -34,5 +34,7 @@ win64-sccache:
             TOOLTOOL_MANIFEST: "browser/config/tooltool-manifests/win64/sccache-build.manifest"
     run:
         toolchain-artifact: public/build/sccache2.tar.bz2
+        tooltool-downloads: internal
     toolchains:
         - win64-rust-1.34
+
