@@ -47,7 +47,7 @@ pref("extensions.getAddons.langpacks.url", "", locked);
 pref("extensions.getAddons.discovery.api_url", "", locked);
 
 // Enable the HTML-based discovery panel at about:addons.
-pref("extensions.htmlaboutaddons.discover.enabled", false);
+pref("extensions.htmlaboutaddons.discover.enabled", false, locked);
 
 // The URL for the privacy policy related to recommended extensions.
 pref("extensions.recommendations.privacyPolicyUrl", "https://www.mozilla.org/privacy/firefox/?utm_source=firefox-browser&utm_medium=firefox-browser&utm_content=privacy-policy-link#addons");
@@ -205,11 +205,11 @@ pref("browser.eme.ui.enabled", false);
 #endif
 
 // UI tour experience.
-pref("browser.uitour.enabled", false);
-pref("browser.uitour.loglevel", "Error");
-pref("browser.uitour.requireSecure", true);
-pref("browser.uitour.themeOrigin", "");
-pref("browser.uitour.url", "");
+pref("browser.uitour.enabled", false, locked);
+pref("browser.uitour.loglevel", "Error", locked);
+pref("browser.uitour.requireSecure", false, locked);
+pref("browser.uitour.themeOrigin", "", locked);
+pref("browser.uitour.url", "", locked);
 // How long to show a Hearbeat survey (two hours, in seconds)
 pref("browser.uitour.surveyDuration", 7200);
 
@@ -970,7 +970,7 @@ pref("breakpad.reportURL", "", locked);
 
 // URL for "Learn More" for DataCollection
 pref("toolkit.datacollection.infoURL",
-     "");
+     "", locked);
 
 // URL for "Learn More" for Crash Reporter
 pref("toolkit.crashreporter.infoURL",
@@ -1380,8 +1380,8 @@ pref("security.insecure_connection_icon.pbmode.enabled", true);
 #endif
 
 // Show "Not Secure" text for http pages; disabled for now
-pref("security.insecure_connection_text.enabled", false);
-pref("security.insecure_connection_text.pbmode.enabled", false);
+pref("security.insecure_connection_text.enabled", true);
+pref("security.insecure_connection_text.pbmode.enabled", true);
 
 // 1 = allow MITM for certificate pinning checks.
 pref("security.cert_pinning.enforcement_level", 1);
@@ -1456,7 +1456,7 @@ pref("identity.fxaccounts.autoconfig.uri", "");
 // URLs for promo links to mobile browsers. Note that consumers are expected to
 // append a value for utm_campaign.
 pref("identity.mobilepromo.android", "");
-pref("identity.mobilepromo.ios", "");
+pref("identity.mobilepromo.ios", "", locked);
 
 // Migrate any existing Firefox Account data from the default profile to the
 // Developer Edition profile.
@@ -1822,7 +1822,7 @@ pref("browser.chrome.errorReporter.infoURL",
 pref("app.normandy.api_url", "", locked);
 pref("app.normandy.dev_mode", false, locked);
 pref("app.normandy.enabled", false, locked);
-pref("app.normandy.first_run", true);
+pref("app.normandy.first_run", false, locked);
 pref("app.normandy.logging.level", 50); // Warn
 pref("app.normandy.run_interval_seconds", 21600); // 6 hours
 pref("app.normandy.shieldLearnMoreUrl", "", locked);
@@ -1865,8 +1865,8 @@ pref("toolkit.coverage.enabled", false, locked);
 pref("toolkit.coverage.endpoint.base", "");
 
 // Discovery prefs
-pref("browser.discovery.enabled", false);
-pref("browser.discovery.containers.enabled", true);
+pref("browser.discovery.enabled", false, locked);
+pref("browser.discovery.containers.enabled", false, locked);
 pref("browser.discovery.sites", "", locked);
 
 pref("browser.engagement.recent_visited_origins.expiry", 86400); // 24 * 60 * 60 (24 hours in seconds)
