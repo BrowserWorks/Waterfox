@@ -319,14 +319,6 @@
                   </description>
                 </vbox>
               </vbox>
-              <vbox id="plugindeprecation-notice" class="list-view-notice" align="start">
-                <hbox class="message-bar">
-                  <image class="message-bar-icon"/>
-                  <description class="message-bar-description" data-l10n-id="plugin-deprecation-description">
-                    <label class="plain" id="plugindeprecation-learnmore-link" data-l10n-name="learn-more" is="text-link"></label>
-                  </description>
-                </hbox>
-              </vbox>
               <hbox class="view-header global-warning-container">
                 <!-- global warnings -->
                 <hbox class="global-warning" flex="1">

@@ -2846,14 +2846,6 @@ var gListView = {
     } catch (e) {
       document.getElementById("signing-dev-info").hidden = true;
     }
-
-    if (Preferences.get("plugin.load_flash_only", true)) {
-      document
-        .getElementById("plugindeprecation-learnmore-link")
-        .setAttribute("href", SUPPORT_URL + "npapi");
-    } else {
-      document.getElementById("plugindeprecation-notice").hidden = true;
-    }
   },
 
   show(aType, aRequest) {
