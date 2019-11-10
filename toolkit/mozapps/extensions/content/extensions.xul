@@ -29,7 +29,7 @@
     <xhtml:link rel="localization" href="branding/brand.ftl"/>
     <xhtml:link rel="localization" href="toolkit/about/aboutAddons.ftl"/>
   </linkset>
-  
+
   <script src="chrome://global/content/contentAreaUtils.js"/>
   <script src="chrome://mozapps/content/extensions/aboutaddonsCommon.js"/>
   <script src="chrome://mozapps/content/extensions/extensions.js"/>
@@ -318,16 +318,6 @@
                     <label class="plain" id="legacy-extensions-learnmore-link" data-l10n-id="legacy-warning-show-legacy" is="text-link"/>
                   </description>
                 </vbox>
-              </vbox>
-              <vbox id="private-browsing-notice" class="alert-container" hidden="true" align="start">
-                <hbox class="message-bar" align="start">
-                  <image class="message-bar-icon"/>
-                  <vbox class="message-container">
-                    <description class="message-bar-description" data-l10n-id="private-browsing-description2">
-                      <label class="plain" id="private-browsing-learnmore-link" data-l10n-name="private-browsing-learn-more" is="text-link"/>
-                    </description>
-                  </vbox>
-                </hbox>
               </vbox>
               <vbox id="plugindeprecation-notice" class="list-view-notice" align="start">
                 <hbox class="message-bar">
