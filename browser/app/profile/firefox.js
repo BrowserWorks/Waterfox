@@ -1923,3 +1923,6 @@ pref("browser.tabBar.position", "topAboveAB");
 
 // Use old preferences
 pref("browser.preferences.useAllNew", false);
+
+// Disable extensions recommendations
+pref("extensions.getAddons.showPane", false);
