@@ -13,11 +13,6 @@ esac
 
 TOOLTOOL_DL_FLAGS=
 
-if [ -e "$TASKCLUSTER_PROXY_URL" ]; then
-    # When the worker has the relengapi token pass it down
-    TOOLTOOL_DL_FLAGS="${TOOLTOOL_DL_FLAGS=} --tooltool-url=${TASKCLUSTER_PROXY_URL}/tooltool.mozilla-releng.net/"
-fi
-
 if [ -n "$T" ]; then
     # When the worker has the relengapi proxy setup, use it.
     TOOLTOOL_DL_FLAGS="${TOOLTOOL_DL_FLAGS=} --tooltool-url=http://taskcluster/tooltool.mozilla-releng.net/"
