@@ -1262,7 +1262,6 @@ def main(argv, _skip_logging=False):
 
     (options_obj, args) = parser.parse_args(argv[1:])
 
-
     tooltool_host = os.environ.get('TOOLTOOL_HOST', 'tooltool.mozilla-releng.net')
     taskcluster_proxy_url = os.environ.get('TASKCLUSTER_PROXY_URL')
     if taskcluster_proxy_url:
@@ -1297,6 +1296,7 @@ def main(argv, _skip_logging=False):
         parser.error('You must specify a command')
 
     return 0 if process_command(options, args) else 1
+
 
 if __name__ == "__main__":  # pragma: no cover
     sys.exit(main(sys.argv))

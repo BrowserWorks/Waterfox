@@ -21,4 +21,3 @@ config = {
     "enable_mozmake": True,
     'exes': {},
 }
-

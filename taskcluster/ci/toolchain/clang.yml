@@ -188,4 +188,3 @@ win64-clang-cl:
             - 'taskcluster/scripts/misc/build-clang-windows-helper64.sh'
         toolchain-artifact: public/build/clang.tar.bz2
         tooltool-downloads: internal
-

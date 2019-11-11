@@ -23,6 +23,7 @@ class TooltoolMixin(object):
     config['tooltool_authentication_file']; set it to None to not pass
     any authentication information (OK for public files)
     """
+
     def _get_auth_file(self):
         # set the default authentication file based on platform; this
         # corresponds to where puppet puts the token

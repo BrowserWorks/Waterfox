@@ -54,4 +54,3 @@ win64-cbindgen:
         tooltool-downloads: internal
     toolchains:
         - win64-rust-1.34
-

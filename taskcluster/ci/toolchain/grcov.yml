@@ -40,4 +40,3 @@ win64-grcov:
         tooltool-downloads: internal
     toolchains:
         - win64-rust-1.34
-
