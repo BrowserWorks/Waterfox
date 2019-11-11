@@ -21,6 +21,7 @@ import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.content.res.Configuration;
 import android.content.res.Resources;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -784,6 +785,7 @@ public class BrowserApp extends GeckoApp
 
         EventDispatcher.getInstance().registerUiThreadListener(this,
             "GeckoView:AccessibilityEnabled",
+            "SearchEngines:Data",
             "Menu:Open",
             "LightweightTheme:Update",
             "Tab:Added",
@@ -813,6 +815,8 @@ public class BrowserApp extends GeckoApp
             null);
 
         getAppEventDispatcher().registerUiThreadListener(this, "Prompt:ShowTop");
+
+        EventDispatcher.getInstance().dispatch("SearchEngines:GetVisible", null);
 
         final GeckoProfile profile = getProfile();
 
@@ -1593,6 +1597,7 @@ public class BrowserApp extends GeckoApp
 
         EventDispatcher.getInstance().unregisterUiThreadListener(this,
             "GeckoView:AccessibilityEnabled",
+            "SearchEngines:Data",
             "Menu:Open",
             "LightweightTheme:Update",
             "Tab:Added",
@@ -1856,6 +1861,13 @@ public class BrowserApp extends GeckoApp
                 openOptionsMenu();
                 break;
 
+            case "SearchEngines:Data":
+                final GeckoBundle[] engines = message.getBundleArray("searchEngines");
+                final int totalAddedSearchEngines = engines == null ? 0 : engines.length;
+                GeckoSharedPrefs.forApp(getApplicationContext()).edit().putInt("android.not_a_preference.total_added_search_engines", totalAddedSearchEngines).apply();
+
+                break;
+
             case "LightweightTheme:Update":
                 mDynamicToolbar.setVisible(true, VisibilityTransition.ANIMATE);
                 break;
@@ -2034,6 +2046,13 @@ public class BrowserApp extends GeckoApp
                 final boolean hasCustomHomepanels =
                         prefs.contains(HomeConfigPrefsBackend.PREFS_CONFIG_KEY) ||
                         prefs.contains(HomeConfigPrefsBackend.PREFS_CONFIG_KEY_OLD);
+
+                final SharedPreferences appPrefs = GeckoSharedPrefs.forApp(getApplicationContext());
+                final int bookmarksWithStar = db.getCount(cr, "bookmarks");
+                appPrefs.edit().putInt("android.not_a_preference.bookmarks_with_star", bookmarksWithStar).apply();
+
+                final Cursor cursor = BrowserDB.from(this).getTopSites(getContentResolver(), getResources().getInteger(R.integer.number_of_top_sites), 30);
+                appPrefs.edit().putInt("android.not_a_preference.total_sites_pinned_to_topsites", cursor.getCount()).apply();
 
                 Telemetry.addToHistogram("FENNEC_HOMEPANELS_CUSTOM", hasCustomHomepanels ? 1 : 0);
 
@@ -3624,18 +3643,30 @@ public class BrowserApp extends GeckoApp
         }
 
         if (itemId == R.id.save_as_pdf) {
+            final SharedPreferences prefs = GeckoSharedPrefs.forApp(getApplicationContext());
+            final int saveAsPdf = prefs.getInt("android.not_a_preference.save_as_pdf", 0);
+            prefs.edit().putInt("android.not_a_preference.save_as_pdf", saveAsPdf + 1).apply();
+
             Telemetry.sendUIEvent(TelemetryContract.Event.SAVE, TelemetryContract.Method.MENU, "pdf");
             EventDispatcher.getInstance().dispatch("SaveAs:PDF", null);
             return true;
         }
 
         if (itemId == R.id.print) {
+            final SharedPreferences prefs = GeckoSharedPrefs.forApp(getApplicationContext());
+            final int print = prefs.getInt("android.not_a_preference.print", 0);
+            prefs.edit().putInt("android.not_a_preference.print", print + 1).apply();
+
             Telemetry.sendUIEvent(TelemetryContract.Event.SAVE, TelemetryContract.Method.MENU, "print");
             PrintHelper.printPDF(this);
             return true;
         }
 
         if (itemId == R.id.view_page_source) {
+            final SharedPreferences prefs = GeckoSharedPrefs.forApp(getApplicationContext());
+            final int viewPageSource = prefs.getInt("android.not_a_preference.view_page_source", 0);
+            prefs.edit().putInt("android.not_a_preference.view_page_source", viewPageSource + 1).apply();
+
             tab = Tabs.getInstance().getSelectedTab();
             final GeckoBundle args = new GeckoBundle(1);
             args.putInt("tabId", tab.getId());
