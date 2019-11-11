@@ -15,7 +15,6 @@ from taskgraph.transforms.job.common import (
     docker_worker_add_artifacts,
     generic_worker_add_artifacts,
     generic_worker_hg_commands,
-    add_tooltool,
     support_vcs_checkout,
 )
 
@@ -29,6 +28,12 @@ sm_run_schema = Schema({
 
     # Base work directory used to set up the task.
     Required('workdir'): basestring,
+
+    Required('tooltool-downloads'): Any(
+        False,
+        'public',
+        'internal',
+    ),
 })
 
 
@@ -51,7 +56,6 @@ def docker_worker_spidermonkey(config, job, taskdesc):
     })
 
     docker_worker_add_artifacts(config, job, taskdesc)
-    add_tooltool(config, job, taskdesc)
 
     env = worker.setdefault('env', {})
     env.update({
