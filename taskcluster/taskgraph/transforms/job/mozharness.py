@@ -22,7 +22,7 @@ from taskgraph.transforms.job.common import (
     docker_worker_add_workspace_cache,
     setup_secrets,
     docker_worker_add_artifacts,
-    docker_worker_add_tooltool,
+    add_tooltool,
     generic_worker_add_artifacts,
     generic_worker_hg_commands,
     support_vcs_checkout,
@@ -217,7 +217,7 @@ def mozharness_on_docker_worker_setup(config, job, taskdesc):
 
     if run['tooltool-downloads']:
         internal = run['tooltool-downloads'] == 'internal'
-        docker_worker_add_tooltool(config, job, taskdesc, internal=internal)
+        add_tooltool(config, job, taskdesc, internal=internal)
 
     # Retry if mozharness returns TBPL_RETRY
     worker['retry-exit-status'] = [4]
@@ -298,6 +298,10 @@ def mozharness_on_generic_worker(config, job, taskdesc):
     # mozharness doesn't try to find the commit message on its own.
     if config.params.is_try():
         env['TRY_COMMIT_MSG'] = config.params['message'] or 'no commit message'
+
+    if run['tooltool-downloads']:
+        internal = run['tooltool-downloads'] == 'internal'
+        add_tooltool(config, job, taskdesc, internal=internal)
 
     if not job['attributes']['build_platform'].startswith('win'):
         raise Exception(

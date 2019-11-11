@@ -14,7 +14,7 @@ from taskgraph.transforms.tests import (
     normpath
 )
 from taskgraph.transforms.job.common import (
-    docker_worker_add_tooltool,
+    add_tooltool,
     support_vcs_checkout,
 )
 import json
@@ -128,7 +128,7 @@ def mozharness_test_on_docker(config, job, taskdesc):
 
     if mozharness['tooltool-downloads']:
         internal = mozharness['tooltool-downloads'] == 'internal'
-        docker_worker_add_tooltool(config, job, taskdesc, internal=internal)
+        add_tooltool(config, job, taskdesc, internal=internal)
 
     if test['reboot']:
         raise Exception('reboot: {} not supported on generic-worker'.format(test['reboot']))
@@ -355,6 +355,10 @@ def mozharness_test_on_generic_worker(config, job, taskdesc):
 
     if config.params.is_try():
         env['TRY_COMMIT_MSG'] = config.params['message']
+
+    if mozharness['tooltool-downloads']:
+        internal = mozharness['tooltool-downloads'] == 'internal'
+        add_tooltool(config, job, taskdesc, internal=internal)
 
     worker['mounts'] = [{
         'directory': '.',
