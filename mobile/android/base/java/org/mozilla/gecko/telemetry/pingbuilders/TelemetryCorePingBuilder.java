@@ -26,6 +26,8 @@ import org.mozilla.gecko.GeckoSharedPrefs;
 import org.mozilla.gecko.Locales;
 import org.mozilla.gecko.PrefsHelper;
 import org.mozilla.gecko.R;
+import org.mozilla.gecko.Tabs;
+import org.mozilla.gecko.activitystream.homepanel.ActivityStreamPanel;
 import org.mozilla.gecko.preferences.GeckoPreferences;
 import org.mozilla.gecko.search.SearchEngine;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
@@ -124,11 +126,13 @@ public class TelemetryCorePingBuilder extends TelemetryPingBuilder {
     private static final String ACCESSIBILITY_SERVICES = "accessibilityServices";
     private static final String HAD_CANARY_CLIENT_ID = "bug_1501329_affected";
 
-    public TelemetryCorePingBuilder(final Context context) {
-        initPayloadConstants(context);
+    public TelemetryCorePingBuilder(final Context context, boolean[] privacyPrefs, List<String> activeAddons,
+                                    List<String> disabledAddons) {
+        initPayloadConstants(context, privacyPrefs, activeAddons, disabledAddons);
     }
 
-    private void initPayloadConstants(final Context context) {
+    private void initPayloadConstants(final Context context, boolean[] privacyPrefs, List<String> activeAddons,
+                                      List<String> disabledAddons) {
         payload.put(VERSION_ATTR, VERSION_VALUE);
         payload.put(OS_ATTR, TelemetryPingBuilder.OS_NAME);
 
@@ -163,6 +167,19 @@ public class TelemetryCorePingBuilder extends TelemetryPingBuilder {
             final String searchVersion = prefs.getString(GeckoApp.PREFS_ENHANCED_SEARCH_VERSION, "");
             payload.put(GeckoApp.PREFS_ENHANCED_SEARCH_VERSION, searchVersion);
 
+            final boolean fullScreenBrowsing = prefs.getBoolean("browser.chrome.dynamictoolbar", false);
+            final boolean tabQueue = prefs.getBoolean("android.not_a_preference.tab_queue", false);
+            final int tabQueueUsageCount = prefs.getInt("android.not_a_preference.tab_queue_usage_count", 0);
+            final boolean compactTabs = prefs.getBoolean("android.not_a_preference.compact_tabs", false);
+            final boolean customHomepage = Tabs.hasHomepage(context);
+            final boolean customHomepageForNewTab = prefs.getBoolean("android.not_a_preference.newtab.load_homepage", false);
+            final boolean historyEnabled = prefs.getBoolean(ActivityStreamPanel.PREF_VISITED_ENABLED, true);
+            final boolean bookmarksEnabled = prefs.getBoolean(ActivityStreamPanel.PREF_BOOKMARKS_ENABLED, true);
+            final boolean topsitesEnabled = prefs.getBoolean("pref_activitystream_recentbookmarks_enabled", true);
+            final boolean pocketEnabled = prefs.getBoolean("pref_activitystream_pocket_enabled", true);
+            final boolean visitedEnabled = prefs.getBoolean("pref_activitystream_visited_enabled", true);
+            final boolean recentBookmarksEnabled = prefs.getBoolean("pref_activitystream_recentbookmarks_enabled", true);
+
             final int topSitesClicked = prefs.getInt("android.not_a_preference.top_sites_clicked", 0);
             final int pocketStoriesClicked = prefs.getInt("android.not_a_preference.pocket_stories_clicked", 0);
             final boolean restoreTabs = !"quit".equals(prefs.getString(GeckoPreferences.PREFS_RESTORE_SESSION, "always"));
@@ -177,10 +194,7 @@ public class TelemetryCorePingBuilder extends TelemetryPingBuilder {
             final String showImages = getShowImages(intShowImages, context);
             final Boolean onlyOverWifi = prefs.getBoolean("sync.restrict_metered", false);
             final boolean productFeatureTipsEnabled = prefs.getBoolean(GeckoPreferences.PREFS_NOTIFICATIONS_FEATURES_TIPS, true);
-            final boolean[] privacyPrefs = {false, false};
             final int masterPasswordUsageCount = prefs.getInt("android.not_a_preference.master_password_usage_count", 0);
-            final List<String> activeAddons = new ArrayList<>();
-            final List<String> disabledAddons = new ArrayList<>();
             PrefsHelper.getPrefs(new String[]{"privacy.donottrackheader.enabled", "privacy.masterpassword.enabled",
                             "android.not_a_preference.addons_active", "android.not_a_preference.addons_disabled"},
                     new PrefsHelper.PrefHandlerBase() {
@@ -228,9 +242,10 @@ public class TelemetryCorePingBuilder extends TelemetryPingBuilder {
                         public void finish() {
                             final ExtendedJSONObject fennec = getFennec(getNewTab(topSitesClicked, pocketStoriesClicked),
                                     getSettingsAdvanced(restoreTabs, showImages, showWebFonts),
-                                    getSettingsGeneral(false, false, 0, false,
-                                            getHomepage(false, false, false,
-                                                    false, false, false, false, false),
+                                    getSettingsGeneral(fullScreenBrowsing, tabQueue, tabQueueUsageCount, compactTabs,
+                                            getHomepage(customHomepage, customHomepageForNewTab,
+                                                    topsitesEnabled, pocketEnabled, recentBookmarksEnabled,
+                                                    visitedEnabled, bookmarksEnabled, historyEnabled),
                                             getSettingsPrivacy(privacyPrefs[0], privacyPrefs[1], masterPasswordUsageCount),
                                             getSettingsNotifications(productFeatureTipsEnabled), getAddons(activeAddons, disabledAddons),
                                             getPageOptions(saveAsPdf, print, totalAddedSearchEngines, totalSitesPinnedToTopsites, viewPageSource, bookmarksWithStar),
