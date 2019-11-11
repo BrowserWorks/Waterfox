@@ -42,7 +42,7 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Builds a {@link TelemetryOutgoingPing} representing a core ping.
- *
+ * <p>
  * See https://firefox-source-docs.mozilla.org/toolkit/components/telemetry/telemetry/data/core-ping.html
  * for details on the core ping.
  */
@@ -72,6 +72,46 @@ public class TelemetryCorePingBuilder extends TelemetryPingBuilder {
     private static final String SEARCH_COUNTS = "searches";
     private static final String SEQ = "seq";
     private static final String SESSION_COUNT = "sessions";
+    private static final String FENNEC = "fennec";
+    private static final String NEW_TAB = "newTab";
+    private static final String TOP_SITES_CLICKED = "topSitesClicked";
+    private static final String POCKET_STORIES_CLICKED = "pocketStoriesClicked";
+    private static final String SETTINGS_ADVANCED = "settingsAdvanced";
+    private static final String RESTORE_TABS = "restoreTabs";
+    private static final String SHOW_IMAGES = "showImages";
+    private static final String SHOW_WEB_FONTS = "showWebFonts";
+    private static final String SETTINGS_GENERAL = "settingsGeneral";
+    private static final String FULL_SCREEN_BROWSING = "fullScreenBrowsing";
+    private static final String TAB_QUEUE = "tabQueue";
+    private static final String TAB_QUEUE_USAGE_COUNT = "tabQueueUsageCount";
+    private static final String COMPACT_TABS = "compactTabs";
+    private static final String HOMEPAGE = "homepage";
+    private static final String CUSTOM_HOMEPAGE = "customHomepage";
+    private static final String CUSTOM_HOMEPAGE_USE_FOR_NEWTAB = "customHomepageUseForNewtab";
+    private static final String TOPSITES_ENABLED = "topsitesEnabled";
+    private static final String POCKET_ENABLED = "pocketEnabled";
+    private static final String RECENT_BOOKMARKS_ENABLED = "recentBookmarksEnabled";
+    private static final String VISITED_ENABLED = "visitedEnabled";
+    private static final String BOOKMARKS_ENABLED = "bookmarksEnabled";
+    private static final String HISTORY_ENABLED = "historyEnabled";
+    private static final String SETTINGS_PRIVACY = "settingsPrivacy";
+    private static final String DO_NOT_TRACK = "doNotTrack";
+    private static final String MASTER_PASSWORD = "masterPassword";
+    private static final String MASTER_PASSWORD_USAGE_COUNT = "masterPasswordUsageCount";
+    private static final String SETTINGS_NOTIFICATIONS = "settingsNotifications";
+    private static final String PRODUCT_FEATURE_TIPS = "productFeatureTips";
+    private static final String ADDONS = "addons";
+    private static final String ACTIVE = "active";
+    private static final String DISABLED = "disabled";
+    private static final String PAGE_OPTIONS = "pageOptions";
+    private static final String SAVE_AS_PDF = "saveAsPdf";
+    private static final String PRINT = "print";
+    private static final String TOTAL_ADDED_SEARCH_ENGINES = "totalAddedSearchEngines";
+    private static final String TOTAL_SITES_PINNED_TO_TOPSITES = "totalSitesPinnedToTopsites";
+    private static final String VIEW_SOURCE = "viewSource";
+    private static final String BOOKMARK_WITH_STAR = "bookmarkWithStar";
+    private static final String SYNC = "sync";
+    private static final String ONLY_OVER_WIFI = "onlyOverWifi";
     private static final String SESSION_DURATION = "durations";
     private static final String TIMEZONE_OFFSET = "tz";
     private static final String VERSION_ATTR = "v";
@@ -117,6 +157,17 @@ public class TelemetryCorePingBuilder extends TelemetryPingBuilder {
             payload.put(GeckoApp.PREFS_ENHANCED_SEARCH_READY, searchReady);
             final String searchVersion = prefs.getString(GeckoApp.PREFS_ENHANCED_SEARCH_VERSION, "");
             payload.put(GeckoApp.PREFS_ENHANCED_SEARCH_VERSION, searchVersion);
+
+            final ExtendedJSONObject fennec = getFennec(getNewTab(0, 0),
+                    getSettingsAdvanced(false, "", false),
+                    getSettingsGeneral(false, false, 0, false,
+                            getHomepage(false, false, false,
+                                    false, false, false, false, false),
+                            getSettingsPrivacy(false, false, false),
+                            getSettingsNotifications(false), getAddons(new ArrayList<>(), new ArrayList<>()),
+                            getPageOptions(0, 0, 0, 0, 0, 0),
+                            getSync(false)));
+            payload.put(FENNEC, fennec);
         }
     }
 
@@ -127,7 +178,7 @@ public class TelemetryCorePingBuilder extends TelemetryPingBuilder {
 
     @Override
     public String[] getMandatoryFields() {
-        return new String[] {
+        return new String[]{
                 ARCHITECTURE,
                 CLIENT_ID,
                 DEFAULT_SEARCH_ENGINE,
@@ -141,6 +192,7 @@ public class TelemetryCorePingBuilder extends TelemetryPingBuilder {
                 TIMEZONE_OFFSET,
                 VERSION_ATTR,
                 HAD_CANARY_CLIENT_ID,
+                FENNEC
         };
     }
 
@@ -247,6 +299,129 @@ public class TelemetryCorePingBuilder extends TelemetryPingBuilder {
         return this;
     }
 
+    public ExtendedJSONObject getFennec(final ExtendedJSONObject newTab, final ExtendedJSONObject settingsAdvanced,
+                                        final ExtendedJSONObject settingsGeneral) {
+        final ExtendedJSONObject fennec = new ExtendedJSONObject();
+
+        fennec.put(NEW_TAB, newTab);
+        fennec.put(SETTINGS_ADVANCED, settingsAdvanced);
+        fennec.put(SETTINGS_GENERAL, settingsGeneral);
+
+        return fennec;
+    }
+
+    public ExtendedJSONObject getNewTab(final Integer topSitesClicked, final Integer pocketStoriesClicked) {
+        final ExtendedJSONObject newTab = new ExtendedJSONObject();
+
+        newTab.put(TOP_SITES_CLICKED, topSitesClicked);
+        newTab.put(POCKET_STORIES_CLICKED, pocketStoriesClicked);
+
+        return newTab;
+    }
+
+    public ExtendedJSONObject getSettingsAdvanced(final Boolean restoreTabs, final String showImages,
+                                                  final Boolean showWebFonts) {
+        final ExtendedJSONObject settingsAdvanced = new ExtendedJSONObject();
+
+        settingsAdvanced.put(RESTORE_TABS, restoreTabs);
+        settingsAdvanced.put(SHOW_IMAGES, showImages);
+        settingsAdvanced.put(SHOW_WEB_FONTS, showWebFonts);
+
+        return settingsAdvanced;
+    }
+
+    public ExtendedJSONObject getSettingsGeneral(final Boolean fullScreenBrowsing, final Boolean tabQueue,
+                                                 final Integer tabQueueUsageCount, final Boolean compactTabs,
+                                                 final ExtendedJSONObject homepage, final ExtendedJSONObject settingsPrivacy,
+                                                 final ExtendedJSONObject settingsNotifications, final ExtendedJSONObject addons,
+                                                 final ExtendedJSONObject pageOptions, final ExtendedJSONObject sync) {
+        final ExtendedJSONObject settingsGeneral = new ExtendedJSONObject();
+
+        settingsGeneral.put(FULL_SCREEN_BROWSING, fullScreenBrowsing);
+        settingsGeneral.put(TAB_QUEUE, tabQueue);
+        settingsGeneral.put(TAB_QUEUE_USAGE_COUNT, tabQueueUsageCount);
+        settingsGeneral.put(COMPACT_TABS, compactTabs);
+        settingsGeneral.put(HOMEPAGE, homepage);
+        settingsGeneral.put(SETTINGS_PRIVACY, settingsPrivacy);
+        settingsGeneral.put(SETTINGS_NOTIFICATIONS, settingsNotifications);
+        settingsGeneral.put(ADDONS, addons);
+        settingsGeneral.put(PAGE_OPTIONS, pageOptions);
+        settingsGeneral.put(SYNC, sync);
+
+        return settingsGeneral;
+    }
+
+    public ExtendedJSONObject getHomepage(final Boolean customHomepage, final Boolean customHomepageUseForNewTab,
+                                          final Boolean topsitesEnabled, final Boolean pocketEnabled,
+                                          final Boolean recentBookmarksEnabled, final Boolean visitedEnabled,
+                                          final Boolean bookmarksEnabled, final Boolean historyEnabled) {
+        final ExtendedJSONObject homepage = new ExtendedJSONObject();
+
+        homepage.put(CUSTOM_HOMEPAGE, customHomepage);
+        homepage.put(CUSTOM_HOMEPAGE_USE_FOR_NEWTAB, customHomepageUseForNewTab);
+        homepage.put(TOPSITES_ENABLED, topsitesEnabled);
+        homepage.put(POCKET_ENABLED, pocketEnabled);
+        homepage.put(RECENT_BOOKMARKS_ENABLED, recentBookmarksEnabled);
+        homepage.put(VISITED_ENABLED, visitedEnabled);
+        homepage.put(BOOKMARKS_ENABLED, bookmarksEnabled);
+        homepage.put(HISTORY_ENABLED, historyEnabled);
+
+        return homepage;
+    }
+
+    public ExtendedJSONObject getSettingsPrivacy(final Boolean doNotTrack, final Boolean masterPassword,
+                                                 final Boolean masterPasswordUsageCount) {
+        final ExtendedJSONObject settingsPrivacy = new ExtendedJSONObject();
+
+        settingsPrivacy.put(DO_NOT_TRACK, doNotTrack);
+        settingsPrivacy.put(MASTER_PASSWORD, masterPassword);
+        settingsPrivacy.put(MASTER_PASSWORD_USAGE_COUNT, masterPasswordUsageCount);
+
+        return settingsPrivacy;
+    }
+
+    public ExtendedJSONObject getSettingsNotifications(final Boolean productFeatureTips) {
+        final ExtendedJSONObject settingsNotifications = new ExtendedJSONObject();
+
+        settingsNotifications.put(PRODUCT_FEATURE_TIPS, productFeatureTips);
+
+        return settingsNotifications;
+    }
+
+    public ExtendedJSONObject getAddons(final ArrayList<String> active, final ArrayList<String> disabled) {
+        final ExtendedJSONObject addons = new ExtendedJSONObject();
+
+        addons.putArray(ACTIVE, active);
+        addons.putArray(DISABLED, disabled);
+
+        return addons;
+    }
+
+    public ExtendedJSONObject getPageOptions(final Integer saveAsPdf, final Integer print, final Integer totalAddedSearchEngines,
+                                             final Integer totalSitesPinnedToTopsites, final Integer viewSource,
+                                             final Integer bookmarkWithStar) {
+        final ExtendedJSONObject pageOptions = new ExtendedJSONObject();
+
+        pageOptions.put(SAVE_AS_PDF, saveAsPdf);
+        pageOptions.put(PRINT, print);
+        pageOptions.put(TOTAL_ADDED_SEARCH_ENGINES, totalAddedSearchEngines);
+        pageOptions.put(TOTAL_SITES_PINNED_TO_TOPSITES, totalSitesPinnedToTopsites);
+        pageOptions.put(VIEW_SOURCE, viewSource);
+        pageOptions.put(BOOKMARK_WITH_STAR, bookmarkWithStar);
+
+        return pageOptions;
+    }
+
+    public ExtendedJSONObject getSync(final Boolean onlyOverWifi) {
+        final ExtendedJSONObject sync = new ExtendedJSONObject();
+
+        sync.put(ONLY_OVER_WIFI, onlyOverWifi);
+
+        return sync;
+    }
+
+    /********************************************************************************************************/
+
     public TelemetryCorePingBuilder setSessionDuration(final long sessionDuration) {
         if (sessionDuration < 0) {
             // Since this is an increasing value, it's possible we can overflow into negative values and get into a
@@ -271,7 +446,7 @@ public class TelemetryCorePingBuilder extends TelemetryPingBuilder {
 
     /**
      * @return the profile creation date in the format expected by
-     *         {@link TelemetryCorePingBuilder#setProfileCreationDate(Long)}.
+     * {@link TelemetryCorePingBuilder#setProfileCreationDate(Long)}.
      */
     @WorkerThread
     public static Long getProfileCreationDate(final Context context, final GeckoProfile profile) {
