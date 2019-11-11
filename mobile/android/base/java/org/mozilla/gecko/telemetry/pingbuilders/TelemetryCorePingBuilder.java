@@ -160,12 +160,14 @@ public class TelemetryCorePingBuilder extends TelemetryPingBuilder {
             final String searchVersion = prefs.getString(GeckoApp.PREFS_ENHANCED_SEARCH_VERSION, "");
             payload.put(GeckoApp.PREFS_ENHANCED_SEARCH_VERSION, searchVersion);
 
+            final int topSitesClicked = prefs.getInt("android.not_a_preference.top_sites_clicked", 0);
+            final int pocketStoriesClicked = prefs.getInt("android.not_a_preference.pocket_stories_clicked", 0);
             final boolean restoreTabs = !"quit".equals(prefs.getString(GeckoPreferences.PREFS_RESTORE_SESSION, "always"));
             final boolean showWebFonts = prefs.getBoolean("browser.display.use_document_fonts", false);
             final int intShowImages = Integer.parseInt(prefs.getString("browser.image_blocking", "1"));
             final String showImages = getShowImages(intShowImages, context);
             final Boolean onlyOverWifi = prefs.getBoolean("sync.restrict_metered", false);
-            final ExtendedJSONObject fennec = getFennec(getNewTab(0, 0),
+            final ExtendedJSONObject fennec = getFennec(getNewTab(topSitesClicked, pocketStoriesClicked),
                     getSettingsAdvanced(restoreTabs, showImages, showWebFonts),
                     getSettingsGeneral(false, false, 0, false,
                             getHomepage(false, false, false,

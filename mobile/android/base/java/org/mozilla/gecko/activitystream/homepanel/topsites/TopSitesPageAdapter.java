@@ -4,7 +4,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 package org.mozilla.gecko.activitystream.homepanel.topsites;
 
-import android.content.Context;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.support.annotation.UiThread;
 import android.support.v7.widget.RecyclerView;
@@ -13,6 +13,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 
+import org.mozilla.gecko.GeckoSharedPrefs;
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.Telemetry;
 import org.mozilla.gecko.TelemetryContract;
@@ -82,6 +83,10 @@ import java.util.List;
                 TelemetryContract.Method.LIST_ITEM,
                 extras.build()
         );
+
+        final SharedPreferences prefs = GeckoSharedPrefs.forApp(v.getContext());
+        final int topSitesClicked = prefs.getInt("android.not_a_preference.top_sites_clicked", 0);
+        prefs.edit().putInt("android.not_a_preference.top_sites_clicked", topSitesClicked + 1).apply();
 
         onUrlOpenListener.onUrlOpen(StringUtils.decodeUserEnteredUrl(topSite.getUrl()), EnumSet.noneOf(HomePager.OnUrlOpenListener.Flags.class));
     }
