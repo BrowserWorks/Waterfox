@@ -167,13 +167,14 @@ public class TelemetryCorePingBuilder extends TelemetryPingBuilder {
             final int intShowImages = Integer.parseInt(prefs.getString("browser.image_blocking", "1"));
             final String showImages = getShowImages(intShowImages, context);
             final Boolean onlyOverWifi = prefs.getBoolean("sync.restrict_metered", false);
+            final boolean productFeatureTipsEnabled = prefs.getBoolean(GeckoPreferences.PREFS_NOTIFICATIONS_FEATURES_TIPS, true);
             final ExtendedJSONObject fennec = getFennec(getNewTab(topSitesClicked, pocketStoriesClicked),
                     getSettingsAdvanced(restoreTabs, showImages, showWebFonts),
                     getSettingsGeneral(false, false, 0, false,
                             getHomepage(false, false, false,
                                     false, false, false, false, false),
                             getSettingsPrivacy(false, false, false),
-                            getSettingsNotifications(false), getAddons(new ArrayList<>(), new ArrayList<>()),
+                            getSettingsNotifications(productFeatureTipsEnabled), getAddons(new ArrayList<>(), new ArrayList<>()),
                             getPageOptions(0, 0, 0, 0, 0, 0),
                             getSync(onlyOverWifi)));
             payload.put(FENNEC, fennec);
