@@ -12,6 +12,7 @@ from voluptuous import Required, Any, Optional
 
 from taskgraph.transforms.job import run_job_using
 from taskgraph.transforms.job.common import (
+    add_tooltool,
     docker_worker_add_artifacts,
     generic_worker_add_artifacts,
     generic_worker_hg_commands,
@@ -77,6 +78,10 @@ def docker_worker_spidermonkey(config, job, taskdesc):
     elif run['using'] == 'spidermonkey-rust-bindings':
         script = "build-sm-rust-bindings.sh"
 
+    if run['tooltool-downloads']:
+        internal = run['tooltool-downloads'] == 'internal'
+        add_tooltool(config, job, taskdesc, internal=internal)
+
     worker['command'] = [
         '{workdir}/bin/run-task'.format(**run),
         '--gecko-checkout', '{workdir}/workspace/build/src'.format(**run),
@@ -126,6 +131,10 @@ def generic_worker_spidermonkey(config, job, taskdesc):
         script = "build-sm-rust-bindings.sh"
         # Don't allow untested configurations yet
         raise Exception("spidermonkey-rust-bindings is not a supported configuration")
+
+    if run['tooltool-downloads']:
+        internal = run['tooltool-downloads'] == 'internal'
+        add_tooltool(config, job, taskdesc, internal=internal)
 
     hg_command = generic_worker_hg_commands(
         'https://hg.mozilla.org/mozilla-unified',
