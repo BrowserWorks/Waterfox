@@ -6181,28 +6181,6 @@ var XPInstallObserver = {
         let disabledAddons = AddonManager.getStartupChanges(
           AddonManager.STARTUP_CHANGE_DISABLED
         );
-
-        let active = [];
-        let disabled = [];
-
-        AddonManager.getAllAddons().then(allAddons => {
-          allAddons.forEach(addon => {
-            if (addon.isActive) {
-              active.push(addon.id);
-            } else {
-              disabled.push(addon.id);
-            }
-          });
-          Services.prefs.setStringPref(
-            "android.not_a_preference.addons_active",
-            JSON.stringify(active)
-          );
-          Services.prefs.setStringPref(
-            "android.not_a_preference.addons_disabled",
-            JSON.stringify(disabled)
-          );
-        });
-
         for (let id of disabledAddons) {
           if (
             AddonManager.getAddonByID(id).signedState <=

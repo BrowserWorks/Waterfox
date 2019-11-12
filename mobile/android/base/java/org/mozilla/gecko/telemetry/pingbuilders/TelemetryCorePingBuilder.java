@@ -16,19 +16,12 @@ import android.support.annotation.WorkerThread;
 import android.text.TextUtils;
 import android.util.Log;
 
-import org.json.JSONArray;
-import org.json.JSONException;
 import org.mozilla.gecko.AppConstants;
 import org.mozilla.gecko.Experiments;
 import org.mozilla.gecko.GeckoApp;
 import org.mozilla.gecko.GeckoProfile;
 import org.mozilla.gecko.GeckoSharedPrefs;
 import org.mozilla.gecko.Locales;
-import org.mozilla.gecko.PrefsHelper;
-import org.mozilla.gecko.R;
-import org.mozilla.gecko.Tabs;
-import org.mozilla.gecko.activitystream.homepanel.ActivityStreamPanel;
-import org.mozilla.gecko.preferences.GeckoPreferences;
 import org.mozilla.gecko.search.SearchEngine;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.telemetry.TelemetryOutgoingPing;
@@ -49,7 +42,7 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Builds a {@link TelemetryOutgoingPing} representing a core ping.
- * <p>
+ *
  * See https://firefox-source-docs.mozilla.org/toolkit/components/telemetry/telemetry/data/core-ping.html
  * for details on the core ping.
  */
@@ -79,46 +72,6 @@ public class TelemetryCorePingBuilder extends TelemetryPingBuilder {
     private static final String SEARCH_COUNTS = "searches";
     private static final String SEQ = "seq";
     private static final String SESSION_COUNT = "sessions";
-    private static final String FENNEC = "fennec";
-    private static final String NEW_TAB = "newTab";
-    private static final String TOP_SITES_CLICKED = "topSitesClicked";
-    private static final String POCKET_STORIES_CLICKED = "pocketStoriesClicked";
-    private static final String SETTINGS_ADVANCED = "settingsAdvanced";
-    private static final String RESTORE_TABS = "restoreTabs";
-    private static final String SHOW_IMAGES = "showImages";
-    private static final String SHOW_WEB_FONTS = "showWebFonts";
-    private static final String SETTINGS_GENERAL = "settingsGeneral";
-    private static final String FULL_SCREEN_BROWSING = "fullScreenBrowsing";
-    private static final String TAB_QUEUE = "tabQueue";
-    private static final String TAB_QUEUE_USAGE_COUNT = "tabQueueUsageCount";
-    private static final String COMPACT_TABS = "compactTabs";
-    private static final String HOMEPAGE = "homepage";
-    private static final String CUSTOM_HOMEPAGE = "customHomepage";
-    private static final String CUSTOM_HOMEPAGE_USE_FOR_NEWTAB = "customHomepageUseForNewtab";
-    private static final String TOPSITES_ENABLED = "topsitesEnabled";
-    private static final String POCKET_ENABLED = "pocketEnabled";
-    private static final String RECENT_BOOKMARKS_ENABLED = "recentBookmarksEnabled";
-    private static final String VISITED_ENABLED = "visitedEnabled";
-    private static final String BOOKMARKS_ENABLED = "bookmarksEnabled";
-    private static final String HISTORY_ENABLED = "historyEnabled";
-    private static final String SETTINGS_PRIVACY = "settingsPrivacy";
-    private static final String DO_NOT_TRACK = "doNotTrack";
-    private static final String MASTER_PASSWORD = "masterPassword";
-    private static final String MASTER_PASSWORD_USAGE_COUNT = "masterPasswordUsageCount";
-    private static final String SETTINGS_NOTIFICATIONS = "settingsNotifications";
-    private static final String PRODUCT_FEATURE_TIPS = "productFeatureTips";
-    private static final String ADDONS = "addons";
-    private static final String ACTIVE = "active";
-    private static final String DISABLED = "disabled";
-    private static final String PAGE_OPTIONS = "pageOptions";
-    private static final String SAVE_AS_PDF = "saveAsPdf";
-    private static final String PRINT = "print";
-    private static final String TOTAL_ADDED_SEARCH_ENGINES = "totalAddedSearchEngines";
-    private static final String TOTAL_SITES_PINNED_TO_TOPSITES = "totalSitesPinnedToTopsites";
-    private static final String VIEW_SOURCE = "viewSource";
-    private static final String BOOKMARK_WITH_STAR = "bookmarkWithStar";
-    private static final String SYNC = "sync";
-    private static final String ONLY_OVER_WIFI = "onlyOverWifi";
     private static final String SESSION_DURATION = "durations";
     private static final String TIMEZONE_OFFSET = "tz";
     private static final String VERSION_ATTR = "v";
@@ -126,13 +79,11 @@ public class TelemetryCorePingBuilder extends TelemetryPingBuilder {
     private static final String ACCESSIBILITY_SERVICES = "accessibilityServices";
     private static final String HAD_CANARY_CLIENT_ID = "bug_1501329_affected";
 
-    public TelemetryCorePingBuilder(final Context context, boolean[] privacyPrefs, List<String> activeAddons,
-                                    List<String> disabledAddons) {
-        initPayloadConstants(context, privacyPrefs, activeAddons, disabledAddons);
+    public TelemetryCorePingBuilder(final Context context) {
+        initPayloadConstants(context);
     }
 
-    private void initPayloadConstants(final Context context, boolean[] privacyPrefs, List<String> activeAddons,
-                                      List<String> disabledAddons) {
+    private void initPayloadConstants(final Context context) {
         payload.put(VERSION_ATTR, VERSION_VALUE);
         payload.put(OS_ATTR, TelemetryPingBuilder.OS_NAME);
 
@@ -166,106 +117,6 @@ public class TelemetryCorePingBuilder extends TelemetryPingBuilder {
             payload.put(GeckoApp.PREFS_ENHANCED_SEARCH_READY, searchReady);
             final String searchVersion = prefs.getString(GeckoApp.PREFS_ENHANCED_SEARCH_VERSION, "");
             payload.put(GeckoApp.PREFS_ENHANCED_SEARCH_VERSION, searchVersion);
-
-            final boolean fullScreenBrowsing = prefs.getBoolean("browser.chrome.dynamictoolbar", false);
-            final boolean tabQueue = prefs.getBoolean("android.not_a_preference.tab_queue", false);
-            final int tabQueueUsageCount = prefs.getInt("android.not_a_preference.tab_queue_usage_count", 0);
-            final boolean compactTabs = prefs.getBoolean("android.not_a_preference.compact_tabs", false);
-            final boolean customHomepage = Tabs.hasHomepage(context);
-            final boolean customHomepageForNewTab = prefs.getBoolean("android.not_a_preference.newtab.load_homepage", false);
-            final boolean historyEnabled = prefs.getBoolean(ActivityStreamPanel.PREF_VISITED_ENABLED, true);
-            final boolean bookmarksEnabled = prefs.getBoolean(ActivityStreamPanel.PREF_BOOKMARKS_ENABLED, true);
-            final boolean topsitesEnabled = prefs.getBoolean("pref_activitystream_recentbookmarks_enabled", true);
-            final boolean pocketEnabled = prefs.getBoolean("pref_activitystream_pocket_enabled", true);
-            final boolean visitedEnabled = prefs.getBoolean("pref_activitystream_visited_enabled", true);
-            final boolean recentBookmarksEnabled = prefs.getBoolean("pref_activitystream_recentbookmarks_enabled", true);
-
-            final int topSitesClicked = prefs.getInt("android.not_a_preference.top_sites_clicked", 0);
-            final int pocketStoriesClicked = prefs.getInt("android.not_a_preference.pocket_stories_clicked", 0);
-            final boolean restoreTabs = !"quit".equals(prefs.getString(GeckoPreferences.PREFS_RESTORE_SESSION, "always"));
-            final boolean showWebFonts = prefs.getBoolean("browser.display.use_document_fonts", false);
-            final int totalAddedSearchEngines = prefs.getInt("android.not_a_preference.total_added_search_engines", 0);
-            final int bookmarksWithStar = prefs.getInt("android.not_a_preference.bookmarks_with_star", 0);
-            final int totalSitesPinnedToTopsites = prefs.getInt("android.not_a_preference.total_sites_pinned_to_topsites", 0);
-            final int saveAsPdf = prefs.getInt("android.not_a_preference.save_as_pdf", 0);
-            final int print = prefs.getInt("android.not_a_preference.print", 0);
-            final int viewPageSource = prefs.getInt("android.not_a_preference.view_page_source", 0);
-            final int intShowImages = Integer.parseInt(prefs.getString("browser.image_blocking", "1"));
-            final String showImages = getShowImages(intShowImages, context);
-            final Boolean onlyOverWifi = prefs.getBoolean("sync.restrict_metered", false);
-            final boolean productFeatureTipsEnabled = prefs.getBoolean(GeckoPreferences.PREFS_NOTIFICATIONS_FEATURES_TIPS, true);
-            final int masterPasswordUsageCount = prefs.getInt("android.not_a_preference.master_password_usage_count", 0);
-            PrefsHelper.getPrefs(new String[]{"privacy.donottrackheader.enabled", "privacy.masterpassword.enabled",
-                            "android.not_a_preference.addons_active", "android.not_a_preference.addons_disabled"},
-                    new PrefsHelper.PrefHandlerBase() {
-                        @Override
-                        public void prefValue(String pref, boolean value) {
-                            if (pref.equalsIgnoreCase("privacy.donottrackheader.enabled")) {
-                                privacyPrefs[0] = value;
-                                return;
-                            }
-
-                            if (pref.equalsIgnoreCase("privacy.masterpassword.enabled")) {
-                                privacyPrefs[1] = value;
-                            }
-                        }
-
-                        @Override
-                        public void prefValue(String pref, String value) {
-                            if (pref.equalsIgnoreCase("android.not_a_preference.addons_active")) {
-                                try {
-                                    final JSONArray array = new JSONArray(value);
-                                    for (int index = 0; index < array.length(); index++) {
-                                        activeAddons.add(array.getString(index));
-                                    }
-                                } catch (JSONException ex) {
-                                    // nothing to do here but to log the error
-                                    ex.printStackTrace();
-                                }
-                                return;
-                            }
-
-                            if (pref.equalsIgnoreCase("android.not_a_preference.addons_disabled")) {
-                                try {
-                                    final JSONArray array = new JSONArray(value);
-                                    for (int index = 0; index < array.length(); index++) {
-                                        disabledAddons.add(array.getString(index));
-                                    }
-                                } catch (JSONException ex) {
-                                    // nothing to do here but to log the error
-                                    ex.printStackTrace();
-                                }
-                            }
-                        }
-
-                        @Override
-                        public void finish() {
-                            final ExtendedJSONObject fennec = getFennec(getNewTab(topSitesClicked, pocketStoriesClicked),
-                                    getSettingsAdvanced(restoreTabs, showImages, showWebFonts),
-                                    getSettingsGeneral(fullScreenBrowsing, tabQueue, tabQueueUsageCount, compactTabs,
-                                            getHomepage(customHomepage, customHomepageForNewTab,
-                                                    topsitesEnabled, pocketEnabled, recentBookmarksEnabled,
-                                                    visitedEnabled, bookmarksEnabled, historyEnabled),
-                                            getSettingsPrivacy(privacyPrefs[0], privacyPrefs[1], masterPasswordUsageCount),
-                                            getSettingsNotifications(productFeatureTipsEnabled), getAddons(activeAddons, disabledAddons),
-                                            getPageOptions(saveAsPdf, print, totalAddedSearchEngines, totalSitesPinnedToTopsites, viewPageSource, bookmarksWithStar),
-                                            getSync(onlyOverWifi)));
-                            payload.put(FENNEC, fennec);
-                        }
-                    });
-        }
-    }
-
-    private static String getShowImages(int showImages, Context context) {
-        switch (showImages) {
-            case 0:
-                return context.getResources().getStringArray(R.array.pref_browser_image_blocking_entries)[2];
-            case 1:
-                return context.getResources().getStringArray(R.array.pref_browser_image_blocking_entries)[0];
-            case 2:
-                return context.getResources().getStringArray(R.array.pref_browser_image_blocking_entries)[1];
-            default:
-                return null;
         }
     }
 
@@ -276,7 +127,7 @@ public class TelemetryCorePingBuilder extends TelemetryPingBuilder {
 
     @Override
     public String[] getMandatoryFields() {
-        return new String[]{
+        return new String[] {
                 ARCHITECTURE,
                 CLIENT_ID,
                 DEFAULT_SEARCH_ENGINE,
@@ -290,7 +141,6 @@ public class TelemetryCorePingBuilder extends TelemetryPingBuilder {
                 TIMEZONE_OFFSET,
                 VERSION_ATTR,
                 HAD_CANARY_CLIENT_ID,
-                FENNEC
         };
     }
 
@@ -397,129 +247,6 @@ public class TelemetryCorePingBuilder extends TelemetryPingBuilder {
         return this;
     }
 
-    public ExtendedJSONObject getFennec(final ExtendedJSONObject newTab, final ExtendedJSONObject settingsAdvanced,
-                                        final ExtendedJSONObject settingsGeneral) {
-        final ExtendedJSONObject fennec = new ExtendedJSONObject();
-
-        fennec.put(NEW_TAB, newTab);
-        fennec.put(SETTINGS_ADVANCED, settingsAdvanced);
-        fennec.put(SETTINGS_GENERAL, settingsGeneral);
-
-        return fennec;
-    }
-
-    public ExtendedJSONObject getNewTab(final Integer topSitesClicked, final Integer pocketStoriesClicked) {
-        final ExtendedJSONObject newTab = new ExtendedJSONObject();
-
-        newTab.put(TOP_SITES_CLICKED, topSitesClicked);
-        newTab.put(POCKET_STORIES_CLICKED, pocketStoriesClicked);
-
-        return newTab;
-    }
-
-    public ExtendedJSONObject getSettingsAdvanced(final Boolean restoreTabs, final String showImages,
-                                                  final Boolean showWebFonts) {
-        final ExtendedJSONObject settingsAdvanced = new ExtendedJSONObject();
-
-        settingsAdvanced.put(RESTORE_TABS, restoreTabs);
-        settingsAdvanced.put(SHOW_IMAGES, showImages);
-        settingsAdvanced.put(SHOW_WEB_FONTS, showWebFonts);
-
-        return settingsAdvanced;
-    }
-
-    public ExtendedJSONObject getSettingsGeneral(final Boolean fullScreenBrowsing, final Boolean tabQueue,
-                                                 final Integer tabQueueUsageCount, final Boolean compactTabs,
-                                                 final ExtendedJSONObject homepage, final ExtendedJSONObject settingsPrivacy,
-                                                 final ExtendedJSONObject settingsNotifications, final ExtendedJSONObject addons,
-                                                 final ExtendedJSONObject pageOptions, final ExtendedJSONObject sync) {
-        final ExtendedJSONObject settingsGeneral = new ExtendedJSONObject();
-
-        settingsGeneral.put(FULL_SCREEN_BROWSING, fullScreenBrowsing);
-        settingsGeneral.put(TAB_QUEUE, tabQueue);
-        settingsGeneral.put(TAB_QUEUE_USAGE_COUNT, tabQueueUsageCount);
-        settingsGeneral.put(COMPACT_TABS, compactTabs);
-        settingsGeneral.put(HOMEPAGE, homepage);
-        settingsGeneral.put(SETTINGS_PRIVACY, settingsPrivacy);
-        settingsGeneral.put(SETTINGS_NOTIFICATIONS, settingsNotifications);
-        settingsGeneral.put(ADDONS, addons);
-        settingsGeneral.put(PAGE_OPTIONS, pageOptions);
-        settingsGeneral.put(SYNC, sync);
-
-        return settingsGeneral;
-    }
-
-    public ExtendedJSONObject getHomepage(final Boolean customHomepage, final Boolean customHomepageUseForNewTab,
-                                          final Boolean topsitesEnabled, final Boolean pocketEnabled,
-                                          final Boolean recentBookmarksEnabled, final Boolean visitedEnabled,
-                                          final Boolean bookmarksEnabled, final Boolean historyEnabled) {
-        final ExtendedJSONObject homepage = new ExtendedJSONObject();
-
-        homepage.put(CUSTOM_HOMEPAGE, customHomepage);
-        homepage.put(CUSTOM_HOMEPAGE_USE_FOR_NEWTAB, customHomepageUseForNewTab);
-        homepage.put(TOPSITES_ENABLED, topsitesEnabled);
-        homepage.put(POCKET_ENABLED, pocketEnabled);
-        homepage.put(RECENT_BOOKMARKS_ENABLED, recentBookmarksEnabled);
-        homepage.put(VISITED_ENABLED, visitedEnabled);
-        homepage.put(BOOKMARKS_ENABLED, bookmarksEnabled);
-        homepage.put(HISTORY_ENABLED, historyEnabled);
-
-        return homepage;
-    }
-
-    public ExtendedJSONObject getSettingsPrivacy(final Boolean doNotTrack, final Boolean masterPassword,
-                                                 final Integer masterPasswordUsageCount) {
-        final ExtendedJSONObject settingsPrivacy = new ExtendedJSONObject();
-
-        settingsPrivacy.put(DO_NOT_TRACK, doNotTrack);
-        settingsPrivacy.put(MASTER_PASSWORD, masterPassword);
-        settingsPrivacy.put(MASTER_PASSWORD_USAGE_COUNT, masterPasswordUsageCount);
-
-        return settingsPrivacy;
-    }
-
-    public ExtendedJSONObject getSettingsNotifications(final Boolean productFeatureTips) {
-        final ExtendedJSONObject settingsNotifications = new ExtendedJSONObject();
-
-        settingsNotifications.put(PRODUCT_FEATURE_TIPS, productFeatureTips);
-
-        return settingsNotifications;
-    }
-
-    public ExtendedJSONObject getAddons(final List<String> active, final List<String> disabled) {
-        final ExtendedJSONObject addons = new ExtendedJSONObject();
-
-        addons.putArray(ACTIVE, active);
-        addons.putArray(DISABLED, disabled);
-
-        return addons;
-    }
-
-    public ExtendedJSONObject getPageOptions(final Integer saveAsPdf, final Integer print, final Integer totalAddedSearchEngines,
-                                             final Integer totalSitesPinnedToTopsites, final Integer viewSource,
-                                             final Integer bookmarkWithStar) {
-        final ExtendedJSONObject pageOptions = new ExtendedJSONObject();
-
-        pageOptions.put(SAVE_AS_PDF, saveAsPdf);
-        pageOptions.put(PRINT, print);
-        pageOptions.put(TOTAL_ADDED_SEARCH_ENGINES, totalAddedSearchEngines);
-        pageOptions.put(TOTAL_SITES_PINNED_TO_TOPSITES, totalSitesPinnedToTopsites);
-        pageOptions.put(VIEW_SOURCE, viewSource);
-        pageOptions.put(BOOKMARK_WITH_STAR, bookmarkWithStar);
-
-        return pageOptions;
-    }
-
-    public ExtendedJSONObject getSync(final Boolean onlyOverWifi) {
-        final ExtendedJSONObject sync = new ExtendedJSONObject();
-
-        sync.put(ONLY_OVER_WIFI, onlyOverWifi);
-
-        return sync;
-    }
-
-    /********************************************************************************************************/
-
     public TelemetryCorePingBuilder setSessionDuration(final long sessionDuration) {
         if (sessionDuration < 0) {
             // Since this is an increasing value, it's possible we can overflow into negative values and get into a
@@ -544,7 +271,7 @@ public class TelemetryCorePingBuilder extends TelemetryPingBuilder {
 
     /**
      * @return the profile creation date in the format expected by
-     * {@link TelemetryCorePingBuilder#setProfileCreationDate(Long)}.
+     *         {@link TelemetryCorePingBuilder#setProfileCreationDate(Long)}.
      */
     @WorkerThread
     public static Long getProfileCreationDate(final Context context, final GeckoProfile profile) {

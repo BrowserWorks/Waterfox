@@ -367,8 +367,6 @@ public class TabQueueHelper {
                 // will never show again without having to keep track of an extra pref.
                 editor.putInt(TabQueueHelper.PREF_TAB_QUEUE_LAUNCHES,
                                      TabQueueHelper.EXTERNAL_LAUNCHES_BEFORE_SHOWING_PROMPT + 1);
-                final int tabQueueUsageCount = prefs.getInt("android.not_a_preference.tab_queue_usage_count", 0);
-                editor.putInt("android.not_a_preference.tab_queue_usage_count", tabQueueUsageCount + 1);
                 break;
 
             case TAB_QUEUE_NO:
