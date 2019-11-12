@@ -1312,7 +1312,7 @@ function moveTabBar()
   }
   else if (Services.prefs.getStringPref("browser.tabBar.position") == "topAboveAB")
   {
-    windowRoot.ownerGlobal.document.querySelector("#navigator-toolbox").insertAdjacentElement('afterbegin', windowRoot.ownerGlobal.document.querySelector("#TabsToolbar"));
+    windowRoot.ownerGlobal.document.querySelector("#titlebar").insertAdjacentElement('afterend', windowRoot.ownerGlobal.document.querySelector("#TabsToolbar"));
     windowRoot.ownerGlobal.gBrowser.setTabTitle(windowRoot.ownerGlobal.document.querySelector(".tabbrowser-tab[first-visible-tab]"));
   }
 }
