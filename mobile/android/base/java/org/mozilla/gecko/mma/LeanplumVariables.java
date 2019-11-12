@@ -98,11 +98,6 @@ public class LeanplumVariables {
             syncPanelMessage = FirstrunPanel.NO_MESSAGE;
             syncPanelSubtext = onboardingUtil.getSyncSubtext();
             syncDrawableId = onboardingUtil.getSyncImageResId();
-
-            sendTabPanelMessage = FirstrunPanel.NO_MESSAGE;
-            sendTabPanelSubtext = appResources.getString(R.string.firstrun_sendtab_message);
-            sendTabDrawableId = R.drawable.firstrun_sendtab;
-
         } else {
             welcomePanelMessage = appResources.getString(R.string.firstrun_urlbar_message);
             welcomePanelSubtext = appResources.getString(R.string.firstrun_urlbar_subtext);
@@ -116,6 +111,10 @@ public class LeanplumVariables {
             syncPanelSubtext = appResources.getString(R.string.firstrun_sync_subtext);
             syncDrawableId = R.drawable.firstrun_sync;
         }
+
+        sendTabPanelMessage = FirstrunPanel.NO_MESSAGE;
+        sendTabPanelSubtext = appResources.getString(R.string.firstrun_sendtab_message);
+        sendTabDrawableId = R.drawable.firstrun_sendtab;
     }
 
     public static int getWelcomeImage() {
