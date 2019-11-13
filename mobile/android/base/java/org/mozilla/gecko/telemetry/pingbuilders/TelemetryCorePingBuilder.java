@@ -22,6 +22,8 @@ import org.mozilla.gecko.GeckoApp;
 import org.mozilla.gecko.GeckoProfile;
 import org.mozilla.gecko.GeckoSharedPrefs;
 import org.mozilla.gecko.Locales;
+import org.mozilla.gecko.R;
+import org.mozilla.gecko.preferences.GeckoPreferences;
 import org.mozilla.gecko.search.SearchEngine;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.telemetry.TelemetryOutgoingPing;
@@ -158,8 +160,12 @@ public class TelemetryCorePingBuilder extends TelemetryPingBuilder {
             final String searchVersion = prefs.getString(GeckoApp.PREFS_ENHANCED_SEARCH_VERSION, "");
             payload.put(GeckoApp.PREFS_ENHANCED_SEARCH_VERSION, searchVersion);
             final Boolean onlyOverWifi = prefs.getBoolean("sync.restrict_metered", false);
+            final boolean restoreTabs = !"quit".equals(prefs.getString(GeckoPreferences.PREFS_RESTORE_SESSION, "always"));
+            final boolean showWebFonts = prefs.getBoolean("browser.display.use_document_fonts", false);
+            final int intShowImages = Integer.parseInt(prefs.getString("browser.image_blocking", "1"));
+            final String showImages = getShowImages(intShowImages, context);
             final ExtendedJSONObject fennec = getFennec(getNewTab(0, 0),
-                    getSettingsAdvanced(false, "", false),
+                    getSettingsAdvanced(restoreTabs, showImages, showWebFonts),
                     getSettingsGeneral(false, false, 0, false,
                             getHomepage(false, false, false,
                                     false, false, false, false, false)),
@@ -168,6 +174,19 @@ public class TelemetryCorePingBuilder extends TelemetryPingBuilder {
                     getPageOptions(0, 0, 0, 0, 0, 0),
                     getSync(onlyOverWifi));
             payload.put(FENNEC, fennec);
+        }
+    }
+
+    private static String getShowImages(int showImages, Context context) {
+        switch (showImages) {
+            case 0:
+                return context.getResources().getStringArray(R.array.pref_browser_image_blocking_entries)[2];
+            case 1:
+                return context.getResources().getStringArray(R.array.pref_browser_image_blocking_entries)[0];
+            case 2:
+                return context.getResources().getStringArray(R.array.pref_browser_image_blocking_entries)[1];
+            default:
+                return null;
         }
     }
 
