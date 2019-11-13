@@ -5,10 +5,9 @@
 "use strict";
 
 const { AddonManager } = require("resource://gre/modules/AddonManager.jsm");
-
-startupAddonsManager();
-
 add_task(async function testReloadExitedAddon() {
+  await startupAddonsManager();
+
   DebuggerServer.init();
   DebuggerServer.registerAllActors();
 
