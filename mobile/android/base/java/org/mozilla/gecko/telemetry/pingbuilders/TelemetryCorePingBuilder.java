@@ -157,7 +157,7 @@ public class TelemetryCorePingBuilder extends TelemetryPingBuilder {
             payload.put(GeckoApp.PREFS_ENHANCED_SEARCH_READY, searchReady);
             final String searchVersion = prefs.getString(GeckoApp.PREFS_ENHANCED_SEARCH_VERSION, "");
             payload.put(GeckoApp.PREFS_ENHANCED_SEARCH_VERSION, searchVersion);
-
+            final Boolean onlyOverWifi = prefs.getBoolean("sync.restrict_metered", false);
             final ExtendedJSONObject fennec = getFennec(getNewTab(0, 0),
                     getSettingsAdvanced(false, "", false),
                     getSettingsGeneral(false, false, 0, false,
@@ -166,7 +166,7 @@ public class TelemetryCorePingBuilder extends TelemetryPingBuilder {
                     getSettingsPrivacy(false, false, false),
                     getSettingsNotifications(false), getAddons(new ArrayList<>(), new ArrayList<>()),
                     getPageOptions(0, 0, 0, 0, 0, 0),
-                    getSync(false));
+                    getSync(onlyOverWifi));
             payload.put(FENNEC, fennec);
         }
     }
