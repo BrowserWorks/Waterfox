@@ -16,6 +16,8 @@ import android.support.annotation.WorkerThread;
 import android.text.TextUtils;
 import android.util.Log;
 
+import org.json.JSONArray;
+import org.json.JSONException;
 import org.mozilla.gecko.AppConstants;
 import org.mozilla.gecko.Experiments;
 import org.mozilla.gecko.GeckoApp;
@@ -170,7 +172,10 @@ public class TelemetryCorePingBuilder extends TelemetryPingBuilder {
             final String showImages = getShowImages(intShowImages, context);
             final boolean[] privacyPrefs = {false, false};
             final int masterPasswordUsageCount = prefs.getInt("android.not_a_preference.master_password_usage_count", 0);
-            PrefsHelper.getPrefs(new String[]{"privacy.donottrackheader.enabled", "privacy.masterpassword.enabled"},
+            final List<String> activeAddons = new ArrayList<>();
+            final List<String> disabledAddons = new ArrayList<>();
+            PrefsHelper.getPrefs(new String[]{"privacy.donottrackheader.enabled", "privacy.masterpassword.enabled",
+                            "android.not_a_preference.addons_active", "android.not_a_preference.addons_disabled"},
                     new PrefsHelper.PrefHandlerBase() {
                         @Override
                         public void prefValue(String pref, boolean value) {
@@ -185,6 +190,34 @@ public class TelemetryCorePingBuilder extends TelemetryPingBuilder {
                         }
 
                         @Override
+                        public void prefValue(String pref, String value) {
+                            if (pref.equalsIgnoreCase("android.not_a_preference.addons_active")) {
+                                try {
+                                    final JSONArray array = new JSONArray(value);
+                                    for (int index = 0; index < array.length(); index++) {
+                                        activeAddons.add(array.getString(index));
+                                    }
+                                } catch (JSONException ex) {
+                                    // nothing to do here but to log the error
+                                    ex.printStackTrace();
+                                }
+                                return;
+                            }
+
+                            if (pref.equalsIgnoreCase("android.not_a_preference.addons_disabled")) {
+                                try {
+                                    final JSONArray array = new JSONArray(value);
+                                    for (int index = 0; index < array.length(); index++) {
+                                        disabledAddons.add(array.getString(index));
+                                    }
+                                } catch (JSONException ex) {
+                                    // nothing to do here but to log the error
+                                    ex.printStackTrace();
+                                }
+                            }
+                        }
+
+                        @Override
                         public void finish() {
                             final ExtendedJSONObject fennec = getFennec(getNewTab(topSitesClicked, pocketStoriesClicked),
                                     getSettingsAdvanced(restoreTabs, showImages, showWebFonts),
@@ -193,7 +226,7 @@ public class TelemetryCorePingBuilder extends TelemetryPingBuilder {
                                                     false, false, false, false, false)),
                                     getSettingsPrivacy(privacyPrefs[0], privacyPrefs[1], masterPasswordUsageCount),
                                     getSettingsNotifications(productFeatureTipsEnabled),
-                                    getAddons(new ArrayList<>(), new ArrayList<>()),
+                                    getAddons(activeAddons, disabledAddons),
                                     getPageOptions(0, 0, 0, 0, 0, 0),
                                     getSync(onlyOverWifi));
                             payload.put(FENNEC, fennec);
@@ -432,7 +465,7 @@ public class TelemetryCorePingBuilder extends TelemetryPingBuilder {
         return settingsNotifications;
     }
 
-    public ExtendedJSONObject getAddons(final ArrayList<String> active, final ArrayList<String> disabled) {
+    public ExtendedJSONObject getAddons(final List<String> active, final List<String> disabled) {
         final ExtendedJSONObject addons = new ExtendedJSONObject();
 
         addons.putArray(ACTIVE, active);
