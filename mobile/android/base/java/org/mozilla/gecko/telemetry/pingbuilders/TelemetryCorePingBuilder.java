@@ -161,7 +161,8 @@ public class TelemetryCorePingBuilder extends TelemetryPingBuilder {
             payload.put(GeckoApp.PREFS_ENHANCED_SEARCH_VERSION, searchVersion);
             final int topSitesClicked = prefs.getInt("android.not_a_preference.top_sites_clicked", 0);
             final int pocketStoriesClicked = prefs.getInt("android.not_a_preference.pocket_stories_clicked", 0);
-            final Boolean onlyOverWifi = prefs.getBoolean("sync.restrict_metered", false);
+            final boolean onlyOverWifi = prefs.getBoolean("sync.restrict_metered", false);
+            final boolean productFeatureTipsEnabled = prefs.getBoolean(GeckoPreferences.PREFS_NOTIFICATIONS_FEATURES_TIPS, true);
             final boolean restoreTabs = !"quit".equals(prefs.getString(GeckoPreferences.PREFS_RESTORE_SESSION, "always"));
             final boolean showWebFonts = prefs.getBoolean("browser.display.use_document_fonts", false);
             final int intShowImages = Integer.parseInt(prefs.getString("browser.image_blocking", "1"));
@@ -172,7 +173,7 @@ public class TelemetryCorePingBuilder extends TelemetryPingBuilder {
                             getHomepage(false, false, false,
                                     false, false, false, false, false)),
                     getSettingsPrivacy(false, false, false),
-                    getSettingsNotifications(false), getAddons(new ArrayList<>(), new ArrayList<>()),
+                    getSettingsNotifications(productFeatureTipsEnabled), getAddons(new ArrayList<>(), new ArrayList<>()),
                     getPageOptions(0, 0, 0, 0, 0, 0),
                     getSync(onlyOverWifi));
             payload.put(FENNEC, fennec);
