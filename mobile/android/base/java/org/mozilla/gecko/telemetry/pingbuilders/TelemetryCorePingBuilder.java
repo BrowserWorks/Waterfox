@@ -22,6 +22,7 @@ import org.mozilla.gecko.GeckoApp;
 import org.mozilla.gecko.GeckoProfile;
 import org.mozilla.gecko.GeckoSharedPrefs;
 import org.mozilla.gecko.Locales;
+import org.mozilla.gecko.PrefsHelper;
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.preferences.GeckoPreferences;
 import org.mozilla.gecko.search.SearchEngine;
@@ -167,16 +168,37 @@ public class TelemetryCorePingBuilder extends TelemetryPingBuilder {
             final boolean showWebFonts = prefs.getBoolean("browser.display.use_document_fonts", false);
             final int intShowImages = Integer.parseInt(prefs.getString("browser.image_blocking", "1"));
             final String showImages = getShowImages(intShowImages, context);
-            final ExtendedJSONObject fennec = getFennec(getNewTab(topSitesClicked, pocketStoriesClicked),
-                    getSettingsAdvanced(restoreTabs, showImages, showWebFonts),
-                    getSettingsGeneral(false, false, 0, false,
-                            getHomepage(false, false, false,
-                                    false, false, false, false, false)),
-                    getSettingsPrivacy(false, false, false),
-                    getSettingsNotifications(productFeatureTipsEnabled), getAddons(new ArrayList<>(), new ArrayList<>()),
-                    getPageOptions(0, 0, 0, 0, 0, 0),
-                    getSync(onlyOverWifi));
-            payload.put(FENNEC, fennec);
+            final boolean[] privacyPrefs = {false, false};
+            final int masterPasswordUsageCount = prefs.getInt("android.not_a_preference.master_password_usage_count", 0);
+            PrefsHelper.getPrefs(new String[]{"privacy.donottrackheader.enabled", "privacy.masterpassword.enabled"},
+                    new PrefsHelper.PrefHandlerBase() {
+                        @Override
+                        public void prefValue(String pref, boolean value) {
+                            if (pref.equalsIgnoreCase("privacy.donottrackheader.enabled")) {
+                                privacyPrefs[0] = value;
+                                return;
+                            }
+
+                            if (pref.equalsIgnoreCase("privacy.masterpassword.enabled")) {
+                                privacyPrefs[1] = value;
+                            }
+                        }
+
+                        @Override
+                        public void finish() {
+                            final ExtendedJSONObject fennec = getFennec(getNewTab(topSitesClicked, pocketStoriesClicked),
+                                    getSettingsAdvanced(restoreTabs, showImages, showWebFonts),
+                                    getSettingsGeneral(false, false, 0, false,
+                                            getHomepage(false, false, false,
+                                                    false, false, false, false, false)),
+                                    getSettingsPrivacy(privacyPrefs[0], privacyPrefs[1], masterPasswordUsageCount),
+                                    getSettingsNotifications(productFeatureTipsEnabled),
+                                    getAddons(new ArrayList<>(), new ArrayList<>()),
+                                    getPageOptions(0, 0, 0, 0, 0, 0),
+                                    getSync(onlyOverWifi));
+                            payload.put(FENNEC, fennec);
+                        }
+                    });
         }
     }
 
@@ -392,7 +414,7 @@ public class TelemetryCorePingBuilder extends TelemetryPingBuilder {
     }
 
     public ExtendedJSONObject getSettingsPrivacy(final Boolean doNotTrack, final Boolean masterPassword,
-                                                 final Boolean masterPasswordUsageCount) {
+                                                 final Integer masterPasswordUsageCount) {
         final ExtendedJSONObject settingsPrivacy = new ExtendedJSONObject();
 
         settingsPrivacy.put(DO_NOT_TRACK, doNotTrack);
@@ -441,8 +463,6 @@ public class TelemetryCorePingBuilder extends TelemetryPingBuilder {
 
         return sync;
     }
-
-    /********************************************************************************************************/
 
     public TelemetryCorePingBuilder setSessionDuration(final long sessionDuration) {
         if (sessionDuration < 0) {
