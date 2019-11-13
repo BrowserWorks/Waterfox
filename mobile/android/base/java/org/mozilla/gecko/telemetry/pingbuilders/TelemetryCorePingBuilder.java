@@ -168,6 +168,12 @@ public class TelemetryCorePingBuilder extends TelemetryPingBuilder {
             final boolean productFeatureTipsEnabled = prefs.getBoolean(GeckoPreferences.PREFS_NOTIFICATIONS_FEATURES_TIPS, true);
             final boolean restoreTabs = !"quit".equals(prefs.getString(GeckoPreferences.PREFS_RESTORE_SESSION, "always"));
             final boolean showWebFonts = prefs.getBoolean("browser.display.use_document_fonts", false);
+            final int totalAddedSearchEngines = prefs.getInt("android.not_a_preference.total_added_search_engines", 0);
+            final int bookmarksWithStar = prefs.getInt("android.not_a_preference.bookmarks_with_star", 0);
+            final int totalSitesPinnedToTopsites = prefs.getInt("android.not_a_preference.total_sites_pinned_to_topsites", 0);
+            final int saveAsPdf = prefs.getInt("android.not_a_preference.save_as_pdf", 0);
+            final int print = prefs.getInt("android.not_a_preference.print", 0);
+            final int viewPageSource = prefs.getInt("android.not_a_preference.view_page_source", 0);
             final int intShowImages = Integer.parseInt(prefs.getString("browser.image_blocking", "1"));
             final String showImages = getShowImages(intShowImages, context);
             final boolean[] privacyPrefs = {false, false};
@@ -227,7 +233,7 @@ public class TelemetryCorePingBuilder extends TelemetryPingBuilder {
                                     getSettingsPrivacy(privacyPrefs[0], privacyPrefs[1], masterPasswordUsageCount),
                                     getSettingsNotifications(productFeatureTipsEnabled),
                                     getAddons(activeAddons, disabledAddons),
-                                    getPageOptions(0, 0, 0, 0, 0, 0),
+                                    getPageOptions(saveAsPdf, print, totalAddedSearchEngines, totalSitesPinnedToTopsites, viewPageSource, bookmarksWithStar),
                                     getSync(onlyOverWifi));
                             payload.put(FENNEC, fennec);
                         }
