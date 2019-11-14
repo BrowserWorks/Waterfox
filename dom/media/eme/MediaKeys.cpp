@@ -565,16 +565,6 @@ void MediaKeys::OnSessionLoaded(PromiseId aId, bool aSuccess) {
   ResolvePromiseWithResult(aId, aSuccess);
 }
 
-template <typename T>
-void MediaKeys::ResolvePromiseWithResult(PromiseId aId, const T& aResult) {
-  RefPtr<DetailedPromise> promise(RetrievePromise(aId));
-  if (!promise) {
-    return;
-  }
-
-  promise->MaybeResolve(aResult);
-}
-
 void MediaKeys::OnSessionClosed(MediaKeySession* aSession) {
   nsAutoString id;
   aSession->GetSessionId(id);
