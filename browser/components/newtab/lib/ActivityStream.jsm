@@ -187,11 +187,11 @@ const PREFS_CONFIG = new Map([
   }],
   ["asrouter.userprefs.cfr.addons", {
     title: "Does the user allow CFR addon recommendations?",
-    value: true,
+    value: false,
   }],
   ["asrouter.userprefs.cfr.features", {
     title: "Does the user allow CFR feature recommendations?",
-    value: true,
+    value: false,
   }],
   ["asrouter.providers.onboarding", {
     title: "Configuration for onboarding provider",
