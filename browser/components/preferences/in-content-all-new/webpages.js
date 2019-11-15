@@ -57,16 +57,6 @@ Preferences.addAll([
 
   // Fonts
   { id: "font.language.group", type: "wstring" },
-
-  // CFR
-  {
-    id: "browser.newtabpage.activity-stream.asrouter.userprefs.cfr.addons",
-    type: "bool",
-  },
-  {
-    id: "browser.newtabpage.activity-stream.asrouter.userprefs.cfr.features",
-    type: "bool",
-  },
 ]);
 
 var { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
@@ -86,8 +76,6 @@ const PREF_DISABLED_PLUGIN_TYPES = "plugin.disable_full_page_plugin_for_types";
 const PREF_SHOW_PLUGINS_IN_LIST = "browser.download.show_plugins_in_list";
 const PREF_HIDE_PLUGINS_WITHOUT_EXTENSIONS =
   "browser.download.hide_plugins_without_extensions";
-
-const AUTO_UPDATE_CHANGED_TOPIC = "auto-update-config-change";
 
 // The nsHandlerInfoAction enumeration values in nsIHandlerInfo identify
 // the actions the application can take with content of various types.
@@ -154,13 +142,6 @@ var gWebpagesPane = {
     );
 
     this.updateOnScreenKeyboardVisibility();
-    let cfrLearnMoreUrl =
-      Services.urlFormatter.formatURLPref("app.support.baseURL") +
-      "extensionrecommendations";
-    for (const id of ["cfrLearnMore", "cfrFeaturesLearnMore"]) {
-      let link = document.getElementById(id);
-      link.setAttribute("href", cfrLearnMoreUrl);
-    }
 
     Preferences.get("font.language.group").on(
       "change",
@@ -367,8 +348,6 @@ var gWebpagesPane = {
     window.removeEventListener("unload", this);
     Services.prefs.removeObserver(PREF_SHOW_PLUGINS_IN_LIST, this);
     Services.prefs.removeObserver(PREF_HIDE_PLUGINS_WITHOUT_EXTENSIONS, this);
-
-    Services.obs.removeObserver(this, AUTO_UPDATE_CHANGED_TOPIC);
   },
 
   // nsISupports
