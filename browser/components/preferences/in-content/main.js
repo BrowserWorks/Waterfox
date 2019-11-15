@@ -136,16 +136,6 @@ Preferences.addAll([
   { id: "browser.sessionstore.restore_on_demand", type: "bool" },
   { id: "browser.ctrlTab.recentlyUsedOrder", type: "bool" },
 
-  // CFR
-  {
-    id: "browser.newtabpage.activity-stream.asrouter.userprefs.cfr.addons",
-    type: "bool",
-  },
-  {
-    id: "browser.newtabpage.activity-stream.asrouter.userprefs.cfr.features",
-    type: "bool",
-  },
-
   // Fonts
   { id: "font.language.group", type: "wstring" },
 
@@ -377,14 +367,6 @@ var gMainPane = {
 
     if (Services.prefs.getBoolPref("intl.multilingual.enabled")) {
       gMainPane.initBrowserLocale();
-    }
-
-    let cfrLearnMoreUrl =
-      Services.urlFormatter.formatURLPref("app.support.baseURL") +
-      "extensionrecommendations";
-    for (const id of ["cfrLearnMore", "cfrFeaturesLearnMore"]) {
-      let link = document.getElementById(id);
-      link.setAttribute("href", cfrLearnMoreUrl);
     }
 
     if (AppConstants.platform == "win") {
