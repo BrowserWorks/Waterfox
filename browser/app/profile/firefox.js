@@ -1915,6 +1915,6 @@ pref("browser.pagethumbnails.capturing_disabled", false);
 // 0 - hide Status Bar
 // 1 - show Status Info Overlay
 // 2 - show Status Bar
-pref("browser.statusbar.mode", 2);
+pref("browser.statusbar.mode", 0);
 
 pref("browser.statusbar.showbtn", false);
