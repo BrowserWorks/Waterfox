@@ -6,6 +6,9 @@
 /* import-globals-from preferences.js */
 
 Preferences.addAll([
+  // Preferences layout
+  { id: "browser.preferences.useAllNew", type: "bool" },
+
   // Restart Menu Item
   { id: "browser.restart_menu.purgecache", type: "bool" },
   { id: "browser.restart_menu.requireconfirm", type: "bool" },
