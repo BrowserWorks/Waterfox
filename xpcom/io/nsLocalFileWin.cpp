@@ -56,6 +56,7 @@
 #include "mozIDOMWindow.h"
 #include "nsPIDOMWindow.h"
 #include "nsIWidget.h"
+#include "mozilla/ShellHeaderOnlyUtils.h"
 #include "mozilla/WidgetUtils.h"
 
 using namespace mozilla;
@@ -1695,12 +1696,12 @@ nsresult nsLocalFile::CopySingleFile(nsIFile* aSourceFile, nsIFile* aDestParent,
 
     // Pass the flag COPY_FILE_NO_BUFFERING to CopyFileEx as we may be copying
     // to a SMBV2 remote drive. Without this parameter subsequent append mode
-    // file writes can cause the resultant file to become corrupt. We only need to
-    // do this if the major version of Windows is > 5(Only Windows Vista and above
-    // can support SMBV2).  With a 7200RPM hard drive:
-    // Copying a 1KB file with COPY_FILE_NO_BUFFERING takes about 30-60ms.
-    // Copying a 1KB file without COPY_FILE_NO_BUFFERING takes < 1ms.
-    // So we only use COPY_FILE_NO_BUFFERING when we have a remote drive.
+    // file writes can cause the resultant file to become corrupt. We only need
+    // to do this if the major version of Windows is > 5(Only Windows Vista and
+    // above can support SMBV2).  With a 7200RPM hard drive: Copying a 1KB file
+    // with COPY_FILE_NO_BUFFERING takes about 30-60ms. Copying a 1KB file
+    // without COPY_FILE_NO_BUFFERING takes < 1ms. So we only use
+    // COPY_FILE_NO_BUFFERING when we have a remote drive.
     DWORD dwCopyFlags = COPY_FILE_ALLOW_DECRYPTED_DESTINATION;
     bool path1Remote, path2Remote;
     if (!IsRemoteFilePath(filePath.get(), path1Remote) ||
@@ -3040,16 +3041,12 @@ nsLocalFile::Launch() {
   }
 
   // use the app registry name to launch a shell execute....
-  SHELLEXECUTEINFOW seinfo;
-  memset(&seinfo, 0, sizeof(seinfo));
-  seinfo.cbSize = sizeof(SHELLEXECUTEINFOW);
-  seinfo.fMask = SEE_MASK_ASYNCOK;
-  seinfo.hwnd = GetMostRecentNavigatorHWND();
-  seinfo.lpVerb = nullptr;
-  seinfo.lpFile = mResolvedPath.get();
-  seinfo.lpParameters = nullptr;
-  seinfo.lpDirectory = nullptr;
-  seinfo.nShow = SW_SHOWNORMAL;
+  _bstr_t execPath(mResolvedPath.get());
+
+  _variant_t args;
+  _variant_t verb(L"open");
+  _variant_t workingDir;
+  _variant_t showCmd(SW_SHOWNORMAL);
 
   // Use the directory of the file we're launching as the working
   // directory. That way if we have a self extracting EXE it won't
@@ -3057,18 +3054,32 @@ nsLocalFile::Launch() {
   WCHAR workingDirectory[MAX_PATH + 1] = {L'\0'};
   wcsncpy(workingDirectory, mResolvedPath.get(), MAX_PATH);
   if (PathRemoveFileSpecW(workingDirectory)) {
-    seinfo.lpDirectory = workingDirectory;
+    workingDir = workingDirectory;
   } else {
     NS_WARNING("Could not set working directory for launched file.");
   }
 
-  if (ShellExecuteExW(&seinfo)) {
+  // Ask Explorer to ShellExecute on our behalf, as some applications such as
+  // Skype for Business do not start correctly when inheriting our process's
+  // migitation policies.
+  mozilla::LauncherVoidResult shellExecuteOk = mozilla::ShellExecuteByExplorer(
+      execPath, args, verb, workingDir, showCmd);
+  if (shellExecuteOk.isOk()) {
     return NS_OK;
   }
-  DWORD r = GetLastError();
+  DWORD r = shellExecuteOk.unwrapErr().AsWin32Error().value();
   // if the file has no association, we launch windows'
   // "what do you want to do" dialog
   if (r == SE_ERR_NOASSOC) {
+    SHELLEXECUTEINFOW seinfo;
+    memset(&seinfo, 0, sizeof(seinfo));
+    seinfo.cbSize = sizeof(SHELLEXECUTEINFOW);
+    seinfo.fMask = SEE_MASK_ASYNCOK;
+    seinfo.hwnd = GetMostRecentNavigatorHWND();
+    seinfo.lpVerb = nullptr;
+    seinfo.lpDirectory = workingDirectory;
+    seinfo.nShow = SW_SHOWNORMAL;
+
     nsAutoString shellArg;
     shellArg.AssignLiteral(u"shell32.dll,OpenAs_RunDLL ");
     shellArg.Append(mResolvedPath);
