@@ -26,6 +26,7 @@ groupbox html|h2 {
 #searchInput {
   margin-left: 15px;
   margin-right: 15px;
+  margin-bottom: 10px;
   width: 100px !important;
   /* background-color: #262626 !important;
   color: white !important; */

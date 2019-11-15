@@ -11,6 +11,8 @@ var { AppConstants } = ChromeUtils.import(
   "resource://gre/modules/AppConstants.jsm"
 );
 
+const AUTO_UPDATE_CHANGED_TOPIC = "auto-update-config-change";
+
 XPCOMUtils.defineLazyServiceGetters(this, {
   gHandlerService: [
     "@mozilla.org/uriloader/handler-service;1",
