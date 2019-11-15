@@ -1910,3 +1910,11 @@ pref("browser.tabs.copyallurls", true);
 // State true no thumbnails will be captured
 // State false default state thumbnails will be captured and added to new tab
 pref("browser.pagethumbnails.capturing_disabled", false);
+
+// Status Bar mode
+// 0 - hide Status Bar
+// 1 - show Status Info Overlay
+// 2 - show Status Bar
+pref("browser.statusbar.mode", 2);
+
+pref("browser.statusbar.showbtn", false);

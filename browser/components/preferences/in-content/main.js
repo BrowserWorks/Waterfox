@@ -115,6 +115,10 @@ Preferences.addAll([
   { id: "browser.tabs.copyurl.activetab", type: "bool" },
   { id: "browser.tabs.copyallurls", type: "bool" },
 
+  // Status Bar
+  { id: "browser.statusbar.mode", type: "int" },
+  { id: "browser.statusbar.showbtn", type: "bool" },
+
   // Downloads
   { id: "browser.download.useDownloadDir", type: "bool" },
   { id: "browser.download.folderList", type: "int" },

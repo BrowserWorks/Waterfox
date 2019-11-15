@@ -1112,3 +1112,17 @@ webrtcp2preference =
 
 new-tab-thumbnail =
     .label = Disable thumbnail capturing on new tab page
+
+statusBar-header = Status Bar
+
+show-status-bar =
+    .label = Show Status Bar
+
+show-status-overlay =
+    .label = Show Status Info Overlay
+
+hide-status-bar =
+    .label = Hide Status Bar
+
+show-btn-range =
+    .label = Use buttons in range control

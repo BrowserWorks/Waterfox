@@ -304,6 +304,28 @@
   </hbox>
 </groupbox>
 
+<groupbox id="statusBarGroup"
+          data-category="paneGeneral"
+          hidden="true">
+  <label><html:h2 data-l10n-id="statusBar-header"/></label>
+  <vbox id="statusBarContainer">
+    <radiogroup id="statusBarRadioGroup" preference="browser.statusbar.mode" onsyncfrompreference="toggleStatusBar();">
+      <radio id="showStatusBar"
+             value="2"
+             data-l10n-id="show-status-bar"/>
+      <radio id="showStatusOverlay"
+             value="1"
+             data-l10n-id="show-status-overlay"/>
+      <radio id="hideStatusBar"
+             value="0"
+             data-l10n-id="hide-status-bar"/>
+    </radiogroup>
+    <checkbox id="showButtonsRange" preference="browser.statusbar.showbtn"
+                data-l10n-id="show-btn-range"
+                onsyncfrompreference="showBtnRange();"/>
+  </vbox>
+</groupbox>
+
 <!-- Languages -->
 <groupbox id="languagesGroup" data-category="paneGeneral" hidden="true">
   <label><html:h2 data-l10n-id="language-header"/></label>

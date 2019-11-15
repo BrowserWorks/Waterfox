@@ -6064,10 +6064,12 @@ var StatusPanel = {
 
     if (val) {
       this._labelElement.value = val;
+      document.querySelector('.status-info').textContent = val;
       this.panel.removeAttribute("inactive");
       MousePosTracker.addListener(this);
     } else {
       this.panel.setAttribute("inactive", "true");
+      document.querySelector('.status-info').textContent = "";
       MousePosTracker.removeListener(this);
     }
 
