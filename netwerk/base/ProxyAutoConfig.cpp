@@ -286,35 +286,41 @@ class PACResolver final : public nsIDNSListener
 public:
   NS_DECL_THREADSAFE_ISUPPORTS
 
-  explicit PACResolver(nsIEventTarget *aTarget)
-    : mStatus(NS_ERROR_FAILURE)
-    , mMainThreadEventTarget(aTarget)
-  {
-  }
+  explicit PACResolver(nsIEventTarget* aTarget)
+      : mStatus(NS_ERROR_FAILURE),
+        mMainThreadEventTarget(aTarget),
+        mMutex("PACResolver::Mutex") {}
 
   // nsIDNSListener
-  NS_IMETHOD OnLookupComplete(nsICancelable *request,
-                              nsIDNSRecord *record,
-                              nsresult status) override
-  {
-    if (mTimer) {
-      mTimer->Cancel();
-      mTimer = nullptr;
+  NS_IMETHOD OnLookupComplete(nsICancelable* request, nsIDNSRecord* record,
+                              nsresult status) override {
+    nsCOMPtr<nsITimer> timer;
+    {
+      MutexAutoLock lock(mMutex);
+      timer.swap(mTimer);
+      mRequest = nullptr;
     }
 
-    mRequest = nullptr;
+    if (timer) {
+      timer->Cancel();
+    }
+
     mStatus = status;
     mResponse = record;
     return NS_OK;
   }
 
   // nsITimerCallback
-  NS_IMETHOD Notify(nsITimer *timer) override
-  {
-    nsCOMPtr<nsICancelable> request(mRequest);
-    if (request)
+  NS_IMETHOD Notify(nsITimer* timer) override {
+    nsCOMPtr<nsICancelable> request;
+    {
+      MutexAutoLock lock(mMutex);
+      request.swap(mRequest);
+      mTimer = nullptr;
+    }
+    if (request) {
       request->Cancel(NS_ERROR_NET_TIMEOUT);
-    mTimer = nullptr;
+    }
     return NS_OK;
   }
 
@@ -330,6 +336,7 @@ public:
   nsCOMPtr<nsIDNSRecord>   mResponse;
   nsCOMPtr<nsITimer>       mTimer;
   nsCOMPtr<nsIEventTarget> mMainThreadEventTarget;
+  Mutex mMutex;
 
 private:
   ~PACResolver() {}
