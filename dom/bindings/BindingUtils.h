@@ -2603,11 +2603,11 @@ class MOZ_STACK_CLASS BindingJSObjectCreator {
                                JS::PrivateValue(aNative));
       mNative = aNative;
       mReflector = aReflector;
-    }
 
-    if (size_t mallocBytes = BindingJSObjectMallocBytes(aNative)) {
-      JS::AddAssociatedMemory(aReflector, mallocBytes,
-                              JS::MemoryUse::DOMBinding);
+      if (size_t mallocBytes = BindingJSObjectMallocBytes(aNative)) {
+        JS::AddAssociatedMemory(aReflector, mallocBytes,
+                                JS::MemoryUse::DOMBinding);
+      }
     }
   }
 
@@ -2620,11 +2620,11 @@ class MOZ_STACK_CLASS BindingJSObjectCreator {
                           JS::PrivateValue(aNative));
       mNative = aNative;
       mReflector = aReflector;
-    }
 
-    if (size_t mallocBytes = BindingJSObjectMallocBytes(aNative)) {
-      JS::AddAssociatedMemory(aReflector, mallocBytes,
-                              JS::MemoryUse::DOMBinding);
+      if (size_t mallocBytes = BindingJSObjectMallocBytes(aNative)) {
+        JS::AddAssociatedMemory(aReflector, mallocBytes,
+                                JS::MemoryUse::DOMBinding);
+      }
     }
   }
 
