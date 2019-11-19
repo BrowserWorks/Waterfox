@@ -86,6 +86,10 @@ function Startup() {
   removeButton = document.getElementById("removeSignon");
   removeAllButton = document.getElementById("removeAllSignons");
 
+  if (Services.policies && !Services.policies.isAllowed("passwordReveal")) {
+    togglePasswordsButton.hidden = true;
+  }
+
   document.l10n.setAttributes(togglePasswordsButton, "show-passwords");
   document.l10n.setAttributes(signonsIntro, "logins-description-all");
   document.l10n.setAttributes(

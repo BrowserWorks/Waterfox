@@ -453,6 +453,14 @@ var Policies = {
     },
   },
 
+  DisablePasswordReveal: {
+    onBeforeUIStartup(manager, param) {
+      if (param) {
+        manager.disallowFeature("passwordReveal");
+      }
+    },
+  },
+
   DisablePocket: {
     onBeforeAddons(manager, param) {
       if (param) {
