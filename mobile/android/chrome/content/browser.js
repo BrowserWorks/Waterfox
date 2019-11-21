@@ -7093,11 +7093,18 @@ var SearchEngines = {
       },
     });
 
-    // Send a speculative connection to the default engine.
-    Services.search.defaultEngine.speculativeConnect({
-      window: window,
-      originAttributes: {},
-    });
+    // Send a speculative connection to the default engine to warmup Necko.
+    // Don't need to open an external connection when in automation though.
+    let env = Cc["@mozilla.org/process/environment;1"].getService(
+      Ci.nsIEnvironment
+    );
+    let isInAutomation = env.get("MOZ_IN_AUTOMATION") == 1;
+    if (!isInAutomation) {
+      Services.search.defaultEngine.speculativeConnect({
+        window: window,
+        originAttributes: {},
+      });
+    }
   },
 
   // Helper method to extract the engine name from a JSON. Simplifies the observe function.
