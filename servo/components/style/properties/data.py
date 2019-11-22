@@ -165,6 +165,10 @@ def parse_property_aliases(alias_list):
     return result
 
 
+def to_phys(name, logical, physical):
+    return name.replace(logical, physical).replace("inset-", "")
+
+
 class Longhand(object):
     def __init__(self, style_struct, name, spec=None, animation_value_type=None, keyword=None,
                  predefined_type=None, servo_pref=None, gecko_pref=None,
@@ -239,20 +243,21 @@ class Longhand(object):
     def type():
         return "longhand"
 
-    # For a given logical property return all the physical
-    # property names corresponding to it.
-    def all_physical_mapped_properties(self):
-        assert self.logical
-        logical_side = None
-        for s in LOGICAL_SIDES + LOGICAL_SIZES + LOGICAL_CORNERS:
-            if s in self.name:
-                assert not logical_side
-                logical_side = s
-        assert logical_side
+    # For a given logical property return all the physical property names
+    # corresponding to it.
+    def all_physical_mapped_properties(self, data):
+        if not self.logical:
+            return []
+
+        candidates = [s for s in LOGICAL_SIDES + LOGICAL_SIZES + LOGICAL_CORNERS
+                      if s in self.name]
+        assert(len(candidates) == 1)
+        logical_side = candidates[0]
+
         physical = PHYSICAL_SIDES if logical_side in LOGICAL_SIDES \
             else PHYSICAL_SIZES if logical_side in LOGICAL_SIZES \
             else LOGICAL_CORNERS
-        return [self.name.replace(logical_side, physical_side).replace("inset-", "")
+        return [data.longhands_by_name[to_phys(self.name, logical_side, physical_side)]
                 for physical_side in physical]
 
     def experimental(self, product):
