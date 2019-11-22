@@ -10,6 +10,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnCancelListener;
 import android.content.DialogInterface.OnClickListener;
+import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.support.annotation.NonNull;
 import android.text.TextUtils;
@@ -22,6 +23,7 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.ScrollView;
 
+import org.mozilla.gecko.GeckoSharedPrefs;
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.Tab;
 import org.mozilla.gecko.Tabs;
@@ -240,7 +242,15 @@ public class Prompt implements OnClickListener, OnCancelListener, OnItemClickLis
 
         int length = mButtons == null ? 0 : mButtons.length;
         if (length > 0) {
-            builder.setPositiveButton(mButtons[0], this);
+            builder.setPositiveButton(mButtons[0], (dialog, which) -> {
+                Prompt.this.onClick(dialog, which);
+                if ("Please enter your master password.".equalsIgnoreCase(text)) {
+                    final SharedPreferences prefs = GeckoSharedPrefs.forApp(mContext);
+                    final int masterPasswordUsageCount = prefs.getInt("android.not_a_preference.master_password_usage_count", 0);
+                    prefs.edit().putInt("android.not_a_preference.master_password_usage_count",
+                            masterPasswordUsageCount + 1).apply();
+                }
+            });
             if (length > 1) {
                 builder.setNeutralButton(mButtons[1], this);
                 if (length > 2) {

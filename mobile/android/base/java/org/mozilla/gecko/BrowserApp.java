@@ -1866,6 +1866,9 @@ public class BrowserApp extends GeckoApp
                 final int totalAddedSearchEngines = engines == null ? 0 : engines.length;
                 GeckoSharedPrefs.forApp(getApplicationContext()).edit().putInt("android.not_a_preference.total_added_search_engines", totalAddedSearchEngines).apply();
 
+                final int sitesPinnedToTopsites = BrowserDB.from(this).getPinnedSitesCountForAS(getContentResolver());
+
+                GeckoSharedPrefs.forApp(getApplicationContext()).edit().putInt("android.not_a_preference.total_sites_pinned_to_topsites", sitesPinnedToTopsites).apply();
                 break;
 
             case "LightweightTheme:Update":
@@ -2046,14 +2049,6 @@ public class BrowserApp extends GeckoApp
                 final boolean hasCustomHomepanels =
                         prefs.contains(HomeConfigPrefsBackend.PREFS_CONFIG_KEY) ||
                         prefs.contains(HomeConfigPrefsBackend.PREFS_CONFIG_KEY_OLD);
-
-                final SharedPreferences appPrefs = GeckoSharedPrefs.forApp(getApplicationContext());
-                final int bookmarksWithStar = db.getCount(cr, "bookmarks");
-                appPrefs.edit().putInt("android.not_a_preference.bookmarks_with_star", bookmarksWithStar).apply();
-
-                final Cursor cursor = BrowserDB.from(this).getTopSites(getContentResolver(), getResources().getInteger(R.integer.number_of_top_sites), 30);
-                appPrefs.edit().putInt("android.not_a_preference.total_sites_pinned_to_topsites", cursor.getCount()).apply();
-
                 Telemetry.addToHistogram("FENNEC_HOMEPANELS_CUSTOM", hasCustomHomepanels ? 1 : 0);
 
                 Telemetry.addToHistogram("FENNEC_READER_VIEW_CACHE_SIZE",
@@ -3320,6 +3315,12 @@ public class BrowserApp extends GeckoApp
         bookmark.setCheckable(true);
         bookmark.setChecked(tab.isBookmark());
         bookmark.setTitle(resolveBookmarkTitleID(tab.isBookmark()));
+        bookmark.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                return false;
+            }
+        });
 
         final boolean isPrivate = tab.isPrivate();
         // We don't use icons on GB builds so not resolving icons might conserve resources.
@@ -3568,6 +3569,8 @@ public class BrowserApp extends GeckoApp
         mBrowserToolbar.cancelEdit();
 
         if (itemId == R.id.bookmark) {
+            final int bookmarkWithStar = GeckoSharedPrefs.forApp(getApplicationContext()).getInt("android.not_a_preference.bookmarks_with_star", 0);
+            GeckoSharedPrefs.forApp(getApplicationContext()).edit().putInt("android.not_a_preference.bookmarks_with_star", bookmarkWithStar + 1).apply();
             tab = Tabs.getInstance().getSelectedTab();
             if (tab != null) {
                 final String extra;

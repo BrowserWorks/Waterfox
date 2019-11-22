@@ -178,7 +178,7 @@ public abstract class BrowserDB {
     public abstract void unpinSiteForAS(ContentResolver cr, String url);
 
     public abstract boolean isPinnedForAS(ContentResolver cr, String url);
-
+    public abstract int getPinnedSitesCountForAS(ContentResolver cr);
     public abstract boolean hideSuggestedSite(String url);
     public abstract void setSuggestedSites(SuggestedSites suggestedSites);
     public abstract SuggestedSites getSuggestedSites();

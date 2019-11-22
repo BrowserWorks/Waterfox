@@ -26,6 +26,9 @@ import org.mozilla.gecko.GeckoSharedPrefs;
 import org.mozilla.gecko.Locales;
 import org.mozilla.gecko.PrefsHelper;
 import org.mozilla.gecko.R;
+import org.mozilla.gecko.Tabs;
+import org.mozilla.gecko.activitystream.homepanel.ActivityStreamPanel;
+import org.mozilla.gecko.home.HomeConfig;
 import org.mozilla.gecko.preferences.GeckoPreferences;
 import org.mozilla.gecko.search.SearchEngine;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
@@ -44,6 +47,9 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+
+import static org.mozilla.gecko.home.HomeConfig.PREF_KEY_HISTORY_PANEL_ENABLED;
+import static org.mozilla.gecko.home.HomeConfig.PREF_KEY_TOPSITES_PANEL_ENABLED;
 
 /**
  * Builds a {@link TelemetryOutgoingPing} representing a core ping.
@@ -124,11 +130,13 @@ public class TelemetryCorePingBuilder extends TelemetryPingBuilder {
     private static final String ACCESSIBILITY_SERVICES = "accessibilityServices";
     private static final String HAD_CANARY_CLIENT_ID = "bug_1501329_affected";
 
-    public TelemetryCorePingBuilder(final Context context) {
-        initPayloadConstants(context);
+    public TelemetryCorePingBuilder(final Context context, int[] settingsAdvanced, boolean[] privacyPrefs, List<String> activeAddons,
+                                    List<String> disabledAddons) {
+        initPayloadConstants(context, settingsAdvanced, privacyPrefs, activeAddons, disabledAddons);
     }
 
-    private void initPayloadConstants(final Context context) {
+    private void initPayloadConstants(final Context context, int[] settingsAdvanced, boolean[] privacyPrefs, List<String> activeAddons,
+                                      List<String> disabledAddons) {
         payload.put(VERSION_ATTR, VERSION_VALUE);
         payload.put(OS_ATTR, TelemetryPingBuilder.OS_NAME);
 
@@ -153,6 +161,7 @@ public class TelemetryCorePingBuilder extends TelemetryPingBuilder {
         synchronized (this) {
             SharedPreferences prefs = GeckoSharedPrefs.forApp(context);
             final int count = prefs.getInt(GeckoApp.PREFS_FLASH_USAGE, 0);
+            final int defaultSearchEnginesCount = 6;
             payload.put(FLASH_USAGE, count);
             prefs.edit().putInt(GeckoApp.PREFS_FLASH_USAGE, 0).apply();
 
@@ -164,93 +173,65 @@ public class TelemetryCorePingBuilder extends TelemetryPingBuilder {
             payload.put(GeckoApp.PREFS_ENHANCED_SEARCH_VERSION, searchVersion);
             final int topSitesClicked = prefs.getInt("android.not_a_preference.top_sites_clicked", 0);
             final int pocketStoriesClicked = prefs.getInt("android.not_a_preference.pocket_stories_clicked", 0);
+            final boolean fullScreenBrowsing = prefs.getBoolean("browser.chrome.dynamictoolbar", true);
+            final boolean tabQueue = prefs.getBoolean("android.not_a_preference.tab_queue", false);
+            final int tabQueueUsageCount = prefs.getInt("android.not_a_preference.tab_queue_usage_count", 0);
+            final boolean compactTabs = prefs.getBoolean("android.not_a_preference.compact_tabs", true);
+            final boolean customHomepage = (Tabs.getHomepage(context) != null && !"about:home".equalsIgnoreCase(Tabs.getHomepage(context)));
+            final boolean customHomepageForNewTab = prefs.getBoolean("android.not_a_preference.newtab.load_homepage", false);
+            final boolean historyEnabled = GeckoSharedPrefs.forProfile(context).getBoolean(PREF_KEY_HISTORY_PANEL_ENABLED, true);
+            final boolean bookmarksEnabled = GeckoSharedPrefs.forProfile(context).getBoolean(HomeConfig.PREF_KEY_BOOKMARKS_PANEL_ENABLED, true);
+            final boolean topsitesEnabled = GeckoSharedPrefs.forProfile(context).getBoolean(PREF_KEY_TOPSITES_PANEL_ENABLED, true);
+            final boolean pocketEnabled =  GeckoSharedPrefs.forProfile(context).getBoolean("pref_activitystream_pocket_enabled", true);
+            final boolean visitedEnabled = GeckoSharedPrefs.forProfile(context).getBoolean("pref_activitystream_visited_enabled", true);
+            final boolean recentBookmarksEnabled = GeckoSharedPrefs.forProfile(context).getBoolean("pref_activitystream_recentbookmarks_enabled", true);
             final boolean onlyOverWifi = prefs.getBoolean("sync.restrict_metered", false);
             final boolean productFeatureTipsEnabled = prefs.getBoolean(GeckoPreferences.PREFS_NOTIFICATIONS_FEATURES_TIPS, true);
             final boolean restoreTabs = !"quit".equals(prefs.getString(GeckoPreferences.PREFS_RESTORE_SESSION, "always"));
             final boolean showWebFonts = prefs.getBoolean("browser.display.use_document_fonts", false);
-            final int totalAddedSearchEngines = prefs.getInt("android.not_a_preference.total_added_search_engines", 0);
+            final int totalSearchEngines = prefs.getInt("android.not_a_preference.total_added_search_engines", 0);
+            final int totalAddedSearchEngines = totalSearchEngines > 0 ? totalSearchEngines - defaultSearchEnginesCount : 0;
             final int bookmarksWithStar = prefs.getInt("android.not_a_preference.bookmarks_with_star", 0);
             final int totalSitesPinnedToTopsites = prefs.getInt("android.not_a_preference.total_sites_pinned_to_topsites", 0);
             final int saveAsPdf = prefs.getInt("android.not_a_preference.save_as_pdf", 0);
             final int print = prefs.getInt("android.not_a_preference.print", 0);
             final int viewPageSource = prefs.getInt("android.not_a_preference.view_page_source", 0);
-            final int intShowImages = Integer.parseInt(prefs.getString("browser.image_blocking", "1"));
-            final String showImages = getShowImages(intShowImages, context);
-            final boolean[] privacyPrefs = {false, false};
+            final String showImages = getShowImages(settingsAdvanced[0]);
             final int masterPasswordUsageCount = prefs.getInt("android.not_a_preference.master_password_usage_count", 0);
-            final List<String> activeAddons = new ArrayList<>();
-            final List<String> disabledAddons = new ArrayList<>();
-            PrefsHelper.getPrefs(new String[]{"privacy.donottrackheader.enabled", "privacy.masterpassword.enabled",
-                            "android.not_a_preference.addons_active", "android.not_a_preference.addons_disabled"},
-                    new PrefsHelper.PrefHandlerBase() {
-                        @Override
-                        public void prefValue(String pref, boolean value) {
-                            if (pref.equalsIgnoreCase("privacy.donottrackheader.enabled")) {
-                                privacyPrefs[0] = value;
-                                return;
-                            }
-
-                            if (pref.equalsIgnoreCase("privacy.masterpassword.enabled")) {
-                                privacyPrefs[1] = value;
-                            }
-                        }
-
-                        @Override
-                        public void prefValue(String pref, String value) {
-                            if (pref.equalsIgnoreCase("android.not_a_preference.addons_active")) {
-                                try {
-                                    final JSONArray array = new JSONArray(value);
-                                    for (int index = 0; index < array.length(); index++) {
-                                        activeAddons.add(array.getString(index));
-                                    }
-                                } catch (JSONException ex) {
-                                    // nothing to do here but to log the error
-                                    ex.printStackTrace();
-                                }
-                                return;
-                            }
-
-                            if (pref.equalsIgnoreCase("android.not_a_preference.addons_disabled")) {
-                                try {
-                                    final JSONArray array = new JSONArray(value);
-                                    for (int index = 0; index < array.length(); index++) {
-                                        disabledAddons.add(array.getString(index));
-                                    }
-                                } catch (JSONException ex) {
-                                    // nothing to do here but to log the error
-                                    ex.printStackTrace();
-                                }
-                            }
-                        }
-
-                        @Override
-                        public void finish() {
-                            final ExtendedJSONObject fennec = getFennec(getNewTab(topSitesClicked, pocketStoriesClicked),
-                                    getSettingsAdvanced(restoreTabs, showImages, showWebFonts),
-                                    getSettingsGeneral(false, false, 0, false,
-                                            getHomepage(false, false, false,
-                                                    false, false, false, false, false)),
-                                    getSettingsPrivacy(privacyPrefs[0], privacyPrefs[1], masterPasswordUsageCount),
-                                    getSettingsNotifications(productFeatureTipsEnabled),
-                                    getAddons(activeAddons, disabledAddons),
-                                    getPageOptions(saveAsPdf, print, totalAddedSearchEngines, totalSitesPinnedToTopsites, viewPageSource, bookmarksWithStar),
-                                    getSync(onlyOverWifi));
-                            payload.put(FENNEC, fennec);
-                        }
-                    });
+            final ExtendedJSONObject fennec = getFennec(getNewTab(topSitesClicked, pocketStoriesClicked),
+                    getSettingsAdvanced(restoreTabs, showImages, showWebFonts),
+                    getSettingsGeneral(fullScreenBrowsing, tabQueue, tabQueueUsageCount, compactTabs,
+                            getHomepage(customHomepage, customHomepageForNewTab,
+                                    topsitesEnabled, pocketEnabled, recentBookmarksEnabled,
+                                    visitedEnabled, bookmarksEnabled, historyEnabled)),
+                    getSettingsPrivacy(privacyPrefs[0], privacyPrefs[1], masterPasswordUsageCount),
+                    getSettingsNotifications(productFeatureTipsEnabled),
+                    getAddons(activeAddons, disabledAddons),
+                    getPageOptions(saveAsPdf, print, totalAddedSearchEngines, totalSitesPinnedToTopsites, viewPageSource, bookmarksWithStar),
+                    getSync(onlyOverWifi));
+            payload.put(FENNEC, fennec);
+            resetCounts(prefs);
         }
     }
 
-    private static String getShowImages(int showImages, Context context) {
+    private static void resetCounts(SharedPreferences prefs) {
+        prefs.edit().putInt("android.not_a_preference.master_password_usage_count", 0).apply();
+        prefs.edit().putInt("android.not_a_preference.tab_queue_usage_count", 0).apply();
+        prefs.edit().putInt("android.not_a_preference.top_sites_clicked", 0).apply();
+        prefs.edit().putInt("android.not_a_preference.pocket_stories_clicked", 0).apply();
+        prefs.edit().putInt("android.not_a_preference.print", 0).apply();
+        prefs.edit().putInt("android.not_a_preference.save_as_pdf", 0).apply();
+        prefs.edit().putInt("android.not_a_preference.bookmarks_with_star", 0).apply();
+        prefs.edit().putInt("android.not_a_preference.view_page_source", 0).apply();
+    }
+
+    private static String getShowImages(int showImages) {
         switch (showImages) {
             case 0:
-                return context.getResources().getStringArray(R.array.pref_browser_image_blocking_entries)[2];
-            case 1:
-                return context.getResources().getStringArray(R.array.pref_browser_image_blocking_entries)[0];
             case 2:
-                return context.getResources().getStringArray(R.array.pref_browser_image_blocking_entries)[1];
+                return "user-specified";
             default:
-                return null;
+                return "default";
         }
     }
 

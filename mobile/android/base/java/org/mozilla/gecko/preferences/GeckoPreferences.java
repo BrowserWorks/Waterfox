@@ -1358,10 +1358,7 @@ public class GeckoPreferences
                         .setPositiveButton(R.string.button_ok, (dialog1, which) -> {
                             PrefsHelper.setPref(PREFS_MP_ENABLED, input1.getText().toString(),
                                     /* flush */ true);
-                            final SharedPreferences prefs = GeckoSharedPrefs.forApp(getApplicationContext());
-                            final int masterPasswordUsageCount = prefs.getInt("android.not_a_preference.master_password_usage_count", 0);
-                            prefs.edit().putInt("android.not_a_preference.master_password_usage_count",
-                                    masterPasswordUsageCount + 1).apply();
+                            PrefsHelper.setPref("android.not_a_preference.master_password_enabled", true);
                         })
                         .setNegativeButton(R.string.button_cancel, new DialogInterface.OnClickListener() {
                             @Override
@@ -1395,6 +1392,7 @@ public class GeckoPreferences
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
                                 PrefsHelper.setPref(PREFS_MP_ENABLED, input.getText().toString());
+                                PrefsHelper.setPref("android.not_a_preference.master_password_enabled", false);
                             }
                         })
                         .setNegativeButton(R.string.button_cancel, new DialogInterface.OnClickListener() {

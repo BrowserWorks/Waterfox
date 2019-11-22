@@ -35,6 +35,7 @@ import org.mozilla.gecko.util.GeckoBundle;
 import org.mozilla.gecko.util.ThreadUtils;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class TabQueueHelper {
@@ -337,6 +338,8 @@ public class TabQueueHelper {
             data.putStringArray("urls", urls);
             data.putBoolean("shouldNotifyTabsOpenedToJava", shouldPerformJavaScriptCallback);
             EventDispatcher.getInstance().dispatch("Tabs:OpenMultiple", data);
+            final int tabQueueUsageCount = GeckoSharedPrefs.forApp(context).getInt("android.not_a_preference.tab_queue_usage_count", 0);
+            GeckoSharedPrefs.forApp(context).edit().putInt("android.not_a_preference.tab_queue_usage_count", tabQueueUsageCount + urls.length + 1).apply();
         }
 
         try {
@@ -367,7 +370,7 @@ public class TabQueueHelper {
                 // will never show again without having to keep track of an extra pref.
                 editor.putInt(TabQueueHelper.PREF_TAB_QUEUE_LAUNCHES,
                                      TabQueueHelper.EXTERNAL_LAUNCHES_BEFORE_SHOWING_PROMPT + 1);
-                break;
+                 break;
 
             case TAB_QUEUE_NO:
                 // The user clicked the 'no' button, so let's make sure the user never sees the prompt again by

@@ -13,11 +13,15 @@ import android.support.annotation.Nullable;
 import android.support.annotation.WorkerThread;
 import android.util.Log;
 import android.view.accessibility.AccessibilityManager;
+
+import org.json.JSONArray;
+import org.json.JSONException;
 import org.mozilla.gecko.BrowserApp;
 import org.mozilla.gecko.GeckoApp;
 import org.mozilla.gecko.GeckoProfile;
 import org.mozilla.gecko.GeckoSharedPrefs;
 import org.mozilla.gecko.GeckoThread;
+import org.mozilla.gecko.PrefsHelper;
 import org.mozilla.gecko.Telemetry;
 import org.mozilla.gecko.TelemetryContract;
 import org.mozilla.gecko.adjust.AttributionHelperListener;
@@ -33,6 +37,7 @@ import org.mozilla.gecko.util.StringUtils;
 import org.mozilla.gecko.util.ThreadUtils;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -165,17 +170,77 @@ public class TelemetryCorePingDelegate extends BrowserAppDelegateWithReference
             final SharedPreferences sharedPrefs = getSharedPreferences(activity);
             final SessionMeasurements.SessionMeasurementsContainer sessionMeasurementsContainer =
                     sessionMeasurements.getAndResetSessionMeasurements(activity);
-            final TelemetryCorePingBuilder pingBuilder = new TelemetryCorePingBuilder(activity)
-                    .setClientID(clientID)
-                    .setHadCanaryClientId(hadCanaryClientId)
-                    .setDefaultSearchEngine(TelemetryCorePingBuilder.getEngineIdentifier(engine))
-                    .setProfileCreationDate(TelemetryCorePingBuilder.getProfileCreationDate(activity, profile))
-                    .setSequenceNumber(TelemetryCorePingBuilder.getAndIncrementSequenceNumber(sharedPrefs))
-                    .setSessionCount(sessionMeasurementsContainer.sessionCount)
-                    .setSessionDuration(sessionMeasurementsContainer.elapsedSeconds);
-            maybeSetOptionalMeasurements(activity, sharedPrefs, pingBuilder);
+            final boolean[] privacyPrefs = {false, false};
+            final int[] settingsAdvanced = {1};
+            final List<String> activeAddons = new ArrayList<>();
+            final List<String> disabledAddons = new ArrayList<>();
+            PrefsHelper.getPrefs(new String[]{"privacy.donottrackheader.enabled",
+                            "android.not_a_preference.master_password_enabled",
+                            "android.not_a_preference.addons_active",
+                            "android.not_a_preference.addons_disabled",
+                            "browser.image_blocking"},
+                    new PrefsHelper.PrefHandlerBase() {
+                        @Override
+                        public void prefValue(String pref, boolean value) {
+                            if (pref.equalsIgnoreCase("privacy.donottrackheader.enabled")) {
+                                privacyPrefs[0] = value;
+                                return;
+                            }
 
-            getTelemetryDispatcher(activity).queuePingForUpload(activity, pingBuilder);
+                            if (pref.equalsIgnoreCase("android.not_a_preference.master_password_enabled")) {
+                                privacyPrefs[1] = value;
+                            }
+                        }
+
+                        @Override
+                        public void prefValue(String pref, String value) {
+                            if (pref.equalsIgnoreCase("browser.image_blocking")) {
+                                settingsAdvanced[0] = Integer.parseInt(value);
+                                return;
+                            }
+
+                            if (pref.equalsIgnoreCase("android.not_a_preference.addons_active")) {
+                                try {
+                                    final JSONArray array = new JSONArray(value);
+                                    for (int index = 0; index < array.length(); index++) {
+                                        activeAddons.add(array.getString(index));
+                                    }
+                                } catch (JSONException ex) {
+                                    // nothing to do here but to log the error
+                                    ex.printStackTrace();
+                                }
+                                return;
+                            }
+
+                            if (pref.equalsIgnoreCase("android.not_a_preference.addons_disabled")) {
+                                try {
+                                    final JSONArray array = new JSONArray(value);
+                                    for (int index = 0; index < array.length(); index++) {
+                                        disabledAddons.add(array.getString(index));
+                                    }
+                                } catch (JSONException ex) {
+                                    // nothing to do here but to log the error
+                                    ex.printStackTrace();
+                                }
+                            }
+                        }
+
+                        @Override
+                        public void finish() {
+                            final TelemetryCorePingBuilder pingBuilder = new TelemetryCorePingBuilder(activity,
+                                    settingsAdvanced, privacyPrefs, activeAddons, disabledAddons)
+                                    .setClientID(clientID)
+                                    .setHadCanaryClientId(hadCanaryClientId)
+                                    .setDefaultSearchEngine(TelemetryCorePingBuilder.getEngineIdentifier(engine))
+                                    .setProfileCreationDate(TelemetryCorePingBuilder.getProfileCreationDate(activity, profile))
+                                    .setSequenceNumber(TelemetryCorePingBuilder.getAndIncrementSequenceNumber(sharedPrefs))
+                                    .setSessionCount(sessionMeasurementsContainer.sessionCount)
+                                    .setSessionDuration(sessionMeasurementsContainer.elapsedSeconds);
+                            maybeSetOptionalMeasurements(activity, sharedPrefs, pingBuilder);
+
+                            getTelemetryDispatcher(activity).queuePingForUpload(activity, pingBuilder);
+                        }
+                    });
         });
     }
 

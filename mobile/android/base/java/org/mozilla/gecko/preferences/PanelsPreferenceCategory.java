@@ -252,6 +252,10 @@ public class PanelsPreferenceCategory extends CustomListCategory {
     }
 
     private void updateVisibilityPrefsForPanel(String panelId, boolean toShow) {
+        if (HomeConfig.getIdForBuiltinPanelType(HomeConfig.PanelType.TOP_SITES).equals(panelId)) {
+            GeckoSharedPrefs.forProfile(getContext()).edit().putBoolean(HomeConfig.PREF_KEY_TOPSITES_PANEL_ENABLED, toShow).apply();
+        }
+
         if (HomeConfig.getIdForBuiltinPanelType(HomeConfig.PanelType.BOOKMARKS).equals(panelId)) {
             GeckoSharedPrefs.forProfile(getContext()).edit().putBoolean(HomeConfig.PREF_KEY_BOOKMARKS_PANEL_ENABLED, toShow).apply();
         }

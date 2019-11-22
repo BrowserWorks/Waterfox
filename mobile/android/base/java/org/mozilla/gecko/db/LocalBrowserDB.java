@@ -1806,6 +1806,26 @@ public class LocalBrowserDB extends BrowserDB {
     }
 
     @Override
+    public int getPinnedSitesCountForAS(ContentResolver cr) {
+        final Cursor c = cr.query(bookmarksUriWithLimit(1),
+                new String[] { Bookmarks._ID },
+                Bookmarks.PARENT + " = ?",
+                new String[] {
+                        String.valueOf(Bookmarks.FIXED_PINNED_LIST_ID),
+                }, null);
+
+        if (c == null) {
+            throw new IllegalStateException("Null cursor in isPinnedByUrl");
+        }
+
+        try {
+            return c.getCount();
+        } finally {
+            c.close();
+        }
+    }
+
+    @Override
     @RobocopTarget
     @Nullable
     public Cursor getBookmarkForUrl(ContentResolver cr, String url) {
