@@ -178,3 +178,15 @@ jobs:
               # No default branch
               mozilla-central:
                   - {weekday: 'Monday', hour: 10, minute: 0}
+
+    - name: l10n-bumper
+      job:
+          type: decision-task
+          treeherder-symbol: l10n-bump
+          target-tasks-method: l10n_bump
+      run-on-projects:
+          - mozilla-central
+          - mozilla-beta
+          - mozilla-esr68
+      when:
+          - {minute: 45}
