@@ -33,6 +33,7 @@ import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.nio.channels.FileLock;
+import java.nio.channels.OverlappingFileLockException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -307,6 +308,8 @@ public class TelemetryJSONFilePingStore extends TelemetryPingStore {
             // a ClosedChannelException. To be safe, we could catch that every time but there is a performance
             // hit to exception handling so instead we assume the file lock will be closed.
             return new JSONObject(FileUtils.readStringFromInputStreamAndCloseStream(inputStream, fileSize));
+        } catch (OverlappingFileLockException e) {
+            return null;
         } finally {
             inputStream.close(); // redundant: closed when the stream is closed, but let's be safe.
         }
