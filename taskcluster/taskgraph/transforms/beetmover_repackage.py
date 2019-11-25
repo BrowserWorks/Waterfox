@@ -138,7 +138,6 @@ UPSTREAM_ARTIFACT_SIGNED_MSI_PATHS = [
 
 UPSTREAM_ARTIFACT_SIGNED_MAR_PATHS = [
     'target.complete.mar',
-    'target.bz2.complete.mar',
 ]
 
 beetmover_description_schema = schema.extend({
