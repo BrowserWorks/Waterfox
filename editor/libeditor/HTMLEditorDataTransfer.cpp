@@ -469,9 +469,10 @@ nsresult HTMLEditor::DoInsertHTMLWithContext(
                         !pointToInsert.GetContainer()->GetParentNode())) {
                   // Is it an orphan node?
                 } else {
-                  DeleteNodeWithTransaction(
-                      MOZ_KnownLive(*pointToInsert.GetContainer()));
                   pointToInsert.Set(pointToInsert.GetContainer());
+                  AutoEditorDOMPointChildInvalidator lockOffset(pointToInsert);
+                  DeleteNodeWithTransaction(
+                      MOZ_KnownLive(*pointToInsert.GetChild()));
                 }
               }
             }

@@ -6181,6 +6181,28 @@ var XPInstallObserver = {
         let disabledAddons = AddonManager.getStartupChanges(
           AddonManager.STARTUP_CHANGE_DISABLED
         );
+
+        let active = [];
+        let disabled = [];
+
+        AddonManager.getAllAddons().then(allAddons => {
+          allAddons.forEach(addon => {
+            if (addon.isActive) {
+              active.push(addon.id);
+            } else {
+              disabled.push(addon.id);
+            }
+          });
+          Services.prefs.setStringPref(
+            "android.not_a_preference.addons_active",
+            JSON.stringify(active)
+          );
+          Services.prefs.setStringPref(
+            "android.not_a_preference.addons_disabled",
+            JSON.stringify(disabled)
+          );
+        });
+
         for (let id of disabledAddons) {
           if (
             AddonManager.getAddonByID(id).signedState <=
@@ -7093,11 +7115,18 @@ var SearchEngines = {
       },
     });
 
-    // Send a speculative connection to the default engine.
-    Services.search.defaultEngine.speculativeConnect({
-      window: window,
-      originAttributes: {},
-    });
+    // Send a speculative connection to the default engine to warmup Necko.
+    // Don't need to open an external connection when in automation though.
+    let env = Cc["@mozilla.org/process/environment;1"].getService(
+      Ci.nsIEnvironment
+    );
+    let isInAutomation = env.get("MOZ_IN_AUTOMATION") == 1;
+    if (!isInAutomation) {
+      Services.search.defaultEngine.speculativeConnect({
+        window: window,
+        originAttributes: {},
+      });
+    }
   },
 
   // Helper method to extract the engine name from a JSON. Simplifies the observe function.

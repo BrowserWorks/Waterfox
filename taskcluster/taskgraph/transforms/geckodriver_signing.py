@@ -11,7 +11,6 @@ from taskgraph.loader.single_dep import schema
 from taskgraph.transforms.base import TransformSequence
 from taskgraph.util.attributes import copy_attributes_from_dependent_job
 from taskgraph.util.scriptworker import (
-    add_scope_prefix,
     get_signing_cert_scope_per_platform,
     get_worker_type_for_scope,
 )
@@ -66,11 +65,6 @@ def make_repackage_signing_description(config, jobs):
         upstream_artifacts = _craft_upstream_artifacts(dep_job.kind, build_platform)
 
         scopes = [signing_cert_scope]
-        scopes += list({
-            add_scope_prefix(config, 'signing:format:{}'.format(format))
-            for artifact in upstream_artifacts
-            for format in artifact['formats']
-        })
 
         task = {
             'label': job['label'],
@@ -87,12 +81,30 @@ def make_repackage_signing_description(config, jobs):
             'treeherder': treeherder,
         }
 
+        if build_platform.startswith('macosx'):
+            worker_type = task['worker-type']
+            worker_type_alias_map = {
+                'linux-depsigning': 'mac-depsigning',
+                'linux-signing': 'mac-signing',
+            }
+
+            assert worker_type in worker_type_alias_map, \
+                (
+                    "Make sure to adjust the below worker_type_alias logic for "
+                    "mac if you change the signing workerType aliases!"
+                    " ({} not found in mapping)".format(worker_type)
+                )
+            worker_type = worker_type_alias_map[worker_type]
+
+            task['worker-type'] = worker_type_alias_map[task['worker-type']]
+            task['worker']['mac-behavior'] = 'mac_geckodriver'
+
         yield task
 
 
 def _craft_upstream_artifacts(dependency_kind, build_platform):
     if build_platform.startswith('win'):
-        signing_format = 'sha2signcode'
+        signing_format = 'autograph_authenticode'
         extension = 'zip'
     elif build_platform.startswith('linux'):
         signing_format = 'autograph_gpg'

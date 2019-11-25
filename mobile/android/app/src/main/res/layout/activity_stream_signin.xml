@@ -32,8 +32,10 @@
         app:srcCompat="@drawable/as_dismiss" />
 
     <LinearLayout
+        android:id="@+id/as_signup_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
         android:layout_marginStart="@dimen/as_signin_layout_margin_left_right"
         android:layout_marginLeft="@dimen/as_signin_layout_margin_left_right"
         android:layout_marginTop="4dp"
@@ -73,17 +75,19 @@
             android:textColor="@color/photon_text_main_private"
             android:textSize="@dimen/as_signup_button_text" />
 
-        <TextView
-            android:id="@+id/as_signin"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:layout_marginBottom="8dp"
-            tools:text="@string/activity_stream_signin_prompt"
-            android:textColor="@color/photon_text_main"
-            android:textSize="@dimen/as_signin_text"
-            android:gravity="center"/>
-
     </LinearLayout>
+
+    <TextView
+        android:id="@+id/as_signin"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/as_signup_layout"
+        android:layout_alignParentBottom="true"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="8dp"
+        android:gravity="center"
+        android:textColor="@color/photon_text_main"
+        android:textSize="@dimen/as_signin_text"
+        tools:text="@string/activity_stream_signin_prompt" />
 
 </RelativeLayout>

@@ -65,6 +65,9 @@
               "type": "boolean"
             }
           }
+        },
+        "Locked": {
+          "type": "boolean"
         }
       }
     },
@@ -217,6 +220,10 @@
     },
 
     "DisableMasterPasswordCreation": {
+      "type": "boolean"
+    },
+
+    "DisablePasswordReveal": {
       "type": "boolean"
     },
 

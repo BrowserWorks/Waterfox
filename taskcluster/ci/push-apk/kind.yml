@@ -20,8 +20,8 @@ job-defaults:
     shipping-product: fennec
     worker-type:
         by-release-level:
-            production: scriptworker-prov-v1/pushapk-v1
-            staging: scriptworker-prov-v1/dep-pushapk
+            production: scriptworker-k8s/gecko-3-pushapk
+            staging: scriptworker-k8s/gecko-1-pushapk
     worker:
         upstream-artifacts:  # see transforms
         implementation: push-apk

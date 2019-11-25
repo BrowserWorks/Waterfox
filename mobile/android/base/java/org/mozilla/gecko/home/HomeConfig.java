@@ -30,6 +30,7 @@ import android.text.TextUtils;
 import android.util.Pair;
 
 public final class HomeConfig {
+    public static final String PREF_KEY_TOPSITES_PANEL_ENABLED = "topsitesPanelEnabled";
     public static final String PREF_KEY_BOOKMARKS_PANEL_ENABLED = "bookmarksPanelEnabled";
     public static final String PREF_KEY_HISTORY_PANEL_ENABLED = "combinedHistoryPanelEnabled";
 

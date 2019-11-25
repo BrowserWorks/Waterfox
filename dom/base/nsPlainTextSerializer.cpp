@@ -56,7 +56,6 @@ static int32_t GetUnicharStringWidth(const char16_t* pwcs, int32_t n);
 
 // Someday may want to make this non-const:
 static const uint32_t TagStackSize = 500;
-static const uint32_t OLStackSize = 100;
 
 static bool gPreferenceInitialized = false;
 static bool gAlwaysIncludeRuby = false;
@@ -116,10 +115,6 @@ nsPlainTextSerializer::nsPlainTextSerializer()
   mTagStackIndex = 0;
   mIgnoreAboveIndex = (uint32_t)kNotFound;
 
-  // initialize the OL stack, where numbers for ordered lists are kept
-  mOLStack = new int32_t[OLStackSize];
-  mOLStackIndex = 0;
-
   mULCount = 0;
 
   mIgnoredChildNodeLevel = 0;
@@ -133,7 +128,6 @@ nsPlainTextSerializer::nsPlainTextSerializer()
 
 nsPlainTextSerializer::~nsPlainTextSerializer() {
   delete[] mTagStack;
-  delete[] mOLStack;
   NS_WARNING_ASSERTION(mHeadLevel == 0, "Wrong head level!");
 }
 
@@ -203,6 +197,8 @@ nsPlainTextSerializer::Init(uint32_t aFlags, uint32_t aWrapColumn,
 
   // XXX We should let the caller decide whether to do this or not
   mFlags &= ~nsIDocumentEncoder::OutputNoFramesContent;
+
+  MOZ_ASSERT(mOLStack.IsEmpty());
 
   return NS_OK;
 }
@@ -443,6 +439,8 @@ nsPlainTextSerializer::AppendDocumentStart(Document* aDocument,
   return NS_OK;
 }
 
+constexpr int32_t kOlStackDummyValue = 0;
+
 nsresult nsPlainTextSerializer::DoOpenContainer(nsAtom* aTag) {
   // Check if we need output current node as placeholder character and ignore
   // child nodes.
@@ -612,40 +610,43 @@ nsresult nsPlainTextSerializer::DoOpenContainer(nsAtom* aTag) {
     }
   } else if (aTag == nsGkAtoms::ul) {
     // Indent here to support nested lists, which aren't included in li :-(
-    EnsureVerticalSpace(mULCount + mOLStackIndex == 0 ? 1 : 0);
+    EnsureVerticalSpace(IsInOlOrUl() ? 0 : 1);
     // Must end the current line before we change indention
     mIndent += kIndentSizeList;
     mULCount++;
   } else if (aTag == nsGkAtoms::ol) {
-    EnsureVerticalSpace(mULCount + mOLStackIndex == 0 ? 1 : 0);
+    EnsureVerticalSpace(IsInOlOrUl() ? 0 : 1);
     if (mFlags & nsIDocumentEncoder::OutputFormatted) {
       // Must end the current line before we change indention
-      if (mOLStackIndex < OLStackSize) {
-        nsAutoString startAttr;
-        int32_t startVal = 1;
-        if (NS_SUCCEEDED(GetAttributeValue(nsGkAtoms::start, startAttr))) {
-          nsresult rv = NS_OK;
-          startVal = startAttr.ToInteger(&rv);
-          if (NS_FAILED(rv)) startVal = 1;
+      nsAutoString startAttr;
+      int32_t startVal = 1;
+      if (NS_SUCCEEDED(GetAttributeValue(nsGkAtoms::start, startAttr))) {
+        nsresult rv = NS_OK;
+        startVal = startAttr.ToInteger(&rv);
+        if (NS_FAILED(rv)) {
+          startVal = 1;
         }
-        mOLStack[mOLStackIndex++] = startVal;
       }
+      mOLStack.AppendElement(startVal);
     } else {
-      mOLStackIndex++;
+      mOLStack.AppendElement(kOlStackDummyValue);
     }
     mIndent += kIndentSizeList;  // see ul
   } else if (aTag == nsGkAtoms::li &&
              (mFlags & nsIDocumentEncoder::OutputFormatted)) {
     if (mTagStackIndex > 1 && IsInOL()) {
-      if (mOLStackIndex > 0) {
+      if (!mOLStack.IsEmpty()) {
         nsAutoString valueAttr;
         if (NS_SUCCEEDED(GetAttributeValue(nsGkAtoms::value, valueAttr))) {
           nsresult rv = NS_OK;
           int32_t valueAttrVal = valueAttr.ToInteger(&rv);
-          if (NS_SUCCEEDED(rv)) mOLStack[mOLStackIndex - 1] = valueAttrVal;
+          if (NS_SUCCEEDED(rv)) {
+            mOLStack.LastElement() = valueAttrVal;
+          }
         }
         // This is what nsBulletFrame does for OLs:
-        mInIndentString.AppendInt(mOLStack[mOLStackIndex - 1]++, 10);
+        mInIndentString.AppendInt(mOLStack.LastElement(), 10);
+        mOLStack.LastElement()++;
       } else {
         mInIndentString.Append(char16_t('#'));
       }
@@ -846,16 +847,17 @@ nsresult nsPlainTextSerializer::DoCloseContainer(nsAtom* aTag) {
   } else if (aTag == nsGkAtoms::ul) {
     FlushLine();
     mIndent -= kIndentSizeList;
-    if (--mULCount + mOLStackIndex == 0) {
+    --mULCount;
+    if (!IsInOlOrUl()) {
       mFloatingLines = 1;
       mLineBreakDue = true;
     }
   } else if (aTag == nsGkAtoms::ol) {
     FlushLine();  // Doing this after decreasing OLStackIndex would be wrong.
     mIndent -= kIndentSizeList;
-    NS_ASSERTION(mOLStackIndex, "Wrong OLStack level!");
-    mOLStackIndex--;
-    if (mULCount + mOLStackIndex == 0) {
+    MOZ_ASSERT(!mOLStack.IsEmpty(), "Wrong OLStack level!");
+    mOLStack.RemoveLastElement();
+    if (!IsInOlOrUl()) {
       mFloatingLines = 1;
       mLineBreakDue = true;
     }
@@ -1740,6 +1742,10 @@ bool nsPlainTextSerializer::IsInOL() {
   }
   // We may reach here for orphan LI's.
   return false;
+}
+
+bool nsPlainTextSerializer::IsInOlOrUl() const {
+  return (mULCount > 0) || !mOLStack.IsEmpty();
 }
 
 /*

@@ -25,7 +25,7 @@
  */
 
 struct JSAtomState;
-struct JSFreeOp;
+struct JS_PUBLIC_API JSFreeOp;
 struct JSFunctionSpec;
 
 namespace js {

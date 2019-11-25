@@ -19,8 +19,8 @@ job-defaults:
         nightly: true
     worker-type:
         by-project:
-            mozilla-central: scriptworker-prov-v1/bouncer-v1
-            default: scriptworker-prov-v1/bouncer-dev
+            mozilla-central: scriptworker-k8s/gecko-3-bouncer
+            default: scriptworker-k8s/gecko-1-bouncer
     worker:
         implementation: bouncer-locations
     scopes:
@@ -62,8 +62,8 @@ jobs:
             platform: fennec-release/opt
         worker-type:
             by-project:
-                mozilla-esr68: scriptworker-prov-v1/bouncer-v1
-                default: scriptworker-prov-v1/bouncer-dev
+                mozilla-esr68: scriptworker-k8s/gecko-3-bouncer
+                default: scriptworker-k8s/gecko-1-bouncer
         scopes:
             by-project:
                 mozilla-esr68:

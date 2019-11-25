@@ -22,8 +22,8 @@
 #include "js/GCVector.h"        // JS::GCVector
 #include "js/Transcoding.h"     // JS::TranscodeSource
 
-struct JSContext;
-class JSScript;
+struct JS_PUBLIC_API JSContext;
+class JS_PUBLIC_API JSScript;
 
 namespace JS {
 

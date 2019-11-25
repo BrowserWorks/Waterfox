@@ -50,3 +50,4 @@ win32-gn:
     run:
         script: build-gn-win32.sh
         toolchain-artifact: public/build/gn.tar.bz2
+        tooltool-downloads: internal

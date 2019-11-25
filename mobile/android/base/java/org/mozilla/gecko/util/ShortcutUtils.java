@@ -18,6 +18,7 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.RectF;
+import android.text.TextUtils;
 import android.util.Log;
 
 import org.mozilla.gecko.AppConstants.Versions;
@@ -72,7 +73,7 @@ public class ShortcutUtils {
         final ShortcutInfo info = new ShortcutInfo.Builder(context, aURI)
              .setIcon(Icon.createWithBitmap(getLauncherIcon(aIcon, GeckoAppShell.getPreferredIconSize())))
              .setIntent(shortcutIntent)
-             .setShortLabel(aTitle != null ? aTitle : aURI)
+             .setShortLabel(!TextUtils.isEmpty(aTitle) ? aTitle : aURI)
              .build();
 
         final Intent intent = new Intent(Intent.ACTION_MAIN);

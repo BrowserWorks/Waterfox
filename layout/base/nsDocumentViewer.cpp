@@ -29,7 +29,6 @@
 #include "nsGenericHTMLElement.h"
 #include "nsStubMutationObserver.h"
 
-#include "nsILinkHandler.h"
 #include "nsISelectionListener.h"
 #include "mozilla/dom/Selection.h"
 #include "nsContentUtils.h"
@@ -949,13 +948,6 @@ nsresult nsDocumentViewer::InitInternal(nsIWidget* aParentWidget,
 
   nsCOMPtr<nsIInterfaceRequestor> requestor(mContainer);
   if (requestor) {
-    if (mPresContext) {
-      nsCOMPtr<nsILinkHandler> linkHandler;
-      requestor->GetInterface(NS_GET_IID(nsILinkHandler),
-                              getter_AddRefs(linkHandler));
-      mPresContext->SetLinkHandler(linkHandler);
-    }
-
     // Set script-context-owner in the document
 
     nsCOMPtr<nsPIDOMWindowOuter> window = do_GetInterface(requestor);
@@ -1484,11 +1476,6 @@ static void AttachContainerRecurse(nsIDocShell* aShell) {
     if (doc) {
       doc->SetContainer(static_cast<nsDocShell*>(aShell));
     }
-    RefPtr<nsPresContext> pc = viewer->GetPresContext();
-    if (pc) {
-      nsCOMPtr<nsILinkHandler> handler = do_QueryInterface(aShell);
-      pc->SetLinkHandler(handler);
-    }
     if (PresShell* presShell = viewer->GetPresShell()) {
       presShell->SetForwardingContainer(WeakPtr<nsDocShell>());
     }
@@ -1641,13 +1628,8 @@ static void DetachContainerRecurse(nsIDocShell* aShell) {
   nsCOMPtr<nsIContentViewer> viewer;
   aShell->GetContentViewer(getter_AddRefs(viewer));
   if (viewer) {
-    Document* doc = viewer->GetDocument();
-    if (doc) {
+    if (Document* doc = viewer->GetDocument()) {
       doc->SetContainer(nullptr);
-    }
-    RefPtr<nsPresContext> pc = viewer->GetPresContext();
-    if (pc) {
-      pc->Detach();
     }
     if (PresShell* presShell = viewer->GetPresShell()) {
       auto weakShell = static_cast<nsDocShell*>(aShell);
@@ -1788,9 +1770,6 @@ nsDocumentViewer::Destroy() {
 
     if (mDocument) {
       mDocument->SetContainer(nullptr);
-    }
-    if (mPresContext) {
-      mPresContext->Detach();
     }
     if (mPresShell) {
       mPresShell->SetForwardingContainer(mContainer);
@@ -2202,14 +2181,6 @@ nsDocumentViewer::Show(void) {
                            mPresContext->DevPixelsToAppUnits(mBounds.height)),
                     containerView);
     if (NS_FAILED(rv)) return rv;
-
-    if (mPresContext && base_win) {
-      nsCOMPtr<nsILinkHandler> linkHandler(do_GetInterface(base_win));
-
-      if (linkHandler) {
-        mPresContext->SetLinkHandler(linkHandler);
-      }
-    }
 
     if (mPresContext) {
       Hide();
@@ -4196,7 +4167,6 @@ void nsDocumentViewer::DestroyPresShell() {
 }
 
 void nsDocumentViewer::DestroyPresContext() {
-  mPresContext->Detach();
   mPresContext = nullptr;
 }
 

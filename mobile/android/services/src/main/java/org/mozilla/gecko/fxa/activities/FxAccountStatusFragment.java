@@ -24,6 +24,7 @@ import com.squareup.picasso.Picasso;
 import com.squareup.picasso.Target;
 
 import org.mozilla.gecko.AppConstants;
+import org.mozilla.gecko.GeckoSharedPrefs;
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.background.fxa.FxAccountUtils;
@@ -952,6 +953,7 @@ public class FxAccountStatusFragment
     if (preference == syncOverMeteredPreference) {
       try {
         fxAccount.getSyncPrefs().edit().putBoolean(FxAccountSyncAdapter.PREFS_SYNC_RESTRICT_METERED, (Boolean) newValue).apply();
+        GeckoSharedPrefs.forApp(getContext()).edit().putBoolean(FxAccountSyncAdapter.PREFS_SYNC_RESTRICT_METERED, (Boolean) newValue).apply();
       } catch (Exception e) {
         Logger.error(LOG_TAG, "Failed to save the new for syncMeteredPreference");
       }

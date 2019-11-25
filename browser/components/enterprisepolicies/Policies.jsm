@@ -85,49 +85,61 @@ var Policies = {
 
   Authentication: {
     onBeforeAddons(manager, param) {
+      let locked = true;
+      if ("Locked" in param) {
+        locked = param.Locked;
+      }
+
       if ("SPNEGO" in param) {
-        setAndLockPref(
+        setDefaultPref(
           "network.negotiate-auth.trusted-uris",
-          param.SPNEGO.join(", ")
+          param.SPNEGO.join(", "),
+          locked
         );
       }
       if ("Delegated" in param) {
-        setAndLockPref(
+        setDefaultPref(
           "network.negotiate-auth.delegation-uris",
-          param.Delegated.join(", ")
+          param.Delegated.join(", "),
+          locked
         );
       }
       if ("NTLM" in param) {
-        setAndLockPref(
+        setDefaultPref(
           "network.automatic-ntlm-auth.trusted-uris",
-          param.NTLM.join(", ")
+          param.NTLM.join(", "),
+          locked
         );
       }
       if ("AllowNonFQDN" in param) {
-        if ("NTLM" in param.AllowNonFQDN) {
-          setAndLockPref(
+        if (param.AllowNonFQDN.NTLM) {
+          setDefaultPref(
             "network.automatic-ntlm-auth.allow-non-fqdn",
-            param.AllowNonFQDN.NTLM
+            param.AllowNonFQDN.NTLM,
+            locked
           );
         }
-        if ("SPNEGO" in param.AllowNonFQDN) {
-          setAndLockPref(
+        if (param.AllowNonFQDN.SPNEGO) {
+          setDefaultPref(
             "network.negotiate-auth.allow-non-fqdn",
-            param.AllowNonFQDN.SPNEGO
+            param.AllowNonFQDN.SPNEGO,
+            locked
           );
         }
       }
       if ("AllowProxies" in param) {
         if ("NTLM" in param.AllowProxies) {
-          setAndLockPref(
+          setDefaultPref(
             "network.automatic-ntlm-auth.allow-proxies",
-            param.AllowProxies.NTLM
+            param.AllowProxies.NTLM,
+            locked
           );
         }
         if ("SPNEGO" in param.AllowProxies) {
-          setAndLockPref(
+          setDefaultPref(
             "network.negotiate-auth.allow-proxies",
-            param.AllowProxies.SPNEGO
+            param.AllowProxies.SPNEGO,
+            locked
           );
         }
       }
@@ -449,6 +461,14 @@ var Policies = {
     onBeforeUIStartup(manager, param) {
       if (param) {
         manager.disallowFeature("createMasterPassword");
+      }
+    },
+  },
+
+  DisablePasswordReveal: {
+    onBeforeUIStartup(manager, param) {
+      if (param) {
+        manager.disallowFeature("passwordReveal");
       }
     },
   },

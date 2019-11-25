@@ -296,6 +296,10 @@ public class StreamRecyclerAdapter extends RecyclerView.Adapter<StreamViewHolder
             actionPosition = getTopStoriesIndexFromAdapterPosition(position);
             size = getNumOfTypeShown(RowItemType.TOP_STORIES_ITEM);
             referrerUri = PocketStoriesLoader.POCKET_REFERRER_URI;
+
+            final SharedPreferences prefs = GeckoSharedPrefs.forApp(v.getContext());
+            final int pocketStoriesClicked = prefs.getInt("android.not_a_preference.pocket_stories_clicked", 0);
+            prefs.edit().putInt("android.not_a_preference.pocket_stories_clicked", pocketStoriesClicked + 1).apply();
         }
 
         extras.set(ActivityStreamTelemetry.Contract.SOURCE_TYPE, sourceType)

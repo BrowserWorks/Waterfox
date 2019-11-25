@@ -6,7 +6,6 @@ from __future__ import absolute_import, print_function, unicode_literals
 
 from mozbuild.util import memoize
 
-from .taskcluster import get_root_url
 from .keyed_by import evaluate_keyed_by
 from .attributes import keymatch
 
@@ -15,14 +14,15 @@ WORKER_TYPES = {
     'releng-hardware/gecko-1-b-win2012-gamma': ('generic-worker', 'windows'),
     'invalid/invalid': ('invalid', None),
     'invalid/always-optimized': ('always-optimized', None),
-    'scriptworker-prov-v1/balrog-dev': ('balrog', None),
-    'scriptworker-prov-v1/balrogworker-v1': ('balrog', None),
-    'scriptworker-prov-v1/beetmoverworker-v1': ('beetmover', None),
+    'scriptworker-k8s/gecko-1-balrog': ('balrog', None),
+    'scriptworker-k8s/gecko-3-balrog': ('balrog', None),
+    'scriptworker-k8s/gecko-3-beetmover': ('beetmover', None),
     'scriptworker-prov-v1/pushapk-v1': ('push-apk', None),
     "scriptworker-prov-v1/signing-linux-v1": ('scriptworker-signing', None),
-    "scriptworker-prov-v1/shipit": ('shipit', None),
-    "scriptworker-prov-v1/shipit-dev": ('shipit', None),
-    "scriptworker-prov-v1/treescript-v1": ('treescript', None),
+    "scriptworker-k8s/gecko-3-shipit": ('shipit', None),
+    "scriptworker-k8s/gecko-1-shipit": ('shipit', None),
+    "scriptworker-k8s/gecko-3-tree": ('treescript', None),
+    "scriptworker-k8s/gecko-1-tree": ('treescript', None),
     'terraform-packet/gecko-t-linux': ('docker-worker', 'linux'),
     'releng-hardware/gecko-t-osx-1014': ('generic-worker', 'macosx'),
 }
@@ -59,6 +59,10 @@ def _get(graph_config, alias, level):
         raise KeyError("No matches for worker-type alias " + alias)
     worker_config = matches[0].copy()
 
+    worker_config['provisioner'] = evaluate_keyed_by(
+        worker_config['provisioner'],
+        "worker-type alias {} field provisioner".format(alias),
+        {"level": level}).format(level=level, alias=alias)
     worker_config['worker-type'] = evaluate_keyed_by(
         worker_config['worker-type'],
         "worker-type alias {} field worker-type".format(alias),
@@ -84,13 +88,4 @@ def get_worker_type(graph_config, worker_type, level):
     """
     worker_config = _get(graph_config, worker_type, level)
 
-    # translate the provisionerId to 'ec2' everywhere but the original
-    # https://taskcluster.net deployment.  Once that deployment is no longer in
-    # use, this can be removed and all corresponding provisioners changed to
-    # `ec2`
-    root_url = get_root_url(False)
-    provisioner = worker_config["provisioner"]
-    if root_url != 'https://taskcluster.net' and provisioner == 'aws-provisioner-v1':
-        provisioner = 'ec2'
-
-    return provisioner, worker_config['worker-type']
+    return worker_config['provisioner'], worker_config['worker-type']

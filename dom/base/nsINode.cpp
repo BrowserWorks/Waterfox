@@ -66,7 +66,6 @@
 #include "mozilla/dom/DocumentInlines.h"
 #include "nsIDOMEventListener.h"
 #include "nsIFrameInlines.h"
-#include "nsILinkHandler.h"
 #include "mozilla/dom/NodeInfo.h"
 #include "mozilla/dom/NodeInfoInlines.h"
 #include "nsIScriptError.h"

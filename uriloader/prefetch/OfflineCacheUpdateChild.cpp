@@ -20,6 +20,7 @@
 #include "nsIDocShellTreeOwner.h"
 #include "nsPIDOMWindow.h"
 #include "mozilla/dom/Document.h"
+#include "mozilla/net/CookieSettings.h"
 #include "nsIObserverService.h"
 #include "nsIURL.h"
 #include "nsIBrowserChild.h"
@@ -118,6 +119,8 @@ void OfflineCacheUpdateChild::SetDocument(Document* aDocument) {
   // implicit (which are the reasons we collect documents here).
   if (!aDocument) return;
 
+  mCookieSettings = aDocument->CookieSettings();
+
   nsIChannel* channel = aDocument->GetChannel();
   nsCOMPtr<nsIApplicationCacheChannel> appCacheChannel =
       do_QueryInterface(channel);
@@ -208,7 +211,8 @@ NS_IMETHODIMP
 OfflineCacheUpdateChild::InitPartial(nsIURI* aManifestURI,
                                      const nsACString& clientID,
                                      nsIURI* aDocumentURI,
-                                     nsIPrincipal* aLoadingPrincipal) {
+                                     nsIPrincipal* aLoadingPrincipal,
+                                     nsICookieSettings* aCookieSettings) {
   MOZ_ASSERT_UNREACHABLE(
       "Not expected to do partial offline cache updates"
       " on the child process");
@@ -392,11 +396,17 @@ OfflineCacheUpdateChild::Schedule() {
   // See also nsOfflineCacheUpdate::ScheduleImplicit.
   bool stickDocument = mDocument != nullptr;
 
+  CookieSettingsArgs csArgs;
+  if (mCookieSettings) {
+    CookieSettings::Cast(mCookieSettings)->Serialize(csArgs);
+  }
+
   // Need to addref ourself here, because the IPC stack doesn't hold
   // a reference to us. Will be released in RecvFinish() that identifies
   // the work has been done.
   ContentChild::GetSingleton()->SendPOfflineCacheUpdateConstructor(
-      this, manifestURI, documentURI, loadingPrincipalInfo, stickDocument);
+      this, manifestURI, documentURI, loadingPrincipalInfo, stickDocument,
+      csArgs);
 
   // ContentChild::DeallocPOfflineCacheUpdate will release this.
   NS_ADDREF_THIS();

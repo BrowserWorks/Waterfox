@@ -108,7 +108,8 @@ class TextureChild final : PTextureChild {
         mMainThreadOnly(false),
         mIPCOpen(false),
         mOwnsTextureData(false),
-        mOwnerCalledDestroy(false) {}
+        mOwnerCalledDestroy(false),
+        mUsesImageBridge(false) {}
 
   mozilla::ipc::IPCResult Recv__delete__() override { return IPC_OK(); }
 
@@ -119,15 +120,13 @@ class TextureChild final : PTextureChild {
   bool IPCOpen() const { return mIPCOpen; }
 
   void Lock() const {
-    if (mCompositableForwarder &&
-        mCompositableForwarder->GetTextureForwarder()->UsesImageBridge()) {
+    if (mUsesImageBridge) {
       mLock.Enter();
     }
   }
 
   void Unlock() const {
-    if (mCompositableForwarder &&
-        mCompositableForwarder->GetTextureForwarder()->UsesImageBridge()) {
+    if (mUsesImageBridge) {
       mLock.Leave();
     }
   }
@@ -230,6 +229,7 @@ class TextureChild final : PTextureChild {
   bool mIPCOpen;
   bool mOwnsTextureData;
   bool mOwnerCalledDestroy;
+  bool mUsesImageBridge;
 
   friend class TextureClient;
   friend void DeallocateTextureClient(TextureDeallocParams params);
@@ -874,6 +874,7 @@ bool TextureClient::InitIPDLActor(CompositableForwarder* aForwarder) {
         }
       }
       mActor->mCompositableForwarder = aForwarder;
+      mActor->mUsesImageBridge = aForwarder->GetTextureForwarder()->UsesImageBridge();
     }
     return true;
   }

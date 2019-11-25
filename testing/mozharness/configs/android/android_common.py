@@ -43,7 +43,6 @@ config = {
         'run-tests',
     ],
     "tooltool_cache": os.environ.get("TOOLTOOL_CACHE"),
-    "tooltool_servers": ['http://relengapi/tooltool/'],
     "hostutils_manifest_path": "testing/config/tooltool-manifests/linux64/hostutils.manifest",
     "avds_dir": "/builds/worker/workspace/build/.android",
     # "log_format": "%(levelname)8s - %(message)s",
@@ -196,7 +195,7 @@ config = {
                 "--log-tbpl-level=%(log_tbpl_level)s",
                 "--deviceSerial=%(device_serial)s",
             ],
-            "tests": ["tests/layout/reftests/reftest.list",],
+            "tests": ["tests/layout/reftests/reftest.list", ],
         },
         "crashtest": {
             "run_filename": "remotereftest.py",
@@ -219,7 +218,7 @@ config = {
                 "--log-tbpl-level=%(log_tbpl_level)s",
                 "--deviceSerial=%(device_serial)s",
             ],
-            "tests": ["tests/testing/crashtest/crashtests.list",],
+            "tests": ["tests/testing/crashtest/crashtests.list", ],
         },
         "jittest": {
             "run_filename": "jit_test.py",
@@ -255,7 +254,7 @@ config = {
                 "--log-tbpl-level=%(log_tbpl_level)s",
                 "--deviceSerial=%(device_serial)s",
             ],
-            "tests": ["../jsreftest/tests/jstests.list",],
+            "tests": ["../jsreftest/tests/jstests.list", ],
         },
         "xpcshell": {
             "run_filename": "remotexpcshelltests.py",

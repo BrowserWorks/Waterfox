@@ -16,6 +16,9 @@ var AboutPrivateBrowsingHandler = {
   _topics: ["DontShowIntroPanelAgain", "OpenPrivateWindow", "SearchHandoff"],
 
   init() {
+    if (this._inited) {
+      return;
+    }
     this.pageListener = new RemotePages("about:privatebrowsing");
     for (let topic of this._topics) {
       this.pageListener.addMessageListener(

@@ -1404,6 +1404,12 @@ void WorkerPrivate::EnableDebugger() {
 void WorkerPrivate::DisableDebugger() {
   AssertIsOnParentThread();
 
+  // RegisterDebuggerMainThreadRunnable might be dispatched but not executed.
+  // Wait for its execution before unregistraion.
+  if (!NS_IsMainThread()) {
+    WaitForIsDebuggerRegistered(true);
+  }
+
   if (NS_FAILED(UnregisterWorkerDebugger(this))) {
     NS_WARNING("Failed to unregister worker debugger!");
   }

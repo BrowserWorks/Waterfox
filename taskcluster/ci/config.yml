@@ -223,22 +223,22 @@ scriptworker:
             - 'project:releng:signing:cert:nightly-signing'
         'linux-depsigning':
             - 'project:releng:signing:cert:dep-signing'
-        'scriptworker-prov-v1/beetmoverworker-v1':
+        'scriptworker-k8s/gecko-3-beetmover':
             - 'project:releng:beetmover:bucket:release'
             - 'project:releng:beetmover:bucket:nightly'
             - 'project:releng:beetmover:bucket:partner'
             - 'project:releng:beetmover:bucket:maven-production'
-        'scriptworker-prov-v1/beetmoverworker-dev':
+        'scriptworker-k8s/gecko-1-beetmover':
             - 'project:releng:beetmover:bucket:dep'
             - 'project:releng:beetmover:bucket:dep-partner'
             - 'project:releng:beetmover:bucket:maven-staging'
-        'scriptworker-prov-v1/balrogworker-v1':
+        'scriptworker-k8s/gecko-3-balrog':
             - 'project:releng:balrog:server:nightly'
             - 'project:releng:balrog:server:aurora'
             - 'project:releng:balrog:server:beta'
             - 'project:releng:balrog:server:release'
             - 'project:releng:balrog:server:esr'
-        'scriptworker-prov-v1/balrog-dev':
+        'scriptworker-k8s/gecko-1-balrog':
             - 'project:releng:balrog:server:dep'
 
 partner-urls:
@@ -287,36 +287,31 @@ version-directory:
 
 workers:
     aliases:
-        b-android:
-            provisioner: aws-provisioner-v1
-            implementation: docker-worker
-            os: linux
-            worker-type: 'gecko-{level}-{alias}'
         b-linux.*:
-            provisioner: aws-provisioner-v1
+            provisioner: 'gecko-{level}'
             implementation: docker-worker
             os: linux
-            worker-type: 'gecko-{level}-{alias}'
+            worker-type: '{alias}'
         b-win2012:
-            provisioner: aws-provisioner-v1
+            provisioner: 'gecko-{level}'
             implementation: generic-worker
             os: windows
-            worker-type: 'gecko-{level}-{alias}'
+            worker-type: '{alias}'
         images:
-            provisioner: aws-provisioner-v1
+            provisioner: 'gecko-{level}'
             implementation: docker-worker
             os: linux
-            worker-type: 'gecko-{level}-{alias}'
+            worker-type: '{alias}'
         linux-depsigning:
-            provisioner: scriptworker-prov-v1
+            provisioner: scriptworker-k8s
             implementation: scriptworker-signing
             os: linux
-            worker-type: depsigning
+            worker-type: gecko-t-signing
         linux-signing:
-            provisioner: scriptworker-prov-v1
+            provisioner: scriptworker-k8s
             implementation: scriptworker-signing
             os: linux
-            worker-type: signing-linux-v1
+            worker-type: gecko-3-signing
         mac-depsigning:
             provisioner: scriptworker-prov-v1
             implementation: scriptworker-iscript
@@ -338,10 +333,10 @@ workers:
             os: linux-bitbar
             worker-type: 'gecko-{alias}'
         t-linux(-large|-xlarge):
-            provisioner: aws-provisioner-v1
+            provisioner: 'gecko-t'
             implementation: docker-worker
             os: linux
-            worker-type: 'gecko-{alias}'
+            worker-type: '{alias}'
         t-linux-talos:
             provisioner: releng-hardware
             implementation: generic-worker
@@ -358,13 +353,13 @@ workers:
             os: macosx
             worker-type: 'gecko-{alias}'
         t-linux-xlarge-pgo:
-            provisioner: aws-provisioner-v1
+            provisioner:
+                by-level:
+                    '3': 'gecko-{level}'
+                    default: 'gecko-t'
             implementation: docker-worker
             os: linux
-            worker-type:
-                by-level:
-                    '3': 'gecko-{level}-t-linux-xlarge'
-                    default: 'gecko-t-linux-xlarge'
+            worker-type: 't-linux-xlarge'
         t-osx-1010-pgo:
             provisioner: releng-hardware
             implementation: generic-worker
@@ -381,21 +376,21 @@ workers:
                 by-level:
                     '3': 'gecko-{level}-t-osx-1014'
                     default: 'gecko-t-osx-1014'
-        t-win10-64(|-gpu):
-            provisioner: aws-provisioner-v1
+        t-win10-64(|-gpu-s):
+            provisioner: 'gecko-t'
             implementation: generic-worker
             os: windows
-            worker-type: 'gecko-{alias}'
+            worker-type: '{alias}'
         t-win10-64(-hw|-ux):
             provisioner: releng-hardware
             implementation: generic-worker
             os: windows
             worker-type: 'gecko-{alias}'
         t-win7-32(|-gpu):
-            provisioner: aws-provisioner-v1
+            provisioner: 'gecko-t'
             implementation: generic-worker
             os: windows
-            worker-type: 'gecko-{alias}'
+            worker-type: '{alias}'
         t-win64-aarch64-laptop:
             provisioner: bitbar
             implementation: generic-worker

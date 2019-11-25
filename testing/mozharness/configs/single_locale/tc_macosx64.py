@@ -13,8 +13,5 @@ config = {
         'UPLOAD_PATH': '/builds/worker/artifacts/',
     },
 
-    "tooltool_url": 'http://relengapi/tooltool/',
-
     "vcs_share_base": "/builds/hg-shared",
 }
-

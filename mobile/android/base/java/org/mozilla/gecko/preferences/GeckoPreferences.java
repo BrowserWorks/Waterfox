@@ -1354,14 +1354,11 @@ public class GeckoPreferences
                 final EditText input2 = inputLayout2.getEditText();
 
                 builder.setTitle(R.string.masterpassword_create_title)
-                       .setView((View) linearLayout)
-                       .setPositiveButton(R.string.button_ok, new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                PrefsHelper.setPref(PREFS_MP_ENABLED,
-                                                    input1.getText().toString(),
-                                                    /* flush */ true);
-                            }
+                        .setView(linearLayout)
+                        .setPositiveButton(R.string.button_ok, (dialog1, which) -> {
+                            PrefsHelper.setPref(PREFS_MP_ENABLED, input1.getText().toString(),
+                                    /* flush */ true);
+                            PrefsHelper.setPref("android.not_a_preference.master_password_enabled", true);
                         })
                         .setNegativeButton(R.string.button_cancel, new DialogInterface.OnClickListener() {
                             @Override
@@ -1395,6 +1392,7 @@ public class GeckoPreferences
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
                                 PrefsHelper.setPref(PREFS_MP_ENABLED, input.getText().toString());
+                                PrefsHelper.setPref("android.not_a_preference.master_password_enabled", false);
                             }
                         })
                         .setNegativeButton(R.string.button_cancel, new DialogInterface.OnClickListener() {

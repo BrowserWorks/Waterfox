@@ -15,7 +15,7 @@ from voluptuous import Optional, Required, Any
 from taskgraph.transforms.job import run_job_using
 from taskgraph.transforms.job.common import (
     docker_worker_add_artifacts,
-    docker_worker_add_tooltool,
+    add_tooltool,
     generic_worker_hg_commands,
     support_vcs_checkout,
 )
@@ -141,7 +141,7 @@ def docker_worker_toolchain(config, job, taskdesc):
 
     if run['tooltool-downloads']:
         internal = run['tooltool-downloads'] == 'internal'
-        docker_worker_add_tooltool(config, job, taskdesc, internal=internal)
+        add_tooltool(config, job, taskdesc, internal=internal)
 
     # Use `mach` to invoke python scripts so in-tree libraries are available.
     if run['script'].endswith('.py'):
@@ -209,6 +209,10 @@ def windows_toolchain(config, job, taskdesc):
         'MOZ_SCM_LEVEL': config.params['level'],
         'MOZ_AUTOMATION': '1',
     })
+
+    if run['tooltool-downloads']:
+        internal = run['tooltool-downloads'] == 'internal'
+        add_tooltool(config, job, taskdesc, internal=internal)
 
     sparse_profile = run.get('sparse-profile')
     if sparse_profile:

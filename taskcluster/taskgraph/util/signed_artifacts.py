@@ -42,19 +42,19 @@ def generate_specifications_of_artifacts_to_sign(
             extension = 'dmg'
         artifacts_specifications = [{
             'artifacts': [get_artifact_path(task, '{{locale}}/target.{}'.format(extension))],
-            'formats': ['macapp', 'widevine'],
+            'formats': ['macapp', 'autograph_widevine', 'autograph_omnija'],
         }]
     elif 'win' in build_platform:
         artifacts_specifications = [{
             'artifacts': [
                 get_artifact_path(task, '{locale}/setup.exe'),
             ],
-            'formats': ['sha2signcode'],
+            'formats': ['autograph_authenticode'],
         }, {
             'artifacts': [
                 get_artifact_path(task, '{locale}/target.zip'),
             ],
-            'formats': ['sha2signcode', 'widevine'],
+            'formats': ['autograph_authenticode', 'autograph_widevine', 'autograph_omnija'],
         }]
 
         if use_stub:
@@ -64,7 +64,7 @@ def generate_specifications_of_artifacts_to_sign(
     elif 'linux' in build_platform:
         artifacts_specifications = [{
             'artifacts': [get_artifact_path(task, '{locale}/target.tar.bz2')],
-            'formats': ['autograph_gpg', 'widevine'],
+            'formats': ['autograph_gpg', 'autograph_widevine', 'autograph_omnija'],
         }]
     else:
         raise Exception("Platform not implemented for signing")
@@ -93,8 +93,10 @@ def _strip_widevine_for_partners(artifacts_specifications):
     updates
     """
     for spec in artifacts_specifications:
-        if 'widevine' in spec['formats']:
-            spec['formats'].remove('widevine')
+        if 'autograph_widevine' in spec['formats']:
+            spec['formats'].remove('autograph_widevine')
+        if 'autograph_omnija' in spec['formats']:
+            spec['formats'].remove('autograph_omnija')
 
     return artifacts_specifications
 

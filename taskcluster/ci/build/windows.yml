@@ -6,6 +6,7 @@ job-defaults:
     run:
         using: mozharness
         use-caches: false
+        tooltool-downloads: internal
 
 win32/debug:
     description: "Win32 Debug"

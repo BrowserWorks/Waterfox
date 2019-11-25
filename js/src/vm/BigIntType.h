@@ -10,6 +10,7 @@
 #include "mozilla/Range.h"
 #include "mozilla/Span.h"
 
+#include "jstypes.h"
 #include "gc/Barrier.h"
 #include "gc/GC.h"
 #include "gc/Heap.h"
@@ -24,7 +25,7 @@
 
 namespace JS {
 
-class BigInt;
+class JS_PUBLIC_API BigInt;
 
 }  // namespace JS
 

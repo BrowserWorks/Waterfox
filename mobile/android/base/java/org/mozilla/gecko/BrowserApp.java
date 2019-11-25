@@ -21,6 +21,7 @@ import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.content.res.Configuration;
 import android.content.res.Resources;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -784,6 +785,7 @@ public class BrowserApp extends GeckoApp
 
         EventDispatcher.getInstance().registerUiThreadListener(this,
             "GeckoView:AccessibilityEnabled",
+            "SearchEngines:Data",
             "Menu:Open",
             "LightweightTheme:Update",
             "Tab:Added",
@@ -813,6 +815,8 @@ public class BrowserApp extends GeckoApp
             null);
 
         getAppEventDispatcher().registerUiThreadListener(this, "Prompt:ShowTop");
+
+        EventDispatcher.getInstance().dispatch("SearchEngines:GetVisible", null);
 
         final GeckoProfile profile = getProfile();
 
@@ -1593,6 +1597,7 @@ public class BrowserApp extends GeckoApp
 
         EventDispatcher.getInstance().unregisterUiThreadListener(this,
             "GeckoView:AccessibilityEnabled",
+            "SearchEngines:Data",
             "Menu:Open",
             "LightweightTheme:Update",
             "Tab:Added",
@@ -1856,6 +1861,16 @@ public class BrowserApp extends GeckoApp
                 openOptionsMenu();
                 break;
 
+            case "SearchEngines:Data":
+                final GeckoBundle[] engines = message.getBundleArray("searchEngines");
+                final int totalAddedSearchEngines = engines == null ? 0 : engines.length;
+                GeckoSharedPrefs.forApp(getApplicationContext()).edit().putInt("android.not_a_preference.total_added_search_engines", totalAddedSearchEngines).apply();
+
+                final int sitesPinnedToTopsites = BrowserDB.from(this).getPinnedSitesCountForAS(getContentResolver());
+
+                GeckoSharedPrefs.forApp(getApplicationContext()).edit().putInt("android.not_a_preference.total_sites_pinned_to_topsites", sitesPinnedToTopsites).apply();
+                break;
+
             case "LightweightTheme:Update":
                 mDynamicToolbar.setVisible(true, VisibilityTransition.ANIMATE);
                 break;
@@ -2034,7 +2049,6 @@ public class BrowserApp extends GeckoApp
                 final boolean hasCustomHomepanels =
                         prefs.contains(HomeConfigPrefsBackend.PREFS_CONFIG_KEY) ||
                         prefs.contains(HomeConfigPrefsBackend.PREFS_CONFIG_KEY_OLD);
-
                 Telemetry.addToHistogram("FENNEC_HOMEPANELS_CUSTOM", hasCustomHomepanels ? 1 : 0);
 
                 Telemetry.addToHistogram("FENNEC_READER_VIEW_CACHE_SIZE",
@@ -3301,6 +3315,12 @@ public class BrowserApp extends GeckoApp
         bookmark.setCheckable(true);
         bookmark.setChecked(tab.isBookmark());
         bookmark.setTitle(resolveBookmarkTitleID(tab.isBookmark()));
+        bookmark.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                return false;
+            }
+        });
 
         final boolean isPrivate = tab.isPrivate();
         // We don't use icons on GB builds so not resolving icons might conserve resources.
@@ -3549,6 +3569,8 @@ public class BrowserApp extends GeckoApp
         mBrowserToolbar.cancelEdit();
 
         if (itemId == R.id.bookmark) {
+            final int bookmarkWithStar = GeckoSharedPrefs.forApp(getApplicationContext()).getInt("android.not_a_preference.bookmarks_with_star", 0);
+            GeckoSharedPrefs.forApp(getApplicationContext()).edit().putInt("android.not_a_preference.bookmarks_with_star", bookmarkWithStar + 1).apply();
             tab = Tabs.getInstance().getSelectedTab();
             if (tab != null) {
                 final String extra;
@@ -3624,18 +3646,30 @@ public class BrowserApp extends GeckoApp
         }
 
         if (itemId == R.id.save_as_pdf) {
+            final SharedPreferences prefs = GeckoSharedPrefs.forApp(getApplicationContext());
+            final int saveAsPdf = prefs.getInt("android.not_a_preference.save_as_pdf", 0);
+            prefs.edit().putInt("android.not_a_preference.save_as_pdf", saveAsPdf + 1).apply();
+
             Telemetry.sendUIEvent(TelemetryContract.Event.SAVE, TelemetryContract.Method.MENU, "pdf");
             EventDispatcher.getInstance().dispatch("SaveAs:PDF", null);
             return true;
         }
 
         if (itemId == R.id.print) {
+            final SharedPreferences prefs = GeckoSharedPrefs.forApp(getApplicationContext());
+            final int print = prefs.getInt("android.not_a_preference.print", 0);
+            prefs.edit().putInt("android.not_a_preference.print", print + 1).apply();
+
             Telemetry.sendUIEvent(TelemetryContract.Event.SAVE, TelemetryContract.Method.MENU, "print");
             PrintHelper.printPDF(this);
             return true;
         }
 
         if (itemId == R.id.view_page_source) {
+            final SharedPreferences prefs = GeckoSharedPrefs.forApp(getApplicationContext());
+            final int viewPageSource = prefs.getInt("android.not_a_preference.view_page_source", 0);
+            prefs.edit().putInt("android.not_a_preference.view_page_source", viewPageSource + 1).apply();
+
             tab = Tabs.getInstance().getSelectedTab();
             final GeckoBundle args = new GeckoBundle(1);
             args.putInt("tabId", tab.getId());

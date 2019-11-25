@@ -19,8 +19,6 @@
 #include <stdarg.h>
 
 struct PLDHashTableOps;
-struct JSContext;
-class JSObject;
 
 namespace mozilla {
 namespace recordreplay {
@@ -187,9 +185,11 @@ static inline void DestroyPLDHashTableCallbacks(const PLDHashTableOps* aOps);
 static inline void MovePLDHashTableContents(const PLDHashTableOps* aFirstOps,
                                             const PLDHashTableOps* aSecondOps);
 
-// Associate an arbitrary pointer with a JS object root while replaying. This
-// is useful for replaying the behavior of weak pointers.
-MFBT_API void SetWeakPointerJSRoot(const void* aPtr, JSObject* aJSObj);
+// is useful for replaying the behavior of weak pointers. "aJSObj" must be a
+// JSObject* pointer, but we can't include JSObject's header here and we can't
+// forward-declare it due to some peculiarities with the compiler's visibility
+// attributes. See https://bugzilla.mozilla.org/show_bug.cgi?id=1426865
+MFBT_API void SetWeakPointerJSRoot(const void* aPtr, void* aJSObj);
 
 // API for ensuring that a function executes at a consistent point when
 // recording or replaying. This is primarily needed for finalizers and other
@@ -309,8 +309,9 @@ MFBT_API bool ShouldUpdateProgressCounter(const char* aURL);
 
 // Define a RecordReplayControl object on the specified global object, with
 // methods specialized to the current recording/replaying or middleman process
-// kind.
-MFBT_API bool DefineRecordReplayControlObject(JSContext* aCx, JSObject* aObj);
+// kind. "aCx" must be a JSContext* pointer, and "aObj" must be a JSObject*
+// pointer, as with HoldJSObject above.
+MFBT_API bool DefineRecordReplayControlObject(void* aCx, void* aObj);
 
 // Notify the infrastructure that some URL which contains JavaScript or CSS is
 // being parsed. This is used to provide the complete contents of the URL to
