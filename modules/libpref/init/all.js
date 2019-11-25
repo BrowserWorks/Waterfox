@@ -5786,23 +5786,14 @@ pref("security.data_uri.unique_opaque_origin", false);
 // URL-Bar will not be blocked when flipping this pref.
 pref("security.data_uri.block_toplevel_data_uri_navigations", false);
 
-// Disable Storage api in release builds.
-#if defined(NIGHTLY_BUILD) && !defined(MOZ_WIDGET_ANDROID)
 pref("dom.storageManager.enabled", true);
-#else
-pref("dom.storageManager.enabled", false);
-#endif
 
 pref("dom.storageManager.prompt.testing", false);
 pref("dom.storageManager.prompt.testing.allow", false);
 
 // Enable the Storage management in about:preferences and persistent-storage permission request
 // To enable the DOM implementation, turn on "dom.storageManager.enabled"
-#ifdef NIGHTLY_BUILD
-pref("browser.storageManager.enabled", true);
-#else
 pref("browser.storageManager.enabled", false);
-#endif
 pref("browser.storageManager.pressureNotification.minIntervalMS", 1200000);
 pref("browser.storageManager.pressureNotification.usageThresholdGB", 5);
 
