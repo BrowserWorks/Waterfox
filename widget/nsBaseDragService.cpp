@@ -52,15 +52,18 @@ using namespace mozilla::image;
 #define DRAGIMAGES_PREF "nglayout.enable_drag_images"
 
 nsBaseDragService::nsBaseDragService()
-  : mCanDrop(false), mOnlyChromeDrop(false), mDoingDrag(false),
-    mHasImage(false), mUserCancelled(false),
-    mDragEventDispatchedToChildProcess(false),
-    mDragAction(DRAGDROP_ACTION_NONE),
-    mDragActionFromChildProcess(DRAGDROP_ACTION_UNINITIALIZED), mTargetSize(0,0),
-    mContentPolicyType(nsIContentPolicy::TYPE_OTHER),
-    mSuppressLevel(0), mInputSource(nsIDOMMouseEvent::MOZ_SOURCE_MOUSE)
-{
-}
+    : mCanDrop(false),
+      mOnlyChromeDrop(false),
+      mDoingDrag(false),
+      mEndingSession(false),
+      mHasImage(false),
+      mUserCancelled(false),
+      mDragEventDispatchedToChildProcess(false),
+      mDragAction(DRAGDROP_ACTION_NONE),
+      mDragActionFromChildProcess(DRAGDROP_ACTION_UNINITIALIZED),
+      mContentPolicyType(nsIContentPolicy::TYPE_OTHER),
+      mSuppressLevel(0),
+      mInputSource(nsIDOMMouseEvent::MOZ_SOURCE_MOUSE) {}
 
 nsBaseDragService::~nsBaseDragService() = default;
 
@@ -380,11 +383,12 @@ nsBaseDragService::TakeChildProcessDragAction()
 
 //-------------------------------------------------------------------------
 NS_IMETHODIMP
-nsBaseDragService::EndDragSession(bool aDoneDrag, uint32_t aKeyModifiers)
-{
-  if (!mDoingDrag) {
+nsBaseDragService::EndDragSession(bool aDoneDrag, uint32_t aKeyModifiers) {
+  if (!mDoingDrag || mEndingSession) {
     return NS_ERROR_FAILURE;
   }
+
+  mEndingSession = true;
 
   if (aDoneDrag && !mSuppressLevel) {
     FireDragEventAtSource(eDragEnd, aKeyModifiers);
@@ -413,6 +417,7 @@ nsBaseDragService::EndDragSession(bool aDoneDrag, uint32_t aKeyModifiers)
   }
 
   mDoingDrag = false;
+  mEndingSession = false;
   mCanDrop = false;
 
   // release the source we've been holding on to.

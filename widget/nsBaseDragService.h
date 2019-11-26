@@ -147,6 +147,9 @@ protected:
   bool mCanDrop;
   bool mOnlyChromeDrop;
   bool mDoingDrag;
+
+  // true if in EndDragSession
+  bool mEndingSession;
   // true if mImage should be used to set a drag image
   bool mHasImage;
   // true if the user cancelled the drag operation
