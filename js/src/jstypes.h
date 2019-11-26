@@ -96,11 +96,16 @@
 #define JS_ROUNDDOWN(x, y) (((x) / (y)) * (y))
 #define JS_ROUND(x, y) ((((x) + (y) / 2) / (y)) * (y))
 
-#if defined(JS_64BIT)
+#if (defined(__SIZEOF_POINTER__) && __SIZEOF_POINTER__ == 8) || \
+    (defined(UINTPTR_MAX) && UINTPTR_MAX == 0xFFFFFFFFFFFFFFFFu)
 #  define JS_BITS_PER_WORD 64
 #else
 #  define JS_BITS_PER_WORD 32
 #endif
+
+static_assert(sizeof(void*) == 8 ? JS_BITS_PER_WORD == 64
+                                 : JS_BITS_PER_WORD == 32,
+              "preprocessor and compiler must agree");
 
 /***********************************************************************
 ** MACROS:      JS_FUNC_TO_DATA_PTR
