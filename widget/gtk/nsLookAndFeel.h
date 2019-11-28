@@ -32,6 +32,10 @@ public:
     virtual char16_t GetPasswordCharacterImpl();
     virtual bool GetEchoPasswordImpl();
 
+    virtual nsTArray<LookAndFeelInt> GetIntCacheImpl() override;
+    virtual void SetIntCacheImpl(
+        const nsTArray<LookAndFeelInt>& aLookAndFeelIntCache) override;
+
     bool IsCSDAvailable() const { return mCSDAvailable; }
 
 protected:
