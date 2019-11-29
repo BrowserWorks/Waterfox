@@ -17,18 +17,13 @@ import android.support.annotation.WorkerThread;
 import android.text.TextUtils;
 import android.util.Log;
 
-import org.json.JSONArray;
-import org.json.JSONException;
 import org.mozilla.gecko.AppConstants;
 import org.mozilla.gecko.Experiments;
 import org.mozilla.gecko.GeckoApp;
 import org.mozilla.gecko.GeckoProfile;
 import org.mozilla.gecko.GeckoSharedPrefs;
 import org.mozilla.gecko.Locales;
-import org.mozilla.gecko.PrefsHelper;
-import org.mozilla.gecko.R;
 import org.mozilla.gecko.Tabs;
-import org.mozilla.gecko.activitystream.homepanel.ActivityStreamPanel;
 import org.mozilla.gecko.home.HomeConfig;
 import org.mozilla.gecko.preferences.GeckoPreferences;
 import org.mozilla.gecko.search.SearchEngine;
