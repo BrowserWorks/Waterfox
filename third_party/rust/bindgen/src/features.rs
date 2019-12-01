@@ -102,6 +102,8 @@ macro_rules! rust_target_base {
             => Stable_1_27 => 1.27;
             /// Rust stable 1.28
             => Stable_1_28 => 1.28;
+            /// Rust stable 1.30
+            => Stable_1_30 => 1.30;
             /// Rust stable 1.33
             => Stable_1_33 => 1.33;
             /// Nightly rust
@@ -192,6 +194,11 @@ rust_feature_def!(
         /// repr(transparent) ([PR](https://github.com/rust-lang/rust/pull/51562))
         => repr_transparent;
     }
+    Stable_1_30 {
+        /// `const fn` support for limited cases
+        /// ([PR](https://github.com/rust-lang/rust/pull/54835/)
+        => min_const_fn;
+    }
     Stable_1_33 {
         /// repr(packed(N)) ([PR](https://github.com/rust-lang/rust/pull/57049))
         => repr_packed_n;
@@ -199,6 +206,8 @@ rust_feature_def!(
     Nightly {
         /// `thiscall` calling convention ([Tracking issue](https://github.com/rust-lang/rust/issues/42202))
         => thiscall_abi;
+        /// `non_exhaustive` enums/structs ([Tracking issue](https://github.com/rust-lang/rust/issues/44109))
+        => non_exhaustive;
     }
 );
 
@@ -218,27 +227,27 @@ mod test {
     fn target_features() {
         let f_1_0 = RustFeatures::from(RustTarget::Stable_1_0);
         assert!(
-            !f_1_0.untagged_union
-                && !f_1_0.associated_const
-                && !f_1_0.builtin_clone_impls
-                && !f_1_0.repr_align
-                && !f_1_0.thiscall_abi
+            !f_1_0.untagged_union &&
+                !f_1_0.associated_const &&
+                !f_1_0.builtin_clone_impls &&
+                !f_1_0.repr_align &&
+                !f_1_0.thiscall_abi
         );
         let f_1_21 = RustFeatures::from(RustTarget::Stable_1_21);
         assert!(
-            f_1_21.untagged_union
-                && f_1_21.associated_const
-                && f_1_21.builtin_clone_impls
-                && !f_1_21.repr_align
-                && !f_1_21.thiscall_abi
+            f_1_21.untagged_union &&
+                f_1_21.associated_const &&
+                f_1_21.builtin_clone_impls &&
+                !f_1_21.repr_align &&
+                !f_1_21.thiscall_abi
         );
         let f_nightly = RustFeatures::from(RustTarget::Nightly);
         assert!(
-            f_nightly.untagged_union
-                && f_nightly.associated_const
-                && f_nightly.builtin_clone_impls
-                && f_nightly.repr_align
-                && f_nightly.thiscall_abi
+            f_nightly.untagged_union &&
+                f_nightly.associated_const &&
+                f_nightly.builtin_clone_impls &&
+                f_nightly.repr_align &&
+                f_nightly.thiscall_abi
         );
     }
 
