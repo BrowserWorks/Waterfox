@@ -68,7 +68,8 @@ StreamControl::CloseAllReadStreams()
 {
   AssertOwningThread();
 
-  ReadStreamList::ForwardIterator iter(mReadStreamList);
+  auto readStreamList = mReadStreamList;
+  ReadStreamList::ForwardIterator iter(readStreamList);
   while (iter.HasMore()) {
     iter.GetNext()->CloseStream();
   }
