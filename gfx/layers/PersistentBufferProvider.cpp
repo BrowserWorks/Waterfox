@@ -90,7 +90,7 @@ PersistentBufferProviderShared::Create(gfx::IntSize aSize,
                                        ShadowLayerForwarder* aFwd) {
   if (!aFwd ||
       !aFwd->GetTextureForwarder() ||
-      !aFwd->GetTextureForwarder()->IPCOpen() {
+      !aFwd->GetTextureForwarder()->IPCOpen()) {
     return nullptr;
   }
 
