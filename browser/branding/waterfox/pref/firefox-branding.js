@@ -4,8 +4,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-pref("startup.homepage_override_url", "https://www.waterfox.net/blog/waterfox-%DISPLAY_VERSION%-release-download/?upgrade");
-pref("startup.homepage_welcome_url", "https://www.waterfox.net/blog/waterfox-%DISPLAY_VERSION%-release-download/?new");
+pref("startup.homepage_override_url", "https://www.waterfox.net/blog/waterfox-%DISPLAY_VERSION%-release/?upgrade");
+pref("startup.homepage_welcome_url", "https://www.waterfox.net/blog/waterfox-%DISPLAY_VERSION%-release/?new");
 pref("startup.homepage_welcome_url.additional", "");
 // The time interval between checks for a new version (in seconds)
 pref("app.update.interval", 28800); // 8 hours
@@ -18,7 +18,7 @@ pref("app.update.url.manual", "https://www.waterfox.net/releases/");
 // supplied in the "An update is available" page of the update wizard.
 pref("app.update.url.details", "https://www.waterfox.net/releases/");
 
-pref("app.releaseNotesURL", "https://www.waterfox.net/blog/waterfox-%DISPLAY_VERSION%-release-download/");
+pref("app.releaseNotesURL", "https://www.waterfox.net/blog/waterfox-%DISPLAY_VERSION%-release/");
 
 // The number of days a binary is permitted to be old
 // without checking for an update.  This assumes that
