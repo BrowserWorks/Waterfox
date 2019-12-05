@@ -3,6 +3,7 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 MOZ_APP_DISPLAYNAME=Waterfox
+MOZ_APP_REMOTINGNAME=waterfox-classic
 
 # Hard code profile locations due to rebranding changing the default location
 if test "$OS_ARCH" = "WINNT"; then
@@ -19,6 +20,6 @@ MOZ_ADOBE_EME=0
 MOZ_SERVICES_HEALTHREPORT=0
 MOZ_CRASHREPORTER=0
 MOZ_DATA_REPORTING=0
-MOZ_GECKO_PROFILER=
-MOZ_ENABLE_PROFILER_SPS=
-MOZ_PROFILING=
+MOZ_GECKO_PROFILER=0
+MOZ_ENABLE_PROFILER_SPS=0
+MOZ_PROFILING=0
