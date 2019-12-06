@@ -109,9 +109,6 @@ function RegExpMatch(string) {
     if (!IsObject(rx))
         ThrowTypeError(JSMSG_NOT_NONNULL_OBJECT, rx === null ? "null" : typeof rx);
 
-    if (rx.flags === undefined || rx.flags === null)
-        ThrowTypeError(JSMSG_FLAGS_UNDEFINED_OR_NULL);
-
     // Step 3.
     var S = ToString(string);
 
@@ -1162,11 +1159,6 @@ function RegExpMatchAll(string) {
         source = "";
         flags = ToString(rx.flags);
 
-        // Step 2.b.iii; located here because it needs to check |flags|.
-        if (!callFunction(std_String_includes, flags, "g")) {
-            ThrowTypeError(JSMSG_REQUIRES_GLOBAL_REGEXP, "matchAll");
-        }
-
         // Step 6.
         matcher = new C(rx, flags);
 
@@ -1174,9 +1166,7 @@ function RegExpMatchAll(string) {
         matcher.lastIndex = ToLength(rx.lastIndex);
 
         // Steps 9-12.
-        // Note, always global because non-global throws as per
-        // https://github.com/tc39/ecma262/pull/1716
-        flags = REGEXP_GLOBAL_FLAG |
+        flags = (callFunction(std_String_includes, flags, "g") ? REGEXP_GLOBAL_FLAG : 0);
                 (callFunction(std_String_includes, flags, "u") ? REGEXP_UNICODE_FLAG : 0);
 
         // Take the non-optimized path.
