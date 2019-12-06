@@ -44,6 +44,7 @@ fi
 mk_add_options AUTOCLOBBER=1
 mk_add_options MOZ_OBJDIR=objdir-current
 export MOZ_REQUIRE_SIGNING=0
+export MOZ_INCLUDE_SOURCE_INFO=1
 
 ac_add_options --disable-debug
 ac_add_options --disable-dmd
