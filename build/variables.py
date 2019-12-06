@@ -31,12 +31,14 @@ def get_program_output(*command):
 
 
 def get_hg_info(workdir):
-    repo = get_program_output('hg', '-R', workdir, 'path', 'default')
+    repo = get_program_output('git', '-C', workdir, 'remote', 'get-url', 'origin')
     if repo:
         repo = repo.strip()
         if repo.startswith('ssh://'):
             repo = 'https://' + repo[6:]
         repo = repo.rstrip('/')
+        if repo.endswith('.git'):
+            repo = repo[:-4]
 
     changeset = get_hg_changeset(workdir)
 
@@ -44,7 +46,7 @@ def get_hg_info(workdir):
 
 
 def get_hg_changeset(path):
-    return get_program_output('hg', '-R', path, 'parent', '--template={node}')
+    return get_program_output('git', '-C', path, 'rev-parse', 'HEAD')
 
 
 def get_info_from_sourcestamp(sourcestamp_path):
@@ -80,7 +82,7 @@ def source_repo_header(output):
     if not repo:
         sourcestamp_path = os.path.join(
             buildconfig.topsrcdir, SOURCESTAMP_FILENAME)
-        if os.path.exists(os.path.join(buildconfig.topsrcdir, '.hg')):
+        if os.path.exists(os.path.join(buildconfig.topsrcdir, '.git')):
             repo, changeset = get_hg_info(buildconfig.topsrcdir)
         elif os.path.exists(sourcestamp_path):
             repo, changeset = get_info_from_sourcestamp(sourcestamp_path)
@@ -94,7 +96,7 @@ def source_repo_header(output):
         output.write('#define MOZ_SOURCE_STAMP %s\n' % changeset)
 
     if repo and buildconfig.substs.get('MOZ_INCLUDE_SOURCE_INFO'):
-        source = '%s/rev/%s' % (repo, changeset)
+        source = '%s/commit/%s' % (repo, changeset)
         output.write('#define MOZ_SOURCE_REPO %s\n' % repo)
         output.write('#define MOZ_SOURCE_URL %s\n' % source)
 
