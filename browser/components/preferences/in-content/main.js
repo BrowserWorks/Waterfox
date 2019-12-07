@@ -122,6 +122,9 @@ Preferences.addAll([
   { id: "browser.statusbar.mode", type: "int" },
   { id: "browser.statusbar.showbtn", type: "bool" },
 
+  // Window Controls Position
+  { id: "browser.windowControls.position", type: "wstring" },
+
   // Downloads
   { id: "browser.download.useDownloadDir", type: "bool" },
   { id: "browser.download.folderList", type: "int" },
@@ -2819,6 +2822,17 @@ var gMainPane = {
     var currentDirPref = Preferences.get("browser.download.dir");
     return currentDirPref.value;
   },
+
+  toggleMoveWindowControls() {
+    if(Services.prefs.getBoolPref("browser.tabs.drawInTitlebar", true))
+    {
+      document.getElementById("windowControlsRadioGroup").disabled = "";
+    }
+    else
+    {
+      document.getElementById("windowControlsRadioGroup").disabled = "true";
+    }
+  }
 
 };
 

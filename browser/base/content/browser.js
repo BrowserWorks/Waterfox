@@ -1925,6 +1925,10 @@ var gBrowserInit = {
       moveTabBar();
     }
 
+    if(Services.prefs.getStringPref("browser.windowControls.position") == "left"){
+      moveWindowControls();
+    }
+
     this._loadHandled = true;
   },
 

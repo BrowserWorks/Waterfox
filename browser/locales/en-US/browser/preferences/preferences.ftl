@@ -1158,3 +1158,11 @@ settings-page = Settings Page
 
 display-all-new-prefs =
     .label = Use all-new settings layout
+
+window-controls-position-header = Window Controls Position
+
+left-side =
+    .label = Left Side
+
+right-side =
+    .label = Right Side

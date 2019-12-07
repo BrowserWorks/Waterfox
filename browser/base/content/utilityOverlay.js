@@ -1327,3 +1327,18 @@ function moveTabBar()
     }
  }
 }
+
+function moveWindowControls() {
+  if(Services.prefs.getStringPref("browser.windowControls.position") == "left")
+  {
+    windowRoot.ownerGlobal.document.querySelector(".titlebar-buttonbox").classList.add("left");
+    windowRoot.ownerGlobal.document.querySelector("#window-controls").classList.add("left");
+    windowRoot.ownerGlobal.document.querySelector("#TabsToolbar").classList.add("leftWindowControls");
+  }
+  else
+  {
+    windowRoot.ownerGlobal.document.querySelector(".titlebar-buttonbox").classList.remove("left");
+    windowRoot.ownerGlobal.document.querySelector("#window-controls").classList.remove("left");
+    windowRoot.ownerGlobal.document.querySelector("#TabsToolbar").classList.remove("leftWindowControls");
+  }
+}

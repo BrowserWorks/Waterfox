@@ -349,6 +349,19 @@
   </vbox>
 </groupbox>
 
+<!-- Window Controls Position preferences -->
+<groupbox id="windowControlsGroup"
+          data-category="paneGeneral"
+          hidden="true">
+  <label><html:h2 data-l10n-id="window-controls-position-header"/></label>
+    <radiogroup id="windowControlsRadioGroup" preference="browser.windowControls.position" onsyncfrompreference="gMainPane.toggleMoveWindowControls(); moveWindowControls();">
+      <radio value="right"
+             data-l10n-id="right-side"/>
+      <radio value="left"
+             data-l10n-id="left-side"/>
+    </radiogroup>
+</groupbox>
+
 <!-- Languages -->
 <groupbox id="languagesGroup" data-category="paneGeneral" hidden="true">
   <label><html:h2 data-l10n-id="language-header"/></label>

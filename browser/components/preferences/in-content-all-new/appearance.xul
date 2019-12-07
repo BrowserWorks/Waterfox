@@ -53,4 +53,17 @@
   </vbox>
 </groupbox>
 
+<!-- Window Controls Position preferences -->
+<groupbox id="windowControlsGroup"
+          data-category="paneAppearance"
+          hidden="true">
+  <label><html:h2 data-l10n-id="window-controls-position-header"/></label>
+    <radiogroup id="windowControlsRadioGroup" preference="browser.windowControls.position" onsyncfrompreference="gAppearancePane.toggleMoveWindowControls(); moveWindowControls();">
+      <radio value="right"
+             data-l10n-id="right-side"/>
+      <radio value="left"
+             data-l10n-id="left-side"/>
+    </radiogroup>
+</groupbox>
+
 </html:template>

@@ -17,6 +17,9 @@ Preferences.addAll([
   // Status Bar
   { id: "browser.statusbar.mode", type: "int" },
   { id: "browser.statusbar.showbtn", type: "bool" },
+
+  // Window Controls Position
+  { id: "browser.windowControls.position", type: "wstring" },
 ]);
 
 var gAppearancePane = {
@@ -25,6 +28,16 @@ var gAppearancePane = {
         Services.obs.notifyObservers(window, "appearance-pane-loaded");
 
         this.setInitialized();
+    },
+    toggleMoveWindowControls() {
+      if(Services.prefs.getBoolPref("browser.tabs.drawInTitlebar", true))
+      {
+        document.getElementById("windowControlsRadioGroup").disabled = "";
+      }
+      else
+      {
+        document.getElementById("windowControlsRadioGroup").disabled = "true";
+      }
     }
 };
 

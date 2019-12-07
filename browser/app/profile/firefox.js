@@ -1928,3 +1928,6 @@ pref("browser.preferences.useAllNew", false);
 
 // Disable extensions recommendations
 pref("extensions.getAddons.showPane", false);
+
+// Window controls position
+pref("browser.windowControls.position", "right");
