@@ -1179,3 +1179,7 @@ bookmarks-bar-position-header = Bookmarks Toolbar Position
 
 top-bookmarks =
     .label = Top
+
+pane-windowAppearance-title = Window Appearance
+
+pane-menu-title = Menu
