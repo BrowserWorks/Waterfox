@@ -1300,30 +1300,41 @@ function showBtnRange() {
 
 function moveTabBar()
 {
+  var bottomBookmarksBar = windowRoot.ownerGlobal.document.querySelector("#browser-bottombox #PersonalToolbar");
+  var tabsToolbar = windowRoot.ownerGlobal.document.querySelector("#TabsToolbar");
+  var titlebar = windowRoot.ownerGlobal.document.querySelector("#titlebar");
+
   if(Services.prefs.getStringPref("browser.tabBar.position") == "topUnderAB")
   {
-    windowRoot.ownerGlobal.document.querySelector("#navigator-toolbox").appendChild(windowRoot.ownerGlobal.document.querySelector("#TabsToolbar"));
+    windowRoot.ownerGlobal.document.querySelector("#navigator-toolbox").appendChild(tabsToolbar);
     windowRoot.ownerGlobal.gBrowser.setTabTitle(windowRoot.ownerGlobal.document.querySelector(".tabbrowser-tab[first-visible-tab]"));
-    if (windowRoot.ownerGlobal.document.querySelector("#titlebar").classList.contains("tabs-topAboveAB"))
+    if (titlebar.classList.contains("tabs-topAboveAB"))
     {
-      windowRoot.ownerGlobal.document.querySelector("#titlebar").classList.remove("tabs-topAboveAB");
+      titlebar.classList.remove("tabs-topAboveAB");
     }
   }
   else if (Services.prefs.getStringPref("browser.tabBar.position") == "bottom")
   {
-    windowRoot.ownerGlobal.document.querySelector("#browser-bottombox").insertAdjacentElement('afterbegin', windowRoot.ownerGlobal.document.querySelector("#TabsToolbar"));
-    windowRoot.ownerGlobal.gBrowser.setTabTitle(windowRoot.ownerGlobal.document.querySelector(".tabbrowser-tab[first-visible-tab]"));
-    if (windowRoot.ownerGlobal.document.querySelector("#titlebar").classList.contains("tabs-topAboveAB"))
+    if(bottomBookmarksBar)
     {
-      windowRoot.ownerGlobal.document.querySelector("#titlebar").classList.remove("tabs-topAboveAB");
+      bottomBookmarksBar.insertAdjacentElement('afterend', tabsToolbar);
+    }
+    else
+    {
+      windowRoot.ownerGlobal.document.querySelector("#browser-bottombox").insertAdjacentElement('afterbegin', tabsToolbar);
+    }
+    windowRoot.ownerGlobal.gBrowser.setTabTitle(windowRoot.ownerGlobal.document.querySelector(".tabbrowser-tab[first-visible-tab]"));
+    if (titlebar.classList.contains("tabs-topAboveAB"))
+    {
+      titlebar.classList.remove("tabs-topAboveAB");
     }
   }
   else if (Services.prefs.getStringPref("browser.tabBar.position") == "topAboveAB")
   {
-    windowRoot.ownerGlobal.document.querySelector("#titlebar").insertAdjacentElement('beforeend', windowRoot.ownerGlobal.document.querySelector("#TabsToolbar"));
+    titlebar.insertAdjacentElement('beforeend', tabsToolbar);
     windowRoot.ownerGlobal.gBrowser.setTabTitle(windowRoot.ownerGlobal.document.querySelector(".tabbrowser-tab[first-visible-tab]"));
-    if (!windowRoot.ownerGlobal.document.querySelector("#titlebar").classList.contains("tabs-topAboveAB")) {
-      windowRoot.ownerGlobal.document.querySelector("#titlebar").classList.add("tabs-topAboveAB");
+    if (!titlebar.classList.contains("tabs-topAboveAB")) {
+      titlebar.classList.add("tabs-topAboveAB");
     }
  }
 }
@@ -1352,5 +1363,23 @@ function changeMenuIconStyle() {
   }
   else if (Services.prefs.getIntPref("browser.menuIcon.style") == 1) {
     menuBtn.classList.add("browser");
+  }
+}
+
+function moveBookmarksBar() {
+  var bottomTabs = windowRoot.ownerGlobal.document.querySelector("#browser-bottombox #TabsToolbar");
+  var bookmarksBar = windowRoot.ownerGlobal.document.querySelector("#PersonalToolbar");
+
+  if (Services.prefs.getStringPref("browser.bookmarksBar.position") == "top") {
+    windowRoot.ownerGlobal.document.querySelector("#nav-bar").insertAdjacentElement('afterend', bookmarksBar);
+  }
+  else if (Services.prefs.getStringPref("browser.bookmarksBar.position") == "bottom") {
+    if(bottomTabs) {
+      bottomTabs.insertAdjacentElement('beforebegin', bookmarksBar);
+    }
+    else
+    {
+      windowRoot.ownerGlobal.document.querySelector("#browser-bottombox").insertAdjacentElement('afterbegin', bookmarksBar);
+    }
   }
 }

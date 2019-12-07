@@ -1936,3 +1936,6 @@ pref("browser.windowControls.position", "right");
 // 0 - Menu Icon
 // 1 - Browser Icon
 pref("browser.menuIcon.style", 0);
+
+// Bookmarks Toolbar Position
+pref("browser.bookmarksBar.position", "top");

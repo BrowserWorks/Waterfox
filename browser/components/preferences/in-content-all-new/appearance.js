@@ -24,6 +24,9 @@ Preferences.addAll([
   // Menu Icon Style
   { id: "browser.menuIcon.style", type: "int" },
 
+  // Bookmarks Toolbar Position
+  { id: "browser.bookmarksBar.position", type: "wstring" },
+
 ]);
 
 var gAppearancePane = {

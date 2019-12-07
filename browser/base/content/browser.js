@@ -1933,6 +1933,10 @@ var gBrowserInit = {
       changeMenuIconStyle();
     }
 
+    if (Services.prefs.getStringPref("browser.bookmarksBar.position") == "bottom") {
+      moveBookmarksBar();
+    }
+
     this._loadHandled = true;
   },
 

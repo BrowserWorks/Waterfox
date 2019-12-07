@@ -375,6 +375,19 @@
     </radiogroup>
 </groupbox>
 
+<!-- Bookmarks Toolbar Position preferences -->
+<groupbox id="bookmarksBarPositionGroup"
+          data-category="paneGeneral"
+          hidden="true">
+  <label><html:h2 data-l10n-id="bookmarks-bar-position-header"/></label>
+    <radiogroup id="bookmarksBarPositionRadioGroup" preference="browser.bookmarksBar.position" onsyncfrompreference="moveBookmarksBar();">
+      <radio value="top"
+             data-l10n-id="top-bookmarks"/>
+      <radio value="bottom"
+             data-l10n-id="tab-bottom"/>
+    </radiogroup>
+</groupbox>
+
 <!-- Languages -->
 <groupbox id="languagesGroup" data-category="paneGeneral" hidden="true">
   <label><html:h2 data-l10n-id="language-header"/></label>

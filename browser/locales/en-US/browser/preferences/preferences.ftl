@@ -1174,3 +1174,8 @@ menu-icon =
 
 browser-icon =
     .label = { -brand-short-name } Icon
+
+bookmarks-bar-position-header = Bookmarks Toolbar Position
+
+top-bookmarks =
+    .label = Top
