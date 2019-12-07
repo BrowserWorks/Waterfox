@@ -20,6 +20,10 @@ Preferences.addAll([
 
   // Window Controls Position
   { id: "browser.windowControls.position", type: "wstring" },
+
+  // Menu Icon Style
+  { id: "browser.menuIcon.style", type: "int" },
+
 ]);
 
 var gAppearancePane = {

@@ -1929,6 +1929,10 @@ var gBrowserInit = {
       moveWindowControls();
     }
 
+    if (Services.prefs.getIntPref("browser.menuIcon.style") == 1) {
+      changeMenuIconStyle();
+    }
+
     this._loadHandled = true;
   },
 

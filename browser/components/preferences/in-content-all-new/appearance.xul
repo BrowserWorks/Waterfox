@@ -66,4 +66,17 @@
     </radiogroup>
 </groupbox>
 
+<!-- Menu Icon Style preferences -->
+<groupbox id="menuIconStyleGroup"
+          data-category="paneAppearance"
+          hidden="true">
+  <label><html:h2 data-l10n-id="menu-icon-style-header"/></label>
+    <radiogroup id="menuIconStyleRadioGroup" preference="browser.menuIcon.style" onsyncfrompreference="changeMenuIconStyle();">
+      <radio value="0"
+             data-l10n-id="menu-icon"/>
+      <radio value="1"
+             data-l10n-id="browser-icon"/>
+    </radiogroup>
+</groupbox>
+
 </html:template>

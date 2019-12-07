@@ -125,6 +125,9 @@ Preferences.addAll([
   // Window Controls Position
   { id: "browser.windowControls.position", type: "wstring" },
 
+  // Menu Icon Style
+  { id: "browser.menuIcon.style", type: "int" },
+
   // Downloads
   { id: "browser.download.useDownloadDir", type: "bool" },
   { id: "browser.download.folderList", type: "int" },

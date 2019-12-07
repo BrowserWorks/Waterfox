@@ -1342,3 +1342,15 @@ function moveWindowControls() {
     windowRoot.ownerGlobal.document.querySelector("#TabsToolbar").classList.remove("leftWindowControls");
   }
 }
+
+function changeMenuIconStyle() {
+  var menuBtn = windowRoot.ownerGlobal.document.querySelector("#PanelUI-menu-button");
+  if (Services.prefs.getIntPref("browser.menuIcon.style") == 0) {
+    if (menuBtn.classList.contains("browser")) {
+      menuBtn.classList.remove("browser");
+    }
+  }
+  else if (Services.prefs.getIntPref("browser.menuIcon.style") == 1) {
+    menuBtn.classList.add("browser");
+  }
+}

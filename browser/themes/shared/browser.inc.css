@@ -598,3 +598,7 @@
   right: auto;
   display: flex;
 }
+
+#PanelUI-menu-button.browser {
+  list-style-image: url("chrome://branding/content/icon16.png");
+}

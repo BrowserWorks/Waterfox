@@ -1931,3 +1931,8 @@ pref("extensions.getAddons.showPane", false);
 
 // Window controls position
 pref("browser.windowControls.position", "right");
+
+// Menu Icon Style
+// 0 - Menu Icon
+// 1 - Browser Icon
+pref("browser.menuIcon.style", 0);

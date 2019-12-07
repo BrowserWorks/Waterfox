@@ -1166,3 +1166,11 @@ left-side =
 
 right-side =
     .label = Right Side
+
+menu-icon-style-header = Menu Icon style
+
+menu-icon =
+    .label = Menu Icon
+
+browser-icon =
+    .label = { -brand-short-name } Icon
