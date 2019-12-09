@@ -12,6 +12,7 @@
 #include "mozilla/a11y/DocAccessibleParent.h"
 #include "EnumVariant.h"
 #include "GeckoCustom.h"
+#include "HyperTextAccessible-inl.h"
 #include "nsAccUtils.h"
 #include "nsCoreUtils.h"
 #include "nsIAccessibleEvent.h"
