@@ -188,9 +188,9 @@ public class TelemetryCorePingBuilder extends TelemetryPingBuilder {
             final boolean onlyOverWifi = prefs.getBoolean("sync.restrict_metered", false);
             final boolean productFeatureTipsEnabled = prefs.getBoolean(GeckoPreferences.PREFS_NOTIFICATIONS_FEATURES_TIPS, true);
             final boolean restoreTabs = !"quit".equals(prefs.getString(GeckoPreferences.PREFS_RESTORE_SESSION, "always"));
-            final boolean showWebFonts = prefs.getBoolean("browser.display.use_document_fonts", false);
+            final boolean showWebFonts = prefs.getBoolean("browser.display.use_document_fonts", true);
             final int totalSearchEngines = prefs.getInt("android.not_a_preference.total_added_search_engines", 0);
-            final int totalAddedSearchEngines = totalSearchEngines > 0 ? totalSearchEngines - defaultSearchEnginesCount : 0;
+            final int totalAddedSearchEngines = totalSearchEngines - defaultSearchEnginesCount > 0 ? totalSearchEngines - defaultSearchEnginesCount : 0;
             final int bookmarksWithStar = prefs.getInt("android.not_a_preference.bookmarks_with_star", 0);
             final int totalSitesPinnedToTopsites = prefs.getInt("android.not_a_preference.total_sites_pinned_to_topsites", 0);
             final int saveAsPdf = prefs.getInt("android.not_a_preference.save_as_pdf", 0);
