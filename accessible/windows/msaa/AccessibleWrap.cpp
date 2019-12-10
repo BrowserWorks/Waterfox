@@ -12,6 +12,7 @@
 #include "mozilla/a11y/DocAccessibleParent.h"
 #include "EnumVariant.h"
 #include "GeckoCustom.h"
+#include "HyperTextAccessible-inl.h"
 #include "nsAccUtils.h"
 #include "nsCoreUtils.h"
 #include "nsIAccessibleEvent.h"
@@ -1015,7 +1016,25 @@ STDMETHODIMP
 AccessibleWrap::put_accValue(
     /* [optional][in] */ VARIANT varChild,
     /* [in] */ BSTR szValue) {
-  return E_NOTIMPL;
+  RefPtr<IAccessible> accessible;
+  HRESULT hr = ResolveChild(varChild, getter_AddRefs(accessible));
+  if (FAILED(hr)) {
+    return hr;
+  }
+
+  if (accessible) {
+    return accessible->put_accValue(kVarChildIdSelf, szValue);
+  }
+
+  HyperTextAccessible* ht = AsHyperText();
+  if (!ht) {
+    return E_NOTIMPL;
+  }
+
+  uint32_t length = ::SysStringLen(szValue);
+  nsAutoString text(szValue, length);
+  ht->ReplaceText(text);
+  return S_OK;
 }
 
 ////////////////////////////////////////////////////////////////////////////////

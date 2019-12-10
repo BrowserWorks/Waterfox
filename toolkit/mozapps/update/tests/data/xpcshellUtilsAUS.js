@@ -924,6 +924,18 @@ function setupTestCommon(aAppUpdateAutoEnabled = false, aAllowBits = false) {
     );
   }
 
+  if (gIsServiceTest) {
+    let exts = ["id", "log", "status"];
+    for (let i = 0; i < exts.length; ++i) {
+      let file = getSecureOutputFile(exts[i]);
+      if (file.exists()) {
+        try {
+          file.remove(false);
+        } catch (e) {}
+      }
+    }
+  }
+
   adjustGeneralPaths();
   createWorldWritableAppUpdateDir();
 
@@ -986,6 +998,18 @@ function cleanupTestCommon() {
   if (AppConstants.platform == "macosx" || AppConstants.platform == "linux") {
     // This will delete the launch script if it exists.
     getLaunchScript();
+  }
+
+  if (gIsServiceTest) {
+    let exts = ["id", "log", "status"];
+    for (let i = 0; i < exts.length; ++i) {
+      let file = getSecureOutputFile(exts[i]);
+      if (file.exists()) {
+        try {
+          file.remove(false);
+        } catch (e) {}
+      }
+    }
   }
 
   if (AppConstants.platform == "win" && MOZ_APP_BASENAME) {
@@ -1509,6 +1533,37 @@ function getMaintSvcDir() {
 }
 
 /**
+ * Reads the current update operation/state in the status file in the secure
+ * update log directory.
+ *
+ * @return The status value.
+ */
+function readSecureStatusFile() {
+  let file = getSecureOutputFile("status");
+  if (!file.exists()) {
+    debugDump("update status file does not exist, path: " + file.path);
+    return STATE_NONE;
+  }
+  return readFile(file).split("\n")[0];
+}
+
+/**
+ * Get an nsIFile for a file in the secure update log directory. The file name
+ * is always the value of gTestID and the file extension is specified by the
+ * aFileExt parameter.
+ *
+ * @param  aFileExt
+ *         The file extension.
+ * @return The nsIFile of the secure update file.
+ */
+function getSecureOutputFile(aFileExt) {
+  let file = getMaintSvcDir();
+  file.append("UpdateLogs");
+  file.append(gTestID + "." + aFileExt);
+  return file;
+}
+
+/**
  * Get the nsIFile for a Windows special folder determined by the CSIDL
  * passed.
  *
@@ -1848,7 +1903,7 @@ function logUpdateLog(aLogLeafName) {
     updateLogContents = replaceLogPaths(updateLogContents);
     let aryLogContents = updateLogContents.split("\n");
     logTestInfo("contents of " + updateLog.path + ":");
-    aryLogContents.forEach(function RU_LC_FE(aLine) {
+    aryLogContents.forEach(function LU_ULC_FE(aLine) {
       logTestInfo(aLine);
     });
   } else {
@@ -1856,6 +1911,23 @@ function logUpdateLog(aLogLeafName) {
   }
 
   if (gIsServiceTest) {
+    let secureStatus = readSecureStatusFile();
+    logTestInfo("secure update status: " + secureStatus);
+
+    updateLog = getSecureOutputFile("log");
+    if (updateLog.exists()) {
+      // xpcshell tests won't display the entire contents so log each line.
+      let updateLogContents = readFileBytes(updateLog).replace(/\r\n/g, "\n");
+      updateLogContents = replaceLogPaths(updateLogContents);
+      let aryLogContents = updateLogContents.split("\n");
+      logTestInfo("contents of " + updateLog.path + ":");
+      aryLogContents.forEach(function LU_SULC_FE(aLine) {
+        logTestInfo(aLine);
+      });
+    } else {
+      logTestInfo("secure update log doesn't exist, path: " + updateLog.path);
+    }
+
     let serviceLog = getMaintSvcDir();
     serviceLog.append("logs");
     serviceLog.append("maintenanceservice.log");
@@ -1865,7 +1937,7 @@ function logUpdateLog(aLogLeafName) {
       serviceLogContents = replaceLogPaths(serviceLogContents);
       let aryLogContents = serviceLogContents.split("\n");
       logTestInfo("contents of " + serviceLog.path + ":");
-      aryLogContents.forEach(function RU_LC_FE(aLine) {
+      aryLogContents.forEach(function LU_MSLC_FE(aLine) {
         logTestInfo(aLine);
       });
     } else {
@@ -2006,7 +2078,7 @@ function runUpdate(
   let status = readStatusFile();
   if (
     (!gIsServiceTest && process.exitValue != aExpectedExitValue) ||
-    status != aExpectedStatus
+    (status != aExpectedStatus && !gIsServiceTest && !isInvalidArgTest)
   ) {
     if (process.exitValue != aExpectedExitValue) {
       logTestInfo(
@@ -2027,12 +2099,23 @@ function runUpdate(
     logUpdateLog(FILE_LAST_UPDATE_LOG);
   }
 
+  if (gIsServiceTest && isInvalidArgTest) {
+    let secureStatus = readSecureStatusFile();
+    if (secureStatus != STATE_NONE) {
+      status = secureStatus;
+    }
+  }
+
   if (!gIsServiceTest) {
     Assert.equal(
       process.exitValue,
       aExpectedExitValue,
       "the process exit value" + MSG_SHOULD_EQUAL
     );
+  }
+
+  if (status != aExpectedStatus) {
+    logUpdateLog(FILE_UPDATE_LOG);
   }
   Assert.equal(status, aExpectedStatus, "the update status" + MSG_SHOULD_EQUAL);
 

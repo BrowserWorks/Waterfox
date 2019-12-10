@@ -9,37 +9,22 @@ use std::ops;
 use {HashMap, Entry};
 
 /// The result of the `HasVtableAnalysis` for an individual item.
-#[derive(Copy, Clone, Debug, PartialEq, Eq, Ord)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub enum HasVtableResult {
-    /// The item has a vtable, but the actual vtable pointer is in a base
-    /// member.
-    BaseHasVtable,
+    /// The item does not have a vtable pointer.
+    No,
 
     /// The item has a vtable and the actual vtable pointer is within this item.
     SelfHasVtable,
 
-    /// The item does not have a vtable pointer.
-    No
+    /// The item has a vtable, but the actual vtable pointer is in a base
+    /// member.
+    BaseHasVtable,
 }
 
 impl Default for HasVtableResult {
     fn default() -> Self {
         HasVtableResult::No
-    }
-}
-
-impl cmp::PartialOrd for HasVtableResult {
-    fn partial_cmp(&self, rhs: &Self) -> Option<cmp::Ordering> {
-        use self::HasVtableResult::*;
-
-        match (*self, *rhs) {
-            (x, y) if x == y => Some(cmp::Ordering::Equal),
-            (BaseHasVtable, _) => Some(cmp::Ordering::Greater),
-            (_, BaseHasVtable) => Some(cmp::Ordering::Less),
-            (SelfHasVtable, _) => Some(cmp::Ordering::Greater),
-            (_, SelfHasVtable) => Some(cmp::Ordering::Less),
-            _ => unreachable!(),
-        }
     }
 }
 

@@ -262,6 +262,29 @@ void nsLookAndFeel::RefreshImpl() {
   mInitialized = false;
 }
 
+nsTArray<LookAndFeelInt> nsLookAndFeel::GetIntCacheImpl() {
+  nsTArray<LookAndFeelInt> lookAndFeelIntCache =
+      nsXPLookAndFeel::GetIntCacheImpl();
+
+  LookAndFeelInt lafInt;
+  lafInt.id = eIntID_SystemUsesDarkTheme;
+  lafInt.value = GetInt(eIntID_SystemUsesDarkTheme);
+  lookAndFeelIntCache.AppendElement(lafInt);
+
+  return lookAndFeelIntCache;
+}
+
+void nsLookAndFeel::SetIntCacheImpl(
+    const nsTArray<LookAndFeelInt>& aLookAndFeelIntCache) {
+  for (auto entry : aLookAndFeelIntCache) {
+    switch (entry.id) {
+      case eIntID_SystemUsesDarkTheme:
+        mSystemUsesDarkTheme = entry.value;
+        break;
+    }
+  }
+}
+
 nsresult nsLookAndFeel::NativeGetColor(ColorID aID, nscolor& aColor) {
   EnsureInit();
 
@@ -924,25 +947,31 @@ void nsLookAndFeel::EnsureInit() {
   // gtk does non threadsafe refcounting
   MOZ_ASSERT(NS_IsMainThread());
 
-  GdkRGBA color;
   GtkStyleContext* style;
-
-  // It seems GTK doesn't have an API to query if the current theme is
-  // "light" or "dark", so we synthesize it from the CSS2 Window/WindowText
-  // colors instead, by comparing their luminosity.
-  GdkRGBA bg, fg;
-  style = GetStyleContext(MOZ_GTK_WINDOW);
-  gtk_style_context_get_background_color(style, GTK_STATE_FLAG_NORMAL, &bg);
-  gtk_style_context_get_color(style, GTK_STATE_FLAG_NORMAL, &fg);
-  mSystemUsesDarkTheme =
-      (RelativeLuminanceUtils::Compute(GDK_RGBA_TO_NS_RGBA(bg)) <
-       RelativeLuminanceUtils::Compute(GDK_RGBA_TO_NS_RGBA(fg)));
 
   if (XRE_IsContentProcess()) {
     // Dark themes interacts poorly with widget styling (see bug 1216658).
     // We disable dark themes by default for web content
     // but allow user to overide it by prefs.
     ConfigureContentGtkTheme();
+  } else {
+    // It seems GTK doesn't have an API to query if the current theme is
+    // "light" or "dark", so we synthesize it from the CSS2 Window/WindowText
+    // colors instead, by comparing their luminosity.
+    GdkRGBA bg, fg;
+    style = GetStyleContext(MOZ_GTK_WINDOW);
+    gtk_style_context_get_background_color(style, GTK_STATE_FLAG_NORMAL, &bg);
+    gtk_style_context_get_color(style, GTK_STATE_FLAG_NORMAL, &fg);
+    mSystemUsesDarkTheme =
+        (RelativeLuminanceUtils::Compute(GDK_RGBA_TO_NS_RGBA(bg)) <
+         RelativeLuminanceUtils::Compute(GDK_RGBA_TO_NS_RGBA(fg)));
+    // Update mSystemUsesDarkTheme only in the parent process since in the child
+    // processes we forcibly set gtk-theme-name so that we can't get correct
+    // results.  Instead mSystemUsesDarkTheme in the child processes is updated
+    // via our caching machinery.
+    mSystemUsesDarkTheme =
+        (RelativeLuminanceUtils::Compute(GDK_RGBA_TO_NS_RGBA(bg)) <
+         RelativeLuminanceUtils::Compute(GDK_RGBA_TO_NS_RGBA(fg)));
   }
 
   // The label is not added to a parent widget, but shared for constructing
@@ -952,6 +981,7 @@ void nsLookAndFeel::EnsureInit() {
   g_object_ref_sink(labelWidget);
 
   // Scrollbar colors
+  GdkRGBA color;
   style = GetStyleContext(MOZ_GTK_SCROLLBAR_TROUGH_VERTICAL);
   gtk_style_context_get_background_color(style, GTK_STATE_FLAG_NORMAL, &color);
   mMozScrollbar = GDK_RGBA_TO_NS_RGBA(color);

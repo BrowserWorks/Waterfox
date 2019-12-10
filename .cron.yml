@@ -140,15 +140,23 @@ jobs:
           treeherder-symbol: Rel
           target-tasks-method: cron_bouncer_check
       run-on-projects:
+          - mozilla-central
           - mozilla-beta
           - mozilla-release
+          - mozilla-esr68
       when:
           by-project:
               # No default branch
+              mozilla-central:
+                  - {hour: 7, minute: 0}
+                  - {hour: 19, minute: 0}
               mozilla-beta:
                   - {hour: 7, minute: 0}
                   - {hour: 19, minute: 0}
               mozilla-release:
+                  - {hour: 7, minute: 0}
+                  - {hour: 19, minute: 0}
+              mozilla-esr68:
                   - {hour: 7, minute: 0}
                   - {hour: 19, minute: 0}
 
@@ -178,3 +186,15 @@ jobs:
               # No default branch
               mozilla-central:
                   - {weekday: 'Monday', hour: 10, minute: 0}
+
+    - name: l10n-bumper
+      job:
+          type: decision-task
+          treeherder-symbol: l10n-bump
+          target-tasks-method: l10n_bump
+      run-on-projects:
+          - mozilla-central
+          - mozilla-beta
+          - mozilla-esr68
+      when:
+          - {minute: 45}

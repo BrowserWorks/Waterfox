@@ -588,3 +588,7 @@ test archive into it's own archive.
 geckodriver-signing
 -------------------
 Signing for geckodriver binary.
+
+l10n-bump
+---------
+Cron-driven tasks that bump l10n-changesets files in-tree, using data from the l10n dashboard.
