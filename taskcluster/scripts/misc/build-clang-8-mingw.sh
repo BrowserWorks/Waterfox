@@ -32,7 +32,7 @@ SRC_DIR=$TOOLCHAIN_DIR/src
 
 make_flags="-j$(nproc)"
 
-mingw_version=0a1d495478d8ed1a94fc77b9dbb428b7e0372588
+mingw_version=1b373beec6d07478ffba33726bb3bb21f32e4411
 libunwind_version=6ee92fcc97350ae32db3172a269e9afcc2bab686
 llvm_mingw_version=c3a16814bd26aa6702e1e5b482a3d9044bb0f725
 
@@ -269,6 +269,28 @@ build_libcxx() {
   popd
 }
 
+build_libssp() {
+  pushd $HOME_DIR/gcc-6.4.0/
+
+  # Massage the environment for the build-libssp.sh script
+  mkdir -p ./$machine-w64-mingw32/lib
+  cp $SRC_DIR/llvm-mingw/libssp-Makefile .
+  sed -i 's/set -e/set -x -e -v/' $SRC_DIR/llvm-mingw/build-libssp.sh
+  sed -i 's/(CROSS)gcc/(CROSS)clang/' libssp-Makefile
+  sed -i 's/\$(CROSS)ar/llvm-ar/' libssp-Makefile
+  OLDPATH=$PATH
+  PATH=$INSTALL_DIR/clang/bin:$PATH
+
+  # Run the script
+  TOOLCHAIN_ARCHS=$machine $SRC_DIR/llvm-mingw/build-libssp.sh .
+
+  # Grab the artifacts, cleanup
+  cp $HOME_DIR/gcc-6.4.0//$machine-w64-mingw32/lib/{libssp.a,libssp_nonshared.a} $INSTALL_DIR/$machine-w64-mingw32/lib/
+  unset TOOLCHAIN_ARCHS
+  PATH=$OLDPATH
+  popd
+}
+
 build_utils() {
   pushd $INSTALL_DIR/bin/
   ln -s llvm-nm $machine-w64-mingw32-nm
@@ -298,6 +320,7 @@ install_wrappers
 build_mingw
 build_compiler_rt
 build_libcxx
+build_libssp
 build_utils
 
 popd

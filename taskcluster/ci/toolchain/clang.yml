@@ -69,6 +69,9 @@ linux64-clang-8-mingw-x86:
             - 'taskcluster/scripts/misc/tooltool-download.sh'
         toolchain-alias: linux64-clang-mingw-x86
         toolchain-artifact: public/build/clangmingw.tar.xz
+    fetches:
+        fetch:
+            - gcc-6.4.0
     toolchains:
         - linux64-gcc-6
 
@@ -87,6 +90,9 @@ linux64-clang-8-mingw-x64:
             - 'taskcluster/scripts/misc/tooltool-download.sh'
         toolchain-alias: linux64-clang-mingw-x64
         toolchain-artifact: public/build/clangmingw.tar.xz
+    fetches:
+        fetch:
+            - gcc-6.4.0
     toolchains:
         - linux64-gcc-6
 
