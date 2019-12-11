@@ -117,8 +117,7 @@ public class CombinedHistoryPanel extends HomeFragment implements RemoteClientsD
         // for all fragments in it's savedInstanceState. This Fragment will be created.
         // When BrowserApp does not complete it's onCreate() - like when finishing early and restarting
         // our onCreate would try to access not yet initialized resources and would get a NPE.
-        final FragmentActivity parent = getActivity();
-        if (parent != null && parent.isFinishing()) {
+        if (isParentFinishing()) {
             return;
         }
 
@@ -151,6 +150,13 @@ public class CombinedHistoryPanel extends HomeFragment implements RemoteClientsD
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
+        // No need for potentially heavy initializations if we are to be destroyed soon.
+        // Also avoid potential issues stemming from the code in onCreate() already being short-circuited
+        // by this same check.
+        if (isParentFinishing()) {
+            return;
+        }
 
         mRecyclerView = (CombinedHistoryRecyclerView) view.findViewById(R.id.combined_recycler_view);
         setUpRecyclerView();
@@ -689,5 +695,10 @@ public class CombinedHistoryPanel extends HomeFragment implements RemoteClientsD
             FirefoxAccounts.removeSyncStatusListener(mSyncStatusListener);
             mSyncStatusListener = null;
         }
+    }
+
+    private boolean isParentFinishing() {
+        final FragmentActivity parent = getActivity();
+        return parent != null && parent.isFinishing();
     }
 }
