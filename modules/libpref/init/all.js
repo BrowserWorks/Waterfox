@@ -1401,6 +1401,13 @@ pref("privacy.firstparty.isolate",                        false);
 // (top level URLs) can access resources through window.opener.
 // This pref is effective only when "privacy.firstparty.isolate" is true.
 pref("privacy.firstparty.isolate.restrict_opener_access", true);
+// Whether to block postMessage across different first party domains when the targetOrigin is '*'.
+// This pref is effective only when "privacy.firstparty.isolate" is true.
+pref("privacy.firstparty.isolate.block_post_message", false);
+
+// If true, DISABLES navigator.mozAddonManager entirely
+sticky_pref("privacy.resistFingerprinting.block_mozAddonManager", true);
+
 // We automatically decline canvas permission requests if they are not initiated
 // from user input. Just in case that breaks something, we allow the user to revert
 // this behavior with this obscure pref. We do not intend to support this long term.
