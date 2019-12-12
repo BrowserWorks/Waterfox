@@ -899,11 +899,11 @@ pref("gfx.ycbcr.accurate-conversion", false);
 // We also have a pref gfx.webrender.all.qualified which is not exposed via
 // about:config. That pref enables WR but only on qualified hardware. This is
 // the pref we'll eventually flip to deploy WebRender to the target population.
-pref("gfx.webrender.all", false);
+pref("gfx.webrender.all", true);
 #ifdef MOZ_ENABLE_WEBRENDER
 pref("gfx.webrender.enabled", true);
 #else
-pref("gfx.webrender.enabled", false);
+pref("gfx.webrender.enabled", true);
 #endif
 
 // Also expose a pref to allow users to force-disable WR. This is exposed
@@ -5025,7 +5025,7 @@ pref("layers.gpu-process.max_restarts", 3);
 // compositing isn't default disabled in widget/android.
 pref("layers.acceleration.force-enabled", true);
 #else
-pref("layers.acceleration.force-enabled", false);
+pref("layers.acceleration.force-enabled", true);
 #endif
 
 pref("layers.acceleration.draw-fps", false);
@@ -6081,3 +6081,6 @@ pref("toolkit.legacyUserProfileCustomizations.stylesheets", true);
 // Enable support for XMLDocument.load and .async for webcompat (bug 1569102).
 pref("dom.xmldocument.load.enabled", true);
 pref("dom.xmldocument.async.enabled", true);
+
+// Enable accelerated Azure Canvas.
+pref("gfx.canvas.azure.accelerated", true);
