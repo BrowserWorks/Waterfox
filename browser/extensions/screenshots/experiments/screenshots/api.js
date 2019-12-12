@@ -94,7 +94,7 @@ this.screenshots = class extends ExtensionAPI {
             return Services.prefs.getBoolPref("places.history.enabled", true);
           },
           isUploadDisabled() {
-            return Services.prefs.getBoolPref("extensions.screenshots.upload-disabled", false);
+            return true;
           },
           initLibraryButton() {
             context.callOnClose({

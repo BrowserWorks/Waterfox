@@ -980,7 +980,7 @@ var UITour = {
   // This function is copied to UITourListener.
   isSafeScheme(aURI) {
     let allowedSchemes = new Set(["https", "about"]);
-    if (!Services.prefs.getBoolPref("browser.uitour.requireSecure")) {
+    if (!Services.prefs.getBoolPref("browser.uitour.requireSecure", true)) {
       allowedSchemes.add("http");
     }
 

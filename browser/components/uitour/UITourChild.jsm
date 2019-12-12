@@ -56,7 +56,7 @@ class UITourChild extends ActorChild {
   // This function is copied from UITour.jsm.
   isSafeScheme(aURI) {
     let allowedSchemes = new Set(["https", "about"]);
-    if (!Services.prefs.getBoolPref("browser.uitour.requireSecure")) {
+    if (!Services.prefs.getBoolPref("browser.uitour.requireSecure", true)) {
       allowedSchemes.add("http");
     }
 

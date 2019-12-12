@@ -212,11 +212,8 @@ pref("browser.eme.ui.enabled", false);
 // UI tour experience.
 pref("browser.uitour.enabled", false, locked);
 pref("browser.uitour.loglevel", "Error", locked);
-pref("browser.uitour.requireSecure", false, locked);
 pref("browser.uitour.themeOrigin", "", locked);
 pref("browser.uitour.url", "", locked);
-// How long to show a Hearbeat survey (two hours, in seconds)
-pref("browser.uitour.surveyDuration", 7200);
 
 pref("keyword.enabled", true);
 pref("browser.fixup.domainwhitelist.localhost", true);
@@ -1817,9 +1814,6 @@ pref("browser.suppress_first_window_animation", true);
 
 // Preference that allows individual users to disable Screenshots.
 pref("extensions.screenshots.disabled", false);
-// Preference that allows individual users to leave Screenshots enabled, but
-// disable uploading to the server.
-pref("extensions.screenshots.upload-disabled", false);
 
 // URL for Learn More link for browser error logging in preferences
 pref("browser.chrome.errorReporter.infoURL",
@@ -1831,7 +1825,6 @@ pref("app.normandy.dev_mode", false, locked);
 pref("app.normandy.enabled", false, locked);
 pref("app.normandy.first_run", false, locked);
 pref("app.normandy.logging.level", 50); // Warn
-pref("app.normandy.run_interval_seconds", 21600); // 6 hours
 pref("app.normandy.shieldLearnMoreUrl", "", locked);
 #ifdef MOZ_DATA_REPORTING
 pref("app.shield.optoutstudies.enabled", false, locked);
