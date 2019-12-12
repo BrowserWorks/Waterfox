@@ -3249,24 +3249,6 @@ BrowserGlue.prototype = {
     let prefName = "browser.urlbar.matchBuckets";
     let prefValue = Services.prefs.getCharPref(prefName, "");
 
-    // Get the study (aka experiment).  It may not be installed.
-    let experiment = null;
-    let experimentName = "pref-flip-search-composition-57-release-1413565";
-    let { PreferenceExperiments } = ChromeUtils.import(
-      "resource://normandy/lib/PreferenceExperiments.jsm"
-    );
-    try {
-      experiment = await PreferenceExperiments.get(experimentName);
-    } catch (e) {}
-
-    // Uninstall the study, resetting the pref to its state before the study.
-    if (experiment && !experiment.expired) {
-      await PreferenceExperiments.stop(experimentName, {
-        resetValue: true,
-        reason: "external:search-ui-migration",
-      });
-    }
-
     // At this point, normally the pref should not exist.  If it does, then it
     // either has a user value, or something unexpectedly set its value on the
     // default branch.  Either way, preserve that value.
