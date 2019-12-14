@@ -63,9 +63,6 @@ const BUILT_IN_SECTIONS = {
       }, {
         name: "section.highlights.includeDownloads",
         titleString: "prefs_highlights_options_download_label",
-      }, {
-        name: "section.highlights.includePocket",
-        titleString: "prefs_highlights_options_pocket_label",
       }],
     },
     shouldHidePref:  false,
