@@ -492,7 +492,9 @@ class AutoPrintEventDispatcher {
  private:
   void DispatchEventToWindowTree(const nsAString& aEvent) {
     nsTArray<nsCOMPtr<Document>> targets;
-    CollectDocuments(mTop, &targets);
+    if (mTop) {
+      CollectDocuments(*mTop, &targets);
+    }
     for (nsCOMPtr<Document>& doc : targets) {
       nsContentUtils::DispatchTrustedEvent(doc, doc->GetWindow(), aEvent,
                                            CanBubble::eNo, Cancelable::eNo,
@@ -500,12 +502,10 @@ class AutoPrintEventDispatcher {
     }
   }
 
-  static bool CollectDocuments(Document* aDocument, void* aData) {
-    if (aDocument) {
-      static_cast<nsTArray<nsCOMPtr<Document>>*>(aData)->AppendElement(
-          aDocument);
-      aDocument->EnumerateSubDocuments(CollectDocuments, aData);
-    }
+  static bool CollectDocuments(Document& aDocument, void* aData) {
+    static_cast<nsTArray<nsCOMPtr<Document>>*>(aData)->AppendElement(
+        &aDocument);
+    aDocument.EnumerateSubDocuments(CollectDocuments, aData);
     return true;
   }
 
@@ -2608,7 +2608,6 @@ NS_IMETHODIMP nsDocumentViewer::SetCommandNode(nsINode* aNode) {
   root->SetPopupNode(aNode);
   return NS_OK;
 }
-
 void nsDocumentViewer::CallChildren(CallChildFunc aFunc, void* aClosure) {
   nsCOMPtr<nsIDocShell> docShell(mContainer);
   if (docShell) {
@@ -2660,9 +2659,9 @@ static void SetChildOverrideDPPX(nsIContentViewer* aChild, void* aClosure) {
   aChild->SetOverrideDPPX(ZoomInfo->mZoom);
 }
 
-static bool SetExtResourceTextZoom(Document* aDocument, void* aClosure) {
+static bool SetExtResourceTextZoom(Document& aDocument, void* aClosure) {
   // Would it be better to enumerate external resource viewers instead?
-  nsPresContext* ctxt = aDocument->GetPresContext();
+  nsPresContext* ctxt = aDocument.GetPresContext();
   if (ctxt) {
     struct ZoomInfo* ZoomInfo = static_cast<struct ZoomInfo*>(aClosure);
     ctxt->SetTextZoom(ZoomInfo->mZoom);
@@ -2671,9 +2670,9 @@ static bool SetExtResourceTextZoom(Document* aDocument, void* aClosure) {
   return true;
 }
 
-static bool SetExtResourceFullZoom(Document* aDocument, void* aClosure) {
+static bool SetExtResourceFullZoom(Document& aDocument, void* aClosure) {
   // Would it be better to enumerate external resource viewers instead?
-  nsPresContext* ctxt = aDocument->GetPresContext();
+  nsPresContext* ctxt = aDocument.GetPresContext();
   if (ctxt) {
     struct ZoomInfo* ZoomInfo = static_cast<struct ZoomInfo*>(aClosure);
     ctxt->SetFullZoom(ZoomInfo->mZoom);
@@ -2682,8 +2681,8 @@ static bool SetExtResourceFullZoom(Document* aDocument, void* aClosure) {
   return true;
 }
 
-static bool SetExtResourceOverrideDPPX(Document* aDocument, void* aClosure) {
-  nsPresContext* ctxt = aDocument->GetPresContext();
+static bool SetExtResourceOverrideDPPX(Document& aDocument, void* aClosure) {
+  nsPresContext* ctxt = aDocument.GetPresContext();
   if (ctxt) {
     struct ZoomInfo* ZoomInfo = static_cast<struct ZoomInfo*>(aClosure);
     ctxt->SetOverrideDPPX(ZoomInfo->mZoom);
@@ -2899,8 +2898,8 @@ nsDocumentViewer::GetAuthorStyleDisabled(bool* aStyleDisabled) {
   return NS_OK;
 }
 
-static bool ExtResourceEmulateMedium(Document* aDocument, void* aClosure) {
-  nsPresContext* ctxt = aDocument->GetPresContext();
+static bool ExtResourceEmulateMedium(Document& aDocument, void* aClosure) {
+  nsPresContext* ctxt = aDocument.GetPresContext();
   if (ctxt) {
     const nsAString* mediaType = static_cast<nsAString*>(aClosure);
     ctxt->EmulateMedium(*mediaType);
@@ -2929,9 +2928,9 @@ nsDocumentViewer::EmulateMedium(const nsAString& aMediaType) {
   return NS_OK;
 }
 
-static bool ExtResourceStopEmulatingMedium(Document* aDocument,
+static bool ExtResourceStopEmulatingMedium(Document& aDocument,
                                            void* aClosure) {
-  nsPresContext* ctxt = aDocument->GetPresContext();
+  nsPresContext* ctxt = aDocument.GetPresContext();
   if (ctxt) {
     ctxt->StopEmulatingMedium();
   }

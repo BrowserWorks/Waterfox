@@ -2580,11 +2580,8 @@ void nsPrintJob::EllipseLongString(nsAString& aStr, const uint32_t aLen,
   }
 }
 
-static bool DocHasPrintCallbackCanvas(Document* aDoc, void* aData) {
-  if (!aDoc) {
-    return true;
-  }
-  Element* root = aDoc->GetRootElement();
+static bool DocHasPrintCallbackCanvas(Document& aDoc, void* aData) {
+  Element* root = aDoc.GetRootElement();
   if (!root) {
     return true;
   }
@@ -2604,10 +2601,10 @@ static bool DocHasPrintCallbackCanvas(Document* aDoc, void* aData) {
   return true;
 }
 
-static bool DocHasPrintCallbackCanvas(Document* aDoc) {
+static bool DocHasPrintCallbackCanvas(Document& aDoc) {
   bool result = false;
-  aDoc->EnumerateSubDocuments(&DocHasPrintCallbackCanvas,
-                              static_cast<void*>(&result));
+  aDoc.EnumerateSubDocuments(DocHasPrintCallbackCanvas,
+                             static_cast<void*>(&result));
   return result;
 }
 
@@ -2622,9 +2619,9 @@ bool nsPrintJob::HasPrintCallbackCanvas() {
   }
   // First check this mDocument.
   bool result = false;
-  DocHasPrintCallbackCanvas(mDocument, static_cast<void*>(&result));
+  DocHasPrintCallbackCanvas(*mDocument, static_cast<void*>(&result));
   // Also check the sub documents.
-  return result || DocHasPrintCallbackCanvas(mDocument);
+  return result || DocHasPrintCallbackCanvas(*mDocument);
 }
 
 //-------------------------------------------------------
