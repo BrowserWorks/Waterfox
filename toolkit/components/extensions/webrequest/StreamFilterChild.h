@@ -131,6 +131,7 @@ private:
   }
 
   void FlushBufferedData();
+  void WriteBufferedData();
 
   virtual void ActorDestroy(ActorDestroyReason aWhy) override;
 
