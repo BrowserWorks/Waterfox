@@ -134,6 +134,7 @@ StreamFilterChild::Disconnect(ErrorResult& aRv)
     mState = State::Disconnecting;
     mNextState = State::Disconnected;
 
+    WriteBufferedData();
     SendDisconnect();
     break;
 
@@ -256,11 +257,18 @@ StreamFilterChild::MaybeStopRequest()
     return;
   }
 
+  if (mStreamFilter) {
+    Unused << mStreamFilter->CheckAlive();
+  }
+
   switch (mState) {
   case State::Suspending:
   case State::Resuming:
     mNextState = State::FinishedTransferringData;
     return;
+
+  case State::Disconnecting:
+    break;
 
   default:
     mState = State::FinishedTransferringData;
@@ -292,6 +300,18 @@ StreamFilterChild::RecvInitialized(bool aSuccess)
       mStreamFilter = nullptr;
     }
   }
+}
+
+IPCResult
+StreamFilterChild::RecvError(const nsCString& aError)
+{
+  mState = State::Error;
+  if (mStreamFilter) {
+    mStreamFilter->FireErrorEvent(NS_ConvertUTF8toUTF16(aError));
+    mStreamFilter = nullptr;
+  }
+  SendDestroy();
+  return IPC_OK();
 }
 
 IPCResult
@@ -430,6 +450,7 @@ StreamFilterChild::RecvStartRequest()
 
   if (mStreamFilter) {
     mStreamFilter->FireEvent(NS_LITERAL_STRING("start"));
+    Unused << mStreamFilter->CheckAlive();
   }
   return IPC_OK();
 }
@@ -467,10 +488,24 @@ StreamFilterChild::FlushBufferedData()
   }
 }
 
+void
+StreamFilterChild::WriteBufferedData()
+{
+  while (!mBufferedData.isEmpty()) {
+    UniquePtr<BufferedData> data(mBufferedData.popFirst());
+
+    SendWrite(data->mData);
+  }
+}
+
 IPCResult
 StreamFilterChild::RecvData(Data&& aData)
 {
   MOZ_ASSERT(!mReceivedOnStop);
+
+  if (mStreamFilter) {
+    Unused << mStreamFilter->CheckAlive();
+  }
 
   switch (mState) {
   case State::TransferringData:

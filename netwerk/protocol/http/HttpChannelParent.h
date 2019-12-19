@@ -119,6 +119,8 @@ public:
   // Callback while background channel is destroyed.
   void OnBackgroundParentDestroyed();
 
+  base::ProcessId OtherPid() const override;
+
 protected:
   // used to connect redirected-to channel in parent with just created
   // ChildChannel.  Used during redirects.

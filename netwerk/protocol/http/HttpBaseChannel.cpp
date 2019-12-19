@@ -264,6 +264,13 @@ HttpBaseChannel::ReleaseMainThreadOnlyReferences()
   NS_DispatchToMainThread(new ProxyReleaseRunnable(Move(arrayToRelease)));
 }
 
+void
+HttpBaseChannel::SetIsTrackingResource()
+{
+  LOG(("HttpBaseChannel::SetIsTrackingResource %p", this));
+  mIsTrackingResource = true;
+}
+
 nsresult
 HttpBaseChannel::Init(nsIURI *aURI,
                       uint32_t aCaps,
@@ -4095,6 +4102,8 @@ HttpBaseChannel::EnsureRequestContextID()
 {
     if (mRequestContextID) {
         // Already have a request context ID, no need to do the rest of this work
+        LOG(("HttpBaseChannel::EnsureRequestContextID this=%p id=%" PRIx64,
+             this, mRequestContextID));
         return true;
     }
 
@@ -4114,6 +4123,10 @@ HttpBaseChannel::EnsureRequestContextID()
 
     // Set the load group connection scope on the transaction
     rootLoadGroup->GetRequestContextID(&mRequestContextID);
+
+    LOG(("HttpBaseChannel::EnsureRequestContextID this=%p id=%" PRIx64,
+         this, mRequestContextID));
+
     return true;
 }
 

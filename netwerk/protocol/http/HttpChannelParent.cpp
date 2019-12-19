@@ -263,6 +263,15 @@ HttpChannelParent::CleanupBackgroundChannel()
   }
 }
 
+base::ProcessId
+HttpChannelParent::OtherPid() const
+{
+  if (mIPCClosed) {
+    return 0;
+  }
+  return Manager()->OtherPid();
+}
+
 //-----------------------------------------------------------------------------
 // HttpChannelParent::nsISupports
 //-----------------------------------------------------------------------------
@@ -491,8 +500,8 @@ HttpChannelParent::DoAsyncOpen(  const URIParams&           aURI,
   nsCOMPtr<nsIURI> apiRedirectToUri = DeserializeURI(aAPIRedirectToURI);
   nsCOMPtr<nsIURI> topWindowUri = DeserializeURI(aTopWindowURI);
 
-  LOG(("HttpChannelParent RecvAsyncOpen [this=%p uri=%s]\n",
-       this, uri->GetSpecOrDefault().get()));
+  LOG(("HttpChannelParent RecvAsyncOpen [this=%p uri=%s, gid=%" PRIu64 " topwinid=%" PRIx64 "]\n",
+       this, uri->GetSpecOrDefault().get(), aChannelId, aTopLevelOuterContentWindowId));
 
   nsresult rv;
 
@@ -810,6 +819,8 @@ HttpChannelParent::ConnectChannel(const uint32_t& registrarId, const bool& shoul
     Delete();
     return true;
   }
+
+  LOG(("  and it is nsHttpChannel %p", mChannel.get()));
 
   mChannel->SetWarningReporter(this);
 

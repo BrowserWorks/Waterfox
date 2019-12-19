@@ -19,6 +19,8 @@ XPCOMUtils.defineLazyModuleGetter(this, "Extension",
                                   "resource://gre/modules/Extension.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "FileUtils",
                                   "resource://gre/modules/FileUtils.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "MessageChannel",
+                                  "resource://gre/modules/MessageChannel.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "Schemas",
                                   "resource://gre/modules/Schemas.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "Services",
@@ -56,17 +58,25 @@ let BASE_MANIFEST = Object.freeze({
 
 
 function frameScript() {
+  Components.utils.import("resource://gre/modules/MessageChannel.jsm");
   Components.utils.import("resource://gre/modules/Services.jsm");
 
   Services.obs.notifyObservers(this, "tab-content-frameloader-created");
+
+  const messageListener = {
+    async receiveMessage({target, messageName, recipient, data, name}) {
+      /* globals content */
+      let resp = await content.fetch(data.url, data.options);
+      return resp.text();
+    },
+  };
+  MessageChannel.addListener(this, "Test:Fetch", messageListener);
 
   // eslint-disable-next-line mozilla/balanced-listeners
   addEventListener("MozHeapMinimize", () => {
     Services.obs.notifyObservers(null, "memory-pressure", "heap-minimize");
   }, true, true);
 }
-
-const FRAME_SCRIPT = `data:text/javascript,(${encodeURI(frameScript)}).call(this)`;
 
 let kungFuDeathGrip = new Set();
 function promiseBrowserLoaded(browser, url, redirectUrl) {
@@ -132,10 +142,20 @@ class ContentPage {
     chromeDoc.documentElement.appendChild(browser);
 
     await awaitFrameLoader;
-    browser.messageManager.loadFrameScript(FRAME_SCRIPT, true);
-
     this.browser = browser;
+
+    this.loadFrameScript(frameScript);
+
     return browser;
+  }
+
+  sendMessage(msg, data) {
+    return MessageChannel.sendMessage(this.browser.messageManager, msg, data);
+  }
+
+  loadFrameScript(func) {
+    let frameScript = `data:text/javascript,(${encodeURI(func)}).call(this)`;
+    this.browser.messageManager.loadFrameScript(frameScript, true);
   }
 
   async loadURL(url, redirectUrl = undefined) {
@@ -143,6 +163,10 @@ class ContentPage {
 
     this.browser.loadURI(url);
     return promiseBrowserLoaded(this.browser, url, redirectUrl);
+  }
+
+  async fetch(url, options) {
+    return this.sendMessage("Test:Fetch", {url, options});
   }
 
   async close() {
@@ -609,6 +633,8 @@ var ExtensionTestUtils = {
 
     this.profileDir = scope.do_get_profile();
 
+    this.fetchScopes = new Map();
+
     // We need to load at least one frame script into every message
     // manager to ensure that the scriptable wrapper for its global gets
     // created before we try to access it externally. If we don't, we
@@ -641,6 +667,10 @@ var ExtensionTestUtils = {
       Services.dirsvc.unregisterProvider(dirProvider);
 
       this.currentScope = null;
+
+
+      return Promise.all(Array.from(this.fetchScopes.values(),
+                                    promise => promise.then(scope => scope.close())));
     });
   },
 
@@ -686,6 +716,17 @@ var ExtensionTestUtils = {
 
   set remoteContentScripts(val) {
     REMOTE_CONTENT_SCRIPTS = !!val;
+  },
+
+  async fetch(origin, url, options) {
+    let fetchScopePromise = this.fetchScopes.get(origin);
+    if (!fetchScopePromise) {
+      fetchScopePromise = this.loadContentPage(origin);
+      this.fetchScopes.set(origin, fetchScopePromise);
+    }
+
+    let fetchScope = await fetchScopePromise;
+    return fetchScope.sendMessage("Test:Fetch", {url, options});
   },
 
   loadContentPage(url, remote = undefined, redirectUrl = undefined) {
