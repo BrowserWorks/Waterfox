@@ -27,7 +27,7 @@ const BUILT_IN_SECTIONS = {
         icon: "icon-info",
       }] : [],
     },
-    shouldHidePref: options.hidden,
+    shouldHidePref: true,
     eventSource: "TOP_STORIES",
     icon: options.provider_icon,
     title: {id: "header_recommended_by", values: {provider: options.provider_name}},
@@ -63,9 +63,6 @@ const BUILT_IN_SECTIONS = {
       }, {
         name: "section.highlights.includeDownloads",
         titleString: "prefs_highlights_options_download_label",
-      }, {
-        name: "section.highlights.includePocket",
-        titleString: "prefs_highlights_options_pocket_label",
       }],
     },
     shouldHidePref:  false,

@@ -35,8 +35,6 @@ ChromeUtils.defineModuleGetter(this, "ASRouterTriggerListeners",
   "resource://activity-stream/lib/ASRouterTriggerListeners.jsm");
 ChromeUtils.defineModuleGetter(this, "TelemetryEnvironment",
   "resource://gre/modules/TelemetryEnvironment.jsm");
-ChromeUtils.defineModuleGetter(this, "ClientEnvironment",
-  "resource://normandy/lib/ClientEnvironment.jsm");
 ChromeUtils.defineModuleGetter(this, "Sampling",
   "resource://gre/modules/components-utils/Sampling.jsm");
 
@@ -739,7 +737,7 @@ class _ASRouter {
     const locale = Services.locale.appLocaleAsLangTag;
 
     if (TRAILHEAD_CONFIG.LOCALES.includes(locale)) {
-      const {userId} = ClientEnvironment;
+      const {userId} = '';
       experiment = await chooseBranch(`${userId}-trailhead-experiments`, TRAILHEAD_CONFIG.EXPERIMENT_RATIOS);
 
       // For the interrupts experiment,
