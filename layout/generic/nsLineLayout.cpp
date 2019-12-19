@@ -255,6 +255,8 @@ nsLineLayout::EndLineReflow()
                 !mFramesAllocated && !mFramesFreed && !mFrameFreeList),
                "Allocated frames or spans on non-base line layout?");
 
+  MOZ_ASSERT(mRootSpan == mCurrentSpan);
+
   UnlinkFrame(mRootSpan->mFrame);
   mCurrentSpan = mRootSpan = nullptr;
 
@@ -447,6 +449,12 @@ nsLineLayout::EndSpan(nsIFrame* aFrame)
   printf(": EndSpan width=%d\n", mCurrentSpan->mICoord - mCurrentSpan->mIStart);
 #endif
   PerSpanData* psd = mCurrentSpan;
+  MOZ_ASSERT(psd->mParent, "We never call this on the root");
+
+  if (psd->mNoWrap && !psd->mParent->mNoWrap) {
+    FlushNoWrapFloats();
+  }
+
   nscoord iSizeResult = psd->mLastFrame ? (psd->mICoord - psd->mIStart) : 0;
 
   mSpanDepth--;
@@ -942,27 +950,25 @@ nsLineLayout::ReflowFrame(nsIFrame* aFrame,
       pfd->mSkipWhenTrimmingWhitespace = true;
       nsIFrame* outOfFlowFrame = nsLayoutUtils::GetFloatFromPlaceholder(aFrame);
       if (outOfFlowFrame) {
-        // Add mTrimmableISize to the available width since if the line ends
-        // here, the width of the inline content will be reduced by
-        // mTrimmableISize.
-        nscoord availableISize = psd->mIEnd - (psd->mICoord - mTrimmableISize);
-        if (psd->mNoWrap) {
-          // If we place floats after inline content where there's
-          // no break opportunity, we don't know how much additional
-          // width is required for the non-breaking content after the float,
-          // so we can't know whether the float plus that content will fit
-          // on the line. So for now, don't place floats after inline
-          // content where there's no break opportunity. This is incorrect
-          // but hopefully rare. Fixing it will require significant
-          // restructuring of line layout.
-          // We might as well allow zero-width floats to be placed, though.
-          availableISize = 0;
+        if (psd->mNoWrap &&
+            // We can always place floats in an empty line.
+            !LineIsEmpty() &&
+            // We always place floating letter frames. This kinda sucks. They'd
+            // usually fall into the LineIsEmpty() check anyway, except when
+            // there's something like a bullet before or what not. We actually
+            // need to place them now, because they're pretty nasty and they
+            // create continuations that are in flow and not a kid of the
+            // previous continuation's parent. We don't want the deferred reflow
+            // of the letter frame to kill a continuation after we've stored it
+            // in the line layout data structures. See bug 1490281 to fix the
+            // underlying issue. When that's fixed this check should be removed.
+            !outOfFlowFrame->IsLetterFrame() &&
+            !GetOutermostLineLayout()->mBlockRI->mFlags.mCanHaveTextOverflow) {
+          // We'll do this at the next break opportunity.
+          RecordNoWrapFloat(outOfFlowFrame);
+        } else {
+          placedFloat = TryToPlaceFloat(outOfFlowFrame);
         }
-        placedFloat = GetOutermostLineLayout()->
-          AddFloat(outOfFlowFrame, availableISize);
-        NS_ASSERTION(!(outOfFlowFrame->IsLetterFrame() &&
-                       GetFirstLetterStyleOK()),
-                    "FirstLetterStyle set on line with floating first letter");
       }
     }
     else if (isText) {
@@ -1108,8 +1114,8 @@ nsLineLayout::ReflowFrame(nsIFrame* aFrame,
         VerticalAlignFrames(span);
       }
 
-      if (!continuingTextRun) {
-        if (!psd->mNoWrap && (!LineIsEmpty() || placedFloat)) {
+      if (!continuingTextRun && !psd->mNoWrap) {
+        if (!LineIsEmpty() || placedFloat) {
           // record soft break opportunity after this content that can't be
           // part of a text run. This is not a text frame so we know
           // that offset INT32_MAX means "after the content".
@@ -1491,6 +1497,60 @@ nsLineLayout::DumpPerSpanData(PerSpanData* psd, int32_t aIndent)
   }
 }
 #endif
+
+void
+nsLineLayout::RecordNoWrapFloat(nsIFrame* aFloat)
+{
+  GetOutermostLineLayout()->mBlockRI->mNoWrapFloats.AppendElement(aFloat);
+}
+
+void
+nsLineLayout::FlushNoWrapFloats()
+{
+  auto& noWrapFloats = GetOutermostLineLayout()->mBlockRI->mNoWrapFloats;
+  for (nsIFrame* floatedFrame : noWrapFloats) {
+    TryToPlaceFloat(floatedFrame);
+  }
+  noWrapFloats.Clear();
+}
+
+bool
+nsLineLayout::TryToPlaceFloat(nsIFrame* aFloat)
+{
+  // Add mTrimmableISize to the available width since if the line ends here, the
+  // width of the inline content will be reduced by mTrimmableISize.
+  nscoord availableISize = mCurrentSpan->mIEnd - (mCurrentSpan->mICoord - mTrimmableISize);
+  NS_ASSERTION(!(aFloat->IsLetterFrame() && GetFirstLetterStyleOK()),
+              "FirstLetterStyle set on line with floating first letter");
+  return GetOutermostLineLayout()->AddFloat(aFloat, availableISize);
+}
+
+bool
+nsLineLayout::NotifyOptionalBreakPosition(nsIFrame* aFrame,
+                                          int32_t aOffset,
+                                          bool aFits,
+                                          gfxBreakPriority aPriority)
+{
+  MOZ_ASSERT(!aFits || !mNeedBackup,
+             "Shouldn't be updating the break position with a break that fits "
+             "after we've already flagged an overrun");
+  MOZ_ASSERT(mCurrentSpan, "Should be doing line layout");
+  if (mCurrentSpan->mNoWrap) {
+    FlushNoWrapFloats();
+  }
+
+  // Remember the last break position that fits; if there was no break that fit,
+  // just remember the first break
+  if ((aFits && aPriority >= mLastOptionalBreakPriority) ||
+      !mLastOptionalBreakFrame) {
+    mLastOptionalBreakFrame = aFrame;
+    mLastOptionalBreakFrameOffset = aOffset;
+    mLastOptionalBreakPriority = aPriority;
+  }
+  return aFrame && mForceBreakFrame == aFrame &&
+    mForceBreakFrameOffset == aOffset;
+}
+
 
 #define VALIGN_OTHER  0
 #define VALIGN_TOP    1
