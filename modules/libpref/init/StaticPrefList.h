@@ -1131,6 +1131,14 @@ VARCACHE_PREF(
   bool, false
 )
 
+// Pref to control whether -moz-binding declarations are enabled in content
+// pages.
+VARCACHE_PREF(
+  "layout.css.moz-binding.content.enabled",
+   layout_css_moz_binding_content_enabled,
+  bool, false
+)
+
 #ifdef NIGHTLY_BUILD
 # define PREF_VALUE true
 #else
