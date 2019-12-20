@@ -148,7 +148,7 @@ FetchStreamReader::CloseAndRelease(nsresult aStatus)
   mWorkerHolder = nullptr;
 
   mReader = nullptr;
-  mBuffer = nullptr;
+  mBuffer.Clear();
 }
 
 void
@@ -191,7 +191,7 @@ FetchStreamReader::OnOutputStreamReady(nsIAsyncOutputStream* aStream)
     return NS_OK;
   }
 
-  if (mBuffer) {
+  if (!mBuffer.IsEmpty()) {
     return WriteBuffer();
   }
 
@@ -267,8 +267,13 @@ FetchStreamReader::ResolvedCallback(JSContext* aCx,
     return;
   }
 
-  MOZ_DIAGNOSTIC_ASSERT(!mBuffer);
-  mBuffer = Move(value);
+  MOZ_DIAGNOSTIC_ASSERT(mBuffer.IsEmpty());
+
+  // Let's take a copy of the data.
+  if (!mBuffer.AppendElements(array.Data(), len, fallible)) {
+    CloseAndRelease(aCx, NS_ERROR_OUT_OF_MEMORY);
+    return;
+  }
 
   mBufferOffset = 0;
   mBufferRemaining = len;
@@ -276,14 +281,10 @@ FetchStreamReader::ResolvedCallback(JSContext* aCx,
   WriteBuffer();
 }
 
-nsresult
-FetchStreamReader::WriteBuffer()
-{
-  MOZ_ASSERT(mBuffer);
-  MOZ_ASSERT(mBuffer->mValue.WasPassed());
+nsresult FetchStreamReader::WriteBuffer() {
+  MOZ_ASSERT(!mBuffer.IsEmpty());
 
-  Uint8Array& array = mBuffer->mValue.Value();
-  char* data = reinterpret_cast<char*>(array.Data());
+  char* data = reinterpret_cast<char*>(mBuffer.Elements());
 
   while (1) {
     uint32_t written = 0;
@@ -304,7 +305,7 @@ FetchStreamReader::WriteBuffer()
     mBufferOffset += written;
 
     if (mBufferRemaining == 0) {
-      mBuffer = nullptr;
+      mBuffer.Clear();
       break;
     }
   }
