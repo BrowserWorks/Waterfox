@@ -140,7 +140,7 @@ async function testAdUrlClicked(serpUrl, adUrl, expectedAdKey) {
   info(`Testing Ad URL: ${adUrl}`);
   let channel = NetUtil.newChannel({
     uri: NetUtil.newURI(adUrl),
-    triggeringPrincipal: Services.scriptSecurityManager.createContentPrincipal(
+    triggeringPrincipal: Services.scriptSecurityManager.createCodebasePrincipal(
       NetUtil.newURI(serpUrl),
       {}
     ),
