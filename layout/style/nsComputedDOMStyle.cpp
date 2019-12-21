@@ -265,7 +265,7 @@ nsComputedDOMStyle::nsComputedDOMStyle(dom::Element* aElement,
   // TODO(emilio, bug 548397, https://github.com/w3c/csswg-drafts/issues/2403):
   // Should use aElement->OwnerDoc() instead.
   mDocumentWeak = do_GetWeakReference(aDocument);
-  mContent = aElement;
+  mElement = aElement;
   mPseudo = nsCSSPseudoElements::GetPseudoAtom(aPseudoElt);
 }
 
@@ -277,13 +277,13 @@ nsComputedDOMStyle::~nsComputedDOMStyle()
 NS_IMPL_CYCLE_COLLECTION_CLASS(nsComputedDOMStyle)
 
 NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN(nsComputedDOMStyle)
-  tmp->ClearStyleContext();  // remove observer before clearing mContent
-  NS_IMPL_CYCLE_COLLECTION_UNLINK(mContent)
+  tmp->ClearStyleContext();  // remove observer before clearing mElement
+  NS_IMPL_CYCLE_COLLECTION_UNLINK(mElement)
   NS_IMPL_CYCLE_COLLECTION_UNLINK_PRESERVED_WRAPPER
 NS_IMPL_CYCLE_COLLECTION_UNLINK_END
 
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN(nsComputedDOMStyle)
-  NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mContent)
+  NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mElement)
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 
 NS_IMPL_CYCLE_COLLECTION_TRACE_WRAPPERCACHE(nsComputedDOMStyle)
@@ -781,7 +781,7 @@ nsComputedDOMStyle::ClearStyleContext()
 {
   if (mResolvedStyleContext) {
     mResolvedStyleContext = false;
-    mContent->RemoveMutationObserver(this);
+    mElement->RemoveMutationObserver(this);
   }
   mStyleContext = nullptr;
 }
@@ -792,7 +792,7 @@ nsComputedDOMStyle::SetResolvedStyleContext(RefPtr<nsStyleContext>&& aContext,
 {
   if (!mResolvedStyleContext) {
     mResolvedStyleContext = true;
-    mContent->AddMutationObserver(this);
+    mElement->AddMutationObserver(this);
   }
   mStyleContext = aContext;
   mStyleContextGeneration = aGeneration;
@@ -818,7 +818,7 @@ nsComputedDOMStyle::UpdateCurrentStyleSources(bool aNeedsLayoutFlush)
 
   // Flush _before_ getting the presshell, since that could create a new
   // presshell.  Also note that we want to flush the style on the document
-  // we're computing style in, not on the document mContent is in -- the two
+  // we're computing style in, not on the document mElement is in -- the two
   // may be different.
   document->FlushPendingNotifications(
     aNeedsLayoutFlush ? FlushType::Layout : FlushType::Style);
@@ -826,7 +826,7 @@ nsComputedDOMStyle::UpdateCurrentStyleSources(bool aNeedsLayoutFlush)
   mFlushedPendingReflows = aNeedsLayoutFlush;
 #endif
 
-  nsCOMPtr<nsIPresShell> presShellForContent = GetPresShellForContent(mContent);
+  nsCOMPtr<nsIPresShell> presShellForContent = GetPresShellForContent(mElement);
   if (presShellForContent && presShellForContent != document->GetShell()) {
     presShellForContent->FlushPendingNotifications(FlushType::Style);
   }
@@ -851,12 +851,12 @@ nsComputedDOMStyle::UpdateCurrentStyleSources(bool aNeedsLayoutFlush)
 
   if (mStyleContext) {
     // We can't rely on the undisplayed restyle generation if
-    // mContent is out-of-document, since that generation is not
+    // mElement is out-of-document, since that generation is not
     // incremented for DOM changes on out-of-document elements.
     // So we always need to update the style context to ensure it
     // it up-to-date.
     if (mStyleContextGeneration == currentGeneration
-        && mContent->IsInComposedDoc()) {
+        && mElement->IsInComposedDoc()) {
       // Our cached style context is still valid.
       return;
     }
@@ -865,21 +865,21 @@ nsComputedDOMStyle::UpdateCurrentStyleSources(bool aNeedsLayoutFlush)
     mStyleContext = nullptr;
   }
 
-  // XXX the !mContent->IsHTMLElement(nsGkAtoms::area)
+  // XXX the !mElement->IsHTMLElement(nsGkAtoms::area)
   // check is needed due to bug 135040 (to avoid using
   // mPrimaryFrame). Remove it once that's fixed.
-  if (mStyleType == eAll && !mContent->IsHTMLElement(nsGkAtoms::area)) {
+  if (mStyleType == eAll && !mElement->IsHTMLElement(nsGkAtoms::area)) {
     mOuterFrame = nullptr;
 
     if (!mPseudo) {
-      mOuterFrame = mContent->GetPrimaryFrame();
+      mOuterFrame = mElement->GetPrimaryFrame();
     } else if (mPseudo == nsCSSPseudoElements::before ||
                mPseudo == nsCSSPseudoElements::after) {
       nsIAtom* property = mPseudo == nsCSSPseudoElements::before
                             ? nsGkAtoms::beforePseudoProperty
                             : nsGkAtoms::afterPseudoProperty;
 
-      auto* pseudo = static_cast<Element*>(mContent->GetProperty(property));
+      auto* pseudo = static_cast<Element*>(mElement->GetProperty(property));
       mOuterFrame = pseudo ? pseudo->GetPrimaryFrame() : nullptr;
     }
 
@@ -928,7 +928,7 @@ nsComputedDOMStyle::UpdateCurrentStyleSources(bool aNeedsLayoutFlush)
     // Need to resolve a style context
     RefPtr<nsStyleContext> resolvedStyleContext =
       nsComputedDOMStyle::GetStyleContextNoFlush(
-          mContent->AsElement(),
+          mElement,
           mPseudo,
           presShellForContent ? presShellForContent.get() : mPresShell,
           mStyleType);
@@ -956,7 +956,7 @@ nsComputedDOMStyle::UpdateCurrentStyleSources(bool aNeedsLayoutFlush)
     nsStyleSet* styleSet = mPresShell->StyleSet()->AsGecko();
     RefPtr<nsStyleContext> unanimatedStyleContext =
       styleSet->ResolveStyleByRemovingAnimation(
-        mContent->AsElement(), mStyleContext->AsGecko(),
+        mElement, mStyleContext->AsGecko(),
         eRestyle_AllHintsWithAnimations);
     SetResolvedStyleContext(Move(unanimatedStyleContext), currentGeneration);
   }
@@ -3121,7 +3121,7 @@ nsComputedDOMStyle::DoGetGridTemplateColumns()
 
   nsGridContainerFrame* gridFrame =
     nsGridContainerFrame::GetGridFrameWithComputedInfo(
-      mContent->GetPrimaryFrame());
+      mElement->GetPrimaryFrame());
 
   if (gridFrame) {
     info = gridFrame->GetComputedTemplateColumns();
@@ -3137,7 +3137,7 @@ nsComputedDOMStyle::DoGetGridTemplateRows()
 
   nsGridContainerFrame* gridFrame =
     nsGridContainerFrame::GetGridFrameWithComputedInfo(
-      mContent->GetPrimaryFrame());
+      mElement->GetPrimaryFrame());
 
   if (gridFrame) {
     info = gridFrame->GetComputedTemplateRows();
@@ -5463,7 +5463,7 @@ nsComputedDOMStyle::GetLineHeightCoord(nscoord& aCoord)
 
   // lie about font size inflation since we lie about font size (since
   // the inflation only applies to text)
-  aCoord = ReflowInput::CalcLineHeight(mContent, mStyleContext,
+  aCoord = ReflowInput::CalcLineHeight(mElement, mStyleContext,
                                        blockHeight, 1.0f);
 
   // CalcLineHeight uses font->mFont.size, but we want to use
@@ -6982,7 +6982,7 @@ nsComputedDOMStyle::DoGetCustomProperty(const nsAString& aPropertyName)
 void
 nsComputedDOMStyle::ParentChainChanged(nsIContent* aContent)
 {
-  NS_ASSERTION(mContent == aContent, "didn't we register mContent?");
+  NS_ASSERTION(mElement == aContent, "didn't we register mElement?");
   NS_ASSERTION(mResolvedStyleContext,
                "should have only registered an observer when "
                "mResolvedStyleContext is true");
