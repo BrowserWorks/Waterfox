@@ -346,7 +346,6 @@ nsComputedDOMStyle::SetCssText(const nsAString& aCssText)
 NS_IMETHODIMP
 nsComputedDOMStyle::GetLength(uint32_t* aLength)
 {
-  NS_PRECONDITION(aLength, "Null aLength!  Prepare to die!");
 
   uint32_t length = GetComputedStyleMap()->Length();
 
@@ -357,6 +356,8 @@ nsComputedDOMStyle::GetLength(uint32_t* aLength)
     length += mStyleContext->IsServo()
       ? Servo_GetCustomPropertiesCount(mStyleContext->AsServo())
       : StyleVariables()->mVariables.Count();
+  } else {
+    length = 0;
   }
 
   *aLength = length;
@@ -1034,7 +1035,6 @@ nsComputedDOMStyle::GetPropertyCSSValue(const nsAString& aPropertyName, ErrorRes
 
   UpdateCurrentStyleSources(needsLayoutFlush);
   if (!mStyleContext) {
-    aRv.Throw(NS_ERROR_NOT_AVAILABLE);
     return nullptr;
   }
 
