@@ -1183,3 +1183,7 @@ top-bookmarks =
 pane-windowAppearance-title = Window Appearance
 
 pane-menu-title = Menu
+
+search-suggestions-header = Search Suggestions
+
+dnt-header = "Do Not Track” signal

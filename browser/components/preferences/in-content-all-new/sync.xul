@@ -6,8 +6,8 @@
 
 <script src="chrome://browser/content/preferences/in-content/sync.js"/>
 <html:template id="template-paneSync">
-
-<deck id="weavePrefsDeck" data-category="paneSync" hidden="true"
+<html:section xmlns:html="http://www.w3.org/1999/xhtml" class="setting-section" data-category="paneSync" hidden="true">
+<deck id="weavePrefsDeck"
       data-hidden-from-search="true">
   <groupbox id="noFxaAccount">
   <label><html:h2 data-l10n-id="pane-sync-title2"/></label>
@@ -203,4 +203,5 @@
     </vbox>
   </vbox>
 </deck>
+</html:section>
 </html:template>

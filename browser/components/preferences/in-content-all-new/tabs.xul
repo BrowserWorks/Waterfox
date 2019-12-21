@@ -8,9 +8,11 @@
 <html:template id="template-paneTabs">
 
 <!-- Tab preferences -->
-<groupbox data-category="paneTabs"
-          hidden="true">
-    <label><html:h2 data-l10n-id="tabs-group-header"/></label>
+<html:section class="setting-section"
+              data-category="paneTabs"
+              hidden="true">
+<html:h2 data-l10n-id="tabs-group-header"/>
+<groupbox>
 
     <checkbox id="ctrlTabRecentlyUsedOrder" data-l10n-id="ctrl-tab-recently-used-order"
               preference="browser.ctrlTab.recentlyUsedOrder"
@@ -99,5 +101,5 @@
     </vbox>
 
 </groupbox>
-
+</html:section>
 </html:template>

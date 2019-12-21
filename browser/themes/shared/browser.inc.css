@@ -528,6 +528,7 @@
   list-style-image: url(chrome://browser/skin/fullscreen.svg);
   margin-left: 10px;
   margin-right: 12px;
+  margin-bottom: 3px;
 }
 
 #browser-bottombox #TabsToolbar {

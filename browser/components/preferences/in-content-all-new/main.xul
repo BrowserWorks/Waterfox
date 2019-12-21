@@ -10,13 +10,35 @@
 <stringbundle id="bundlePreferences" src="chrome://browser/locale/preferences.properties"/>
 
 <html:template id="template-paneGeneral">
-
+<html:section class="setting-section"
+              data-category="paneGeneral"
+              hidden="true">
 <!-- Startup -->
-<groupbox id="startupGroup"
-          data-category="paneGeneral"
-          hidden="true">
-  <label><html:h2 class="subcategory-header" data-l10n-id="startup-header"/></label>
-
+<html:h2 data-l10n-id="startup-header"/>
+#ifdef HAVE_SHELL_SERVICE
+<groupbox id="defaultBrowserGroup" class="setting-group">
+  <vbox id="defaultBrowserBox">
+    <deck id="setDefaultPane">
+      <hbox align="center">
+        <image class="face-sad"/>
+        <label id="isNotDefaultLabel" flex="1" data-l10n-id="is-not-default"/>
+      </hbox>
+      <hbox align="center">
+        <image class="face-smile"/>
+        <label id="isDefaultLabel" flex="1" data-l10n-id="is-default"/>
+      </hbox>
+    </deck>
+    <button id="setDefaultButton"
+                is="highlightable-button"
+                class="accessory-button"
+                data-l10n-id="set-as-my-default-browser"
+                preference="pref.general.disable_button.default_browser"/>
+      <checkbox id="alwaysCheckDefault" preference="browser.shell.checkDefaultBrowser"
+              data-l10n-id="always-check-default"/>
+  </vbox>
+</groupbox>
+#endif
+<groupbox id="sessionGroup" class="setting-group">
   <vbox id="startupPageBox">
     <checkbox id="browserRestoreSession"
               data-l10n-id="startup-restore-previous-session"/>
@@ -27,33 +49,15 @@
                 data-l10n-id="startup-restore-warn-on-quit"/>
     </hbox>
   </vbox>
-
-#ifdef HAVE_SHELL_SERVICE
-  <vbox id="defaultBrowserBox">
-    <checkbox id="alwaysCheckDefault" preference="browser.shell.checkDefaultBrowser"
-              data-l10n-id="always-check-default"/>
-    <deck id="setDefaultPane">
-      <hbox align="center" class="indent">
-        <image class="face-sad"/>
-        <label id="isNotDefaultLabel" flex="1" data-l10n-id="is-not-default"/>
-        <button id="setDefaultButton"
-                is="highlightable-button"
-                class="accessory-button"
-                data-l10n-id="set-as-my-default-browser"
-                preference="pref.general.disable_button.default_browser"/>
-      </hbox>
-      <hbox align="center" class="indent">
-        <image class="face-smile"/>
-        <label id="isDefaultLabel" flex="1" data-l10n-id="is-default"/>
-      </hbox>
-    </deck>
-  </vbox>
-#endif
 </groupbox>
+</html:section>
 
+<html:section class="setting-section"
+              data-category="paneGeneral"
+              hidden="true">
 <!-- Languages -->
-<groupbox id="languagesGroup" data-category="paneGeneral" hidden="true">
-  <label><html:h2 data-l10n-id="language-header"/></label>
+<html:h2 data-l10n-id="language-header"/>
+<groupbox id="languagesGroup">
 
   <vbox id="browserLanguagesBox" align="start" hidden="true">
     <description flex="1" controls="chooseBrowserLanguage" data-l10n-id="choose-browser-language-description"/>
@@ -118,12 +122,15 @@
           onsynctopreference="return gMainPane.writeCheckSpelling();"
           preference="layout.spellcheckDefault"/>
 </groupbox>
+</html:section>
 
+<html:section class="setting-section"
+              data-category="paneGeneral"
+              hidden="true">
 <!-- Network Settings-->
-<groupbox id="connectionGroup" data-category="paneGeneral" hidden="true">
   <label class="search-header" hidden="true"><html:h2 data-l10n-id="network-settings-title"/></label>
-  <label><html:h2 data-l10n-id="network-settings-title"/></label>
-
+  <html:h2 data-l10n-id="network-settings-title"/>
+<groupbox id="connectionGroup">
   <hbox align="center">
     <hbox align="center" flex="1">
       <description id="connectionSettingsDescription" control="connectionSettings"/>
@@ -168,5 +175,6 @@
     </hbox>
   </hbox>
 </groupbox>
+</html:section>
 
 </html:template>

@@ -11,10 +11,12 @@
 <script src="chrome://browser/content/preferences/in-content-all-new/downloads.js"/>
 
 <html:template id="template-paneDownloads">
-
+<html:section class="setting-section"
+              data-category="paneDownloads"
+              hidden="true">
 <!--Downloads-->
-<groupbox id="downloadsGroup" data-category="paneDownloads" hidden="true">
-  <label><html:h2 data-l10n-id="download-header"/></label>
+<html:h2 data-l10n-id="download-header"/>
+<groupbox id="downloadsGroup" class="setting-group">
 
   <radiogroup id="saveWhere"
               preference="browser.download.useDownloadDir"
@@ -23,9 +25,12 @@
       <radio id="saveTo"
              value="true"
              data-l10n-id="download-save-to"/>
-      <textbox id="downloadFolder" flex="1"
+      <html:input id="downloadFolder" type="text"
                readonly="true"
                aria-labelledby="saveTo"/>
+      <!-- <textbox id="downloadFolder" flex="1"
+               readonly="true"
+               aria-labelledby="saveTo"/> -->
       <button id="chooseFolder"
               is="highlightable-button"
               class="accessory-button"
@@ -41,15 +46,20 @@
   </radiogroup>
 </groupbox>
 
+</html:section>
 
 #ifdef HAVE_SHELL_SERVICE
   <stringbundle id="bundleShell" src="chrome://browser/locale/shellservice.properties"/>
   <stringbundle id="bundleBrand" src="chrome://branding/locale/brand.properties"/>
 #endif
 
+<html:section class="setting-section"
+              data-category="paneDownloads"
+              hidden="true">
 <!-- Update -->
-<groupbox id="updateApp" data-category="paneDownloads" hidden="true">
-  <label><html:h2 data-l10n-id="update-application-title"/></label>
+<html:h2 data-l10n-id="update-application-title"/>
+
+<groupbox id="updateApp" class="setting-section">
 
   <label class="search-header" hidden="true"><html:h2 data-l10n-id="update-application-title"/></label>
 
@@ -204,5 +214,7 @@
             data-l10n-id="update-enable-search-update"
             preference="browser.search.update"/>
 </groupbox>
+
+</html:section>
 
 </html:template>

@@ -5,7 +5,7 @@
 @namespace url("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul");
 @namespace html url("http://www.w3.org/1999/xhtml");
 
-groupbox html|h2 {
+groupbox html|h2, html|section.setting-section html|h2 {
   border-bottom: 1px solid var(--in-content-border-color);
   text-transform: uppercase;
   letter-spacing: 0.4pt;
@@ -15,6 +15,9 @@ groupbox html|h2 {
 
 .main-content {
   padding-top: 24px;
+  display: flex;
+  flex: 1;
+  contain: strict;
   /* background: #343434;
   color: #cdc8c0; */
 }
@@ -33,7 +36,7 @@ groupbox html|h2 {
 }
 
 #mainPrefPane {
-  padding-top: 55px;
+  padding-top: 35px;
 }
 
 /* .navigation {
@@ -74,4 +77,65 @@ textbox {
 
 #category-all > .category-icon {
   list-style-image: url("chrome://browser/skin/preferences/in-content/all.svg");
+}
+
+.setting-group {
+  display: inline-block;
+  vertical-align: top;
+  width: 100%;
+  max-width: 220px;
+  margin: 0 18px 18px 0;
+}
+
+.setting-single {
+  margin: 0 0 3px;
+}
+
+.setting-group html|h3 {
+  margin-top: 0;
+  margin-bottom: 6px;
+}
+
+html|section.setting-section html|h2 {
+  padding-top: 24px;
+}
+
+#handlersView {
+  height: auto;
+}
+
+.pane-container {
+  flex: 1 1 auto;
+  max-width: 1400px;
+}
+
+.accessory-button
+{
+  margin-right: 5px;
+}
+
+#searchbarGroup {
+  padding-bottom: 15px;
+  margin-right: 18px;
+}
+
+html|input#downloadFolder {
+  min-width: 50ch !important;
+  margin-right: 15px;
+}
+
+#fontsGroup {
+  margin-bottom: 30px;
+}
+
+#enableOCSP {
+  padding-top: 10px;
+}
+
+html|section.setting-section[data-category="panePrivacy"] groupbox:not(.setting-group) {
+  margin: 0 18px 18px 0;
+}
+
+#trackingGroup {
+  max-width: 650px;
 }
