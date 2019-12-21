@@ -66,14 +66,15 @@ using namespace mozilla::dom;
  */
 
 already_AddRefed<nsComputedDOMStyle>
-NS_NewComputedDOMStyle(dom::Element* aElement, const nsAString& aPseudoElt,
-                       nsIPresShell* aPresShell,
+NS_NewComputedDOMStyle(dom::Element* aElement,
+                       const nsAString& aPseudoElt,
+                       nsIDocument* aDocument,
                        nsComputedDOMStyle::StyleType aStyleType,
                        nsComputedDOMStyle::AnimationFlag aFlag)
 {
   RefPtr<nsComputedDOMStyle> computedStyle;
   computedStyle = new nsComputedDOMStyle(aElement, aPseudoElt,
-                                         aPresShell, aStyleType, aFlag);
+                                         aDocument, aStyleType, aFlag);
   return computedStyle.forget();
 }
 
@@ -246,7 +247,7 @@ nsComputedStyleMap::Update()
 
 nsComputedDOMStyle::nsComputedDOMStyle(dom::Element* aElement,
                                        const nsAString& aPseudoElt,
-                                       nsIPresShell* aPresShell,
+                                       nsIDocument* aDocument,
                                        StyleType aStyleType,
                                        AnimationFlag aFlag)
   : mDocumentWeak(nullptr)
@@ -259,13 +260,13 @@ nsComputedDOMStyle::nsComputedDOMStyle(dom::Element* aElement,
   , mResolvedStyleContext(false)
   , mAnimationFlag(aFlag)
 {
-  MOZ_ASSERT(aElement && aPresShell);
-
-  mDocumentWeak = do_GetWeakReference(aPresShell->GetDocument());
+  MOZ_ASSERT(aElement);
+  MOZ_ASSERT(aDocument);
+  // TODO(emilio, bug 548397, https://github.com/w3c/csswg-drafts/issues/2403):
+  // Should use aElement->OwnerDoc() instead.
+  mDocumentWeak = do_GetWeakReference(aDocument);
   mContent = aElement;
   mPseudo = nsCSSPseudoElements::GetPseudoAtom(aPseudoElt);
-
-  MOZ_ASSERT(aPresShell->GetPresContext());
 }
 
 nsComputedDOMStyle::~nsComputedDOMStyle()

@@ -81,7 +81,7 @@ public:
 
   nsComputedDOMStyle(mozilla::dom::Element* aElement,
                      const nsAString& aPseudoElt,
-                     nsIPresShell* aPresShell,
+                     nsIDocument* aDocument,
                      StyleType aStyleType,
                      AnimationFlag aFlag = eWithAnimation);
 
@@ -793,7 +793,7 @@ private:
 already_AddRefed<nsComputedDOMStyle>
 NS_NewComputedDOMStyle(mozilla::dom::Element* aElement,
                        const nsAString& aPseudoElt,
-                       nsIPresShell* aPresShell,
+                       nsIDocument* aDocument,
                        nsComputedDOMStyle::StyleType aStyleType =
                          nsComputedDOMStyle::eAll,
                        nsComputedDOMStyle::AnimationFlag aFlag =
