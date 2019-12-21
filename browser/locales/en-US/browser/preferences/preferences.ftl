@@ -1187,3 +1187,7 @@ pane-menu-title = Menu
 search-suggestions-header = Search Suggestions
 
 dnt-header = "Do Not Track” signal
+
+webrtc-header = WebRTC peer connection
+
+ref-header = HTTP Referrer Header
