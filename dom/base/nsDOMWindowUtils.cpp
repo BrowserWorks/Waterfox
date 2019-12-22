@@ -3010,9 +3010,12 @@ nsDOMWindowUtils::GetUnanimatedComputedStyle(nsIDOMElement* aElement,
       (computedValue.GetCSSValueValue()->GetUnit() == eCSSUnit_Unset ||
        computedValue.GetCSSValueValue()->GetUnit() == eCSSUnit_Initial ||
        computedValue.GetCSSValueValue()->GetUnit() == eCSSUnit_Inherit)) {
+
+    nsCOMPtr<nsIDocument> doc = GetDocument();
+
     RefPtr<nsComputedDOMStyle> computedStyle =
       NS_NewComputedDOMStyle(
-       element, aPseudoElement, shell,
+       element, aPseudoElement, doc,
        nsComputedDOMStyle::StyleType::eAll,
        nsComputedDOMStyle::AnimationFlag::eWithoutAnimation);
     computedStyle->GetPropertyValue(propertyID, aResult);
