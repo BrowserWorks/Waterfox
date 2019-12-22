@@ -16,6 +16,7 @@
 use encoding::EncodingOverride;
 use percent_encoding::{percent_encode_byte, percent_decode};
 use std::borrow::{Borrow, Cow};
+use std::fmt;
 use std::str;
 
 
@@ -81,7 +82,7 @@ pub fn parse_with_encoding<'a>(input: &'a [u8],
 }
 
 /// The return type of `parse()`.
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 pub struct Parse<'a> {
     input: &'a [u8],
     encoding: EncodingOverride,
@@ -145,6 +146,7 @@ impl<'a> Parse<'a> {
 }
 
 /// Like `Parse`, but yields pairs of `String` instead of pairs of `Cow<str>`.
+#[derive(Debug)]
 pub struct ParseIntoOwned<'a> {
     inner: Parse<'a>
 }
@@ -168,6 +170,7 @@ pub fn byte_serialize(input: &[u8]) -> ByteSerialize {
 }
 
 /// Return value of `byte_serialize()`.
+#[derive(Debug)]
 pub struct ByteSerialize<'a> {
     bytes: &'a [u8],
 }
@@ -209,10 +212,20 @@ impl<'a> Iterator for ByteSerialize<'a> {
 
 /// The [`application/x-www-form-urlencoded` serializer](
 /// https://url.spec.whatwg.org/#concept-urlencoded-serializer).
+#[derive(Debug)]
 pub struct Serializer<T: Target> {
     target: Option<T>,
     start_position: usize,
     encoding: EncodingOverride,
+    custom_encoding: Option<SilentDebug<Box<FnMut(&str) -> Cow<[u8]>>>>,
+}
+
+struct SilentDebug<T>(T);
+
+impl<T> fmt::Debug for SilentDebug<T> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.write_str("…")
+    }
 }
 
 pub trait Target {
@@ -244,8 +257,16 @@ impl<'a> Target for &'a mut String {
 // * `Serializer` keeps its target in a private field
 // * Unlike in other `Target` impls, `UrlQuery::finished` does not return `Self`.
 impl<'a> Target for ::UrlQuery<'a> {
-    fn as_mut_string(&mut self) -> &mut String { &mut self.url.serialization }
-    fn finish(self) -> &'a mut ::Url { self.url }
+    fn as_mut_string(&mut self) -> &mut String {
+        &mut self.url.as_mut().unwrap().serialization
+    }
+
+    fn finish(mut self) -> &'a mut ::Url {
+        let url = self.url.take().unwrap();
+        url.restore_already_parsed_fragment(self.fragment.take());
+        url
+    }
+
     type Finished = &'a mut ::Url;
 }
 
@@ -269,6 +290,7 @@ impl<T: Target> Serializer<T> {
             target: Some(target),
             start_position: start_position,
             encoding: EncodingOverride::utf8(),
+            custom_encoding: None,
         }
     }
 
@@ -287,11 +309,20 @@ impl<T: Target> Serializer<T> {
         self
     }
 
+    /// Set the character encoding to be used for names and values before percent-encoding.
+    pub fn custom_encoding_override<F>(&mut self, encode: F) -> &mut Self
+        where F: FnMut(&str) -> Cow<[u8]> + 'static
+    {
+        self.custom_encoding = Some(SilentDebug(Box::new(encode)));
+        self
+    }
+
     /// Serialize and append a name/value pair.
     ///
     /// Panics if called after `.finish()`.
     pub fn append_pair(&mut self, name: &str, value: &str) -> &mut Self {
-        append_pair(string(&mut self.target), self.start_position, self.encoding, name, value);
+        append_pair(string(&mut self.target), self.start_position, self.encoding,
+                    &mut self.custom_encoding, name, value);
         self
     }
 
@@ -308,7 +339,8 @@ impl<T: Target> Serializer<T> {
             let string = string(&mut self.target);
             for pair in iter {
                 let &(ref k, ref v) = pair.borrow();
-                append_pair(string, self.start_position, self.encoding, k.as_ref(), v.as_ref());
+                append_pair(string, self.start_position, self.encoding,
+                            &mut self.custom_encoding, k.as_ref(), v.as_ref());
             }
         }
         self
@@ -321,6 +353,8 @@ impl<T: Target> Serializer<T> {
     /// Panics if called after `.finish()`.
     #[cfg(feature = "query_encoding")]
     pub fn append_charset(&mut self) -> &mut Self {
+        assert!(self.custom_encoding.is_none(),
+                "Cannot use both custom_encoding_override() and append_charset()");
         {
             let string = string(&mut self.target);
             append_separator_if_needed(string, self.start_position);
@@ -358,9 +392,20 @@ fn string<T: Target>(target: &mut Option<T>) -> &mut String {
 }
 
 fn append_pair(string: &mut String, start_position: usize, encoding: EncodingOverride,
+               custom_encoding: &mut Option<SilentDebug<Box<FnMut(&str) -> Cow<[u8]>>>>,
                name: &str, value: &str) {
     append_separator_if_needed(string, start_position);
-    string.extend(byte_serialize(&encoding.encode(name.into())));
+    append_encoded(name, string, encoding, custom_encoding);
     string.push('=');
-    string.extend(byte_serialize(&encoding.encode(value.into())));
+    append_encoded(value, string, encoding, custom_encoding);
+}
+
+fn append_encoded(s: &str, string: &mut String, encoding: EncodingOverride,
+               custom_encoding: &mut Option<SilentDebug<Box<FnMut(&str) -> Cow<[u8]>>>>) {
+    let bytes = if let Some(SilentDebug(ref mut custom)) = *custom_encoding {
+        custom(s)
+    } else {
+        encoding.encode(s.into())
+    };
+    string.extend(byte_serialize(&bytes));
 }

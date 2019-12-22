@@ -46,7 +46,7 @@ pub fn set_href(url: &mut Url, value: &str) -> Result<(), ParseError> {
 
 /// Getter for https://url.spec.whatwg.org/#dom-url-origin
 pub fn origin(url: &Url) -> String {
-    url.origin().unicode_serialization()
+    url.origin().ascii_serialization()
 }
 
 /// Getter for https://url.spec.whatwg.org/#dom-url-protocol
@@ -152,7 +152,7 @@ pub fn set_port(url: &mut Url, new_port: &str) -> Result<(), ()> {
     {
         // has_host implies !cannot_be_a_base
         let scheme = url.scheme();
-        if !url.has_host() || scheme == "file" {
+        if !url.has_host() || url.host() == Some(Host::Domain("")) || scheme == "file" {
             return Err(())
         }
         result = Parser::parse_port(Input::new(new_port), || default_port(scheme), Context::Setter)

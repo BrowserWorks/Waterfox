@@ -11,10 +11,12 @@
 #[macro_use]
 extern crate url;
 
+use std::ascii::AsciiExt;
 use std::borrow::Cow;
+use std::cell::{Cell, RefCell};
 use std::net::{Ipv4Addr, Ipv6Addr};
 use std::path::{Path, PathBuf};
-use url::{Host, Url, form_urlencoded};
+use url::{Host, HostAndPort, Url, form_urlencoded};
 
 #[test]
 fn size() {
@@ -105,6 +107,17 @@ fn new_directory_paths() {
         assert_eq!(url.host(), None);
         assert_eq!(url.path(), "/C:/foo/bar/");
     }
+}
+
+#[test]
+fn path_backslash_fun() {
+    let mut special_url = "http://foobar.com".parse::<Url>().unwrap();
+    special_url.path_segments_mut().unwrap().push("foo\\bar");
+    assert_eq!(special_url.as_str(), "http://foobar.com/foo%5Cbar");
+
+    let mut nonspecial_url = "thing://foobar.com".parse::<Url>().unwrap();
+    nonspecial_url.path_segments_mut().unwrap().push("foo\\bar");
+    assert_eq!(nonspecial_url.as_str(), "thing://foobar.com/foo\\bar");
 }
 
 #[test]
@@ -221,7 +234,7 @@ fn test_serialization() {
         ("http://example.com/", "http://example.com/"),
         ("http://addslash.com", "http://addslash.com/"),
         ("http://@emptyuser.com/", "http://emptyuser.com/"),
-        ("http://:@emptypass.com/", "http://:@emptypass.com/"),
+        ("http://:@emptypass.com/", "http://emptypass.com/"),
         ("http://user@user.com/", "http://user@user.com/"),
         ("http://user:pass@userpass.com/", "http://user:pass@userpass.com/"),
         ("http://slashquery.com/path/?q=something", "http://slashquery.com/path/?q=something"),
@@ -256,19 +269,42 @@ fn test_form_serialize() {
 }
 
 #[test]
-/// https://github.com/servo/rust-url/issues/25
-fn issue_25() {
-    let filename = if cfg!(windows) { r"C:\run\pg.sock" } else { "/run/pg.sock" };
-    let mut url = Url::from_file_path(filename).unwrap();
-    url.check_invariants().unwrap();
-    url.set_scheme("postgres").unwrap();
-    url.check_invariants().unwrap();
-    url.set_host(Some("")).unwrap();
-    url.check_invariants().unwrap();
-    url.set_username("me").unwrap();
-    url.check_invariants().unwrap();
-    let expected = format!("postgres://me@/{}run/pg.sock", if cfg!(windows) { "C:/" } else { "" });
-    assert_eq!(url.as_str(), expected);
+fn form_urlencoded_custom_encoding_override() {
+    let encoded = form_urlencoded::Serializer::new(String::new())
+        .custom_encoding_override(|s| s.as_bytes().to_ascii_uppercase().into())
+        .append_pair("foo", "bar")
+        .finish();
+    assert_eq!(encoded, "FOO=BAR");
+}
+
+#[test]
+fn host_and_port_display() {
+    assert_eq!(
+        format!(
+            "{}",
+            HostAndPort{ host: Host::Domain("www.mozilla.org"), port: 80}
+        ),
+        "www.mozilla.org:80"
+    );
+    assert_eq!(
+        format!(
+            "{}",
+            HostAndPort::<String>{ host: Host::Ipv4(Ipv4Addr::new(1, 35, 33, 49)), port: 65535 }
+        ),
+        "1.35.33.49:65535"
+    );
+    assert_eq!(
+        format!(
+            "{}",
+            HostAndPort::<String>{
+                host: Host::Ipv6(Ipv6Addr::new(
+                    0x2001, 0x0db8, 0x85a3, 0x08d3, 0x1319, 0x8a2e, 0x0370, 0x7344
+                )),
+                port: 1337
+            })
+        ,
+        "[2001:db8:85a3:8d3:1319:8a2e:370:7344]:1337"
+    )
 }
 
 #[test]
@@ -342,6 +378,18 @@ fn test_set_host() {
     let mut url = Url::parse("foobar://example.net/hello").unwrap();
     url.set_host(None).unwrap();
     assert_eq!(url.as_str(), "foobar:/hello");
+
+    let mut url = Url::parse("foo://ș").unwrap();
+    assert_eq!(url.as_str(), "foo://%C8%99/");
+    url.set_host(Some("goșu.ro")).unwrap();
+    assert_eq!(url.as_str(), "foo://go%C8%99u.ro/");
+}
+
+#[test]
+// https://github.com/servo/rust-url/issues/166
+fn test_leading_dots() {
+    assert_eq!(Host::parse(".org").unwrap(), Host::Domain(".org".to_owned()));
+    assert_eq!(Url::parse("file://./foo").unwrap().domain(), Some("."));
 }
 
 // This is testing that the macro produces buildable code when invoked
@@ -371,4 +419,138 @@ fn define_encode_set_scopes() {
     }
 
     m::test();
+}
+
+#[test]
+/// https://github.com/servo/rust-url/issues/302
+fn test_origin_hash() {
+    use std::hash::{Hash,Hasher};
+    use std::collections::hash_map::DefaultHasher;
+
+    fn hash<T: Hash>(value: &T) -> u64 {
+        let mut hasher = DefaultHasher::new();
+        value.hash(&mut hasher);
+        hasher.finish()
+    }
+
+    let origin = &Url::parse("http://example.net/").unwrap().origin();
+
+    let origins_to_compare = [
+        Url::parse("http://example.net:80/").unwrap().origin(),
+        Url::parse("http://example.net:81/").unwrap().origin(),
+        Url::parse("http://example.net").unwrap().origin(),
+        Url::parse("http://example.net/hello").unwrap().origin(),
+        Url::parse("https://example.net").unwrap().origin(),
+        Url::parse("ftp://example.net").unwrap().origin(),
+        Url::parse("file://example.net").unwrap().origin(),
+        Url::parse("http://user@example.net/").unwrap().origin(),
+        Url::parse("http://user:pass@example.net/").unwrap().origin(),
+    ];
+
+    for origin_to_compare in &origins_to_compare {
+        if origin == origin_to_compare {
+            assert_eq!(hash(origin), hash(origin_to_compare));
+        } else {
+            assert_ne!(hash(origin), hash(origin_to_compare));
+        }
+    }
+
+    let opaque_origin = Url::parse("file://example.net").unwrap().origin();
+    let same_opaque_origin = Url::parse("file://example.net").unwrap().origin();
+    let other_opaque_origin = Url::parse("file://other").unwrap().origin();
+
+    assert_ne!(hash(&opaque_origin), hash(&same_opaque_origin));
+    assert_ne!(hash(&opaque_origin), hash(&other_opaque_origin));
+}
+
+#[test]
+fn test_windows_unc_path() {
+    if !cfg!(windows) {
+        return
+    }
+
+    let url = Url::from_file_path(Path::new(r"\\host\share\path\file.txt")).unwrap();
+    assert_eq!(url.as_str(), "file://host/share/path/file.txt");
+
+    let url = Url::from_file_path(Path::new(r"\\höst\share\path\file.txt")).unwrap();
+    assert_eq!(url.as_str(), "file://xn--hst-sna/share/path/file.txt");
+
+    let url = Url::from_file_path(Path::new(r"\\192.168.0.1\share\path\file.txt")).unwrap();
+    assert_eq!(url.host(), Some(Host::Ipv4(Ipv4Addr::new(192, 168, 0, 1))));
+
+    let path = url.to_file_path().unwrap();
+    assert_eq!(path.to_str(), Some(r"\\192.168.0.1\share\path\file.txt"));
+
+    // Another way to write these:
+    let url = Url::from_file_path(Path::new(r"\\?\UNC\host\share\path\file.txt")).unwrap();
+    assert_eq!(url.as_str(), "file://host/share/path/file.txt");
+
+    // Paths starting with "\\.\" (Local Device Paths) are intentionally not supported.
+    let url = Url::from_file_path(Path::new(r"\\.\some\path\file.txt"));
+    assert!(url.is_err());
+}
+
+// Test the now deprecated log_syntax_violation method for backward
+// compatibility
+#[test]
+#[allow(deprecated)]
+fn test_old_log_violation_option() {
+    let violation = Cell::new(None);
+    let url = Url::options()
+        .log_syntax_violation(Some(&|s| violation.set(Some(s.to_owned()))))
+        .parse("http:////mozilla.org:42").unwrap();
+    assert_eq!(url.port(), Some(42));
+
+    let violation = violation.take();
+    assert_eq!(violation, Some("expected //".to_string()));
+}
+
+#[test]
+fn test_syntax_violation_callback() {
+    use url::SyntaxViolation::*;
+    let violation = Cell::new(None);
+    let url = Url::options()
+        .syntax_violation_callback(Some(&|v| violation.set(Some(v))))
+        .parse("http:////mozilla.org:42").unwrap();
+    assert_eq!(url.port(), Some(42));
+
+    let v = violation.take().unwrap();
+    assert_eq!(v, ExpectedDoubleSlash);
+    assert_eq!(v.description(), "expected //");
+}
+
+#[test]
+fn test_syntax_violation_callback_lifetimes() {
+    use url::SyntaxViolation::*;
+    let violation = Cell::new(None);
+    let vfn = |s| violation.set(Some(s));
+
+    let url = Url::options()
+        .syntax_violation_callback(Some(&vfn))
+        .parse("http:////mozilla.org:42").unwrap();
+    assert_eq!(url.port(), Some(42));
+    assert_eq!(violation.take(), Some(ExpectedDoubleSlash));
+
+    let url = Url::options()
+        .syntax_violation_callback(Some(&vfn))
+        .parse("http://mozilla.org\\path").unwrap();
+    assert_eq!(url.path(), "/path");
+    assert_eq!(violation.take(), Some(Backslash));
+}
+
+#[test]
+fn test_options_reuse() {
+    use url::SyntaxViolation::*;
+    let violations = RefCell::new(Vec::new());
+    let vfn = |v| violations.borrow_mut().push(v);
+
+    let options = Url::options()
+        .syntax_violation_callback(Some(&vfn));
+    let url = options.parse("http:////mozilla.org").unwrap();
+
+    let options = options.base_url(Some(&url));
+    let url = options.parse("/sub\\path").unwrap();
+    assert_eq!(url.as_str(), "http://mozilla.org/sub/path");
+    assert_eq!(*violations.borrow(),
+               vec!(ExpectedDoubleSlash, Backslash));
 }
