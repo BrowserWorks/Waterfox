@@ -7,6 +7,7 @@ from __future__ import absolute_import
 import posixpath
 import os
 import re
+import sys
 
 '''
 Like os.path, with a reduced set of functions, and with normalized path
@@ -27,7 +28,21 @@ def normsep(path):
     return path
 
 
+def cargo_workaround(path):
+    unc = '//?/'
+    if path.startswith(unc):
+        return path[len(unc):]
+    return path
+
+
 def relpath(path, start):
+    path = normsep(path)
+    start = normsep(start)
+    if sys.platform == 'win32':
+        # os.path.relpath can't handle relative paths between UNC and non-UNC
+        # paths, so strip a //?/ prefix if present (bug 1581248)
+        path = cargo_workaround(path)
+        start = cargo_workaround(start)
     rel = normsep(os.path.relpath(path, start))
     return '' if rel == '.' else rel
 
