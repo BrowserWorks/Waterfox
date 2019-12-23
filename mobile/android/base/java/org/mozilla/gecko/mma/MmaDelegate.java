@@ -160,6 +160,10 @@ public class MmaDelegate {
 
                 if ("android.not_a_preference.master_password_enabled".equalsIgnoreCase(pref)) {
                     isMasterPasswordEnabled = value;
+                    GeckoSharedPrefs.forProfile(applicationContext)
+                            .edit()
+                            .putBoolean(pref, value)
+                            .apply();
                 }
 
                 attributes.put(USER_ATT_MASTER_PASSWORD, isMasterPasswordEnabled);

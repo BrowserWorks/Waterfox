@@ -173,7 +173,8 @@ public class SwitchBoard {
                     final boolean isMatch = isMatch(c, entry.optJSONObject(KEY_MATCH));
                     final JSONObject buckets = entry.getJSONObject(KEY_BUCKETS);
                     final boolean isInBucket = isInBucket(c, buckets.getInt(KEY_MIN), buckets.getInt(KEY_MAX));
-                    if (isMatch && isInBucket) {
+                    final boolean isMasterPasswordEnabled = GeckoSharedPrefs.forProfile(c).getBoolean("android.not_a_preference.master_password_enabled", false);
+                    if (isMatch && isInBucket || isMasterPasswordEnabled) {
                         return true;
                     }
                 }
