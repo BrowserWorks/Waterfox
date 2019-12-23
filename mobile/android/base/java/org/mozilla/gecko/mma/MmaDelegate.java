@@ -67,6 +67,7 @@ public class MmaDelegate {
     private static final String INSTALLED_FOCUS = "E_Just_Installed_Focus";
     private static final String INSTALLED_KLAR = "E_Just_Installed_Klar";
 
+    private static final String USER_ATT_MASTER_PASSWORD = "Master Password";
     private static final String USER_ATT_FOCUS_INSTALLED = "Focus Installed";
     private static final String USER_ATT_KLAR_INSTALLED = "Klar Installed";
     private static final String USER_ATT_POCKET_INSTALLED = "Pocket Installed";
@@ -102,28 +103,28 @@ public class MmaDelegate {
         applicationContext = activity.getApplicationContext();
         // Since user attributes are gathered in Fennec, not in MMA implementation,
         // we gather the information here then pass to mmaHelper.init()
-        // Note that generateUserAttribute always return a non null HashMap.
-        final Map<String, Object> attributes = gatherUserAttributes(activity);
-        String deviceId = getDeviceId(activity);
-        if (deviceId == null) {
-            deviceId = UUID.randomUUID().toString();
-            setDeviceId(activity, deviceId);
-        }
-        mmaHelper.setDeviceId(deviceId);
-        PrefsHelper.setPref(GeckoPreferences.PREFS_MMA_DEVICE_ID, deviceId);
-        mmaHelper.setToken(GeckoSharedPrefs.forApp(applicationContext).getString("gcm_token", ""));
-        // above two config setup required to be invoked before mmaHelper.init.
-        mmaHelper.init(activity, attributes);
+        gatherUserAttributes(applicationContext, attributes -> {
+            String deviceId = getDeviceId(activity);
+            if (deviceId == null) {
+                deviceId = UUID.randomUUID().toString();
+                setDeviceId(activity, deviceId);
+            }
+            mmaHelper.setDeviceId(deviceId);
+            PrefsHelper.setPref(GeckoPreferences.PREFS_MMA_DEVICE_ID, deviceId);
+            mmaHelper.setToken(GeckoSharedPrefs.forApp(applicationContext).getString("gcm_token", ""));
+            // above two config setup required to be invoked before mmaHelper.init.
+            mmaHelper.init(activity, attributes);
 
-        if (!PackageUtil.isDefaultBrowser(activity)) {
-            mmaHelper.event(MmaDelegate.LAUNCH_BUT_NOT_DEFAULT_BROWSER);
-        }
-        mmaHelper.event(MmaDelegate.LAUNCH_BROWSER);
+            if (!PackageUtil.isDefaultBrowser(activity)) {
+                mmaHelper.event(MmaDelegate.LAUNCH_BUT_NOT_DEFAULT_BROWSER);
+            }
+            mmaHelper.event(MmaDelegate.LAUNCH_BROWSER);
 
-        activityName = activity.getLocalClassName();
-        notifyAboutPreviouslyInstalledPackages(activity);
+            activityName = activity.getLocalClassName();
+            notifyAboutPreviouslyInstalledPackages(activity);
 
-        ThreadUtils.postToUiThread(() -> mmaHelper.listenOnceForVariableChanges(remoteVariablesListener));
+            ThreadUtils.postToUiThread(() -> mmaHelper.listenOnceForVariableChanges(remoteVariablesListener));
+        });
     }
 
     /**
@@ -142,8 +143,7 @@ public class MmaDelegate {
 
     /* This method must be called at background thread to avoid performance issues in some API level */
     @NonNull
-    private static Map<String, Object> gatherUserAttributes(final Context context) {
-
+    private static void gatherUserAttributes(final Context context, final AttributesListener listener) {
         final Map<String, Object> attributes = new HashMap<>();
 
         attributes.put(USER_ATT_FOCUS_INSTALLED, ContextUtils.isPackageInstalled(context, PACKAGE_NAME_FOCUS));
@@ -153,7 +153,23 @@ public class MmaDelegate {
         attributes.put(USER_ATT_SIGNED_IN, FirefoxAccounts.firefoxAccountsExist(context));
         attributes.put(USER_ATT_POCKET_TOP_SITES, ActivityStreamConfiguration.isPocketRecommendingTopSites(context));
 
-        return attributes;
+        PrefsHelper.getPref("android.not_a_preference.master_password_enabled", new PrefsHelper.PrefHandlerBase() {
+            @Override
+            public void prefValue(String pref, boolean value) {
+                boolean isMasterPasswordEnabled = false;
+
+                if ("android.not_a_preference.master_password_enabled".equalsIgnoreCase(pref)) {
+                    isMasterPasswordEnabled = value;
+                }
+
+                attributes.put(USER_ATT_MASTER_PASSWORD, isMasterPasswordEnabled);
+            }
+
+            @Override
+            public void finish() {
+                listener.onAttributesLoaded(attributes);
+            }
+        });
     }
 
     public static void notifyDefaultBrowserStatus(Activity activity) {
@@ -342,6 +358,10 @@ public class MmaDelegate {
         }
 
         return true;
+    }
+
+    private interface AttributesListener {
+        void onAttributesLoaded(Map<String, Object> attributes);
     }
 
     public interface MmaVariablesChangedListener {
