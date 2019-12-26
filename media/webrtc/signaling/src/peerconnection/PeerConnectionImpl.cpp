@@ -1235,8 +1235,9 @@ PeerConnectionImpl::CreateOffer(const JsepOfferOptions& aOptions) {
 
     mPCObserver->OnCreateOfferError(*buildJSErrorData(result, errorString), rv);
   } else {
+    auto pco = mPCObserver;
     UpdateSignalingState();
-    mPCObserver->OnCreateOfferSuccess(ObString(offer.c_str()), rv);
+    pco->OnCreateOfferSuccess(ObString(offer.c_str()), rv);
   }
 
   return NS_OK;
@@ -1265,8 +1266,9 @@ PeerConnectionImpl::CreateAnswer() {
     mPCObserver->OnCreateAnswerError(*buildJSErrorData(result, errorString),
                                      rv);
   } else {
+    auto pco = mPCObserver;
     UpdateSignalingState();
-    mPCObserver->OnCreateAnswerSuccess(ObString(answer.c_str()), rv);
+    pco->OnCreateAnswerSuccess(ObString(answer.c_str()), rv);
   }
 
   return NS_OK;
@@ -1321,9 +1323,10 @@ PeerConnectionImpl::SetLocalDescription(int32_t aAction, const char* aSDP) {
     if (wasRestartingIce) {
       RecordIceRestartStatistics(sdpType);
     }
-    mPCObserver->SyncTransceivers(rv);
+    auto pco = mPCObserver;
+    pco->SyncTransceivers(rv);
     UpdateSignalingState(sdpType == mozilla::kJsepSdpRollback);
-    mPCObserver->OnSetLocalDescriptionSuccess(rv);
+    pco->OnSetLocalDescriptionSuccess(rv);
   }
 
   return NS_OK;
@@ -1393,6 +1396,7 @@ PeerConnectionImpl::SetRemoteDescription(int32_t action, const char* aSDP) {
       return NS_ERROR_FAILURE;
   }
 
+  auto pco = mPCObserver;
   size_t originalTransceiverCount = mJsepSession->GetTransceivers().size();
   JsepSession::Result result =
       mJsepSession->SetRemoteDescription(sdpType, mRemoteRequestedSDP);
@@ -1400,8 +1404,8 @@ PeerConnectionImpl::SetRemoteDescription(int32_t action, const char* aSDP) {
     std::string errorString = mJsepSession->GetLastError();
     CSFLogError(LOGTAG, "%s: pc = %s, error = %s", __FUNCTION__,
                 mHandle.c_str(), errorString.c_str());
-    mPCObserver->OnSetRemoteDescriptionError(
-        *buildJSErrorData(result, errorString), jrv);
+    pco->OnSetRemoteDescriptionError(*buildJSErrorData(result, errorString),
+                                     jrv);
   } else {
     // Iterate over the JSEP transceivers that were just created
     for (size_t i = originalTransceiverCount;
@@ -1426,12 +1430,12 @@ PeerConnectionImpl::SetRemoteDescription(int32_t action, const char* aSDP) {
                  __FUNCTION__, mHandle.c_str());
       switch (receiving.GetMediaType()) {
         case SdpMediaSection::MediaType::kAudio:
-          mPCObserver->OnTransceiverNeeded(NS_ConvertASCIItoUTF16("audio"),
-                                           *transceiverImpl, jrv);
+          pco->OnTransceiverNeeded(NS_ConvertASCIItoUTF16("audio"),
+                                   *transceiverImpl, jrv);
           break;
         case SdpMediaSection::MediaType::kVideo:
-          mPCObserver->OnTransceiverNeeded(NS_ConvertASCIItoUTF16("video"),
-                                           *transceiverImpl, jrv);
+          pco->OnTransceiverNeeded(NS_ConvertASCIItoUTF16("video"),
+                                   *transceiverImpl, jrv);
           break;
         default:
           MOZ_RELEASE_ASSERT(false);
@@ -1452,13 +1456,13 @@ PeerConnectionImpl::SetRemoteDescription(int32_t action, const char* aSDP) {
       RecordIceRestartStatistics(sdpType);
     }
 
-    mPCObserver->SyncTransceivers(jrv);
+    pco->SyncTransceivers(jrv);
+
+    startCallTelem();
 
     UpdateSignalingState(sdpType == mozilla::kJsepSdpRollback);
 
-    mPCObserver->OnSetRemoteDescriptionSuccess(jrv);
-
-    startCallTelem();
+    pco->OnSetRemoteDescriptionSuccess(jrv);
   }
 
   return NS_OK;
