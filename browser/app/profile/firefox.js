@@ -1591,6 +1591,9 @@ pref("view_source.tab", true);
 pref("dom.serviceWorkers.enabled", false);
 pref("dom.serviceWorkers.openWindow.enabled", false);
 
+// Disable Notifications
+pref("dom.webnotifications.enabled", false);
+
 // Enable Push API.
 pref("dom.push.enabled", true);
 
