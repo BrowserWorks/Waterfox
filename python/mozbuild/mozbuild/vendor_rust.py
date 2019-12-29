@@ -128,6 +128,9 @@ Please commit or stash these changes before vendoring, or re-run with `--ignore-
     # Licenses for code used at build time (e.g. code generators). Please see the above
     # comments before adding anything to this list.
     BUILDTIME_LICENSE_WHITELIST = {
+        'BSD-2-Clause': [
+            'cloudabi',
+         ],
         'BSD-3-Clause': [
             'bindgen',
         ]
