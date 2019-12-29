@@ -133,6 +133,7 @@ Please commit or stash these changes before vendoring, or re-run with `--ignore-
          ],
         'BSD-3-Clause': [
             'bindgen',
+            'fuchsia-cprng',
         ]
     }
 
@@ -149,6 +150,9 @@ Please commit or stash these changes before vendoring, or re-run with `--ignore-
         'gamma-lut': '1f04103e3a61b91343b3f9d2ed2cc8543062917e2cc7d52a739ffe6429ccaf61',
         # MIT
         'deque': '6485b8ed310d3f0340bf1ad1f47645069ce4069dcc6bb46c7d5c6faf41de1fdb',
+        # we're whitelisting this fuchsia crate because it doesn't get built in the final
+        # product but has a license-file that needs ignoring
+        'fuchsia-cprng': '03b114f53e6587a398931762ee11e2395bfdba252a329940e2c8c9e81813845b',
     }
 
     @staticmethod
