@@ -244,6 +244,9 @@
         <ignore path="**/raw/.mkdir.done" />
         <!-- Ignore drawables used for localized Top Sites. -->
         <ignore regexp="^.*?/res/drawable-[xhmdpi]+/suggestedsites_[a-z]+.png$" />
+        <!-- Need to ignore currently unused resources added for bug 1603268
+             Suppression is to be removed in the patch for bug 1603275 -->
+        <ignore path="**/res/values/strings.xml" />
     </issue>
     <issue id="Usability" severity="error" />
     <issue id="UseCheckPermission" severity="error" />

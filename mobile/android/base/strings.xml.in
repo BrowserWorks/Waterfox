@@ -652,6 +652,10 @@
   <string name="activity_stream_signin_prompt">&activity_stream_signin_prompt;</string>
   <string name="activity_stream_signin_prompt_button">&activity_stream_signin_prompt_button;</string>
 
+  <string name="activity_stream_firefox_promo_title">&activity_stream_firefox_promo_title;</string>
+  <string name="activity_stream_firefox_promo_description">&activity_stream_firefox_promo_description;</string>
+  <string name="activity_stream_firefox_promo_button">&activity_stream_firefox_promo_button;</string>
+
   <string name="private_tab_panel_title">&private_tab_panel_title;</string>
   <string name="private_tab_panel_description">&private_tab_panel_description;</string>
   <string name="private_tab_panel_description2">&private_tab_panel_description2;</string>

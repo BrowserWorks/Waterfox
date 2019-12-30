@@ -887,6 +887,13 @@ activity_stream_signin_prompt, activity_stream_signin_prompt_button):
 <!-- LOCALIZATION NOTE (activity_stream_signin_prompt_button): To be used in continuation of activity_stream_signin_prompt. -->
 <!ENTITY activity_stream_signin_prompt_button "Sign in.">
 
+<!-- LOCALIZATION NOTE (activity_stream_firefox_promo_title,
+     activity_stream_firefox_promo_description, activity_stream_firefox_promo_button):
+     These labels are shown in an Activity Stream banner. -->
+<!ENTITY activity_stream_firefox_promo_title "Your all-new Firefox, arriving in 2020">
+<!ENTITY activity_stream_firefox_promo_description "Coming soon: Improved performance. Enhanced tracking protection. And features designed to help you find, save, and share more of what you love online.">
+<!ENTITY activity_stream_firefox_promo_button "Take a sneak peek">
+
 <!ENTITY activity_stream_topsites "Top Sites">
 <!-- LOCALIZATION NOTE (activity_stream_topstories): &brandPocket is the brand of the company, Pocket, that is being used to provide suggestions for articles. -->
 <!ENTITY activity_stream_topstories "Recommended by &brandPocket;">
