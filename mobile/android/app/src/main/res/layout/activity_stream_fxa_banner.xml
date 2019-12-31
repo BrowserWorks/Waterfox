@@ -9,7 +9,9 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_margin="@dimen/as_banner_margin"
     android:background="@drawable/as_banner_background_rounded"
-    android:padding="@dimen/as_banner_padding">
+    android:padding="@dimen/as_banner_padding"
+    android:clipChildren="false"
+    android:clipToPadding="false">
 
     <ImageView
         android:id="@+id/banner_logo"
