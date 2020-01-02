@@ -90,7 +90,6 @@
       <row id="notificationsPolicyRow" align="center">
         <hbox align="start">
           <checkbox id="enableNotifications" preference="dom.webnotifications.enabled"
-                    onsyncfrompreference="gContentPane.toggleServiceWorkers();"
                     label="&enableNotifications.label;"/>
           <label id="notificationsPolicyLearnMore"
                  class="learnMore text-link"

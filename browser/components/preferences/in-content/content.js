@@ -339,15 +339,4 @@ var gContentPane = {
   toggleDoNotDisturbNotifications(event) {
     AlertsServiceDND.manualDoNotDisturb = event.target.checked;
   },
-
-  toggleServiceWorkers() {
-    if (Services.prefs.getBoolPref("dom.webnotifications.enabled", true))
-    {
-      Services.prefs.setBoolPref("dom.serviceWorkers.enabled", true);
-    }
-    else
-    {
-      Services.prefs.setBoolPref("dom.serviceWorkers.enabled", false);
-    }
-  }
 };
