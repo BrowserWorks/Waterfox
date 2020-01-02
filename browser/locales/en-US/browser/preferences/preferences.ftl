@@ -1158,3 +1158,36 @@ settings-page = Settings Page
 
 display-all-new-prefs =
     .label = Use all-new settings layout
+
+window-controls-position-header = Window Controls Position
+
+left-side =
+    .label = Left Side
+
+right-side =
+    .label = Right Side
+
+menu-icon-style-header = Menu Icon style
+
+menu-icon =
+    .label = Menu Icon
+
+browser-icon =
+    .label = { -brand-short-name } Icon
+
+bookmarks-bar-position-header = Bookmarks Toolbar Position
+
+top-bookmarks =
+    .label = Top
+
+pane-windowAppearance-title = Window Appearance
+
+pane-menu-title = Menu
+
+search-suggestions-header = Search Suggestions
+
+dnt-header = "Do Not Track” signal
+
+webrtc-header = WebRTC peer connection
+
+ref-header = HTTP Referrer Header

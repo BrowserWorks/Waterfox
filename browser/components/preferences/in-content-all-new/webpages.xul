@@ -8,26 +8,28 @@
 <script src="chrome://browser/content/preferences/in-content-all-new/webpages.js"/>
 <html:template id="template-paneWebpages">
 
-<!-- Performance -->
-<groupbox id="performanceGroup" data-category="paneWebpages" hidden="true">
-  <label class="search-header" hidden="true"><html:h2 data-l10n-id="performance-title"/></label>
-  <label><html:h2 data-l10n-id="pane-webpages-title"/></label>
-  <label><html:h3 data-l10n-id="performance-title"/></label>
 
-  <hbox align="center">
+<html:section class="setting-section"
+              data-category="paneWebpages"
+              hidden="true">
+<html:h2 data-l10n-id="pane-webpages-title"/>
+
+<!-- Performance -->
+<groupbox id="performanceGroup" class="setting-group">
+  <label class="search-header" hidden="true"><html:h3 data-l10n-id="performance-title"/></label>
+  <html:h3 data-l10n-id="performance-title"/>
+
+  <html:div class="group">
     <checkbox id="useRecommendedPerformanceSettings"
-              class="tail-with-learn-more"
               data-l10n-id="performance-use-recommended-settings-checkbox"
               preference="browser.preferences.defaultPerformanceSettings.enabled"/>
-    <label id="performanceSettingsLearnMore" class="learnMore" data-l10n-id="performance-settings-learn-more" is="text-link"/>
-  </hbox>
   <description class="indent tip-caption" data-l10n-id="performance-use-recommended-settings-desc"/>
+  <label id="performanceSettingsLearnMore" class="learnMore indent tip-caption" data-l10n-id="performance-settings-learn-more" is="text-link"/>
 
-  <vbox id="performanceSettings" class="indent" hidden="true">
+  <vbox id="performanceSettings" hidden="true">
     <checkbox id="allowHWAccel"
               data-l10n-id="performance-allow-hw-accel"
               preference="layers.acceleration.disabled"/>
-    <hbox align="center">
       <label id="limitContentProcess" data-l10n-id="performance-limit-content-process-option" control="contentProcessCount"/>
       <menulist id="contentProcessCount" preference="dom.ipc.processCount">
         <menupopup>
@@ -41,26 +43,25 @@
           <menuitem label="8" value="8"/>
         </menupopup>
       </menulist>
-    </hbox>
     <description id="contentProcessCountEnabledDescription" class="tip-caption" data-l10n-id="performance-limit-content-process-enabled-desc"/>
     <description id="contentProcessCountDisabledDescription" class="tip-caption" data-l10n-id="performance-limit-content-process-blocked-desc">
       <html:a class="text-link" data-l10n-name="learn-more" href="https://wiki.mozilla.org/Electrolysis"/>
     </description>
   </vbox>
+  </html:div>
 </groupbox>
 
 <!-- Browsing -->
-<groupbox id="browsingGroup" data-category="paneWebpages" hidden="true">
+<groupbox id="browsingGroup" class="setting-group">
   <label class="search-header" hidden="true"><html:h2 data-l10n-id="browsing-title"/></label>
-  <label><html:h3 data-l10n-id="browsing-title"/></label>
-
+  <html:h3 data-l10n-id="browsing-title"/>
+<html:div class="group">
   <checkbox id="useAutoScroll"
             data-l10n-id="browsing-use-autoscroll"
             preference="general.autoScroll"/>
   <checkbox id="useSmoothScrolling"
             data-l10n-id="browsing-use-smooth-scrolling"
             preference="general.smoothScroll"/>
-
 #ifdef XP_WIN
   <checkbox id="useOnScreenKeyboard"
             hidden="true"
@@ -73,11 +74,27 @@
   <checkbox id="searchStartTyping"
             data-l10n-id="browsing-search-on-start-typing"
             preference="accessibility.typeaheadfind"/>
+</html:div>
 </groupbox>
 
+<!-- DRM Content -->
+<groupbox id="drmGroup" class="setting-group" data-category="paneWebpages" data-subcategory="drm">
+  <html:h3 data-l10n-id="drm-content-header"/>
+  <hbox align="center">
+    <checkbox id="playDRMContent" preference="media.eme.enabled"
+              class="tail-with-learn-more" data-l10n-id="play-drm-content" />
+    <label id="playDRMContentLink" class="learnMore" data-l10n-id="play-drm-content-learn-more" is="text-link"/>
+  </hbox>
+</groupbox>
+
+</html:section>
+
 <!-- Applications -->
-<groupbox id="applicationsGroup" data-category="paneWebpages" hidden="true">
-  <label><html:h2 data-l10n-id="applications-header"/></label>
+<html:section class="setting-section"
+              data-category="paneWebpages"
+              hidden="true">
+<html:h2 data-l10n-id="applications-header"/>
+<groupbox id="applicationsGroup">
   <description data-l10n-id="applications-description"/>
   <textbox id="filter" flex="1"
            is="search-textbox"
@@ -95,21 +112,15 @@
   <richlistbox id="handlersView"
                preference="pref.downloads.disable_button.edit_actions"/>
 </groupbox>
+</html:section>
 
-
-<!-- DRM Content -->
-<groupbox id="drmGroup" data-category="paneWebpages" data-subcategory="drm" hidden="true">
-  <label><html:h2 data-l10n-id="drm-content-header"/></label>
-  <hbox align="center">
-    <checkbox id="playDRMContent" preference="media.eme.enabled"
-              class="tail-with-learn-more" data-l10n-id="play-drm-content" />
-    <label id="playDRMContentLink" class="learnMore" data-l10n-id="play-drm-content-learn-more" is="text-link"/>
-  </hbox>
-</groupbox>
+<html:section class="setting-section"
+              data-category="paneWebpages"
+              hidden="true">
 
 <!-- Fonts and Colors -->
-<groupbox id="fontsGroup" data-category="paneWebpages" hidden="true">
-  <label><html:h2 data-l10n-id="fonts-and-colors-header"/></label>
+<html:h2 data-l10n-id="fonts-and-colors-header"/>
+<groupbox id="fontsGroup">
 
   <hbox id="fontSettings">
     <hbox align="center" flex="1">
@@ -222,33 +233,28 @@
                 fonts-languages-fallback-name-vietnamese.label,
                 fonts-languages-fallback-name-other.label,
               " />
-    </hbox>
-  </hbox>
-  <hbox id="colorsSettings">
-    <spacer flex="1" />
-    <!-- Please don't remove the wrapping hbox/vbox/box for these elements. It's used to properly compute the search tooltip position. -->
-    <hbox>
-      <button id="colors"
-              is="highlightable-button"
-              class="accessory-button"
-              icon="select-color"
-              data-l10n-id="colors-settings"
-              search-l10n-ids="
-                colors-page-override,
-                colors-page-override-option-always.label,
-                colors-page-override-option-auto.label,
-                colors-page-override-option-never.label,
-                colors-text-and-background,
-                colors-text-header,
-                colors-background,
-                colors-use-system,
-                colors-underline-links,
-                colors-links-header,
-                colors-unvisited-links,
-                colors-visited-links
-              "/>
+              <button id="colors"
+                      is="highlightable-button"
+                      class="accessory-button"
+                      icon="select-color"
+                      data-l10n-id="colors-settings"
+                      search-l10n-ids="
+                        colors-page-override,
+                        colors-page-override-option-always.label,
+                        colors-page-override-option-auto.label,
+                        colors-page-override-option-never.label,
+                        colors-text-and-background,
+                        colors-text-header,
+                        colors-background,
+                        colors-use-system,
+                        colors-underline-links,
+                        colors-links-header,
+                        colors-unvisited-links,
+                        colors-visited-links
+                      "/>
     </hbox>
   </hbox>
 </groupbox>
+</html:section>
 
 </html:template>

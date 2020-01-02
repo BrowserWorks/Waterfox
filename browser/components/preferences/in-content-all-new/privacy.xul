@@ -8,11 +8,13 @@
 <stringbundle id="bundlePreferences" src="chrome://browser/locale/preferences/preferences.properties"/>
 <stringbundle id="signonBundle" src="chrome://passwordmgr/locale/passwordmgr.properties"/>
 <html:template id="template-panePrivacy">
-
+<html:section class="setting-section"
+              data-category="panePrivacy"
+              hidden="true">
+  <html:h2 data-l10n-id="privacy-header"/>
 <!-- Tracking / Content Blocking -->
-<groupbox id="trackingGroup" data-category="panePrivacy" hidden="true" aria-describedby="contentBlockingDescription">
-  <label><html:h2 data-l10n-id="privacy-header"/></label>
-  <label id="contentBlockingHeader"><html:h3 data-l10n-id="content-blocking-header"/></label>
+<groupbox id="trackingGroup" aria-describedby="contentBlockingDescription">
+  <html:h3 data-l10n-id="content-blocking-header"/>
   <vbox data-subcategory="trackingprotection">
     <hbox align="start">
       <image id="trackingProtectionShield"/>
@@ -331,7 +333,12 @@
         </vbox>
       </radiogroup>
     </vbox>
-    <vbox id="doNotTrackLearnMoreBox">
+  </vbox>
+</groupbox>
+
+<!-- Do Not Track signal -->
+<groupbox id="dnt">
+  <html:h3 data-l10n-id="dnt-header"/>
       <label><label class="tail-with-learn-more" data-l10n-id="do-not-track-description" id="doNotTrackDesc"></label><label
       class="learnMore" is="text-link" href="https://www.mozilla.org/dnt"
       data-l10n-id="do-not-track-learn-more"></label></label>
@@ -339,45 +346,69 @@
         <radio value="true" data-l10n-id="do-not-track-option-always"/>
         <radio value="false" data-l10n-id="do-not-track-option-default-content-blocking-known"/>
       </radiogroup>
-    </vbox>
-  </vbox>
+</groupbox>
+
+<!-- WebRTC peer connection -->
+<groupbox id="webrtc">
+  <html:h3 data-l10n-id="webrtc-header"/>
+  <hbox align="center">
+    <checkbox id="media.peerconnection.enabled"
+              class="tail-with-learn-more"
+              data-l10n-id="webrtcp2preference"
+              preference="media.peerconnection.enabled"/>
+    <label class="learnMore" is="text-link" href="https://bugzilla.mozilla.org/show_bug.cgi?id=959893"
+           data-l10n-id="content-blocking-learn-more"/>
+  </hbox>
+</groupbox>
+
+<!-- HTTP Referrer Header-->
+<groupbox id="refheader">
+    <html:h3 data-l10n-id="ref-header"/>
+    <!-- Please don't remove the wrapping hbox/vbox/box for these elements. It's used to properly compute the search tooltip position. -->
+
+    <hbox align="center">
+    <hbox>
+      <label id="historyModeLabel"
+             control="doNotsendSecureXSiteReferrer"
+             data-l10n-id="history-remember-label"/>
+    </hbox>
+    <hbox>
+      <menulist id="doNotsendSecureXSiteReferrer" preference="network.http.sendRefererHeader">
+        <menupopup>
+          <menuitem data-l10n-id="sendRefererHeaderopt0"
+                    value="0"/>
+          <menuitem data-l10n-id="sendRefererHeaderopt1"
+                    value="1"/>
+          <menuitem data-l10n-id="sendRefererHeaderopt2"
+                    value="2"/>
+        </menupopup>
+      </menulist>
+    </hbox>
+    </hbox>
 </groupbox>
 
 <!-- Site Data -->
-<groupbox id="siteDataGroup" data-category="panePrivacy" hidden="true" aria-describedby="totalSiteDataSize">
-  <label><html:h3 data-l10n-id="sitedata-header"/></label>
+<groupbox id="siteDataGroup" aria-describedby="totalSiteDataSize">
+  <html:h3 data-l10n-id="sitedata-header"/>
 
-  <hbox data-subcategory="sitedata" align="baseline">
-    <vbox flex="1">
       <description class="description-with-side-element" flex="1">
         <html:span id="totalSiteDataSize" class="tail-with-learn-more"></html:span>
         <label id="siteDataLearnMoreLink"
           class="learnMore" is="text-link" data-l10n-id="sitedata-learn-more"/>
       </description>
+
+      <html:div class="group">
       <hbox flex="1" id="deleteOnCloseNote" class="info-panel">
         <description flex="1" data-l10n-id="sitedata-delete-on-close-private-browsing" />
       </hbox>
-      <hbox id="keepRow"
-            align="center">
-        <checkbox id="deleteOnClose"
-                  data-l10n-id="sitedata-delete-on-close"
-                  preference="network.cookie.lifetimePolicy"
-                  onsyncfrompreference="return gPrivacyPane.readDeleteOnClose();"
-                  onsynctopreference="return gPrivacyPane.writeDeleteOnClose();"
-                  flex="1" />
-      </hbox>
-    </vbox>
-    <vbox align="end">
+    <hbox id="cookiesButtons">
       <!-- Please don't remove the wrapping hbox/vbox/box for these elements. It's used to properly compute the search tooltip position. -->
-      <hbox>
         <button id="clearSiteDataButton"
             is="highlightable-button"
             class="accessory-button"
             icon="clear"
             search-l10n-ids="clear-site-data-cookies-empty.label, clear-site-data-cache-empty.label"
             data-l10n-id="sitedata-clear"/>
-      </hbox>
-      <hbox>
         <button id="siteDataSettings"
                 is="highlightable-button"
                 class="accessory-button"
@@ -390,8 +421,6 @@
                   site-data-settings-description,
                   site-data-remove-all.label,
                 "/>
-      </hbox>
-      <hbox>
         <button id="cookieExceptions"
                 is="highlightable-button"
                 class="accessory-button"
@@ -407,22 +436,29 @@
                   permissions-button-ok.label,
                   permissions-exceptions-cookie-desc,
                 " />
-      </hbox>
-    </vbox>
-  </hbox>
+    </hbox>
+    </html:div>
+    <html:div>
+                <checkbox id="deleteOnClose"
+                  data-l10n-id="sitedata-delete-on-close"
+                  preference="network.cookie.lifetimePolicy"
+                  onsyncfrompreference="return gPrivacyPane.readDeleteOnClose();"
+                  onsynctopreference="return gPrivacyPane.writeDeleteOnClose();"
+                  flex="1" />
+    </html:div>
 </groupbox>
 
 <!-- Passwords -->
-<groupbox id="passwordsGroup" orient="vertical" data-category="panePrivacy" hidden="true">
-  <label><html:h3 data-l10n-id="logins-header"/></label>
-
-  <vbox id="passwordSettings">
-    <hbox id="savePasswordsBox">
-      <checkbox id="savePasswords"
+<groupbox id="passwordsGroup" >
+  <html:h3 data-l10n-id="logins-header"/>
+  <html:div>
+        <checkbox id="savePasswords"
                 data-l10n-id="forms-ask-to-save-logins"
                 preference="signon.rememberSignons"
                 onsyncfrompreference="return gPrivacyPane.readSavePasswords();"
                 flex="1" />
+  </html:div>
+    <html:div>
       <!-- Please don't remove the wrapping hbox/vbox/box for these elements. It's used to properly compute the search tooltip position. -->
       <hbox>
         <button id="passwordExceptions"
@@ -436,8 +472,6 @@
                   permissions-exceptions-saved-logins-desc,
                 "/>
       </hbox>
-    </hbox>
-    <hbox id="showPasswordBox" pack="end">
       <!-- Please don't remove the wrapping hbox/vbox/box for these elements. It's used to properly compute the search tooltip position. -->
       <hbox>
         <button id="showPasswords"
@@ -447,12 +481,13 @@
                 search-l10n-ids="forms-saved-logins.label"
                 preference="pref.privacy.disable_button.view_passwords"/>
       </hbox>
-    </hbox>
-  </vbox>
-  <hbox id="masterPasswordRow">
+    </html:div>
+  <html:div>
     <checkbox id="useMasterPassword"
               data-l10n-id="forms-master-pw-use"
               flex="1"/>
+  </html:div>
+  <html:div>
     <!-- Please don't remove the wrapping hbox/vbox/box for these elements. It's used to properly compute the search tooltip position. -->
     <hbox>
       <button id="changeMasterPassword"
@@ -460,18 +495,18 @@
               class="accessory-button"
               data-l10n-id="forms-master-pw-change"/>
     </hbox>
-  </hbox>
+  </html:div>
 </groupbox>
 
 <!-- The form autofill section is inserted in to this box
      after the form autofill extension has initialized. -->
 <groupbox id="formAutofillGroupBox"
-          data-category="panePrivacy"
-          data-subcategory="form-autofill" hidden="true"></groupbox>
+          data-subcategory="form-autofill"></groupbox>
 
 <!-- History -->
-<groupbox id="historyGroup" data-category="panePrivacy" hidden="true">
-  <label><html:h3 data-l10n-id="history-header"/></label>
+<groupbox id="historyGroup">
+  <html:h3 data-l10n-id="history-header"/>
+  <html:div class="group">
   <hbox align="center">
     <label id="historyModeLabel"
            control="historyMode"
@@ -498,7 +533,8 @@
       </menulist>
     </hbox>
   </hbox>
-  <hbox>
+  </html:div>
+  <html:div>
     <deck id="historyPane" flex="1">
       <vbox id="historyRememberPane">
         <hbox align="center" flex="1">
@@ -544,12 +580,16 @@
         </vbox>
       </vbox>
     </deck>
-    <vbox id="historyButtons" align="end">
-      <button id="clearHistoryButton"
-              is="highlightable-button"
-              class="accessory-button"
-              icon="clear"
-              data-l10n-id="history-clear-button"/>
+    </html:div>
+    <html:div>
+    <hbox id="historyButtons" align="end">
+      <hbox>
+        <button id="clearHistoryButton"
+                is="highlightable-button"
+                class="accessory-button"
+                icon="clear"
+                data-l10n-id="history-clear-button"/>
+      </hbox>
       <!-- Please don't remove the wrapping hbox/vbox/box for these elements. It's used to properly compute the search tooltip position. -->
       <hbox>
         <button id="clearDataSettings"
@@ -569,15 +609,13 @@
                   item-offline-apps.label
                 "/>
       </hbox>
-    </vbox>
-  </hbox>
+    </hbox>
+  </html:div>
 </groupbox>
 
 <!-- Address Bar -->
-<groupbox id="locationBarGroup"
-          data-category="panePrivacy"
-          hidden="true">
-  <label><html:h3 data-l10n-id="addressbar-header"/></label>
+<groupbox id="locationBarGroup">
+  <html:h3 data-l10n-id="addressbar-header"/>
   <label id="locationBarSuggestionLabel" data-l10n-id="addressbar-suggest"/>
   <checkbox id="historySuggestion" data-l10n-id="addressbar-locbar-history-option"
             preference="browser.urlbar.suggest.history"/>
@@ -585,15 +623,18 @@
             preference="browser.urlbar.suggest.bookmark"/>
   <checkbox id="openpageSuggestion" data-l10n-id="addressbar-locbar-openpage-option"
             preference="browser.urlbar.suggest.openpage"/>
-  <label id="openSearchEnginePreferences" is="text-link"
+    <label id="openSearchEnginePreferences" is="text-link"
          data-l10n-id="addressbar-suggestions-settings"/>
 </groupbox>
-
+</html:section>
 
 <!-- Permissions -->
-<groupbox id="permissionsGroup" data-category="panePrivacy" hidden="true" data-subcategory="permissions">
-  <label><html:h2 data-l10n-id="permissions-header"/></label>
-  <label class="search-header" hidden="true"><html:h2 data-l10n-id="permissions-header"/></label>
+<html:section class="setting-section"
+              data-category="panePrivacy"
+              hidden="true">
+<html:h2 data-l10n-id="permissions-header"/>
+<label class="search-header" hidden="true"><html:h2 data-l10n-id="permissions-header"/></label>
+<groupbox id="permissionsGroup">
 
   <!-- The hbox around the buttons is to compute the search tooltip position properly -->
   <vbox>
@@ -834,34 +875,6 @@
     </vbox>
   </hbox>
 
-  <hbox align="center">
-    <checkbox id="media.peerconnection.enabled"
-              class="tail-with-learn-more"
-              data-l10n-id="webrtcp2preference"
-              preference="media.peerconnection.enabled"/>
-    <label class="learnMore" is="text-link" href="https://bugzilla.mozilla.org/show_bug.cgi?id=959893"
-           data-l10n-id="content-blocking-learn-more"/>
-  </hbox>
-
-  <hbox align="center">
-    <label id="historyModeLabel"
-           control="doNotsendSecureXSiteReferrer"
-           data-l10n-id="history-remember-label"/>
-    <!-- Please don't remove the wrapping hbox/vbox/box for these elements. It's used to properly compute the search tooltip position. -->
-    <hbox>
-      <menulist id="doNotsendSecureXSiteReferrer" preference="network.http.sendRefererHeader">
-        <menupopup>
-          <menuitem data-l10n-id="sendRefererHeaderopt0"
-                    value="0"/>
-          <menuitem data-l10n-id="sendRefererHeaderopt1"
-                    value="1"/>
-          <menuitem data-l10n-id="sendRefererHeaderopt2"
-                    value="2"/>
-        </menupopup>
-      </menulist>
-    </hbox>
-  </hbox>
-
 </groupbox>
 
 <!-- Firefox Data Collection and Use -->
@@ -932,32 +945,33 @@
   </vbox>
 </groupbox>
 #endif
+</html:section>
 
-
+<html:section class="setting-section"
+              data-category="panePrivacy"
+              hidden="true">
+<html:h2 data-l10n-id="security-header"/>
 <!-- addons, forgery (phishing) UI Security -->
-<groupbox id="browsingProtectionGroup" data-category="panePrivacy" hidden="true">
-  <label><html:h2 data-l10n-id="security-header"/></label>
-  <label><html:h3 data-l10n-id="security-browsing-protection"/></label>
-  <hbox align = "center">
+<groupbox id="browsingProtectionGroup" class="setting-group">
+  <html:h3 data-l10n-id="security-browsing-protection"/>
+  <html:div class="group">
     <checkbox id="enableSafeBrowsing"
-              data-l10n-id="security-enable-safe-browsing"
-              class="tail-with-learn-more"/>
+              data-l10n-id="security-enable-safe-browsing"/>
     <label id="enableSafeBrowsingLearnMore"
-           class="learnMore" is="text-link" data-l10n-id="security-enable-safe-browsing-link"/>
-  </hbox>
-  <vbox class="indent">
+           class="learnMore indent tip-caption text-link" is="text-link" data-l10n-id="security-enable-safe-browsing-link"/>
     <checkbox id="blockDownloads"
               data-l10n-id="security-block-downloads"/>
     <checkbox id="blockUncommonUnwanted"
               data-l10n-id="security-block-uncommon-software"/>
-  </vbox>
+  </html:div>
 </groupbox>
 
 <!-- Certificates -->
-<groupbox id="certSelection" data-category="panePrivacy" hidden="true">
-  <label><html:h3 data-l10n-id="certs-header"/></label>
+<groupbox id="certSelection" class="setting-group">
+  <html:h3 data-l10n-id="certs-header"/>
   <description id="CertSelectionDesc" control="certSelection" data-l10n-id="certs-personal-label"/>
 
+  <html:div class="group">
   <!--
     The values on these radio buttons may look like l10n issues, but
     they're not - this preference uses *those strings* as its values.
@@ -972,15 +986,14 @@
     <radio data-l10n-id="certs-select-ask-option"
            value="Ask Every Time"/>
   </radiogroup>
-  <hbox align="start">
     <checkbox id="enableOCSP"
               data-l10n-id="certs-enable-ocsp"
               onsyncfrompreference="return gPrivacyPane.readEnableOCSP();"
               onsynctopreference="return gPrivacyPane.writeEnableOCSP();"
               preference="security.OCSP.enabled"
               flex="1" />
-    <vbox>
       <!-- Please don't remove the wrapping hbox/vbox/box for these elements. It's used to properly compute the search tooltip position. -->
+      <hbox>
       <hbox pack="end">
         <button id="viewCertificatesButton"
                 is="highlightable-button"
@@ -1022,7 +1035,8 @@
                   devmgr-button-unload.label
                 "/>
       </hbox>
-    </vbox>
-  </hbox>
+      </hbox>
+      </html:div>
 </groupbox>
+</html:section>
 </html:template>

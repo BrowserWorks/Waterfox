@@ -7,34 +7,28 @@
 <script src="chrome://browser/content/preferences/in-content-all-new/appearance.js"/>
 <html:template id="template-paneAppearance">
 
-<groupbox id="preferencesGroup"
-          data-category="paneAppearance"
-          hidden="true">
-<label><html:h2 data-l10n-id="settings-page"/></label>
+<!-- Menu section -->
+<html:section class="setting-section"
+              data-category="paneAppearance"
+              hidden="true">
+<html:h2 data-l10n-id="pane-windowAppearance-title"/>
 
+<!-- Settings Page preferences -->
+<groupbox id="preferencesGroup"
+          class="setting-group">
+<html:h3 data-l10n-id="settings-page"/>
+
+<html:div class="group">
   <checkbox id="browser.preferences.useAllNew" data-l10n-id="display-all-new-prefs"
 							preference="browser.preferences.useAllNew"/>
+</html:div>
 </groupbox>
-
-<!-- Restart Menu Item preferences -->
-<groupbox id="restartGroup"
-          data-category="paneAppearance"
-          hidden="true">
-  <label><html:h2 data-l10n-id="restart-header"/></label>
-
-  <checkbox id="browser.restart_menu.showpanelmenubtn" data-l10n-id="restart-paneluibtn"
-							preference="browser.restart_menu.showpanelmenubtn"/>
-  <checkbox id="browser.restart_menu.purgecache" data-l10n-id="clean-fast-restart-cache"
-            preference="browser.restart_menu.purgecache"/>
-  <checkbox id="browser.restart_menu.requireconfirm" data-l10n-id="restart-reqconfirmation"
-            preference="browser.restart_menu.requireconfirm"/>
- </groupbox>
 
 <!-- Status Bar preferences -->
 <groupbox id="statusBarGroup"
-          data-category="paneAppearance"
-          hidden="true">
-  <label><html:h2 data-l10n-id="statusBar-header"/></label>
+          class="setting-group">
+  <html:h3 data-l10n-id="statusBar-header"/>
+  <html:div class="group">
   <vbox id="statusBarContainer">
     <radiogroup id="statusBarRadioGroup" preference="browser.statusbar.mode" onsyncfrompreference="toggleStatusBar();">
       <radio id="showStatusBar"
@@ -51,6 +45,73 @@
                 data-l10n-id="show-btn-range"
                 onsyncfrompreference="showBtnRange();"/>
   </vbox>
+  </html:div>
 </groupbox>
+
+<!-- Window Controls Position preferences -->
+<groupbox id="windowControlsGroup"
+          class="setting-group">
+  <html:h3 data-l10n-id="window-controls-position-header"/>
+  <html:div class="group">
+    <radiogroup id="windowControlsRadioGroup" preference="browser.windowControls.position" onsyncfrompreference="gAppearancePane.toggleMoveWindowControls(); moveWindowControls();">
+      <radio value="right"
+             data-l10n-id="right-side"/>
+      <radio value="left"
+             data-l10n-id="left-side"/>
+    </radiogroup>
+  </html:div>
+</groupbox>
+
+<!-- Bookmarks Toolbar Position preferences -->
+<groupbox id="bookmarksBarPositionGroup"
+          class="setting-group">
+  <html:h3 data-l10n-id="bookmarks-bar-position-header"/>
+  <html:div class="group">
+    <radiogroup id="bookmarksBarPositionRadioGroup" preference="browser.bookmarksBar.position" onsyncfrompreference="moveBookmarksBar();">
+      <radio value="top"
+             data-l10n-id="top-bookmarks"/>
+      <radio value="bottom"
+             data-l10n-id="tab-bottom"/>
+    </radiogroup>
+  </html:div>
+</groupbox>
+</html:section>
+
+
+<!-- Menu section -->
+<html:section class="setting-section"
+              data-category="paneAppearance"
+              hidden="true">
+<html:h2 data-l10n-id="pane-menu-title"/>
+
+<!-- Restart Menu Item preferences -->
+<groupbox id="restartGroup"
+          class="setting-group">
+
+    <html:h3 data-l10n-id="restart-header"/>
+    <html:div class="group">
+      <checkbox id="browser.restart_menu.showpanelmenubtn" data-l10n-id="restart-paneluibtn"
+							preference="browser.restart_menu.showpanelmenubtn"/>
+      <checkbox id="browser.restart_menu.purgecache" data-l10n-id="clean-fast-restart-cache"
+            preference="browser.restart_menu.purgecache"/>
+      <checkbox id="browser.restart_menu.requireconfirm" data-l10n-id="restart-reqconfirmation"
+            preference="browser.restart_menu.requireconfirm"/>
+    </html:div>
+ </groupbox>
+
+<!-- Menu Icon Style preferences -->
+<groupbox id="menuIconStyleGroup"
+          class="setting-group">
+  <html:h3 data-l10n-id="menu-icon-style-header"/>
+  <html:div class="group">
+    <radiogroup id="menuIconStyleRadioGroup" preference="browser.menuIcon.style" onsyncfrompreference="changeMenuIconStyle();">
+      <radio value="0"
+             data-l10n-id="menu-icon"/>
+      <radio value="1"
+             data-l10n-id="browser-icon"/>
+    </radiogroup>
+  </html:div>
+</groupbox>
+</html:section>
 
 </html:template>

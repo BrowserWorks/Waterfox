@@ -1246,73 +1246,154 @@ function resetZoomStatus() {
 
 
 function updateZoomStatus() {
-  var zoomValue =  windowRoot.ownerGlobal.ZoomManager.getZoomForBrowser(windowRoot.ownerGlobal.gBrowser)
+  var zoomValue =  windowRoot.ownerGlobal.ZoomManager.getZoomForBrowser(windowRoot.ownerGlobal.gBrowser);
+  var resetZoomBtn = windowRoot.ownerGlobal.document.querySelector('.reset-zoom.button-textonly');
   windowRoot.ownerGlobal.document.querySelector('#zoom-range-status').value = zoomValue;
   var zoomPercentValue = parseInt(zoomValue * 100);
   windowRoot.ownerGlobal.document.querySelector('.zoom-percent-status').textContent = zoomPercentValue +' %';
   if (zoomPercentValue != 100){
-    windowRoot.ownerGlobal.document.querySelector('.reset-zoom.button-textonly').disabled = "";
+    resetZoomBtn.disabled = "";
   }
   else
   {
-    windowRoot.ownerGlobal.document.querySelector('.reset-zoom.button-textonly').disabled = "true";
+    resetZoomBtn.disabled = "true";
   }
 }
 
 function toggleStatusBar() {
+  var statuspanel = windowRoot.ownerGlobal.document.getElementById("statuspanel");
+  var statusbar = windowRoot.ownerGlobal.document.querySelector(".toolbar-statusbar");
+  var zoombtn = windowRoot.ownerGlobal.document.querySelector("#urlbar-zoom-button");
+  var pageActionSeparator = windowRoot.ownerGlobal.document.querySelector("#pageActionSeparator");
+
   if (Services.prefs.getIntPref("browser.statusbar.mode") == 2) {
-    windowRoot.ownerGlobal.document.getElementById("statuspanel").hidden = true;
-    windowRoot.ownerGlobal.document.querySelector(".toolbar-statusbar").style.display = "flex";
-    windowRoot.ownerGlobal.document.querySelector("#urlbar-zoom-button").style.display = "none";
-    windowRoot.ownerGlobal.document.querySelector("#pageActionSeparator").style.display = "none";
+    statuspanel.hidden = true;
+    statusbar.style.display = "flex";
+    zoombtn.style.display = "none";
+    pageActionSeparator.style.display = "none";
   }
   else if (Services.prefs.getIntPref("browser.statusbar.mode") == 1) {
-    windowRoot.ownerGlobal.document.querySelector(".toolbar-statusbar").style.display = "none";
-    windowRoot.ownerGlobal.document.querySelector("#urlbar-zoom-button").style.display = "";
-    windowRoot.ownerGlobal.document.getElementById("statuspanel").hidden = "";
-    windowRoot.ownerGlobal.document.querySelector("#pageActionSeparator").style.display = "";
-    windowRoot.ownerGlobal.document.querySelector("#pageActionSeparator").style.visibility = "visible";
+    statusbar.style.display = "none";
+    zoombtn.style.display = "";
+    statuspanel.hidden = "";
+    pageActionSeparator.style.display = "";
+    pageActionSeparator.style.visibility = "visible";
   }
   else if (Services.prefs.getIntPref("browser.statusbar.mode") == 0) {
-    windowRoot.ownerGlobal.document.querySelector(".toolbar-statusbar").style.display = "none";
-    windowRoot.ownerGlobal.document.getElementById("statuspanel").hidden = true;
-    windowRoot.ownerGlobal.document.querySelector("#urlbar-zoom-button").style.display = "";
-    windowRoot.ownerGlobal.document.querySelector("#pageActionSeparator").style.display = "";
-    windowRoot.ownerGlobal.document.querySelector("#pageActionSeparator").style.visibility = "visible";
+    statusbar.style.display = "none";
+    statuspanel.hidden = true;
+    zoombtn.style.display = "";
+    pageActionSeparator.style.display = "";
+    pageActionSeparator.style.visibility = "visible";
   }
 }
 
 function showBtnRange() {
+  var zoomoutsb = windowRoot.ownerGlobal.document.querySelector("#zoomoutsb");
+  var zoominsb = windowRoot.ownerGlobal.document.querySelector("#zoominsb");
+  var zoomStatus = windowRoot.ownerGlobal.document.querySelector("#zoom-range-status");
+
   if (Services.prefs.getIntPref("browser.statusbar.mode") == 2) {
     if(Services.prefs.getBoolPref("browser.statusbar.showbtn", true)) {
-      windowRoot.ownerGlobal.document.querySelector("#zoomoutsb").style.display = "initial";
-      windowRoot.ownerGlobal.document.querySelector("#zoominsb").style.display = "initial";
-      windowRoot.ownerGlobal.document.querySelector("#zoom-range-status").style.display = "none";
+      zoomoutsb.style.display = "initial";
+      zoominsb.style.display = "initial";
+      zoomStatus.style.display = "none";
     }
     else
     {
-      windowRoot.ownerGlobal.document.querySelector("#zoomoutsb").style.display = "none";
-      windowRoot.ownerGlobal.document.querySelector("#zoominsb").style.display = "none";
-      windowRoot.ownerGlobal.document.querySelector("#zoom-range-status").style.display = "initial";
+      zoomoutsb.style.display = "none";
+      zoominsb.style.display = "none";
+      zoomStatus.style.display = "initial";
     }
   }
 }
 
 function moveTabBar()
 {
+  var bottomBookmarksBar = windowRoot.ownerGlobal.document.querySelector("#browser-bottombox #PersonalToolbar");
+  var tabsToolbar = windowRoot.ownerGlobal.document.querySelector("#TabsToolbar");
+  var titlebar = windowRoot.ownerGlobal.document.querySelector("#titlebar");
+
   if(Services.prefs.getStringPref("browser.tabBar.position") == "topUnderAB")
   {
-    windowRoot.ownerGlobal.document.querySelector("#navigator-toolbox").appendChild(windowRoot.ownerGlobal.document.querySelector("#TabsToolbar"));
+    windowRoot.ownerGlobal.document.querySelector("#navigator-toolbox").appendChild(tabsToolbar);
     windowRoot.ownerGlobal.gBrowser.setTabTitle(windowRoot.ownerGlobal.document.querySelector(".tabbrowser-tab[first-visible-tab]"));
+    if (titlebar.classList.contains("tabs-topAboveAB"))
+    {
+      titlebar.classList.remove("tabs-topAboveAB");
+    }
   }
   else if (Services.prefs.getStringPref("browser.tabBar.position") == "bottom")
   {
-    windowRoot.ownerGlobal.document.querySelector("#browser-bottombox").insertAdjacentElement('afterbegin', windowRoot.ownerGlobal.document.querySelector("#TabsToolbar"));
+    if(bottomBookmarksBar)
+    {
+      bottomBookmarksBar.insertAdjacentElement('afterend', tabsToolbar);
+    }
+    else
+    {
+      windowRoot.ownerGlobal.document.querySelector("#browser-bottombox").insertAdjacentElement('afterbegin', tabsToolbar);
+    }
     windowRoot.ownerGlobal.gBrowser.setTabTitle(windowRoot.ownerGlobal.document.querySelector(".tabbrowser-tab[first-visible-tab]"));
+    if (titlebar.classList.contains("tabs-topAboveAB"))
+    {
+      titlebar.classList.remove("tabs-topAboveAB");
+    }
   }
   else if (Services.prefs.getStringPref("browser.tabBar.position") == "topAboveAB")
   {
-    windowRoot.ownerGlobal.document.querySelector("#titlebar").insertAdjacentElement('afterend', windowRoot.ownerGlobal.document.querySelector("#TabsToolbar"));
+    titlebar.insertAdjacentElement('beforeend', tabsToolbar);
     windowRoot.ownerGlobal.gBrowser.setTabTitle(windowRoot.ownerGlobal.document.querySelector(".tabbrowser-tab[first-visible-tab]"));
+    if (!titlebar.classList.contains("tabs-topAboveAB")) {
+      titlebar.classList.add("tabs-topAboveAB");
+    }
+ }
+}
+
+function moveWindowControls() {
+  var titlebarButtonbox =  windowRoot.ownerGlobal.document.querySelector(".titlebar-buttonbox");
+  var windowControls = windowRoot.ownerGlobal.document.querySelector("#window-controls");
+  var tabsToolbar = windowRoot.ownerGlobal.document.querySelector("#TabsToolbar");
+
+  if(Services.prefs.getStringPref("browser.windowControls.position") == "left")
+  {
+    titlebarButtonbox.classList.add("left");
+    windowControls.classList.add("left");
+    tabsToolbar.classList.add("leftWindowControls");
+  }
+  else
+  {
+    titlebarButtonbox.classList.remove("left");
+    windowControls.classList.remove("left");
+    tabsToolbar.classList.remove("leftWindowControls");
+  }
+}
+
+function changeMenuIconStyle() {
+  var menuBtn = windowRoot.ownerGlobal.document.querySelector("#PanelUI-menu-button");
+  if (Services.prefs.getIntPref("browser.menuIcon.style") == 0) {
+    if (menuBtn.classList.contains("browser")) {
+      menuBtn.classList.remove("browser");
+    }
+  }
+  else if (Services.prefs.getIntPref("browser.menuIcon.style") == 1) {
+    menuBtn.classList.add("browser");
+  }
+}
+
+function moveBookmarksBar() {
+  var bottomTabs = windowRoot.ownerGlobal.document.querySelector("#browser-bottombox #TabsToolbar");
+  var bookmarksBar = windowRoot.ownerGlobal.document.querySelector("#PersonalToolbar");
+
+  if (Services.prefs.getStringPref("browser.bookmarksBar.position") == "top") {
+    windowRoot.ownerGlobal.document.querySelector("#nav-bar").insertAdjacentElement('afterend', bookmarksBar);
+  }
+  else if (Services.prefs.getStringPref("browser.bookmarksBar.position") == "bottom") {
+    if(bottomTabs) {
+      bottomTabs.insertAdjacentElement('beforebegin', bookmarksBar);
+    }
+    else
+    {
+      windowRoot.ownerGlobal.document.querySelector("#browser-bottombox").insertAdjacentElement('afterbegin', bookmarksBar);
+    }
   }
 }

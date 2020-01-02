@@ -1925,6 +1925,18 @@ var gBrowserInit = {
       moveTabBar();
     }
 
+    if(Services.prefs.getStringPref("browser.windowControls.position") == "left"){
+      moveWindowControls();
+    }
+
+    if (Services.prefs.getIntPref("browser.menuIcon.style") == 1) {
+      changeMenuIconStyle();
+    }
+
+    if (Services.prefs.getStringPref("browser.bookmarksBar.position") == "bottom") {
+      moveBookmarksBar();
+    }
+
     this._loadHandled = true;
   },
 

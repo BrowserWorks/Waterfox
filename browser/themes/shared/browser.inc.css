@@ -528,8 +528,78 @@
   list-style-image: url(chrome://browser/skin/fullscreen.svg);
   margin-left: 10px;
   margin-right: 12px;
+  margin-bottom: 3px;
 }
 
 #browser-bottombox #TabsToolbar {
   background: var(--lwt-accent-color);
+}
+
+.titlebar-buttonbox-container {
+  position: absolute;
+  width: 100%;
+  top: 0;
+}
+
+.titlebar-buttonbox {
+  position: absolute;
+  right: 5px;
+  display: flex;
+}
+
+:root:not([tabsintitlebar]) .titlebar-buttonbox-container, :root[inFullscreen] .titlebar-buttonbox-container {
+  display: none;
+}
+
+:root[tabsintitlebar] #titlebar:not(.tabs-topAboveAB), :root[inFullscreen]:not([tabsintitlebar]) #titlebar:not(.tabs-topAboveAB) {
+  min-height: 30px;
+  position: relative;
+}
+
+:root[inFullscreen] #window-controls {
+  position: absolute;
+  top: 2px;
+  right: 0;
+  z-index: 1;
+}
+
+#titlebar.tabs-topAboveAB #TabsToolbar {
+  padding-right: 80px;
+}
+
+:root[inFullscreen] #titlebar.tabs-topAboveAB #TabsToolbar {
+  padding-right: 140px;
+}
+
+.titlebar-buttonbox.left {
+  left: 5px;
+  right: auto;
+}
+
+#titlebar.tabs-topAboveAB #TabsToolbar.leftWindowControls
+{
+  padding-left: 110px !important;
+}
+
+#titlebar.tabs-topAboveAB #TabsToolbar.leftWindowControls, :root[inFullscreen] #titlebar.tabs-topAboveAB #TabsToolbar.leftWindowControls
+{
+  padding-right: 0;
+}
+
+:root[inFullscreen] #titlebar.tabs-topAboveAB #TabsToolbar.leftWindowControls {
+  padding-left: 140px !important;
+}
+
+.titlebar-buttonbox.left .titlebar-close, :root[inFullscreen][tabsintitlebar] #window-controls.left #close-button {
+  order: -1;
+}
+
+:root[inFullscreen][tabsintitlebar] #window-controls.left {
+  left: 0;
+  right: auto;
+  display: flex;
+}
+
+#PanelUI-menu-button.browser {
+  list-style-image: url("chrome://branding/content/icon16.png");
 }
