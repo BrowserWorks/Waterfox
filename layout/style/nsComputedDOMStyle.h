@@ -81,13 +81,13 @@ public:
 
   nsComputedDOMStyle(mozilla::dom::Element* aElement,
                      const nsAString& aPseudoElt,
-                     nsIPresShell* aPresShell,
+                     nsIDocument* aDocument,
                      StyleType aStyleType,
                      AnimationFlag aFlag = eWithAnimation);
 
-  virtual nsINode *GetParentObject() override
+  nsINode* GetParentObject() override
   {
-    return mContent;
+    return mElement;
   }
 
   static already_AddRefed<nsStyleContext>
@@ -720,9 +720,9 @@ private:
 
   // We don't really have a good immutable representation of "presentation".
   // Given the way GetComputedStyle is currently used, we should just grab the
-  // 0th presshell, if any, from the document.
+  // presshell, if any, from the document.
   nsWeakPtr mDocumentWeak;
-  nsCOMPtr<nsIContent> mContent;
+  RefPtr<mozilla::dom::Element> mElement;
 
   /**
    * Strong reference to the style context we access data from.  This can be
@@ -744,13 +744,13 @@ private:
   nsCOMPtr<nsIAtom> mPseudo;
 
   /*
-   * While computing style data, the primary frame for mContent --- named "outer"
+   * While computing style data, the primary frame for mElement --- named "outer"
    * because we should use it to compute positioning data.  Null
    * otherwise.
    */
   nsIFrame* mOuterFrame;
   /*
-   * While computing style data, the "inner frame" for mContent --- the frame
+   * While computing style data, the "inner frame" for mElement --- the frame
    * which we should use to compute margin, border, padding and content data.  Null
    * otherwise.
    */
@@ -793,7 +793,7 @@ private:
 already_AddRefed<nsComputedDOMStyle>
 NS_NewComputedDOMStyle(mozilla::dom::Element* aElement,
                        const nsAString& aPseudoElt,
-                       nsIPresShell* aPresShell,
+                       nsIDocument* aDocument,
                        nsComputedDOMStyle::StyleType aStyleType =
                          nsComputedDOMStyle::eAll,
                        nsComputedDOMStyle::AnimationFlag aFlag =
