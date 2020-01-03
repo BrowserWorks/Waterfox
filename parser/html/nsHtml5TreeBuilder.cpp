@@ -154,8 +154,6 @@ nsHtml5TreeBuilder::startTokenization(nsHtml5Tokenizer* self)
         tokenizer->setState(nsHtml5Tokenizer::DATA);
       }
     }
-    contextName = nullptr;
-    contextNode = nullptr;
   } else {
     mode = INITIAL;
     if (tokenizer->isViewingXmlSource()) {
@@ -600,6 +598,8 @@ nsHtml5TreeBuilder::endTokenization()
   formPointer = nullptr;
   headPointer = nullptr;
   deepTreeSurrogateParent = nullptr;
+  contextName = nullptr;
+  contextNode = nullptr;
   templateModeStack = nullptr;
   if (stack) {
     while (currentPtr > -1) {
