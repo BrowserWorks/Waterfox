@@ -488,7 +488,8 @@ public class TelemetryCorePingBuilder extends TelemetryPingBuilder {
 
     private int getCurrentPwas(final Context context) {
         // ShortcutManager#getPinnedShortcuts is only available on Android >= 25
-        if (Build.VERSION.SDK_INT >= 25) {
+        // But it only seems to return a valid result on Android >= 26
+        if (Build.VERSION.SDK_INT >= 26) {
             final ShortcutManager sm = context.getSystemService(ShortcutManager.class);
             return (int) sm.getPinnedShortcuts()
                     .stream()
