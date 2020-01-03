@@ -93,10 +93,7 @@ impl<T: ?Sized> ReentrantMutex<T> {
     #[inline]
     pub fn lock(&self) -> ReentrantMutexGuard<T> {
         self.raw.lock();
-        ReentrantMutexGuard {
-            mutex: self,
-            marker: PhantomData,
-        }
+        ReentrantMutexGuard::new(self)
     }
 
     /// Attempts to acquire this lock.
@@ -109,10 +106,7 @@ impl<T: ?Sized> ReentrantMutex<T> {
     #[inline]
     pub fn try_lock(&self) -> Option<ReentrantMutexGuard<T>> {
         if self.raw.try_lock() {
-            Some(ReentrantMutexGuard {
-                mutex: self,
-                marker: PhantomData,
-            })
+            Some(ReentrantMutexGuard::new(self))
         } else {
             None
         }
@@ -126,10 +120,7 @@ impl<T: ?Sized> ReentrantMutex<T> {
     #[inline]
     pub fn try_lock_for(&self, timeout: Duration) -> Option<ReentrantMutexGuard<T>> {
         if self.raw.try_lock_for(timeout) {
-            Some(ReentrantMutexGuard {
-                mutex: self,
-                marker: PhantomData,
-            })
+            Some(ReentrantMutexGuard::new(self))
         } else {
             None
         }
@@ -143,10 +134,7 @@ impl<T: ?Sized> ReentrantMutex<T> {
     #[inline]
     pub fn try_lock_until(&self, timeout: Instant) -> Option<ReentrantMutexGuard<T>> {
         if self.raw.try_lock_until(timeout) {
-            Some(ReentrantMutexGuard {
-                mutex: self,
-                marker: PhantomData,
-            })
+            Some(ReentrantMutexGuard::new(self))
         } else {
             None
         }
@@ -225,6 +213,12 @@ impl<T: ?Sized + fmt::Debug> fmt::Debug for ReentrantMutex<T> {
 }
 
 impl<'a, T: ?Sized + 'a> ReentrantMutexGuard<'a, T> {
+    fn new(mutex: &'a ReentrantMutex<T>) -> Self {
+        ReentrantMutexGuard {
+            mutex: mutex,
+            marker: PhantomData,
+        }
+    }
     /// Unlocks the mutex using a fair unlock protocol.
     ///
     /// By default, mutexes are unfair and allow the current thread to re-lock
@@ -310,10 +304,9 @@ mod tests {
         let _lock = m.try_lock();
         let _lock2 = m.try_lock();
         thread::spawn(move || {
-                let lock = m2.try_lock();
-                assert!(lock.is_none());
-            })
-            .join()
+            let lock = m2.try_lock();
+            assert!(lock.is_none());
+        }).join()
             .unwrap();
         let _lock3 = m.try_lock();
     }

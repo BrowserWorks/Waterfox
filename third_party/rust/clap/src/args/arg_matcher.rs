@@ -1,5 +1,6 @@
 // Std
 use std::collections::hash_map::{Entry, Iter};
+use std::collections::HashMap;
 use std::ffi::OsStr;
 use std::ops::Deref;
 use std::mem;
@@ -20,31 +21,104 @@ impl<'a> Default for ArgMatcher<'a> {
 impl<'a> ArgMatcher<'a> {
     pub fn new() -> Self { ArgMatcher::default() }
 
-    pub fn propagate(&mut self, arg: &'a str) {
-        debugln!("ArgMatcher::propagate: arg={}", arg);
-        let vals: Vec<_> = if let Some(ma) = self.get(arg) {
-            ma.vals.clone()
-        } else {
-            debugln!("ArgMatcher::propagate: arg wasn't used");
-            return;
-        };
-        if let Some(ref mut sc) = self.0.subcommand {
-            {
-                let sma = (*sc).matches.args.entry(arg).or_insert_with(|| {
-                    let mut gma = MatchedArg::new();
-                    gma.occurs += 1;
-                    gma.vals = vals.clone();
-                    gma
-                });
-                if sma.vals.is_empty() {
-                    sma.vals = vals.clone();
+    pub fn process_arg_overrides<'b>(&mut self, a: Option<&AnyArg<'a, 'b>>, overrides: &mut Vec<(&'b str, &'a str)>, required: &mut Vec<&'a str>, check_all: bool) {
+        debugln!("ArgMatcher::process_arg_overrides:{:?};", a.map_or(None, |a| Some(a.name())));
+        if let Some(aa) = a {
+            let mut self_done = false;
+            if let Some(a_overrides) = aa.overrides() {
+                for overr in a_overrides {
+                    debugln!("ArgMatcher::process_arg_overrides:iter:{};", overr);
+                    if overr == &aa.name() {
+                        self_done = true;
+                        self.handle_self_overrides(a);
+                    } else if self.is_present(overr) {
+                        debugln!("ArgMatcher::process_arg_overrides:iter:{}: removing from matches;", overr);
+                        self.remove(overr);
+                        for i in (0 .. required.len()).rev() {
+                            if &required[i] == overr {
+                                debugln!("ArgMatcher::process_arg_overrides:iter:{}: removing required;", overr);
+                                required.swap_remove(i);
+                                break;
+                            }
+                        }
+                        overrides.push((overr, aa.name()));
+                    } else {
+                        overrides.push((overr, aa.name()));
+                    }
                 }
             }
+            if check_all && !self_done {
+                self.handle_self_overrides(a);
+            }
+        }
+    }
+
+    pub fn handle_self_overrides<'b>(&mut self, a: Option<&AnyArg<'a, 'b>>) {
+        debugln!("ArgMatcher::handle_self_overrides:{:?};", a.map_or(None, |a| Some(a.name())));
+        if let Some(aa) = a {
+            if !aa.has_switch() || aa.is_set(ArgSettings::Multiple) {
+                // positional args can't override self or else we would never advance to the next
+
+                // Also flags with --multiple set are ignored otherwise we could never have more
+                // than one
+                return;
+            }
+            if let Some(ma) = self.get_mut(aa.name()) {
+                if ma.vals.len() > 1 {
+                    // swap_remove(0) would be O(1) but does not preserve order, which
+                    // we need
+                    ma.vals.remove(0);
+                    ma.occurs = 1;
+                } else if !aa.takes_value() && ma.occurs > 1 {
+                    ma.occurs = 1;
+                }
+            }
+        }
+    }
+
+    pub fn is_present(&self, name: &str) -> bool {
+        self.0.is_present(name)
+    }
+
+    pub fn propagate_globals(&mut self, global_arg_vec: &[&'a str]) {
+        debugln!( "ArgMatcher::get_global_values: global_arg_vec={:?}", global_arg_vec );
+        let mut vals_map = HashMap::new();
+        self.fill_in_global_values(global_arg_vec, &mut vals_map);
+    }
+
+    fn fill_in_global_values(
+        &mut self,
+        global_arg_vec: &[&'a str],
+        vals_map: &mut HashMap<&'a str, MatchedArg>,
+    ) {
+        for global_arg in global_arg_vec {
+            if let Some(ma) = self.get(global_arg) {
+                // We have to check if the parent's global arg wasn't used but still exists
+                // such as from a default value.
+                //
+                // For example, `myprog subcommand --global-arg=value` where --global-arg defines
+                // a default value of `other` myprog would have an existing MatchedArg for
+                // --global-arg where the value is `other`, however the occurs will be 0.
+                let to_update = if let Some(parent_ma) = vals_map.get(global_arg) {
+                    if parent_ma.occurs > 0 && ma.occurs == 0 {
+                        parent_ma.clone()
+                    } else {
+                        ma.clone()
+                    }
+                } else {
+                    ma.clone()
+                };
+                vals_map.insert(global_arg, to_update);
+            }
+        }
+        if let Some(ref mut sc) = self.0.subcommand {
             let mut am = ArgMatcher(mem::replace(&mut sc.matches, ArgMatches::new()));
-            am.propagate(arg);
+            am.fill_in_global_values(global_arg_vec, vals_map);
             mem::swap(&mut am.0, &mut sc.matches);
-        } else {
-            debugln!("ArgMatcher::propagate: Subcommand wasn't used");
+        }
+
+        for (name, matched_arg) in vals_map.into_iter() {
+            self.0.args.insert(name, matched_arg.clone());
         }
     }
 
@@ -98,14 +172,24 @@ impl<'a> ArgMatcher<'a> {
     pub fn add_val_to(&mut self, arg: &'a str, val: &OsStr) {
         let ma = self.entry(arg).or_insert(MatchedArg {
             occurs: 0,
+            indices: Vec::with_capacity(1),
             vals: Vec::with_capacity(1),
         });
-        // let len = ma.vals.len() + 1;
         ma.vals.push(val.to_owned());
     }
 
+    pub fn add_index_to(&mut self, arg: &'a str, idx: usize) {
+        let ma = self.entry(arg).or_insert(MatchedArg {
+            occurs: 0,
+            indices: Vec::with_capacity(1),
+            vals: Vec::new(),
+        });
+        ma.indices.push(idx);
+    }
+
     pub fn needs_more_vals<'b, A>(&self, o: &A) -> bool
-        where A: AnyArg<'a, 'b>
+    where
+        A: AnyArg<'a, 'b>,
     {
         debugln!("ArgMatcher::needs_more_vals: o={}", o.name());
         if let Some(ma) = self.get(o.name()) {

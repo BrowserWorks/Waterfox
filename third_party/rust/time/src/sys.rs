@@ -2,17 +2,15 @@
 
 pub use self::inner::*;
 
-#[cfg(target_os = "redox")]
-mod inner {
-    use std::fmt;
-    use std::cmp::Ordering;
-    use std::ops::{Add, Sub};
-    use syscall;
-
-    use Duration;
+#[cfg(any(
+    all(target_arch = "wasm32", not(target_os = "emscripten")),
+    target_os = "redox",
+    target_env = "sgx"
+))]
+mod common {
     use Tm;
 
-    fn time_to_tm(ts: i64, tm: &mut Tm) {
+    pub fn time_to_tm(ts: i64, tm: &mut Tm) {
         let leapyear = |year| -> bool {
             year % 4 == 0 && (year % 100 != 0 || year % 400 == 0)
         };
@@ -56,7 +54,7 @@ mod inner {
         tm.tm_isdst = 0;
     }
 
-    fn tm_to_time(tm: &Tm) -> i64 {
+    pub fn tm_to_time(tm: &Tm) -> i64 {
         let mut y = tm.tm_year as i64 + 1900;
         let mut m = tm.tm_mon as i64 + 1;
         if m <= 2 {
@@ -70,6 +68,82 @@ mod inner {
         (365*y + y/4 - y/100 + y/400 + 3*(m+1)/5 + 30*m + d - 719561)
             * 86400 + 3600 * h + 60 * mi + s
     }
+}
+
+#[cfg(all(target_arch = "wasm32", not(target_os = "emscripten")))]
+mod inner {
+    use std::ops::{Add, Sub};
+    use Tm;
+    use Duration;
+    use super::common::{time_to_tm, tm_to_time};
+
+    #[derive(Copy, Clone, Debug, PartialOrd, Ord, PartialEq, Eq)]
+    pub struct SteadyTime;
+
+    pub fn time_to_utc_tm(sec: i64, tm: &mut Tm) {
+        time_to_tm(sec, tm);
+    }
+
+    pub fn time_to_local_tm(sec: i64, tm: &mut Tm) {
+        // FIXME: Add timezone logic
+        time_to_tm(sec, tm);
+    }
+
+    pub fn utc_tm_to_time(tm: &Tm) -> i64 {
+        tm_to_time(tm)
+    }
+
+    pub fn local_tm_to_time(tm: &Tm) -> i64 {
+        // FIXME: Add timezone logic
+        tm_to_time(tm)
+    }
+
+    pub fn get_time() -> (i64, i32) {
+        unimplemented!()
+    }
+
+    pub fn get_precise_ns() -> u64 {
+        unimplemented!()
+    }
+
+    impl SteadyTime {
+        pub fn now() -> SteadyTime {
+            unimplemented!()
+        }
+    }
+
+    impl Sub for SteadyTime {
+        type Output = Duration;
+        fn sub(self, _other: SteadyTime) -> Duration {
+            unimplemented!()
+        }
+    }
+
+    impl Sub<Duration> for SteadyTime {
+        type Output = SteadyTime;
+        fn sub(self, _other: Duration) -> SteadyTime {
+            unimplemented!()
+        }
+    }
+
+    impl Add<Duration> for SteadyTime {
+        type Output = SteadyTime;
+        fn add(self, _other: Duration) -> SteadyTime {
+            unimplemented!()
+        }
+    }
+}
+
+#[cfg(target_os = "redox")]
+mod inner {
+    use std::fmt;
+    use std::cmp::Ordering;
+    use std::ops::{Add, Sub};
+    use syscall;
+    use super::common::{time_to_tm, tm_to_time};
+
+    use Duration;
+    use Tm;
 
     pub fn time_to_utc_tm(sec: i64, tm: &mut Tm) {
         time_to_tm(sec, tm);
@@ -197,6 +271,82 @@ mod inner {
     impl Eq for SteadyTime {}
 }
 
+#[cfg(target_env = "sgx")]
+mod inner {
+    use std::ops::{Add, Sub};
+    use Tm;
+    use Duration;
+    use super::common::{time_to_tm, tm_to_time};
+    use std::time::SystemTime;
+
+    /// The number of nanoseconds in seconds.
+    const NANOS_PER_SEC: u64 = 1_000_000_000;
+
+    #[derive(Copy, Clone, Debug, PartialOrd, Ord, PartialEq, Eq)]
+    pub struct SteadyTime {
+        t: Duration
+    }
+
+    pub fn time_to_utc_tm(sec: i64, tm: &mut Tm) {
+        time_to_tm(sec, tm);
+    }
+
+    pub fn time_to_local_tm(sec: i64, tm: &mut Tm) {
+        // FIXME: Add timezone logic
+        time_to_tm(sec, tm);
+    }
+
+    pub fn utc_tm_to_time(tm: &Tm) -> i64 {
+        tm_to_time(tm)
+    }
+
+    pub fn local_tm_to_time(tm: &Tm) -> i64 {
+        // FIXME: Add timezone logic
+        tm_to_time(tm)
+    }
+
+    pub fn get_time() -> (i64, i32) {
+        SteadyTime::now().t.raw()
+    }
+
+    pub fn get_precise_ns() -> u64 {
+        // This unwrap is safe because current time is well ahead of UNIX_EPOCH, unless system clock is adjusted backward.
+        let std_duration = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap();
+        std_duration.as_secs() * NANOS_PER_SEC + std_duration.subsec_nanos() as u64
+    }
+
+    impl SteadyTime {
+        pub fn now() -> SteadyTime {
+            // This unwrap is safe because current time is well ahead of UNIX_EPOCH, unless system clock is adjusted backward.
+            let std_duration = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap();
+            // This unwrap is safe because duration is well within the limits of i64.
+            let duration = Duration::from_std(std_duration).unwrap();
+            SteadyTime { t: duration }
+        }
+    }
+
+    impl Sub for SteadyTime {
+        type Output = Duration;
+        fn sub(self, other: SteadyTime) -> Duration {
+            self.t - other.t
+        }
+    }
+
+    impl Sub<Duration> for SteadyTime {
+        type Output = SteadyTime;
+        fn sub(self, other: Duration) -> SteadyTime {
+            SteadyTime { t: self.t - other }
+        }
+    }
+
+    impl Add<Duration> for SteadyTime {
+        type Output = SteadyTime;
+        fn add(self, other: Duration) -> SteadyTime {
+            SteadyTime { t: self.t + other }
+        }
+    }
+}
+
 #[cfg(unix)]
 mod inner {
     use libc::{self, time_t};
@@ -208,6 +358,12 @@ mod inner {
     pub use self::mac::*;
     #[cfg(all(not(target_os = "macos"), not(target_os = "ios")))]
     pub use self::unix::*;
+
+    #[cfg(target_os = "solaris")]
+    extern {
+        static timezone: time_t;
+        static altzone: time_t;
+    }
 
     fn rust_tm_to_tm(rust_tm: &Tm, tm: &mut libc::tm) {
         tm.tm_sec = rust_tm.tm_sec;
@@ -234,8 +390,8 @@ mod inner {
         rust_tm.tm_utcoff = utcoff;
     }
 
-    #[cfg(target_os = "nacl")]
-    unsafe fn timegm(tm: *const libc::tm) -> time_t {
+    #[cfg(any(target_os = "nacl", target_os = "solaris"))]
+    unsafe fn timegm(tm: *mut libc::tm) -> time_t {
         use std::env::{set_var, var_os, remove_var};
         extern {
             fn tzset();
@@ -277,14 +433,29 @@ mod inner {
             if libc::localtime_r(&sec, &mut out).is_null() {
                 panic!("localtime_r failed: {}", io::Error::last_os_error());
             }
-            tm_to_rust_tm(&out, out.tm_gmtoff as i32, tm);
+            #[cfg(target_os = "solaris")]
+            let gmtoff = {
+                ::tzset();
+                // < 0 means we don't know; assume we're not in DST.
+                if out.tm_isdst == 0 {
+                    // timezone is seconds west of UTC, tm_gmtoff is seconds east
+                    -timezone
+                } else if out.tm_isdst > 0 {
+                    -altzone
+                } else {
+                    -timezone
+                }
+            };
+            #[cfg(not(target_os = "solaris"))]
+            let gmtoff = out.tm_gmtoff;
+            tm_to_rust_tm(&out, gmtoff as i32, tm);
         }
     }
 
     pub fn utc_tm_to_time(rust_tm: &Tm) -> i64 {
-        #[cfg(all(target_os = "android", not(target_arch = "aarch64")))]
+        #[cfg(all(target_os = "android", target_pointer_width = "32"))]
         use libc::timegm64 as timegm;
-        #[cfg(not(all(target_os = "android", not(target_arch = "aarch64"))))]
+        #[cfg(not(any(all(target_os = "android", target_pointer_width = "32"), target_os = "nacl", target_os = "solaris")))]
         use libc::timegm;
 
         let mut tm = unsafe { mem::zeroed() };
@@ -327,6 +498,7 @@ mod inner {
             (tv.tv_sec as i64, tv.tv_usec * 1000)
         }
 
+        #[inline]
         pub fn get_precise_ns() -> u64 {
             unsafe {
                 let time = libc::mach_absolute_time();
@@ -469,14 +641,20 @@ mod inner {
                 let seconds = other.num_seconds();
                 let nanoseconds = other - Duration::seconds(seconds);
                 let nanoseconds = nanoseconds.num_nanoseconds().unwrap();
+
+                #[cfg(all(target_arch = "x86_64", target_pointer_width = "32"))]
+                type nsec = i64;
+                #[cfg(not(all(target_arch = "x86_64", target_pointer_width = "32")))]
+                type nsec = libc::c_long;
+
                 self.t.tv_sec += seconds as libc::time_t;
-                self.t.tv_nsec += nanoseconds as libc::c_long;
-                if self.t.tv_nsec >= ::NSEC_PER_SEC as libc::c_long {
-                    self.t.tv_nsec -= ::NSEC_PER_SEC as libc::c_long;
+                self.t.tv_nsec += nanoseconds as nsec;
+                if self.t.tv_nsec >= ::NSEC_PER_SEC as nsec {
+                    self.t.tv_nsec -= ::NSEC_PER_SEC as nsec;
                     self.t.tv_sec += 1;
                 } else if self.t.tv_nsec < 0 {
                     self.t.tv_sec -= 1;
-                    self.t.tv_nsec += ::NSEC_PER_SEC as libc::c_long;
+                    self.t.tv_nsec += ::NSEC_PER_SEC as nsec;
                 }
                 self
             }
@@ -518,18 +696,38 @@ mod inner {
     use std::ops::{Add, Sub};
     use {Tm, Duration};
 
-    use kernel32::*;
-    use winapi::*;
+    use winapi::um::winnt::*;
+    use winapi::shared::minwindef::*;
+    use winapi::um::minwinbase::SYSTEMTIME;
+    use winapi::um::profileapi::*;
+    use winapi::um::timezoneapi::*;
+    use winapi::um::sysinfoapi::GetSystemTimeAsFileTime;
 
-    fn frequency() -> LARGE_INTEGER {
-        static mut FREQUENCY: LARGE_INTEGER = 0;
+    fn frequency() -> i64 {
+        static mut FREQUENCY: i64 = 0;
         static ONCE: Once = ONCE_INIT;
 
         unsafe {
             ONCE.call_once(|| {
-                QueryPerformanceFrequency(&mut FREQUENCY);
+                let mut l = i64_to_large_integer(0);
+                QueryPerformanceFrequency(&mut l);
+                FREQUENCY = large_integer_to_i64(l);
             });
             FREQUENCY
+        }
+    }
+
+    fn i64_to_large_integer(i: i64) -> LARGE_INTEGER {
+        unsafe {
+            let mut large_integer: LARGE_INTEGER = mem::zeroed();
+            *large_integer.QuadPart_mut() = i;
+            large_integer
+        }
+    }
+
+    fn large_integer_to_i64(l: LARGE_INTEGER) -> i64 {
+        unsafe {
+            *l.QuadPart()
         }
     }
 
@@ -676,24 +874,24 @@ mod inner {
     }
 
     pub fn get_precise_ns() -> u64 {
-        let mut ticks = 0;
+        let mut ticks = i64_to_large_integer(0);
         unsafe {
             assert!(QueryPerformanceCounter(&mut ticks) == 1);
         }
-        mul_div_i64(ticks as i64, 1000000000, frequency() as i64) as u64
+        mul_div_i64(large_integer_to_i64(ticks), 1000000000, frequency()) as u64
 
     }
 
-    #[derive(Clone, Copy, PartialOrd, Ord, PartialEq, Eq, Debug)]
+    #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug)]
     pub struct SteadyTime {
-        t: LARGE_INTEGER,
+        t: i64,
     }
 
     impl SteadyTime {
         pub fn now() -> SteadyTime {
-            let mut t = SteadyTime { t: 0 };
-            unsafe { QueryPerformanceCounter(&mut t.t); }
-            t
+            let mut l = i64_to_large_integer(0);
+            unsafe { QueryPerformanceCounter(&mut l); }
+            SteadyTime { t : large_integer_to_i64(l) }
         }
     }
 
@@ -702,7 +900,7 @@ mod inner {
         fn sub(self, other: SteadyTime) -> Duration {
             let diff = self.t as i64 - other.t as i64;
             Duration::nanoseconds(mul_div_i64(diff, 1000000000,
-                                              frequency() as i64))
+                                              frequency()))
         }
     }
 
@@ -716,8 +914,8 @@ mod inner {
     impl Add<Duration> for SteadyTime {
         type Output = SteadyTime;
         fn add(mut self, other: Duration) -> SteadyTime {
-            self.t += (other.num_microseconds().unwrap() * frequency() as i64 /
-                       1_000_000) as LARGE_INTEGER;
+            self.t += (other.num_microseconds().unwrap() * frequency() /
+                       1_000_000) as i64;
             self
         }
     }
@@ -783,9 +981,18 @@ mod inner {
     #[cfg(test)]
     fn acquire_privileges() {
         use std::sync::{ONCE_INIT, Once};
-        use advapi32::*;
+        use winapi::um::processthreadsapi::*;
+        use winapi::um::winbase::LookupPrivilegeValueA;
         const SE_PRIVILEGE_ENABLED: DWORD = 2;
         static INIT: Once = ONCE_INIT;
+
+        // TODO: FIXME
+        extern "system" {
+            fn AdjustTokenPrivileges(
+                TokenHandle: HANDLE, DisableAllPrivileges: BOOL, NewState: PTOKEN_PRIVILEGES,
+                BufferLength: DWORD, PreviousState: PTOKEN_PRIVILEGES, ReturnLength: PDWORD,
+            ) -> BOOL;
+        }
 
         #[repr(C)]
         struct TKP {

@@ -1,5 +1,5 @@
 /* pecoff.c -- Get debug data from a PE/COFFF file for backtraces.
-   Copyright (C) 2015-2016 Free Software Foundation, Inc.
+   Copyright (C) 2015-2018 Free Software Foundation, Inc.
    Adapted from elf.c by Tristan Gingold, AdaCore.
 
 Redistribution and use in source and binary forms, with or without
@@ -602,9 +602,11 @@ coff_add (struct backtrace_state *state, int descriptor,
   const b_coff_section_header *sects;
   struct backtrace_view str_view;
   int str_view_valid;
-  size_t str_size;
+  uint32_t str_size;
   off_t str_off;
-  struct backtrace_view syms_view;
+  // NOTE: upstream doesn't have `{0}`, this is a fix for Rust issue #39468.
+  //       If syms_view is not initialized, then `free(syms_view.base)` may segfault later.
+  struct backtrace_view syms_view = {0};
   off_t syms_off;
   size_t syms_size;
   int syms_view_valid;
@@ -631,10 +633,10 @@ coff_add (struct backtrace_state *state, int descriptor,
     goto fail;
 
   {
-    const char *vptr = (const char *)fhdr_view.data;
+    const unsigned char *vptr = fhdr_view.data;
 
     if (vptr[0] == 'M' && vptr[1] == 'Z')
-      memcpy (&fhdr_off, vptr + 0x3c, 4);
+      fhdr_off = coff_read4 (vptr + 0x3c);
     else
       fhdr_off = 0;
   }
@@ -727,7 +729,7 @@ coff_add (struct backtrace_state *state, int descriptor,
 	goto fail;
       syms_view_valid = 1;
 
-      memcpy (&str_size, syms_view.data + syms_size, 4);
+      str_size = coff_read4 (syms_view.data + syms_size);
 
       str_off = syms_off + syms_size;
 
@@ -804,8 +806,11 @@ coff_add (struct backtrace_state *state, int descriptor,
 
   backtrace_release_view (state, &sects_view, error_callback, data);
   sects_view_valid = 0;
-  backtrace_release_view (state, &syms_view, error_callback, data);
-  syms_view_valid = 0;
+  if (syms_view_valid)
+    {
+      backtrace_release_view (state, &syms_view, error_callback, data);
+      syms_view_valid = 0;
+    }
 
   /* Read all the debug sections in a single view, since they are
      probably adjacent in the file.  We never release this view.  */
@@ -890,7 +895,8 @@ coff_add (struct backtrace_state *state, int descriptor,
    sections.  */
 
 int
-backtrace_initialize (struct backtrace_state *state, int descriptor,
+backtrace_initialize (struct backtrace_state *state,
+		      const char *filename ATTRIBUTE_UNUSED, int descriptor,
 		      backtrace_error_callback error_callback,
 		      void *data, fileline *fileline_fn)
 {

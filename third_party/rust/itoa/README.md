@@ -14,7 +14,7 @@ but avoids the performance penalty of going through
 See also [`dtoa`](https://github.com/dtolnay/dtoa) for printing floating point
 primitives.
 
-## Performance
+## Performance (lower is better)
 
 ![performance](https://raw.githubusercontent.com/dtolnay/itoa/master/performance.png)
 
@@ -41,8 +41,9 @@ fn write<W: io::Write, V: itoa::Integer>(writer: W, value: V) -> io::Result<usiz
 ```
 
 where `itoa::Integer` is implemented for `i8`, `u8`, `i16`, `u16`, `i32`, `u32`,
-`i64`, `u64`, `isize` and `usize`. The return value gives the number of bytes
-written.
+`i64`, `u64`, `i128`, `u128`, `isize` and `usize`. 128-bit integer support is
+only available with the nightly compiler when the `i128` feature is enabled for
+this crate. The return value gives the number of bytes written.
 
 ## Dependency
 

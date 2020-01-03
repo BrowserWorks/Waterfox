@@ -368,11 +368,11 @@ macro_rules! separated_list {
     }};
 
     ($i:expr, $sepmac:ident!( $($separgs:tt)* ), $f:expr) => {
-        separated_list!($i, $sepmac!($(separgs)*), call!($f))
+        separated_list!($i, $sepmac!($($separgs)*), call!($f))
     };
 
     ($i:expr, $sep:expr, $fmac:ident!( $($fargs:tt)* )) => {
-        separated_list!($i, call!($sep), $fmac!($(fargs)*))
+        separated_list!($i, call!($sep), $fmac!($($fargs)*))
     };
 
     ($i:expr, $sep:expr, $f:expr) => {
@@ -483,11 +483,11 @@ macro_rules! terminated_list {
     }};
 
     ($i:expr, $sepmac:ident!( $($separgs:tt)* ), $f:expr) => {
-        terminated_list!($i, $sepmac!($(separgs)*), call!($f))
+        terminated_list!($i, $sepmac!($($separgs)*), call!($f))
     };
 
     ($i:expr, $sep:expr, $fmac:ident!( $($fargs:tt)* )) => {
-        terminated_list!($i, call!($sep), $fmac!($(fargs)*))
+        terminated_list!($i, call!($sep), $fmac!($($fargs)*))
     };
 
     ($i:expr, $sep:expr, $f:expr) => {

@@ -41,7 +41,7 @@ macro_rules! try_opt {
 
 /// ISO 8601 time duration with nanosecond precision.
 /// This also allows for the negative duration; see individual methods for details.
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug, Hash)]
 pub struct Duration {
     secs: i64,
     nanos: i32, // Always 0 <= nanos < NANOS_PER_SEC
@@ -193,7 +193,7 @@ impl Duration {
     }
 
     /// Returns the total number of whole microseconds in the duration,
-    /// or `None` on overflow (exceeding 2^63 microseconds in either direction).
+    /// or `None` on overflow (exceeding 2<sup>63</sup> microseconds in either direction).
     pub fn num_microseconds(&self) -> Option<i64> {
         let secs_part = try_opt!(self.num_seconds().checked_mul(MICROS_PER_SEC));
         let nanos_part = self.nanos_mod_sec() / NANOS_PER_MICRO;
@@ -201,7 +201,7 @@ impl Duration {
     }
 
     /// Returns the total number of whole nanoseconds in the duration,
-    /// or `None` on overflow (exceeding 2^63 nanoseconds in either direction).
+    /// or `None` on overflow (exceeding 2<sup>63</sup> nanoseconds in either direction).
     pub fn num_nanoseconds(&self) -> Option<i64> {
         let secs_part = try_opt!(self.num_seconds().checked_mul(NANOS_PER_SEC as i64));
         let nanos_part = self.nanos_mod_sec();
@@ -284,6 +284,12 @@ impl Duration {
             return Err(OutOfRangeError(()));
         }
         Ok(StdDuration::new(self.secs as u64, self.nanos as u32))
+    }
+
+    /// Returns the raw value of duration.
+    #[cfg(target_env = "sgx")]
+    pub(crate) fn raw(&self) -> (i64, i32) {
+        (self.secs, self.nanos)
     }
 }
 

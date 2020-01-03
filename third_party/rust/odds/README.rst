@@ -20,6 +20,10 @@ __ https://docs.rs/odds/
 Recent Changes
 --------------
 
+- 0.2.26
+
+  - Proper license files by @raphlinus
+
 - 0.2.25
 
   - Add ``UnalignedIter``

@@ -1,15 +1,8 @@
-/* This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
-
-#![cfg_attr(feature= "unstable", feature(alloc, heap_api, repr_simd))]
+#![cfg_attr(feature= "unstable", feature(allocator_api, repr_simd))]
 
 extern crate heapsize;
 
 use heapsize::{HeapSizeOf, heap_size_of};
-use std::os::raw::c_void;
-
-const EMPTY: *mut () = 0x1 as *mut ();
 
 /// https://github.com/servo/heapsize/issues/74
 #[cfg(feature = "flexible-tests")]
@@ -32,42 +25,44 @@ macro_rules! assert_size {
 
 #[cfg(feature = "unstable")]
 mod unstable {
-    extern crate alloc;
-
     use heapsize::heap_size_of;
     use std::os::raw::c_void;
+    use std::heap::{Heap, Alloc, Layout};
 
-    #[repr(C, simd)]
-    struct OverAligned(u64, u64, u64, u64);
-
-    #[test]
-    fn check_empty() {
-        assert_eq!(::EMPTY, alloc::heap::EMPTY);
+    unsafe fn allocate(size: usize, align: usize) -> *mut u8 {
+        Heap.alloc(Layout::from_size_align(size, align).unwrap()).unwrap()
     }
+
+    unsafe fn deallocate(ptr: *mut u8, size: usize, align: usize) {
+        Heap.dealloc(ptr, Layout::from_size_align(size, align).unwrap())
+    }
+
+    #[repr(simd)]
+    struct OverAligned(u64, u64, u64, u64);
 
     #[cfg(not(target_os = "windows"))]
     #[test]
     fn test_alloc() {
         unsafe {
             // A 64 byte request is allocated exactly.
-            let x = alloc::heap::allocate(64, 0);
+            let x = allocate(64, 1);
             assert_size!(heap_size_of(x as *const c_void), 64);
-            alloc::heap::deallocate(x, 64, 0);
+            deallocate(x, 64, 1);
 
             // A 255 byte request is rounded up to 256 bytes.
-            let x = alloc::heap::allocate(255, 0);
+            let x = allocate(255, 1);
             assert_size!(heap_size_of(x as *const c_void), 256);
-            alloc::heap::deallocate(x, 255, 0);
+            deallocate(x, 255, 1);
 
             // A 1MiB request is allocated exactly.
-            let x = alloc::heap::allocate(1024 * 1024, 0);
+            let x = allocate(1024 * 1024, 1);
             assert_size!(heap_size_of(x as *const c_void), 1024 * 1024);
-            alloc::heap::deallocate(x, 1024 * 1024, 0);
+            deallocate(x, 1024 * 1024, 1);
 
             // An overaligned 1MiB request is allocated exactly.
-            let x = alloc::heap::allocate(1024 * 1024, 32);
+            let x = allocate(1024 * 1024, 32);
             assert_size!(heap_size_of(x as *const c_void), 1024 * 1024);
-            alloc::heap::deallocate(x, 1024 * 1024, 32);
+            deallocate(x, 1024 * 1024, 32);
         }
     }
 
@@ -76,24 +71,24 @@ mod unstable {
     fn test_alloc() {
         unsafe {
             // A 64 byte request is allocated exactly.
-            let x = alloc::heap::allocate(64, 0);
+            let x = allocate(64, 1);
             assert_size!(heap_size_of(x as *const c_void), 64);
-            alloc::heap::deallocate(x, 64, 0);
+            deallocate(x, 64, 1);
 
             // A 255 byte request is allocated exactly.
-            let x = alloc::heap::allocate(255, 0);
+            let x = allocate(255, 1);
             assert_size!(heap_size_of(x as *const c_void), 255);
-            alloc::heap::deallocate(x, 255, 0);
+            deallocate(x, 255, 1);
 
             // A 1MiB request is allocated exactly.
-            let x = alloc::heap::allocate(1024 * 1024, 0);
+            let x = allocate(1024 * 1024, 1);
             assert_size!(heap_size_of(x as *const c_void), 1024 * 1024);
-            alloc::heap::deallocate(x, 1024 * 1024, 0);
+            deallocate(x, 1024 * 1024, 1);
 
             // An overaligned 1MiB request is over-allocated.
-            let x = alloc::heap::allocate(1024 * 1024, 32);
+            let x = allocate(1024 * 1024, 32);
             assert_size!(heap_size_of(x as *const c_void), 1024 * 1024 + 32);
-            alloc::heap::deallocate(x, 1024 * 1024, 32);
+            deallocate(x, 1024 * 1024, 32);
         }
     }
 
@@ -130,7 +125,8 @@ fn test_heap_size() {
 
     unsafe {
         // EMPTY is the special non-null address used to represent zero-size allocations.
-        assert_size!(heap_size_of(EMPTY as *const c_void), 0);
+        assert_size!(heap_size_of::<[u64; 0]>(&*Box::new([42_u64; 0])), 0);
+        assert_size!(heap_size_of::<[u8; 0]>(&*Box::new([42_u8; 0])), 0);
     }
 
     //-----------------------------------------------------------------------

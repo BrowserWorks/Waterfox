@@ -15,6 +15,7 @@
 
 use std::u32;
 use std::char;
+#[allow(unused_imports, deprecated)]
 use std::ascii::AsciiExt;
 
 // Bootstring parameters for Punycode

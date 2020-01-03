@@ -10,7 +10,7 @@
 
 #![doc(html_logo_url = "https://www.rust-lang.org/logos/rust-logo-128x128-blk-v2.png",
        html_favicon_url = "https://www.rust-lang.org/favicon.ico",
-       html_root_url = "https://doc.rust-lang.org/tempdir/")]
+       html_root_url = "https://docs.rs/tempdir/0.3.7")]
 #![cfg_attr(test, deny(warnings))]
 
 //! Temporary directories of files.
@@ -29,16 +29,22 @@
 //! extern crate tempdir;
 //!
 //! use std::fs::File;
-//! use std::io::Write;
+//! use std::io::{self, Write};
 //! use tempdir::TempDir;
 //!
 //! fn main() {
+//!     if let Err(_) = run() {
+//!         ::std::process::exit(1);
+//!     }
+//! }
+//!
+//! fn run() -> Result<(), io::Error> {
 //!     // Create a directory inside of `std::env::temp_dir()`, named with
 //!     // the prefix "example".
-//!     let tmp_dir = TempDir::new("example").expect("create temp dir");
+//!     let tmp_dir = TempDir::new("example")?;
 //!     let file_path = tmp_dir.path().join("my-temporary-note.txt");
-//!     let mut tmp_file = File::create(file_path).expect("create temp file");
-//!     writeln!(tmp_file, "Brian was here. Briefly.").expect("write temp file");
+//!     let mut tmp_file = File::create(file_path)?;
+//!     writeln!(tmp_file, "Brian was here. Briefly.")?;
 //!
 //!     // By closing the `TempDir` explicitly, we can check that it has
 //!     // been deleted successfully. If we don't close it explicitly,
@@ -46,11 +52,13 @@
 //!     // of scope, but we won't know whether deleting the directory
 //!     // succeeded.
 //!     drop(tmp_file);
-//!     tmp_dir.close().expect("delete temp dir");
+//!     tmp_dir.close()?;
+//!     Ok(())
 //! }
 //! ```
 
 extern crate rand;
+extern crate remove_dir_all;
 
 use std::env;
 use std::io::{self, Error, ErrorKind};
@@ -58,6 +66,7 @@ use std::fmt;
 use std::fs;
 use std::path::{self, PathBuf, Path};
 use rand::{thread_rng, Rng};
+use remove_dir_all::remove_dir_all;
 
 /// A directory in the filesystem that is automatically deleted when
 /// it goes out of scope.
@@ -133,15 +142,19 @@ impl TempDir {
     /// use std::io::Write;
     /// use tempdir::TempDir;
     ///
+    /// # use std::io;
+    /// # fn run() -> Result<(), io::Error> {
     /// // Create a directory inside of `std::env::temp_dir()`, named with
     /// // the prefix, "example".
-    /// let tmp_dir = TempDir::new("example").expect("create temp dir");
+    /// let tmp_dir = TempDir::new("example")?;
     /// let file_path = tmp_dir.path().join("my-temporary-note.txt");
-    /// let mut tmp_file = File::create(file_path).expect("create temp file");
-    /// writeln!(tmp_file, "Brian was here. Briefly.").expect("write temp file");
+    /// let mut tmp_file = File::create(file_path)?;
+    /// writeln!(tmp_file, "Brian was here. Briefly.")?;
     ///
     /// // `tmp_dir` goes out of scope, the directory as well as
     /// // `tmp_file` will be deleted here.
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn new(prefix: &str) -> io::Result<TempDir> {
         TempDir::new_in(&env::temp_dir(), prefix)
@@ -163,18 +176,22 @@ impl TempDir {
     /// use std::io::Write;
     /// use tempdir::TempDir;
     ///
+    /// # use std::io;
+    /// # fn run() -> Result<(), io::Error> {
     /// // Create a directory inside of the current directory, named with
     /// // the prefix, "example".
-    /// let tmp_dir = TempDir::new_in(".", "example").expect("create temp dir");
+    /// let tmp_dir = TempDir::new_in(".", "example")?;
     /// let file_path = tmp_dir.path().join("my-temporary-note.txt");
-    /// let mut tmp_file = File::create(file_path).expect("create temp file");
-    /// writeln!(tmp_file, "Brian was here. Briefly.").expect("write temp file");
+    /// let mut tmp_file = File::create(file_path)?;
+    /// writeln!(tmp_file, "Brian was here. Briefly.")?;
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn new_in<P: AsRef<Path>>(tmpdir: P, prefix: &str) -> io::Result<TempDir> {
         let storage;
         let mut tmpdir = tmpdir.as_ref();
         if !tmpdir.is_absolute() {
-            let cur_dir = try!(env::current_dir());
+            let cur_dir = env::current_dir()?;
             storage = cur_dir.join(tmpdir);
             tmpdir = &storage;
             // return TempDir::new_in(&cur_dir.join(tmpdir), prefix);
@@ -183,7 +200,7 @@ impl TempDir {
         let mut rng = thread_rng();
         for _ in 0..NUM_RETRIES {
             let suffix: String = rng.gen_ascii_chars().take(NUM_RAND_CHARS).collect();
-            let leaf = if prefix.len() > 0 {
+            let leaf = if !prefix.is_empty() {
                 format!("{}.{}", prefix, suffix)
             } else {
                 // If we're given an empty string for a prefix, then creating a
@@ -212,10 +229,12 @@ impl TempDir {
     /// ```
     /// use tempdir::TempDir;
     ///
+    /// # use std::io;
+    /// # fn run() -> Result<(), io::Error> {
     /// let tmp_path;
     ///
     /// {
-    ///    let tmp_dir = TempDir::new("example").expect("create temp dir");
+    ///    let tmp_dir = TempDir::new("example")?;
     ///    tmp_path = tmp_dir.path().to_owned();
     ///
     ///    // Check that the temp directory actually exists.
@@ -226,6 +245,8 @@ impl TempDir {
     ///
     /// // Temp directory should be deleted by now
     /// assert_eq!(tmp_path.exists(), false);
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn path(&self) -> &path::Path {
         self.path.as_ref().unwrap()
@@ -243,14 +264,18 @@ impl TempDir {
     /// use std::fs;
     /// use tempdir::TempDir;
     ///
-    /// let tmp_dir = TempDir::new("example").expect("create temp dir");
+    /// # use std::io;
+    /// # fn run() -> Result<(), io::Error> {
+    /// let tmp_dir = TempDir::new("example")?;
     ///
     /// // Convert `tmp_dir` into a `Path`, destroying the `TempDir`
     /// // without deleting the directory.
     /// let tmp_path = tmp_dir.into_path();
     ///
     /// // Delete the temporary directory ourselves.
-    /// fs::remove_dir_all(tmp_path).expect("remove temp dir");
+    /// fs::remove_dir_all(tmp_path)?;
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn into_path(mut self) -> PathBuf {
         self.path.take().unwrap()
@@ -278,12 +303,14 @@ impl TempDir {
     /// use std::io::Write;
     /// use tempdir::TempDir;
     ///
+    /// # use std::io;
+    /// # fn run() -> Result<(), io::Error> {
     /// // Create a directory inside of `std::env::temp_dir()`, named with
     /// // the prefix, "example".
-    /// let tmp_dir = TempDir::new("example").expect("create temp dir");
+    /// let tmp_dir = TempDir::new("example")?;
     /// let file_path = tmp_dir.path().join("my-temporary-note.txt");
-    /// let mut tmp_file = File::create(file_path).expect("create temp file");
-    /// writeln!(tmp_file, "Brian was here. Briefly.").expect("write temp file");
+    /// let mut tmp_file = File::create(file_path)?;
+    /// writeln!(tmp_file, "Brian was here. Briefly.")?;
     ///
     /// // By closing the `TempDir` explicitly we can check that it has
     /// // been deleted successfully. If we don't close it explicitly,
@@ -291,17 +318,17 @@ impl TempDir {
     /// // of scope, but we won't know whether deleting the directory
     /// // succeeded.
     /// drop(tmp_file);
-    /// tmp_dir.close().expect("delete temp dir");
+    /// tmp_dir.close()?;
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn close(mut self) -> io::Result<()> {
-        self.cleanup_dir()
-    }
+        let result = remove_dir_all(self.path());
 
-    fn cleanup_dir(&mut self) -> io::Result<()> {
-        match self.path {
-            Some(ref p) => fs::remove_dir_all(p),
-            None => Ok(()),
-        }
+        // Prevent the Drop impl from removing the dir a second time.
+        self.path = None;
+
+        result
     }
 }
 
@@ -321,7 +348,10 @@ impl fmt::Debug for TempDir {
 
 impl Drop for TempDir {
     fn drop(&mut self) {
-        let _ = self.cleanup_dir();
+        // Path is `None` if `close()` or `into_path()` has been called.
+        if let Some(ref p) = self.path {
+            let _ =  remove_dir_all(p);
+        }
     }
 }
 

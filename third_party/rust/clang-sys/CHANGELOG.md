@@ -1,3 +1,40 @@
+## [0.21.2] - 2018-02-17
+
+### Changed
+- Added original errors to error messages
+- Added support for searching for libraries in `LD_LIBRARY_PATH` directories
+
+## [0.21.1] - 2017-11-24
+
+### Changed
+- Improved finding of versioned libraries (e.g., `libclang-3.9.so`)
+
+### Fixed
+* Fixed compilation failures on the beta and nightly channels caused by a [compiler bug](https://github.com/KyleMayes/clang-sys/pull/69)
+
+## [0.21.0] - 2017-10-11
+
+### Changed
+* Replaced `bitflags` usage with constants which avoids crashes on 32-bit Linux platforms
+
+## [0.20.1] - 2017-09-16
+
+### Fixed
+- Fixed static linking
+
+## [0.20.0] - 2017-09-14
+
+### Added
+- Added support for `clang` 5.0.x
+- Added `clang` as a link target of this package
+- Added dummy implementations of `is_loaded` for builds with the `static` Cargo feature enabled
+
+## [0.19.0] - 2017-07-02
+
+### Changed
+- Bumped `bitflags` version to `0.9.1`
+- Added `args` parameter to `Clang::new` function which passes arguments to the Clang executable
+
 ## [0.18.0] - 2017-05-16
 
 ### Changed

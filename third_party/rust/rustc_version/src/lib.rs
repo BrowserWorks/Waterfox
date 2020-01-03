@@ -11,7 +11,10 @@
 //! Simple library for getting the version information of a `rustc`
 //! compiler.
 //!
-//! This calls `$RUSTC --version` and parses the output, falling
+//! This can be used by build scripts or other tools dealing with Rust sources
+//! to make decisions based on the version of the compiler.
+//!
+//! It calls `$RUSTC --version -v` and parses the output, falling
 //! back to `rustc` if `$RUSTC` is not set.
 //!
 //! # Example
@@ -20,14 +23,14 @@
 //! // This could be a cargo build script
 //!
 //! extern crate rustc_version;
-//! use rustc_version::{version, version_matches, version_meta, Channel};
+//! use rustc_version::{version, version_meta, Channel, Version};
 //!
 //! fn main() {
 //!     // Assert we haven't travelled back in time
-//!     assert!(version().major >= 1);
+//!     assert!(version().unwrap().major >= 1);
 //!
 //!     // Set cfg flags depending on release channel
-//!     match version_meta().channel {
+//!     match version_meta().unwrap().channel {
 //!         Channel::Stable => {
 //!             println!("cargo:rustc-cfg=RUSTC_IS_STABLE");
 //!         }
@@ -42,18 +45,25 @@
 //!         }
 //!     }
 //!
-//!     // Directly check a semver version requirment
-//!     if version_matches(">= 1.4.0") {
+//!     // Check for a minimum version
+//!     if version().unwrap() >= Version::parse("1.4.0").unwrap() {
 //!         println!("cargo:rustc-cfg=compiler_has_important_bugfix");
 //!     }
 //! }
 //! ```
 
 extern crate semver;
-use semver::{Version, VersionReq, Identifier};
+use semver::Identifier;
 use std::process::Command;
-use std::env;
+use std::{env, str};
 use std::ffi::OsString;
+
+// Convenience re-export to allow version comparison without needing to add
+// semver crate.
+pub use semver::Version;
+
+mod errors;
+pub use errors::{Error, Result};
 
 /// Release channel of the compiler.
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
@@ -69,7 +79,7 @@ pub enum Channel {
 }
 
 /// Rustc version plus metada like git short hash and build date.
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub struct VersionMeta {
     /// Version of the compiler
     pub semver: Version,
@@ -93,51 +103,57 @@ pub struct VersionMeta {
     pub short_version_string: String,
 }
 
+impl VersionMeta {
+    /// Returns the version metadata for `cmd`, which should be a `rustc` command.
+    pub fn for_command(cmd: Command) -> Result<VersionMeta> {
+        let mut cmd = cmd;
+
+        let out = cmd.arg("-vV").output().map_err(Error::CouldNotExecuteCommand)?;
+        let out = str::from_utf8(&out.stdout)?;
+
+        version_meta_for(out)
+    }
+}
+
 /// Returns the `rustc` SemVer version.
-pub fn version() -> Version {
-    version_meta().semver
+pub fn version() -> Result<Version> {
+    Ok(version_meta()?.semver)
 }
 
 /// Returns the `rustc` SemVer version and additional metadata
 /// like the git short hash and build date.
-pub fn version_meta() -> VersionMeta {
+pub fn version_meta() -> Result<VersionMeta> {
     let cmd = env::var_os("RUSTC").unwrap_or_else(|| OsString::from("rustc"));
 
-    let out = Command::new(&cmd)
-        .arg("-vV")
-        .output()
-        .unwrap_or_else(|e| { panic!("failed to execute `RUSTC -vV`: {}", e) });
-
-    let out = String::from_utf8(out.stdout)
-        .ok()
-        .expect("non utf8 output from RUSTC -vV");
-
-    version_meta_for(&out)
+    VersionMeta::for_command(Command::new(cmd))
 }
 
 /// Parses a "rustc -vV" output string and returns
 /// the SemVer version and additional metadata
 /// like the git short hash and build date.
-pub fn version_meta_for(verbose_version_string: &str) -> VersionMeta {
+pub fn version_meta_for(verbose_version_string: &str) -> Result<VersionMeta> {
     let out: Vec<_> = verbose_version_string.lines().collect();
 
-    const ERR_MSG: &'static str = "unexpected -vV format";
-
-    assert!(out.len() == 6 || out.len() == 7, ERR_MSG);
+    if !(out.len() >= 6 && out.len() <= 8) {
+        return Err(Error::UnexpectedVersionFormat);
+    }
 
     let short_version_string = out[0];
 
-    fn expect_prefix<'a>(line: &'a str, prefix: &str) -> &'a str {
-        assert!(line.starts_with(prefix), ERR_MSG);
-        &line[prefix.len()..]
+    fn expect_prefix<'a>(line: &'a str, prefix: &str) -> Result<&'a str> {
+        if line.starts_with(prefix) {
+            Ok(&line[prefix.len()..])
+        } else {
+            Err(Error::UnexpectedVersionFormat)
+        }
     }
 
-    let commit_hash = match expect_prefix(out[2], "commit-hash: ") {
+    let commit_hash = match expect_prefix(out[2], "commit-hash: ")? {
         "unknown" => None,
         hash => Some(hash.to_owned()),
     };
 
-    let commit_date = match expect_prefix(out[3], "commit-date: ") {
+    let commit_date = match expect_prefix(out[3], "commit-date: ")? {
         "unknown" => None,
         hash => Some(hash.to_owned()),
     };
@@ -146,35 +162,31 @@ pub fn version_meta_for(verbose_version_string: &str) -> VersionMeta {
     let mut idx = 4;
     let mut build_date = None;
     if out[idx].starts_with("build-date") {
-        build_date = match expect_prefix(out[idx], "build-date: ") {
+        build_date = match expect_prefix(out[idx], "build-date: ")? {
             "unknown" => None,
             s => Some(s.to_owned()),
         };
-        idx = idx + 1;
+        idx += 1;
     }
 
+    let host = expect_prefix(out[idx], "host: ")?;
+    idx += 1;
+    let release = expect_prefix(out[idx], "release: ")?;
 
-    let host = expect_prefix(out[idx], "host: ");
-    idx = idx +1;
-    let release = expect_prefix(out[idx], "release: ");
-
-    let semver = Version::parse(release).unwrap();
+    let semver: Version = release.parse()?;
 
     let channel = if semver.pre.is_empty() {
         Channel::Stable
     } else {
         match semver.pre[0] {
-            Identifier::AlphaNumeric(ref s)
-                if s == "dev" => Channel::Dev,
-            Identifier::AlphaNumeric(ref s)
-                if s == "beta" => Channel::Beta,
-            Identifier::AlphaNumeric(ref s)
-                if s == "nightly" => Channel::Nightly,
-            ref x => panic!("Unknown pre-release tag {}", x),
+            Identifier::AlphaNumeric(ref s) if s == "dev" => Channel::Dev,
+            Identifier::AlphaNumeric(ref s) if s == "beta" => Channel::Beta,
+            Identifier::AlphaNumeric(ref s) if s == "nightly" => Channel::Nightly,
+            ref x => return Err(Error::UnknownPreReleaseTag(x.clone())),
         }
     };
 
-    VersionMeta {
+    Ok(VersionMeta {
         semver: semver,
         commit_hash: commit_hash,
         commit_date: commit_date,
@@ -182,31 +194,23 @@ pub fn version_meta_for(verbose_version_string: &str) -> VersionMeta {
         channel: channel,
         host: host.into(),
         short_version_string: short_version_string.into(),
-    }
-}
-
-/// Check wether the `rustc` version matches the given SemVer
-/// version requirement.
-pub fn version_matches(req: &str) -> bool {
-    VersionReq::parse(req).unwrap().matches(&version())
+    })
 }
 
 #[test]
 fn smoketest() {
-    let v = version();
+    let v = version().unwrap();
     assert!(v.major >= 1);
 
-    let v = version_meta();
+    let v = version_meta().unwrap();
     assert!(v.semver.major >= 1);
 
-    assert!(version_matches(">= 1.0.0"));
+    assert!(version().unwrap() >= Version::parse("1.0.0").unwrap());
 }
 
 #[test]
-#[should_panic(expected = "unexpected")]
-// Characterization test for behavior on an unexpected key.
 fn parse_unexpected() {
-    version_meta_for(
+    let res = version_meta_for(
 "rustc 1.0.0 (a59de37e9 2015-05-13) (built 2015-05-14)
 binary: rustc
 commit-hash: a59de37e99060162a2674e3ff45409ac73595c0e
@@ -214,6 +218,12 @@ commit-date: 2015-05-13
 rust-birthday: 2015-05-14
 host: x86_64-unknown-linux-gnu
 release: 1.0.0");
+
+    assert!(match res {
+        Err(Error::UnexpectedVersionFormat) => true,
+        _ => false,
+    });
+
 }
 
 #[test]
@@ -225,7 +235,7 @@ commit-hash: a59de37e99060162a2674e3ff45409ac73595c0e
 commit-date: 2015-05-13
 build-date: 2015-05-14
 host: x86_64-unknown-linux-gnu
-release: 1.0.0");
+release: 1.0.0").unwrap();
 
     assert_eq!(version.semver, Version::parse("1.0.0").unwrap());
     assert_eq!(version.commit_hash, Some("a59de37e99060162a2674e3ff45409ac73595c0e".into()));
@@ -245,7 +255,7 @@ binary: rustc
 commit-hash: unknown
 commit-date: unknown
 host: x86_64-unknown-linux-gnu
-release: 1.3.0");
+release: 1.3.0").unwrap();
 
     assert_eq!(version.semver, Version::parse("1.3.0").unwrap());
     assert_eq!(version.commit_hash, None);
@@ -263,7 +273,7 @@ binary: rustc
 commit-hash: 65d5c083377645a115c4ac23a620d3581b9562b6
 commit-date: 2015-09-29
 host: x86_64-unknown-linux-gnu
-release: 1.5.0-nightly");
+release: 1.5.0-nightly").unwrap();
 
     assert_eq!(version.semver, Version::parse("1.5.0-nightly").unwrap());
     assert_eq!(version.commit_hash, Some("65d5c083377645a115c4ac23a620d3581b9562b6".into()));
@@ -281,7 +291,7 @@ binary: rustc
 commit-hash: 9a92aaf19a64603b02b4130fe52958cc12488900
 commit-date: 2015-09-15
 host: x86_64-unknown-linux-gnu
-release: 1.3.0");
+release: 1.3.0").unwrap();
 
     assert_eq!(version.semver, Version::parse("1.3.0").unwrap());
     assert_eq!(version.commit_hash, Some("9a92aaf19a64603b02b4130fe52958cc12488900".into()));
@@ -290,3 +300,48 @@ release: 1.3.0");
     assert_eq!(version.host, "x86_64-unknown-linux-gnu");
     assert_eq!(version.short_version_string, "rustc 1.3.0 (9a92aaf19 2015-09-15)");
 }
+
+#[test]
+fn parse_1_16_0_nightly() {
+    let version = version_meta_for(
+"rustc 1.16.0-nightly (5d994d8b7 2017-01-05)
+binary: rustc
+commit-hash: 5d994d8b7e482e87467d4a521911477bd8284ce3
+commit-date: 2017-01-05
+host: x86_64-unknown-linux-gnu
+release: 1.16.0-nightly
+LLVM version: 3.9").unwrap();
+
+    assert_eq!(version.semver, Version::parse("1.16.0-nightly").unwrap());
+    assert_eq!(version.commit_hash, Some("5d994d8b7e482e87467d4a521911477bd8284ce3".into()));
+    assert_eq!(version.commit_date, Some("2017-01-05".into()));
+    assert_eq!(version.channel, Channel::Nightly);
+    assert_eq!(version.host, "x86_64-unknown-linux-gnu");
+    assert_eq!(version.short_version_string, "rustc 1.16.0-nightly (5d994d8b7 2017-01-05)");
+}
+
+/*
+#[test]
+fn version_matches_replacement() {
+    let f = |s1: &str, s2: &str| {
+        let a = Version::parse(s1).unwrap();
+        let b = Version::parse(s2).unwrap();
+        println!("{} <= {} : {}", s1, s2, a <= b);
+    };
+
+    println!();
+
+    f("1.5.0",         "1.5.0");
+    f("1.5.0-nightly", "1.5.0");
+    f("1.5.0",         "1.5.0-nightly");
+    f("1.5.0-nightly", "1.5.0-nightly");
+
+    f("1.5.0",         "1.6.0");
+    f("1.5.0-nightly", "1.6.0");
+    f("1.5.0",         "1.6.0-nightly");
+    f("1.5.0-nightly", "1.6.0-nightly");
+
+    panic!();
+
+}
+*/

@@ -3,7 +3,7 @@
 # When uploading crates to the registry Cargo will automatically
 # "normalize" Cargo.toml files for maximal compatibility
 # with all versions of Cargo and also rewrite `path` dependencies
-# to registry (e.g. crates.io) dependencies
+# to registry (e.g., crates.io) dependencies
 #
 # If you believe there's an error in this file please file an
 # issue against the rust-lang/cargo repository. If you're
@@ -12,30 +12,37 @@
 
 [package]
 name = "serde_derive"
-version = "1.0.8"
+version = "1.0.104"
 authors = ["Erick Tryzelaar <erick.tryzelaar@gmail.com>", "David Tolnay <dtolnay@gmail.com>"]
-include = ["Cargo.toml", "src/**/*.rs", "README.md", "LICENSE-APACHE", "LICENSE-MIT"]
+include = ["Cargo.toml", "src/**/*.rs", "crates-io.md", "README.md", "LICENSE-APACHE", "LICENSE-MIT"]
 description = "Macros 1.1 implementation of #[derive(Serialize, Deserialize)]"
 homepage = "https://serde.rs"
-documentation = "https://serde.rs/codegen.html"
-readme = "README.md"
+documentation = "https://serde.rs/derive.html"
+readme = "crates-io.md"
 keywords = ["serde", "serialization", "no_std"]
-license = "MIT/Apache-2.0"
+license = "MIT OR Apache-2.0"
 repository = "https://github.com/serde-rs/serde"
 
 [lib]
 name = "serde_derive"
 proc-macro = true
+[dependencies.proc-macro2]
+version = "1.0"
 
-[dependencies]
-quote = "0.3.8"
+[dependencies.quote]
+version = "1.0"
 
 [dependencies.syn]
-version = "0.11"
+version = "1.0"
 features = ["visit"]
+[dev-dependencies.serde]
+version = "1.0"
 
-[dependencies.serde_derive_internals]
-version = "=0.15.1"
-default-features = false
+[features]
+default = []
+deserialize_in_place = []
+[badges.appveyor]
+repository = "serde-rs/serde"
+
 [badges.travis-ci]
 repository = "serde-rs/serde"

@@ -42,7 +42,7 @@ pub trait Automaton<P> {
     /// Returns true if the automaton has no patterns.
     #[inline]
     fn is_empty(&self) -> bool {
-        self.len() == 0
+        self.patterns().is_empty()
     }
 
     /// Returns an iterator of non-overlapping matches in `s`.
@@ -239,6 +239,33 @@ fn skip_to_match<P, A: Automaton<P> + ?Sized, F: Fn(&A, &[u8], usize) -> usize>(
             texti = skip(aut, text, texti + 1);
         } else {
             texti += 1;
+            if texti + 4 < text.len() {
+                si = aut.next_state(si, text[texti]);
+                if aut.has_match(si, 0) {
+                    return Some((texti, si));
+                }
+                texti += 1;
+                si = aut.next_state(si, text[texti]);
+                if aut.has_match(si, 0) {
+                    return Some((texti, si));
+                }
+                texti += 1;
+                si = aut.next_state(si, text[texti]);
+                if aut.has_match(si, 0) {
+                    return Some((texti, si));
+                }
+                texti += 1;
+                si = aut.next_state(si, text[texti]);
+                if aut.has_match(si, 0) {
+                    return Some((texti, si));
+                }
+                texti += 1;
+                si = aut.next_state(si, text[texti]);
+                if aut.has_match(si, 0) {
+                    return Some((texti, si));
+                }
+                texti += 1;
+            }
         }
     }
     None
@@ -354,7 +381,7 @@ impl<'a, R: io::Read, P, A: Automaton<P>>
             self.buf.consume(consumed);
             let bs = match self.buf.fill_buf() {
                 Err(err) => return Some(Err(err)),
-                Ok(bs) if bs.len() == 0 => break,
+                Ok(bs) if bs.is_empty() => break,
                 Ok(bs) => bs,
             };
             consumed = bs.len(); // is shortened if we find a match
@@ -478,7 +505,7 @@ impl<'a, R: io::Read, P, A: Automaton<P> + ?Sized>
             self.buf.consume(consumed);
             let bs = match self.buf.fill_buf() {
                 Err(err) => return Some(Err(err)),
-                Ok(bs) if bs.len() == 0 => break,
+                Ok(bs) if bs.is_empty() => break,
                 Ok(bs) => bs,
             };
             consumed = bs.len(); // is shortened if we find a match

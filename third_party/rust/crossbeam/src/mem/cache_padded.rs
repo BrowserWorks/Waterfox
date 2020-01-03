@@ -39,14 +39,29 @@ impl<T> fmt::Debug for CachePadded<T> {
 unsafe impl<T: Send> Send for CachePadded<T> {}
 unsafe impl<T: Sync> Sync for CachePadded<T> {}
 
-/// Types for which mem::zeroed() is safe.
-///
-/// If a type `T: ZerosValid`, then a sequence of zeros the size of `T` must be
-/// a valid member of the type `T`.
-pub unsafe trait ZerosValid {}
+#[cfg(not(feature = "nightly"))]
+macro_rules! declare_zeros_valid {
+    () => {
+        /// Types for which mem::zeroed() is safe.
+        ///
+        /// If a type `T: ZerosValid`, then a sequence of zeros the size of `T` must be
+        /// a valid member of the type `T`.
+        pub unsafe trait ZerosValid {}
+    }
+}
 
 #[cfg(feature = "nightly")]
-unsafe impl ZerosValid for .. {}
+macro_rules! declare_zeros_valid {
+    () => {
+        /// Types for which mem::zeroed() is safe.
+        ///
+        /// If a type `T: ZerosValid`, then a sequence of zeros the size of `T` must be
+        /// a valid member of the type `T`.
+        pub unsafe auto trait ZerosValid {}
+    }
+}
+
+declare_zeros_valid!();
 
 macro_rules! zeros_valid { ($( $T:ty )*) => ($(
     unsafe impl ZerosValid for $T {}

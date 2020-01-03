@@ -14,10 +14,15 @@ It is intended to be used by crates such as [owning_ref](https://crates.io/crate
 no_std support can be enabled by disabling default features (specifically "std"). In this case, the trait will not be implemented for the std types mentioned above, but you can still use it for your own types.
 */
 
+#![cfg_attr(feature = "alloc", feature(alloc))]
+
 #![cfg_attr(not(feature = "std"), no_std)]
 
 #[cfg(feature = "std")]
 extern crate core;
+
+#[cfg(feature = "alloc")]
+extern crate alloc;
 
 use core::ops::Deref;
 
@@ -129,36 +134,60 @@ pub unsafe trait CloneStableDeref: StableDeref + Clone {}
 // std types integration
 /////////////////////////////////////////////////////////////////////////////
 
-#[cfg(feature = "std")]
+#[cfg(all(feature = "std", not(feature = "alloc")))]
 use std::boxed::Box;
-#[cfg(feature = "std")]
+#[cfg(all(not(feature = "std"), feature = "alloc"))]
+use alloc::boxed::Box;
+
+#[cfg(all(feature = "std", not(feature = "alloc")))]
 use std::rc::Rc;
-#[cfg(feature = "std")]
+#[cfg(all(not(feature = "std"), feature = "alloc"))]
+use alloc::rc::Rc;
+
+#[cfg(all(feature = "std", not(feature = "alloc")))]
 use std::sync::Arc;
+#[cfg(all(not(feature = "std"), feature = "alloc"))]
+use alloc::sync::Arc;
+
+#[cfg(all(feature = "std", not(feature = "alloc")))]
+use std::vec::Vec;
+#[cfg(all(not(feature = "std"), feature = "alloc"))]
+use alloc::vec::Vec;
+
+#[cfg(all(feature = "std", not(feature = "alloc")))]
+use std::string::String;
+#[cfg(all(not(feature = "std"), feature = "alloc"))]
+use alloc::string::String;
+
+
 #[cfg(feature = "std")]
 use std::sync::{MutexGuard, RwLockReadGuard, RwLockWriteGuard};
+
 #[cfg(feature = "std")]
 use std::cell::{Ref, RefMut};
+#[cfg(not(feature = "std"))]
+use core::cell::{Ref, RefMut};
 
-#[cfg(feature = "std")]
+
+#[cfg(any(feature = "std", feature = "alloc"))]
 unsafe impl<T: ?Sized> StableDeref for Box<T> {}
-#[cfg(feature = "std")]
+#[cfg(any(feature = "std", feature = "alloc"))]
 unsafe impl<T> StableDeref for Vec<T> {}
-#[cfg(feature = "std")]
+#[cfg(any(feature = "std", feature = "alloc"))]
 unsafe impl StableDeref for String {}
 
-#[cfg(feature = "std")]
+#[cfg(any(feature = "std", feature = "alloc"))]
 unsafe impl<T: ?Sized> StableDeref for Rc<T> {}
-#[cfg(feature = "std")]
+#[cfg(any(feature = "std", feature = "alloc"))]
 unsafe impl<T: ?Sized> CloneStableDeref for Rc<T> {}
-#[cfg(feature = "std")]
+#[cfg(any(feature = "std", feature = "alloc"))]
 unsafe impl<T: ?Sized> StableDeref for Arc<T> {}
-#[cfg(feature = "std")]
+#[cfg(any(feature = "std", feature = "alloc"))]
 unsafe impl<T: ?Sized> CloneStableDeref for Arc<T> {}
 
-#[cfg(feature = "std")]
+// #[cfg(any(feature = "std", feature = "alloc"))]
 unsafe impl<'a, T: ?Sized> StableDeref for Ref<'a, T> {}
-#[cfg(feature = "std")]
+// #[cfg(any(feature = "std", feature = "alloc"))]
 unsafe impl<'a, T: ?Sized> StableDeref for RefMut<'a, T> {}
 #[cfg(feature = "std")]
 unsafe impl<'a, T: ?Sized> StableDeref for MutexGuard<'a, T> {}

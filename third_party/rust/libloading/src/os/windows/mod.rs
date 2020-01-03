@@ -147,6 +147,20 @@ pub struct Symbol<T> {
     pd: marker::PhantomData<T>
 }
 
+impl<T> Symbol<Option<T>> {
+    /// Lift Option out of the symbol.
+    pub fn lift_option(self) -> Option<Symbol<T>> {
+        if self.pointer.is_null() {
+            None
+        } else {
+            Some(Symbol {
+                pointer: self.pointer,
+                pd: marker::PhantomData,
+            })
+        }
+    }
+}
+
 unsafe impl<T: Send> Send for Symbol<T> {}
 unsafe impl<T: Sync> Sync for Symbol<T> {}
 
@@ -177,19 +191,47 @@ static USE_ERRORMODE: AtomicBool = ATOMIC_BOOL_INIT;
 struct ErrorModeGuard(winapi::DWORD);
 
 impl ErrorModeGuard {
-    fn new() -> ErrorModeGuard {
-        let mut ret = ErrorModeGuard(0);
-
-        if !USE_ERRORMODE.load(Ordering::Acquire) {
-            if unsafe { kernel32::SetThreadErrorMode(1, &mut ret.0) == 0
-                        && kernel32::GetLastError() == winapi::ERROR_CALL_NOT_IMPLEMENTED } {
-                USE_ERRORMODE.store(true, Ordering::Release);
-            } else {
-                return ret;
+    fn new() -> Option<ErrorModeGuard> {
+        const SEM_FAILCE: winapi::DWORD = 1;
+        unsafe {
+            if !USE_ERRORMODE.load(Ordering::Acquire) {
+                let mut previous_mode = 0;
+                let success = kernel32::SetThreadErrorMode(SEM_FAILCE, &mut previous_mode) != 0;
+                if !success && kernel32::GetLastError() == winapi::ERROR_CALL_NOT_IMPLEMENTED {
+                    USE_ERRORMODE.store(true, Ordering::Release);
+                } else if !success {
+                    // SetThreadErrorMode failed with some other error? How in the world is it
+                    // possible for what is essentially a simple variable swap to fail?
+                    // For now we just ignore the error -- the worst that can happen here is
+                    // the previous mode staying on and user seeing a dialog error on older Windows
+                    // machines.
+                    return None;
+                } else if previous_mode == SEM_FAILCE {
+                    return None;
+                } else {
+                    return Some(ErrorModeGuard(previous_mode));
+                }
+            }
+            match kernel32::SetErrorMode(SEM_FAILCE) {
+                SEM_FAILCE => {
+                    // This is important to reduce racy-ness when this library is used on multiple
+                    // threads. In particular this helps with following race condition:
+                    //
+                    // T1: SetErrorMode(SEM_FAILCE)
+                    // T2: SetErrorMode(SEM_FAILCE)
+                    // T1: SetErrorMode(old_mode) # not SEM_FAILCE
+                    // T2: SetErrorMode(SEM_FAILCE) # restores to SEM_FAILCE on drop
+                    //
+                    // This is still somewhat racy in a sense that T1 might resture the error
+                    // mode before T2 finishes loading the library, but that is less of a
+                    // concern – it will only end up in end user seeing a dialog.
+                    //
+                    // Also, SetErrorMode itself is probably not an atomic operation.
+                    None
+                }
+                a => Some(ErrorModeGuard(a))
             }
         }
-        ret.0 = unsafe { kernel32::SetErrorMode(1) };
-        ret
     }
 }
 

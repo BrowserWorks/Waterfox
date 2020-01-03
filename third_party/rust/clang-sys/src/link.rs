@@ -24,7 +24,10 @@ macro_rules! link {
         #[cfg($cfg)]
         pub fn $name(library: &mut super::SharedLibrary) {
             let symbol = unsafe { library.library.get(stringify!($name).as_bytes()) }.ok();
-            library.functions.$name = symbol.map(|s| *s);
+            library.functions.$name = match symbol {
+                Some(s) => *s,
+                None => None,
+            };
         }
 
         #[cfg(not($cfg))]
@@ -40,15 +43,9 @@ macro_rules! link {
         use std::sync::{Arc};
 
         /// The set of functions loaded dynamically.
-        #[derive(Debug)]
+        #[derive(Debug, Default)]
         pub struct Functions {
             $($(#[cfg($cfg)])* pub $name: Option<unsafe extern fn($($pname: $pty), *) $(-> $ret)*>,)+
-        }
-
-        impl Default for Functions {
-            fn default() -> Functions {
-                unsafe { std::mem::zeroed() }
-            }
         }
 
         /// A dynamically loaded instance of the `libclang` library.
@@ -121,8 +118,8 @@ macro_rules! link {
             mod build;
 
             let file = try!(build::find_shared_library());
-            let library = libloading::Library::new(&file).map_err(|_| {
-                format!("the `libclang` shared library could not be opened: {}", file.display())
+            let library = libloading::Library::new(&file).map_err(|e| {
+                format!("the `libclang` shared library at {} could not be opened: {}", file.display(), e)
             });
             let mut library = SharedLibrary::new(try!(library));
             $(load::$name(&mut library);)+
@@ -181,5 +178,10 @@ macro_rules! link {
 macro_rules! link {
     ($($(#[cfg($cfg:meta)])* pub fn $name:ident($($pname:ident: $pty:ty), *) $(-> $ret:ty)*;)+) => (
         extern { $($(#[cfg($cfg)])* pub fn $name($($pname: $pty), *) $(-> $ret)*;)+ }
+
+        $($(#[cfg($cfg)])*
+        pub mod $name {
+            pub fn is_loaded() -> bool { true }
+        })+
     )
 }

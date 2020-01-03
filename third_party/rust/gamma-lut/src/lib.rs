@@ -21,10 +21,12 @@ pub enum LuminanceColorSpace {
 
 impl LuminanceColorSpace {
     pub fn new(gamma: f32) -> LuminanceColorSpace {
-        match gamma {
-            1.0 => LuminanceColorSpace::Linear,
-            0.0 => LuminanceColorSpace::Srgb,
-            _ => LuminanceColorSpace::Gamma(gamma),
+        if gamma == 1.0 {
+            LuminanceColorSpace::Linear
+        } else if gamma == 0.0 {
+            LuminanceColorSpace::Srgb
+        } else {
+            LuminanceColorSpace::Gamma(gamma)
         }
     }
 
@@ -87,12 +89,26 @@ fn scale255(n: u8, mut base: u8) -> u8 {
     lum
 }
 
+// Computes the luminance from the given r, g, and b in accordance with
+// SK_LUM_COEFF_X. For correct results, r, g, and b should be in linear space.
+fn compute_luminance(r: u8, g: u8, b: u8) -> u8 {
+    // The following is
+    // r * SK_LUM_COEFF_R + g * SK_LUM_COEFF_G + b * SK_LUM_COEFF_B
+    // with SK_LUM_COEFF_X in 1.8 fixed point (rounding adjusted to sum to 256).
+    let val: u32 = r as u32 * 54 + g as u32 * 183 + b as u32 * 19;
+    assert!(val < 0x10000);
+    (val >> 8) as u8
+}
+
+// Skia uses 3 bits per channel for luminance.
+pub const LUM_BITS: u8 = 3;
+
 #[derive(Copy, Clone)]
 pub struct Color {
-    r: u8,
-    g: u8,
-    b: u8,
-    _a: u8,
+    pub r: u8,
+    pub g: u8,
+    pub b: u8,
+    pub a: u8,
 }
 
 impl Color {
@@ -101,8 +117,31 @@ impl Color {
             r: r,
             g: g,
             b: b,
-            _a: a,
+            a: a,
         }
+    }
+
+    // Compute a canonical color that is equivalent to the input color
+    // for preblend table lookups.
+    pub fn quantize(&self) -> Color {
+        Color::new(
+            scale255(LUM_BITS, self.r >> (8 - LUM_BITS)),
+            scale255(LUM_BITS, self.g >> (8 - LUM_BITS)),
+            scale255(LUM_BITS, self.b >> (8 - LUM_BITS)),
+            self.a,
+        )
+    }
+
+    // Compute a luminance value suitable for grayscale preblend table
+    // lookups.
+    pub fn luminance(&self) -> u8 {
+        compute_luminance(self.r, self.g, self.b)
+    }
+
+    // Make a grayscale color from the computed luminance.
+    pub fn luminance_color(&self) -> Color {
+        let lum = self.luminance();
+        Color::new(lum, lum, lum, self.a)
     }
 }
 
@@ -191,20 +230,6 @@ pub fn build_gamma_correcting_lut(table: &mut [u8; 256], src: u8, contrast: f32,
     }
 }
 
-// Computes the luminance from the given r, g, and b in accordance with
-// SK_LUM_COEFF_X. For correct results, r, g, and b should be in linear space.
-fn compute_luminance(r: u8, g: u8, b: u8) -> u8 {
-    // The following is
-    // r * SK_LUM_COEFF_R + g * SK_LUM_COEFF_G + b * SK_LUM_COEFF_B
-    // with SK_LUM_COEFF_X in 1.8 fixed point (rounding adjusted to sum to 256).
-    let val: u32 = r as u32 * 54 + g as u32 * 183 + b as u32 * 19;
-    assert!(val < 0x10000);
-    (val >> 8) as u8
-}
-
-// Skia uses 3 bits per channel for luminance.
-pub const LUM_BITS: u8 = 3;
-
 pub struct GammaLut {
     tables: [[u8; 256]; 1 << LUM_BITS],
     #[cfg(target_os="macos")]
@@ -255,12 +280,7 @@ impl GammaLut {
     // Skia normally preblends based on what the text color is.
     // If we can't do that, use Skia default colors.
     pub fn preblend_default_colors_bgra(&self, pixels: &mut [u8], width: usize, height: usize) {
-        let preblend_color = Color {
-            r: 0x7f,
-            g: 0x80,
-            b: 0x7f,
-            _a: 0xff,
-        };
+        let preblend_color = Color::new(0x7f, 0x80, 0x7f, 0xff);
         self.preblend_bgra(pixels, width, height, preblend_color);
     }
 
@@ -327,11 +347,11 @@ impl GammaLut {
             let current_height = y * width * 4;
 
             for pixel in pixels[current_height..current_height + (width * 4)].chunks_mut(4) {
-                let luminance = compute_luminance(pixel[0], pixel[1], pixel[2]);
+                let luminance = compute_luminance(pixel[2], pixel[1], pixel[0]);
                 pixel[0] = table_g[luminance as usize];
                 pixel[1] = table_g[luminance as usize];
                 pixel[2] = table_g[luminance as usize];
-                // Don't touch alpha
+                pixel[3] = table_g[luminance as usize];
             }
         }
     }

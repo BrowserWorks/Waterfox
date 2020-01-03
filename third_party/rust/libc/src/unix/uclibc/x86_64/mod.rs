@@ -1,7 +1,7 @@
-//! Definitions for l4re-uclibc on 64bit systems
-
+//! Definitions for uclibc on 64bit systems
 pub type blkcnt_t = i64;
 pub type blksize_t = i64;
+pub type clock_t = i64;
 pub type c_char = u8;
 pub type c_long = i64;
 pub type c_ulong = u64;
@@ -13,41 +13,94 @@ pub type nlink_t = ::c_uint;
 pub type off_t = ::c_long;
 pub type rlim_t = c_ulong;
 pub type rlim64_t = u64;
+// [uClibc docs] Note stat64 has the same shape as stat for x86-64.
+pub type stat64 = stat;
 pub type suseconds_t = ::c_long;
 pub type time_t = ::c_int;
 pub type wchar_t = ::c_int;
 
-// ToDo, used?
-//pub type d_ino = ::c_ulong;
-pub type nfds_t = ::c_ulong;
-
 s! {
-    // ------------------------------------------------------------
-    // networking
-    pub struct in_addr {
-        pub s_addr: in_addr_t,
+    pub struct ipc_perm {
+        pub __key: ::key_t,
+        pub uid: ::uid_t,
+        pub gid: ::gid_t,
+        pub cuid: ::uid_t,
+        pub cgid: ::gid_t,
+        pub mode: ::c_ushort, // read / write
+        __pad1: ::c_ushort,
+        pub __seq: ::c_ushort,
+        __pad2: ::c_ushort,
+        __unused1: ::c_ulong,
+        __unused2: ::c_ulong
     }
 
-    pub struct in6_addr {
-        pub s6_addr: [u8; 16],
-        __align: [u32; 0],
+    #[cfg(not(target_os = "l4re"))]
+    pub struct pthread_attr_t {
+        __detachstate: ::c_int,
+        __schedpolicy: ::c_int,
+        __schedparam: __sched_param,
+        __inheritsched: ::c_int,
+        __scope: ::c_int,
+        __guardsize: ::size_t,
+        __stackaddr_set: ::c_int,
+        __stackaddr: *mut ::c_void, // better don't use it
+        __stacksize: ::size_t,
+    }
+
+    pub struct __sched_param {
+        __sched_priority: ::c_int,
+    }
+
+    pub struct siginfo_t {
+        si_signo: ::c_int, // signal number
+        si_errno: ::c_int, // if not zero: error value of signal, see errno.h
+        si_code: ::c_int,  // signal code
+        pub _pad: [::c_int; 28], // unported union
+        _align: [usize; 0],
+    }
+
+    pub struct shmid_ds {
+        pub shm_perm: ::ipc_perm,
+        pub shm_segsz: ::size_t, // segment size in bytes
+        pub shm_atime: ::time_t, // time of last shmat()
+        pub shm_dtime: ::time_t,
+        pub shm_ctime: ::time_t,
+        pub shm_cpid: ::pid_t,
+        pub shm_lpid: ::pid_t,
+        pub shm_nattch: ::shmatt_t,
+        __unused1: ::c_ulong,
+        __unused2: ::c_ulong
+    }
+
+    pub struct msqid_ds {
+        pub msg_perm: ::ipc_perm,
+        pub msg_stime: ::time_t,
+        pub msg_rtime: ::time_t,
+        pub msg_ctime: ::time_t,
+        __msg_cbytes: ::c_ulong,
+        pub msg_qnum: ::msgqnum_t,
+        pub msg_qbytes: ::msglen_t,
+        pub msg_lspid: ::pid_t,
+        pub msg_lrpid: ::pid_t,
+        __ignored1: ::c_ulong,
+        __ignored2: ::c_ulong,
     }
 
     pub struct sockaddr {
-        pub sa_family: sa_family_t,
+        pub sa_family: ::sa_family_t,
         pub sa_data: [::c_char; 14],
     }
 
     pub struct sockaddr_in {
-        pub sin_family: sa_family_t,
+        pub sin_family: ::sa_family_t,
         pub sin_port: ::in_port_t,
         pub sin_addr: ::in_addr,
         pub sin_zero: [u8; 8],
     }
 
     pub struct sockaddr_in6 {
-        pub sin6_family: sa_family_t,
-        pub sin6_port: in_port_t,
+        pub sin6_family: ::sa_family_t,
+        pub sin6_port: ::in_port_t,
         pub sin6_flowinfo: u32,
         pub sin6_addr: ::in6_addr,
         pub sin6_scope_id: u32,
@@ -55,77 +108,43 @@ s! {
 
     // ------------------------------------------------------------
     // definitions below are *unverified* and might **break** the software
-    pub struct stat { // ToDo
+//    pub struct in_addr {
+//        pub s_addr: in_addr_t,
+//    }
+//
+//    pub struct in6_addr {
+//        pub s6_addr: [u8; 16],
+//        #[cfg(not(libc_align))]
+//        __align: [u32; 0],
+//    }
+
+    pub struct stat {
         pub st_dev: ::c_ulong,
-        st_pad1: [::c_long; 2],
         pub st_ino: ::ino_t,
-        pub st_mode: ::mode_t,
+        // According to uclibc/libc/sysdeps/linux/x86_64/bits/stat.h, order of
+        // nlink and mode are swapped on 64 bit systems.
         pub st_nlink: ::nlink_t,
+        pub st_mode: ::mode_t,
         pub st_uid: ::uid_t,
         pub st_gid: ::gid_t,
-        pub st_rdev: u64,
-        pub st_pad2: [u64; 1],
-        pub st_size: off_t,
-        st_pad3: ::c_long,
-        pub st_atime: ::time_t,
-        pub st_atime_nsec: ::c_long,
-        pub st_mtime: ::time_t,
-        pub st_mtime_nsec: ::c_long,
-        pub st_ctime: ::time_t,
-        pub st_ctime_nsec: ::c_long,
+        pub st_rdev: ::c_ulong, // dev_t
+        pub st_size: off_t, // file size
         pub st_blksize: ::blksize_t,
-        st_pad4: ::c_long,
         pub st_blocks: ::blkcnt_t,
-        st_pad5: [::c_long; 7],
+        pub st_atime: ::time_t,
+        pub st_atime_nsec: ::c_ulong,
+        pub st_mtime: ::time_t,
+        pub st_mtime_nsec: ::c_ulong,
+        pub st_ctime: ::time_t,
+        pub st_ctime_nsec: ::c_ulong,
+        st_pad4: [::c_long; 3]
     }
 
-    pub struct statvfs { // ToDo: broken
-        pub f_bsize: ::c_ulong,
-        pub f_frsize: ::c_ulong,
-        pub f_blocks: ::fsblkcnt_t,
-        pub f_bfree: ::fsblkcnt_t,
-        pub f_bavail: ::fsblkcnt_t,
-        pub f_files: ::fsfilcnt_t,
-        pub f_ffree: ::fsfilcnt_t,
-        pub f_favail: ::fsfilcnt_t,
-        #[cfg(target_endian = "little")]
-        pub f_fsid: ::c_ulong,
-        #[cfg(target_pointer_width = "32")]
-        __f_unused: ::c_int,
-        #[cfg(target_endian = "big")]
-        pub f_fsid: ::c_ulong,
-        pub f_flag: ::c_ulong,
-        pub f_namemax: ::c_ulong,
-        __f_spare: [::c_int; 6],
-    }
-
-    pub struct dirent { // Todo
-        pub d_ino: ino_64_t,
-        pub d_off: off64_t,
-        d_reclen: u16,
-        pub d_type: u8,
-        pub d_name: [i8; 256],
-    }
-
-    pub struct dirent64 { //
-        pub d_ino: ino64_t,
-        pub d_off: off64_t,
-        pub d_reclen: u16,
-        pub d_type: u8,
-        pub d_name: [i8; 256],
-    }
-
-    pub struct pthread_attr_t { // ToDo
-        __size: [u64; 7]
-    }
-
-    pub struct sigaction { // TODO!!
-        pub sa_sigaction: ::sighandler_t,
+    pub struct sigaction {
+        pub sa_handler: ::sighandler_t,
+        pub sa_flags: ::c_ulong,
+        pub sa_restorer: *mut ::c_void,
         pub sa_mask: ::sigset_t,
-        #[cfg(target_arch = "sparc64")]
-        __reserved0: ::c_int,
-        pub sa_flags: ::c_int,
-        _restorer: *mut ::c_void,
     }
 
     pub struct stack_t { // ToDo
@@ -167,56 +186,6 @@ s! {
         pub c_cc: [::cc_t; ::NCCS],
     }
 
-    pub struct sem_t { // ToDo
-        #[cfg(target_pointer_width = "32")]
-        __size: [::c_char; 16],
-        #[cfg(target_pointer_width = "64")]
-        __size: [::c_char; 32],
-        __align: [::c_long; 0],
-    }
-
-    pub struct pthread_mutex_t { // ToDo
-        #[cfg(any(target_arch = "mips", target_arch = "arm",
-                  target_arch = "powerpc"))]
-        __align: [::c_long; 0],
-        #[cfg(not(any(target_arch = "mips", target_arch = "arm",
-                      target_arch = "powerpc")))]
-        __align: [::c_longlong; 0],
-        size: [u8; __SIZEOF_PTHREAD_MUTEX_T],
-    }
-
-    pub struct pthread_mutexattr_t { // ToDo
-        #[cfg(any(target_arch = "x86_64", target_arch = "powerpc64",
-                  target_arch = "mips64", target_arch = "s390x",
-                  target_arch = "sparc64"))]
-        __align: [::c_int; 0],
-        #[cfg(not(any(target_arch = "x86_64", target_arch = "powerpc64",
-                      target_arch = "mips64", target_arch = "s390x",
-                      target_arch = "sparc64")))]
-        __align: [::c_long; 0],
-        size: [u8; __SIZEOF_PTHREAD_MUTEXATTR_T],
-    }
-
-    pub struct pthread_cond_t { // ToDo
-        __align: [::c_longlong; 0],
-        size: [u8; __SIZEOF_PTHREAD_COND_T],
-    }
-
-    pub struct pthread_condattr_t { // ToDo
-        __align: [::c_int; 0],
-        size: [u8; __SIZEOF_PTHREAD_CONDATTR_T],
-    }
-
-    pub struct pthread_rwlock_t { // ToDo
-        #[cfg(any(target_arch = "mips", target_arch = "arm",
-                  target_arch = "powerpc"))]
-        __align: [::c_long; 0],
-        #[cfg(not(any(target_arch = "mips", target_arch = "arm",
-                      target_arch = "powerpc")))]
-        __align: [::c_longlong; 0],
-        size: [u8; __SIZEOF_PTHREAD_RWLOCK_T],
-    }
-
     pub struct sigset_t { // ToDo
         __val: [::c_ulong; 16],
     }
@@ -250,27 +219,6 @@ s! {
         __unused5: *mut ::c_void,
     }
 
-    pub struct stat64 { // ToDo
-        pub st_dev: ::dev_t,
-        pub st_ino: ::ino64_t,
-        pub st_nlink: ::nlink_t,
-        pub st_mode: ::mode_t,
-        pub st_uid: ::uid_t,
-        pub st_gid: ::gid_t,
-        __pad0: ::c_int,
-        pub st_rdev: ::dev_t,
-        pub st_size: ::off_t,
-        pub st_blksize: ::blksize_t,
-        pub st_blocks: ::blkcnt64_t,
-        pub st_atime: ::time_t,
-        pub st_atime_nsec: ::c_long,
-        pub st_mtime: ::time_t,
-        pub st_mtime_nsec: ::c_long,
-        pub st_ctime: ::time_t,
-        pub st_ctime_nsec: ::c_long,
-        __reserved: [::c_long; 3],
-    }
-
     pub struct rlimit64 { // ToDo
         pub rlim_cur: rlim64_t,
         pub rlim_max: rlim64_t,
@@ -283,30 +231,82 @@ s! {
         bits: [u64; 16],
     }
 
-    pub struct timespec { // ToDo
-        tv_sec: time_t, // seconds
-        tv_nsec: ::c_ulong, // nanoseconds
-    }
-
     pub struct fsid_t { // ToDo
         __val: [::c_int; 2],
     }
 }
 
+s_no_extra_traits! {
+    #[allow(missing_debug_implementations)]
+    pub struct dirent {
+        pub d_ino: ::ino64_t,
+        pub d_off: ::off64_t,
+        pub d_reclen: u16,
+        pub d_type: u8,
+        pub d_name: [::c_char; 256],
+    }
+    #[allow(missing_debug_implementations)]
+    pub struct dirent64 {
+        pub d_ino: ::ino64_t,
+        pub d_off: ::off64_t,
+        pub d_reclen: u16,
+        pub d_type: u8,
+        pub d_name: [::c_char; 256],
+    }
+}
+
 // constants
+pub const EADDRINUSE: ::c_int = 98; // Address already in use
+pub const EADDRNOTAVAIL: ::c_int = 99; // Cannot assign requested address
+pub const ECONNABORTED: ::c_int = 103; // Software caused connection abort
+pub const ECONNREFUSED: ::c_int = 111; // Connection refused
+pub const ECONNRESET: ::c_int = 104; // Connection reset by peer
+pub const EDEADLK: ::c_int = 35; // Resource deadlock would occur
+pub const ENOSYS: ::c_int = 38; // Function not implemented
+pub const ENOTCONN: ::c_int = 107; // Transport endpoint is not connected
+pub const ETIMEDOUT: ::c_int = 110; // connection timed out
+pub const O_APPEND: ::c_int = 02000;
+pub const O_ACCMODE: ::c_int = 0003;
 pub const O_CLOEXEC: ::c_int = 0x80000;
+pub const O_CREAT: ::c_int = 0100;
 pub const O_DIRECTORY: ::c_int = 0200000;
+pub const O_EXCL: ::c_int = 0200;
+pub const O_NONBLOCK: ::c_int = 04000;
+pub const O_TRUNC: ::c_int = 01000;
 pub const NCCS: usize = 32;
+pub const SIG_SETMASK: ::c_int = 2; // Set the set of blocked signals
 pub const __SIZEOF_PTHREAD_MUTEX_T: usize = 40;
 pub const __SIZEOF_PTHREAD_MUTEXATTR_T: usize = 4;
-pub const PTHREAD_MUTEX_NORMAL: ::c_int = 0;
-pub const PTHREAD_MUTEX_RECURSIVE: ::c_int = 1;
-pub const PTHREAD_MUTEX_ERRORCHECK: ::c_int = 2;
-pub const PTHREAD_MUTEX_DEFAULT: ::c_int = PTHREAD_MUTEX_NORMAL;
+pub const SO_BROADCAST: ::c_int = 6;
+pub const SOCK_DGRAM: ::c_int = 2; // connectionless, unreliable datagrams
+pub const SOCK_STREAM: ::c_int = 1; // …/common/bits/socket_type.h
+pub const SO_ERROR: ::c_int = 4;
+pub const SOL_SOCKET: ::c_int = 1;
+pub const SO_RCVTIMEO: ::c_int = 20;
+pub const SO_REUSEADDR: ::c_int = 2;
+pub const SO_SNDTIMEO: ::c_int = 21;
+pub const RLIM_INFINITY: u64 = 0xffffffffffffffff;
 pub const __SIZEOF_PTHREAD_COND_T: usize = 48;
 pub const __SIZEOF_PTHREAD_CONDATTR_T: usize = 4;
 pub const __SIZEOF_PTHREAD_RWLOCK_T: usize = 56;
 
-extern {
-    pub fn memalign(align: ::size_t, size: ::size_t) -> *mut ::c_void;
+cfg_if! {
+    if #[cfg(target_os = "l4re")] {
+        mod l4re;
+        pub use self::l4re::*;
+    } else {
+        mod other;
+        pub use other::*;
+    }
 }
+
+cfg_if! {
+    if #[cfg(libc_align)] {
+        #[macro_use]
+        mod align;
+    } else {
+        #[macro_use]
+        mod no_align;
+    }
+}
+expand_align!();

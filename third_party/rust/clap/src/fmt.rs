@@ -7,6 +7,7 @@ use ansi_term::Colour::{Green, Red, Yellow};
 #[cfg(feature = "color")]
 use atty;
 use std::fmt;
+use std::env;
 
 #[doc(hidden)]
 #[derive(Debug, Copy, Clone, PartialEq)]
@@ -33,20 +34,23 @@ pub fn is_a_tty(_: bool) -> bool {
     false
 }
 
+pub fn is_term_dumb() -> bool { env::var("TERM").ok() == Some(String::from("dumb")) }
+
 #[doc(hidden)]
-pub struct Colorizer {
+pub struct ColorizerOption {
     pub use_stderr: bool,
     pub when: ColorWhen,
+}
+
+#[doc(hidden)]
+pub struct Colorizer {
+    when: ColorWhen,
 }
 
 macro_rules! color {
     ($_self:ident, $c:ident, $m:expr) => {
         match $_self.when {
-            ColorWhen::Auto => if is_a_tty($_self.use_stderr) {
-                Format::$c($m)
-            } else {
-                Format::None($m)
-            },
+            ColorWhen::Auto => Format::$c($m),
             ColorWhen::Always => Format::$c($m),
             ColorWhen::Never => Format::None($m),
         }
@@ -54,29 +58,45 @@ macro_rules! color {
 }
 
 impl Colorizer {
+    pub fn new(option: ColorizerOption) -> Colorizer {
+        let is_a_tty = is_a_tty(option.use_stderr);
+        let is_term_dumb = is_term_dumb();
+        Colorizer {
+            when: match option.when {
+                ColorWhen::Auto if is_a_tty && !is_term_dumb => ColorWhen::Auto,
+                ColorWhen::Auto => ColorWhen::Never,
+                when => when,
+            }
+        }
+    }
+
     pub fn good<T>(&self, msg: T) -> Format<T>
-        where T: fmt::Display + AsRef<str>
+    where
+        T: fmt::Display + AsRef<str>,
     {
         debugln!("Colorizer::good;");
         color!(self, Good, msg)
     }
 
     pub fn warning<T>(&self, msg: T) -> Format<T>
-        where T: fmt::Display + AsRef<str>
+    where
+        T: fmt::Display + AsRef<str>,
     {
         debugln!("Colorizer::warning;");
         color!(self, Warning, msg)
     }
 
     pub fn error<T>(&self, msg: T) -> Format<T>
-        where T: fmt::Display + AsRef<str>
+    where
+        T: fmt::Display + AsRef<str>,
     {
         debugln!("Colorizer::error;");
         color!(self, Error, msg)
     }
 
     pub fn none<T>(&self, msg: T) -> Format<T>
-        where T: fmt::Display + AsRef<str>
+    where
+        T: fmt::Display + AsRef<str>,
     {
         debugln!("Colorizer::none;");
         Format::None(msg)
@@ -85,10 +105,10 @@ impl Colorizer {
 
 impl Default for Colorizer {
     fn default() -> Self {
-        Colorizer {
+        Colorizer::new(ColorizerOption {
             use_stderr: true,
             when: ColorWhen::Auto,
-        }
+        })
     }
 }
 
@@ -120,7 +140,7 @@ impl<T: AsRef<str>> Format<T> {
 }
 
 #[cfg(any(not(feature = "color"), target_os = "windows"))]
-#[cfg_attr(feature="lints", allow(match_same_arms))]
+#[cfg_attr(feature = "lints", allow(match_same_arms))]
 impl<T: fmt::Display> Format<T> {
     fn format(&self) -> &T {
         match *self {
@@ -152,14 +172,18 @@ mod test {
     #[test]
     fn colored_output() {
         let err = Format::Error("error");
-        assert_eq!(&*format!("{}", err),
-                   &*format!("{}", Red.bold().paint("error")));
+        assert_eq!(
+            &*format!("{}", err),
+            &*format!("{}", Red.bold().paint("error"))
+        );
         let good = Format::Good("good");
         assert_eq!(&*format!("{}", good), &*format!("{}", Green.paint("good")));
         let warn = Format::Warning("warn");
         assert_eq!(&*format!("{}", warn), &*format!("{}", Yellow.paint("warn")));
         let none = Format::None("none");
-        assert_eq!(&*format!("{}", none),
-                   &*format!("{}", ANSIString::from("none")));
+        assert_eq!(
+            &*format!("{}", none),
+            &*format!("{}", ANSIString::from("none"))
+        );
     }
 }

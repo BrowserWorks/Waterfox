@@ -6,103 +6,270 @@
 ///
 /// This allows you to conveniently provide a long list #[cfg]'d blocks of code
 /// without having to rewrite each clause multiple times.
+#[allow(unused_macros)]
 macro_rules! cfg_if {
+    // match if/else chains with a final `else`
     ($(
         if #[cfg($($meta:meta),*)] { $($it:item)* }
     ) else * else {
         $($it2:item)*
     }) => {
-        __cfg_if_items! {
+        cfg_if! {
+            @__items
             () ;
             $( ( ($($meta),*) ($($it)*) ), )*
             ( () ($($it2)*) ),
         }
-    }
-}
+    };
 
-macro_rules! __cfg_if_items {
-    (($($not:meta,)*) ; ) => {};
-    (($($not:meta,)*) ; ( ($($m:meta),*) ($($it:item)*) ), $($rest:tt)*) => {
-        __cfg_if_apply! { cfg(all(not(any($($not),*)), $($m,)*)), $($it)* }
-        __cfg_if_items! { ($($not,)* $($m,)*) ; $($rest)* }
-    }
-}
+    // match if/else chains lacking a final `else`
+    (
+        if #[cfg($($i_met:meta),*)] { $($i_it:item)* }
+        $(
+            else if #[cfg($($e_met:meta),*)] { $($e_it:item)* }
+        )*
+    ) => {
+        cfg_if! {
+            @__items
+            () ;
+            ( ($($i_met),*) ($($i_it)*) ),
+            $( ( ($($e_met),*) ($($e_it)*) ), )*
+            ( () () ),
+        }
+    };
 
-macro_rules! __cfg_if_apply {
-    ($m:meta, $($it:item)*) => {
+    // Internal and recursive macro to emit all the items
+    //
+    // Collects all the negated cfgs in a list at the beginning and after the
+    // semicolon is all the remaining items
+    (@__items ($($not:meta,)*) ; ) => {};
+    (@__items ($($not:meta,)*) ; ( ($($m:meta),*) ($($it:item)*) ),
+     $($rest:tt)*) => {
+        // Emit all items within one block, applying an approprate #[cfg]. The
+        // #[cfg] will require all `$m` matchers specified and must also negate
+        // all previous matchers.
+        cfg_if! { @__apply cfg(all($($m,)* not(any($($not),*)))), $($it)* }
+
+        // Recurse to emit all other items in `$rest`, and when we do so add all
+        // our `$m` matchers to the list of `$not` matchers as future emissions
+        // will have to negate everything we just matched as well.
+        cfg_if! { @__items ($($not,)* $($m,)*) ; $($rest)* }
+    };
+
+    // Internal macro to Apply a cfg attribute to a list of items
+    (@__apply $m:meta, $($it:item)*) => {
         $(#[$m] $it)*
-    }
+    };
 }
 
+#[allow(unused_macros)]
 macro_rules! s {
-    ($($(#[$attr:meta])* pub struct $i:ident { $($field:tt)* })*) => ($(
+    ($($(#[$attr:meta])* pub $t:ident $i:ident { $($field:tt)* })*) => ($(
+        s!(it: $(#[$attr])* pub $t $i { $($field)* });
+    )*);
+    (it: $(#[$attr:meta])* pub union $i:ident { $($field:tt)* }) => (
+        compile_error!("unions cannot derive extra traits, use s_no_extra_traits instead");
+    );
+    (it: $(#[$attr:meta])* pub struct $i:ident { $($field:tt)* }) => (
+        __item! {
+            #[repr(C)]
+            #[cfg_attr(feature = "extra_traits", derive(Debug, Eq, Hash, PartialEq))]
+            #[allow(deprecated)]
+            $(#[$attr])*
+            pub struct $i { $($field)* }
+        }
+        #[allow(deprecated)]
+        impl ::Copy for $i {}
+        #[allow(deprecated)]
+        impl ::Clone for $i {
+            fn clone(&self) -> $i { *self }
+        }
+    );
+}
+
+#[allow(unused_macros)]
+macro_rules! s_no_extra_traits {
+    ($($(#[$attr:meta])* pub $t:ident $i:ident { $($field:tt)* })*) => ($(
+        s_no_extra_traits!(it: $(#[$attr])* pub $t $i { $($field)* });
+    )*);
+    (it: $(#[$attr:meta])* pub union $i:ident { $($field:tt)* }) => (
+        cfg_if! {
+            if #[cfg(libc_union)] {
+                __item! {
+                    #[repr(C)]
+                    $(#[$attr])*
+                    pub union $i { $($field)* }
+                }
+
+                impl ::Copy for $i {}
+                impl ::Clone for $i {
+                    fn clone(&self) -> $i { *self }
+                }
+            }
+        }
+    );
+    (it: $(#[$attr:meta])* pub struct $i:ident { $($field:tt)* }) => (
         __item! {
             #[repr(C)]
             $(#[$attr])*
             pub struct $i { $($field)* }
         }
-        impl ::dox::Copy for $i {}
-        impl ::dox::Clone for $i {
+        impl ::Copy for $i {}
+        impl ::Clone for $i {
             fn clone(&self) -> $i { *self }
         }
-    )*)
+    );
 }
 
-macro_rules! f {
-    ($(pub fn $i:ident($($arg:ident: $argty:ty),*) -> $ret:ty {
-        $($body:stmt);*
-    })*) => ($(
-        #[inline]
-        #[cfg(not(dox))]
-        pub unsafe extern fn $i($($arg: $argty),*) -> $ret {
-            $($body);*
+// This is a pretty horrible hack to allow us to conditionally mark
+// some functions as 'const', without requiring users of this macro
+// to care about the "const-extern-fn" feature.
+//
+// When 'const-extern-fn' is enabled, we emit the captured 'const' keyword
+// in the expanded function.
+//
+// When 'const-extern-fn' is disabled, we always emit a plain 'pub unsafe extern fn'.
+// Note that the expression matched by the macro is exactly the same - this allows
+// users of this macro to work whether or not 'const-extern-fn' is enabled
+//
+// Unfortunately, we need to duplicate most of this macro between the 'cfg_if' blocks.
+// This is because 'const unsafe extern fn' won't even parse on older compilers,
+// so we need to avoid emitting it at all of 'const-extern-fn'.
+//
+// Specifically, moving the 'cfg_if' into the macro body will *not* work.
+// Doing so would cause the '#[cfg(feature = "const-extern-fn")]' to be emiited
+// into user code. The 'cfg' gate will not stop Rust from trying to parse the
+// 'pub const unsafe extern fn', so users would get a compiler error even when
+// the 'const-extern-fn' feature is disabled
+//
+// Note that users of this macro need to place 'const' in a weird position
+// (after the closing ')' for the arguments, but before the return type).
+// This was the only way I could satisfy the following two requirements:
+// 1. Avoid ambuguity errors from 'macro_rules!' (which happen when writing '$foo:ident fn'
+// 2. Allow users of this macro to mix 'pub fn foo' and 'pub const fn bar' within the same
+// 'f!' block
+cfg_if! {
+    if #[cfg(libc_const_extern_fn)] {
+        #[allow(unused_macros)]
+        macro_rules! f {
+            ($(pub $({$constness:ident})* fn $i:ident(
+                        $($arg:ident: $argty:ty),*
+            ) -> $ret:ty {
+                $($body:stmt);*
+            })*) => ($(
+                #[inline]
+                pub $($constness)* unsafe extern fn $i($($arg: $argty),*
+                ) -> $ret {
+                    $($body);*
+                }
+            )*)
         }
 
-        #[cfg(dox)]
-        #[allow(dead_code)]
-        pub unsafe extern fn $i($($arg: $argty),*) -> $ret {
-            loop {}
+        #[allow(unused_macros)]
+        macro_rules! const_fn {
+            ($($({$constness:ident})* fn $i:ident(
+                        $($arg:ident: $argty:ty),*
+            ) -> $ret:ty {
+                $($body:stmt);*
+            })*) => ($(
+                #[inline]
+                $($constness)* fn $i($($arg: $argty),*
+                ) -> $ret {
+                    $($body);*
+                }
+            )*)
         }
-    )*)
+
+    } else {
+        #[allow(unused_macros)]
+        macro_rules! f {
+            ($(pub $({$constness:ident})* fn $i:ident(
+                        $($arg:ident: $argty:ty),*
+            ) -> $ret:ty {
+                $($body:stmt);*
+            })*) => ($(
+                #[inline]
+                pub unsafe extern fn $i($($arg: $argty),*
+                ) -> $ret {
+                    $($body);*
+                }
+            )*)
+        }
+
+        #[allow(unused_macros)]
+        macro_rules! const_fn {
+            ($($({$constness:ident})* fn $i:ident(
+                        $($arg:ident: $argty:ty),*
+            ) -> $ret:ty {
+                $($body:stmt);*
+            })*) => ($(
+                #[inline]
+                fn $i($($arg: $argty),*
+                ) -> $ret {
+                    $($body);*
+                }
+            )*)
+        }
+    }
 }
 
+#[allow(unused_macros)]
 macro_rules! __item {
-    ($i:item) => ($i)
+    ($i:item) => {
+        $i
+    };
 }
 
-#[cfg(test)]
-mod tests {
-    cfg_if! {
-        if #[cfg(test)] {
-            use std::option::Option as Option2;
-            fn works1() -> Option2<u32> { Some(1) }
-        } else {
-            fn works1() -> Option<u32> { None }
-        }
-    }
+#[allow(unused_macros)]
+macro_rules! align_const {
+    ($($(#[$attr:meta])*
+       pub const $name:ident : $t1:ty
+       = $t2:ident { $($field:tt)* };)*) => ($(
+        #[cfg(libc_align)]
+        $(#[$attr])*
+        pub const $name : $t1 = $t2 {
+            $($field)*
+        };
+        #[cfg(not(libc_align))]
+        $(#[$attr])*
+        pub const $name : $t1 = $t2 {
+            $($field)*
+            __align: [],
+        };
+    )*)
+}
 
-    cfg_if! {
-        if #[cfg(foo)] {
-            fn works2() -> bool { false }
-        } else if #[cfg(test)] {
-            fn works2() -> bool { true }
-        } else {
-            fn works2() -> bool { false }
-        }
-    }
-
-    cfg_if! {
-        if #[cfg(foo)] {
-            fn works3() -> bool { false }
-        } else {
-            fn works3() -> bool { true }
-        }
-    }
-
-    #[test]
-    fn it_works() {
-        assert!(works1().is_some());
-        assert!(works2());
-        assert!(works3());
+// This macro is used to deprecate items that should be accessed via the mach crate
+#[allow(unused_macros)]
+macro_rules! deprecated_mach {
+    (pub const $id:ident: $ty:ty = $expr:expr;) => {
+        #[deprecated(
+            since = "0.2.55",
+            note = "Use the `mach` crate instead",
+        )]
+        #[allow(deprecated)]
+        pub const $id: $ty = $expr;
+    };
+    ($(pub const $id:ident: $ty:ty = $expr:expr;)*) => {
+        $(
+            deprecated_mach!(
+                pub const $id: $ty = $expr;
+            );
+        )*
+    };
+    (pub type $id:ident = $ty:ty;) => {
+        #[deprecated(
+            since = "0.2.55",
+            note = "Use the `mach` crate instead",
+        )]
+        #[allow(deprecated)]
+        pub type $id = $ty;
+    };
+    ($(pub type $id:ident = $ty:ty;)*) => {
+        $(
+            deprecated_mach!(
+                pub type $id = $ty;
+            );
+        )*
     }
 }

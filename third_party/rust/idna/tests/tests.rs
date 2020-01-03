@@ -1,6 +1,6 @@
 extern crate idna;
 extern crate rustc_serialize;
-extern crate test;
+extern crate rustc_test as test;
 
 mod punycode;
 mod uts46;
@@ -10,11 +10,7 @@ fn main() {
     {
         let mut add_test = |name, run| {
             tests.push(test::TestDescAndFn {
-                desc: test::TestDesc {
-                    name: test::DynTestName(name),
-                    ignore: false,
-                    should_panic: test::ShouldPanic::No,
-                },
+                desc: test::TestDesc::new(test::DynTestName(name)),
                 testfn: run,
             })
         };

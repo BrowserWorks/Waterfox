@@ -1,54 +1,113 @@
-use super::Tokens;
+use super::TokenStreamExt;
 
 use std::borrow::Cow;
+use std::iter;
+use std::rc::Rc;
 
-/// Types that can be interpolated inside a `quote!(...)` invocation.
+use proc_macro2::{Group, Ident, Literal, Punct, Span, TokenStream, TokenTree};
+
+/// Types that can be interpolated inside a `quote!` invocation.
+///
+/// [`quote!`]: macro.quote.html
 pub trait ToTokens {
-    /// Write `self` to the given `Tokens`.
+    /// Write `self` to the given `TokenStream`.
+    ///
+    /// The token append methods provided by the [`TokenStreamExt`] extension
+    /// trait may be useful for implementing `ToTokens`.
+    ///
+    /// [`TokenStreamExt`]: trait.TokenStreamExt.html
+    ///
+    /// # Example
     ///
     /// Example implementation for a struct representing Rust paths like
     /// `std::cmp::PartialEq`:
     ///
-    /// ```ignore
+    /// ```
+    /// use proc_macro2::{TokenTree, Spacing, Span, Punct, TokenStream};
+    /// use quote::{TokenStreamExt, ToTokens};
+    ///
     /// pub struct Path {
     ///     pub global: bool,
     ///     pub segments: Vec<PathSegment>,
     /// }
     ///
     /// impl ToTokens for Path {
-    ///     fn to_tokens(&self, tokens: &mut Tokens) {
+    ///     fn to_tokens(&self, tokens: &mut TokenStream) {
     ///         for (i, segment) in self.segments.iter().enumerate() {
     ///             if i > 0 || self.global {
-    ///                 tokens.append("::");
+    ///                 // Double colon `::`
+    ///                 tokens.append(Punct::new(':', Spacing::Joint));
+    ///                 tokens.append(Punct::new(':', Spacing::Alone));
     ///             }
     ///             segment.to_tokens(tokens);
     ///         }
     ///     }
     /// }
+    /// #
+    /// # pub struct PathSegment;
+    /// #
+    /// # impl ToTokens for PathSegment {
+    /// #     fn to_tokens(&self, tokens: &mut TokenStream) {
+    /// #         unimplemented!()
+    /// #     }
+    /// # }
     /// ```
-    fn to_tokens(&self, &mut Tokens);
+    fn to_tokens(&self, tokens: &mut TokenStream);
+
+    /// Convert `self` directly into a `TokenStream` object.
+    ///
+    /// This method is implicitly implemented using `to_tokens`, and acts as a
+    /// convenience method for consumers of the `ToTokens` trait.
+    fn to_token_stream(&self) -> TokenStream {
+        let mut tokens = TokenStream::new();
+        self.to_tokens(&mut tokens);
+        tokens
+    }
+
+    /// Convert `self` directly into a `TokenStream` object.
+    ///
+    /// This method is implicitly implemented using `to_tokens`, and acts as a
+    /// convenience method for consumers of the `ToTokens` trait.
+    fn into_token_stream(self) -> TokenStream
+    where
+        Self: Sized,
+    {
+        self.to_token_stream()
+    }
 }
 
 impl<'a, T: ?Sized + ToTokens> ToTokens for &'a T {
-    fn to_tokens(&self, tokens: &mut Tokens) {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        (**self).to_tokens(tokens);
+    }
+}
+
+impl<'a, T: ?Sized + ToTokens> ToTokens for &'a mut T {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
         (**self).to_tokens(tokens);
     }
 }
 
 impl<'a, T: ?Sized + ToOwned + ToTokens> ToTokens for Cow<'a, T> {
-    fn to_tokens(&self, tokens: &mut Tokens) {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
         (**self).to_tokens(tokens);
     }
 }
 
 impl<T: ?Sized + ToTokens> ToTokens for Box<T> {
-    fn to_tokens(&self, tokens: &mut Tokens) {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        (**self).to_tokens(tokens);
+    }
+}
+
+impl<T: ?Sized + ToTokens> ToTokens for Rc<T> {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
         (**self).to_tokens(tokens);
     }
 }
 
 impl<T: ToTokens> ToTokens for Option<T> {
-    fn to_tokens(&self, tokens: &mut Tokens) {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
         if let Some(ref t) = *self {
             t.to_tokens(tokens);
         }
@@ -56,302 +115,95 @@ impl<T: ToTokens> ToTokens for Option<T> {
 }
 
 impl ToTokens for str {
-    fn to_tokens(&self, tokens: &mut Tokens) {
-        let mut escaped = "\"".to_string();
-        for ch in self.chars() {
-            match ch {
-                '\0' => escaped.push_str(r"\0"),
-                '\'' => escaped.push_str("'"),
-                _ => escaped.extend(ch.escape_default().map(|c| c as char)),
-            }
-        }
-        escaped.push('"');
-
-        tokens.append(&escaped);
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        tokens.append(Literal::string(self));
     }
 }
 
 impl ToTokens for String {
-    fn to_tokens(&self, tokens: &mut Tokens) {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
         self.as_str().to_tokens(tokens);
     }
 }
 
+macro_rules! primitive {
+    ($($t:ident => $name:ident)*) => ($(
+        impl ToTokens for $t {
+            fn to_tokens(&self, tokens: &mut TokenStream) {
+                tokens.append(Literal::$name(*self));
+            }
+        }
+    )*)
+}
+
+primitive! {
+    i8 => i8_suffixed
+    i16 => i16_suffixed
+    i32 => i32_suffixed
+    i64 => i64_suffixed
+    i128 => i128_suffixed
+    isize => isize_suffixed
+
+    u8 => u8_suffixed
+    u16 => u16_suffixed
+    u32 => u32_suffixed
+    u64 => u64_suffixed
+    u128 => u128_suffixed
+    usize => usize_suffixed
+
+    f32 => f32_suffixed
+    f64 => f64_suffixed
+}
+
 impl ToTokens for char {
-    fn to_tokens(&self, tokens: &mut Tokens) {
-        match *self {
-            '\0' => tokens.append(r"'\0'"),
-            '"' => tokens.append("'\"'"),
-            _ => tokens.append(&format!("{:?}", self)),
-        }
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        tokens.append(Literal::character(*self));
     }
 }
 
-/// Wrap a `&str` so it interpolates as a byte-string: `b"abc"`.
-#[derive(Debug)]
-pub struct ByteStr<'a>(pub &'a str);
-
-impl<'a> ToTokens for ByteStr<'a> {
-    fn to_tokens(&self, tokens: &mut Tokens) {
-        let mut escaped = "b\"".to_string();
-        for b in self.0.bytes() {
-            match b {
-                b'\0' => escaped.push_str(r"\0"),
-                b'\t' => escaped.push_str(r"\t"),
-                b'\n' => escaped.push_str(r"\n"),
-                b'\r' => escaped.push_str(r"\r"),
-                b'"' => escaped.push_str("\\\""),
-                b'\\' => escaped.push_str("\\\\"),
-                b'\x20' ... b'\x7E' => escaped.push(b as char),
-                _ => escaped.push_str(&format!("\\x{:02X}", b)),
-            }
-        }
-        escaped.push('"');
-
-        tokens.append(&escaped);
+impl ToTokens for bool {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        let word = if *self { "true" } else { "false" };
+        tokens.append(Ident::new(word, Span::call_site()));
     }
 }
 
-macro_rules! impl_to_tokens_display {
-    ($ty:ty) => {
-        impl ToTokens for $ty {
-            fn to_tokens(&self, tokens: &mut Tokens) {
-                tokens.append(&self.to_string());
-            }
-        }
-    };
-}
-
-impl_to_tokens_display!(Tokens);
-impl_to_tokens_display!(bool);
-
-/// Wrap an integer so it interpolates as a hexadecimal.
-#[derive(Debug)]
-pub struct Hex<T>(pub T);
-
-macro_rules! impl_to_tokens_integer {
-    ($ty:ty) => {
-        impl ToTokens for $ty {
-            fn to_tokens(&self, tokens: &mut Tokens) {
-                tokens.append(&format!(concat!("{}", stringify!($ty)), self));
-            }
-        }
-
-        impl ToTokens for Hex<$ty> {
-            fn to_tokens(&self, tokens: &mut Tokens) {
-                tokens.append(&format!(concat!("0x{:X}", stringify!($ty)), self.0));
-            }
-        }
-    };
-}
-
-impl_to_tokens_integer!(i8);
-impl_to_tokens_integer!(i16);
-impl_to_tokens_integer!(i32);
-impl_to_tokens_integer!(i64);
-impl_to_tokens_integer!(isize);
-impl_to_tokens_integer!(u8);
-impl_to_tokens_integer!(u16);
-impl_to_tokens_integer!(u32);
-impl_to_tokens_integer!(u64);
-impl_to_tokens_integer!(usize);
-
-macro_rules! impl_to_tokens_floating {
-    ($ty:ty) => {
-        impl ToTokens for $ty {
-            fn to_tokens(&self, tokens: &mut Tokens) {
-                use std::num::FpCategory::*;
-                match self.classify() {
-                    Zero | Subnormal | Normal => {
-                        tokens.append(&format!(concat!("{}", stringify!($ty)), self));
-                    }
-                    Nan => {
-                        tokens.append("::");
-                        tokens.append("std");
-                        tokens.append("::");
-                        tokens.append(stringify!($ty));
-                        tokens.append("::");
-                        tokens.append("NAN");
-                    }
-                    Infinite => {
-                        tokens.append("::");
-                        tokens.append("std");
-                        tokens.append("::");
-                        tokens.append(stringify!($ty));
-                        tokens.append("::");
-                        if self.is_sign_positive() {
-                            tokens.append("INFINITY");
-                        } else {
-                            tokens.append("NEG_INFINITY");
-                        }
-                    }
-                }
-            }
-        }
-    };
-}
-impl_to_tokens_floating!(f32);
-impl_to_tokens_floating!(f64);
-
-impl<T: ToTokens> ToTokens for [T] {
-    fn to_tokens(&self, tokens: &mut Tokens) {
-        tokens.append("[");
-        for item in self {
-            item.to_tokens(tokens);
-            tokens.append(",");
-        }
-        tokens.append("]");
+impl ToTokens for Group {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        tokens.append(self.clone());
     }
 }
 
-impl<T: ToTokens> ToTokens for Vec<T> {
-    fn to_tokens(&self, tokens: &mut Tokens) {
-        self[..].to_tokens(tokens)
+impl ToTokens for Ident {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        tokens.append(self.clone());
     }
 }
 
-macro_rules! array_impls {
-    ($($N:expr)+) => {
-        $(
-            impl<T: ToTokens> ToTokens for [T; $N] {
-                fn to_tokens(&self, tokens: &mut Tokens) {
-                    self[..].to_tokens(tokens)
-                }
-            }
-        )+
+impl ToTokens for Punct {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        tokens.append(self.clone());
     }
 }
 
-array_impls! {
-     0  1  2  3  4  5  6  7  8  9
-    10 11 12 13 14 15 16 17 18 19
-    20 21 22 23 24 25 26 27 28 29
-    30 31 32
-}
-
-macro_rules! tuple_impls {
-    ($(
-        $Tuple:ident {
-            $(($idx:tt) -> $T:ident)*
-        }
-    )+) => {
-        $(
-            impl<$($T: ToTokens),*> ToTokens for ($($T,)*) {
-                fn to_tokens(&self, tokens: &mut Tokens) {
-                    tokens.append("(");
-                    $(
-                        self.$idx.to_tokens(tokens);
-                        tokens.append(",");
-                    )*
-                    tokens.append(")");
-                }
-            }
-        )+
+impl ToTokens for Literal {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        tokens.append(self.clone());
     }
 }
 
-tuple_impls! {
-    Tuple0 {}
-    Tuple1 {
-        (0) -> A
+impl ToTokens for TokenTree {
+    fn to_tokens(&self, dst: &mut TokenStream) {
+        dst.append(self.clone());
     }
-    Tuple2 {
-        (0) -> A
-        (1) -> B
+}
+
+impl ToTokens for TokenStream {
+    fn to_tokens(&self, dst: &mut TokenStream) {
+        dst.extend(iter::once(self.clone()));
     }
-    Tuple3 {
-        (0) -> A
-        (1) -> B
-        (2) -> C
-    }
-    Tuple4 {
-        (0) -> A
-        (1) -> B
-        (2) -> C
-        (3) -> D
-    }
-    Tuple5 {
-        (0) -> A
-        (1) -> B
-        (2) -> C
-        (3) -> D
-        (4) -> E
-    }
-    Tuple6 {
-        (0) -> A
-        (1) -> B
-        (2) -> C
-        (3) -> D
-        (4) -> E
-        (5) -> F
-    }
-    Tuple7 {
-        (0) -> A
-        (1) -> B
-        (2) -> C
-        (3) -> D
-        (4) -> E
-        (5) -> F
-        (6) -> G
-    }
-    Tuple8 {
-        (0) -> A
-        (1) -> B
-        (2) -> C
-        (3) -> D
-        (4) -> E
-        (5) -> F
-        (6) -> G
-        (7) -> H
-    }
-    Tuple9 {
-        (0) -> A
-        (1) -> B
-        (2) -> C
-        (3) -> D
-        (4) -> E
-        (5) -> F
-        (6) -> G
-        (7) -> H
-        (8) -> I
-    }
-    Tuple10 {
-        (0) -> A
-        (1) -> B
-        (2) -> C
-        (3) -> D
-        (4) -> E
-        (5) -> F
-        (6) -> G
-        (7) -> H
-        (8) -> I
-        (9) -> J
-    }
-    Tuple11 {
-        (0) -> A
-        (1) -> B
-        (2) -> C
-        (3) -> D
-        (4) -> E
-        (5) -> F
-        (6) -> G
-        (7) -> H
-        (8) -> I
-        (9) -> J
-        (10) -> K
-    }
-    Tuple12 {
-        (0) -> A
-        (1) -> B
-        (2) -> C
-        (3) -> D
-        (4) -> E
-        (5) -> F
-        (6) -> G
-        (7) -> H
-        (8) -> I
-        (9) -> J
-        (10) -> K
-        (11) -> L
+
+    fn into_token_stream(self) -> TokenStream {
+        self
     }
 }

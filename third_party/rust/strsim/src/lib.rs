@@ -105,26 +105,6 @@ pub fn jaro(a: &str, b: &str) -> f64 {
     }
 }
 
-/// Calculates the Jaro distance between a string and each string in a vector.
-/// Returns a vector of corresponding values between 0.0 and 1.0 (higher value
-/// means more similar).
-///
-/// ```
-/// use strsim::jaro_against_vec;
-///
-/// let v = vec!["test", "test1", "test12", "test123", "", "tset"];
-/// let result = jaro_against_vec("test", &v);
-/// let expected = vec![1.0, 0.933333, 0.888889, 0.857143, 0.0, 0.916667];
-/// let delta: f64 = result.iter()
-///                        .zip(expected.iter())
-///                        .map(|(x, y)| (x - y).abs() as f64)
-///                        .fold(0.0, |x, y| x + y as f64);
-/// assert!(delta.abs() < 0.0001);
-/// ```
-pub fn jaro_against_vec(a: &str, v: &[&str]) -> Vec<f64> {
-  v.iter().map(|b| jaro(a, b)).collect()
-}
-
 /// Like Jaro but gives a boost to strings that have a common prefix.
 ///
 /// ```
@@ -152,25 +132,6 @@ pub fn jaro_winkler(a: &str, b: &str) -> f64 {
     }
 }
 
-/// Calculates the Jaro-Winkler distances between a string and each string
-/// in a vector. Returns a vector of corresponding values.
-///
-/// ```
-/// use strsim::jaro_winkler_against_vec;
-///
-/// let v = vec!["test", "test1", "test12", "test123", "", "tset"];
-/// let result = jaro_winkler_against_vec("test", &v);
-/// let expected = vec![1.0, 0.96, 0.933333, 0.914286, 0.0, 0.925];
-/// let delta: f64 = result.iter()
-///                        .zip(expected.iter())
-///                        .map(|(x, y)| (x - y).abs() as f64)
-///                        .fold(0.0, |x, y| x + y as f64);
-/// assert!(delta.abs() < 0.0001);
-/// ```
-pub fn jaro_winkler_against_vec(a: &str, v: &[&str]) -> Vec<f64> {
-  v.iter().map(|b| jaro_winkler(a, b)).collect()
-}
-
 /// Calculates the minimum number of insertions, deletions, and substitutions
 /// required to change one string into the other.
 ///
@@ -180,49 +141,53 @@ pub fn jaro_winkler_against_vec(a: &str, v: &[&str]) -> Vec<f64> {
 /// assert_eq!(3, levenshtein("kitten", "sitting"));
 /// ```
 pub fn levenshtein(a: &str, b: &str) -> usize {
+    if a == b { return 0; }
+
     let a_len = a.chars().count();
     let b_len = b.chars().count();
-    if a == b { return 0; }
-    else if a_len == 0 { return b_len; }
-    else if b_len == 0 { return a_len; }
 
-    let mut prev_distances: Vec<usize> = Vec::with_capacity(b_len + 1);
-    let mut curr_distances: Vec<usize> = Vec::with_capacity(b_len + 1);
+    if a_len == 0 { return b_len; }
+    if b_len == 0 { return a_len; }
 
-    for i in 0..(b_len + 1) {
-        prev_distances.push(i);
-        curr_distances.push(0);
-    }
+    let mut cache: Vec<usize> = (1..b_len+1).collect();
+
+    let mut result = 0;
+    let mut distance_a;
+    let mut distance_b;
 
     for (i, a_char) in a.chars().enumerate() {
-        curr_distances[0] = i + 1;
+        result = i;
+        distance_b = i;
 
         for (j, b_char) in b.chars().enumerate() {
             let cost = if a_char == b_char { 0 } else { 1 };
-            curr_distances[j + 1] = min(curr_distances[j] + 1,
-                                        min(prev_distances[j + 1] + 1,
-                                            prev_distances[j] + cost));
+            distance_a = distance_b + cost;
+            distance_b = cache[j];
+            result = min(result + 1, min(distance_a, distance_b + 1));
+            cache[j] = result;
         }
-
-        prev_distances.clone_from(&curr_distances);
     }
 
-    curr_distances[b_len]
+    result
 }
 
-/// Calculates the Levenshtein distance between a string and each string in a
-/// vector. Returns a vector of corresponding values.
+/// Calculates a normalized score of the Levenshtein algorithm between 0.0 and
+/// 1.0 (inclusive), where 1.0 means the strings are the same.
 ///
 /// ```
-/// use strsim::levenshtein_against_vec;
+/// use strsim::normalized_levenshtein;
 ///
-/// let v = vec!["test", "test1", "test12", "test123", "", "tset"];
-/// let result = levenshtein_against_vec("test", &v);
-/// let expected = vec![0, 1, 2, 3, 4, 2];
-/// assert_eq!(expected, result);
+/// assert!((normalized_levenshtein("kitten", "sitting") - 0.57142).abs() < 0.00001);
+/// assert!((normalized_levenshtein("", "") - 1.0).abs() < 0.00001);
+/// assert!(normalized_levenshtein("", "second").abs() < 0.00001);
+/// assert!(normalized_levenshtein("first", "").abs() < 0.00001);
+/// assert!((normalized_levenshtein("string", "string") - 1.0).abs() < 0.00001);
 /// ```
-pub fn levenshtein_against_vec(a: &str, v: &[&str]) -> Vec<usize> {
-  v.iter().map(|b| levenshtein(a, b)).collect()
+pub fn normalized_levenshtein(a: &str, b: &str) -> f64 {
+    if a.is_empty() && b.is_empty() {
+        return 1.0;
+    }
+    1.0 - (levenshtein(a, b) as f64) / (a.chars().count().max(b.chars().count()) as f64)
 }
 
 /// Like Levenshtein but allows for adjacent transpositions. Each substring can
@@ -277,21 +242,6 @@ pub fn osa_distance(a: &str, b: &str) -> usize {
 
     curr_distances[b_len]
 
-}
-
-/// Calculates the optimal string alignment distance between a string and each
-/// string in a vector. Returns a vector of corresponding values.
-///
-/// ```
-/// use strsim::osa_distance_against_vec;
-///
-/// let v = vec!["test", "test1", "test12", "test123", "", "tset"];
-/// let result = osa_distance_against_vec("test", &v);
-/// let expected = vec![0, 1, 2, 3, 4, 1];
-/// assert_eq!(expected, result);
-/// ```
-pub fn osa_distance_against_vec(a: &str, v: &[&str]) -> Vec<usize> {
-  v.iter().map(|b| osa_distance(a, b)).collect()
 }
 
 /// Like optimal string alignment, but substrings can be edited an unlimited
@@ -364,19 +314,23 @@ pub fn damerau_levenshtein(a: &str, b: &str) -> usize {
     distances[a_len + 1][b_len + 1]
 }
 
-/// Calculates the Damerau-Levenshtein distance between a string and each string
-/// in a vector. Returns a vector of corresponding values.
+/// Calculates a normalized score of the Damerau–Levenshtein algorithm between
+/// 0.0 and 1.0 (inclusive), where 1.0 means the strings are the same.
 ///
 /// ```
-/// use strsim::damerau_levenshtein_against_vec;
+/// use strsim::normalized_damerau_levenshtein;
 ///
-/// let v = vec!["test", "test1", "test12", "test123", "", "tset"];
-/// let result = damerau_levenshtein_against_vec("test", &v);
-/// let expected = vec![0, 1, 2, 3, 4, 1];
-/// assert_eq!(expected, result);
+/// assert!((normalized_damerau_levenshtein("levenshtein", "löwenbräu") - 0.27272).abs() < 0.00001);
+/// assert!((normalized_damerau_levenshtein("", "") - 1.0).abs() < 0.00001);
+/// assert!(normalized_damerau_levenshtein("", "flower").abs() < 0.00001);
+/// assert!(normalized_damerau_levenshtein("tree", "").abs() < 0.00001);
+/// assert!((normalized_damerau_levenshtein("sunglasses", "sunglasses") - 1.0).abs() < 0.00001);
 /// ```
-pub fn damerau_levenshtein_against_vec(a: &str, v: &[&str]) -> Vec<usize> {
-  v.iter().map(|b| damerau_levenshtein(a, b)).collect()
+pub fn normalized_damerau_levenshtein(a: &str, b: &str) -> f64 {
+    if a.is_empty() && b.is_empty() {
+        return 1.0;
+    }
+    1.0 - (damerau_levenshtein(a, b) as f64) / (a.chars().count().max(b.chars().count()) as f64)
 }
 
 #[cfg(test)]
@@ -615,6 +569,31 @@ mod tests {
     }
 
     #[test]
+    fn normalized_levenshtein_diff_short() {
+        assert!((normalized_levenshtein("kitten", "sitting") - 0.57142).abs() < 0.00001);
+    }
+
+    #[test]
+    fn normalized_levenshtein_for_empty_strings() {
+        assert!((normalized_levenshtein("", "") - 1.0).abs() < 0.00001);
+    }
+
+    #[test]
+    fn normalized_levenshtein_first_empty() {
+        assert!(normalized_levenshtein("", "second").abs() < 0.00001);
+    }
+
+    #[test]
+    fn normalized_levenshtein_second_empty() {
+        assert!(normalized_levenshtein("first", "").abs() < 0.00001);
+    }
+
+    #[test]
+    fn normalized_levenshtein_identical_strings() {
+        assert!((normalized_levenshtein("identical", "identical") - 1.0).abs() < 0.00001);
+    }
+
+    #[test]
     fn osa_distance_empty() {
         assert_eq!(0, osa_distance("", ""));
     }
@@ -781,131 +760,27 @@ mod tests {
     }
 
     #[test]
-    fn levenshtein_against_vec_empty() {
-        let v = Vec::new();
-        let result = levenshtein_against_vec("test", &v);
-        let expected: Vec<usize> = Vec::new();
-        assert_eq!(expected, result);
+    fn normalized_damerau_levenshtein_diff_short() {
+        assert!((normalized_damerau_levenshtein("levenshtein", "löwenbräu") - 0.27272).abs() < 0.00001);
     }
 
     #[test]
-    fn levenshtein_against_vec_one() {
-        let v = vec!["testy"];
-        let result = levenshtein_against_vec("test", &v);
-        let expected = vec![1];
-        assert_eq!(expected, result);
+    fn normalized_damerau_levenshtein_for_empty_strings() {
+        assert!((normalized_damerau_levenshtein("", "") - 1.0).abs() < 0.00001);
     }
 
     #[test]
-    fn levenshtein_against_vec_many() {
-        let v = vec!["test", "test1", "test12", "test123", "", "tset"];
-        let result = levenshtein_against_vec("test", &v);
-        let expected = vec![0, 1, 2, 3, 4, 2];
-        assert_eq!(expected, result);
+    fn normalized_damerau_levenshtein_first_empty() {
+        assert!(normalized_damerau_levenshtein("", "flower").abs() < 0.00001);
     }
 
     #[test]
-    fn osa_distance_against_vec_empty() {
-        let v = Vec::new();
-        let result = osa_distance_against_vec("test", &v);
-        let expected: Vec<usize> = Vec::new();
-        assert_eq!(expected, result);
+    fn normalized_damerau_levenshtein_second_empty() {
+        assert!(normalized_damerau_levenshtein("tree", "").abs() < 0.00001);
     }
 
     #[test]
-    fn osa_distance_against_vec_one() {
-        let v = vec!["etst"];
-        let result = osa_distance_against_vec("test", &v);
-        let expected = vec![1];
-        assert_eq!(expected, result);
-    }
-
-    #[test]
-    fn osa_distance_against_vec_many() {
-        let v = vec!["test", "test1", "test12", "test123", "", "tsvet"];
-        let result = osa_distance_against_vec("test", &v);
-        let expected = vec![0, 1, 2, 3, 4, 3];
-        assert_eq!(expected, result);
-    }
-
-    #[test]
-    fn damerau_levenshtein_against_vec_empty() {
-        let v = Vec::new();
-        let result = damerau_levenshtein_against_vec("test", &v);
-        let expected: Vec<usize> = Vec::new();
-        assert_eq!(expected, result);
-    }
-
-    #[test]
-    fn damerau_levenshtein_against_vec_one() {
-        let v = vec!["etst"];
-        let result = damerau_levenshtein_against_vec("test", &v);
-        let expected = vec![1];
-        assert_eq!(expected, result);
-    }
-
-    #[test]
-    fn damerau_levenshtein_against_vec_many() {
-        let v = vec!["test", "test1", "test12", "test123", "", "tsvet"];
-        let result = damerau_levenshtein_against_vec("test", &v);
-        let expected = vec![0, 1, 2, 3, 4, 2];
-        assert_eq!(expected, result);
-    }
-
-    fn equal_float_vecs(a: Vec<f64>, b: Vec<f64>) -> bool {
-        let delta: f64 = a.iter()
-                          .zip(b.iter())
-                          .map(|(x, y)| (x - y).abs() as f64)
-                          .fold(0.0, |x, y| x + y as f64);
-        delta < 0.0001
-    }
-
-    #[test]
-    fn jaro_against_vec_empty() {
-        let v = Vec::new();
-        let result = jaro_against_vec("test", &v);
-        let expected: Vec<f64> = Vec::new();
-        assert_eq!(expected, result);
-    }
-
-    #[test]
-    fn jaro_against_vec_one() {
-        let v = vec!["test1"];
-        let result = jaro_against_vec("test", &v);
-        let expected = vec![0.93333];
-        assert!(equal_float_vecs(result, expected));
-    }
-
-    #[test]
-    fn jaro_against_vec_many() {
-        let v = vec!["test", "test1", "test12", "test123", "", "tset"];
-        let result = jaro_against_vec("test", &v);
-        let expected = vec![1.0, 0.933333, 0.888889, 0.857143, 0.0, 0.916667];
-        assert!(equal_float_vecs(result, expected));
-    }
-
-    #[test]
-    fn jaro_winkler_against_vec_empty() {
-        let v = Vec::new();
-        let result = jaro_winkler_against_vec("test", &v);
-        let expected: Vec<f64> = Vec::new();
-        assert_eq!(expected, result);
-    }
-
-    #[test]
-    fn jaro_winkler_against_vec_one() {
-        let v = vec!["test123"];
-        let result = jaro_winkler_against_vec("test", &v);
-        let expected = vec![0.914286];
-        assert!(equal_float_vecs(result, expected));
-    }
-
-    #[test]
-    fn jaro_winkler_against_vec_many() {
-        let v = vec!["test", "test1", "test12", "test123", "", "tset"];
-        let result = jaro_winkler_against_vec("test", &v);
-        let expected = vec![1.0, 0.96, 0.933333, 0.914286, 0.0, 0.925];
-        assert!(equal_float_vecs(result, expected));
+    fn normalized_damerau_levenshtein_identical_strings() {
+        assert!((normalized_damerau_levenshtein("sunglasses", "sunglasses") - 1.0).abs() < 0.00001);
     }
 }
-

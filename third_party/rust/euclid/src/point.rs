@@ -90,6 +90,12 @@ impl<T: Copy, U> TypedPoint2D<T, U> {
         vec2(self.x, self.y)
     }
 
+    /// Swap x and y.
+    #[inline]
+    pub fn yx(&self) -> Self {
+        point2(self.y, self.x)
+    }
+
     /// Returns self.x as a Length carrying the unit.
     #[inline]
     pub fn x_typed(&self) -> Length<T, U> { Length::new(self.x) }
@@ -233,7 +239,7 @@ impl<T: Round, U> TypedPoint2D<T, U> {
     /// This behavior is preserved for negative values (unlike the basic cast).
     /// For example `{ -0.1, -0.8 }.round() == { 0.0, -1.0 }`.
     #[inline]
-    #[must_use]
+    #[cfg_attr(feature = "unstable", must_use)]
     pub fn round(&self) -> Self {
         point2(self.x.round(), self.y.round())
     }
@@ -245,7 +251,7 @@ impl<T: Ceil, U> TypedPoint2D<T, U> {
     /// This behavior is preserved for negative values (unlike the basic cast).
     /// For example `{ -0.1, -0.8 }.ceil() == { 0.0, 0.0 }`.
     #[inline]
-    #[must_use]
+    #[cfg_attr(feature = "unstable", must_use)]
     pub fn ceil(&self) -> Self {
         point2(self.x.ceil(), self.y.ceil())
     }
@@ -257,7 +263,7 @@ impl<T: Floor, U> TypedPoint2D<T, U> {
     /// This behavior is preserved for negative values (unlike the basic cast).
     /// For example `{ -0.1, -0.8 }.floor() == { -1.0, -1.0 }`.
     #[inline]
-    #[must_use]
+    #[cfg_attr(feature = "unstable", must_use)]
     pub fn floor(&self) -> Self {
         point2(self.x.floor(), self.y.floor())
     }
@@ -282,6 +288,12 @@ impl<T: NumCast + Copy, U> TypedPoint2D<T, U> {
     /// Cast into an `f32` point.
     #[inline]
     pub fn to_f32(&self) -> TypedPoint2D<f32, U> {
+        self.cast().unwrap()
+    }
+
+    /// Cast into an `f64` point.
+    #[inline]
+    pub fn to_f64(&self) -> TypedPoint2D<f64, U> {
         self.cast().unwrap()
     }
 
@@ -439,6 +451,24 @@ impl<T: Copy, U> TypedPoint3D<T, U> {
         vec3(self.x, self.y, self.z)
     }
 
+    /// Returns a 2d point using this point's x and y coordinates
+    #[inline]
+    pub fn xy(&self) -> TypedPoint2D<T, U> {
+        point2(self.x, self.y)
+    }
+
+    /// Returns a 2d point using this point's x and z coordinates
+    #[inline]
+    pub fn xz(&self) -> TypedPoint2D<T, U> {
+        point2(self.x, self.z)
+    }
+
+    /// Returns a 2d point using this point's x and z coordinates
+    #[inline]
+    pub fn yz(&self) -> TypedPoint2D<T, U> {
+        point2(self.y, self.z)
+    }
+
     /// Returns self.x as a Length carrying the unit.
     #[inline]
     pub fn x_typed(&self) -> Length<T, U> { Length::new(self.x) }
@@ -469,7 +499,7 @@ impl<T: Copy, U> TypedPoint3D<T, U> {
     /// Convert into a 2d point.
     #[inline]
     pub fn to_2d(&self) -> TypedPoint2D<T, U> {
-        point2(self.x, self.y)
+        self.xy()
     }
 }
 
@@ -544,7 +574,7 @@ impl<T: Round, U> TypedPoint3D<T, U> {
     ///
     /// This behavior is preserved for negative values (unlike the basic cast).
     #[inline]
-    #[must_use]
+    #[cfg_attr(feature = "unstable", must_use)]
     pub fn round(&self) -> Self {
         point3(self.x.round(), self.y.round(), self.z.round())
     }
@@ -555,7 +585,7 @@ impl<T: Ceil, U> TypedPoint3D<T, U> {
     ///
     /// This behavior is preserved for negative values (unlike the basic cast).
     #[inline]
-    #[must_use]
+    #[cfg_attr(feature = "unstable", must_use)]
     pub fn ceil(&self) -> Self {
         point3(self.x.ceil(), self.y.ceil(), self.z.ceil())
     }
@@ -566,7 +596,7 @@ impl<T: Floor, U> TypedPoint3D<T, U> {
     ///
     /// This behavior is preserved for negative values (unlike the basic cast).
     #[inline]
-    #[must_use]
+    #[cfg_attr(feature = "unstable", must_use)]
     pub fn floor(&self) -> Self {
         point3(self.x.floor(), self.y.floor(), self.z.floor())
     }
@@ -593,6 +623,12 @@ impl<T: NumCast + Copy, U> TypedPoint3D<T, U> {
     /// Cast into an `f32` point.
     #[inline]
     pub fn to_f32(&self) -> TypedPoint3D<f32, U> {
+        self.cast().unwrap()
+    }
+
+    /// Cast into an `f64` point.
+    #[inline]
+    pub fn to_f64(&self) -> TypedPoint3D<f64, U> {
         self.cast().unwrap()
     }
 
@@ -705,7 +741,7 @@ mod point2d {
 
 #[cfg(test)]
 mod typedpoint2d {
-    use super::TypedPoint2D;
+    use super::{TypedPoint2D, Point2D, point2};
     use scale_factor::ScaleFactor;
     use vector::vec2;
 
@@ -755,11 +791,17 @@ mod typedpoint2d {
             assert_eq!(p.to_vector().to_point(), p);
         }
     }
+
+    #[test]
+    pub fn test_swizzling() {
+        let p: Point2D<i32> = point2(1, 2);
+        assert_eq!(p.yx(), point2(2, 1));
+    }
 }
 
 #[cfg(test)]
 mod point3d {
-    use super::Point3D;
+    use super::{Point3D, point2, point3};
 
     #[test]
     pub fn test_min() {
@@ -792,5 +834,13 @@ mod point3d {
             let p: Point3D<f32> = point3(x, y, z);
             assert_eq!(p.to_vector().to_point(), p);
         }
+    }
+
+    #[test]
+    pub fn test_swizzling() {
+        let p: Point3D<i32> = point3(1, 2, 3);
+        assert_eq!(p.xy(), point2(1, 2));
+        assert_eq!(p.xz(), point2(1, 3));
+        assert_eq!(p.yz(), point2(2, 3));
     }
 }

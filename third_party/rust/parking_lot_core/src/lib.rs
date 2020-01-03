@@ -11,15 +11,16 @@
 //! # The parking lot
 //!
 //! To keep synchronization primitives small, all thread queuing and suspending
-//! functionality is offloaded to the *parking lot*. The idea behind this is
-//! based on the Webkit [`WTF::ParkingLot`]
-//! (https://webkit.org/blog/6161/locking-in-webkit/) class, which essentially
-//! consists of a hash table mapping of lock addresses to queues of parked
-//! (sleeping) threads. The Webkit parking lot was itself inspired by Linux
-//! [futexes](http://man7.org/linux/man-pages/man2/futex.2.html), but it is more
-//! powerful since it allows invoking callbacks while holding a queue lock.
+//! functionality is offloaded to the *parking lot*. The idea behind this is based
+//! on the Webkit [`WTF::ParkingLot`](https://webkit.org/blog/6161/locking-in-webkit/)
+//! class, which essentially consists of a hash table mapping of lock addresses
+//! to queues of parked (sleeping) threads. The Webkit parking lot was itself
+//! inspired by Linux [futexes](http://man7.org/linux/man-pages/man2/futex.2.html),
+//! but it is more powerful since it allows invoking callbacks while holding a
+//! queue lock.
 //!
 //! There are two main operations that can be performed on the parking lot:
+//!
 //!  - *Parking* refers to suspending the thread while simultaneously enqueuing it
 //! on a queue keyed by some address.
 //! - *Unparking* refers to dequeuing a thread from a queue keyed by some address
@@ -37,20 +38,23 @@
 //! reference count and the two mutex bits in the same atomic word.
 
 #![warn(missing_docs)]
-#![cfg_attr(feature = "nightly", feature(const_fn))]
 #![cfg_attr(all(feature = "nightly", target_os = "linux"), feature(integer_atomics))]
-#![cfg_attr(feature = "nightly", feature(asm))]
 
-extern crate smallvec;
 extern crate rand;
+extern crate smallvec;
+
+#[cfg(feature = "deadlock_detection")]
+extern crate backtrace;
+#[cfg(feature = "deadlock_detection")]
+extern crate petgraph;
+#[cfg(feature = "deadlock_detection")]
+extern crate thread_id;
 
 #[cfg(unix)]
 extern crate libc;
 
 #[cfg(windows)]
 extern crate winapi;
-#[cfg(windows)]
-extern crate kernel32;
 
 #[cfg(all(feature = "nightly", target_os = "linux"))]
 #[path = "thread_parker/linux.rs"]
@@ -65,15 +69,13 @@ mod thread_parker;
 #[path = "thread_parker/generic.rs"]
 mod thread_parker;
 
-#[cfg(not(feature = "nightly"))]
-mod stable;
-
 mod util;
 mod spinwait;
 mod word_lock;
 mod parking_lot;
 
-pub use parking_lot::{ParkResult, UnparkResult, RequeueOp, UnparkToken, ParkToken, FilterOp};
-pub use parking_lot::{DEFAULT_UNPARK_TOKEN, DEFAULT_PARK_TOKEN};
-pub use parking_lot::{park, unpark_one, unpark_all, unpark_requeue, unpark_filter};
+pub use parking_lot::{FilterOp, ParkResult, ParkToken, RequeueOp, UnparkResult, UnparkToken};
+pub use parking_lot::{DEFAULT_PARK_TOKEN, DEFAULT_UNPARK_TOKEN};
+pub use parking_lot::{park, unpark_all, unpark_filter, unpark_one, unpark_requeue};
 pub use spinwait::SpinWait;
+pub use parking_lot::deadlock;

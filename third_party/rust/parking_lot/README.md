@@ -63,6 +63,11 @@ in the Rust standard library:
 15. `Mutex` and `RwLock` support [eventual fairness](https://trac.webkit.org/changeset/203350)
     which allows them to be fair on average without sacrificing performance.
 16. A `ReentrantMutex` type which supports recursive locking.
+17. An *experimental* deadlock detector that works for `Mutex`,
+    `RwLock` and `ReentrantMutex`. This feature is disabled by default and
+    can be enabled via the `deadlock_detection` feature. Note that enabling
+    it will also remove the `Send` marker from the lock guards as they are
+    incompatible.
 
 ## The parking lot
 

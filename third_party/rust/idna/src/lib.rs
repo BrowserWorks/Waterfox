@@ -49,7 +49,7 @@ pub mod uts46;
 pub fn domain_to_ascii(domain: &str) -> Result<String, uts46::Errors> {
     uts46::to_ascii(domain, uts46::Flags {
         use_std3_ascii_rules: false,
-        transitional_processing: true, // XXX: switch when Firefox does
+        transitional_processing: false,
         verify_dns_length: false,
     })
 }
@@ -67,7 +67,7 @@ pub fn domain_to_unicode(domain: &str) -> (String, Result<(), uts46::Errors>) {
         use_std3_ascii_rules: false,
 
         // Unused:
-        transitional_processing: true,
+        transitional_processing: false,
         verify_dns_length: false,
     })
 }

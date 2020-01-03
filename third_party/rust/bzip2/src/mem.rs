@@ -19,7 +19,7 @@ pub struct Compress {
 
 /// Representation of an in-memory decompression stream.
 ///
-/// An instance of `Decompress` can be used to inflate a straem of bz2-encoded
+/// An instance of `Decompress` can be used to inflate a stream of bz2-encoded
 /// data.
 pub struct Decompress {
     inner: Stream<DirDecompress>,
@@ -302,4 +302,3 @@ impl<D: Direction> Drop for Stream<D> {
         }
     }
 }
-

@@ -23,9 +23,34 @@ use color;
 use Terminal;
 use Result;
 use self::searcher::get_dbpath_for_term;
-use self::parser::compiled::{parse, msys_terminfo};
+use self::parser::compiled::parse;
 use self::parm::{expand, Variables, Param};
 use self::Error::*;
+
+
+/// Returns true if the named terminal supports basic ANSI escape codes.
+fn is_ansi(name: &str) -> bool {
+    // SORTED! We binary search this.
+    static ANSI_TERM_PREFIX: &'static [&'static str] = &[
+        "Eterm",
+        "ansi",
+        "eterm",
+        "iterm",
+        "konsole",
+        "linux",
+        "mrxvt",
+        "msyscon",
+        "rxvt",
+        "screen",
+        "tmux",
+        "xterm",
+    ];
+    match ANSI_TERM_PREFIX.binary_search(&name) {
+        Ok(_) => true,
+        Err(0) => false,
+        Err(idx) => name.starts_with(ANSI_TERM_PREFIX[idx - 1]),
+    }
+}
 
 
 /// A parsed terminfo database entry.
@@ -44,24 +69,55 @@ pub struct TermInfo {
 impl TermInfo {
     /// Create a `TermInfo` based on current environment.
     pub fn from_env() -> Result<TermInfo> {
-        let term = match env::var("TERM") {
-            Ok(name) => TermInfo::from_name(&name),
-            Err(..) => return Err(::Error::TermUnset),
-        };
-
-        if term.is_err() && env::var("MSYSCON").ok().map_or(false, |s| "mintty.exe" == s) {
-            // msys terminal
-            Ok(msys_terminfo())
+        let term_var = env::var("TERM").ok();
+        let term_name = term_var
+            .as_ref()
+            .map(|s| &**s)
+            .or_else(|| env::var("MSYSCON")
+                     .ok()
+                     .and_then(|s| if s == "mintty.exe" {
+                         Some("msyscon")
+                     } else {
+                         None
+                     }));
+        if let Some(term_name) = term_name {
+            return TermInfo::from_name(term_name);
         } else {
-            term
+            return Err(::Error::TermUnset);
         }
     }
 
     /// Create a `TermInfo` for the named terminal.
     pub fn from_name(name: &str) -> Result<TermInfo> {
-        get_dbpath_for_term(name)
-            .ok_or_else(|| ::Error::TerminfoEntryNotFound)
-            .and_then(|p| TermInfo::from_path(&p))
+        if let Some(path) = get_dbpath_for_term(name) {
+            match TermInfo::from_path(&path) {
+                Ok(term) => return Ok(term),
+                // Skip IO Errors (e.g., permission denied).
+                Err(::Error::Io(_)) => {},
+                // Don't ignore malformed terminfo databases.
+                Err(e) => return Err(e),
+            }
+        }
+        // Basic ANSI fallback terminal.
+        if is_ansi(name) {
+            let mut strings = HashMap::new();
+            strings.insert("sgr0", b"\x1B[0m".to_vec());
+            strings.insert("bold", b"\x1B[1m".to_vec());
+            strings.insert("setaf", b"\x1B[3%p1%dm".to_vec());
+            strings.insert("setab", b"\x1B[4%p1%dm".to_vec());
+
+            let mut numbers = HashMap::new();
+            numbers.insert("colors", 8u16);
+
+            Ok(TermInfo {
+                names: vec![name.to_owned()],
+                bools: HashMap::new(),
+                numbers: numbers,
+                strings: strings,
+            })
+        } else {
+            Err(::Error::TerminfoEntryNotFound)
+        }
     }
 
     /// Parse the given `TermInfo`.

@@ -109,7 +109,7 @@
 //! implement `Write`.
 use std::fmt;
 use std::io::{self, ErrorKind, BufWriter, Write};
-use std::net::{SocketAddr, ToSocketAddrs};
+use std::net::{SocketAddr, ToSocketAddrs, Shutdown};
 use std::thread::{self, JoinHandle};
 use std::time::Duration;
 
@@ -161,15 +161,6 @@ impl Default for Timeouts {
         }
     }
 }
-
-macro_rules! try_option(
-    ($e:expr) => {{
-        match $e {
-            Some(v) => v,
-            None => return None
-        }
-    }}
-);
 
 impl<L: NetworkListener> Server<L> {
     /// Creates a new server with the provided handler.
@@ -271,7 +262,7 @@ impl<H: Handler + 'static> Worker<H> {
         }
     }
 
-    fn handle_connection<S>(&self, mut stream: &mut S) where S: NetworkStream + Clone {
+    fn handle_connection<S>(&self, stream: &mut S) where S: NetworkStream + Clone {
         debug!("Incoming stream");
 
         self.handler.on_connection_start();
@@ -279,19 +270,18 @@ impl<H: Handler + 'static> Worker<H> {
         let addr = match stream.peer_addr() {
             Ok(addr) => addr,
             Err(e) => {
-                error!("Peer Name error: {:?}", e);
+                info!("Peer Name error: {:?}", e);
                 return;
             }
         };
 
-        // FIXME: Use Type ascription
-        let stream_clone: &mut NetworkStream = &mut stream.clone();
-        let mut rdr = BufReader::new(stream_clone);
+        let stream2: &mut NetworkStream = &mut stream.clone();
+        let mut rdr = BufReader::new(stream2);
         let mut wrt = BufWriter::new(stream);
 
         while self.keep_alive_loop(&mut rdr, &mut wrt, addr) {
             if let Err(e) = self.set_read_timeout(*rdr.get_ref(), self.timeouts.keep_alive) {
-                error!("set_read_timeout keep_alive {:?}", e);
+                info!("set_read_timeout keep_alive {:?}", e);
                 break;
             }
         }
@@ -299,13 +289,17 @@ impl<H: Handler + 'static> Worker<H> {
         self.handler.on_connection_end();
 
         debug!("keep_alive loop ending for {}", addr);
+
+        if let Err(e) = rdr.get_mut().close(Shutdown::Both) {
+            info!("failed to close stream: {}", e);
+        }
     }
 
     fn set_read_timeout(&self, s: &NetworkStream, timeout: Option<Duration>) -> io::Result<()> {
         s.set_read_timeout(timeout)
     }
 
-    fn keep_alive_loop<W: Write>(&self, mut rdr: &mut BufReader<&mut NetworkStream>,
+    fn keep_alive_loop<W: Write>(&self, rdr: &mut BufReader<&mut NetworkStream>,
             wrt: &mut W, addr: SocketAddr) -> bool {
         let req = match Request::new(rdr, addr) {
             Ok(req) => req,
@@ -319,7 +313,7 @@ impl<H: Handler + 'static> Worker<H> {
             }
             Err(e) => {
                 //TODO: send a 400 response
-                error!("request error = {:?}", e);
+                info!("request error = {:?}", e);
                 return false;
             }
         };
@@ -329,7 +323,7 @@ impl<H: Handler + 'static> Worker<H> {
         }
 
         if let Err(e) = req.set_read_timeout(self.timeouts.read) {
-            error!("set_read_timeout {:?}", e);
+            info!("set_read_timeout {:?}", e);
             return false;
         }
 
@@ -362,7 +356,7 @@ impl<H: Handler + 'static> Worker<H> {
             match write!(wrt, "{} {}\r\n\r\n", Http11, status).and_then(|_| wrt.flush()) {
                 Ok(..) => (),
                 Err(e) => {
-                    error!("error writing 100-continue: {:?}", e);
+                    info!("error writing 100-continue: {:?}", e);
                     return false;
                 }
             }

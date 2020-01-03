@@ -25,8 +25,16 @@ impl<'a> Bytes<'a> {
     }
 
     #[inline]
-    pub fn bump(&mut self) {
+    pub unsafe fn bump(&mut self) {
+        debug_assert!(self.pos + 1 <= self.slice.len(), "overflow");
         self.pos += 1;
+    }
+
+    #[allow(unused)]
+    #[inline]
+    pub unsafe fn advance(&mut self, n: usize) {
+        debug_assert!(self.pos + n <= self.slice.len(), "overflow");
+        self.pos += n;
     }
 
     #[inline]
@@ -36,30 +44,38 @@ impl<'a> Bytes<'a> {
 
     #[inline]
     pub fn slice(&mut self) -> &'a [u8] {
-        self.slice_skip(0)
+        // not moving position at all, so it's safe
+        unsafe {
+            self.slice_skip(0)
+        }
     }
 
     #[inline]
-    pub fn slice_skip(&mut self, skip: usize) -> &'a [u8] {
+    pub unsafe fn slice_skip(&mut self, skip: usize) -> &'a [u8] {
         debug_assert!(self.pos >= skip);
         let head_pos = self.pos - skip;
-        unsafe {
-            let ptr = self.slice.as_ptr();
-            let head = slice::from_raw_parts(ptr, head_pos);
-            let tail = slice::from_raw_parts(ptr.offset(self.pos as isize), self.slice.len() - self.pos);
-            self.pos = 0;
-            self.slice = tail;
-            head
-        }
+        let ptr = self.slice.as_ptr();
+        let head = slice::from_raw_parts(ptr, head_pos);
+        let tail = slice::from_raw_parts(ptr.offset(self.pos as isize), self.slice.len() - self.pos);
+        self.pos = 0;
+        self.slice = tail;
+        head
     }
 
     #[inline]
     pub fn next_8<'b>(&'b mut self) -> Option<Bytes8<'b, 'a>> {
         if self.slice.len() > self.pos + 8 {
-            Some(Bytes8 { bytes: self, pos: 0 })
+            Some(Bytes8::new(self))
         } else {
             None
         }
+    }
+}
+
+impl<'a> AsRef<[u8]> for Bytes<'a> {
+    #[inline]
+    fn as_ref(&self) -> &[u8] {
+        &self.slice[self.pos..]
     }
 }
 
@@ -80,6 +96,7 @@ impl<'a> Iterator for Bytes<'a> {
 
 pub struct Bytes8<'a, 'b: 'a> {
     bytes: &'a mut Bytes<'b>,
+    #[cfg(debug_assertions)]
     pos: usize
 }
 
@@ -87,7 +104,7 @@ macro_rules! bytes8_methods {
     ($f:ident, $pos:expr) => {
         #[inline]
         pub fn $f(&mut self) -> u8 {
-            debug_assert!(self.assert_pos($pos));
+            self.assert_pos($pos);
             let b = unsafe { *self.bytes.slice.get_unchecked(self.bytes.pos) };
             self.bytes.pos += 1;
             b
@@ -108,9 +125,32 @@ macro_rules! bytes8_methods {
 impl<'a, 'b: 'a> Bytes8<'a, 'b> {
     bytes8_methods! {}
 
-    fn assert_pos(&mut self, pos: usize) -> bool {
-        let ret = self.pos == pos;
+    #[cfg(not(debug_assertions))]
+    #[inline]
+    fn new(bytes: &'a mut Bytes<'b>) -> Bytes8<'a, 'b> {
+        Bytes8 {
+            bytes: bytes,
+        }
+    }
+
+    #[cfg(debug_assertions)]
+    #[inline]
+    fn new(bytes: &'a mut Bytes<'b>) -> Bytes8<'a, 'b> {
+        Bytes8 {
+            bytes: bytes,
+            pos: 0,
+        }
+    }
+
+    #[cfg(not(debug_assertions))]
+    #[inline]
+    fn assert_pos(&mut self, _pos: usize) {
+    }
+
+    #[cfg(debug_assertions)]
+    #[inline]
+    fn assert_pos(&mut self, pos: usize) {
+        assert!(self.pos == pos);
         self.pos += 1;
-        ret
     }
 }

@@ -1,297 +1,456 @@
 use super::*;
+use crate::punctuated::Punctuated;
 
-/// An enum variant.
-#[derive(Debug, Clone, Eq, PartialEq, Hash)]
-pub struct Variant {
-    /// Name of the variant.
-    pub ident: Ident,
-
-    /// Attributes tagged on the variant.
-    pub attrs: Vec<Attribute>,
-
-    /// Type of variant.
-    pub data: VariantData,
-
-    /// Explicit discriminant, e.g. `Foo = 1`
-    pub discriminant: Option<ConstExpr>,
-}
-
-/// Data stored within an enum variant or struct.
-#[derive(Debug, Clone, Eq, PartialEq, Hash)]
-pub enum VariantData {
-    /// Struct variant, e.g. `Point { x: f64, y: f64 }`.
-    Struct(Vec<Field>),
-
-    /// Tuple variant, e.g. `Some(T)`.
-    Tuple(Vec<Field>),
-
-    /// Unit variant, e.g. `None`.
-    Unit,
-}
-
-impl VariantData {
-    /// Slice containing the fields stored in the variant.
-    pub fn fields(&self) -> &[Field] {
-        match *self {
-            VariantData::Struct(ref fields) |
-            VariantData::Tuple(ref fields) => fields,
-            VariantData::Unit => &[],
-        }
-    }
-
-    /// Mutable slice containing the fields stored in the variant.
-    pub fn fields_mut(&mut self) -> &mut [Field] {
-        match *self {
-            VariantData::Struct(ref mut fields) |
-            VariantData::Tuple(ref mut fields) => fields,
-            VariantData::Unit => &mut [],
-        }
-    }
-}
-
-/// A field of a struct or enum variant.
-#[derive(Debug, Clone, Eq, PartialEq, Hash)]
-pub struct Field {
-    /// Name of the field, if any.
+ast_struct! {
+    /// An enum variant.
     ///
-    /// Fields of tuple structs have no names.
-    pub ident: Option<Ident>,
+    /// *This type is available if Syn is built with the `"derive"` or `"full"`
+    /// feature.*
+    pub struct Variant {
+        /// Attributes tagged on the variant.
+        pub attrs: Vec<Attribute>,
 
-    /// Visibility of the field.
-    pub vis: Visibility,
+        /// Name of the variant.
+        pub ident: Ident,
 
-    /// Attributes tagged on the field.
-    pub attrs: Vec<Attribute>,
+        /// Content stored in the variant.
+        pub fields: Fields,
 
-    /// Type of the field.
-    pub ty: Ty,
+        /// Explicit discriminant: `Variant = 1`
+        pub discriminant: Option<(Token![=], Expr)>,
+    }
 }
 
+ast_enum_of_structs! {
+    /// Data stored within an enum variant or struct.
+    ///
+    /// *This type is available if Syn is built with the `"derive"` or `"full"`
+    /// feature.*
+    ///
+    /// # Syntax tree enum
+    ///
+    /// This type is a [syntax tree enum].
+    ///
+    /// [syntax tree enum]: enum.Expr.html#syntax-tree-enums
+    //
+    // TODO: change syntax-tree-enum link to an intra rustdoc link, currently
+    // blocked on https://github.com/rust-lang/rust/issues/62833
+    pub enum Fields {
+        /// Named fields of a struct or struct variant such as `Point { x: f64,
+        /// y: f64 }`.
+        Named(FieldsNamed),
 
-/// Visibility level of an item.
-#[derive(Debug, Clone, Eq, PartialEq, Hash)]
-pub enum Visibility {
-    /// Public, i.e. `pub`.
-    Public,
+        /// Unnamed fields of a tuple struct or tuple variant such as `Some(T)`.
+        Unnamed(FieldsUnnamed),
 
-    /// Crate-visible, i.e. `pub(crate)`.
-    Crate,
+        /// Unit struct or unit variant such as `None`.
+        Unit,
+    }
+}
 
-    /// Restricted, e.g. `pub(some::module)`.
-    Restricted(Box<Path>),
+ast_struct! {
+    /// Named fields of a struct or struct variant such as `Point { x: f64,
+    /// y: f64 }`.
+    ///
+    /// *This type is available if Syn is built with the `"derive"` or
+    /// `"full"` feature.*
+    pub struct FieldsNamed {
+        pub brace_token: token::Brace,
+        pub named: Punctuated<Field, Token![,]>,
+    }
+}
 
-    /// Inherited, i.e. private.
-    Inherited,
+ast_struct! {
+    /// Unnamed fields of a tuple struct or tuple variant such as `Some(T)`.
+    ///
+    /// *This type is available if Syn is built with the `"derive"` or
+    /// `"full"` feature.*
+    pub struct FieldsUnnamed {
+        pub paren_token: token::Paren,
+        pub unnamed: Punctuated<Field, Token![,]>,
+    }
+}
+
+impl Fields {
+    /// Get an iterator over the borrowed [`Field`] items in this object. This
+    /// iterator can be used to iterate over a named or unnamed struct or
+    /// variant's fields uniformly.
+    pub fn iter(&self) -> punctuated::Iter<Field> {
+        match self {
+            Fields::Unit => crate::punctuated::empty_punctuated_iter(),
+            Fields::Named(f) => f.named.iter(),
+            Fields::Unnamed(f) => f.unnamed.iter(),
+        }
+    }
+
+    /// Get an iterator over the mutably borrowed [`Field`] items in this
+    /// object. This iterator can be used to iterate over a named or unnamed
+    /// struct or variant's fields uniformly.
+    pub fn iter_mut(&mut self) -> punctuated::IterMut<Field> {
+        match self {
+            Fields::Unit => crate::punctuated::empty_punctuated_iter_mut(),
+            Fields::Named(f) => f.named.iter_mut(),
+            Fields::Unnamed(f) => f.unnamed.iter_mut(),
+        }
+    }
+
+    /// Returns the number of fields.
+    pub fn len(&self) -> usize {
+        match self {
+            Fields::Unit => 0,
+            Fields::Named(f) => f.named.len(),
+            Fields::Unnamed(f) => f.unnamed.len(),
+        }
+    }
+
+    /// Returns `true` if there are zero fields.
+    pub fn is_empty(&self) -> bool {
+        match self {
+            Fields::Unit => true,
+            Fields::Named(f) => f.named.is_empty(),
+            Fields::Unnamed(f) => f.unnamed.is_empty(),
+        }
+    }
+}
+
+impl IntoIterator for Fields {
+    type Item = Field;
+    type IntoIter = punctuated::IntoIter<Field>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        match self {
+            Fields::Unit => Punctuated::<Field, ()>::new().into_iter(),
+            Fields::Named(f) => f.named.into_iter(),
+            Fields::Unnamed(f) => f.unnamed.into_iter(),
+        }
+    }
+}
+
+impl<'a> IntoIterator for &'a Fields {
+    type Item = &'a Field;
+    type IntoIter = punctuated::Iter<'a, Field>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter()
+    }
+}
+
+impl<'a> IntoIterator for &'a mut Fields {
+    type Item = &'a mut Field;
+    type IntoIter = punctuated::IterMut<'a, Field>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter_mut()
+    }
+}
+
+ast_struct! {
+    /// A field of a struct or enum variant.
+    ///
+    /// *This type is available if Syn is built with the `"derive"` or `"full"`
+    /// feature.*
+    pub struct Field {
+        /// Attributes tagged on the field.
+        pub attrs: Vec<Attribute>,
+
+        /// Visibility of the field.
+        pub vis: Visibility,
+
+        /// Name of the field, if any.
+        ///
+        /// Fields of tuple structs have no names.
+        pub ident: Option<Ident>,
+
+        pub colon_token: Option<Token![:]>,
+
+        /// Type of the field.
+        pub ty: Type,
+    }
+}
+
+ast_enum_of_structs! {
+    /// The visibility level of an item: inherited or `pub` or
+    /// `pub(restricted)`.
+    ///
+    /// *This type is available if Syn is built with the `"derive"` or `"full"`
+    /// feature.*
+    ///
+    /// # Syntax tree enum
+    ///
+    /// This type is a [syntax tree enum].
+    ///
+    /// [syntax tree enum]: enum.Expr.html#syntax-tree-enums
+    //
+    // TODO: change syntax-tree-enum link to an intra rustdoc link, currently
+    // blocked on https://github.com/rust-lang/rust/issues/62833
+    pub enum Visibility {
+        /// A public visibility level: `pub`.
+        Public(VisPublic),
+
+        /// A crate-level visibility: `crate`.
+        Crate(VisCrate),
+
+        /// A visibility level restricted to some path: `pub(self)` or
+        /// `pub(super)` or `pub(crate)` or `pub(in some::module)`.
+        Restricted(VisRestricted),
+
+        /// An inherited visibility, which usually means private.
+        Inherited,
+    }
+}
+
+ast_struct! {
+    /// A public visibility level: `pub`.
+    ///
+    /// *This type is available if Syn is built with the `"derive"` or
+    /// `"full"` feature.*
+    pub struct VisPublic {
+        pub pub_token: Token![pub],
+    }
+}
+
+ast_struct! {
+    /// A crate-level visibility: `crate`.
+    ///
+    /// *This type is available if Syn is built with the `"derive"` or
+    /// `"full"` feature.*
+    pub struct VisCrate {
+        pub crate_token: Token![crate],
+    }
+}
+
+ast_struct! {
+    /// A visibility level restricted to some path: `pub(self)` or
+    /// `pub(super)` or `pub(crate)` or `pub(in some::module)`.
+    ///
+    /// *This type is available if Syn is built with the `"derive"` or
+    /// `"full"` feature.*
+    pub struct VisRestricted {
+        pub pub_token: Token![pub],
+        pub paren_token: token::Paren,
+        pub in_token: Option<Token![in]>,
+        pub path: Box<Path>,
+    }
 }
 
 #[cfg(feature = "parsing")]
 pub mod parsing {
     use super::*;
-    use WhereClause;
-    #[cfg(feature = "full")]
-    use ConstExpr;
-    use attr::parsing::outer_attr;
-    #[cfg(feature = "full")]
-    use constant::parsing::const_expr;
-    #[cfg(feature = "full")]
-    use expr::parsing::expr;
-    use generics::parsing::where_clause;
-    use ident::parsing::ident;
-    use ty::parsing::{path, ty};
 
-    named!(pub struct_body -> (WhereClause, VariantData), alt!(
-        do_parse!(
-            wh: where_clause >>
-            body: struct_like_body >>
-            (wh, VariantData::Struct(body))
-        )
-        |
-        do_parse!(
-            body: tuple_like_body >>
-            wh: where_clause >>
-            punct!(";") >>
-            (wh, VariantData::Tuple(body))
-        )
-        |
-        do_parse!(
-            wh: where_clause >>
-            punct!(";") >>
-            (wh, VariantData::Unit)
-        )
-    ));
+    use crate::ext::IdentExt;
+    use crate::parse::discouraged::Speculative;
+    use crate::parse::{Parse, ParseStream, Result};
 
-    named!(pub enum_body -> (WhereClause, Vec<Variant>), do_parse!(
-        wh: where_clause >>
-        punct!("{") >>
-        variants: terminated_list!(punct!(","), variant) >>
-        punct!("}") >>
-        (wh, variants)
-    ));
+    impl Parse for Variant {
+        fn parse(input: ParseStream) -> Result<Self> {
+            Ok(Variant {
+                attrs: input.call(Attribute::parse_outer)?,
+                ident: input.parse()?,
+                fields: {
+                    if input.peek(token::Brace) {
+                        Fields::Named(input.parse()?)
+                    } else if input.peek(token::Paren) {
+                        Fields::Unnamed(input.parse()?)
+                    } else {
+                        Fields::Unit
+                    }
+                },
+                discriminant: {
+                    if input.peek(Token![=]) {
+                        let eq_token: Token![=] = input.parse()?;
+                        let discriminant: Expr = input.parse()?;
+                        Some((eq_token, discriminant))
+                    } else {
+                        None
+                    }
+                },
+            })
+        }
+    }
 
-    named!(variant -> Variant, do_parse!(
-        attrs: many0!(outer_attr) >>
-        id: ident >>
-        data: alt!(
-            struct_like_body => { VariantData::Struct }
-            |
-            tuple_like_body => { VariantData::Tuple }
-            |
-            epsilon!() => { |_| VariantData::Unit }
-        ) >>
-        disr: option!(preceded!(punct!("="), discriminant)) >>
-        (Variant {
-            ident: id,
-            attrs: attrs,
-            data: data,
-            discriminant: disr,
-        })
-    ));
+    impl Parse for FieldsNamed {
+        fn parse(input: ParseStream) -> Result<Self> {
+            let content;
+            Ok(FieldsNamed {
+                brace_token: braced!(content in input),
+                named: content.parse_terminated(Field::parse_named)?,
+            })
+        }
+    }
 
-    #[cfg(not(feature = "full"))]
-    use constant::parsing::const_expr as discriminant;
+    impl Parse for FieldsUnnamed {
+        fn parse(input: ParseStream) -> Result<Self> {
+            let content;
+            Ok(FieldsUnnamed {
+                paren_token: parenthesized!(content in input),
+                unnamed: content.parse_terminated(Field::parse_unnamed)?,
+            })
+        }
+    }
 
-    #[cfg(feature = "full")]
-    named!(discriminant -> ConstExpr, alt!(
-        terminated!(const_expr, after_discriminant)
-        |
-        terminated!(expr, after_discriminant) => { ConstExpr::Other }
-    ));
+    impl Field {
+        /// Parses a named (braced struct) field.
+        pub fn parse_named(input: ParseStream) -> Result<Self> {
+            Ok(Field {
+                attrs: input.call(Attribute::parse_outer)?,
+                vis: input.parse()?,
+                ident: Some(input.parse()?),
+                colon_token: Some(input.parse()?),
+                ty: input.parse()?,
+            })
+        }
 
-    #[cfg(feature = "full")]
-    named!(after_discriminant -> &str, peek!(alt!(punct!(",") | punct!("}"))));
+        /// Parses an unnamed (tuple struct) field.
+        pub fn parse_unnamed(input: ParseStream) -> Result<Self> {
+            Ok(Field {
+                attrs: input.call(Attribute::parse_outer)?,
+                vis: input.parse()?,
+                ident: None,
+                colon_token: None,
+                ty: input.parse()?,
+            })
+        }
+    }
 
-    named!(pub struct_like_body -> Vec<Field>, do_parse!(
-        punct!("{") >>
-        fields: terminated_list!(punct!(","), struct_field) >>
-        punct!("}") >>
-        (fields)
-    ));
+    impl Parse for Visibility {
+        fn parse(input: ParseStream) -> Result<Self> {
+            if input.peek(Token![pub]) {
+                Self::parse_pub(input)
+            } else if input.peek(Token![crate]) {
+                Self::parse_crate(input)
+            } else {
+                Ok(Visibility::Inherited)
+            }
+        }
+    }
 
-    named!(tuple_like_body -> Vec<Field>, do_parse!(
-        punct!("(") >>
-        fields: terminated_list!(punct!(","), tuple_field) >>
-        punct!(")") >>
-        (fields)
-    ));
+    impl Visibility {
+        fn parse_pub(input: ParseStream) -> Result<Self> {
+            let pub_token = input.parse::<Token![pub]>()?;
 
-    named!(struct_field -> Field, do_parse!(
-        attrs: many0!(outer_attr) >>
-        vis: visibility >>
-        id: ident >>
-        punct!(":") >>
-        ty: ty >>
-        (Field {
-            ident: Some(id),
-            vis: vis,
-            attrs: attrs,
-            ty: ty,
-        })
-    ));
+            if input.peek(token::Paren) {
+                let ahead = input.fork();
 
-    named!(tuple_field -> Field, do_parse!(
-        attrs: many0!(outer_attr) >>
-        vis: visibility >>
-        ty: ty >>
-        (Field {
-            ident: None,
-            vis: vis,
-            attrs: attrs,
-            ty: ty,
-        })
-    ));
+                let content;
+                let paren_token = parenthesized!(content in ahead);
+                if content.peek(Token![crate])
+                    || content.peek(Token![self])
+                    || content.peek(Token![super])
+                {
+                    let path = content.call(Ident::parse_any)?;
 
-    named!(pub visibility -> Visibility, alt!(
-        do_parse!(
-            keyword!("pub") >>
-            punct!("(") >>
-            keyword!("crate") >>
-            punct!(")") >>
-            (Visibility::Crate)
-        )
-        |
-        do_parse!(
-            keyword!("pub") >>
-            punct!("(") >>
-            restricted: path >>
-            punct!(")") >>
-            (Visibility::Restricted(Box::new(restricted)))
-        )
-        |
-        keyword!("pub") => { |_| Visibility::Public }
-        |
-        epsilon!() => { |_| Visibility::Inherited }
-    ));
+                    // Ensure there are no additional tokens within `content`.
+                    // Without explicitly checking, we may misinterpret a tuple
+                    // field as a restricted visibility, causing a parse error.
+                    // e.g. `pub (crate::A, crate::B)` (Issue #720).
+                    if content.is_empty() {
+                        input.advance_to(&ahead);
+                        return Ok(Visibility::Restricted(VisRestricted {
+                            pub_token,
+                            paren_token,
+                            in_token: None,
+                            path: Box::new(Path::from(path)),
+                        }));
+                    }
+                } else if content.peek(Token![in]) {
+                    let in_token: Token![in] = content.parse()?;
+                    let path = content.call(Path::parse_mod_style)?;
+
+                    input.advance_to(&ahead);
+                    return Ok(Visibility::Restricted(VisRestricted {
+                        pub_token,
+                        paren_token,
+                        in_token: Some(in_token),
+                        path: Box::new(path),
+                    }));
+                }
+            }
+
+            Ok(Visibility::Public(VisPublic { pub_token }))
+        }
+
+        fn parse_crate(input: ParseStream) -> Result<Self> {
+            if input.peek2(Token![::]) {
+                Ok(Visibility::Inherited)
+            } else {
+                Ok(Visibility::Crate(VisCrate {
+                    crate_token: input.parse()?,
+                }))
+            }
+        }
+    }
 }
 
 #[cfg(feature = "printing")]
 mod printing {
     use super::*;
-    use quote::{Tokens, ToTokens};
+
+    use proc_macro2::TokenStream;
+    use quote::{ToTokens, TokenStreamExt};
+
+    use crate::print::TokensOrDefault;
 
     impl ToTokens for Variant {
-        fn to_tokens(&self, tokens: &mut Tokens) {
-            for attr in &self.attrs {
-                attr.to_tokens(tokens);
-            }
+        fn to_tokens(&self, tokens: &mut TokenStream) {
+            tokens.append_all(&self.attrs);
             self.ident.to_tokens(tokens);
-            self.data.to_tokens(tokens);
-            if let Some(ref disr) = self.discriminant {
-                tokens.append("=");
-                disr.to_tokens(tokens);
+            self.fields.to_tokens(tokens);
+            if let Some((eq_token, disc)) = &self.discriminant {
+                eq_token.to_tokens(tokens);
+                disc.to_tokens(tokens);
             }
         }
     }
 
-    impl ToTokens for VariantData {
-        fn to_tokens(&self, tokens: &mut Tokens) {
-            match *self {
-                VariantData::Struct(ref fields) => {
-                    tokens.append("{");
-                    tokens.append_separated(fields, ",");
-                    tokens.append("}");
-                }
-                VariantData::Tuple(ref fields) => {
-                    tokens.append("(");
-                    tokens.append_separated(fields, ",");
-                    tokens.append(")");
-                }
-                VariantData::Unit => {}
-            }
+    impl ToTokens for FieldsNamed {
+        fn to_tokens(&self, tokens: &mut TokenStream) {
+            self.brace_token.surround(tokens, |tokens| {
+                self.named.to_tokens(tokens);
+            });
+        }
+    }
+
+    impl ToTokens for FieldsUnnamed {
+        fn to_tokens(&self, tokens: &mut TokenStream) {
+            self.paren_token.surround(tokens, |tokens| {
+                self.unnamed.to_tokens(tokens);
+            });
         }
     }
 
     impl ToTokens for Field {
-        fn to_tokens(&self, tokens: &mut Tokens) {
-            for attr in &self.attrs {
-                attr.to_tokens(tokens);
-            }
+        fn to_tokens(&self, tokens: &mut TokenStream) {
+            tokens.append_all(&self.attrs);
             self.vis.to_tokens(tokens);
-            if let Some(ref ident) = self.ident {
+            if let Some(ident) = &self.ident {
                 ident.to_tokens(tokens);
-                tokens.append(":");
+                TokensOrDefault(&self.colon_token).to_tokens(tokens);
             }
             self.ty.to_tokens(tokens);
         }
     }
 
-    impl ToTokens for Visibility {
-        fn to_tokens(&self, tokens: &mut Tokens) {
-            match *self {
-                Visibility::Public => tokens.append("pub"),
-                Visibility::Crate => {
-                    tokens.append("pub");
-                    tokens.append("(");
-                    tokens.append("crate");
-                    tokens.append(")");
-                }
-                Visibility::Restricted(ref path) => {
-                    tokens.append("pub");
-                    tokens.append("(");
-                    path.to_tokens(tokens);
-                    tokens.append(")");
-                }
-                Visibility::Inherited => {}
-            }
+    impl ToTokens for VisPublic {
+        fn to_tokens(&self, tokens: &mut TokenStream) {
+            self.pub_token.to_tokens(tokens)
+        }
+    }
+
+    impl ToTokens for VisCrate {
+        fn to_tokens(&self, tokens: &mut TokenStream) {
+            self.crate_token.to_tokens(tokens);
+        }
+    }
+
+    impl ToTokens for VisRestricted {
+        fn to_tokens(&self, tokens: &mut TokenStream) {
+            self.pub_token.to_tokens(tokens);
+            self.paren_token.surround(tokens, |tokens| {
+                // TODO: If we have a path which is not "self" or "super" or
+                // "crate", automatically add the "in" token.
+                self.in_token.to_tokens(tokens);
+                self.path.to_tokens(tokens);
+            });
         }
     }
 }

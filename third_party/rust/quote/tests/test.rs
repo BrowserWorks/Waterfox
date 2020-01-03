@@ -1,36 +1,38 @@
-use std::{f32, f64};
-use std::borrow::Cow;
+#![cfg_attr(feature = "cargo-clippy", allow(blacklisted_name))]
 
-#[macro_use]
-extern crate quote;
+use std::borrow::Cow;
+use std::collections::BTreeSet;
+
+use proc_macro2::{Ident, Span, TokenStream};
+use quote::{format_ident, quote, TokenStreamExt};
 
 struct X;
 
 impl quote::ToTokens for X {
-    fn to_tokens(&self, tokens: &mut quote::Tokens) {
-        tokens.append("X");
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        tokens.append(Ident::new("X", Span::call_site()));
     }
 }
 
 #[test]
 fn test_quote_impl() {
-    let tokens = quote!(
+    let tokens = quote! {
         impl<'a, T: ToTokens> ToTokens for &'a T {
-            fn to_tokens(&self, tokens: &mut Tokens) {
+            fn to_tokens(&self, tokens: &mut TokenStream) {
                 (**self).to_tokens(tokens)
             }
         }
-    );
+    };
 
     let expected = concat!(
         "impl < 'a , T : ToTokens > ToTokens for & 'a T { ",
-            "fn to_tokens ( & self , tokens : & mut Tokens ) { ",
-                "( * * self ) . to_tokens ( tokens ) ",
-            "} ",
+        "fn to_tokens ( & self , tokens : & mut TokenStream ) { ",
+        "( * * self ) . to_tokens ( tokens ) ",
+        "} ",
         "}"
     );
 
-    assert_eq!(expected, tokens.as_str());
+    assert_eq!(expected, tokens.to_string());
 }
 
 #[test]
@@ -40,18 +42,18 @@ fn test_substitution() {
 
     let expected = "X < X > ( X ) [ X ] { X }";
 
-    assert_eq!(expected, tokens.as_str());
+    assert_eq!(expected, tokens.to_string());
 }
 
 #[test]
 fn test_iter() {
     let primes = &[X, X, X, X];
 
-    assert_eq!("X X X X", quote!(#(#primes)*).as_str());
+    assert_eq!("X X X X", quote!(#(#primes)*).to_string());
 
-    assert_eq!("X , X , X , X ,", quote!(#(#primes,)*).as_str());
+    assert_eq!("X , X , X , X ,", quote!(#(#primes,)*).to_string());
 
-    assert_eq!("X , X , X , X", quote!(#(#primes),*).as_str());
+    assert_eq!("X , X , X , X", quote!(#(#primes),*).to_string());
 }
 
 #[test]
@@ -60,13 +62,13 @@ fn test_advanced() {
 
     let where_clause = quote!( where T: Serialize );
 
-    let field_ty = quote!( String );
+    let field_ty = quote!(String);
 
-    let item_ty = quote!( Cow<'a, str> );
+    let item_ty = quote!(Cow<'a, str>);
 
-    let path = quote!( SomeTrait::serialize_with );
+    let path = quote!(SomeTrait::serialize_with);
 
-    let value = quote!( self.x );
+    let value = quote!(self.x);
 
     let tokens = quote! {
         struct SerializeWith #generics #where_clause {
@@ -90,63 +92,23 @@ fn test_advanced() {
 
     let expected = concat!(
         "struct SerializeWith < 'a , T > where T : Serialize { ",
-            "value : & 'a String , ",
-            "phantom : :: std :: marker :: PhantomData < Cow < 'a , str > > , ",
+        "value : & 'a String , ",
+        "phantom : :: std :: marker :: PhantomData < Cow < 'a , str > > , ",
         "} ",
         "impl < 'a , T > :: serde :: Serialize for SerializeWith < 'a , T > where T : Serialize { ",
-            "fn serialize < S > ( & self , s : & mut S ) -> Result < ( ) , S :: Error > ",
-                "where S : :: serde :: Serializer ",
-            "{ ",
-                "SomeTrait :: serialize_with ( self . value , s ) ",
-            "} ",
+        "fn serialize < S > ( & self , s : & mut S ) -> Result < ( ) , S :: Error > ",
+        "where S : :: serde :: Serializer ",
+        "{ ",
+        "SomeTrait :: serialize_with ( self . value , s ) ",
+        "} ",
         "} ",
         "SerializeWith { ",
-            "value : self . x , ",
-            "phantom : :: std :: marker :: PhantomData :: < Cow < 'a , str > > , ",
+        "value : self . x , ",
+        "phantom : :: std :: marker :: PhantomData :: < Cow < 'a , str > > , ",
         "}"
     );
 
-    assert_eq!(expected, tokens.as_str());
-}
-
-#[test]
-fn test_unit() {
-    let x = ();
-    let tokens = quote!(#x);
-    let expected = "( )";
-    assert_eq!(expected, tokens.as_str());
-}
-
-#[test]
-fn test_tuple() {
-    let x = ("foo", 4_u32);
-    let tokens = quote!(#x);
-    let expected = "( \"foo\" , 4u32 , )";
-    assert_eq!(expected, tokens.as_str());
-}
-
-#[test]
-fn test_array() {
-    let x: [u32; 3] = [1, 2, 3];
-    let tokens = quote!(#x);
-    let expected = "[ 1u32 , 2u32 , 3u32 , ]";
-    assert_eq!(expected, tokens.as_str());
-}
-
-#[test]
-fn test_slice() {
-    let x: &[u32] = &[1, 2, 3];
-    let tokens = quote!(&#x);  // Note: explicit `&`
-    let expected = "& [ 1u32 , 2u32 , 3u32 , ]";
-    assert_eq!(expected, tokens.as_str());
-}
-
-#[test]
-fn test_vec() {
-    let x: Vec<u32> = vec![1, 2, 3];
-    let tokens = quote!(vec!#x);  // Note: explicit `vec!`
-    let expected = "vec ! [ 1u32 , 2u32 , 3u32 , ]";
-    assert_eq!(expected, tokens.as_str());
+    assert_eq!(expected, tokens.to_string());
 }
 
 #[test]
@@ -155,50 +117,35 @@ fn test_integer() {
     let ii16 = -1i16;
     let ii32 = -1i32;
     let ii64 = -1i64;
+    let ii128 = -1i128;
     let iisize = -1isize;
     let uu8 = 1u8;
     let uu16 = 1u16;
     let uu32 = 1u32;
     let uu64 = 1u64;
+    let uu128 = 1u128;
     let uusize = 1usize;
 
     let tokens = quote! {
-        #ii8 #ii16 #ii32 #ii64 #iisize
-        #uu8 #uu16 #uu32 #uu64 #uusize
+        #ii8 #ii16 #ii32 #ii64 #ii128 #iisize
+        #uu8 #uu16 #uu32 #uu64 #uu128 #uusize
     };
-    let expected = "-1i8 -1i16 -1i32 -1i64 -1isize 1u8 1u16 1u32 1u64 1usize";
-    assert_eq!(expected, tokens.as_str());
-}
-
-#[test]
-fn test_hex() {
-    let hex = quote::Hex(0xFFFF_0000_u32);
-    let tokens = quote!(#hex);
-    let expected = "0xFFFF0000u32";
-    assert_eq!(expected, tokens.as_str());
+    let expected = "-1i8 -1i16 -1i32 -1i64 -1i128 -1isize 1u8 1u16 1u32 1u64 1u128 1usize";
+    assert_eq!(expected, tokens.to_string());
 }
 
 #[test]
 fn test_floating() {
-    let e32 = 2.71828f32;
-    let nan32 = f32::NAN;
-    let inf32 = f32::INFINITY;
-    let neginf32 = f32::NEG_INFINITY;
+    let e32 = 2.345f32;
 
-    let e64 = 2.71828f64;
-    let nan64 = f64::NAN;
-    let inf64 = f64::INFINITY;
-    let neginf64 = f64::NEG_INFINITY;
+    let e64 = 2.345f64;
 
     let tokens = quote! {
-        #e32 @ #nan32 @ #inf32 @ #neginf32
-        #e64 @ #nan64 @ #inf64 @ #neginf64
+        #e32
+        #e64
     };
-    let expected = concat!(
-        "2.71828f32 @ :: std :: f32 :: NAN @ :: std :: f32 :: INFINITY @ :: std :: f32 :: NEG_INFINITY ",
-        "2.71828f64 @ :: std :: f64 :: NAN @ :: std :: f64 :: INFINITY @ :: std :: f64 :: NEG_INFINITY",
-    );
-    assert_eq!(expected, tokens.as_str());
+    let expected = concat!("2.345f32 2.345f64");
+    assert_eq!(expected, tokens.to_string());
 }
 
 #[test]
@@ -213,49 +160,33 @@ fn test_char() {
     let tokens = quote! {
         #zero #pound #quote #apost #newline #heart
     };
-    let expected = "'\\0' '#' '\"' '\\'' '\\n' '\u{2764}'";
-    assert_eq!(expected, tokens.as_str());
+    let expected = "'\\u{0}' '#' '\"' '\\'' '\\n' '\\u{2764}'";
+    assert_eq!(expected, tokens.to_string());
 }
 
 #[test]
 fn test_str() {
     let s = "\0 a 'b \" c";
     let tokens = quote!(#s);
-    let expected = "\"\\0 a 'b \\\" c\"";
-    assert_eq!(expected, tokens.as_str());
+    let expected = "\"\\u{0} a 'b \\\" c\"";
+    assert_eq!(expected, tokens.to_string());
 }
 
 #[test]
 fn test_string() {
     let s = "\0 a 'b \" c".to_string();
     let tokens = quote!(#s);
-    let expected = "\"\\0 a 'b \\\" c\"";
-    assert_eq!(expected, tokens.as_str());
-}
-
-#[test]
-fn test_byte_str() {
-    let s = quote::ByteStr("\0 a 'b \" c");
-    let tokens = quote!(#s);
-    let expected = "b\"\\0 a 'b \\\" c\"";
-    assert_eq!(expected, tokens.as_str());
-}
-
-#[test]
-fn test_byte_str_escape() {
-    let s = quote::ByteStr("\u{3c3} \\ \" \n");
-    let tokens = quote!(#s);
-    let expected = "b\"\\xCF\\x83 \\\\ \\\" \\n\"";
-    assert_eq!(expected, tokens.as_str());
+    let expected = "\"\\u{0} a 'b \\\" c\"";
+    assert_eq!(expected, tokens.to_string());
 }
 
 #[test]
 fn test_ident() {
-    let foo = quote::Ident::from("Foo");
-    let bar = quote::Ident::from(format!("Bar{}", 7));
+    let foo = Ident::new("Foo", Span::call_site());
+    let bar = Ident::new(&format!("Bar{}", 7), Span::call_site());
     let tokens = quote!(struct #foo; enum #bar {});
     let expected = "struct Foo ; enum Bar7 { }";
-    assert_eq!(expected, tokens.as_str());
+    assert_eq!(expected, tokens.to_string());
 }
 
 #[test]
@@ -265,7 +196,7 @@ fn test_duplicate() {
     let tokens = quote!(#ch #ch);
 
     let expected = "'x' 'x'";
-    assert_eq!(expected, tokens.as_str());
+    assert_eq!(expected, tokens.to_string());
 }
 
 #[test]
@@ -278,7 +209,7 @@ fn test_fancy_repetition() {
     };
 
     let expected = r#""a" : true , "b" : false"#;
-    assert_eq!(expected, tokens.as_str());
+    assert_eq!(expected, tokens.to_string());
 }
 
 #[test]
@@ -292,13 +223,46 @@ fn test_nested_fancy_repetition() {
     };
 
     let expected = "'a' 'b' 'c' , 'x' 'y' 'z'";
-    assert_eq!(expected, tokens.as_str());
+    assert_eq!(expected, tokens.to_string());
 }
 
 #[test]
-fn test_empty_repetition() {
-    let tokens = quote!(#(a b)* #(c d),*);
-    assert_eq!("", tokens.as_str());
+fn test_duplicate_name_repetition() {
+    let foo = &["a", "b"];
+
+    let tokens = quote! {
+        #(#foo: #foo),*
+        #(#foo: #foo),*
+    };
+
+    let expected = r#""a" : "a" , "b" : "b" "a" : "a" , "b" : "b""#;
+    assert_eq!(expected, tokens.to_string());
+}
+
+#[test]
+fn test_duplicate_name_repetition_no_copy() {
+    let foo = vec!["a".to_owned(), "b".to_owned()];
+
+    let tokens = quote! {
+        #(#foo: #foo),*
+    };
+
+    let expected = r#""a" : "a" , "b" : "b""#;
+    assert_eq!(expected, tokens.to_string());
+}
+
+#[test]
+fn test_btreeset_repetition() {
+    let mut set = BTreeSet::new();
+    set.insert("a".to_owned());
+    set.insert("b".to_owned());
+
+    let tokens = quote! {
+        #(#set: #set),*
+    };
+
+    let expected = r#""a" : "a" , "b" : "b""#;
+    assert_eq!(expected, tokens.to_string());
 }
 
 #[test]
@@ -308,37 +272,50 @@ fn test_variable_name_conflict() {
     let _i = vec!['a', 'b'];
     let tokens = quote! { #(#_i),* };
     let expected = "'a' , 'b'";
-    assert_eq!(expected, tokens.as_str());
+    assert_eq!(expected, tokens.to_string());
+}
+
+#[test]
+fn test_nonrep_in_repetition() {
+    let rep = vec!["a", "b"];
+    let nonrep = "c";
+
+    let tokens = quote! {
+        #(#rep #rep : #nonrep #nonrep),*
+    };
+
+    let expected = r#""a" "a" : "c" "c" , "b" "b" : "c" "c""#;
+    assert_eq!(expected, tokens.to_string());
 }
 
 #[test]
 fn test_empty_quote() {
     let tokens = quote!();
-    assert_eq!("", tokens.as_str());
+    assert_eq!("", tokens.to_string());
 }
 
 #[test]
 fn test_box_str() {
     let b = "str".to_owned().into_boxed_str();
     let tokens = quote! { #b };
-    assert_eq!("\"str\"", tokens.as_str());
+    assert_eq!("\"str\"", tokens.to_string());
 }
 
 #[test]
 fn test_cow() {
-    let owned: Cow<quote::Ident> = Cow::Owned(quote::Ident::from("owned"));
+    let owned: Cow<Ident> = Cow::Owned(Ident::new("owned", Span::call_site()));
 
-    let ident = quote::Ident::from("borrowed");
+    let ident = Ident::new("borrowed", Span::call_site());
     let borrowed = Cow::Borrowed(&ident);
 
     let tokens = quote! { #owned #borrowed };
-    assert_eq!("owned borrowed", tokens.as_str());
+    assert_eq!("owned borrowed", tokens.to_string());
 }
 
 #[test]
 fn test_closure() {
-    fn field_i(i: usize) -> quote::Ident {
-        quote::Ident::new(format!("__field{}", i))
+    fn field_i(i: usize) -> Ident {
+        format_ident!("__field{}", i)
     }
 
     let fields = (0usize..3)
@@ -346,5 +323,107 @@ fn test_closure() {
         .map(|var| quote! { #var });
 
     let tokens = quote! { #(#fields)* };
-    assert_eq!("__field0 __field1 __field2", tokens.as_str());
+    assert_eq!("__field0 __field1 __field2", tokens.to_string());
+}
+
+#[test]
+fn test_append_tokens() {
+    let mut a = quote!(a);
+    let b = quote!(b);
+    a.append_all(b);
+    assert_eq!("a b", a.to_string());
+}
+
+#[test]
+fn test_format_ident() {
+    let id0 = format_ident!("Aa");
+    let id1 = format_ident!("Hello{x}", x = id0);
+    let id2 = format_ident!("Hello{x}", x = 5usize);
+    let id3 = format_ident!("Hello{}_{x}", id0, x = 10usize);
+    let id4 = format_ident!("Aa", span = Span::call_site());
+
+    assert_eq!(id0, "Aa");
+    assert_eq!(id1, "HelloAa");
+    assert_eq!(id2, "Hello5");
+    assert_eq!(id3, "HelloAa_10");
+    assert_eq!(id4, "Aa");
+}
+
+#[test]
+fn test_format_ident_strip_raw() {
+    let id = format_ident!("r#struct");
+    let my_id = format_ident!("MyId{}", id);
+    let raw_my_id = format_ident!("r#MyId{}", id);
+
+    assert_eq!(id, "r#struct");
+    assert_eq!(my_id, "MyIdstruct");
+    assert_eq!(raw_my_id, "r#MyIdstruct");
+}
+
+#[test]
+fn test_outer_line_comment() {
+    let tokens = quote! {
+        /// doc
+    };
+    let expected = "# [ doc = r\" doc\" ]";
+    assert_eq!(expected, tokens.to_string());
+}
+
+#[test]
+fn test_inner_line_comment() {
+    let tokens = quote! {
+        //! doc
+    };
+    let expected = "# ! [ doc = r\" doc\" ]";
+    assert_eq!(expected, tokens.to_string());
+}
+
+#[test]
+fn test_outer_block_comment() {
+    let tokens = quote! {
+        /** doc */
+    };
+    let expected = "# [ doc = r\" doc \" ]";
+    assert_eq!(expected, tokens.to_string());
+}
+
+#[test]
+fn test_inner_block_comment() {
+    let tokens = quote! {
+        /*! doc */
+    };
+    let expected = "# ! [ doc = r\" doc \" ]";
+    assert_eq!(expected, tokens.to_string());
+}
+
+#[test]
+fn test_outer_attr() {
+    let tokens = quote! {
+        #[inline]
+    };
+    let expected = "# [ inline ]";
+    assert_eq!(expected, tokens.to_string());
+}
+
+#[test]
+fn test_inner_attr() {
+    let tokens = quote! {
+        #![no_std]
+    };
+    let expected = "# ! [ no_std ]";
+    assert_eq!(expected, tokens.to_string());
+}
+
+// https://github.com/dtolnay/quote/issues/130
+#[test]
+fn test_star_after_repetition() {
+    let c = vec!['0', '1'];
+    let tokens = quote! {
+        #(
+            f(#c);
+        )*
+        *out = None;
+    };
+    let expected = "f ( '0' ) ; f ( '1' ) ; * out = None ;";
+    assert_eq!(expected, tokens.to_string());
 }

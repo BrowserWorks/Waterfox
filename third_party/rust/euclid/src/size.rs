@@ -13,7 +13,7 @@ use scale_factor::ScaleFactor;
 use vector::{TypedVector2D, vec2};
 use num::*;
 
-use num_traits::NumCast;
+use num_traits::{NumCast, Signed};
 use std::fmt;
 use std::ops::{Add, Div, Mul, Sub};
 use std::marker::PhantomData;
@@ -102,8 +102,8 @@ impl<T: Copy + Sub<T, Output=T>, U> Sub for TypedSize2D<T, U> {
     }
 }
 
-impl<T: Copy + Clone + Mul<T, Output=U>, U> TypedSize2D<T, U> {
-    pub fn area(&self) -> U { self.width * self.height }
+impl<T: Copy + Clone + Mul<T>, U> TypedSize2D<T, U> {
+    pub fn area(&self) -> T::Output { self.width * self.height }
 }
 
 impl<T, U> TypedSize2D<T, U>
@@ -217,6 +217,11 @@ impl<T: NumCast + Copy, Unit> TypedSize2D<T, Unit> {
         self.cast().unwrap()
     }
 
+    /// Cast into an `f64` size.
+    pub fn to_f64(&self) -> TypedSize2D<f64, Unit> {
+        self.cast().unwrap()
+    }
+
     /// Cast into an `uint` size, truncating decimals if any.
     ///
     /// When casting from floating point sizes, it is worth considering whether
@@ -242,6 +247,17 @@ impl<T: NumCast + Copy, Unit> TypedSize2D<T, Unit> {
     /// the desired conversion behavior.
     pub fn to_i64(&self) -> TypedSize2D<i64, Unit> {
         self.cast().unwrap()
+    }
+}
+
+impl<T, U> TypedSize2D<T, U>
+where T: Signed {
+    pub fn abs(&self) -> Self {
+        size2(self.width.abs(), self.height.abs())
+    }
+
+    pub fn is_positive(&self) -> bool {
+        self.width.is_positive() && self.height.is_positive()
     }
 }
 
@@ -290,5 +306,11 @@ mod size2d {
         let p1 = Size2D::new(0.0, 0.0);
         let p2 = Size2D::new(0.0, 0.0);
         assert_eq!(p1 - p2, Size2D::new(0.0, 0.0));
+    }
+
+    #[test]
+    pub fn test_area() {
+        let p = Size2D::new(1.5, 2.0);
+        assert_eq!(p.area(), 3.0);
     }
 }

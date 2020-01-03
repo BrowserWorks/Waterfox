@@ -1,6 +1,6 @@
 [package]
 name = "bit-vec"
-version = "0.4.3"
+version = "0.4.4"
 authors = ["Alexis Beingessner <a.beingessner@gmail.com>"]
 license = "MIT/Apache-2.0"
 description = "A vector of bits"
@@ -11,7 +11,7 @@ keywords = ["data-structures", "bitvec", "bitmask", "bitmap", "bit"]
 readme = "README.md"
 
 [dev-dependencies]
-rand = "*"
+rand = "0.3.15"
 
 [features]
 nightly = []

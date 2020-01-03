@@ -1,10 +1,8 @@
-// Third Party
-use vec_map::VecMap;
-
 // Internal
 use INTERNAL_ERROR_MSG;
 use args::Arg;
 use args::settings::ArgSettings;
+use map::VecMap;
 
 #[derive(PartialEq, Debug)]
 enum UsageToken {
@@ -61,9 +59,13 @@ impl<'a> UsageParser<'a> {
                 break;
             }
         }
-        debug_assert!(!arg.b.name.is_empty(),
-                      format!("No name found for Arg when parsing usage string: {}",
-                              self.usage));
+        debug_assert!(
+            !arg.b.name.is_empty(),
+            format!(
+                "No name found for Arg when parsing usage string: {}",
+                self.usage
+            )
+        );
         arg.v.num_vals = match arg.v.val_names {
             Some(ref v) if v.len() >= 2 => Some(v.len() as u64),
             _ => None,
@@ -74,8 +76,11 @@ impl<'a> UsageParser<'a> {
 
     fn name(&mut self, arg: &mut Arg<'a, 'a>) {
         debugln!("UsageParser::name;");
-        if *self.usage.as_bytes().get(self.pos).expect(INTERNAL_ERROR_MSG) == b'<' &&
-           !self.explicit_name_set {
+        if *self.usage
+            .as_bytes()
+            .get(self.pos)
+            .expect(INTERNAL_ERROR_MSG) == b'<' && !self.explicit_name_set
+        {
             arg.setb(ArgSettings::Required);
         }
         self.pos += 1;
@@ -105,17 +110,25 @@ impl<'a> UsageParser<'a> {
     }
 
     fn stop_at<F>(&mut self, f: F)
-        where F: Fn(u8) -> bool
+    where
+        F: Fn(u8) -> bool,
     {
         debugln!("UsageParser::stop_at;");
         self.start = self.pos;
-        self.pos += self.usage[self.start..].bytes().take_while(|&b| f(b)).count();
+        self.pos += self.usage[self.start..]
+            .bytes()
+            .take_while(|&b| f(b))
+            .count();
     }
 
     fn short_or_long(&mut self, arg: &mut Arg<'a, 'a>) {
         debugln!("UsageParser::short_or_long;");
         self.pos += 1;
-        if *self.usage.as_bytes().get(self.pos).expect(INTERNAL_ERROR_MSG) == b'-' {
+        if *self.usage
+            .as_bytes()
+            .get(self.pos)
+            .expect(INTERNAL_ERROR_MSG) == b'-'
+        {
             self.pos += 1;
             self.long(arg);
             return;
@@ -182,9 +195,12 @@ impl<'a> UsageParser<'a> {
         self.stop_at(help_start);
         self.start = self.pos + 1;
         self.pos = self.usage.len() - 1;
-        debugln!("UsageParser::help: setting help...{}", &self.usage[self.start..self.pos]);
+        debugln!(
+            "UsageParser::help: setting help...{}",
+            &self.usage[self.start..self.pos]
+        );
         arg.b.help = Some(&self.usage[self.start..self.pos]);
-        self.pos += 1;   // Move to next byte to keep from thinking ending ' is a start
+        self.pos += 1; // Move to next byte to keep from thinking ending ' is a start
         self.prev = UsageToken::Help;
     }
 }
@@ -333,7 +349,10 @@ mod test {
         assert!(!a.is_set(ArgSettings::Multiple));
         assert!(a.is_set(ArgSettings::TakesValue));
         assert!(!a.is_set(ArgSettings::Required));
-        assert_eq!(a.v.val_names.unwrap().values().collect::<Vec<_>>(), [&"opt"]);
+        assert_eq!(
+            a.v.val_names.unwrap().values().collect::<Vec<_>>(),
+            [&"opt"]
+        );
         assert!(a.v.num_vals.is_none());
     }
 
@@ -347,7 +366,10 @@ mod test {
         assert!(!b.is_set(ArgSettings::Multiple));
         assert!(b.is_set(ArgSettings::TakesValue));
         assert!(!b.is_set(ArgSettings::Required));
-        assert_eq!(b.v.val_names.unwrap().values().collect::<Vec<_>>(), [&"opt"]);
+        assert_eq!(
+            b.v.val_names.unwrap().values().collect::<Vec<_>>(),
+            [&"opt"]
+        );
         assert!(b.v.num_vals.is_none());
     }
 
@@ -361,7 +383,10 @@ mod test {
         assert!(!c.is_set(ArgSettings::Multiple));
         assert!(c.is_set(ArgSettings::TakesValue));
         assert!(c.is_set(ArgSettings::Required));
-        assert_eq!(c.v.val_names.unwrap().values().collect::<Vec<_>>(), [&"opt"]);
+        assert_eq!(
+            c.v.val_names.unwrap().values().collect::<Vec<_>>(),
+            [&"opt"]
+        );
         assert!(c.v.num_vals.is_none());
     }
 
@@ -375,7 +400,10 @@ mod test {
         assert!(!d.is_set(ArgSettings::Multiple));
         assert!(d.is_set(ArgSettings::TakesValue));
         assert!(d.is_set(ArgSettings::Required));
-        assert_eq!(d.v.val_names.unwrap().values().collect::<Vec<_>>(), [&"opt"]);
+        assert_eq!(
+            d.v.val_names.unwrap().values().collect::<Vec<_>>(),
+            [&"opt"]
+        );
         assert!(d.v.num_vals.is_none());
     }
 
@@ -389,7 +417,10 @@ mod test {
         assert!(a.is_set(ArgSettings::Multiple));
         assert!(a.is_set(ArgSettings::TakesValue));
         assert!(!a.is_set(ArgSettings::Required));
-        assert_eq!(a.v.val_names.unwrap().values().collect::<Vec<_>>(), [&"opt"]);
+        assert_eq!(
+            a.v.val_names.unwrap().values().collect::<Vec<_>>(),
+            [&"opt"]
+        );
         assert!(a.v.num_vals.is_none());
     }
 
@@ -403,7 +434,10 @@ mod test {
         assert!(a.is_set(ArgSettings::Multiple));
         assert!(a.is_set(ArgSettings::TakesValue));
         assert!(!a.is_set(ArgSettings::Required));
-        assert_eq!(a.v.val_names.unwrap().values().collect::<Vec<_>>(), [&"opt"]);
+        assert_eq!(
+            a.v.val_names.unwrap().values().collect::<Vec<_>>(),
+            [&"opt"]
+        );
         assert!(a.v.num_vals.is_none());
     }
 
@@ -417,7 +451,10 @@ mod test {
         assert!(b.is_set(ArgSettings::Multiple));
         assert!(b.is_set(ArgSettings::TakesValue));
         assert!(!b.is_set(ArgSettings::Required));
-        assert_eq!(b.v.val_names.unwrap().values().collect::<Vec<_>>(), [&"opt"]);
+        assert_eq!(
+            b.v.val_names.unwrap().values().collect::<Vec<_>>(),
+            [&"opt"]
+        );
         assert!(b.v.num_vals.is_none());
     }
 
@@ -431,7 +468,10 @@ mod test {
         assert!(c.is_set(ArgSettings::Multiple));
         assert!(c.is_set(ArgSettings::TakesValue));
         assert!(c.is_set(ArgSettings::Required));
-        assert_eq!(c.v.val_names.unwrap().values().collect::<Vec<_>>(), [&"opt"]);
+        assert_eq!(
+            c.v.val_names.unwrap().values().collect::<Vec<_>>(),
+            [&"opt"]
+        );
         assert!(c.v.num_vals.is_none());
     }
 
@@ -445,7 +485,10 @@ mod test {
         assert!(c.is_set(ArgSettings::Multiple));
         assert!(c.is_set(ArgSettings::TakesValue));
         assert!(c.is_set(ArgSettings::Required));
-        assert_eq!(c.v.val_names.unwrap().values().collect::<Vec<_>>(), [&"opt"]);
+        assert_eq!(
+            c.v.val_names.unwrap().values().collect::<Vec<_>>(),
+            [&"opt"]
+        );
         assert!(c.v.num_vals.is_none());
     }
 
@@ -459,7 +502,10 @@ mod test {
         assert!(d.is_set(ArgSettings::Multiple));
         assert!(d.is_set(ArgSettings::TakesValue));
         assert!(d.is_set(ArgSettings::Required));
-        assert_eq!(d.v.val_names.unwrap().values().collect::<Vec<_>>(), [&"opt"]);
+        assert_eq!(
+            d.v.val_names.unwrap().values().collect::<Vec<_>>(),
+            [&"opt"]
+        );
         assert!(d.v.num_vals.is_none());
     }
 
@@ -473,7 +519,10 @@ mod test {
         assert!(!a.is_set(ArgSettings::Multiple));
         assert!(a.is_set(ArgSettings::TakesValue));
         assert!(!a.is_set(ArgSettings::Required));
-        assert_eq!(a.v.val_names.unwrap().values().collect::<Vec<_>>(), [&"opt"]);
+        assert_eq!(
+            a.v.val_names.unwrap().values().collect::<Vec<_>>(),
+            [&"opt"]
+        );
         assert!(a.v.num_vals.is_none());
     }
 
@@ -487,8 +536,10 @@ mod test {
         assert!(!b.is_set(ArgSettings::Multiple));
         assert!(b.is_set(ArgSettings::TakesValue));
         assert!(!b.is_set(ArgSettings::Required));
-        assert_eq!(b.v.val_names.unwrap().values().collect::<Vec<_>>(),
-                   [&"option"]);
+        assert_eq!(
+            b.v.val_names.unwrap().values().collect::<Vec<_>>(),
+            [&"option"]
+        );
         assert!(b.v.num_vals.is_none());
     }
 
@@ -502,7 +553,10 @@ mod test {
         assert!(!c.is_set(ArgSettings::Multiple));
         assert!(c.is_set(ArgSettings::TakesValue));
         assert!(c.is_set(ArgSettings::Required));
-        assert_eq!(c.v.val_names.unwrap().values().collect::<Vec<_>>(), [&"opt"]);
+        assert_eq!(
+            c.v.val_names.unwrap().values().collect::<Vec<_>>(),
+            [&"opt"]
+        );
         assert!(c.v.num_vals.is_none());
     }
 
@@ -516,8 +570,10 @@ mod test {
         assert!(!d.is_set(ArgSettings::Multiple));
         assert!(d.is_set(ArgSettings::TakesValue));
         assert!(d.is_set(ArgSettings::Required));
-        assert_eq!(d.v.val_names.unwrap().values().collect::<Vec<_>>(),
-                   [&"option"]);
+        assert_eq!(
+            d.v.val_names.unwrap().values().collect::<Vec<_>>(),
+            [&"option"]
+        );
         assert!(d.v.num_vals.is_none());
     }
 
@@ -531,7 +587,10 @@ mod test {
         assert!(a.is_set(ArgSettings::Multiple));
         assert!(a.is_set(ArgSettings::TakesValue));
         assert!(!a.is_set(ArgSettings::Required));
-        assert_eq!(a.v.val_names.unwrap().values().collect::<Vec<_>>(), [&"opt"]);
+        assert_eq!(
+            a.v.val_names.unwrap().values().collect::<Vec<_>>(),
+            [&"opt"]
+        );
         assert!(a.v.num_vals.is_none());
     }
 
@@ -545,7 +604,10 @@ mod test {
         assert!(a.is_set(ArgSettings::Multiple));
         assert!(a.is_set(ArgSettings::TakesValue));
         assert!(!a.is_set(ArgSettings::Required));
-        assert_eq!(a.v.val_names.unwrap().values().collect::<Vec<_>>(), [&"opt"]);
+        assert_eq!(
+            a.v.val_names.unwrap().values().collect::<Vec<_>>(),
+            [&"opt"]
+        );
         assert!(a.v.num_vals.is_none());
     }
 
@@ -559,8 +621,10 @@ mod test {
         assert!(b.is_set(ArgSettings::Multiple));
         assert!(b.is_set(ArgSettings::TakesValue));
         assert!(!b.is_set(ArgSettings::Required));
-        assert_eq!(b.v.val_names.unwrap().values().collect::<Vec<_>>(),
-                   [&"option"]);
+        assert_eq!(
+            b.v.val_names.unwrap().values().collect::<Vec<_>>(),
+            [&"option"]
+        );
         assert!(b.v.num_vals.is_none());
     }
 
@@ -574,7 +638,10 @@ mod test {
         assert!(c.is_set(ArgSettings::Multiple));
         assert!(c.is_set(ArgSettings::TakesValue));
         assert!(c.is_set(ArgSettings::Required));
-        assert_eq!(c.v.val_names.unwrap().values().collect::<Vec<_>>(), [&"opt"]);
+        assert_eq!(
+            c.v.val_names.unwrap().values().collect::<Vec<_>>(),
+            [&"opt"]
+        );
         assert!(c.v.num_vals.is_none());
     }
 
@@ -588,7 +655,10 @@ mod test {
         assert!(c.is_set(ArgSettings::Multiple));
         assert!(c.is_set(ArgSettings::TakesValue));
         assert!(c.is_set(ArgSettings::Required));
-        assert_eq!(c.v.val_names.unwrap().values().collect::<Vec<_>>(), [&"opt"]);
+        assert_eq!(
+            c.v.val_names.unwrap().values().collect::<Vec<_>>(),
+            [&"opt"]
+        );
         assert!(c.v.num_vals.is_none());
     }
 
@@ -602,8 +672,10 @@ mod test {
         assert!(d.is_set(ArgSettings::Multiple));
         assert!(d.is_set(ArgSettings::TakesValue));
         assert!(d.is_set(ArgSettings::Required));
-        assert_eq!(d.v.val_names.unwrap().values().collect::<Vec<_>>(),
-                   [&"option"]);
+        assert_eq!(
+            d.v.val_names.unwrap().values().collect::<Vec<_>>(),
+            [&"option"]
+        );
         assert!(d.v.num_vals.is_none());
     }
 
@@ -617,7 +689,10 @@ mod test {
         assert!(!a.is_set(ArgSettings::Multiple));
         assert!(a.is_set(ArgSettings::TakesValue));
         assert!(!a.is_set(ArgSettings::Required));
-        assert_eq!(a.v.val_names.unwrap().values().collect::<Vec<_>>(), [&"opt"]);
+        assert_eq!(
+            a.v.val_names.unwrap().values().collect::<Vec<_>>(),
+            [&"opt"]
+        );
         assert!(a.v.num_vals.is_none());
     }
 
@@ -631,8 +706,10 @@ mod test {
         assert!(!b.is_set(ArgSettings::Multiple));
         assert!(b.is_set(ArgSettings::TakesValue));
         assert!(!b.is_set(ArgSettings::Required));
-        assert_eq!(b.v.val_names.unwrap().values().collect::<Vec<_>>(),
-                   [&"option"]);
+        assert_eq!(
+            b.v.val_names.unwrap().values().collect::<Vec<_>>(),
+            [&"option"]
+        );
         assert!(b.v.num_vals.is_none());
     }
 
@@ -646,7 +723,10 @@ mod test {
         assert!(!c.is_set(ArgSettings::Multiple));
         assert!(c.is_set(ArgSettings::TakesValue));
         assert!(c.is_set(ArgSettings::Required));
-        assert_eq!(c.v.val_names.unwrap().values().collect::<Vec<_>>(), [&"opt"]);
+        assert_eq!(
+            c.v.val_names.unwrap().values().collect::<Vec<_>>(),
+            [&"opt"]
+        );
         assert!(c.v.num_vals.is_none());
     }
 
@@ -660,8 +740,10 @@ mod test {
         assert!(!d.is_set(ArgSettings::Multiple));
         assert!(d.is_set(ArgSettings::TakesValue));
         assert!(d.is_set(ArgSettings::Required));
-        assert_eq!(d.v.val_names.unwrap().values().collect::<Vec<_>>(),
-                   [&"option"]);
+        assert_eq!(
+            d.v.val_names.unwrap().values().collect::<Vec<_>>(),
+            [&"option"]
+        );
         assert!(d.v.num_vals.is_none());
     }
 
@@ -675,7 +757,10 @@ mod test {
         assert!(a.is_set(ArgSettings::Multiple));
         assert!(a.is_set(ArgSettings::TakesValue));
         assert!(!a.is_set(ArgSettings::Required));
-        assert_eq!(a.v.val_names.unwrap().values().collect::<Vec<_>>(), [&"opt"]);
+        assert_eq!(
+            a.v.val_names.unwrap().values().collect::<Vec<_>>(),
+            [&"opt"]
+        );
         assert!(a.v.num_vals.is_none());
     }
 
@@ -689,7 +774,10 @@ mod test {
         assert!(a.is_set(ArgSettings::Multiple));
         assert!(a.is_set(ArgSettings::TakesValue));
         assert!(!a.is_set(ArgSettings::Required));
-        assert_eq!(a.v.val_names.unwrap().values().collect::<Vec<_>>(), [&"opt"]);
+        assert_eq!(
+            a.v.val_names.unwrap().values().collect::<Vec<_>>(),
+            [&"opt"]
+        );
         assert!(a.v.num_vals.is_none());
     }
 
@@ -703,8 +791,10 @@ mod test {
         assert!(b.is_set(ArgSettings::Multiple));
         assert!(b.is_set(ArgSettings::TakesValue));
         assert!(!b.is_set(ArgSettings::Required));
-        assert_eq!(b.v.val_names.unwrap().values().collect::<Vec<_>>(),
-                   [&"option"]);
+        assert_eq!(
+            b.v.val_names.unwrap().values().collect::<Vec<_>>(),
+            [&"option"]
+        );
         assert!(b.v.num_vals.is_none());
     }
 
@@ -718,7 +808,10 @@ mod test {
         assert!(c.is_set(ArgSettings::Multiple));
         assert!(c.is_set(ArgSettings::TakesValue));
         assert!(c.is_set(ArgSettings::Required));
-        assert_eq!(c.v.val_names.unwrap().values().collect::<Vec<_>>(), [&"opt"]);
+        assert_eq!(
+            c.v.val_names.unwrap().values().collect::<Vec<_>>(),
+            [&"opt"]
+        );
         assert!(c.v.num_vals.is_none());
     }
 
@@ -732,7 +825,10 @@ mod test {
         assert!(c.is_set(ArgSettings::Multiple));
         assert!(c.is_set(ArgSettings::TakesValue));
         assert!(c.is_set(ArgSettings::Required));
-        assert_eq!(c.v.val_names.unwrap().values().collect::<Vec<_>>(), [&"opt"]);
+        assert_eq!(
+            c.v.val_names.unwrap().values().collect::<Vec<_>>(),
+            [&"opt"]
+        );
         assert!(c.v.num_vals.is_none());
     }
 
@@ -746,8 +842,10 @@ mod test {
         assert!(d.is_set(ArgSettings::Multiple));
         assert!(d.is_set(ArgSettings::TakesValue));
         assert!(d.is_set(ArgSettings::Required));
-        assert_eq!(d.v.val_names.unwrap().values().collect::<Vec<_>>(),
-                   [&"option"]);
+        assert_eq!(
+            d.v.val_names.unwrap().values().collect::<Vec<_>>(),
+            [&"option"]
+        );
         assert!(d.v.num_vals.is_none());
     }
 
@@ -761,8 +859,10 @@ mod test {
         assert!(!a.is_set(ArgSettings::Multiple));
         assert!(a.is_set(ArgSettings::TakesValue));
         assert!(!a.is_set(ArgSettings::Required));
-        assert_eq!(a.v.val_names.unwrap().values().collect::<Vec<_>>(),
-                   [&"option"]);
+        assert_eq!(
+            a.v.val_names.unwrap().values().collect::<Vec<_>>(),
+            [&"option"]
+        );
         assert!(a.v.num_vals.is_none());
     }
 
@@ -776,8 +876,10 @@ mod test {
         assert!(!b.is_set(ArgSettings::Multiple));
         assert!(b.is_set(ArgSettings::TakesValue));
         assert!(!b.is_set(ArgSettings::Required));
-        assert_eq!(b.v.val_names.unwrap().values().collect::<Vec<_>>(),
-                   [&"option"]);
+        assert_eq!(
+            b.v.val_names.unwrap().values().collect::<Vec<_>>(),
+            [&"option"]
+        );
         assert!(b.v.num_vals.is_none());
     }
 
@@ -791,7 +893,10 @@ mod test {
         assert!(!c.is_set(ArgSettings::Multiple));
         assert!(c.is_set(ArgSettings::TakesValue));
         assert!(c.is_set(ArgSettings::Required));
-        assert_eq!(c.v.val_names.unwrap().values().collect::<Vec<_>>(), [&"opt"]);
+        assert_eq!(
+            c.v.val_names.unwrap().values().collect::<Vec<_>>(),
+            [&"opt"]
+        );
         assert!(c.v.num_vals.is_none());
     }
 
@@ -805,8 +910,10 @@ mod test {
         assert!(!d.is_set(ArgSettings::Multiple));
         assert!(d.is_set(ArgSettings::TakesValue));
         assert!(d.is_set(ArgSettings::Required));
-        assert_eq!(d.v.val_names.unwrap().values().collect::<Vec<_>>(),
-                   [&"option"]);
+        assert_eq!(
+            d.v.val_names.unwrap().values().collect::<Vec<_>>(),
+            [&"option"]
+        );
         assert!(d.v.num_vals.is_none());
     }
 
@@ -820,8 +927,10 @@ mod test {
         assert!(a.is_set(ArgSettings::Multiple));
         assert!(a.is_set(ArgSettings::TakesValue));
         assert!(!a.is_set(ArgSettings::Required));
-        assert_eq!(a.v.val_names.unwrap().values().collect::<Vec<_>>(),
-                   [&"option"]);
+        assert_eq!(
+            a.v.val_names.unwrap().values().collect::<Vec<_>>(),
+            [&"option"]
+        );
         assert!(a.v.num_vals.is_none());
     }
 
@@ -835,8 +944,10 @@ mod test {
         assert!(b.is_set(ArgSettings::Multiple));
         assert!(b.is_set(ArgSettings::TakesValue));
         assert!(!b.is_set(ArgSettings::Required));
-        assert_eq!(b.v.val_names.unwrap().values().collect::<Vec<_>>(),
-                   [&"option"]);
+        assert_eq!(
+            b.v.val_names.unwrap().values().collect::<Vec<_>>(),
+            [&"option"]
+        );
         assert!(b.v.num_vals.is_none());
     }
 
@@ -850,7 +961,10 @@ mod test {
         assert!(c.is_set(ArgSettings::Multiple));
         assert!(c.is_set(ArgSettings::TakesValue));
         assert!(c.is_set(ArgSettings::Required));
-        assert_eq!(c.v.val_names.unwrap().values().collect::<Vec<_>>(), [&"opt"]);
+        assert_eq!(
+            c.v.val_names.unwrap().values().collect::<Vec<_>>(),
+            [&"opt"]
+        );
         assert!(c.v.num_vals.is_none());
     }
 
@@ -864,8 +978,10 @@ mod test {
         assert!(d.is_set(ArgSettings::Multiple));
         assert!(d.is_set(ArgSettings::TakesValue));
         assert!(d.is_set(ArgSettings::Required));
-        assert_eq!(d.v.val_names.unwrap().values().collect::<Vec<_>>(),
-                   [&"option"]);
+        assert_eq!(
+            d.v.val_names.unwrap().values().collect::<Vec<_>>(),
+            [&"option"]
+        );
         assert!(d.v.num_vals.is_none());
     }
 
@@ -879,8 +995,10 @@ mod test {
         assert!(!a.is_set(ArgSettings::Multiple));
         assert!(a.is_set(ArgSettings::TakesValue));
         assert!(!a.is_set(ArgSettings::Required));
-        assert_eq!(a.v.val_names.unwrap().values().collect::<Vec<_>>(),
-                   [&"option"]);
+        assert_eq!(
+            a.v.val_names.unwrap().values().collect::<Vec<_>>(),
+            [&"option"]
+        );
         assert!(a.v.num_vals.is_none());
     }
 
@@ -894,8 +1012,10 @@ mod test {
         assert!(!b.is_set(ArgSettings::Multiple));
         assert!(b.is_set(ArgSettings::TakesValue));
         assert!(!b.is_set(ArgSettings::Required));
-        assert_eq!(b.v.val_names.unwrap().values().collect::<Vec<_>>(),
-                   [&"option"]);
+        assert_eq!(
+            b.v.val_names.unwrap().values().collect::<Vec<_>>(),
+            [&"option"]
+        );
         assert!(b.v.num_vals.is_none());
     }
 
@@ -909,7 +1029,10 @@ mod test {
         assert!(!c.is_set(ArgSettings::Multiple));
         assert!(c.is_set(ArgSettings::TakesValue));
         assert!(c.is_set(ArgSettings::Required));
-        assert_eq!(c.v.val_names.unwrap().values().collect::<Vec<_>>(), [&"opt"]);
+        assert_eq!(
+            c.v.val_names.unwrap().values().collect::<Vec<_>>(),
+            [&"opt"]
+        );
         assert!(c.v.num_vals.is_none());
     }
 
@@ -923,8 +1046,10 @@ mod test {
         assert!(!d.is_set(ArgSettings::Multiple));
         assert!(d.is_set(ArgSettings::TakesValue));
         assert!(d.is_set(ArgSettings::Required));
-        assert_eq!(d.v.val_names.unwrap().values().collect::<Vec<_>>(),
-                   [&"option"]);
+        assert_eq!(
+            d.v.val_names.unwrap().values().collect::<Vec<_>>(),
+            [&"option"]
+        );
         assert!(d.v.num_vals.is_none());
     }
 
@@ -938,8 +1063,10 @@ mod test {
         assert!(a.is_set(ArgSettings::Multiple));
         assert!(a.is_set(ArgSettings::TakesValue));
         assert!(!a.is_set(ArgSettings::Required));
-        assert_eq!(a.v.val_names.unwrap().values().collect::<Vec<_>>(),
-                   [&"option"]);
+        assert_eq!(
+            a.v.val_names.unwrap().values().collect::<Vec<_>>(),
+            [&"option"]
+        );
         assert!(a.v.num_vals.is_none());
     }
 
@@ -953,8 +1080,10 @@ mod test {
         assert!(b.is_set(ArgSettings::Multiple));
         assert!(b.is_set(ArgSettings::TakesValue));
         assert!(!b.is_set(ArgSettings::Required));
-        assert_eq!(b.v.val_names.unwrap().values().collect::<Vec<_>>(),
-                   [&"option"]);
+        assert_eq!(
+            b.v.val_names.unwrap().values().collect::<Vec<_>>(),
+            [&"option"]
+        );
         assert!(b.v.num_vals.is_none());
     }
 
@@ -968,7 +1097,10 @@ mod test {
         assert!(c.is_set(ArgSettings::Multiple));
         assert!(c.is_set(ArgSettings::TakesValue));
         assert!(c.is_set(ArgSettings::Required));
-        assert_eq!(c.v.val_names.unwrap().values().collect::<Vec<_>>(), [&"opt"]);
+        assert_eq!(
+            c.v.val_names.unwrap().values().collect::<Vec<_>>(),
+            [&"opt"]
+        );
         assert!(c.v.num_vals.is_none());
     }
 
@@ -982,8 +1114,10 @@ mod test {
         assert!(d.is_set(ArgSettings::Multiple));
         assert!(d.is_set(ArgSettings::TakesValue));
         assert!(d.is_set(ArgSettings::Required));
-        assert_eq!(d.v.val_names.unwrap().values().collect::<Vec<_>>(),
-                   [&"option"]);
+        assert_eq!(
+            d.v.val_names.unwrap().values().collect::<Vec<_>>(),
+            [&"option"]
+        );
         assert!(d.v.num_vals.is_none());
     }
 
@@ -997,8 +1131,10 @@ mod test {
         assert!(!d.is_set(ArgSettings::Multiple));
         assert!(d.is_set(ArgSettings::TakesValue));
         assert!(d.is_set(ArgSettings::Required));
-        assert_eq!(d.v.val_names.unwrap().values().collect::<Vec<_>>(),
-                   [&"file", &"mode"]);
+        assert_eq!(
+            d.v.val_names.unwrap().values().collect::<Vec<_>>(),
+            [&"file", &"mode"]
+        );
         assert_eq!(d.v.num_vals.unwrap(), 2);
     }
 
@@ -1012,8 +1148,10 @@ mod test {
         assert!(d.is_set(ArgSettings::Multiple));
         assert!(d.is_set(ArgSettings::TakesValue));
         assert!(d.is_set(ArgSettings::Required));
-        assert_eq!(d.v.val_names.unwrap().values().collect::<Vec<_>>(),
-                   [&"file", &"mode"]);
+        assert_eq!(
+            d.v.val_names.unwrap().values().collect::<Vec<_>>(),
+            [&"file", &"mode"]
+        );
         assert_eq!(d.v.num_vals.unwrap(), 2);
     }
 
@@ -1027,8 +1165,10 @@ mod test {
         assert!(d.is_set(ArgSettings::Multiple));
         assert!(d.is_set(ArgSettings::TakesValue));
         assert!(d.is_set(ArgSettings::Required));
-        assert_eq!(d.v.val_names.unwrap().values().collect::<Vec<_>>(),
-                   [&"file", &"mode"]);
+        assert_eq!(
+            d.v.val_names.unwrap().values().collect::<Vec<_>>(),
+            [&"file", &"mode"]
+        );
         assert_eq!(d.v.num_vals.unwrap(), 2);
     }
 
@@ -1042,8 +1182,10 @@ mod test {
         assert!(!d.is_set(ArgSettings::Multiple));
         assert!(d.is_set(ArgSettings::TakesValue));
         assert!(!d.is_set(ArgSettings::Required));
-        assert_eq!(d.v.val_names.unwrap().values().collect::<Vec<_>>(),
-                   [&"file", &"mode"]);
+        assert_eq!(
+            d.v.val_names.unwrap().values().collect::<Vec<_>>(),
+            [&"file", &"mode"]
+        );
         assert_eq!(d.v.num_vals.unwrap(), 2);
     }
 
@@ -1117,8 +1259,10 @@ mod test {
 
     #[test]
     fn pos_help_newline() {
-        let c = Arg::from_usage("[pos]... 'some help{n}\
-                                           info'");
+        let c = Arg::from_usage(
+            "[pos]... 'some help{n}\
+             info'",
+        );
         assert_eq!(c.b.name, "pos");
         assert_eq!(c.b.help.unwrap(), "some help{n}info");
         assert!(c.is_set(ArgSettings::Multiple));
@@ -1129,8 +1273,10 @@ mod test {
 
     #[test]
     fn pos_help_newline_lit_sq() {
-        let c = Arg::from_usage("[pos]... 'some help\' stuff{n}\
-                                           info'");
+        let c = Arg::from_usage(
+            "[pos]... 'some help\' stuff{n}\
+             info'",
+        );
         assert_eq!(c.b.name, "pos");
         assert_eq!(c.b.help.unwrap(), "some help' stuff{n}info");
         assert!(c.is_set(ArgSettings::Multiple));
@@ -1192,8 +1338,10 @@ mod test {
         let a = Arg::from_usage("[ñämê] --ôpt=[üñíčöĐ€] 'hælp'");
         assert_eq!(a.b.name, "ñämê");
         assert_eq!(a.s.long, Some("ôpt"));
-        assert_eq!(a.v.val_names.unwrap().values().collect::<Vec<_>>(),
-                   [&"üñíčöĐ€"]);
+        assert_eq!(
+            a.v.val_names.unwrap().values().collect::<Vec<_>>(),
+            [&"üñíčöĐ€"]
+        );
         assert_eq!(a.b.help, Some("hælp"));
     }
 }

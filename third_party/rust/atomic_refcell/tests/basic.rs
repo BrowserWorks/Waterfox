@@ -32,6 +32,12 @@ fn mutable() {
 }
 
 #[test]
+fn get_mut() {
+    let mut a = AtomicRefCell::new(Bar::default());
+    let _ = a.get_mut();
+}
+
+#[test]
 fn interleaved() {
     let a = AtomicRefCell::new(Bar::default());
     {

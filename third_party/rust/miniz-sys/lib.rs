@@ -1,5 +1,6 @@
 #![doc(html_root_url = "https://docs.rs/miniz-sys/0.1")]
 #![allow(bad_style)]
+#![cfg(not(all(target_arch = "wasm32", not(target_os = "emscripten"))))]
 
 extern crate libc;
 use libc::*;
@@ -50,26 +51,23 @@ pub struct mz_stream {
 
 pub enum mz_internal_state {}
 
-pub type mz_alloc_func = extern fn(*mut c_void,
-                                   size_t,
-                                   size_t) -> *mut c_void;
-pub type mz_free_func = extern fn(*mut c_void, *mut c_void);
+pub type mz_alloc_func = extern "C" fn(*mut c_void, size_t, size_t) -> *mut c_void;
+pub type mz_free_func = extern "C" fn(*mut c_void, *mut c_void);
 
-extern {
-    pub fn mz_deflateInit2(stream: *mut mz_stream,
-                           level: c_int,
-                           method: c_int,
-                           window_bits: c_int,
-                           mem_level: c_int,
-                           strategy: c_int)
-                           -> c_int;
+extern "C" {
+    pub fn mz_deflateInit2(
+        stream: *mut mz_stream,
+        level: c_int,
+        method: c_int,
+        window_bits: c_int,
+        mem_level: c_int,
+        strategy: c_int,
+    ) -> c_int;
     pub fn mz_deflate(stream: *mut mz_stream, flush: c_int) -> c_int;
     pub fn mz_deflateEnd(stream: *mut mz_stream) -> c_int;
     pub fn mz_deflateReset(stream: *mut mz_stream) -> c_int;
 
-    pub fn mz_inflateInit2(stream: *mut mz_stream,
-                           window_bits: c_int)
-                           -> c_int;
+    pub fn mz_inflateInit2(stream: *mut mz_stream, window_bits: c_int) -> c_int;
     pub fn mz_inflate(stream: *mut mz_stream, flush: c_int) -> c_int;
     pub fn mz_inflateEnd(stream: *mut mz_stream) -> c_int;
 

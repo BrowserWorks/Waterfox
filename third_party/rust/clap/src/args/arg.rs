@@ -1,20 +1,20 @@
 #[cfg(feature = "yaml")]
 use std::collections::BTreeMap;
 use std::rc::Rc;
-use std::ffi::{OsString, OsStr};
-#[cfg(target_os="windows")]
+use std::ffi::{OsStr, OsString};
+#[cfg(any(target_os = "windows", target_arch = "wasm32"))]
 use osstringext::OsStrExt3;
-#[cfg(not(target_os="windows"))]
+#[cfg(not(any(target_os = "windows", target_arch = "wasm32")))]
 use std::os::unix::ffi::OsStrExt;
-
+use std::env;
 
 #[cfg(feature = "yaml")]
 use yaml_rust::Yaml;
-use vec_map::VecMap;
+use map::VecMap;
 
 use usage_parser::UsageParser;
 use args::settings::ArgSettings;
-use args::arg_builder::{Base, Valued, Switched};
+use args::arg_builder::{Base, Switched, Valued};
 
 /// The abstract representation of a command line argument. Used to set all the options and
 /// relationships that define a valid argument for the program.
@@ -41,18 +41,14 @@ use args::arg_builder::{Base, Valued, Switched};
 #[allow(missing_debug_implementations)]
 #[derive(Default, Clone)]
 pub struct Arg<'a, 'b>
-    where 'a: 'b
+where
+    'a: 'b,
 {
-    #[doc(hidden)]
-    pub b: Base<'a, 'b>,
-    #[doc(hidden)]
-    pub s: Switched<'b>,
-    #[doc(hidden)]
-    pub v: Valued<'a, 'b>,
-    #[doc(hidden)]
-    pub index: Option<u64>,
-    #[doc(hidden)]
-    pub r_ifs: Option<Vec<(&'a str, &'b str)>>,
+    #[doc(hidden)] pub b: Base<'a, 'b>,
+    #[doc(hidden)] pub s: Switched<'b>,
+    #[doc(hidden)] pub v: Valued<'a, 'b>,
+    #[doc(hidden)] pub index: Option<u64>,
+    #[doc(hidden)] pub r_ifs: Option<Vec<(&'a str, &'b str)>>,
 }
 
 impl<'a, 'b> Arg<'a, 'b> {
@@ -73,7 +69,12 @@ impl<'a, 'b> Arg<'a, 'b> {
     /// ```
     /// [`Arg::takes_value(true)`]: ./struct.Arg.html#method.takes_value
     /// [`Arg`]: ./struct.Arg.html
-    pub fn with_name(n: &'a str) -> Self { Arg { b: Base::new(n), ..Default::default() } }
+    pub fn with_name(n: &'a str) -> Self {
+        Arg {
+            b: Base::new(n),
+            ..Default::default()
+        }
+    }
 
     /// Creates a new instance of [`Arg`] from a .yml (YAML) file.
     ///
@@ -121,6 +122,7 @@ impl<'a, 'b> Arg<'a, 'b> {
                 "value_name" => yaml_to_str!(a, v, value_name),
                 "use_delimiter" => yaml_to_bool!(a, v, use_delimiter),
                 "allow_hyphen_values" => yaml_to_bool!(a, v, allow_hyphen_values),
+                "last" => yaml_to_bool!(a, v, last),
                 "require_delimiter" => yaml_to_bool!(a, v, require_delimiter),
                 "value_delimiter" => yaml_to_str!(a, v, value_delimiter),
                 "required_unless" => yaml_to_str!(a, v, required_unless),
@@ -128,6 +130,7 @@ impl<'a, 'b> Arg<'a, 'b> {
                 "default_value" => yaml_to_str!(a, v, default_value),
                 "default_value_if" => yaml_tuple3!(a, v, default_value_if),
                 "default_value_ifs" => yaml_tuple3!(a, v, default_value_if),
+                "env" => yaml_to_str!(a, v, env),
                 "value_names" => yaml_vec_or_str!(v, a, value_name),
                 "groups" => yaml_vec_or_str!(v, a, group),
                 "requires" => yaml_vec_or_str!(v, a, requires),
@@ -136,17 +139,17 @@ impl<'a, 'b> Arg<'a, 'b> {
                 "conflicts_with" => yaml_vec_or_str!(v, a, conflicts_with),
                 "overrides_with" => yaml_vec_or_str!(v, a, overrides_with),
                 "possible_values" => yaml_vec_or_str!(v, a, possible_value),
+                "case_insensitive" => yaml_to_bool!(a, v, case_insensitive),
                 "required_unless_one" => yaml_vec_or_str!(v, a, required_unless),
                 "required_unless_all" => {
                     a = yaml_vec_or_str!(v, a, required_unless);
                     a.setb(ArgSettings::RequiredUnlessAll);
                     a
                 }
-                s => {
-                    panic!("Unknown Arg setting '{}' in YAML file for arg '{}'",
-                           s,
-                           name_str)
-                }
+                s => panic!(
+                    "Unknown Arg setting '{}' in YAML file for arg '{}'",
+                    s, name_str
+                ),
             }
         }
 
@@ -604,10 +607,10 @@ impl<'a, 'b> Arg<'a, 'b> {
     ///         that cannot be read by this program. Obviously I'm going on
     ///         and on, so I'll stop now.
     ///
-    /// -h, --help       
+    /// -h, --help
     ///         Prints help information
     ///
-    /// -V, --version    
+    /// -V, --version
     ///         Prints version information
     /// ```
     /// [`Arg::help`]: ./struct.Arg.html#method.help
@@ -623,13 +626,13 @@ impl<'a, 'b> Arg<'a, 'b> {
     /// allows one to access this arg early using the `--` syntax. Accessing an arg early, even with
     /// the `--` syntax is otherwise not possible.
     ///
-    /// **NOTE:** This will change the usage string to look like `$ prog [FLAGS] [-- <ARG>]` if 
+    /// **NOTE:** This will change the usage string to look like `$ prog [FLAGS] [-- <ARG>]` if
     /// `ARG` is marked as `.last(true)`.
     ///
     /// **NOTE:** This setting will imply [`AppSettings::DontCollapseArgsInUsage`] because failing
     /// to set this can make the usage string very confusing.
     ///
-    /// **NOTE**: This setting only applies to positional arguments, and has no affect on FLAGS / 
+    /// **NOTE**: This setting only applies to positional arguments, and has no affect on FLAGS /
     /// OPTIONS
     ///
     /// **CAUTION:** Setting an argument to `.last(true)` *and* having child subcommands is not
@@ -820,14 +823,14 @@ impl<'a, 'b> Arg<'a, 'b> {
 
     /// Allows values which start with a leading hyphen (`-`)
     ///
-    /// **WARNING**: Take caution when using this setting, combined with [`Arg::multiple(true)`] as
-    /// it this becomes ambigous `$ prog --arg -- -- val`. All three `--, --, val` will be values
+    /// **WARNING**: Take caution when using this setting combined with [`Arg::multiple(true)`], as
+    /// this becomes ambiguous `$ prog --arg -- -- val`. All three `--, --, val` will be values
     /// when the user may have thought the second `--` would constitute the normal, "Only
     /// positional args follow" idiom. To fix this, consider using [`Arg::number_of_values(1)`]
     ///
     /// **WARNING**: When building your CLIs, consider the effects of allowing leading hyphens and
     /// the user passing in a value that matches a valid short. For example `prog -opt -F` where
-    /// `-F` is supposed to be a value, yet `-F` is *also* a valid short for anther arg. Care should
+    /// `-F` is supposed to be a value, yet `-F` is *also* a valid short for another arg. Care should
     /// should be taken when designing these args. This is compounded by the ability to "stack"
     /// short args. I.e. if `-val` is supposed to be a value, but `-v`, `-a`, and `-l` are all valid
     /// shorts.
@@ -1201,6 +1204,10 @@ impl<'a, 'b> Arg<'a, 'b> {
     /// **NOTE:** When an argument is overridden it is essentially as if it never was used, any
     /// conflicts, requirements, etc. are evaluated **after** all "overrides" have been removed
     ///
+    /// **WARNING:** Positional arguments cannot override themselves (or we would never be able
+    /// to advance to the next positional). If a positional agument lists itself as an override,
+    /// it is simply ignored.
+    ///
     /// # Examples
     ///
     /// ```rust
@@ -1220,11 +1227,79 @@ impl<'a, 'b> Arg<'a, 'b> {
     ///                                 // was never used because it was overridden with color
     /// assert!(!m.is_present("flag"));
     /// ```
+    /// Care must be taken when using this setting, and having an arg override with itself. This
+    /// is common practice when supporting things like shell aliases, config files, etc.
+    /// However, when combined with multiple values, it can get dicy.
+    /// Here is how clap handles such situations:
+    ///
+    /// When a flag overrides itself, it's as if the flag was only ever used once (essentially
+    /// preventing a "Unexpected multiple usage" error):
+    ///
+    /// ```rust
+    /// # use clap::{App, Arg};
+    /// let m = App::new("posix")
+    ///             .arg(Arg::from_usage("--flag  'some flag'").overrides_with("flag"))
+    ///             .get_matches_from(vec!["posix", "--flag", "--flag"]);
+    /// assert!(m.is_present("flag"));
+    /// assert_eq!(m.occurrences_of("flag"), 1);
+    /// ```
+    /// Making a arg `multiple(true)` and override itself is essentially meaningless. Therefore
+    /// clap ignores an override of self if it's a flag and it already accepts multiple occurrences.
+    ///
+    /// ```
+    /// # use clap::{App, Arg};
+    /// let m = App::new("posix")
+    ///             .arg(Arg::from_usage("--flag...  'some flag'").overrides_with("flag"))
+    ///             .get_matches_from(vec!["", "--flag", "--flag", "--flag", "--flag"]);
+    /// assert!(m.is_present("flag"));
+    /// assert_eq!(m.occurrences_of("flag"), 4);
+    /// ```
+    /// Now notice with options (which *do not* set `multiple(true)`), it's as if only the last
+    /// occurrence happened.
+    ///
+    /// ```
+    /// # use clap::{App, Arg};
+    /// let m = App::new("posix")
+    ///             .arg(Arg::from_usage("--opt [val] 'some option'").overrides_with("opt"))
+    ///             .get_matches_from(vec!["", "--opt=some", "--opt=other"]);
+    /// assert!(m.is_present("opt"));
+    /// assert_eq!(m.occurrences_of("opt"), 1);
+    /// assert_eq!(m.value_of("opt"), Some("other"));
+    /// ```
+    ///
+    /// Just like flags, options with `multiple(true)` set, will ignore the "override self" setting.
+    ///
+    /// ```
+    /// # use clap::{App, Arg};
+    /// let m = App::new("posix")
+    ///             .arg(Arg::from_usage("--opt [val]... 'some option'")
+    ///                 .overrides_with("opt"))
+    ///             .get_matches_from(vec!["", "--opt", "first", "over", "--opt", "other", "val"]);
+    /// assert!(m.is_present("opt"));
+    /// assert_eq!(m.occurrences_of("opt"), 2);
+    /// assert_eq!(m.values_of("opt").unwrap().collect::<Vec<_>>(), &["first", "over", "other", "val"]);
+    /// ```
+    ///
+    /// A safe thing to do if you'd like to support an option which supports multiple values, but
+    /// also is "overridable" by itself, is to use `use_delimiter(false)` and *not* use
+    /// `multiple(true)` while telling users to seperate values with a comma (i.e. `val1,val2`)
+    ///
+    /// ```
+    /// # use clap::{App, Arg};
+    /// let m = App::new("posix")
+    ///             .arg(Arg::from_usage("--opt [val] 'some option'")
+    ///                 .overrides_with("opt")
+    ///                 .use_delimiter(false))
+    ///             .get_matches_from(vec!["", "--opt=some,other", "--opt=one,two"]);
+    /// assert!(m.is_present("opt"));
+    /// assert_eq!(m.occurrences_of("opt"), 1);
+    /// assert_eq!(m.values_of("opt").unwrap().collect::<Vec<_>>(), &["one,two"]);
+    /// ```
     pub fn overrides_with(mut self, name: &'a str) -> Self {
         if let Some(ref mut vec) = self.b.overrides {
-            vec.push(name.as_ref());
+            vec.push(name);
         } else {
-            self.b.overrides = Some(vec![name.as_ref()]);
+            self.b.overrides = Some(vec![name]);
         }
         self
     }
@@ -1507,7 +1582,7 @@ impl<'a, 'b> Arg<'a, 'b> {
     /// assert!(res.is_ok()); // We didn't use --other=special, so "cfg" wasn't required
     /// ```
     ///
-    /// Setting [`Arg::required_if(arg, val)`] and having `arg` used with a vaue of `val` but *not*
+    /// Setting [`Arg::required_if(arg, val)`] and having `arg` used with a value of `val` but *not*
     /// using this arg is an error.
     ///
     /// ```rust
@@ -1591,7 +1666,7 @@ impl<'a, 'b> Arg<'a, 'b> {
     /// ```
     ///
     /// Setting [`Arg::required_ifs(&[(arg, val)])`] and having any of the `arg`s used with it's
-    /// vaue of `val` but *not* using this arg is an error.
+    /// value of `val` but *not* using this arg is an error.
     ///
     /// ```rust
     /// # use clap::{App, Arg, ErrorKind};
@@ -1890,17 +1965,47 @@ impl<'a, 'b> Arg<'a, 'b> {
     /// **WARNING:**
     ///
     /// Setting `multiple(true)` for an [option] with no other details, allows multiple values
-    /// **and** multiple occurrences because it isn't possible to have more occurrences than values for
-    /// options. Because multiple values are allowed, `--option val1 val2 val3` is perfectly valid,
-    /// be careful when designing a CLI where positional arguments are expected after a option which
-    /// accepts multiple values, as `clap` will continue parsing *values* until it reaches the max
-    /// or specific number of values defined, or another flag or option.
+    /// **and** multiple occurrences because it isn't possible to have more occurrences than values
+    /// for options. Because multiple values are allowed, `--option val1 val2 val3` is perfectly
+    /// valid, be careful when designing a CLI where positional arguments are expected after a
+    /// option which accepts multiple values, as `clap` will continue parsing *values* until it
+    /// reaches the max or specific number of values defined, or another flag or option.
     ///
     /// **Pro Tip**:
     ///
     /// It's possible to define an option which allows multiple occurrences, but only one value per
     /// occurrence. To do this use [`Arg::number_of_values(1)`] in coordination with
     /// [`Arg::multiple(true)`].
+    ///
+    /// **WARNING:**
+    ///
+    /// When using args with `multiple(true)` on [options] or [positionals] (i.e. those args that
+    /// accept values) and [subcommands], one needs to consider the possibility of an argument value
+    /// being the same as a valid subcommand. By default `clap` will parse the argument in question
+    /// as a value *only if* a value is possible at that moment. Otherwise it will be parsed as a
+    /// subcommand. In effect, this means using `multiple(true)` with no additional parameters and
+    /// a possible value that coincides with a subcommand name, the subcommand cannot be called
+    /// unless another argument is passed first.
+    ///
+    /// As an example, consider a CLI with an option `--ui-paths=<paths>...` and subcommand `signer`
+    ///
+    /// The following would be parsed as values to `--ui-paths`.
+    ///
+    /// ```notrust
+    /// $ program --ui-paths path1 path2 signer
+    /// ```
+    ///
+    /// This is because `--ui-paths` accepts multiple values. `clap` will continue parsing values
+    /// until another argument is reached and it knows `--ui-paths` is done.
+    ///
+    /// By adding additional parameters to `--ui-paths` we can solve this issue. Consider adding
+    /// [`Arg::number_of_values(1)`] as discussed above. The following are all valid, and `signer`
+    /// is parsed as both a subcommand and a value in the second case.
+    ///
+    /// ```notrust
+    /// $ program --ui-paths path1 signer
+    /// $ program --ui-paths path1 --ui-paths signer signer
+    /// ```
     ///
     /// # Examples
     ///
@@ -1945,7 +2050,7 @@ impl<'a, 'b> Arg<'a, 'b> {
     /// let files: Vec<_> = m.values_of("file").unwrap().collect();
     /// assert_eq!(files, ["file1", "file2", "file3"]);
     /// ```
-    /// This is functionally equivilant to the example above
+    /// This is functionally equivalent to the example above
     ///
     /// ```rust
     /// # use clap::{App, Arg};
@@ -2035,6 +2140,9 @@ impl<'a, 'b> Arg<'a, 'b> {
     /// assert_eq!(res.unwrap_err().kind, ErrorKind::UnknownArgument);
     /// ```
     /// [option]: ./struct.Arg.html#method.takes_value
+    /// [options]: ./struct.Arg.html#method.takes_value
+    /// [subcommands]: ./struct.SubCommand.html
+    /// [positionals]: ./struct.Arg.html#method.index
     /// [`Arg::number_of_values(1)`]: ./struct.Arg.html#method.number_of_values
     /// [`Arg::multiple(true)`]: ./struct.Arg.html#method.multiple
     pub fn multiple(self, multi: bool) -> Self {
@@ -2054,7 +2162,7 @@ impl<'a, 'b> Arg<'a, 'b> {
     /// **NOTE:** This setting only applies to [options] and [positional arguments]
     ///
     /// **NOTE:** When the terminator is passed in on the command line, it is **not** stored as one
-    /// of the vaues
+    /// of the values
     ///
     /// # Examples
     ///
@@ -2098,14 +2206,10 @@ impl<'a, 'b> Arg<'a, 'b> {
 
     /// Specifies that an argument can be matched to all child [`SubCommand`]s.
     ///
-    /// **NOTE:** Global arguments *only* propagate down, **not** up (to parent commands)
-    ///
-    /// **NOTE:** Global arguments *cannot* be [required].
-    ///
-    /// **NOTE:** Global arguments, when matched, *only* exist in the command's matches that they
-    /// were matched to. For example, if you defined a `--flag` global argument in the top most
-    /// parent command, but the user supplied the arguments `top cmd1 cmd2 --flag` *only* `cmd2`'s
-    /// [`ArgMatches`] would return `true` if tested for [`ArgMatches::is_present("flag")`].
+    /// **NOTE:** Global arguments *only* propagate down, **not** up (to parent commands), however
+    /// their values once a user uses them will be propagated back up to parents. In effect, this
+    /// means one should *define* all global arguments at the top level, however it doesn't matter
+    /// where the user *uses* the global argument.
     ///
     /// # Examples
     ///
@@ -2117,7 +2221,7 @@ impl<'a, 'b> Arg<'a, 'b> {
     /// # ;
     /// ```
     ///
-    /// For example, assume an appliction with two subcommands, and you'd like to define a
+    /// For example, assume an application with two subcommands, and you'd like to define a
     /// `--verbose` flag that can be called on any of the subcommands and parent, but you don't
     /// want to clutter the source with three duplicate [`Arg`] definitions.
     ///
@@ -2196,6 +2300,9 @@ impl<'a, 'b> Arg<'a, 'b> {
 
     /// Hides an argument from help message output.
     ///
+    /// **NOTE:** Implicitly sets [`Arg::hidden_short_help(true)`] and [`Arg::hidden_long_help(true)`]
+    /// when set to true
+    ///
     /// **NOTE:** This does **not** hide the argument from usage strings on error
     ///
     /// # Examples
@@ -2232,6 +2339,8 @@ impl<'a, 'b> Arg<'a, 'b> {
     /// -h, --help       Prints help information
     /// -V, --version    Prints version information
     /// ```
+    /// [`Arg::hidden_short_help(true)`]: ./struct.Arg.html#method.hidden_short_help
+    /// [`Arg::hidden_long_help(true)`]: ./struct.Arg.html#method.hidden_long_help
     pub fn hidden(self, h: bool) -> Self {
         if h {
             self.set(ArgSettings::Hidden)
@@ -2358,6 +2467,59 @@ impl<'a, 'b> Arg<'a, 'b> {
             self.v.possible_vals = Some(vec![name]);
         }
         self
+    }
+
+    /// When used with [`Arg::possible_values`] it allows the argument value to pass validation even if
+    /// the case differs from that of the specified `possible_value`.
+    ///
+    /// **Pro Tip:** Use this setting with [`arg_enum!`]
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use clap::{App, Arg};
+    /// # use std::ascii::AsciiExt;
+    /// let m = App::new("pv")
+    ///     .arg(Arg::with_name("option")
+    ///         .long("--option")
+    ///         .takes_value(true)
+    ///         .possible_value("test123")
+    ///         .case_insensitive(true))
+    ///     .get_matches_from(vec![
+    ///         "pv", "--option", "TeSt123",
+    ///     ]);
+    ///
+    /// assert!(m.value_of("option").unwrap().eq_ignore_ascii_case("test123"));
+    /// ```
+    ///
+    /// This setting also works when multiple values can be defined:
+    ///
+    /// ```rust
+    /// # use clap::{App, Arg};
+    /// let m = App::new("pv")
+    ///     .arg(Arg::with_name("option")
+    ///         .short("-o")
+    ///         .long("--option")
+    ///         .takes_value(true)
+    ///         .possible_value("test123")
+    ///         .possible_value("test321")
+    ///         .multiple(true)
+    ///         .case_insensitive(true))
+    ///     .get_matches_from(vec![
+    ///         "pv", "--option", "TeSt123", "teST123", "tESt321"
+    ///     ]);
+    ///
+    /// let matched_vals = m.values_of("option").unwrap().collect::<Vec<_>>();
+    /// assert_eq!(&*matched_vals, &["TeSt123", "teST123", "tESt321"]);
+    /// ```
+    /// [`Arg::case_insensitive(true)`]: ./struct.Arg.html#method.possible_values
+    /// [`arg_enum!`]: ./macro.arg_enum.html
+    pub fn case_insensitive(self, ci: bool) -> Self {
+        if ci {
+            self.set(ArgSettings::CaseInsensitive)
+        } else {
+            self.unset(ArgSettings::CaseInsensitive)
+        }
     }
 
     /// Specifies the name of the [`ArgGroup`] the argument belongs to.
@@ -2520,19 +2682,20 @@ impl<'a, 'b> Arg<'a, 'b> {
     /// [`Err(String)`]: https://doc.rust-lang.org/std/result/enum.Result.html#variant.Err
     /// [`Rc`]: https://doc.rust-lang.org/std/rc/struct.Rc.html
     pub fn validator<F>(mut self, f: F) -> Self
-        where F: Fn(String) -> Result<(), String> + 'static
+    where
+        F: Fn(String) -> Result<(), String> + 'static,
     {
         self.v.validator = Some(Rc::new(f));
         self
     }
 
-    /// Works identically to Validator but is intended to be used with values that could 
+    /// Works identically to Validator but is intended to be used with values that could
     /// contain non UTF-8 formatted strings.
     ///
     /// # Examples
     ///
-    #[cfg_attr(not(unix), doc=" ```ignore")]
-    #[cfg_attr(    unix , doc=" ```rust")]
+    #[cfg_attr(not(unix), doc = " ```ignore")]
+    #[cfg_attr(unix, doc = " ```rust")]
     /// # use clap::{App, Arg};
     /// # use std::ffi::{OsStr, OsString};
     /// # use std::os::unix::ffi::OsStrExt;
@@ -2557,7 +2720,8 @@ impl<'a, 'b> Arg<'a, 'b> {
     /// [`Err(String)`]: https://doc.rust-lang.org/std/result/enum.Result.html#variant.Err
     /// [`Rc`]: https://doc.rust-lang.org/std/rc/struct.Rc.html
     pub fn validator_os<F>(mut self, f: F) -> Self
-        where F: Fn(&OsStr) -> Result<(), OsString> + 'static
+    where
+        F: Fn(&OsStr) -> Result<(), OsString> + 'static,
     {
         self.v.validator_os = Some(Rc::new(f));
         self
@@ -2569,9 +2733,9 @@ impl<'a, 'b> Arg<'a, 'b> {
     ///
     /// **NOTE:** This does *not* implicitly set [`Arg::multiple(true)`]. This is because
     /// `-o val -o val` is multiple occurrences but a single value and `-o val1 val2` is a single
-    /// occurence with multiple values. For positional arguments this **does** set
+    /// occurrence with multiple values. For positional arguments this **does** set
     /// [`Arg::multiple(true)`] because there is no way to determine the difference between multiple
-    /// occurences and multiple values.
+    /// occurrences and multiple values.
     ///
     /// # Examples
     ///
@@ -2632,9 +2796,9 @@ impl<'a, 'b> Arg<'a, 'b> {
     ///
     /// **NOTE:** This does not implicitly set [`Arg::multiple(true)`]. This is because
     /// `-o val -o val` is multiple occurrences but a single value and `-o val1 val2` is a single
-    /// occurence with multiple values. For positional arguments this **does** set
+    /// occurrence with multiple values. For positional arguments this **does** set
     /// [`Arg::multiple(true)`] because there is no way to determine the difference between multiple
-    /// occurences and multiple values.
+    /// occurrences and multiple values.
     ///
     /// # Examples
     ///
@@ -2860,9 +3024,11 @@ impl<'a, 'b> Arg<'a, 'b> {
         self.unsetb(ArgSettings::ValueDelimiterNotSet);
         self.setb(ArgSettings::TakesValue);
         self.setb(ArgSettings::UseValueDelimiter);
-        self.v.val_delim = Some(d.chars()
-            .nth(0)
-            .expect("Failed to get value_delimiter from arg"));
+        self.v.val_delim = Some(
+            d.chars()
+                .nth(0)
+                .expect("Failed to get value_delimiter from arg"),
+        );
         self
     }
 
@@ -3014,7 +3180,7 @@ impl<'a, 'b> Arg<'a, 'b> {
     /// **NOTE:** If the user *does not* use this argument at runtime [`ArgMatches::is_present`] will
     /// still return `true`. If you wish to determine whether the argument was used at runtime or
     /// not, consider [`ArgMatches::occurrences_of`] which will return `0` if the argument was *not*
-    /// used at runtmie.
+    /// used at runtime.
     ///
     /// **NOTE:** This setting is perfectly compatible with [`Arg::default_value_if`] but slightly
     /// different. `Arg::default_value` *only* takes affect when the user has not provided this arg
@@ -3027,7 +3193,7 @@ impl<'a, 'b> Arg<'a, 'b> {
     /// **NOTE:** This implicitly sets [`Arg::takes_value(true)`].
     ///
     /// **NOTE:** This setting effectively disables `AppSettings::ArgRequiredElseHelp` if used in
-    /// conjuction as it ensures that some argument will always be present.
+    /// conjunction as it ensures that some argument will always be present.
     ///
     /// # Examples
     ///
@@ -3180,20 +3346,23 @@ impl<'a, 'b> Arg<'a, 'b> {
     /// [`Arg::takes_value(true)`]: ./struct.Arg.html#method.takes_value
     /// [`Arg::default_value`]: ./struct.Arg.html#method.default_value
     pub fn default_value_if(self, arg: &'a str, val: Option<&'b str>, default: &'b str) -> Self {
-        self.default_value_if_os(arg,
-                                 val.map(str::as_bytes).map(OsStr::from_bytes),
-                                 OsStr::from_bytes(default.as_bytes()))
+        self.default_value_if_os(
+            arg,
+            val.map(str::as_bytes).map(OsStr::from_bytes),
+            OsStr::from_bytes(default.as_bytes()),
+        )
     }
 
     /// Provides a conditional default value in the exact same manner as [`Arg::default_value_if`]
     /// only using [`OsStr`]s instead.
     /// [`Arg::default_value_if`]: ./struct.Arg.html#method.default_value_if
     /// [`OsStr`]: https://doc.rust-lang.org/std/ffi/struct.OsStr.html
-    pub fn default_value_if_os(mut self,
-                               arg: &'a str,
-                               val: Option<&'b OsStr>,
-                               default: &'b OsStr)
-                               -> Self {
+    pub fn default_value_if_os(
+        mut self,
+        arg: &'a str,
+        val: Option<&'b OsStr>,
+        default: &'b OsStr,
+    ) -> Self {
         self.setb(ArgSettings::TakesValue);
         if let Some(ref mut vm) = self.v.default_vals_ifs {
             let l = vm.len();
@@ -3266,7 +3435,7 @@ impl<'a, 'b> Arg<'a, 'b> {
     /// ```
     ///
     /// We can also see that these values are applied in order, and if more than one condition is
-    /// true, only the first evaluatd "wins"
+    /// true, only the first evaluated "wins"
     ///
     /// ```rust
     /// # use clap::{App, Arg};
@@ -3292,9 +3461,11 @@ impl<'a, 'b> Arg<'a, 'b> {
     /// [`Arg::default_value`]: ./struct.Arg.html#method.default_value
     pub fn default_value_ifs(mut self, ifs: &[(&'a str, Option<&'b str>, &'b str)]) -> Self {
         for &(arg, val, default) in ifs {
-            self = self.default_value_if_os(arg,
-                                            val.map(str::as_bytes).map(OsStr::from_bytes),
-                                            OsStr::from_bytes(default.as_bytes()));
+            self = self.default_value_if_os(
+                arg,
+                val.map(str::as_bytes).map(OsStr::from_bytes),
+                OsStr::from_bytes(default.as_bytes()),
+            );
         }
         self
     }
@@ -3309,6 +3480,134 @@ impl<'a, 'b> Arg<'a, 'b> {
             self = self.default_value_if_os(arg, val, default);
         }
         self
+    }
+
+    /// Specifies that if the value is not passed in as an argument, that it should be retrieved
+    /// from the environment, if available. If it is not present in the environment, then default
+    /// rules will apply.
+    ///
+    /// **NOTE:** If the user *does not* use this argument at runtime, [`ArgMatches::occurrences_of`]
+    /// will return `0` even though the [`ArgMatches::value_of`] will return the default specified.
+    ///
+    /// **NOTE:** If the user *does not* use this argument at runtime [`ArgMatches::is_present`] will
+    /// return `true` if the variable is present in the environment . If you wish to determine whether
+    /// the argument was used at runtime or not, consider [`ArgMatches::occurrences_of`] which will
+    /// return `0` if the argument was *not* used at runtime.
+    ///
+    /// **NOTE:** This implicitly sets [`Arg::takes_value(true)`].
+    ///
+    /// **NOTE:** If [`Arg::multiple(true)`] is set then [`Arg::use_delimiter(true)`] should also be
+    /// set. Otherwise, only a single argument will be returned from the environment variable. The
+    /// default delimiter is `,` and follows all the other delimiter rules.
+    ///
+    /// # Examples
+    ///
+    /// In this example, we show the variable coming from the environment:
+    ///
+    /// ```rust
+    /// # use std::env;
+    /// # use clap::{App, Arg};
+    ///
+    /// env::set_var("MY_FLAG", "env");
+    ///
+    /// let m = App::new("prog")
+    ///     .arg(Arg::with_name("flag")
+    ///         .long("flag")
+    ///         .env("MY_FLAG"))
+    ///     .get_matches_from(vec![
+    ///         "prog"
+    ///     ]);
+    ///
+    /// assert_eq!(m.value_of("flag"), Some("env"));
+    /// ```
+    ///
+    /// In this example, we show the variable coming from an option on the CLI:
+    ///
+    /// ```rust
+    /// # use std::env;
+    /// # use clap::{App, Arg};
+    ///
+    /// env::set_var("MY_FLAG", "env");
+    ///
+    /// let m = App::new("prog")
+    ///     .arg(Arg::with_name("flag")
+    ///         .long("flag")
+    ///         .env("MY_FLAG"))
+    ///     .get_matches_from(vec![
+    ///         "prog", "--flag", "opt"
+    ///     ]);
+    ///
+    /// assert_eq!(m.value_of("flag"), Some("opt"));
+    /// ```
+    ///
+    /// In this example, we show the variable coming from the environment even with the
+    /// presence of a default:
+    ///
+    /// ```rust
+    /// # use std::env;
+    /// # use clap::{App, Arg};
+    ///
+    /// env::set_var("MY_FLAG", "env");
+    ///
+    /// let m = App::new("prog")
+    ///     .arg(Arg::with_name("flag")
+    ///         .long("flag")
+    ///         .env("MY_FLAG")
+    ///         .default_value("default"))
+    ///     .get_matches_from(vec![
+    ///         "prog"
+    ///     ]);
+    ///
+    /// assert_eq!(m.value_of("flag"), Some("env"));
+    /// ```
+    ///
+    /// In this example, we show the use of multiple values in a single environment variable:
+    ///
+    /// ```rust
+    /// # use std::env;
+    /// # use clap::{App, Arg};
+    ///
+    /// env::set_var("MY_FLAG_MULTI", "env1,env2");
+    ///
+    /// let m = App::new("prog")
+    ///     .arg(Arg::with_name("flag")
+    ///         .long("flag")
+    ///         .env("MY_FLAG_MULTI")
+    ///         .multiple(true)
+    ///         .use_delimiter(true))
+    ///     .get_matches_from(vec![
+    ///         "prog"
+    ///     ]);
+    ///
+    /// assert_eq!(m.values_of("flag").unwrap().collect::<Vec<_>>(), vec!["env1", "env2"]);
+    /// ```
+    /// [`ArgMatches::occurrences_of`]: ./struct.ArgMatches.html#method.occurrences_of
+    /// [`ArgMatches::value_of`]: ./struct.ArgMatches.html#method.value_of
+    /// [`ArgMatches::is_present`]: ./struct.ArgMatches.html#method.is_present
+    /// [`Arg::takes_value(true)`]: ./struct.Arg.html#method.takes_value
+    /// [`Arg::multiple(true)`]: ./struct.Arg.html#method.multiple
+    /// [`Arg::use_delimiter(true)`]: ./struct.Arg.html#method.use_delimiter
+    pub fn env(self, name: &'a str) -> Self {
+        self.env_os(OsStr::new(name))
+    }
+
+    /// Specifies that if the value is not passed in as an argument, that it should be retrieved
+    /// from the environment if available in the exact same manner as [`Arg::env`] only using
+    /// [`OsStr`]s instead.
+    pub fn env_os(mut self, name: &'a OsStr) -> Self {
+        self.setb(ArgSettings::TakesValue);
+
+        self.v.env = Some((name, env::var_os(name)));
+        self
+    }
+
+    /// @TODO @p2 @docs @release: write docs
+    pub fn hide_env_values(self, hide: bool) -> Self {
+        if hide {
+            self.set(ArgSettings::HideEnvValues)
+        } else {
+            self.unset(ArgSettings::HideEnvValues)
+        }
     }
 
     /// When set to `true` the help string will be displayed on the line after the argument and
@@ -3425,18 +3724,200 @@ impl<'a, 'b> Arg<'a, 'b> {
         self
     }
 
-    /// Checks if one of the [`ArgSettings`] settings is set for the argument
-    /// [`ArgSettings`]: ./enum.ArgSettings.html
-    pub fn is_set(&self, s: ArgSettings) -> bool { self.b.is_set(s) }
+    /// Indicates that all parameters passed after this should not be parsed
+    /// individually, but rather passed in their entirety. It is worth noting
+    /// that setting this requires all values to come after a `--` to indicate they
+    /// should all be captured. For example:
+    ///
+    /// ```notrust
+    /// --foo something -- -v -v -v -b -b -b --baz -q -u -x
+    /// ```
+    /// Will result in everything after `--` to be considered one raw argument. This behavior
+    /// may not be exactly what you are expecting and using [`AppSettings::TrailingVarArg`]
+    /// may be more appropriate.
+    ///
+    /// **NOTE:** Implicitly sets [`Arg::multiple(true)`], [`Arg::allow_hyphen_values(true)`], and
+    /// [`Arg::last(true)`] when set to `true`
+    ///
+    /// [`Arg::multiple(true)`]: ./struct.Arg.html#method.multiple
+    /// [`Arg::allow_hyphen_values(true)`]: ./struct.Arg.html#method.allow_hyphen_values
+    /// [`Arg::last(true)`]: ./struct.Arg.html#method.last
+    /// [`AppSettings::TrailingVarArg`]: ./enum.AppSettings.html#variant.TrailingVarArg
+    pub fn raw(self, raw: bool) -> Self {
+        self.multiple(raw).allow_hyphen_values(raw).last(raw)
+    }
 
-    /// Sets one of the [`ArgSettings`] settings for the argument
+    /// Hides an argument from short help message output.
+    ///
+    /// **NOTE:** This does **not** hide the argument from usage strings on error
+    ///
+    /// **NOTE:** Setting this option will cause next-line-help output style to be used
+    /// when long help (`--help`) is called.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use clap::{App, Arg};
+    /// Arg::with_name("debug")
+    ///     .hidden_short_help(true)
+    /// # ;
+    /// ```
+    /// Setting `hidden_short_help(true)` will hide the argument when displaying short help text
+    ///
+    /// ```rust
+    /// # use clap::{App, Arg};
+    /// let m = App::new("prog")
+    ///     .arg(Arg::with_name("cfg")
+    ///         .long("config")
+    ///         .hidden_short_help(true)
+    ///         .help("Some help text describing the --config arg"))
+    ///     .get_matches_from(vec![
+    ///         "prog", "-h"
+    ///     ]);
+    /// ```
+    ///
+    /// The above example displays
+    ///
+    /// ```notrust
+    /// helptest
+    ///
+    /// USAGE:
+    ///    helptest [FLAGS]
+    ///
+    /// FLAGS:
+    /// -h, --help       Prints help information
+    /// -V, --version    Prints version information
+    /// ```
+    ///
+    /// However, when --help is called
+    ///
+    /// ```rust
+    /// # use clap::{App, Arg};
+    /// let m = App::new("prog")
+    ///     .arg(Arg::with_name("cfg")
+    ///         .long("config")
+    ///         .hidden_short_help(true)
+    ///         .help("Some help text describing the --config arg"))
+    ///     .get_matches_from(vec![
+    ///         "prog", "--help"
+    ///     ]);
+    /// ```
+    ///
+    /// Then the following would be displayed
+    ///
+    /// ```notrust
+    /// helptest
+    ///
+    /// USAGE:
+    ///    helptest [FLAGS]
+    ///
+    /// FLAGS:
+    ///     --config     Some help text describing the --config arg
+    /// -h, --help       Prints help information
+    /// -V, --version    Prints version information
+    /// ```
+    pub fn hidden_short_help(self, hide: bool) -> Self {
+        if hide {
+            self.set(ArgSettings::HiddenShortHelp)
+        } else {
+            self.unset(ArgSettings::HiddenShortHelp)
+        }
+    }
+
+    /// Hides an argument from long help message output.
+    ///
+    /// **NOTE:** This does **not** hide the argument from usage strings on error
+    ///
+    /// **NOTE:** Setting this option will cause next-line-help output style to be used
+    /// when long help (`--help`) is called.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use clap::{App, Arg};
+    /// Arg::with_name("debug")
+    ///     .hidden_long_help(true)
+    /// # ;
+    /// ```
+    /// Setting `hidden_long_help(true)` will hide the argument when displaying long help text
+    ///
+    /// ```rust
+    /// # use clap::{App, Arg};
+    /// let m = App::new("prog")
+    ///     .arg(Arg::with_name("cfg")
+    ///         .long("config")
+    ///         .hidden_long_help(true)
+    ///         .help("Some help text describing the --config arg"))
+    ///     .get_matches_from(vec![
+    ///         "prog", "--help"
+    ///     ]);
+    /// ```
+    ///
+    /// The above example displays
+    ///
+    /// ```notrust
+    /// helptest
+    ///
+    /// USAGE:
+    ///    helptest [FLAGS]
+    ///
+    /// FLAGS:
+    /// -h, --help       Prints help information
+    /// -V, --version    Prints version information
+    /// ```
+    ///
+    /// However, when -h is called
+    ///
+    /// ```rust
+    /// # use clap::{App, Arg};
+    /// let m = App::new("prog")
+    ///     .arg(Arg::with_name("cfg")
+    ///         .long("config")
+    ///         .hidden_long_help(true)
+    ///         .help("Some help text describing the --config arg"))
+    ///     .get_matches_from(vec![
+    ///         "prog", "-h"
+    ///     ]);
+    /// ```
+    ///
+    /// Then the following would be displayed
+    ///
+    /// ```notrust
+    /// helptest
+    ///
+    /// USAGE:
+    ///    helptest [FLAGS]
+    ///
+    /// FLAGS:
+    ///     --config     Some help text describing the --config arg
+    /// -h, --help       Prints help information
+    /// -V, --version    Prints version information
+    /// ```
+    pub fn hidden_long_help(self, hide: bool) -> Self {
+        if hide {
+            self.set(ArgSettings::HiddenLongHelp)
+        } else {
+            self.unset(ArgSettings::HiddenLongHelp)
+        }
+    }
+
+    /// Checks if one of the [`ArgSettings`] settings is set for the argument.
+    ///
+    /// [`ArgSettings`]: ./enum.ArgSettings.html
+    pub fn is_set(&self, s: ArgSettings) -> bool {
+        self.b.is_set(s)
+    }
+
+    /// Sets one of the [`ArgSettings`] settings for the argument.
+    ///
     /// [`ArgSettings`]: ./enum.ArgSettings.html
     pub fn set(mut self, s: ArgSettings) -> Self {
         self.setb(s);
         self
     }
 
-    /// Unsets one of the [`ArgSettings`] settings for the argument
+    /// Unsets one of the [`ArgSettings`] settings for the argument.
+    ///
     /// [`ArgSettings`]: ./enum.ArgSettings.html
     pub fn unset(mut self, s: ArgSettings) -> Self {
         self.unsetb(s);
@@ -3444,10 +3925,14 @@ impl<'a, 'b> Arg<'a, 'b> {
     }
 
     #[doc(hidden)]
-    pub fn setb(&mut self, s: ArgSettings) { self.b.set(s); }
+    pub fn setb(&mut self, s: ArgSettings) {
+        self.b.set(s);
+    }
 
     #[doc(hidden)]
-    pub fn unsetb(&mut self, s: ArgSettings) { self.b.unset(s); }
+    pub fn unsetb(&mut self, s: ArgSettings) {
+        self.b.unset(s);
+    }
 }
 
 impl<'a, 'b, 'z> From<&'z Arg<'a, 'b>> for Arg<'a, 'b> {

@@ -1,6 +1,7 @@
-use std::ops::Neg;
-use std::{f32, f64};
+use core::num::Wrapping;
+use core::ops::Neg;
 
+use float::FloatCore;
 use Num;
 
 /// Useful functions for signed numbers (i.e. numbers that can be negative).
@@ -73,22 +74,58 @@ macro_rules! signed_impl {
 
 signed_impl!(isize i8 i16 i32 i64);
 
+#[cfg(has_i128)]
+signed_impl!(i128);
+
+impl<T: Signed> Signed for Wrapping<T>
+where
+    Wrapping<T>: Num + Neg<Output = Wrapping<T>>,
+{
+    #[inline]
+    fn abs(&self) -> Self {
+        Wrapping(self.0.abs())
+    }
+
+    #[inline]
+    fn abs_sub(&self, other: &Self) -> Self {
+        Wrapping(self.0.abs_sub(&other.0))
+    }
+
+    #[inline]
+    fn signum(&self) -> Self {
+        Wrapping(self.0.signum())
+    }
+
+    #[inline]
+    fn is_positive(&self) -> bool {
+        self.0.is_positive()
+    }
+
+    #[inline]
+    fn is_negative(&self) -> bool {
+        self.0.is_negative()
+    }
+}
+
 macro_rules! signed_float_impl {
-    ($t:ty, $nan:expr, $inf:expr, $neg_inf:expr) => {
+    ($t:ty) => {
         impl Signed for $t {
             /// Computes the absolute value. Returns `NAN` if the number is `NAN`.
             #[inline]
             fn abs(&self) -> $t {
-                <$t>::abs(*self)
+                FloatCore::abs(*self)
             }
 
             /// The positive difference of two numbers. Returns `0.0` if the number is
             /// less than or equal to `other`, otherwise the difference between`self`
             /// and `other` is returned.
             #[inline]
-            #[allow(deprecated)]
             fn abs_sub(&self, other: &$t) -> $t {
-                <$t>::abs_sub(*self, *other)
+                if *self <= *other {
+                    0.
+                } else {
+                    *self - *other
+                }
             }
 
             /// # Returns
@@ -98,22 +135,26 @@ macro_rules! signed_float_impl {
             /// - `NAN` if the number is NaN
             #[inline]
             fn signum(&self) -> $t {
-                <$t>::signum(*self)
+                FloatCore::signum(*self)
             }
 
             /// Returns `true` if the number is positive, including `+0.0` and `INFINITY`
             #[inline]
-            fn is_positive(&self) -> bool { *self > 0.0 || (1.0 / *self) == $inf }
+            fn is_positive(&self) -> bool {
+                FloatCore::is_sign_positive(*self)
+            }
 
             /// Returns `true` if the number is negative, including `-0.0` and `NEG_INFINITY`
             #[inline]
-            fn is_negative(&self) -> bool { *self < 0.0 || (1.0 / *self) == $neg_inf }
+            fn is_negative(&self) -> bool {
+                FloatCore::is_sign_negative(*self)
+            }
         }
-    }
+    };
 }
 
-signed_float_impl!(f32, f32::NAN, f32::INFINITY, f32::NEG_INFINITY);
-signed_float_impl!(f64, f64::NAN, f64::INFINITY, f64::NEG_INFINITY);
+signed_float_impl!(f32);
+signed_float_impl!(f64);
 
 /// Computes the absolute value.
 ///
@@ -147,7 +188,10 @@ pub fn abs_sub<T: Signed>(x: T, y: T) -> T {
 /// * `0` if the number is zero
 /// * `1` if the number is positive
 /// * `-1` if the number is negative
-#[inline(always)] pub fn signum<T: Signed>(value: T) -> T { value.signum() }
+#[inline(always)]
+pub fn signum<T: Signed>(value: T) -> T {
+    value.signum()
+}
 
 /// A trait for values which cannot be negative
 pub trait Unsigned: Num {}
@@ -159,3 +203,23 @@ macro_rules! empty_trait_impl {
 }
 
 empty_trait_impl!(Unsigned for usize u8 u16 u32 u64);
+#[cfg(has_i128)]
+empty_trait_impl!(Unsigned for u128);
+
+impl<T: Unsigned> Unsigned for Wrapping<T> where Wrapping<T>: Num {}
+
+#[test]
+fn unsigned_wrapping_is_unsigned() {
+    fn require_unsigned<T: Unsigned>(_: &T) {}
+    require_unsigned(&Wrapping(42_u32));
+}
+/*
+// Commenting this out since it doesn't compile on Rust 1.8,
+// because on this version Wrapping doesn't implement Neg and therefore can't
+// implement Signed.
+#[test]
+fn signed_wrapping_is_signed() {
+    fn require_signed<T: Signed>(_: &T) {}
+    require_signed(&Wrapping(-42));
+}
+*/

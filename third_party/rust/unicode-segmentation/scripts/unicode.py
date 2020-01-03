@@ -20,9 +20,9 @@
 # Since this should not require frequent updates, we just store this
 # out-of-line and check the unicode.rs file into git.
 
-import fileinput, re, os, sys, operator
+import fileinput, re, os, sys
 
-preamble = '''// Copyright 2012-2015 The Rust Project Developers. See the COPYRIGHT
+preamble = '''// Copyright 2012-2018 The Rust Project Developers. See the COPYRIGHT
 // file at the top-level directory of this distribution and at
 // http://rust-lang.org/COPYRIGHT.
 //
@@ -43,7 +43,7 @@ expanded_categories = {
     'Lu': ['LC', 'L'], 'Ll': ['LC', 'L'], 'Lt': ['LC', 'L'],
     'Lm': ['L'], 'Lo': ['L'],
     'Mn': ['M'], 'Mc': ['M'], 'Me': ['M'],
-    'Nd': ['N'], 'Nl': ['N'], 'No': ['No'],
+    'Nd': ['N'], 'Nl': ['N'], 'No': ['N'],
     'Pc': ['P'], 'Pd': ['P'], 'Ps': ['P'], 'Pe': ['P'],
     'Pi': ['P'], 'Pf': ['P'], 'Po': ['P'],
     'Sm': ['S'], 'Sc': ['S'], 'Sk': ['S'], 'So': ['S'],
@@ -54,13 +54,21 @@ expanded_categories = {
 # these are the surrogate codepoints, which are not valid rust characters
 surrogate_codepoints = (0xd800, 0xdfff)
 
+UNICODE_VERSION = (12, 0, 0)
+
+UNICODE_VERSION_NUMBER = "%s.%s.%s" %UNICODE_VERSION
+
 def is_surrogate(n):
     return surrogate_codepoints[0] <= n <= surrogate_codepoints[1]
 
 def fetch(f):
     if not os.path.exists(os.path.basename(f)):
-        os.system("curl -O http://www.unicode.org/Public/UNIDATA/%s"
-                  % f)
+        if "emoji" in f:
+            os.system("curl -O https://www.unicode.org/Public/emoji/%s.%s/%s"
+                      % (UNICODE_VERSION[0], UNICODE_VERSION[1], f))
+        else:
+            os.system("curl -O http://www.unicode.org/Public/%s/ucd/%s"
+                      % (UNICODE_VERSION_NUMBER, f))
 
     if not os.path.exists(os.path.basename(f)):
         sys.stderr.write("cannot load %s" % f)
@@ -80,7 +88,7 @@ def load_gencats(f):
         if is_surrogate(cp):
             continue
         if range_start >= 0:
-            for i in xrange(range_start, cp):
+            for i in range(range_start, cp):
                 udict[i] = data;
             range_start = -1;
         if data[1].endswith(", First>"):
@@ -150,8 +158,8 @@ def format_table_content(f, content, indent):
 def load_properties(f, interestingprops):
     fetch(f)
     props = {}
-    re1 = re.compile("^ *([0-9A-F]+) *; *(\w+)")
-    re2 = re.compile("^ *([0-9A-F]+)\.\.([0-9A-F]+) *; *(\w+)")
+    re1 = re.compile(r"^ *([0-9A-F]+) *; *(\w+)")
+    re2 = re.compile(r"^ *([0-9A-F]+)\.\.([0-9A-F]+) *; *(\w+)")
 
     for line in fileinput.input(os.path.basename(f)):
         prop = None
@@ -262,7 +270,7 @@ def emit_break_module(f, break_table, break_cats, name):
     pub use self::%sCat::*;
 
     #[allow(non_camel_case_types)]
-    #[derive(Clone, Copy, PartialEq, Eq)]
+    #[derive(Clone, Copy, PartialEq, Eq, Debug)]
     pub enum %sCat {
 """ % (name, Name, Name))
 
@@ -305,18 +313,13 @@ if __name__ == "__main__":
     with open(r, "w") as rf:
         # write the file's preamble
         rf.write(preamble)
-
-        # download and parse all the data
-        fetch("ReadMe.txt")
-        with open("ReadMe.txt") as readme:
-            pattern = "for Version (\d+)\.(\d+)\.(\d+) of the Unicode"
-            unicode_version = re.search(pattern, readme.read()).groups()
         rf.write("""
 /// The version of [Unicode](http://www.unicode.org/)
 /// that this version of unicode-segmentation is based on.
 pub const UNICODE_VERSION: (u64, u64, u64) = (%s, %s, %s);
-""" % unicode_version)
+""" % UNICODE_VERSION)
 
+        # download and parse all the data
         gencats = load_gencats("UnicodeData.txt")
         derived = load_properties("DerivedCoreProperties.txt", ["Alphabetic"])
 
@@ -330,27 +333,26 @@ pub const UNICODE_VERSION: (u64, u64, u64) = (%s, %s, %s);
         grapheme_cats = load_properties("auxiliary/GraphemeBreakProperty.txt", [])
 
         # Control
-        #  Note 1:
+        #  Note:
         # This category also includes Cs (surrogate codepoints), but Rust's `char`s are
         # Unicode Scalar Values only, and surrogates are thus invalid `char`s.
         # Thus, we have to remove Cs from the Control category
-        #  Note 2:
-        # 0x0a and 0x0d (CR and LF) are not in the Control category for Graphemes.
-        # However, the Graphemes iterator treats these as a special case, so they
-        # should be included in grapheme_cats["Control"] for our implementation.
         grapheme_cats["Control"] = group_cat(list(
-            (set(ungroup_cat(grapheme_cats["Control"]))
-             | set(ungroup_cat(grapheme_cats["CR"]))
-             | set(ungroup_cat(grapheme_cats["LF"])))
+            set(ungroup_cat(grapheme_cats["Control"]))
             - set(ungroup_cat([surrogate_codepoints]))))
-        del(grapheme_cats["CR"])
-        del(grapheme_cats["LF"])
 
         grapheme_table = []
         for cat in grapheme_cats:
             grapheme_table.extend([(x, y, cat) for (x, y) in grapheme_cats[cat]])
+        emoji_props = load_properties("emoji-data.txt", ["Extended_Pictographic"])
+        grapheme_table.extend([(x, y, "Extended_Pictographic") for (x, y) in emoji_props["Extended_Pictographic"]])
         grapheme_table.sort(key=lambda w: w[0])
-        emit_break_module(rf, grapheme_table, grapheme_cats.keys(), "grapheme")
+        last = -1
+        for chars in grapheme_table:
+            if chars[0] <= last:
+                raise "Grapheme tables and Extended_Pictographic values overlap; need to store these separately!"
+            last = chars[1]
+        emit_break_module(rf, grapheme_table, list(grapheme_cats.keys()) + ["Extended_Pictographic"], "grapheme")
         rf.write("\n")
 
         word_cats = load_properties("auxiliary/WordBreakProperty.txt", [])
@@ -358,4 +360,16 @@ pub const UNICODE_VERSION: (u64, u64, u64) = (%s, %s, %s);
         for cat in word_cats:
             word_table.extend([(x, y, cat) for (x, y) in word_cats[cat]])
         word_table.sort(key=lambda w: w[0])
-        emit_break_module(rf, word_table, word_cats.keys(), "word")
+        emit_break_module(rf, word_table, list(word_cats.keys()), "word")
+
+        # There are some emoji which are also ALetter, so this needs to be stored separately
+        # For efficiency, we could still merge the two tables and produce an ALetterEP state
+        emoji_table = [(x, y, "Extended_Pictographic") for (x, y) in emoji_props["Extended_Pictographic"]]
+        emit_break_module(rf, emoji_table, ["Extended_Pictographic"], "emoji")
+
+        sentence_cats = load_properties("auxiliary/SentenceBreakProperty.txt", [])
+        sentence_table = []
+        for cat in sentence_cats:
+            sentence_table.extend([(x, y, cat) for (x, y) in sentence_cats[cat]])
+        sentence_table.sort(key=lambda w: w[0])
+        emit_break_module(rf, sentence_table, list(sentence_cats.keys()), "sentence")

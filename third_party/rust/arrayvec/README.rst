@@ -22,6 +22,16 @@ __ https://bluss.github.io/arrayvec
 Recent Changes (arrayvec)
 -------------------------
 
+- 0.3.25
+
+  - Fix future compat warning about raw pointer casts
+
+- 0.3.24
+
+  - Fix compilation on 16-bit targets. This means, the 65536 array size is not
+    included on these targets.
+  - Fix license files so that they are both included (was fixed in 0.4 before)
+
 - 0.3.23
 
   - Implement ``PartialOrd, Ord`` as well as ``PartialOrd<str>`` for

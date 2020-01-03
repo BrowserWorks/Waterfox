@@ -1,99 +1,49 @@
-/* Macros for taking apart, interpreting and processing file names.
+/* btest.c -- Filename header for libbacktrace library
+   Copyright (C) 2012-2018 Free Software Foundation, Inc.
+   Written by Ian Lance Taylor, Google.
 
-   These are here because some non-Posix (a.k.a. DOSish) systems have
-   drive letter brain-damage at the beginning of an absolute file name,
-   use forward- and back-slash in path names interchangeably, and
-   some of them have case-insensitive file names.
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met:
 
-   Copyright (C) 2000-2015 Free Software Foundation, Inc.
+    (1) Redistributions of source code must retain the above copyright
+    notice, this list of conditions and the following disclaimer.
 
-This file is part of BFD, the Binary File Descriptor library.
+    (2) Redistributions in binary form must reproduce the above copyright
+    notice, this list of conditions and the following disclaimer in
+    the documentation and/or other materials provided with the
+    distribution.
 
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
+    (3) The name of the author may not be used to
+    endorse or promote products derived from this software without
+    specific prior written permission.
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT,
+INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+POSSIBILITY OF SUCH DAMAGE.  */
 
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston, MA 02110-1301, USA.  */
+#ifndef GCC_VERSION
+# define GCC_VERSION (__GNUC__ * 1000 + __GNUC_MINOR__)
+#endif
 
-#ifndef FILENAMES_H
-#define FILENAMES_H
+#if (GCC_VERSION < 2007)
+# define __attribute__(x)
+#endif
 
-#include "hashtab.h" /* for hashval_t */
-
-#ifdef __cplusplus
-extern "C" {
+#ifndef ATTRIBUTE_UNUSED
+# define ATTRIBUTE_UNUSED __attribute__ ((__unused__))
 #endif
 
 #if defined(__MSDOS__) || defined(_WIN32) || defined(__OS2__) || defined (__CYGWIN__)
-#  ifndef HAVE_DOS_BASED_FILE_SYSTEM
-#    define HAVE_DOS_BASED_FILE_SYSTEM 1
-#  endif
-#  ifndef HAVE_CASE_INSENSITIVE_FILE_SYSTEM
-#    define HAVE_CASE_INSENSITIVE_FILE_SYSTEM 1
-#  endif
-#  define HAS_DRIVE_SPEC(f) HAS_DOS_DRIVE_SPEC (f)
-#  define IS_DIR_SEPARATOR(c) IS_DOS_DIR_SEPARATOR (c)
-#  define IS_ABSOLUTE_PATH(f) IS_DOS_ABSOLUTE_PATH (f)
-#else /* not DOSish */
-#  if defined(__APPLE__)
-#    ifndef HAVE_CASE_INSENSITIVE_FILE_SYSTEM
-#      define HAVE_CASE_INSENSITIVE_FILE_SYSTEM 1
-#    endif
-#  endif /* __APPLE__ */
-#  define HAS_DRIVE_SPEC(f) (0)
-#  define IS_DIR_SEPARATOR(c) IS_UNIX_DIR_SEPARATOR (c)
-#  define IS_ABSOLUTE_PATH(f) IS_UNIX_ABSOLUTE_PATH (f)
+# define IS_DIR_SEPARATOR(c) ((c) == '/' || (c) == '\\')
+#else
+# define IS_DIR_SEPARATOR(c) ((c) == '/')
 #endif
-
-#define IS_DIR_SEPARATOR_1(dos_based, c)				\
-  (((c) == '/')								\
-   || (((c) == '\\') && (dos_based)))
-
-#define HAS_DRIVE_SPEC_1(dos_based, f)			\
-  ((f)[0] && ((f)[1] == ':') && (dos_based))
-
-/* Remove the drive spec from F, assuming HAS_DRIVE_SPEC (f).
-   The result is a pointer to the remainder of F.  */
-#define STRIP_DRIVE_SPEC(f)	((f) + 2)
-
-#define IS_DOS_DIR_SEPARATOR(c) IS_DIR_SEPARATOR_1 (1, c)
-#define IS_DOS_ABSOLUTE_PATH(f) IS_ABSOLUTE_PATH_1 (1, f)
-#define HAS_DOS_DRIVE_SPEC(f) HAS_DRIVE_SPEC_1 (1, f)
-
-#define IS_UNIX_DIR_SEPARATOR(c) IS_DIR_SEPARATOR_1 (0, c)
-#define IS_UNIX_ABSOLUTE_PATH(f) IS_ABSOLUTE_PATH_1 (0, f)
-
-/* Note that when DOS_BASED is true, IS_ABSOLUTE_PATH accepts d:foo as
-   well, although it is only semi-absolute.  This is because the users
-   of IS_ABSOLUTE_PATH want to know whether to prepend the current
-   working directory to a file name, which should not be done with a
-   name like d:foo.  */
-#define IS_ABSOLUTE_PATH_1(dos_based, f)		 \
-  (IS_DIR_SEPARATOR_1 (dos_based, (f)[0])		 \
-   || HAS_DRIVE_SPEC_1 (dos_based, f))
-
-extern int filename_cmp (const char *s1, const char *s2);
-#define FILENAME_CMP(s1, s2)	filename_cmp(s1, s2)
-
-extern int filename_ncmp (const char *s1, const char *s2,
-			  size_t n);
-
-extern hashval_t filename_hash (const void *s);
-
-extern int filename_eq (const void *s1, const void *s2);
-
-extern int canonical_filename_eq (const char *a, const char *b);
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif /* FILENAMES_H */

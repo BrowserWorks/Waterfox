@@ -246,11 +246,11 @@ impl Regex {
     ///
     /// Here we name the capture groups, which we can access with the `name`
     /// method or the `Index` notation with a `&str`. Note that the named
-    /// capture groups are still accessible with `at` or the `Index` notation
+    /// capture groups are still accessible with `get` or the `Index` notation
     /// with a `usize`.
     ///
     /// The `0`th capture group is always unnamed, so it must always be
-    /// accessed with `at(0)` or `[0]`.
+    /// accessed with `get(0)` or `[0]`.
     pub fn captures<'t>(&self, text: &'t [u8]) -> Option<Captures<'t>> {
         let mut locs = self.locations();
         self.read_captures_at(&mut locs, text, 0).map(|_| Captures {
@@ -427,12 +427,23 @@ impl Regex {
     /// Note that using `$2` instead of `$first` or `$1` instead of `$last`
     /// would produce the same result. To write a literal `$` use `$$`.
     ///
-    /// If `$name` isn't a valid capture group (whether the name doesn't exist
-    /// or isn't a valid index), then it is replaced with the empty string.
+    /// Sometimes the replacement string requires use of curly braces to
+    /// delineate a capture group replacement and surrounding literal text.
+    /// For example, if we wanted to join two words together with an
+    /// underscore:
     ///
-    /// The longest possible name is used. e.g., `$1a` looks up the capture
-    /// group named `1a` and not the capture group at index `1`. To exert more
-    /// precise control over the name, use braces, e.g., `${1}a`.
+    /// ```rust
+    /// # extern crate regex; use regex::bytes::Regex;
+    /// # fn main() {
+    /// let re = Regex::new(r"(?P<first>\w+)\s+(?P<second>\w+)").unwrap();
+    /// let result = re.replace(b"deep fried", &b"${first}_$second"[..]);
+    /// assert_eq!(result, &b"deep_fried"[..]);
+    /// # }
+    /// ```
+    ///
+    /// Without the curly braces, the capture group name `first_` would be
+    /// used, and since it doesn't exist, it would be replaced with the empty
+    /// string.
     ///
     /// Finally, sometimes you just want to replace a literal string with no
     /// regard for capturing group expansion. This can be done by wrapping a
@@ -483,18 +494,19 @@ impl Regex {
         mut rep: R,
     ) -> Cow<'t, [u8]> {
         if let Some(rep) = rep.no_expansion() {
+            let mut it = self.find_iter(text).enumerate().peekable();
+            if it.peek().is_none() {
+                return Cow::Borrowed(text);
+            }
             let mut new = Vec::with_capacity(text.len());
             let mut last_match = 0;
-            for (i, m) in self.find_iter(text).enumerate() {
+            for (i, m) in it {
                 if limit > 0 && i >= limit {
                     break
                 }
                 new.extend_from_slice(&text[last_match..m.start()]);
                 new.extend_from_slice(&rep);
                 last_match = m.end();
-            }
-            if last_match == 0 {
-                return Cow::Borrowed(text);
             }
             new.extend_from_slice(&text[last_match..]);
             return Cow::Owned(new);
@@ -763,7 +775,7 @@ impl<'r> Iterator for CaptureNames<'r> {
 /// index corresponds to the next capture group in the regex. If a capture
 /// group is named, then the matched byte string is *also* available via the
 /// `name` method. (Note that the 0th capture is always unnamed and so must be
-/// accessed with the `at` method.)
+/// accessed with the `get` method.)
 ///
 /// Positions returned from a capture group are always byte indices.
 ///
@@ -778,6 +790,22 @@ impl<'t> Captures<'t> {
     /// Returns the match associated with the capture group at index `i`. If
     /// `i` does not correspond to a capture group, or if the capture group
     /// did not participate in the match, then `None` is returned.
+    ///
+    /// # Examples
+    ///
+    /// Get the text of the match with a default of an empty string if this
+    /// group didn't participate in the match:
+    ///
+    /// ```rust
+    /// # use regex::bytes::Regex;
+    /// let re = Regex::new(r"[a-z]+(?:([0-9]+)|([A-Z]+))").unwrap();
+    /// let caps = re.captures(b"abc123").unwrap();
+    ///
+    /// let text1 = caps.get(1).map_or(&b""[..], |m| m.as_bytes());
+    /// let text2 = caps.get(2).map_or(&b""[..], |m| m.as_bytes());
+    /// assert_eq!(text1, &b"123"[..]);
+    /// assert_eq!(text2, &b""[..]);
+    /// ```
     pub fn get(&self, i: usize) -> Option<Match<'t>> {
         self.locs.pos(i).map(|(s, e)| Match::new(self.text, s, e))
     }
@@ -800,8 +828,8 @@ impl<'t> Captures<'t> {
         }
     }
 
-    /// Expands all instances of `$name` in `text` to the corresponding capture
-    /// group `name`, and writes them to the `dst` buffer given.
+    /// Expands all instances of `$name` in `replacement` to the corresponding
+    /// capture group `name`, and writes them to the `dst` buffer given.
     ///
     /// `name` may be an integer corresponding to the index of the
     /// capture group (counted by order of opening parenthesis where `0` is the
@@ -862,7 +890,7 @@ impl<'c, 't> fmt::Debug for CapturesDebug<'c, 't> {
         let mut map = f.debug_map();
         for (slot, m) in self.0.locs.iter().enumerate() {
             let m = m.map(|(s, e)| escape_bytes(&self.0.text[s..e]));
-            if let Some(ref name) = slot_to_name.get(&slot) {
+            if let Some(name) = slot_to_name.get(&slot) {
                 map.entry(&name, &m);
             } else {
                 map.entry(&slot, &m);
@@ -878,7 +906,7 @@ impl<'c, 't> fmt::Debug for CapturesDebug<'c, 't> {
 ///
 /// The text can't outlive the `Captures` object if this method is
 /// used, because of how `Index` is defined (normally `a[i]` is part
-/// of `a` and can't outlive it); to do that, use `at()` instead.
+/// of `a` and can't outlive it); to do that, use `get()` instead.
 ///
 /// # Panics
 ///
@@ -962,6 +990,46 @@ pub trait Replacer {
     fn no_expansion<'r>(&'r mut self) -> Option<Cow<'r, [u8]>> {
         None
     }
+
+    /// Return a `Replacer` that borrows and wraps this `Replacer`.
+    ///
+    /// This is useful when you want to take a generic `Replacer` (which might
+    /// not be cloneable) and use it without consuming it, so it can be used
+    /// more than once.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use regex::bytes::{Regex, Replacer};
+    ///
+    /// fn replace_all_twice<R: Replacer>(
+    ///     re: Regex,
+    ///     src: &[u8],
+    ///     mut rep: R,
+    /// ) -> Vec<u8> {
+    ///     let dst = re.replace_all(src, rep.by_ref());
+    ///     let dst = re.replace_all(&dst, rep.by_ref());
+    ///     dst.into_owned()
+    /// }
+    /// ```
+    fn by_ref<'r>(&'r mut self) -> ReplacerRef<'r, Self> {
+        ReplacerRef(self)
+    }
+}
+
+/// By-reference adaptor for a `Replacer`
+///
+/// Returned by [`Replacer::by_ref`](trait.Replacer.html#method.by_ref).
+#[derive(Debug)]
+pub struct ReplacerRef<'a, R: ?Sized + 'a>(&'a mut R);
+
+impl<'a, R: Replacer + ?Sized + 'a> Replacer for ReplacerRef<'a, R> {
+    fn replace_append(&mut self, caps: &Captures, dst: &mut Vec<u8>) {
+        self.0.replace_append(caps, dst)
+    }
+    fn no_expansion<'r>(&'r mut self) -> Option<Cow<'r, [u8]>> {
+        self.0.no_expansion()
+    }
 }
 
 impl<'a> Replacer for &'a [u8] {
@@ -969,7 +1037,7 @@ impl<'a> Replacer for &'a [u8] {
         caps.expand(*self, dst);
     }
 
-    fn no_expansion<'r>(&'r mut self) -> Option<Cow<'r, [u8]>> {
+    fn no_expansion(&mut self) -> Option<Cow<[u8]>> {
         match memchr(b'$', *self) {
             Some(_) => None,
             None => Some(Cow::Borrowed(*self)),
@@ -983,7 +1051,7 @@ impl<F> Replacer for F where F: FnMut(&Captures) -> Vec<u8> {
     }
 }
 
-/// NoExpand indicates literal byte string replacement.
+/// `NoExpand` indicates literal byte string replacement.
 ///
 /// It can be used with `replace` and `replace_all` to do a literal byte string
 /// replacement without expanding `$name` to their corresponding capture
@@ -998,7 +1066,7 @@ impl<'t> Replacer for NoExpand<'t> {
         dst.extend_from_slice(self.0);
     }
 
-    fn no_expansion<'r>(&'r mut self) -> Option<Cow<'r, [u8]>> {
+    fn no_expansion(&mut self) -> Option<Cow<[u8]>> {
         Some(Cow::Borrowed(self.0))
     }
 }
