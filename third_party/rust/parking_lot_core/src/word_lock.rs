@@ -5,13 +5,13 @@
 // http://opensource.org/licenses/MIT>, at your option. This file may not be
 // copied, modified, or distributed except according to those terms.
 
-#[cfg(feature = "nightly")]
-use std::sync::atomic::{AtomicUsize, Ordering, fence};
-#[cfg(not(feature = "nightly"))]
-use stable::{AtomicUsize, Ordering, fence};
+use std::sync::atomic::{fence, AtomicUsize, Ordering};
 use std::ptr;
 use std::mem;
 use std::cell::Cell;
+use std::thread::LocalKey;
+#[cfg(not(feature = "nightly"))]
+use std::panic;
 use spinwait::SpinWait;
 use thread_parker::ThreadParker;
 
@@ -46,7 +46,32 @@ impl ThreadData {
     }
 }
 
-thread_local!(static THREAD_DATA: ThreadData = ThreadData::new());
+// Returns a ThreadData structure for the current thread
+unsafe fn get_thread_data(local: &mut Option<ThreadData>) -> &ThreadData {
+    // Try to read from thread-local storage, but return None if the TLS has
+    // already been destroyed.
+    #[cfg(feature = "nightly")]
+    fn try_get_tls(key: &'static LocalKey<ThreadData>) -> Option<*const ThreadData> {
+        key.try_with(|x| x as *const ThreadData).ok()
+    }
+    #[cfg(not(feature = "nightly"))]
+    fn try_get_tls(key: &'static LocalKey<ThreadData>) -> Option<*const ThreadData> {
+        panic::catch_unwind(|| key.with(|x| x as *const ThreadData)).ok()
+    }
+
+    // If ThreadData is expensive to construct, then we want to use a cached
+    // version in thread-local storage if possible.
+    if !cfg!(windows) && !cfg!(all(feature = "nightly", target_os = "linux")) {
+        thread_local!(static THREAD_DATA: ThreadData = ThreadData::new());
+        if let Some(tls) = try_get_tls(&THREAD_DATA) {
+            return &*tls;
+        }
+    }
+
+    // Otherwise just create a ThreadData on the stack
+    *local = Some(ThreadData::new());
+    local.as_ref().unwrap()
+}
 
 const LOCKED_BIT: usize = 1;
 const QUEUE_LOCKED_BIT: usize = 2;
@@ -61,14 +86,17 @@ pub struct WordLock {
 impl WordLock {
     #[inline]
     pub fn new() -> WordLock {
-        WordLock { state: AtomicUsize::new(0) }
+        WordLock {
+            state: AtomicUsize::new(0),
+        }
     }
 
     #[inline]
     pub unsafe fn lock(&self) {
         if self.state
             .compare_exchange_weak(0, LOCKED_BIT, Ordering::Acquire, Ordering::Relaxed)
-            .is_ok() {
+            .is_ok()
+        {
             return;
         }
         self.lock_slow();
@@ -91,11 +119,12 @@ impl WordLock {
         loop {
             // Grab the lock if it isn't locked, even if there is a queue on it
             if state & LOCKED_BIT == 0 {
-                match self.state
-                    .compare_exchange_weak(state,
-                                           state | LOCKED_BIT,
-                                           Ordering::Acquire,
-                                           Ordering::Relaxed) {
+                match self.state.compare_exchange_weak(
+                    state,
+                    state | LOCKED_BIT,
+                    Ordering::Acquire,
+                    Ordering::Relaxed,
+                ) {
                     Ok(_) => return,
                     Err(x) => state = x,
                 }
@@ -109,7 +138,8 @@ impl WordLock {
             }
 
             // Get our thread data and prepare it for parking
-            let thread_data = &*THREAD_DATA.with(|x| x as *const ThreadData);
+            let mut thread_data = None;
+            let thread_data = get_thread_data(&mut thread_data);
             assert!(mem::align_of_val(thread_data) > !QUEUE_MASK);
             thread_data.parker.prepare_park();
 
@@ -123,11 +153,12 @@ impl WordLock {
                 thread_data.prev.set(ptr::null());
                 thread_data.next.set(queue_head);
             }
-            if let Err(x) = self.state
-                .compare_exchange_weak(state,
-                                       (state & !QUEUE_MASK) | thread_data as *const _ as usize,
-                                       Ordering::Release,
-                                       Ordering::Relaxed) {
+            if let Err(x) = self.state.compare_exchange_weak(
+                state,
+                (state & !QUEUE_MASK) | thread_data as *const _ as usize,
+                Ordering::Release,
+                Ordering::Relaxed,
+            ) {
                 state = x;
                 continue;
             }
@@ -154,10 +185,12 @@ impl WordLock {
             }
 
             // Try to grab the queue lock
-            match self.state.compare_exchange_weak(state,
-                                                   state | QUEUE_LOCKED_BIT,
-                                                   Ordering::Acquire,
-                                                   Ordering::Relaxed) {
+            match self.state.compare_exchange_weak(
+                state,
+                state | QUEUE_LOCKED_BIT,
+                Ordering::Acquire,
+                Ordering::Relaxed,
+            ) {
                 Ok(_) => break,
                 Err(x) => state = x,
             }
@@ -189,10 +222,12 @@ impl WordLock {
             // thread now. Instead we let the next unlocker take care of waking
             // up a thread.
             if state & LOCKED_BIT != 0 {
-                match self.state.compare_exchange_weak(state,
-                                                       state & !QUEUE_LOCKED_BIT,
-                                                       Ordering::Release,
-                                                       Ordering::Relaxed) {
+                match self.state.compare_exchange_weak(
+                    state,
+                    state & !QUEUE_LOCKED_BIT,
+                    Ordering::Release,
+                    Ordering::Relaxed,
+                ) {
                     Ok(_) => return,
                     Err(x) => state = x,
                 }
@@ -206,10 +241,12 @@ impl WordLock {
             let new_tail = (*queue_tail).prev.get();
             if new_tail.is_null() {
                 loop {
-                    match self.state.compare_exchange_weak(state,
-                                                           state & LOCKED_BIT,
-                                                           Ordering::Release,
-                                                           Ordering::Relaxed) {
+                    match self.state.compare_exchange_weak(
+                        state,
+                        state & LOCKED_BIT,
+                        Ordering::Release,
+                        Ordering::Relaxed,
+                    ) {
                         Ok(_) => break,
                         Err(x) => state = x,
                     }

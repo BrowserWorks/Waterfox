@@ -171,7 +171,8 @@ impl Once {
     /// `call_once` to also panic.
     #[inline]
     pub fn call_once<F>(&self, f: F)
-        where F: FnOnce()
+    where
+        F: FnOnce(),
     {
         if self.0.load(Ordering::Acquire) == DONE_BIT {
             return;
@@ -192,15 +193,17 @@ impl Once {
     /// not).
     #[inline]
     pub fn call_once_force<F>(&self, f: F)
-        where F: FnOnce(OnceState)
+    where
+        F: FnOnce(OnceState),
     {
         if self.0.load(Ordering::Acquire) == DONE_BIT {
             return;
         }
 
         let mut f = Some(f);
-        self.call_once_slow(true,
-                            &mut |state| unsafe { f.take().unchecked_unwrap()(state) });
+        self.call_once_slow(true, &mut |state| unsafe {
+            f.take().unchecked_unwrap()(state)
+        });
     }
 
     // This is a non-generic function to reduce the monomorphization cost of
@@ -239,11 +242,12 @@ impl Once {
             // We also clear the poison bit since we are going to try running
             // the closure again.
             if state & LOCKED_BIT == 0 {
-                match self.0
-                    .compare_exchange_weak(state,
-                                           (state | LOCKED_BIT) & !POISON_BIT,
-                                           Ordering::Acquire,
-                                           Ordering::Relaxed) {
+                match self.0.compare_exchange_weak(
+                    state,
+                    (state | LOCKED_BIT) & !POISON_BIT,
+                    Ordering::Acquire,
+                    Ordering::Relaxed,
+                ) {
                     Ok(_) => break,
                     Err(x) => state = x,
                 }
@@ -258,10 +262,13 @@ impl Once {
 
             // Set the parked bit
             if state & PARKED_BIT == 0 {
-                if let Err(x) = self.0.compare_exchange_weak(state,
-                                                             state | PARKED_BIT,
-                                                             Ordering::Relaxed,
-                                                             Ordering::Relaxed) {
+                if let Err(x) = self.0.compare_exchange_weak(
+                    state,
+                    state | PARKED_BIT,
+                    Ordering::Relaxed,
+                    Ordering::Relaxed,
+                )
+                {
                     state = x;
                     continue;
                 }
@@ -274,12 +281,14 @@ impl Once {
                 let validate = || self.0.load(Ordering::Relaxed) == LOCKED_BIT | PARKED_BIT;
                 let before_sleep = || {};
                 let timed_out = |_, _| unreachable!();
-                parking_lot_core::park(addr,
-                                       validate,
-                                       before_sleep,
-                                       timed_out,
-                                       DEFAULT_PARK_TOKEN,
-                                       None);
+                parking_lot_core::park(
+                    addr,
+                    validate,
+                    before_sleep,
+                    timed_out,
+                    DEFAULT_PARK_TOKEN,
+                    None,
+                );
             }
 
             // Loop back and check if the done bit was set

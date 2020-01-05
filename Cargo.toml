@@ -1,0 +1,53 @@
+[workspace]
+
+# These are the "root" crates, which we build and test as top-level targets.
+# Their transitive dependencies and dev-dependencies are included automatically
+# and do not need to be listed here. Their external dependencies are vendored
+# into `third_party/rust` by `mach vendor rust`.
+members = [
+  "js/src",
+  "testing/geckodriver",
+  "toolkit/library/gtest/rust",
+  "toolkit/library/rust/",
+]
+
+# Excluded crates may be built as dependencies, but won't be considered members
+# of the workspace and their dev-dependencies won't be included.
+exclude = [
+  # Exclude third-party code vendored into mozilla-central.
+  "gfx/webrender",
+  "gfx/webrender_api",
+  "gfx/webrender_bindings",
+  "servo",
+  "third_party/rust",
+
+  # Excluded because these crates have their own Cargo workspaces so they can't
+  # be included in the top-level one.
+#   "media/audioipc",
+#   "media/cubeb-rs",
+
+  # Excluded because they are used only as dependencies, not top-level targets,
+  # so we don't need to vendor their dev-dependencies.
+#   "dom/webauthn/u2f-hid-rs",
+  "media/libstagefright/binding/mp4parse",
+  "media/libstagefright/binding/mp4parse_capi",
+  "media/libstagefright/binding/mp4parse_fallible",
+]
+
+# Explicitly specify what our profiles use.
+[profile.dev]
+opt-level = 1
+rpath = false
+lto = false
+debug-assertions = true
+codegen-units = 4
+panic = "abort"
+
+[profile.release]
+opt-level = 2
+rpath = false
+debug-assertions = false
+panic = "abort"
+
+[patch.crates-io]
+packed_simd = { git = "https://github.com/hsivonen/packed_simd", branch = "rust_1_32" }

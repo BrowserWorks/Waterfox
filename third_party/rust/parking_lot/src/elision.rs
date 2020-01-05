@@ -15,22 +15,26 @@ pub trait AtomicElisionExt {
     type IntType;
 
     // Perform a compare_exchange and start a transaction
-    fn elision_acquire(&self,
-                       current: Self::IntType,
-                       new: Self::IntType)
-                       -> Result<Self::IntType, Self::IntType>;
+    fn elision_acquire(
+        &self,
+        current: Self::IntType,
+        new: Self::IntType,
+    ) -> Result<Self::IntType, Self::IntType>;
     // Perform a compare_exchange and end a transaction
-    fn elision_release(&self,
-                       current: Self::IntType,
-                       new: Self::IntType)
-                       -> Result<Self::IntType, Self::IntType>;
+    fn elision_release(
+        &self,
+        current: Self::IntType,
+        new: Self::IntType,
+    ) -> Result<Self::IntType, Self::IntType>;
 }
 
 // Indicates whether the target architecture supports lock elision
 #[inline]
 pub fn have_elision() -> bool {
-    cfg!(all(feature = "nightly",
-             any(target_arch = "x86", target_arch = "x86_64")))
+    cfg!(all(
+        feature = "nightly",
+        any(target_arch = "x86", target_arch = "x86_64"),
+    ))
 }
 
 // This implementation is never actually called because it is guarded by

@@ -19,6 +19,7 @@ use num::{One, Zero};
 use std::ops::{Add, Mul, Sub, Div, Neg};
 use std::marker::PhantomData;
 use std::fmt;
+use num_traits::NumCast;
 
 define_matrix! {
     /// A 3d transform stored as a 4 by 4 matrix in row-major order in memory.
@@ -175,6 +176,18 @@ where T: Copy + Clone +
             self.m21, self.m22,
             self.m41, self.m42
         )
+    }
+
+    /// Check whether shapes on the XY plane with Z pointing towards the
+    /// screen transformed by this matrix would be facing back.
+    pub fn is_backface_visible(&self) -> bool {
+        // inverse().m33 < 0;
+        let det = self.determinant();
+        let m33 = self.m12 * self.m24 * self.m41 - self.m14 * self.m22 * self.m41 +
+                  self.m14 * self.m21 * self.m42 - self.m11 * self.m24 * self.m42 -
+                  self.m12 * self.m21 * self.m44 + self.m11 * self.m22 * self.m44;
+        let _0: T = Zero::zero();
+        (m33 * det) < _0
     }
 
     pub fn approx_eq(&self, other: &Self) -> bool {
@@ -370,7 +383,7 @@ where T: Copy + Clone +
     }
 
     /// Multiplies all of the transform's component by a scalar and returns the result.
-    #[must_use]
+    #[cfg_attr(feature = "unstable", must_use)]
     pub fn mul_s(&self, x: T) -> Self {
         TypedTransform3D::row_major(
             self.m11 * x, self.m12 * x, self.m13 * x, self.m14 * x,
@@ -457,13 +470,13 @@ where T: Copy + Clone +
     }
 
     /// Returns a transform with a translation applied before self's transformation.
-    #[must_use]
+    #[cfg_attr(feature = "unstable", must_use)]
     pub fn pre_translate(&self, v: TypedVector3D<T, Src>) -> Self {
         self.pre_mul(&TypedTransform3D::create_translation(v.x, v.y, v.z))
     }
 
     /// Returns a transform with a translation applied after self's transformation.
-    #[must_use]
+    #[cfg_attr(feature = "unstable", must_use)]
     pub fn post_translate(&self, v: TypedVector3D<T, Dst>) -> Self {
         self.post_mul(&TypedTransform3D::create_translation(v.x, v.y, v.z))
     }
@@ -480,7 +493,7 @@ where T: Copy + Clone +
     }
 
     /// Returns a transform with a scale applied before self's transformation.
-    #[must_use]
+    #[cfg_attr(feature = "unstable", must_use)]
     pub fn pre_scale(&self, x: T, y: T, z: T) -> Self {
         TypedTransform3D::row_major(
             self.m11 * x, self.m12,     self.m13,     self.m14,
@@ -491,7 +504,7 @@ where T: Copy + Clone +
     }
 
     /// Returns a transform with a scale applied after self's transformation.
-    #[must_use]
+    #[cfg_attr(feature = "unstable", must_use)]
     pub fn post_scale(&self, x: T, y: T, z: T) -> Self {
         self.post_mul(&TypedTransform3D::create_scale(x, y, z))
     }
@@ -534,13 +547,13 @@ where T: Copy + Clone +
     }
 
     /// Returns a transform with a rotation applied after self's transformation.
-    #[must_use]
+    #[cfg_attr(feature = "unstable", must_use)]
     pub fn post_rotate(&self, x: T, y: T, z: T, theta: Radians<T>) -> Self {
         self.post_mul(&TypedTransform3D::create_rotation(x, y, z, theta))
     }
 
     /// Returns a transform with a rotation applied before self's transformation.
-    #[must_use]
+    #[cfg_attr(feature = "unstable", must_use)]
     pub fn pre_rotate(&self, x: T, y: T, z: T, theta: Radians<T>) -> Self {
         self.pre_mul(&TypedTransform3D::create_rotation(x, y, z, theta))
     }
@@ -640,6 +653,31 @@ impl<T: Copy, Src, Dst> TypedTransform3D<T, Src, Dst> {
     }
 }
 
+impl<T0: NumCast + Copy, Src, Dst> TypedTransform3D<T0, Src, Dst> {
+    /// Cast from one numeric representation to another, preserving the units.
+    pub fn cast<T1: NumCast + Copy>(&self) -> Option<TypedTransform3D<T1, Src, Dst>> {
+        match (NumCast::from(self.m11), NumCast::from(self.m12),
+               NumCast::from(self.m13), NumCast::from(self.m14),
+               NumCast::from(self.m21), NumCast::from(self.m22),
+               NumCast::from(self.m23), NumCast::from(self.m24),
+               NumCast::from(self.m31), NumCast::from(self.m32),
+               NumCast::from(self.m33), NumCast::from(self.m34),
+               NumCast::from(self.m41), NumCast::from(self.m42),
+               NumCast::from(self.m43), NumCast::from(self.m44)) {
+            (Some(m11), Some(m12), Some(m13), Some(m14),
+             Some(m21), Some(m22), Some(m23), Some(m24),
+             Some(m31), Some(m32), Some(m33), Some(m34),
+             Some(m41), Some(m42), Some(m43), Some(m44)) => {
+                Some(TypedTransform3D::row_major(m11, m12, m13, m14,
+                                                 m21, m22, m23, m24,
+                                                 m31, m32, m33, m34,
+                                                 m41, m42, m43, m44))
+            },
+            _ => None
+        }
+    }
+}
+
 impl<T, Src, Dst> fmt::Debug for TypedTransform3D<T, Src, Dst>
 where T: Copy + fmt::Debug +
          PartialEq +
@@ -661,7 +699,7 @@ mod tests {
     use Radians;
     use super::*;
 
-    use std::f32::consts::FRAC_PI_2;
+    use std::f32::consts::{FRAC_PI_2, PI};
 
     type Mf32 = Transform3D<f32>;
 
@@ -884,5 +922,24 @@ mod tests {
         let v2 = vec2(10.0, -5.0);
         assert_eq!(v2, m.transform_vector2d(&v2));
         assert!(v2.to_point() != m.transform_point2d(&v2.to_point()));
+    }
+
+    #[test]
+    pub fn test_is_backface_visible() {
+        // backface is not visible for rotate-x 0 degree.
+        let r1 = Mf32::create_rotation(1.0, 0.0, 0.0, rad(0.0));
+        assert!(!r1.is_backface_visible());
+        // backface is not visible for rotate-x 45 degree.
+        let r1 = Mf32::create_rotation(1.0, 0.0, 0.0, rad(PI * 0.25));
+        assert!(!r1.is_backface_visible());
+        // backface is visible for rotate-x 180 degree.
+        let r1 = Mf32::create_rotation(1.0, 0.0, 0.0, rad(PI));
+        assert!(r1.is_backface_visible());
+        // backface is visible for rotate-x 225 degree.
+        let r1 = Mf32::create_rotation(1.0, 0.0, 0.0, rad(PI * 1.25));
+        assert!(r1.is_backface_visible());
+        // backface is not visible for non-inverseable matrix
+        let r1 = Mf32::create_scale(2.0, 0.0, 2.0);
+        assert!(!r1.is_backface_visible());
     }
 }

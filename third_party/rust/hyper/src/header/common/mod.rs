@@ -57,6 +57,7 @@ pub use self::transfer_encoding::TransferEncoding;
 pub use self::upgrade::{Upgrade, Protocol, ProtocolName};
 pub use self::user_agent::UserAgent;
 pub use self::vary::Vary;
+pub use self::link::{Link, LinkValue, RelationType, MediaDesc};
 
 #[doc(hidden)]
 #[macro_export]
@@ -136,6 +137,7 @@ macro_rules! test_header {
     ($id:ident, $raw:expr) => {
         #[test]
         fn $id() {
+            #[allow(unused_imports)]
             use std::ascii::AsciiExt;
             let raw = $raw;
             let a: Vec<Vec<u8>> = raw.iter().map(|x| x.to_vec()).collect();
@@ -391,3 +393,4 @@ mod transfer_encoding;
 mod upgrade;
 mod user_agent;
 mod vary;
+mod link;

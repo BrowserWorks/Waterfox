@@ -252,6 +252,7 @@ impl BitVec<u32> {
     /// use bit_vec::BitVec;
     /// let mut bv = BitVec::new();
     /// ```
+    #[inline]
     pub fn new() -> Self {
         Default::default()
     }
@@ -270,6 +271,7 @@ impl BitVec<u32> {
     ///     assert_eq!(x, false);
     /// }
     /// ```
+    #[inline]
     pub fn from_elem(nbits: usize, bit: bool) -> Self {
         let nblocks = blocks_for_bits::<B>(nbits);
         let mut bit_vec = BitVec {
@@ -287,6 +289,7 @@ impl BitVec<u32> {
     ///
     /// It is important to note that this function does not specify the
     /// *length* of the returned bitvector, but only the *capacity*.
+    #[inline]
     pub fn with_capacity(nbits: usize) -> Self {
         BitVec {
             storage: Vec::with_capacity(blocks_for_bits::<B>(nbits)),
@@ -349,6 +352,7 @@ impl BitVec<u32> {
     /// let bv = BitVec::from_fn(5, |i| { i % 2 == 0 });
     /// assert!(bv.eq_vec(&[true, false, true, false, true]));
     /// ```
+    #[inline]
     pub fn from_fn<F>(len: usize, mut f: F) -> Self
         where F: FnMut(usize) -> bool
     {
@@ -380,12 +384,14 @@ impl<B: BitBlock> BitVec<B> {
     }
 
     /// Iterator over mutable refs to  the underlying blocks of data.
+    #[inline]
     fn blocks_mut(&mut self) -> MutBlocks<B> {
         // (2)
         self.storage.iter_mut()
     }
 
     /// Iterator over the underlying blocks of data
+    #[inline]
     pub fn blocks(&self) -> Blocks<B> {
         // (2)
         Blocks{iter: self.storage.iter()}
@@ -394,6 +400,7 @@ impl<B: BitBlock> BitVec<B> {
     /// Exposes the raw block storage of this BitVec
     ///
     /// Only really intended for BitSet.
+    #[inline]
     pub fn storage(&self) -> &[B] {
     	&self.storage
     }
@@ -401,6 +408,7 @@ impl<B: BitBlock> BitVec<B> {
     /// Exposes the raw block storage of this BitVec
     ///
     /// Can probably cause unsafety. Only really intended for BitSet.
+    #[inline]
     pub unsafe fn storage_mut(&mut self) -> &mut Vec<B> {
     	&mut self.storage
     }
@@ -621,6 +629,7 @@ impl<B: BitBlock> BitVec<B> {
     /// bv.set(1, false);
     /// assert_eq!(bv.all(), false);
     /// ```
+    #[inline]
     pub fn all(&self) -> bool {
         let mut last_word = !B::zero();
         // Check that every block but the last is all-ones...
@@ -765,6 +774,7 @@ impl<B: BitBlock> BitVec<B> {
     /// bv.set(3, true);
     /// assert_eq!(bv.none(), false);
     /// ```
+    #[inline]
     pub fn none(&self) -> bool {
         self.blocks().all(|w| w == B::zero())
     }
@@ -850,6 +860,7 @@ impl<B: BitBlock> BitVec<B> {
     /// assert!(bv.eq_vec(&[true, false, true, false,
     ///                     false, false, false, false]));
     /// ```
+    #[inline]
     pub fn eq_vec(&self, v: &[bool]) -> bool {
         assert_eq!(self.nbits, v.len());
         self.iter().zip(v.iter().cloned()).all(|(b1, b2)| b1 == b2)
@@ -869,6 +880,7 @@ impl<B: BitBlock> BitVec<B> {
     /// bv.truncate(2);
     /// assert!(bv.eq_vec(&[false, true]));
     /// ```
+    #[inline]
     pub fn truncate(&mut self, len: usize) {
         if len < self.len() {
             self.nbits = len;
@@ -895,6 +907,7 @@ impl<B: BitBlock> BitVec<B> {
     /// assert_eq!(bv.len(), 3);
     /// assert!(bv.capacity() >= 13);
     /// ```
+    #[inline]
     pub fn reserve(&mut self, additional: usize) {
         let desired_cap = self.len().checked_add(additional).expect("capacity overflow");
         let storage_len = self.storage.len();
@@ -924,6 +937,7 @@ impl<B: BitBlock> BitVec<B> {
     /// assert_eq!(bv.len(), 3);
     /// assert!(bv.capacity() >= 13);
     /// ```
+    #[inline]
     pub fn reserve_exact(&mut self, additional: usize) {
         let desired_cap = self.len().checked_add(additional).expect("capacity overflow");
         let storage_len = self.storage.len();
@@ -1016,6 +1030,7 @@ impl<B: BitBlock> BitVec<B> {
     /// assert_eq!(bv.pop(), Some(false));
     /// assert_eq!(bv.len(), 6);
     /// ```
+    #[inline]
     pub fn pop(&mut self) -> Option<bool> {
         if self.is_empty() {
             None
@@ -1045,6 +1060,7 @@ impl<B: BitBlock> BitVec<B> {
     /// bv.push(false);
     /// assert!(bv.eq_vec(&[true, false]));
     /// ```
+    #[inline]
     pub fn push(&mut self, elem: bool) {
         if self.nbits % B::bits() == 0 {
             self.storage.push(B::zero());
@@ -1061,6 +1077,7 @@ impl<B: BitBlock> BitVec<B> {
     /// Sets the number of bits that this BitVec considers initialized.
     ///
     /// Almost certainly can cause bad stuff. Only really intended for BitSet.
+    #[inline]
     pub unsafe fn set_len(&mut self, len: usize) {
     	self.nbits = len;
     }
@@ -1082,6 +1099,7 @@ impl<B: BitBlock> Default for BitVec<B> {
 }
 
 impl<B: BitBlock> FromIterator<bool> for BitVec<B> {
+    #[inline]
     fn from_iter<I: IntoIterator<Item=bool>>(iter: I) -> Self {
         let mut ret: Self = Default::default();
         ret.extend(iter);
@@ -1150,6 +1168,7 @@ impl<B: BitBlock> fmt::Debug for BitVec<B> {
 }
 
 impl<B: BitBlock> hash::Hash for BitVec<B> {
+    #[inline]
     fn hash<H: hash::Hasher>(&self, state: &mut H) {
         self.nbits.hash(state);
         for elem in self.blocks() {
@@ -1206,6 +1225,7 @@ impl<'a, B: BitBlock> IntoIterator for &'a BitVec<B> {
     type Item = bool;
     type IntoIter = Iter<'a, B>;
 
+    #[inline]
     fn into_iter(self) -> Iter<'a, B> {
         self.iter()
     }
@@ -1239,6 +1259,7 @@ impl<B: BitBlock> IntoIterator for BitVec<B> {
     type Item = bool;
     type IntoIter = IntoIter<B>;
 
+    #[inline]
     fn into_iter(self) -> IntoIter<B> {
         let nbits = self.nbits;
         IntoIter { bit_vec: self, range: 0..nbits }
@@ -1259,6 +1280,7 @@ impl<'a, B: BitBlock> Iterator for Blocks<'a, B> {
         self.iter.next().cloned()
     }
 
+    #[inline]
     fn size_hint(&self) -> (usize, Option<usize>) {
         self.iter.size_hint()
     }

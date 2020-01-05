@@ -1,13 +1,32 @@
 # Change Log
 This project attempts to adhere to [Semantic Versioning](http://semver.org).
 
+## [Unreleased]
+
+## [0.8.0] - (2018-08-19)
+### Added
+- Normalized versions of Levenshtein and Damerau-Levenshtein (thanks [@gentoid](https://github.com/gentoid))
+
+## [0.7.0] - (2018-01-17)
+### Changed
+- Faster Levenshtein implementation (thanks [@wdv4758h](https://github.com/wdv4758h))
+
+### Removed
+- Remove the "against_vec" functions. They are one-liners now, so they don't
+  seem to add enough value to justify making the API larger. I didn't find
+  anybody using them when I skimmed through a GitHub search. If you do use them,
+  you can change the calls to something like:
+```rust
+let distances = strings.iter().map(|a| jaro(target, a)).collect();
+```
+
 ## [0.6.0] - (2016-12-26)
 ### Added
 - Add optimal string alignment distance
 
 ### Fixed
 - Fix Damerau-Levenshtein implementation (previous implementation was actually
-optimal string alignment; see this [Damerau-Levenshtein explanation])
+  optimal string alignment; see this [Damerau-Levenshtein explanation])
 
 ## [0.5.2] - (2016-11-21)
 ### Changed
@@ -19,12 +38,12 @@ optimal string alignment; see this [Damerau-Levenshtein explanation])
 
 ### Fixed
 - Fix panic when Jaro or Jaro-Winkler are given strings both with a length of
-one
+  one
 
 ## [0.5.0] - (2016-08-11)
 ### Changed
 - Make Hamming faster (thanks @IBUzPE9) when the two strings have the same
-length but slower when they have different lengths
+  length but slower when they have different lengths
 
 ## [0.4.1] - (2016-04-18)
 ### Added
@@ -75,13 +94,15 @@ vector of results (thanks @ovarene)
 
 ### Fixed
 - Limit Jaro-Winkler return value to a maximum of 1.0
-- Fix float comparsions in tests
+- Fix float comparisons in tests
 
 ## [0.1.0] - (2015-02-09)
 ### Added
 - Implement Hamming, Jaro, Jaro-Winkler, and Levenshtein
 
-[Unreleased]: https://github.com/dguo/strsim-rs/compare/0.6.0...HEAD
+[Unreleased]: https://github.com/dguo/strsim-rs/compare/0.8.0...HEAD
+[0.8.0]: https://github.com/dguo/strsim-rs/compare/0.7.0...0.8.0
+[0.7.0]: https://github.com/dguo/strsim-rs/compare/0.6.0...0.7.0
 [0.6.0]: https://github.com/dguo/strsim-rs/compare/0.5.2...0.6.0
 [0.5.2]: https://github.com/dguo/strsim-rs/compare/0.5.1...0.5.2
 [0.5.1]: https://github.com/dguo/strsim-rs/compare/0.5.0...0.5.1
@@ -100,4 +121,3 @@ vector of results (thanks @ovarene)
 [docs.rs]: https://docs.rs/strsim/
 [Damerau-Levenshtein explanation]:
 http://scarcitycomputing.blogspot.com/2013/04/damerau-levenshtein-edit-distance.html
-

@@ -149,6 +149,7 @@ fn write_struct<W>(registry: &Registry, dest: &mut W) -> io::Result<()>
         }
         try!(writeln!(dest, "pub {name}: FnPtr,", name = cmd.proto.ident));
     }
+    try!(writeln!(dest, "_priv: ()"));
 
     writeln!(dest, "}}")
 }
@@ -166,11 +167,11 @@ fn write_impl<W>(registry: &Registry, dest: &mut W) -> io::Result<()>
             /// let gl = Gl::load_with(|s| glfw.get_proc_address(s));
             /// ~~~
             #[allow(dead_code, unused_variables)]
-            pub fn load_with<F>(mut loadfn: F) -> {api} where F: FnMut(&str) -> *const __gl_imports::raw::c_void {{
+            pub fn load_with<F>(mut loadfn: F) -> {api} where F: FnMut(&'static str) -> *const __gl_imports::raw::c_void {{
                 #[inline(never)]
-                fn do_metaloadfn(loadfn: &mut FnMut(&str) -> *const __gl_imports::raw::c_void,
-                                 symbol: &str,
-                                 symbols: &[&str])
+                fn do_metaloadfn(loadfn: &mut FnMut(&'static str) -> *const __gl_imports::raw::c_void,
+                                 symbol: &'static str,
+                                 symbols: &[&'static str])
                                  -> *const __gl_imports::raw::c_void {{
                     let mut ptr = loadfn(symbol);
                     if ptr.is_null() {{
@@ -181,7 +182,7 @@ fn write_impl<W>(registry: &Registry, dest: &mut W) -> io::Result<()>
                     }}
                     ptr
                 }}
-                let mut metaloadfn = |symbol: &str, symbols: &[&str]| {{
+                let mut metaloadfn = |symbol: &'static str, symbols: &[&'static str]| {{
                     do_metaloadfn(&mut loadfn, symbol, symbols)
                 }};
                 {api} {{",
@@ -202,6 +203,8 @@ fn write_impl<W>(registry: &Registry, dest: &mut W) -> io::Result<()>
             },
         ))
     }
+
+    try!(writeln!(dest, "_priv: ()"));
 
     try!(writeln!(dest,
                   "}}

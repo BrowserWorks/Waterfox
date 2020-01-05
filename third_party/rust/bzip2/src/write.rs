@@ -42,7 +42,11 @@ impl<W: Write> BzEncoder<W> {
 
     fn dump(&mut self) -> io::Result<()> {
         while self.buf.len() > 0 {
-            let n = try!(self.obj.as_mut().unwrap().write(&self.buf));
+            let n = match self.obj.as_mut().unwrap().write(&self.buf) {
+                Ok(n) => n,
+                Err(ref err) if err.kind() == io::ErrorKind::Interrupted => continue,
+                Err(err) => return Err(err),
+            };
             self.buf.drain(..n);
         }
         Ok(())
@@ -198,7 +202,11 @@ impl<W: Write> BzDecoder<W> {
 
     fn dump(&mut self) -> io::Result<()> {
         while self.buf.len() > 0 {
-            let n = try!(self.obj.as_mut().unwrap().write(&self.buf));
+            let n = match self.obj.as_mut().unwrap().write(&self.buf) {
+                Ok(n) => n,
+                Err(ref err) if err.kind() == io::ErrorKind::Interrupted => continue,
+                Err(err) => return Err(err),
+            };
             self.buf.drain(..n);
         }
         Ok(())
@@ -310,6 +318,7 @@ impl<W: Write> Drop for BzDecoder<W> {
 mod tests {
     use std::io::prelude::*;
     use std::iter::repeat;
+    use partial_io::{GenInterrupted, PartialWithErrors, PartialWrite};
     use super::{BzEncoder, BzDecoder};
 
     #[test]
@@ -343,6 +352,20 @@ mod tests {
             let mut w = BzEncoder::new(w, ::Compression::Default);
             w.write_all(&v).unwrap();
             v == w.finish().unwrap().finish().unwrap()
+        }
+    }
+
+    #[test]
+    fn qc_partial() {
+        ::quickcheck::quickcheck(test as fn(_, _, _) -> _);
+
+        fn test(v: Vec<u8>,
+                encode_ops: PartialWithErrors<GenInterrupted>,
+                decode_ops: PartialWithErrors<GenInterrupted>) -> bool {
+            let w = BzDecoder::new(PartialWrite::new(Vec::new(), decode_ops));
+            let mut w = BzEncoder::new(PartialWrite::new(w, encode_ops), ::Compression::Default);
+            w.write_all(&v).unwrap();
+            v == w.finish().unwrap().into_inner().finish().unwrap().into_inner()
         }
     }
 }

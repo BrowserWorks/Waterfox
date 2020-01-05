@@ -5,8 +5,13 @@ A Rust library for creating a temporary directory and deleting its entire
 contents when the directory is dropped.
 
 [![Build Status](https://travis-ci.org/rust-lang-nursery/tempdir.svg?branch=master)](https://travis-ci.org/rust-lang-nursery/tempdir)
+[![Build status](https://ci.appveyor.com/api/projects/status/2mp24396db5t4hul/branch/master?svg=true)](https://ci.appveyor.com/project/rust-lang-libs/tempdir/branch/master)
 
 [Documentation](https://doc.rust-lang.org/tempdir)
+
+## Deprecation Note
+
+The `tempdir` crate is being merged into [`tempfile`](https://github.com/Stebalien/tempfile). Please see [this issue](https://github.com/Stebalien/tempfile/issues/43) to track progress and direct new issues and pull requests to `tempfile`.
 
 ## Usage
 
@@ -34,16 +39,20 @@ This sample method does the following:
 5. Close the directory, deleting the contents in the process.
 
 ```rust
-fn write_temp_folder_with_files() -> Result<(), io::Error> {
-    if let Ok(dir) = TempDir::new("my_directory_prefix") {
-        let file_path = dir.path().join("foo.txt");
-        println!("{:?}", file_path);
+use std::io::{self, Write};
+use std::fs::File;
+use tempdir::TempDir;
 
-        let mut f = try!(File::create(file_path));
-        try!(f.write_all(b"Hello, world!"));
-        try!(f.sync_all());
-        try!(dir.close());
-    }
+fn write_temp_folder_with_files() -> io::Result<()> {
+    let dir = TempDir::new("my_directory_prefix")?;
+    let file_path = dir.path().join("foo.txt");
+    println!("{:?}", file_path);
+
+    let mut f = File::create(file_path)?;
+    f.write_all(b"Hello, world!")?;
+    f.sync_all()?;
+    dir.close()?;
+
     Ok(())
 }
 ```

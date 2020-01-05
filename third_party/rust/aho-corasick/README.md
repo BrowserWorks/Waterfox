@@ -17,7 +17,7 @@ Dual-licensed under MIT or the [UNLICENSE](http://unlicense.org).
 
 ### Documentation
 
-[http://burntsushi.net/rustdoc/aho_corasick/](http://burntsushi.net/rustdoc/aho_corasick/).
+[https://docs.rs/aho-corasick/](https://docs.rs/aho-corasick/).
 
 
 ### Example
@@ -52,4 +52,4 @@ Aho-Corasick is useful for matching multiple substrings against many long
 strings. If your long string is fixed, then you might consider building a
 [suffix array](https://github.com/BurntSushi/suffix)
 of the search text (which takes `O(n)` time). Matches can then be found in
-`O(plogn)` time.
+`O(p log(n))` time.

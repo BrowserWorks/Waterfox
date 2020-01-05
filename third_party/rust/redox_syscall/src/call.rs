@@ -1,9 +1,15 @@
 use super::arch::*;
-use super::data::{Stat, StatVfs, TimeSpec};
+use super::data::{Map, SigAction, Stat, StatVfs, TimeSpec};
 use super::error::Result;
 use super::number::*;
 
-use core::mem;
+use core::{mem, ptr};
+
+// Signal restorer
+extern "C" fn restorer() -> ! {
+    sigreturn().unwrap();
+    unreachable!();
+}
 
 /// Set the end of the process's heap
 ///
@@ -30,15 +36,19 @@ pub unsafe fn brk(addr: usize) -> Result<usize> {
 ///
 /// * `EACCES` - permission is denied for one of the components of `path`, or `path`
 /// * `EFAULT` - `path` does not point to the process's addressible memory
-/// * `EIO` - an I/O error occured
+/// * `EIO` - an I/O error occurred
 /// * `ENOENT` - `path` does not exit
 /// * `ENOTDIR` - `path` is not a directory
-pub fn chdir(path: &str) -> Result<usize> {
-    unsafe { syscall2(SYS_CHDIR, path.as_ptr() as usize, path.len()) }
+pub fn chdir<T: AsRef<[u8]>>(path: T) -> Result<usize> {
+    unsafe { syscall2(SYS_CHDIR, path.as_ref().as_ptr() as usize, path.as_ref().len()) }
 }
 
-pub fn chmod(path: &str, mode: usize) -> Result<usize> {
-    unsafe { syscall3(SYS_CHMOD, path.as_ptr() as usize, path.len(), mode) }
+#[deprecated(
+    since = "0.1.55",
+    note = "use fchmod instead"
+)]
+pub fn chmod<T: AsRef<[u8]>>(path: T, mode: usize) -> Result<usize> {
+    unsafe { syscall3(SYS_CHMOD, path.as_ref().as_ptr() as usize, path.as_ref().len(), mode) }
 }
 
 /// Produce a fork of the current process, or a new process thread
@@ -66,29 +76,36 @@ pub fn dup2(fd: usize, newfd: usize, buf: &[u8]) -> Result<usize> {
     unsafe { syscall4(SYS_DUP2, fd, newfd, buf.as_ptr() as usize, buf.len()) }
 }
 
-/// Replace the current process with a new executable
-pub fn execve(path: &str, args: &[[usize; 2]]) -> Result<usize> {
-    unsafe { syscall4(SYS_EXECVE, path.as_ptr() as usize, path.len(), args.as_ptr() as usize, args.len()) }
-}
-
 /// Exit the current process
 pub fn exit(status: usize) -> Result<usize> {
     unsafe { syscall1(SYS_EXIT, status) }
 }
 
-/// Register a file for event-based I/O
+/// Change file permissions
+pub fn fchmod(fd: usize, mode: u16) -> Result<usize> {
+    unsafe { syscall2(SYS_FCHMOD, fd, mode as usize) }
+
+}
+
+/// Change file ownership
+pub fn fchown(fd: usize, uid: u32, gid: u32) -> Result<usize> {
+    unsafe { syscall3(SYS_FCHOWN, fd, uid as usize, gid as usize) }
+
+}
+
+/// Change file descriptor flags
 pub fn fcntl(fd: usize, cmd: usize, arg: usize) -> Result<usize> {
     unsafe { syscall3(SYS_FCNTL, fd, cmd, arg) }
 }
 
-/// Register a file for event-based I/O
-pub fn fevent(fd: usize, flags: usize) -> Result<usize> {
-    unsafe { syscall2(SYS_FEVENT, fd, flags) }
+/// Replace the current process with a new executable
+pub fn fexec(fd: usize, args: &[[usize; 2]], vars: &[[usize; 2]]) -> Result<usize> {
+    unsafe { syscall5(SYS_FEXEC, fd, args.as_ptr() as usize, args.len(), vars.as_ptr() as usize, vars.len()) }
 }
 
 /// Map a file into memory
-pub unsafe fn fmap(fd: usize, offset: usize, size: usize) -> Result<usize> {
-    syscall3(SYS_FMAP, fd, offset, size)
+pub unsafe fn fmap(fd: usize, map: &Map) -> Result<usize> {
+    syscall3(SYS_FMAP, fd, map as *const Map as usize, mem::size_of::<Map>())
 }
 
 /// Unmap a memory-mapped file
@@ -99,6 +116,11 @@ pub unsafe fn funmap(addr: usize) -> Result<usize> {
 /// Retrieve the canonical path of a file
 pub fn fpath(fd: usize, buf: &mut [u8]) -> Result<usize> {
     unsafe { syscall3(SYS_FPATH, fd, buf.as_mut_ptr() as usize, buf.len()) }
+}
+
+/// Rename a file
+pub fn frename<T: AsRef<[u8]>>(fd: usize, path: T) -> Result<usize> {
+    unsafe { syscall3(SYS_FRENAME, fd, path.as_ref().as_ptr() as usize, path.as_ref().len()) }
 }
 
 /// Get metadata about a file
@@ -121,8 +143,14 @@ pub fn ftruncate(fd: usize, len: usize) -> Result<usize> {
     unsafe { syscall2(SYS_FTRUNCATE, fd, len) }
 }
 
-/// Fast userspace mutex - TODO: Document
-pub unsafe fn futex(addr: *mut i32, op: usize, val: i32, val2: usize, addr2: *mut i32) -> Result<usize> {
+// Change modify and/or access times
+pub fn futimens(fd: usize, times: &[TimeSpec]) -> Result<usize> {
+    unsafe { syscall3(SYS_FUTIMENS, fd, times.as_ptr() as usize, times.len() * mem::size_of::<TimeSpec>()) }
+}
+
+/// Fast userspace mutex
+pub unsafe fn futex(addr: *mut i32, op: usize, val: i32, val2: usize, addr2: *mut i32)
+                    -> Result<usize> {
     syscall5(SYS_FUTEX, addr as usize, op, (val as isize) as usize, val2, addr2 as usize)
 }
 
@@ -161,12 +189,27 @@ pub fn getpid() -> Result<usize> {
     unsafe { syscall0(SYS_GETPID) }
 }
 
+/// Get the process group ID
+pub fn getpgid(pid: usize) -> Result<usize> {
+    unsafe { syscall1(SYS_GETPGID, pid) }
+}
+
+/// Get the parent process ID
+pub fn getppid() -> Result<usize> {
+    unsafe { syscall0(SYS_GETPPID) }
+}
+
 /// Get the current user ID
 pub fn getuid() -> Result<usize> {
     unsafe { syscall0(SYS_GETUID) }
 }
 
 /// Set the I/O privilege level
+///
+/// # Errors
+///
+/// * `EPERM` - `uid != 0`
+/// * `EINVAL` - `level > 3`
 pub unsafe fn iopl(level: usize) -> Result<usize> {
     syscall1(SYS_IOPL, level)
 }
@@ -191,32 +234,56 @@ pub fn mkns(schemes: &[[usize; 2]]) -> Result<usize> {
     unsafe { syscall2(SYS_MKNS, schemes.as_ptr() as usize, schemes.len()) }
 }
 
+/// Change mapping flags
+pub unsafe fn mprotect(addr: usize, size: usize, flags: usize) -> Result<usize> {
+    syscall3(SYS_MPROTECT, addr, size, flags)
+}
+
 /// Sleep for the time specified in `req`
 pub fn nanosleep(req: &TimeSpec, rem: &mut TimeSpec) -> Result<usize> {
-    unsafe { syscall2(SYS_NANOSLEEP, req as *const TimeSpec as usize, rem as *mut TimeSpec as usize) }
+    unsafe { syscall2(SYS_NANOSLEEP, req as *const TimeSpec as usize,
+                                     rem as *mut TimeSpec as usize) }
 }
 
 /// Open a file
-pub fn open(path: &str, flags: usize) -> Result<usize> {
-    unsafe { syscall3(SYS_OPEN, path.as_ptr() as usize, path.len(), flags) }
+pub fn open<T: AsRef<[u8]>>(path: T, flags: usize) -> Result<usize> {
+    unsafe { syscall3(SYS_OPEN, path.as_ref().as_ptr() as usize, path.as_ref().len(), flags) }
 }
 
 /// Allocate pages, linearly in physical memory
+///
+/// # Errors
+///
+/// * `EPERM` - `uid != 0`
+/// * `ENOMEM` - the system has run out of available memory
 pub unsafe fn physalloc(size: usize) -> Result<usize> {
     syscall1(SYS_PHYSALLOC, size)
 }
 
 /// Free physically allocated pages
+///
+/// # Errors
+///
+/// * `EPERM` - `uid != 0`
 pub unsafe fn physfree(physical_address: usize, size: usize) -> Result<usize> {
     syscall2(SYS_PHYSFREE, physical_address, size)
 }
 
 /// Map physical memory to virtual memory
+///
+/// # Errors
+///
+/// * `EPERM` - `uid != 0`
 pub unsafe fn physmap(physical_address: usize, size: usize, flags: usize) -> Result<usize> {
     syscall3(SYS_PHYSMAP, physical_address, size, flags)
 }
 
 /// Unmap previously mapped physical memory
+///
+/// # Errors
+///
+/// * `EPERM` - `uid != 0`
+/// * `EFAULT` - `virtual_address` has not been mapped
 pub unsafe fn physunmap(virtual_address: usize) -> Result<usize> {
     syscall1(SYS_PHYSUNMAP, virtual_address)
 }
@@ -232,8 +299,13 @@ pub fn read(fd: usize, buf: &mut [u8]) -> Result<usize> {
 }
 
 /// Remove a directory
-pub fn rmdir(path: &str) -> Result<usize> {
-    unsafe { syscall2(SYS_RMDIR, path.as_ptr() as usize, path.len()) }
+pub fn rmdir<T: AsRef<[u8]>>(path: T) -> Result<usize> {
+    unsafe { syscall2(SYS_RMDIR, path.as_ref().as_ptr() as usize, path.as_ref().len()) }
+}
+
+/// Set the process group ID
+pub fn setpgid(pid: usize, pgid: usize) -> Result<usize> {
+    unsafe { syscall2(SYS_SETPGID, pid, pgid) }
 }
 
 /// Set the current process group IDs
@@ -251,12 +323,41 @@ pub fn setreuid(ruid: usize, euid: usize) -> Result<usize> {
     unsafe { syscall2(SYS_SETREUID, ruid, euid) }
 }
 
+/// Set up a signal handler
+pub fn sigaction(sig: usize, act: Option<&SigAction>, oldact: Option<&mut SigAction>) -> Result<usize> {
+    unsafe { syscall4(SYS_SIGACTION, sig,
+                      act.map(|x| x as *const _).unwrap_or_else(ptr::null) as usize,
+                      oldact.map(|x| x as *mut _).unwrap_or_else(ptr::null_mut) as usize,
+                      restorer as usize) }
+}
+
+/// Get and/or set signal masks
+pub fn sigprocmask(how: usize, set: Option<&[u64; 2]>, oldset: Option<&mut [u64; 2]>) -> Result<usize> {
+    unsafe { syscall3(SYS_SIGPROCMASK, how,
+                      set.map(|x| x as *const _).unwrap_or_else(ptr::null) as usize,
+                      oldset.map(|x| x as *mut _).unwrap_or_else(ptr::null_mut) as usize) }
+}
+
+// Return from signal handler
+pub fn sigreturn() -> Result<usize> {
+    unsafe { syscall0(SYS_SIGRETURN) }
+}
+
+/// Set the file mode creation mask
+pub fn umask(mask: usize) -> Result<usize> {
+    unsafe { syscall1(SYS_UMASK, mask) }
+}
+
 /// Remove a file
-pub fn unlink(path: &str) -> Result<usize> {
-    unsafe { syscall2(SYS_UNLINK, path.as_ptr() as usize, path.len()) }
+pub fn unlink<T: AsRef<[u8]>>(path: T) -> Result<usize> {
+    unsafe { syscall2(SYS_UNLINK, path.as_ref().as_ptr() as usize, path.as_ref().len()) }
 }
 
 /// Convert a virtual address to a physical one
+///
+/// # Errors
+///
+/// * `EPERM` - `uid != 0`
 pub unsafe fn virttophys(virtual_address: usize) -> Result<usize> {
     syscall1(SYS_VIRTTOPHYS, virtual_address)
 }
@@ -277,7 +378,7 @@ pub fn waitpid(pid: usize, status: &mut usize, options: usize) -> Result<usize> 
 /// * `EAGAIN` - the file descriptor was opened with `O_NONBLOCK` and writing would block
 /// * `EBADF` - the file descriptor is not valid or is not open for writing
 /// * `EFAULT` - `buf` does not point to the process's addressible memory
-/// * `EIO` - an I/O error occured
+/// * `EIO` - an I/O error occurred
 /// * `ENOSPC` - the device containing the file descriptor has no room for data
 /// * `EPIPE` - the file descriptor refers to a pipe or socket whose reading end is closed
 pub fn write(fd: usize, buf: &[u8]) -> Result<usize> {

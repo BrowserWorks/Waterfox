@@ -34,6 +34,10 @@ fn test_graphemes() {
         // family emoji (more than two emoji joined by ZWJ)
         ("\u{1f468}\u{200d}\u{1f467}\u{200d}\u{1f466}",
          &["\u{1f468}\u{200d}\u{1f467}\u{200d}\u{1f466}"]),
+        // cartwheel emoji followed by two fitzpatrick skin tone modifiers
+        // (test case from issue #19)
+        ("\u{1F938}\u{1F3FE}\u{1F3FE}",
+         &["\u{1F938}\u{1F3FE}\u{1F3FE}"]),
     ];
 
     for &(s, g) in TEST_SAME.iter().chain(EXTRA_SAME) {
@@ -134,6 +138,27 @@ fn test_words() {
         assert_!(s.split_word_bound_indices().rev().map(|(l,_)| l),
                  indices.iter().rev().cloned(),
                  "Reverse word indices");
+    }
+}
+
+
+#[test]
+fn test_sentences() {
+    use testdata::TEST_SENTENCE;
+
+    for &(s, w) in TEST_SENTENCE.iter() {
+        macro_rules! assert_ {
+            ($test:expr, $exp:expr, $name:expr) => {
+                // collect into vector for better diagnostics in failure case
+                let testing = $test.collect::<Vec<_>>();
+                let expected = $exp.collect::<Vec<_>>();
+                assert_eq!(testing, expected, "{} test for testcase ({:?}, {:?}) failed.", $name, s, w)
+            }
+        }
+
+        assert_!(s.split_sentence_bounds(),
+                w.iter().cloned(),
+                "Forward sentence boundaries");
     }
 }
 

@@ -5,100 +5,233 @@ Rust Quasi-Quoting
 [![Latest Version](https://img.shields.io/crates/v/quote.svg)](https://crates.io/crates/quote)
 [![Rust Documentation](https://img.shields.io/badge/api-rustdoc-blue.svg)](https://docs.rs/quote/)
 
-Quasi-quoting without a Syntex dependency, intended for use with [Macros
-1.1](https://github.com/rust-lang/rfcs/blob/master/text/1681-macros-1.1.md).
+This crate provides the [`quote!`] macro for turning Rust syntax tree data
+structures into tokens of source code.
+
+[`quote!`]: https://docs.rs/quote/1.0/quote/macro.quote.html
+
+Procedural macros in Rust receive a stream of tokens as input, execute arbitrary
+Rust code to determine how to manipulate those tokens, and produce a stream of
+tokens to hand back to the compiler to compile into the caller's crate.
+Quasi-quoting is a solution to one piece of that &mdash; producing tokens to
+return to the compiler.
+
+The idea of quasi-quoting is that we write *code* that we treat as *data*.
+Within the `quote!` macro, we can write what looks like code to our text editor
+or IDE. We get all the benefits of the editor's brace matching, syntax
+highlighting, indentation, and maybe autocompletion. But rather than compiling
+that as code into the current crate, we can treat it as data, pass it around,
+mutate it, and eventually hand it back to the compiler as tokens to compile into
+the macro caller's crate.
+
+This crate is motivated by the procedural macro use case, but is a
+general-purpose Rust quasi-quoting library and is not specific to procedural
+macros.
+
+*Version requirement: Quote supports any compiler version back to Rust's very
+first support for procedural macros in Rust 1.15.0.*
+
+[*Release notes*](https://github.com/dtolnay/quote/releases)
 
 ```toml
 [dependencies]
-quote = "0.3"
+quote = "1.0"
 ```
-
-```rust
-#[macro_use]
-extern crate quote;
-```
-
-## What is quasi-quoting?
-
-Quasi-quoting is a way of writing code and treating it as data, similar to
-writing code inside of a double-quoted string literal except more friendly to
-your text editor or IDE. It does not get in the way of syntax highlighting,
-brace matching, indentation, or autocompletion, all of which you would lose by
-writing code inside of double quotes.
-
-Check out
-[my meetup talk](https://air.mozilla.org/rust-meetup-december-2016-12-15/)
-on the topic to learn more about the use case. Start the video at 3:00.
-
-This crate is motivated by the Macros 1.1 use case, but is a general-purpose
-Rust quasi-quoting library and is not specific to procedural macros.
 
 ## Syntax
 
-The quote crate provides a `quote!` macro within which you can write Rust code
-that gets packaged into a `quote::Tokens` and can be treated as data. You should
-think of `quote::Tokens` as representing a fragment of Rust source code. Call
-`to_string()` or `as_str()` on a Tokens to get back the fragment of source code
-as a string.
+The quote crate provides a [`quote!`] macro within which you can write Rust code
+that gets packaged into a [`TokenStream`] and can be treated as data. You should
+think of `TokenStream` as representing a fragment of Rust source code.
+
+[`TokenStream`]: https://docs.rs/proc-macro2/1.0/proc_macro2/struct.TokenStream.html
 
 Within the `quote!` macro, interpolation is done with `#var`. Any type
-implementing the `quote::ToTokens` trait can be interpolated. This includes most
-Rust primitive types as well as most of the syntax tree types from
-[`syn`](https://github.com/dtolnay/syn).
+implementing the [`quote::ToTokens`] trait can be interpolated. This includes
+most Rust primitive types as well as most of the syntax tree types from [`syn`].
+
+[`quote::ToTokens`]: https://docs.rs/quote/1.0/quote/trait.ToTokens.html
+[`syn`]: https://github.com/dtolnay/syn
 
 ```rust
 let tokens = quote! {
     struct SerializeWith #generics #where_clause {
         value: &'a #field_ty,
-        phantom: ::std::marker::PhantomData<#item_ty>,
+        phantom: core::marker::PhantomData<#item_ty>,
     }
 
     impl #generics serde::Serialize for SerializeWith #generics #where_clause {
-        fn serialize<S>(&self, s: &mut S) -> Result<(), S::Error>
-            where S: serde::Serializer
+        fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+        where
+            S: serde::Serializer,
         {
-            #path(self.value, s)
+            #path(self.value, serializer)
         }
     }
 
     SerializeWith {
         value: #value,
-        phantom: ::std::marker::PhantomData::<#item_ty>,
+        phantom: core::marker::PhantomData::<#item_ty>,
     }
 };
 ```
 
-Repetition is done using `#(...)*` or `#(...),*` very similar to `macro_rules!`:
+## Repetition
 
-- `#(#var)*` - no separators
-- `#(#var),*` - the character before the asterisk is used as a separator
-- `#( struct #var; )*` - the repetition can contain other things
-- `#( #k => println!("{}", #v), )*` - even multiple interpolations
+Repetition is done using `#(...)*` or `#(...),*` similar to `macro_rules!`. This
+iterates through the elements of any variable interpolated within the repetition
+and inserts a copy of the repetition body for each one. The variables in an
+interpolation may be anything that implements `IntoIterator`, including `Vec` or
+a pre-existing iterator.
 
-Tokens can be interpolated into other quotes:
+- `#(#var)*` — no separators
+- `#(#var),*` — the character before the asterisk is used as a separator
+- `#( struct #var; )*` — the repetition can contain other things
+- `#( #k => println!("{}", #v), )*` — even multiple interpolations
+
+Note that there is a difference between `#(#var ,)*` and `#(#var),*`—the latter
+does not produce a trailing comma. This matches the behavior of delimiters in
+`macro_rules!`.
+
+## Returning tokens to the compiler
+
+The `quote!` macro evaluates to an expression of type
+`proc_macro2::TokenStream`. Meanwhile Rust procedural macros are expected to
+return the type `proc_macro::TokenStream`.
+
+The difference between the two types is that `proc_macro` types are entirely
+specific to procedural macros and cannot ever exist in code outside of a
+procedural macro, while `proc_macro2` types may exist anywhere including tests
+and non-macro code like main.rs and build.rs. This is why even the procedural
+macro ecosystem is largely built around `proc_macro2`, because that ensures the
+libraries are unit testable and accessible in non-macro contexts.
+
+There is a [`From`]-conversion in both directions so returning the output of
+`quote!` from a procedural macro usually looks like `tokens.into()` or
+`proc_macro::TokenStream::from(tokens)`.
+
+[`From`]: https://doc.rust-lang.org/std/convert/trait.From.html
+
+## Examples
+
+### Combining quoted fragments
+
+Usually you don't end up constructing an entire final `TokenStream` in one
+piece. Different parts may come from different helper functions. The tokens
+produced by `quote!` themselves implement `ToTokens` and so can be interpolated
+into later `quote!` invocations to build up a final result.
 
 ```rust
-let t = quote! { /* ... */ };
-return quote! { /* ... */ #t /* ... */ };
+let type_definition = quote! {...};
+let methods = quote! {...};
+
+let tokens = quote! {
+    #type_definition
+    #methods
+};
 ```
 
-The `quote!` macro relies on deep recursion so some large invocations may fail
-with "recursion limit reached" when you compile. If it fails, bump up the
-recursion limit by adding `#![recursion_limit = "128"]` to your crate. An even
-higher limit may be necessary for especially large invocations. You don't need
-this unless the compiler tells you that you need it.
+### Constructing identifiers
 
-## License
+Suppose we have an identifier `ident` which came from somewhere in a macro
+input and we need to modify it in some way for the macro output. Let's consider
+prepending the identifier with an underscore.
 
-Licensed under either of
+Simply interpolating the identifier next to an underscore will not have the
+behavior of concatenating them. The underscore and the identifier will continue
+to be two separate tokens as if you had written `_ x`.
 
- * Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE) or http://www.apache.org/licenses/LICENSE-2.0)
- * MIT license ([LICENSE-MIT](LICENSE-MIT) or http://opensource.org/licenses/MIT)
+```rust
+// incorrect
+quote! {
+    let mut _#ident = 0;
+}
+```
 
-at your option.
+The solution is to build a new identifier token with the correct value. As this
+is such a common case, the `format_ident!` macro provides a convenient utility
+for doing so correctly.
 
-### Contribution
+```rust
+let varname = format_ident!("_{}", ident);
+quote! {
+    let mut #varname = 0;
+}
+```
 
+Alternatively, the APIs provided by Syn and proc-macro2 can be used to directly
+build the identifier. This is roughly equivalent to the above, but will not
+handle `ident` being a raw identifier.
+
+```rust
+let concatenated = format!("_{}", ident);
+let varname = syn::Ident::new(&concatenated, ident.span());
+quote! {
+    let mut #varname = 0;
+}
+```
+
+### Making method calls
+
+Let's say our macro requires some type specified in the macro input to have a
+constructor called `new`. We have the type in a variable called `field_type` of
+type `syn::Type` and want to invoke the constructor.
+
+```rust
+// incorrect
+quote! {
+    let value = #field_type::new();
+}
+```
+
+This works only sometimes. If `field_type` is `String`, the expanded code
+contains `String::new()` which is fine. But if `field_type` is something like
+`Vec<i32>` then the expanded code is `Vec<i32>::new()` which is invalid syntax.
+Ordinarily in handwritten Rust we would write `Vec::<i32>::new()` but for macros
+often the following is more convenient.
+
+```rust
+quote! {
+    let value = <#field_type>::new();
+}
+```
+
+This expands to `<Vec<i32>>::new()` which behaves correctly.
+
+A similar pattern is appropriate for trait methods.
+
+```rust
+quote! {
+    let value = <#field_type as core::default::Default>::default();
+}
+```
+
+## Hygiene
+
+Any interpolated tokens preserve the `Span` information provided by their
+`ToTokens` implementation. Tokens that originate within a `quote!` invocation
+are spanned with [`Span::call_site()`].
+
+[`Span::call_site()`]: https://docs.rs/proc-macro2/1.0/proc_macro2/struct.Span.html#method.call_site
+
+A different span can be provided explicitly through the [`quote_spanned!`]
+macro.
+
+[`quote_spanned!`]: https://docs.rs/quote/1.0/quote/macro.quote_spanned.html
+
+<br>
+
+#### License
+
+<sup>
+Licensed under either of <a href="LICENSE-APACHE">Apache License, Version
+2.0</a> or <a href="LICENSE-MIT">MIT license</a> at your option.
+</sup>
+
+<br>
+
+<sub>
 Unless you explicitly state otherwise, any contribution intentionally submitted
 for inclusion in this crate by you, as defined in the Apache-2.0 license, shall
 be dual licensed as above, without any additional terms or conditions.
+</sub>

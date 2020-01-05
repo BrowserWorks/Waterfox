@@ -55,22 +55,24 @@ impl AtomicUsize {
         self.0.fetch_or(val, order)
     }
     #[inline]
-    pub fn compare_exchange(&self,
-                            old: usize,
-                            new: usize,
-                            order: Ordering,
-                            _: Ordering)
-                            -> Result<usize, usize> {
+    pub fn compare_exchange(
+        &self,
+        old: usize,
+        new: usize,
+        order: Ordering,
+        _: Ordering,
+    ) -> Result<usize, usize> {
         let res = self.0.compare_and_swap(old, new, order);
         if res == old { Ok(res) } else { Err(res) }
     }
     #[inline]
-    pub fn compare_exchange_weak(&self,
-                                 old: usize,
-                                 new: usize,
-                                 order: Ordering,
-                                 _: Ordering)
-                                 -> Result<usize, usize> {
+    pub fn compare_exchange_weak(
+        &self,
+        old: usize,
+        new: usize,
+        order: Ordering,
+        _: Ordering,
+    ) -> Result<usize, usize> {
         let res = self.0.compare_and_swap(old, new, order);
         if res == old { Ok(res) } else { Err(res) }
     }

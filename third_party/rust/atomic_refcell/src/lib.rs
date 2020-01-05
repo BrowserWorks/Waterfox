@@ -75,7 +75,7 @@ impl<T> AtomicRefCell<T> {
     #[inline]
     pub fn into_inner(self) -> T {
         debug_assert!(self.borrow.load(atomic::Ordering::Acquire) == 0);
-        unsafe { self.value.into_inner() }
+        self.value.into_inner()
     }
 }
 
@@ -83,18 +83,24 @@ impl<T: ?Sized> AtomicRefCell<T> {
     /// Immutably borrows the wrapped value.
     #[inline]
     pub fn borrow(&self) -> AtomicRef<T> {
+        // Note: make sure the panic-check here happens before the reference to the inner value
+        // gets created, to make sure this is not UB.
+        let borrow = AtomicBorrowRef::new(&self.borrow);
         AtomicRef {
             value: unsafe { &*self.value.get() },
-            borrow: AtomicBorrowRef::new(&self.borrow),
+            borrow,
         }
     }
 
     /// Mutably borrows the wrapped value.
     #[inline]
     pub fn borrow_mut(&self) -> AtomicRefMut<T> {
+        // Note: make sure the panic-check here happens before the reference to the inner value
+        // gets created, to make sure this is not UB.
+        let borrow = AtomicBorrowRefMut::new(&self.borrow);
         AtomicRefMut {
             value: unsafe { &mut *self.value.get() },
-            borrow: AtomicBorrowRefMut::new(&self.borrow),
+            borrow,
         }
     }
 
@@ -105,6 +111,16 @@ impl<T: ?Sized> AtomicRefCell<T> {
     #[inline]
     pub fn as_ptr(&self) -> *mut T {
         self.value.get()
+    }
+
+    /// Returns a mutable reference to the wrapped value.
+    ///
+    /// No runtime checks take place (unless debug assertions are enabled)
+    /// because this call borrows `AtomicRefCell` mutably at compile-time.
+    #[inline]
+    pub fn get_mut(&mut self) -> &mut T {
+        debug_assert!(self.borrow.load(atomic::Ordering::Acquire) == 0);
+        unsafe { &mut *self.value.get() }
     }
 }
 
@@ -296,6 +312,17 @@ impl<'b, T: ?Sized> AtomicRef<'b, T> {
             borrow: orig.borrow,
         }
     }
+
+    /// Make a new `AtomicRef` for an optional component of the borrowed data.
+    #[inline]
+    pub fn filter_map<U: ?Sized, F>(orig: AtomicRef<'b, T>, f: F) -> Option<AtomicRef<'b, U>>
+        where F: FnOnce(&T) -> Option<&U>
+    {
+        Some(AtomicRef {
+            value: f(orig.value)?,
+            borrow: orig.borrow,
+        })
+    }
 }
 
 impl<'b, T: ?Sized> AtomicRefMut<'b, T> {
@@ -309,6 +336,17 @@ impl<'b, T: ?Sized> AtomicRefMut<'b, T> {
             value: f(orig.value),
             borrow: orig.borrow,
         }
+    }
+
+    /// Make a new `AtomicRefMut` for an optional component of the borrowed data.
+    #[inline]
+    pub fn filter_map<U: ?Sized, F>(orig: AtomicRefMut<'b, T>, f: F) -> Option<AtomicRefMut<'b, U>>
+        where F: FnOnce(&mut T) -> Option<&mut U>
+    {
+        Some(AtomicRefMut {
+            value: f(orig.value)?,
+            borrow: orig.borrow,
+        })
     }
 }
 
@@ -343,5 +381,11 @@ impl<'b, T: ?Sized + Debug + 'b> Debug for AtomicRef<'b, T> {
 impl<'b, T: ?Sized + Debug + 'b> Debug for AtomicRefMut<'b, T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         self.value.fmt(f)
+    }
+}
+
+impl<T: ?Sized + Debug> Debug for AtomicRefCell<T> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "AtomicRefCell {{ ... }}")
     }
 }

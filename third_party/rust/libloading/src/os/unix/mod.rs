@@ -30,7 +30,7 @@ where F: FnOnce() -> Option<T> {
         // This code will only get executed if the `closure` returns `None`.
         let error = dlerror();
         if error.is_null() {
-            // In non-dlsym case this may happen when there’s bugs in our bindings or there’s
+            // In non-dlsym case this may happen when there’re bugs in our bindings or there’s
             // non-libloading user of libdl; possibly in another thread.
             None
         } else {
@@ -200,6 +200,20 @@ impl fmt::Debug for Library {
 pub struct Symbol<T> {
     pointer: *mut raw::c_void,
     pd: marker::PhantomData<T>
+}
+
+impl<T> Symbol<Option<T>> {
+    /// Lift Option out of the symbol.
+    pub fn lift_option(self) -> Option<Symbol<T>> {
+        if self.pointer.is_null() {
+            None
+        } else {
+            Some(Symbol {
+                pointer: self.pointer,
+                pd: marker::PhantomData,
+            })
+        }
+    }
 }
 
 unsafe impl<T: Send> Send for Symbol<T> {}

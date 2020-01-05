@@ -54,9 +54,9 @@ struct Hasher<S: Sip> {
     k0: u64,
     k1: u64,
     length: usize, // how many bytes we've processed
-    state: State, // hash State
-    tail: u64, // unprocessed bytes le
-    ntail: usize, // how many bytes in tail are valid
+    state: State,  // hash State
+    tail: u64,     // unprocessed bytes le
+    ntail: usize,  // how many bytes in tail are valid
     _marker: PhantomData<S>,
 }
 
@@ -91,7 +91,7 @@ macro_rules! compress {
 /// `copy_nonoverlapping` to let the compiler generate the most efficient way
 /// to load it from a possibly unaligned address.
 ///
-/// Unsafe because: unchecked indexing at i..i+size_of(int_ty)
+/// Unsafe because: unchecked indexing at `i..i+size_of(int_ty)`
 macro_rules! load_int_le {
     ($buf:expr, $i:expr, $int_ty:ident) =>
     ({
@@ -145,6 +145,11 @@ impl SipHasher {
     pub fn new_with_keys(key0: u64, key1: u64) -> SipHasher {
         SipHasher(SipHasher24::new_with_keys(key0, key1))
     }
+
+    /// Get the keys used by this hasher
+    pub fn keys(&self) -> (u64, u64) {
+        (self.0.hasher.k0, self.0.hasher.k1)
+    }
 }
 
 impl Hasher128 for SipHasher {
@@ -165,7 +170,14 @@ impl SipHasher13 {
     /// Creates a `SipHasher13` that is keyed off the provided keys.
     #[inline]
     pub fn new_with_keys(key0: u64, key1: u64) -> SipHasher13 {
-        SipHasher13 { hasher: Hasher::new_with_keys(key0, key1) }
+        SipHasher13 {
+            hasher: Hasher::new_with_keys(key0, key1),
+        }
+    }
+
+    /// Get the keys used by this hasher
+    pub fn keys(&self) -> (u64, u64) {
+        (self.hasher.k0, self.hasher.k1)
     }
 }
 
@@ -187,7 +199,14 @@ impl SipHasher24 {
     /// Creates a `SipHasher24` that is keyed off the provided keys.
     #[inline]
     pub fn new_with_keys(key0: u64, key1: u64) -> SipHasher24 {
-        SipHasher24 { hasher: Hasher::new_with_keys(key0, key1) }
+        SipHasher24 {
+            hasher: Hasher::new_with_keys(key0, key1),
+        }
+    }
+
+    /// Get the keys used by this hasher
+    pub fn keys(&self) -> (u64, u64) {
+        (self.hasher.k0, self.hasher.k1)
     }
 }
 
@@ -346,7 +365,7 @@ impl<S: Sip> hash::Hasher for Hasher<S> {
 
         if self.ntail != 0 {
             needed = 8 - self.ntail;
-            self.tail |= unsafe { u8to64_le(msg, 0, cmp::min(length, needed)) } << 8 * self.ntail;
+            self.tail |= unsafe { u8to64_le(msg, 0, cmp::min(length, needed)) } << (8 * self.ntail);
             if length < needed {
                 self.ntail += length;
                 return;
@@ -408,8 +427,8 @@ impl<S: Sip> Default for Hasher<S> {
 
 #[doc(hidden)]
 trait Sip {
-    fn c_rounds(&mut State);
-    fn d_rounds(&mut State);
+    fn c_rounds(_: &mut State);
+    fn d_rounds(_: &mut State);
 }
 
 #[derive(Debug, Clone, Copy, Default)]
@@ -450,7 +469,7 @@ impl Sip for Sip24Rounds {
 
 impl Hash128 {
     /// Convert into a 16-bytes vector
-    pub fn into_bytes(&self) -> [u8; 16] {
+    pub fn as_bytes(&self) -> [u8; 16] {
         let mut bytes = [0u8; 16];
         let h1 = self.h1.to_le();
         let h2 = self.h2.to_le();

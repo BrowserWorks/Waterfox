@@ -23,7 +23,7 @@ use alloc::boxed::Box;
 #[cfg(feature = "std")]
 use std::string::String;
 #[cfg(not(feature = "std"))]
-use collections::string::String;
+use alloc::string::String;
 
 use super::Record;
 
@@ -224,8 +224,6 @@ impl<'a> Serialize for fmt::Arguments<'a>{
         serializer.emit_arguments(key, self)
     }
 }
-
-impl SyncSerialize for fmt::Arguments<'static> {}
 
 impl SyncSerialize for &'static str {}
 

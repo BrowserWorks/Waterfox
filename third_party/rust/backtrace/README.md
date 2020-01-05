@@ -1,13 +1,11 @@
 # backtrace-rs
 
-[![Build Status](https://travis-ci.org/alexcrichton/backtrace-rs.svg?branch=master)](https://travis-ci.org/alexcrichton/backtrace-rs)
-[![Build status](https://ci.appveyor.com/api/projects/status/v4l9oj4aqbbgyx44?svg=true)](https://ci.appveyor.com/project/alexcrichton/backtrace-rs)
-
-[Documentation](http://alexcrichton.com/backtrace-rs)
+[Documentation](https://docs.rs/backtrace)
 
 A library for acquiring backtraces at runtime for Rust. This library aims to
-enhance the support given by the standard library at `std::rt` by providing a
-more stable and programmatic interface.
+enhance the support of the standard library by providing a programmatic
+interface to work with, but it also supports simply easily printing the current
+backtrace like libstd's panics.
 
 ## Install
 
@@ -16,12 +14,9 @@ more stable and programmatic interface.
 backtrace = "0.3"
 ```
 
-```rust
-extern crate backtrace;
-```
-
-Note that this crate requires `make`, `objcopy`, and `ar` to be present on Linux
-systems.
+Note that this crate requires `cc` and `ar` to be present on Unix systems when
+`libbacktrace` is used (which is the default). For configuring C compilers see
+the [`cc` crate documentation](https://github.com/alexcrichton/cc-rs).
 
 ## Usage
 
@@ -54,7 +49,7 @@ fn main() {
         let symbol_address = frame.symbol_address();
 
         // Resolve this instruction pointer to a symbol name
-        backtrace::resolve(ip, |symbol| {
+        backtrace::resolve_frame(frame, |symbol| {
             if let Some(name) = symbol.name() {
                 // ...
             }
@@ -68,15 +63,19 @@ fn main() {
 }
 ```
 
-## Platform Support
+# License
 
-This library currently supports OSX, Linux, and Windows. Support for other
-platforms is always welcome!
+This project is licensed under either of
 
-## License
+ * Apache License, Version 2.0, ([LICENSE-APACHE](LICENSE-APACHE) or
+   http://www.apache.org/licenses/LICENSE-2.0)
+ * MIT license ([LICENSE-MIT](LICENSE-MIT) or
+   http://opensource.org/licenses/MIT)
 
-`backtrace-rs` is primarily distributed under the terms of both the MIT license
-and the Apache License (Version 2.0), with portions covered by various BSD-like
-licenses.
+at your option.
 
-See LICENSE-APACHE, and LICENSE-MIT for details.
+### Contribution
+
+Unless you explicitly state otherwise, any contribution intentionally submitted
+for inclusion in backtrace-rs by you, as defined in the Apache-2.0 license, shall be
+dual licensed as above, without any additional terms or conditions.

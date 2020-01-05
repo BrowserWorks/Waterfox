@@ -1,50 +1,53 @@
 // Std
+#[allow(deprecated, unused_imports)]
 use std::ascii::AsciiExt;
 use std::str::FromStr;
 use std::ops::BitOr;
 
 bitflags! {
-    flags Flags: u64 {
-        const SC_NEGATE_REQS       = 1 << 0,
-        const SC_REQUIRED          = 1 << 1,
-        const A_REQUIRED_ELSE_HELP = 1 << 2,
-        const GLOBAL_VERSION       = 1 << 3,
-        const VERSIONLESS_SC       = 1 << 4,
-        const UNIFIED_HELP         = 1 << 5,
-        const WAIT_ON_ERROR        = 1 << 6,
-        const SC_REQUIRED_ELSE_HELP= 1 << 7,
-        const NEEDS_LONG_HELP      = 1 << 8,
-        const NEEDS_LONG_VERSION   = 1 << 9,
-        const NEEDS_SC_HELP        = 1 << 10,
-        const DISABLE_VERSION      = 1 << 11,
-        const HIDDEN               = 1 << 12,
-        const TRAILING_VARARG      = 1 << 13,
-        const NO_BIN_NAME          = 1 << 14,
-        const ALLOW_UNK_SC         = 1 << 15,
-        const UTF8_STRICT          = 1 << 16,
-        const UTF8_NONE            = 1 << 17,
-        const LEADING_HYPHEN       = 1 << 18,
-        const NO_POS_VALUES        = 1 << 19,
-        const NEXT_LINE_HELP       = 1 << 20,
-        const DERIVE_DISP_ORDER    = 1 << 21,
-        const COLORED_HELP         = 1 << 22,
-        const COLOR_ALWAYS         = 1 << 23,
-        const COLOR_AUTO           = 1 << 24,
-        const COLOR_NEVER          = 1 << 25,
-        const DONT_DELIM_TRAIL     = 1 << 26,
-        const ALLOW_NEG_NUMS       = 1 << 27,
-        const LOW_INDEX_MUL_POS    = 1 << 28,
-        const DISABLE_HELP_SC      = 1 << 29,
-        const DONT_COLLAPSE_ARGS   = 1 << 30,
-        const ARGS_NEGATE_SCS      = 1 << 31, 
-        const PROPAGATE_VALS_DOWN  = 1 << 32,
-        const ALLOW_MISSING_POS    = 1 << 33,
-        const TRAILING_VALUES      = 1 << 34,
-        const VALID_NEG_NUM_FOUND  = 1 << 35,
-        const PROPOGATED           = 1 << 36,
-        const VALID_ARG_FOUND      = 1 << 37,
-        const INFER_SUBCOMMANDS    = 1 << 38,
-        const CONTAINS_LAST        = 1 << 39,
+    struct Flags: u64 {
+        const SC_NEGATE_REQS       = 1;
+        const SC_REQUIRED          = 1 << 1;
+        const A_REQUIRED_ELSE_HELP = 1 << 2;
+        const GLOBAL_VERSION       = 1 << 3;
+        const VERSIONLESS_SC       = 1 << 4;
+        const UNIFIED_HELP         = 1 << 5;
+        const WAIT_ON_ERROR        = 1 << 6;
+        const SC_REQUIRED_ELSE_HELP= 1 << 7;
+        const NEEDS_LONG_HELP      = 1 << 8;
+        const NEEDS_LONG_VERSION   = 1 << 9;
+        const NEEDS_SC_HELP        = 1 << 10;
+        const DISABLE_VERSION      = 1 << 11;
+        const HIDDEN               = 1 << 12;
+        const TRAILING_VARARG      = 1 << 13;
+        const NO_BIN_NAME          = 1 << 14;
+        const ALLOW_UNK_SC         = 1 << 15;
+        const UTF8_STRICT          = 1 << 16;
+        const UTF8_NONE            = 1 << 17;
+        const LEADING_HYPHEN       = 1 << 18;
+        const NO_POS_VALUES        = 1 << 19;
+        const NEXT_LINE_HELP       = 1 << 20;
+        const DERIVE_DISP_ORDER    = 1 << 21;
+        const COLORED_HELP         = 1 << 22;
+        const COLOR_ALWAYS         = 1 << 23;
+        const COLOR_AUTO           = 1 << 24;
+        const COLOR_NEVER          = 1 << 25;
+        const DONT_DELIM_TRAIL     = 1 << 26;
+        const ALLOW_NEG_NUMS       = 1 << 27;
+        const LOW_INDEX_MUL_POS    = 1 << 28;
+        const DISABLE_HELP_SC      = 1 << 29;
+        const DONT_COLLAPSE_ARGS   = 1 << 30;
+        const ARGS_NEGATE_SCS      = 1 << 31;
+        const PROPAGATE_VALS_DOWN  = 1 << 32;
+        const ALLOW_MISSING_POS    = 1 << 33;
+        const TRAILING_VALUES      = 1 << 34;
+        const VALID_NEG_NUM_FOUND  = 1 << 35;
+        const PROPAGATED           = 1 << 36;
+        const VALID_ARG_FOUND      = 1 << 37;
+        const INFER_SUBCOMMANDS    = 1 << 38;
+        const CONTAINS_LAST        = 1 << 39;
+        const ARGS_OVERRIDE_SELF   = 1 << 40;
+        const DISABLE_HELP_FLAGS   = 1 << 41;
     }
 }
 
@@ -59,54 +62,61 @@ impl BitOr for AppFlags {
 
 impl Default for AppFlags {
     fn default() -> Self {
-        AppFlags(NEEDS_LONG_VERSION | NEEDS_LONG_HELP | NEEDS_SC_HELP | UTF8_NONE | COLOR_AUTO)
+        AppFlags(
+            Flags::NEEDS_LONG_VERSION | Flags::NEEDS_LONG_HELP | Flags::NEEDS_SC_HELP
+                | Flags::UTF8_NONE | Flags::COLOR_AUTO,
+        )
     }
 }
 
+#[allow(deprecated)]
 impl AppFlags {
     pub fn new() -> Self { AppFlags::default() }
+    pub fn zeroed() -> Self { AppFlags(Flags::empty()) }
 
     impl_settings! { AppSettings,
-        ArgRequiredElseHelp => A_REQUIRED_ELSE_HELP,
-        ArgsNegateSubcommands => ARGS_NEGATE_SCS,
-        AllowExternalSubcommands => ALLOW_UNK_SC,
-        AllowInvalidUtf8 => UTF8_NONE,
-        AllowLeadingHyphen => LEADING_HYPHEN,
-        AllowNegativeNumbers => ALLOW_NEG_NUMS,
-        AllowMissingPositional => ALLOW_MISSING_POS,
-        ColoredHelp => COLORED_HELP,
-        ColorAlways => COLOR_ALWAYS,
-        ColorAuto => COLOR_AUTO,
-        ColorNever => COLOR_NEVER,
-        DontDelimitTrailingValues => DONT_DELIM_TRAIL,
-        DontCollapseArgsInUsage => DONT_COLLAPSE_ARGS,
-        DeriveDisplayOrder => DERIVE_DISP_ORDER,
-        DisableHelpSubcommand => DISABLE_HELP_SC,
-        DisableVersion => DISABLE_VERSION,
-        GlobalVersion => GLOBAL_VERSION,
-        HidePossibleValuesInHelp => NO_POS_VALUES,
-        Hidden => HIDDEN,
-        LowIndexMultiplePositional => LOW_INDEX_MUL_POS,
-        NeedsLongHelp => NEEDS_LONG_HELP,
-        NeedsLongVersion => NEEDS_LONG_VERSION,
-        NeedsSubcommandHelp => NEEDS_SC_HELP,
-        NoBinaryName => NO_BIN_NAME,
-        PropagateGlobalValuesDown=> PROPAGATE_VALS_DOWN,
-        StrictUtf8 => UTF8_STRICT,
-        SubcommandsNegateReqs => SC_NEGATE_REQS,
-        SubcommandRequired => SC_REQUIRED,
-        SubcommandRequiredElseHelp => SC_REQUIRED_ELSE_HELP,
-        TrailingVarArg => TRAILING_VARARG,
-        UnifiedHelpMessage => UNIFIED_HELP,
-        NextLineHelp => NEXT_LINE_HELP,
-        VersionlessSubcommands => VERSIONLESS_SC,
-        WaitOnError => WAIT_ON_ERROR,
-        TrailingValues => TRAILING_VALUES,
-        ValidNegNumFound => VALID_NEG_NUM_FOUND,
-        Propogated => PROPOGATED,
-        ValidArgFound => VALID_ARG_FOUND,
-        InferSubcommands => INFER_SUBCOMMANDS,
-        ContainsLast => CONTAINS_LAST
+        ArgRequiredElseHelp => Flags::A_REQUIRED_ELSE_HELP,
+        ArgsNegateSubcommands => Flags::ARGS_NEGATE_SCS,
+        AllArgsOverrideSelf => Flags::ARGS_OVERRIDE_SELF,
+        AllowExternalSubcommands => Flags::ALLOW_UNK_SC,
+        AllowInvalidUtf8 => Flags::UTF8_NONE,
+        AllowLeadingHyphen => Flags::LEADING_HYPHEN,
+        AllowNegativeNumbers => Flags::ALLOW_NEG_NUMS,
+        AllowMissingPositional => Flags::ALLOW_MISSING_POS,
+        ColoredHelp => Flags::COLORED_HELP,
+        ColorAlways => Flags::COLOR_ALWAYS,
+        ColorAuto => Flags::COLOR_AUTO,
+        ColorNever => Flags::COLOR_NEVER,
+        DontDelimitTrailingValues => Flags::DONT_DELIM_TRAIL,
+        DontCollapseArgsInUsage => Flags::DONT_COLLAPSE_ARGS,
+        DeriveDisplayOrder => Flags::DERIVE_DISP_ORDER,
+        DisableHelpFlags => Flags::DISABLE_HELP_FLAGS,
+        DisableHelpSubcommand => Flags::DISABLE_HELP_SC,
+        DisableVersion => Flags::DISABLE_VERSION,
+        GlobalVersion => Flags::GLOBAL_VERSION,
+        HidePossibleValuesInHelp => Flags::NO_POS_VALUES,
+        Hidden => Flags::HIDDEN,
+        LowIndexMultiplePositional => Flags::LOW_INDEX_MUL_POS,
+        NeedsLongHelp => Flags::NEEDS_LONG_HELP,
+        NeedsLongVersion => Flags::NEEDS_LONG_VERSION,
+        NeedsSubcommandHelp => Flags::NEEDS_SC_HELP,
+        NoBinaryName => Flags::NO_BIN_NAME,
+        PropagateGlobalValuesDown=> Flags::PROPAGATE_VALS_DOWN,
+        StrictUtf8 => Flags::UTF8_STRICT,
+        SubcommandsNegateReqs => Flags::SC_NEGATE_REQS,
+        SubcommandRequired => Flags::SC_REQUIRED,
+        SubcommandRequiredElseHelp => Flags::SC_REQUIRED_ELSE_HELP,
+        TrailingVarArg => Flags::TRAILING_VARARG,
+        UnifiedHelpMessage => Flags::UNIFIED_HELP,
+        NextLineHelp => Flags::NEXT_LINE_HELP,
+        VersionlessSubcommands => Flags::VERSIONLESS_SC,
+        WaitOnError => Flags::WAIT_ON_ERROR,
+        TrailingValues => Flags::TRAILING_VALUES,
+        ValidNegNumFound => Flags::VALID_NEG_NUM_FOUND,
+        Propagated => Flags::PROPAGATED,
+        ValidArgFound => Flags::VALID_ARG_FOUND,
+        InferSubcommands => Flags::INFER_SUBCOMMANDS,
+        ContainsLast => Flags::CONTAINS_LAST
     }
 }
 
@@ -135,8 +145,8 @@ pub enum AppSettings {
     ///
     /// # Examples
     ///
-    #[cfg_attr(not(unix), doc=" ```ignore")]
-    #[cfg_attr(    unix , doc=" ```")]
+    #[cfg_attr(not(unix), doc = " ```ignore")]
+    #[cfg_attr(unix, doc = " ```")]
     /// # use clap::{App, AppSettings};
     /// use std::ffi::OsString;
     /// use std::os::unix::ffi::{OsStrExt,OsStringExt};
@@ -157,7 +167,15 @@ pub enum AppSettings {
     /// [`ArgMatches::os_values_of`]: ./struct.ArgMatches.html#method.os_values_of
     /// [`ArgMatches::lossy_value_of`]: ./struct.ArgMatches.html#method.lossy_value_of
     /// [`ArgMatches::lossy_values_of`]: ./struct.ArgMatches.html#method.lossy_values_of
+    /// [`SubCommand`]: ./struct.SubCommand.html
     AllowInvalidUtf8,
+
+    /// Essentially sets [`Arg::overrides_with("itself")`] for all arguments.
+    ///
+    /// **WARNING:** Positional arguments cannot override themselves (or we would never be able
+    /// to advance to the next positional). This setting ignores positional arguments.
+    /// [`Arg::overrides_with("itself")`]: ./struct.Arg.html#method.overrides_with
+    AllArgsOverrideSelf,
 
     /// Specifies that leading hyphens are allowed in argument *values*, such as negative numbers
     /// like `-10`. (which would otherwise be parsed as another flag or option)
@@ -206,7 +224,9 @@ pub enum AppSettings {
     /// [`AllowLeadingHyphen`]: ./enum.AppSettings.html#variant.AllowLeadingHyphen
     AllowNegativeNumbers,
 
-    /// Allows one to implement a CLI where the second to last positional argument is optional, but
+    /// Allows one to implement two styles of CLIs where positionals can be used out of order.
+    ///
+    /// The first example is a CLI where the second to last positional argument is optional, but
     /// the final positional argument is required. Such as `$ prog [optional] <required>` where one
     /// of the two following usages is allowed:
     ///
@@ -215,10 +235,45 @@ pub enum AppSettings {
     ///
     /// This would otherwise not be allowed. This is useful when `[optional]` has a default value.
     ///
-    /// **Note:** In addition to using this setting, the second positional argument *must* be
-    /// [required]
+    /// **Note:** when using this style of "missing positionals" the final positional *must* be
+    /// [required] if `--` will not be used to skip to the final positional argument.
+    ///
+    /// **Note:** This style also only allows a single positional argument to be "skipped" without
+    /// the use of `--`. To skip more than one, see the second example.
+    ///
+    /// The second example is when one wants to skip multiple optional positional arguments, and use
+    /// of the `--` operator is OK (but not required if all arguments will be specified anyways).
+    ///
+    /// For example, imagine a CLI which has three positional arguments `[foo] [bar] [baz]...` where
+    /// `baz` accepts multiple values (similar to man `ARGS...` style training arguments).
+    ///
+    /// With this setting the following invocations are possible:
+    ///
+    /// * `$ prog foo bar baz1 baz2 baz3`
+    /// * `$ prog foo -- baz1 baz2 baz3`
+    /// * `$ prog -- baz1 baz2 baz3`
     ///
     /// # Examples
+    ///
+    /// Style number one from above:
+    ///
+    /// ```rust
+    /// # use clap::{App, Arg, AppSettings};
+    /// // Assume there is an external subcommand named "subcmd"
+    /// let m = App::new("myprog")
+    ///     .setting(AppSettings::AllowMissingPositional)
+    ///     .arg(Arg::with_name("arg1"))
+    ///     .arg(Arg::with_name("arg2")
+    ///         .required(true))
+    ///     .get_matches_from(vec![
+    ///         "prog", "other"
+    ///     ]);
+    ///
+    /// assert_eq!(m.value_of("arg1"), None);
+    /// assert_eq!(m.value_of("arg2"), Some("other"));
+    /// ```
+    ///
+    /// Now the same example, but using a default value for the first optional positional argument
     ///
     /// ```rust
     /// # use clap::{App, Arg, AppSettings};
@@ -230,11 +285,48 @@ pub enum AppSettings {
     ///     .arg(Arg::with_name("arg2")
     ///         .required(true))
     ///     .get_matches_from(vec![
-    ///         "myprog", "other"
+    ///         "prog", "other"
     ///     ]);
     ///
     /// assert_eq!(m.value_of("arg1"), Some("something"));
     /// assert_eq!(m.value_of("arg2"), Some("other"));
+    /// ```
+    /// Style number two from above:
+    ///
+    /// ```rust
+    /// # use clap::{App, Arg, AppSettings};
+    /// // Assume there is an external subcommand named "subcmd"
+    /// let m = App::new("myprog")
+    ///     .setting(AppSettings::AllowMissingPositional)
+    ///     .arg(Arg::with_name("foo"))
+    ///     .arg(Arg::with_name("bar"))
+    ///     .arg(Arg::with_name("baz").multiple(true))
+    ///     .get_matches_from(vec![
+    ///         "prog", "foo", "bar", "baz1", "baz2", "baz3"
+    ///     ]);
+    ///
+    /// assert_eq!(m.value_of("foo"), Some("foo"));
+    /// assert_eq!(m.value_of("bar"), Some("bar"));
+    /// assert_eq!(m.values_of("baz").unwrap().collect::<Vec<_>>(), &["baz1", "baz2", "baz3"]);
+    /// ```
+    ///
+    /// Now notice if we don't specify `foo` or `baz` but use the `--` operator.
+    ///
+    /// ```rust
+    /// # use clap::{App, Arg, AppSettings};
+    /// // Assume there is an external subcommand named "subcmd"
+    /// let m = App::new("myprog")
+    ///     .setting(AppSettings::AllowMissingPositional)
+    ///     .arg(Arg::with_name("foo"))
+    ///     .arg(Arg::with_name("bar"))
+    ///     .arg(Arg::with_name("baz").multiple(true))
+    ///     .get_matches_from(vec![
+    ///         "prog", "--", "baz1", "baz2", "baz3"
+    ///     ]);
+    ///
+    /// assert_eq!(m.value_of("foo"), None);
+    /// assert_eq!(m.value_of("bar"), None);
+    /// assert_eq!(m.values_of("baz").unwrap().collect::<Vec<_>>(), &["baz1", "baz2", "baz3"]);
     /// ```
     /// [required]: ./struct.Arg.html#method.required
     AllowMissingPositional,
@@ -275,7 +367,7 @@ pub enum AppSettings {
     /// [`ArgMatches`]: ./struct.ArgMatches.html
     AllowExternalSubcommands,
 
-    /// Specifies that use of a valid [argument] negates [subcomands] being used after. By default
+    /// Specifies that use of a valid [argument] negates [subcommands] being used after. By default
     /// `clap` allows arguments between subcommands such as
     /// `<cmd> [cmd_args] <cmd2> [cmd2_args] <cmd3> [cmd3_args]`. This setting disables that
     /// functionality and says that arguments can only follow the *final* subcommand. For instance
@@ -323,7 +415,7 @@ pub enum AppSettings {
     ///
     /// # Platform Specific
     ///
-    /// This setting only applies to Unix, Linux, and OSX (i.e. non-Windows platforms)
+    /// This setting only applies to Unix, Linux, and macOS (i.e. non-Windows platforms)
     ///
     /// # Examples
     ///
@@ -343,7 +435,7 @@ pub enum AppSettings {
     ///
     /// # Platform Specific
     ///
-    /// This setting only applies to Unix, Linux, and OSX (i.e. non-Windows platforms).
+    /// This setting only applies to Unix, Linux, and macOS (i.e. non-Windows platforms).
     ///
     /// # Examples
     ///
@@ -361,7 +453,7 @@ pub enum AppSettings {
     ///
     /// # Platform Specific
     ///
-    /// This setting only applies to Unix, Linux, and OSX (i.e. non-Windows platforms).
+    /// This setting only applies to Unix, Linux, and macOS (i.e. non-Windows platforms).
     ///
     /// # Examples
     ///
@@ -379,7 +471,7 @@ pub enum AppSettings {
     ///
     /// # Platform Specific
     ///
-    /// This setting only applies to Unix, Linux, and OSX (i.e. non-Windows platforms)
+    /// This setting only applies to Unix, Linux, and macOS (i.e. non-Windows platforms)
     ///
     /// # Examples
     ///
@@ -422,6 +514,37 @@ pub enum AppSettings {
     /// [`Arg::use_delimiter(false)`]: ./struct.Arg.html#method.use_delimiter
     DontDelimitTrailingValues,
 
+    /// Disables `-h` and `--help` [`App`] without affecting any of the [`SubCommand`]s
+    /// (Defaults to `false`; application *does* have help flags)
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use clap::{App, AppSettings, ErrorKind};
+    /// let res = App::new("myprog")
+    ///     .setting(AppSettings::DisableHelpFlags)
+    ///     .get_matches_from_safe(vec![
+    ///         "myprog", "-h"
+    ///     ]);
+    /// assert!(res.is_err());
+    /// assert_eq!(res.unwrap_err().kind, ErrorKind::UnknownArgument);
+    /// ```
+    ///
+    /// ```rust
+    /// # use clap::{App, SubCommand, AppSettings, ErrorKind};
+    /// let res = App::new("myprog")
+    ///     .setting(AppSettings::DisableHelpFlags)
+    ///     .subcommand(SubCommand::with_name("test"))
+    ///     .get_matches_from_safe(vec![
+    ///         "myprog", "test", "-h"
+    ///     ]);
+    /// assert!(res.is_err());
+    /// assert_eq!(res.unwrap_err().kind, ErrorKind::HelpDisplayed);
+    /// ```
+    /// [`SubCommand`]: ./struct.SubCommand.html
+    /// [`App`]: ./struct.App.html
+    DisableHelpFlags,
+
     /// Disables the `help` subcommand
     ///
     /// # Examples
@@ -431,7 +554,7 @@ pub enum AppSettings {
     /// let res = App::new("myprog")
     ///     .version("v1.1")
     ///     .setting(AppSettings::DisableHelpSubcommand)
-    ///     // Normally, creating a subcommand causes a `help` subcommand to automaticaly
+    ///     // Normally, creating a subcommand causes a `help` subcommand to automatically
     ///     // be generated as well
     ///     .subcommand(SubCommand::with_name("test"))
     ///     .get_matches_from_safe(vec![
@@ -473,6 +596,7 @@ pub enum AppSettings {
     /// assert_eq!(res.unwrap_err().kind, ErrorKind::VersionDisplayed);
     /// ```
     /// [`SubCommand`]: ./struct.SubCommand.html
+    /// [`App`]: ./struct.App.html
     DisableVersion,
 
     /// Displays the arguments and [`SubCommand`]s in the help message in the order that they were
@@ -490,7 +614,7 @@ pub enum AppSettings {
     DeriveDisplayOrder,
 
     /// Specifies to use the version of the current command for all child [`SubCommand`]s.
-    /// (Defaults to `false`; subcommands have independant version strings from their parents.)
+    /// (Defaults to `false`; subcommands have independent version strings from their parents.)
     ///
     /// **NOTE:** The version for the current command **and** this setting must be set **prior** to
     /// adding any child subcommands
@@ -528,7 +652,7 @@ pub enum AppSettings {
     /// This can be useful if there are many values, or they are explained elsewhere.
     HidePossibleValuesInHelp,
 
-    /// Tries to match unknown args to partial [`subcommands`] or their [aliases]. For example to 
+    /// Tries to match unknown args to partial [`subcommands`] or their [aliases]. For example to
     /// match a subcommand named `test`, one could use `t`, `te`, `tes`, and `test`.
     ///
     /// **NOTE:** The match *must not* be ambiguous at all in order to succeed. i.e. to match `te`
@@ -536,9 +660,9 @@ pub enum AppSettings {
     ///
     /// **CAUTION:** This setting can interfere with [positional/free arguments], take care when
     /// designing CLIs which allow inferred subcommands and have potential positional/free
-    /// arguments who's values could start with the same characters as subcommands. If this is the
+    /// arguments whose values could start with the same characters as subcommands. If this is the
     /// case, it's recommended to use settings such as [`AppSeettings::ArgsNegateSubcommands`] in
-    /// conjuction with this setting.
+    /// conjunction with this setting.
     ///
     /// # Examples
     ///
@@ -588,18 +712,17 @@ pub enum AppSettings {
     /// ```
     NextLineHelp,
 
-    /// Specifies that the parser should propagate global arg's values down through any *used* child
-    /// subcommands. Meaning, if a subcommand wasn't used, the values won't be propagated down to
-    /// said subcommand.
+    /// **DEPRECATED**: This setting is no longer required in order to propagate values up or down
     ///
-    /// **NOTE:** Values are only propagated *down* through futher child commands, not up
+    /// Specifies that the parser should propagate global arg's values down or up through any *used*
+    /// child subcommands. Meaning, if a subcommand wasn't used, the values won't be propagated to
+    /// said subcommand.
     ///
     /// # Examples
     ///
     /// ```rust
     /// # use clap::{App, Arg, AppSettings, SubCommand};
     /// let m = App::new("myprog")
-    ///     .setting(AppSettings::PropagateGlobalValuesDown)
     ///     .arg(Arg::from_usage("[cmd] 'command to run'")
     ///         .global(true))
     ///     .subcommand(SubCommand::with_name("foo"))
@@ -616,7 +739,6 @@ pub enum AppSettings {
     /// ```rust
     /// # use clap::{App, Arg, AppSettings, SubCommand};
     /// let m = App::new("myprog")
-    ///     .setting(AppSettings::PropagateGlobalValuesDown)
     ///     .arg(Arg::from_usage("[cmd] 'command to run'")
     ///         .global(true))
     ///     .subcommand(SubCommand::with_name("foo"))
@@ -626,6 +748,7 @@ pub enum AppSettings {
     ///
     /// assert!(m.subcommand_matches("foo").is_none());
     /// ```
+    #[deprecated(since = "2.27.0", note = "No longer required to propagate values")]
     PropagateGlobalValuesDown,
 
     /// Allows [`SubCommand`]s to override all requirements of the parent command.
@@ -708,8 +831,8 @@ pub enum AppSettings {
     ///
     /// # Examples
     ///
-    #[cfg_attr(not(unix), doc=" ```ignore")]
-    #[cfg_attr(    unix , doc=" ```")]
+    #[cfg_attr(not(unix), doc = " ```ignore")]
+    #[cfg_attr(unix, doc = " ```")]
     /// # use clap::{App, AppSettings, ErrorKind};
     /// use std::ffi::OsString;
     /// use std::os::unix::ffi::OsStringExt;
@@ -796,7 +919,7 @@ pub enum AppSettings {
     /// Disables `-V` and `--version` for all [`SubCommand`]s
     /// (Defaults to `false`; subcommands *do* have version flags.)
     ///
-    /// **NOTE:** This setting must be set **prior** adding any subcommands
+    /// **NOTE:** This setting must be set **prior** to adding any subcommands.
     ///
     /// # Examples
     ///
@@ -815,7 +938,7 @@ pub enum AppSettings {
     /// [`SubCommand`]: ./struct.SubCommand.html
     VersionlessSubcommands,
 
-    /// Will display a message "Press [ENTER]/[RETURN] to continue..." and wait for user before
+    /// Will display a message "Press \[ENTER\]/\[RETURN\] to continue..." and wait for user before
     /// exiting
     ///
     /// This is most useful when writing an application which is run from a GUI shortcut, or on
@@ -837,38 +960,30 @@ pub enum AppSettings {
     /// [`SubCommand`]: ./struct.SubCommand.html
     WaitOnError,
 
-    #[doc(hidden)]
-    NeedsLongVersion,
+    #[doc(hidden)] NeedsLongVersion,
 
-    #[doc(hidden)]
-    NeedsLongHelp,
+    #[doc(hidden)] NeedsLongHelp,
 
-    #[doc(hidden)]
-    NeedsSubcommandHelp,
+    #[doc(hidden)] NeedsSubcommandHelp,
 
-    #[doc(hidden)]
-    LowIndexMultiplePositional,
+    #[doc(hidden)] LowIndexMultiplePositional,
 
-    #[doc(hidden)]
-    TrailingValues,
+    #[doc(hidden)] TrailingValues,
 
-    #[doc(hidden)]
-    ValidNegNumFound,
+    #[doc(hidden)] ValidNegNumFound,
 
-    #[doc(hidden)]
-    Propogated,
+    #[doc(hidden)] Propagated,
 
-    #[doc(hidden)]
-    ValidArgFound,
+    #[doc(hidden)] ValidArgFound,
 
-    #[doc(hidden)]
-    ContainsLast,
+    #[doc(hidden)] ContainsLast,
 }
 
 impl FromStr for AppSettings {
     type Err = String;
     fn from_str(s: &str) -> Result<Self, <Self as FromStr>::Err> {
         match &*s.to_ascii_lowercase() {
+            "disablehelpflags" => Ok(AppSettings::DisableHelpFlags),
             "argrequiredelsehelp" => Ok(AppSettings::ArgRequiredElseHelp),
             "argsnegatesubcommands" => Ok(AppSettings::ArgsNegateSubcommands),
             "allowinvalidutf8" => Ok(AppSettings::AllowInvalidUtf8),
@@ -901,7 +1016,7 @@ impl FromStr for AppSettings {
             "waitonerror" => Ok(AppSettings::WaitOnError),
             "validnegnumfound" => Ok(AppSettings::ValidNegNumFound),
             "validargfound" => Ok(AppSettings::ValidArgFound),
-            "propogated" => Ok(AppSettings::Propogated),
+            "propagated" => Ok(AppSettings::Propagated),
             "trailingvalues" => Ok(AppSettings::TrailingValues),
             _ => Err("unknown AppSetting, cannot convert from str".to_owned()),
         }
@@ -914,74 +1029,146 @@ mod test {
 
     #[test]
     fn app_settings_fromstr() {
-        assert_eq!("argsnegatesubcommands".parse::<AppSettings>().unwrap(),
-                   AppSettings::ArgsNegateSubcommands);
-        assert_eq!("argrequiredelsehelp".parse::<AppSettings>().unwrap(),
-                   AppSettings::ArgRequiredElseHelp);
-        assert_eq!("allowexternalsubcommands".parse::<AppSettings>().unwrap(),
-                   AppSettings::AllowExternalSubcommands);
-        assert_eq!("allowinvalidutf8".parse::<AppSettings>().unwrap(),
-                   AppSettings::AllowInvalidUtf8);
-        assert_eq!("allowleadinghyphen".parse::<AppSettings>().unwrap(),
-                   AppSettings::AllowLeadingHyphen);
-        assert_eq!("allownegativenumbers".parse::<AppSettings>().unwrap(),
-                   AppSettings::AllowNegativeNumbers);
-        assert_eq!("coloredhelp".parse::<AppSettings>().unwrap(),
-                   AppSettings::ColoredHelp);
-        assert_eq!("colorauto".parse::<AppSettings>().unwrap(),
-                   AppSettings::ColorAuto);
-        assert_eq!("coloralways".parse::<AppSettings>().unwrap(),
-                   AppSettings::ColorAlways);
-        assert_eq!("colornever".parse::<AppSettings>().unwrap(),
-                   AppSettings::ColorNever);
-        assert_eq!("disablehelpsubcommand".parse::<AppSettings>().unwrap(),
-                   AppSettings::DisableHelpSubcommand);
-        assert_eq!("disableversion".parse::<AppSettings>().unwrap(),
-                   AppSettings::DisableVersion);
-        assert_eq!("dontcollapseargsinusage".parse::<AppSettings>().unwrap(),
-                   AppSettings::DontCollapseArgsInUsage);
-        assert_eq!("dontdelimittrailingvalues".parse::<AppSettings>().unwrap(),
-                   AppSettings::DontDelimitTrailingValues);
-        assert_eq!("derivedisplayorder".parse::<AppSettings>().unwrap(),
-                   AppSettings::DeriveDisplayOrder);
-        assert_eq!("globalversion".parse::<AppSettings>().unwrap(),
-                   AppSettings::GlobalVersion);
-        assert_eq!("hidden".parse::<AppSettings>().unwrap(),
-                   AppSettings::Hidden);
-        assert_eq!("hidepossiblevaluesinhelp".parse::<AppSettings>().unwrap(),
-                   AppSettings::HidePossibleValuesInHelp);
-        assert_eq!("lowindexmultiplePositional".parse::<AppSettings>().unwrap(),
-                   AppSettings::LowIndexMultiplePositional);
-        assert_eq!("nobinaryname".parse::<AppSettings>().unwrap(),
-                   AppSettings::NoBinaryName);
-        assert_eq!("nextlinehelp".parse::<AppSettings>().unwrap(),
-                   AppSettings::NextLineHelp);
-        assert_eq!("subcommandsnegatereqs".parse::<AppSettings>().unwrap(),
-                   AppSettings::SubcommandsNegateReqs);
-        assert_eq!("subcommandrequired".parse::<AppSettings>().unwrap(),
-                   AppSettings::SubcommandRequired);
-        assert_eq!("subcommandrequiredelsehelp".parse::<AppSettings>().unwrap(),
-                   AppSettings::SubcommandRequiredElseHelp);
-        assert_eq!("strictutf8".parse::<AppSettings>().unwrap(),
-                   AppSettings::StrictUtf8);
-        assert_eq!("trailingvararg".parse::<AppSettings>().unwrap(),
-                   AppSettings::TrailingVarArg);
-        assert_eq!("unifiedhelpmessage".parse::<AppSettings>().unwrap(),
-                   AppSettings::UnifiedHelpMessage);
-        assert_eq!("versionlesssubcommands".parse::<AppSettings>().unwrap(),
-                   AppSettings::VersionlessSubcommands);
-        assert_eq!("waitonerror".parse::<AppSettings>().unwrap(),
-                   AppSettings::WaitOnError);
-        assert_eq!("validnegnumfound".parse::<AppSettings>().unwrap(),
-                   AppSettings::ValidNegNumFound);
-        assert_eq!("validargfound".parse::<AppSettings>().unwrap(),
-                   AppSettings::ValidArgFound);
-        assert_eq!("propogated".parse::<AppSettings>().unwrap(),
-                   AppSettings::Propogated);
-        assert_eq!("trailingvalues".parse::<AppSettings>().unwrap(),
-                   AppSettings::TrailingValues);
-        assert_eq!("infersubcommands".parse::<AppSettings>().unwrap(),
-                   AppSettings::InferSubcommands);
+        assert_eq!(
+            "disablehelpflags".parse::<AppSettings>().unwrap(),
+            AppSettings::DisableHelpFlags
+        );
+        assert_eq!(
+            "argsnegatesubcommands".parse::<AppSettings>().unwrap(),
+            AppSettings::ArgsNegateSubcommands
+        );
+        assert_eq!(
+            "argrequiredelsehelp".parse::<AppSettings>().unwrap(),
+            AppSettings::ArgRequiredElseHelp
+        );
+        assert_eq!(
+            "allowexternalsubcommands".parse::<AppSettings>().unwrap(),
+            AppSettings::AllowExternalSubcommands
+        );
+        assert_eq!(
+            "allowinvalidutf8".parse::<AppSettings>().unwrap(),
+            AppSettings::AllowInvalidUtf8
+        );
+        assert_eq!(
+            "allowleadinghyphen".parse::<AppSettings>().unwrap(),
+            AppSettings::AllowLeadingHyphen
+        );
+        assert_eq!(
+            "allownegativenumbers".parse::<AppSettings>().unwrap(),
+            AppSettings::AllowNegativeNumbers
+        );
+        assert_eq!(
+            "coloredhelp".parse::<AppSettings>().unwrap(),
+            AppSettings::ColoredHelp
+        );
+        assert_eq!(
+            "colorauto".parse::<AppSettings>().unwrap(),
+            AppSettings::ColorAuto
+        );
+        assert_eq!(
+            "coloralways".parse::<AppSettings>().unwrap(),
+            AppSettings::ColorAlways
+        );
+        assert_eq!(
+            "colornever".parse::<AppSettings>().unwrap(),
+            AppSettings::ColorNever
+        );
+        assert_eq!(
+            "disablehelpsubcommand".parse::<AppSettings>().unwrap(),
+            AppSettings::DisableHelpSubcommand
+        );
+        assert_eq!(
+            "disableversion".parse::<AppSettings>().unwrap(),
+            AppSettings::DisableVersion
+        );
+        assert_eq!(
+            "dontcollapseargsinusage".parse::<AppSettings>().unwrap(),
+            AppSettings::DontCollapseArgsInUsage
+        );
+        assert_eq!(
+            "dontdelimittrailingvalues".parse::<AppSettings>().unwrap(),
+            AppSettings::DontDelimitTrailingValues
+        );
+        assert_eq!(
+            "derivedisplayorder".parse::<AppSettings>().unwrap(),
+            AppSettings::DeriveDisplayOrder
+        );
+        assert_eq!(
+            "globalversion".parse::<AppSettings>().unwrap(),
+            AppSettings::GlobalVersion
+        );
+        assert_eq!(
+            "hidden".parse::<AppSettings>().unwrap(),
+            AppSettings::Hidden
+        );
+        assert_eq!(
+            "hidepossiblevaluesinhelp".parse::<AppSettings>().unwrap(),
+            AppSettings::HidePossibleValuesInHelp
+        );
+        assert_eq!(
+            "lowindexmultiplePositional".parse::<AppSettings>().unwrap(),
+            AppSettings::LowIndexMultiplePositional
+        );
+        assert_eq!(
+            "nobinaryname".parse::<AppSettings>().unwrap(),
+            AppSettings::NoBinaryName
+        );
+        assert_eq!(
+            "nextlinehelp".parse::<AppSettings>().unwrap(),
+            AppSettings::NextLineHelp
+        );
+        assert_eq!(
+            "subcommandsnegatereqs".parse::<AppSettings>().unwrap(),
+            AppSettings::SubcommandsNegateReqs
+        );
+        assert_eq!(
+            "subcommandrequired".parse::<AppSettings>().unwrap(),
+            AppSettings::SubcommandRequired
+        );
+        assert_eq!(
+            "subcommandrequiredelsehelp".parse::<AppSettings>().unwrap(),
+            AppSettings::SubcommandRequiredElseHelp
+        );
+        assert_eq!(
+            "strictutf8".parse::<AppSettings>().unwrap(),
+            AppSettings::StrictUtf8
+        );
+        assert_eq!(
+            "trailingvararg".parse::<AppSettings>().unwrap(),
+            AppSettings::TrailingVarArg
+        );
+        assert_eq!(
+            "unifiedhelpmessage".parse::<AppSettings>().unwrap(),
+            AppSettings::UnifiedHelpMessage
+        );
+        assert_eq!(
+            "versionlesssubcommands".parse::<AppSettings>().unwrap(),
+            AppSettings::VersionlessSubcommands
+        );
+        assert_eq!(
+            "waitonerror".parse::<AppSettings>().unwrap(),
+            AppSettings::WaitOnError
+        );
+        assert_eq!(
+            "validnegnumfound".parse::<AppSettings>().unwrap(),
+            AppSettings::ValidNegNumFound
+        );
+        assert_eq!(
+            "validargfound".parse::<AppSettings>().unwrap(),
+            AppSettings::ValidArgFound
+        );
+        assert_eq!(
+            "propagated".parse::<AppSettings>().unwrap(),
+            AppSettings::Propagated
+        );
+        assert_eq!(
+            "trailingvalues".parse::<AppSettings>().unwrap(),
+            AppSettings::TrailingValues
+        );
+        assert_eq!(
+            "infersubcommands".parse::<AppSettings>().unwrap(),
+            AppSettings::InferSubcommands
+        );
         assert!("hahahaha".parse::<AppSettings>().is_err());
     }
 }

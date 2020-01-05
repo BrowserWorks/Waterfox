@@ -12,6 +12,7 @@ use std::fmt;
 use std::mem;
 use std::marker::PhantomData;
 use raw_rwlock::RawRwLock;
+use deadlock::DeadlockDetectionMarker;
 
 #[cfg(feature = "owning_ref")]
 use owning_ref::StableAddress;
@@ -108,7 +109,7 @@ unsafe impl<T: ?Sized + Send + Sync> Sync for RwLock<T> {}
 #[must_use]
 pub struct RwLockReadGuard<'a, T: ?Sized + 'a> {
     rwlock: &'a RwLock<T>,
-    marker: PhantomData<&'a T>,
+    marker: PhantomData<(&'a T, DeadlockDetectionMarker)>,
 }
 
 /// RAII structure used to release the exclusive write access of a lock when
@@ -116,7 +117,7 @@ pub struct RwLockReadGuard<'a, T: ?Sized + 'a> {
 #[must_use]
 pub struct RwLockWriteGuard<'a, T: ?Sized + 'a> {
     rwlock: &'a RwLock<T>,
-    marker: PhantomData<&'a mut T>,
+    marker: PhantomData<(&'a mut T, DeadlockDetectionMarker)>,
 }
 
 impl<T> RwLock<T> {
@@ -717,10 +718,9 @@ mod tests {
         let arc = Arc::new(RwLock::new(1));
         let arc2 = arc.clone();
         let _: Result<(), _> = thread::spawn(move || {
-                let _lock = arc2.write();
-                panic!();
-            })
-            .join();
+            let _lock = arc2.write();
+            panic!();
+        }).join();
         let lock = arc.read();
         assert_eq!(*lock, 1);
     }
@@ -730,10 +730,9 @@ mod tests {
         let arc = Arc::new(RwLock::new(1));
         let arc2 = arc.clone();
         let _: Result<(), _> = thread::spawn(move || {
-                let _lock = arc2.write();
-                panic!();
-            })
-            .join();
+            let _lock = arc2.write();
+            panic!();
+        }).join();
         let lock = arc.write();
         assert_eq!(*lock, 1);
     }
@@ -743,10 +742,9 @@ mod tests {
         let arc = Arc::new(RwLock::new(1));
         let arc2 = arc.clone();
         let _: Result<(), _> = thread::spawn(move || {
-                let _lock = arc2.read();
-                panic!();
-            })
-            .join();
+            let _lock = arc2.read();
+            panic!();
+        }).join();
         let lock = arc.read();
         assert_eq!(*lock, 1);
     }
@@ -755,10 +753,9 @@ mod tests {
         let arc = Arc::new(RwLock::new(1));
         let arc2 = arc.clone();
         let _: Result<(), _> = thread::spawn(move || {
-                let _lock = arc2.read();
-                panic!()
-            })
-            .join();
+            let _lock = arc2.read();
+            panic!()
+        }).join();
         let lock = arc.write();
         assert_eq!(*lock, 1);
     }
@@ -806,19 +803,18 @@ mod tests {
         let arc = Arc::new(RwLock::new(1));
         let arc2 = arc.clone();
         let _ = thread::spawn(move || -> () {
-                struct Unwinder {
-                    i: Arc<RwLock<isize>>,
+            struct Unwinder {
+                i: Arc<RwLock<isize>>,
+            }
+            impl Drop for Unwinder {
+                fn drop(&mut self) {
+                    let mut lock = self.i.write();
+                    *lock += 1;
                 }
-                impl Drop for Unwinder {
-                    fn drop(&mut self) {
-                        let mut lock = self.i.write();
-                        *lock += 1;
-                    }
-                }
-                let _u = Unwinder { i: arc2 };
-                panic!();
-            })
-            .join();
+            }
+            let _u = Unwinder { i: arc2 };
+            panic!();
+        }).join();
         let lock = arc.read();
         assert_eq!(*lock, 2);
     }
@@ -844,8 +840,10 @@ mod tests {
         match write_result {
             None => (),
             Some(_) => {
-                assert!(false,
-                        "try_write should not succeed while read_guard is in scope")
+                assert!(
+                    false,
+                    "try_write should not succeed while read_guard is in scope"
+                )
             }
         }
 
@@ -883,6 +881,7 @@ mod tests {
         assert_eq!(m.into_inner(), NonCopy(20));
     }
 
+    #[cfg(not(feature = "deadlock_detection"))]
     #[test]
     fn test_rwlockguard_send() {
         fn send<T: Send>(_: T) {}
@@ -890,6 +889,15 @@ mod tests {
         let rwlock = RwLock::new(());
         send(rwlock.read());
         send(rwlock.write());
+    }
+
+    #[test]
+    fn test_rwlockguard_sync() {
+        fn sync<T: Sync>(_: T) {}
+
+        let rwlock = RwLock::new(());
+        sync(rwlock.read());
+        sync(rwlock.write());
     }
 
     #[test]

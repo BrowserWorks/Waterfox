@@ -7,6 +7,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 1.7.1 - 2017-11-08
+
+* Fix `no_std` build on latest nightl
+
+### Changed
+## 1.7.0 - 2017-11-08
+### Changed
+
+* *Breaking*: `fmt::Arguments<'static>` should not be `Sync` -
+  https://github.com/slog-rs/slog/pull/148
+
+## 1.6.0 - 2017-10-19
+### Changed
+
+* Due to a mistake, this release did not contain the neccessary fix,
+  that was later released in `1.7.0`.
+
 ## 1.5.0 - 2017-01-19
 ### Changed
 

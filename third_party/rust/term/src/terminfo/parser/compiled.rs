@@ -185,25 +185,6 @@ pub fn parse(file: &mut io::Read, longnames: bool) -> Result<TermInfo> {
     })
 }
 
-/// Create a dummy `TermInfo` struct for msys terminals
-pub fn msys_terminfo() -> TermInfo {
-    let mut strings = HashMap::new();
-    strings.insert("sgr0", b"\x1B[0m".to_vec());
-    strings.insert("bold", b"\x1B[1m".to_vec());
-    strings.insert("setaf", b"\x1B[3%p1%dm".to_vec());
-    strings.insert("setab", b"\x1B[4%p1%dm".to_vec());
-
-    let mut numbers = HashMap::new();
-    numbers.insert("colors", 8u16);
-
-    TermInfo {
-        names: vec!["cygwin".to_owned()], // msys is a fork of an older cygwin version
-        bools: HashMap::new(),
-        numbers: numbers,
-        strings: strings,
-    }
-}
-
 #[cfg(test)]
 mod test {
 

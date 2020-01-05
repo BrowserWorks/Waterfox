@@ -1,15 +1,10 @@
-#[cfg(rayon_unstable)]
-use futures::{lazy, Future};
-
-use scope;
+use crate::scope;
 use std::any::Any;
-use std::sync::{Arc, Mutex};
 use std::sync::mpsc::channel;
+use std::sync::Mutex;
 
-use {Configuration, ThreadPool};
-use super::spawn;
-#[cfg(rayon_unstable)]
-use super::spawn_future;
+use super::{spawn, spawn_fifo};
+use crate::ThreadPoolBuilder;
 
 #[test]
 fn spawn_then_join_in_worker() {
@@ -32,7 +27,7 @@ fn panic_fwd() {
     let (tx, rx) = channel();
 
     let tx = Mutex::new(tx);
-    let panic_handler = move |err: Box<Any + Send>| {
+    let panic_handler = move |err: Box<dyn Any + Send>| {
         let tx = tx.lock().unwrap();
         if let Some(&msg) = err.downcast_ref::<&str>() {
             if msg == "Hello, world!" {
@@ -45,61 +40,14 @@ fn panic_fwd() {
         }
     };
 
-    let configuration = Configuration::new().panic_handler(panic_handler);
+    let builder = ThreadPoolBuilder::new().panic_handler(panic_handler);
 
-    ThreadPool::new(configuration).unwrap().spawn(move || panic!("Hello, world!"));
+    builder
+        .build()
+        .unwrap()
+        .spawn(move || panic!("Hello, world!"));
 
     assert_eq!(1, rx.recv().unwrap());
-}
-
-#[test]
-#[cfg(rayon_unstable)]
-fn async_future_map() {
-    let data = Arc::new(Mutex::new(format!("Hello, ")));
-
-    let a = spawn_future(lazy({
-        let data = data.clone();
-        move || Ok::<_, ()>(data)
-    }));
-    let future = spawn_future(a.map(|data| {
-        let mut v = data.lock().unwrap();
-        v.push_str("world!");
-    }));
-    let () = future.wait().unwrap();
-
-    // future must have executed for the scope to have ended, even
-    // though we never invoked `wait` to observe its result
-    assert_eq!(&data.lock().unwrap()[..], "Hello, world!");
-}
-
-#[test]
-#[should_panic(expected = "Hello, world!")]
-#[cfg(rayon_unstable)]
-fn async_future_panic_prop() {
-    let future = spawn_future(lazy(move || Ok::<(), ()>(argh())));
-    let _ = future.rayon_wait(); // should panic, not return a value
-
-    fn argh() -> () {
-        if true {
-            panic!("Hello, world!");
-        }
-    }
-}
-
-#[test]
-#[cfg(rayon_unstable)]
-fn async_future_scope_interact() {
-    let future = spawn_future(lazy(move || Ok::<usize, ()>(22)));
-
-    let mut vec = vec![];
-    scope(|s| {
-        let future = s.spawn_future(future.map(|x| x * 2));
-        s.spawn(|_| {
-            vec.push(future.rayon_wait().unwrap());
-        }); // just because
-    });
-
-    assert_eq!(vec![44], vec);
 }
 
 /// Test what happens when the thread-pool is dropped but there are
@@ -113,7 +61,7 @@ fn termination_while_things_are_executing() {
     // Create a thread-pool and spawn some code in it, but then drop
     // our reference to it.
     {
-        let thread_pool = ThreadPool::new(Configuration::new()).unwrap();
+        let thread_pool = ThreadPoolBuilder::new().build().unwrap();
         thread_pool.spawn(move || {
             let data = rx0.recv().unwrap();
 
@@ -139,13 +87,13 @@ fn custom_panic_handler_and_spawn() {
     // channel; since the closure is potentially executed in parallel
     // with itself, we have to wrap `tx` in a mutex.
     let tx = Mutex::new(tx);
-    let panic_handler = move |e: Box<Any + Send>| {
+    let panic_handler = move |e: Box<dyn Any + Send>| {
         tx.lock().unwrap().send(e).unwrap();
     };
 
     // Execute an async that will panic.
-    let config = Configuration::new().panic_handler(panic_handler);
-    ThreadPool::new(config).unwrap().spawn(move || {
+    let builder = ThreadPoolBuilder::new().panic_handler(panic_handler);
+    builder.build().unwrap().spawn(move || {
         panic!("Hello, world!");
     });
 
@@ -172,11 +120,11 @@ fn custom_panic_handler_and_nested_spawn() {
 
     // Execute an async that will (eventually) panic.
     const PANICS: usize = 3;
-    let config = Configuration::new().panic_handler(panic_handler);
-    ThreadPool::new(config).unwrap().spawn(move || {
+    let builder = ThreadPoolBuilder::new().panic_handler(panic_handler);
+    builder.build().unwrap().spawn(move || {
         // launch 3 nested spawn-asyncs; these should be in the same
         // thread-pool and hence inherit the same panic handler
-        for _ in 0 .. PANICS {
+        for _ in 0..PANICS {
             spawn(move || {
                 panic!("Hello, world!");
             });
@@ -184,7 +132,7 @@ fn custom_panic_handler_and_nested_spawn() {
     });
 
     // Check that we get back the panics we expected.
-    for _ in 0 .. PANICS {
+    for _ in 0..PANICS {
         let error = rx.recv().unwrap();
         if let Some(&msg) = error.downcast_ref::<&str>() {
             assert_eq!(msg, "Hello, world!");
@@ -192,4 +140,104 @@ fn custom_panic_handler_and_nested_spawn() {
             panic!("did not receive a string from panic handler");
         }
     }
+}
+
+macro_rules! test_order {
+    ($outer_spawn:ident, $inner_spawn:ident) => {{
+        let builder = ThreadPoolBuilder::new().num_threads(1);
+        let pool = builder.build().unwrap();
+        let (tx, rx) = channel();
+        pool.install(move || {
+            for i in 0..10 {
+                let tx = tx.clone();
+                $outer_spawn(move || {
+                    for j in 0..10 {
+                        let tx = tx.clone();
+                        $inner_spawn(move || {
+                            tx.send(i * 10 + j).unwrap();
+                        });
+                    }
+                });
+            }
+        });
+        rx.iter().collect::<Vec<i32>>()
+    }};
+}
+
+#[test]
+fn lifo_order() {
+    // In the absense of stealing, `spawn()` jobs on a thread will run in LIFO order.
+    let vec = test_order!(spawn, spawn);
+    let expected: Vec<i32> = (0..100).rev().collect(); // LIFO -> reversed
+    assert_eq!(vec, expected);
+}
+
+#[test]
+fn fifo_order() {
+    // In the absense of stealing, `spawn_fifo()` jobs on a thread will run in FIFO order.
+    let vec = test_order!(spawn_fifo, spawn_fifo);
+    let expected: Vec<i32> = (0..100).collect(); // FIFO -> natural order
+    assert_eq!(vec, expected);
+}
+
+#[test]
+fn lifo_fifo_order() {
+    // LIFO on the outside, FIFO on the inside
+    let vec = test_order!(spawn, spawn_fifo);
+    let expected: Vec<i32> = (0..10)
+        .rev()
+        .flat_map(|i| (0..10).map(move |j| i * 10 + j))
+        .collect();
+    assert_eq!(vec, expected);
+}
+
+#[test]
+fn fifo_lifo_order() {
+    // FIFO on the outside, LIFO on the inside
+    let vec = test_order!(spawn_fifo, spawn);
+    let expected: Vec<i32> = (0..10)
+        .flat_map(|i| (0..10).rev().map(move |j| i * 10 + j))
+        .collect();
+    assert_eq!(vec, expected);
+}
+
+macro_rules! spawn_send {
+    ($spawn:ident, $tx:ident, $i:expr) => {{
+        let tx = $tx.clone();
+        $spawn(move || tx.send($i).unwrap());
+    }};
+}
+
+/// Test mixed spawns pushing a series of numbers, interleaved such
+/// such that negative values are using the second kind of spawn.
+macro_rules! test_mixed_order {
+    ($pos_spawn:ident, $neg_spawn:ident) => {{
+        let builder = ThreadPoolBuilder::new().num_threads(1);
+        let pool = builder.build().unwrap();
+        let (tx, rx) = channel();
+        pool.install(move || {
+            spawn_send!($pos_spawn, tx, 0);
+            spawn_send!($neg_spawn, tx, -1);
+            spawn_send!($pos_spawn, tx, 1);
+            spawn_send!($neg_spawn, tx, -2);
+            spawn_send!($pos_spawn, tx, 2);
+            spawn_send!($neg_spawn, tx, -3);
+            spawn_send!($pos_spawn, tx, 3);
+        });
+        rx.iter().collect::<Vec<i32>>()
+    }};
+}
+
+#[test]
+fn mixed_lifo_fifo_order() {
+    let vec = test_mixed_order!(spawn, spawn_fifo);
+    let expected = vec![3, -1, 2, -2, 1, -3, 0];
+    assert_eq!(vec, expected);
+}
+
+#[test]
+fn mixed_fifo_lifo_order() {
+    let vec = test_mixed_order!(spawn_fifo, spawn);
+    let expected = vec![0, -3, 1, -2, 2, -1, 3];
+    assert_eq!(vec, expected);
 }

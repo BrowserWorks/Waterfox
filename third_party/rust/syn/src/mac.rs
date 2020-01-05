@@ -1,430 +1,239 @@
 use super::*;
+use crate::token::{Brace, Bracket, Paren};
+use proc_macro2::TokenStream;
+#[cfg(feature = "parsing")]
+use proc_macro2::{Delimiter, Span, TokenTree};
 
-/// Represents a macro invocation. The Path indicates which macro
-/// is being invoked, and the vector of token-trees contains the source
-/// of the macro invocation.
-///
-/// NB: the additional ident for a `macro_rules`-style macro is actually
-/// stored in the enclosing item. Oog.
-#[derive(Debug, Clone, Eq, PartialEq, Hash)]
-pub struct Mac {
-    pub path: Path,
-    pub tts: Vec<TokenTree>,
+#[cfg(feature = "parsing")]
+use crate::parse::{Parse, ParseStream, Parser, Result};
+#[cfg(feature = "extra-traits")]
+use crate::tt::TokenStreamHelper;
+#[cfg(feature = "extra-traits")]
+use std::hash::{Hash, Hasher};
+
+ast_struct! {
+    /// A macro invocation: `println!("{}", mac)`.
+    ///
+    /// *This type is available if Syn is built with the `"derive"` or `"full"`
+    /// feature.*
+    pub struct Macro #manual_extra_traits {
+        pub path: Path,
+        pub bang_token: Token![!],
+        pub delimiter: MacroDelimiter,
+        pub tokens: TokenStream,
+    }
 }
 
-/// When the main rust parser encounters a syntax-extension invocation, it
-/// parses the arguments to the invocation as a token-tree. This is a very
-/// loose structure, such that all sorts of different AST-fragments can
-/// be passed to syntax extensions using a uniform type.
-///
-/// If the syntax extension is an MBE macro, it will attempt to match its
-/// LHS token tree against the provided token tree, and if it finds a
-/// match, will transcribe the RHS token tree, splicing in any captured
-/// `macro_parser::matched_nonterminals` into the `SubstNt`s it finds.
-///
-/// The RHS of an MBE macro is the only place `SubstNt`s are substituted.
-/// Nothing special happens to misnamed or misplaced `SubstNt`s.
-#[derive(Debug, Clone, Eq, PartialEq, Hash)]
-pub enum TokenTree {
-    /// A single token
-    Token(Token),
-    /// A delimited sequence of token trees
-    Delimited(Delimited),
+ast_enum! {
+    /// A grouping token that surrounds a macro body: `m!(...)` or `m!{...}` or `m![...]`.
+    ///
+    /// *This type is available if Syn is built with the `"derive"` or `"full"`
+    /// feature.*
+    pub enum MacroDelimiter {
+        Paren(Paren),
+        Brace(Brace),
+        Bracket(Bracket),
+    }
 }
 
-#[derive(Debug, Clone, Eq, PartialEq, Hash)]
-pub struct Delimited {
-    /// The type of delimiter
-    pub delim: DelimToken,
-    /// The delimited sequence of token trees
-    pub tts: Vec<TokenTree>,
+#[cfg(feature = "extra-traits")]
+impl Eq for Macro {}
+
+#[cfg(feature = "extra-traits")]
+impl PartialEq for Macro {
+    fn eq(&self, other: &Self) -> bool {
+        self.path == other.path
+            && self.bang_token == other.bang_token
+            && self.delimiter == other.delimiter
+            && TokenStreamHelper(&self.tokens) == TokenStreamHelper(&other.tokens)
+    }
 }
 
-#[derive(Debug, Clone, Eq, PartialEq, Hash)]
-pub enum Token {
-    // Expression-operator symbols.
-    Eq,
-    Lt,
-    Le,
-    EqEq,
-    Ne,
-    Ge,
-    Gt,
-    AndAnd,
-    OrOr,
-    Not,
-    Tilde,
-    BinOp(BinOpToken),
-    BinOpEq(BinOpToken),
-
-    // Structural symbols
-    At,
-    Dot,
-    DotDot,
-    DotDotDot,
-    Comma,
-    Semi,
-    Colon,
-    ModSep,
-    RArrow,
-    LArrow,
-    FatArrow,
-    Pound,
-    Dollar,
-    Question,
-
-    // Literals
-    Literal(Lit),
-
-    // Name components
-    Ident(Ident),
-    Underscore,
-    Lifetime(Ident),
-
-    DocComment(String),
+#[cfg(feature = "extra-traits")]
+impl Hash for Macro {
+    fn hash<H>(&self, state: &mut H)
+    where
+        H: Hasher,
+    {
+        self.path.hash(state);
+        self.bang_token.hash(state);
+        self.delimiter.hash(state);
+        TokenStreamHelper(&self.tokens).hash(state);
+    }
 }
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
-pub enum BinOpToken {
-    Plus,
-    Minus,
-    Star,
-    Slash,
-    Percent,
-    Caret,
-    And,
-    Or,
-    Shl,
-    Shr,
+#[cfg(feature = "parsing")]
+fn delimiter_span(delimiter: &MacroDelimiter) -> Span {
+    match delimiter {
+        MacroDelimiter::Paren(token) => token.span,
+        MacroDelimiter::Brace(token) => token.span,
+        MacroDelimiter::Bracket(token) => token.span,
+    }
 }
 
-/// A delimiter token
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
-pub enum DelimToken {
-    /// A round parenthesis: `(` or `)`
-    Paren,
-    /// A square bracket: `[` or `]`
-    Bracket,
-    /// A curly brace: `{` or `}`
-    Brace,
+impl Macro {
+    /// Parse the tokens within the macro invocation's delimiters into a syntax
+    /// tree.
+    ///
+    /// This is equivalent to `syn::parse2::<T>(mac.tokens)` except that it
+    /// produces a more useful span when `tokens` is empty.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use syn::{parse_quote, Expr, ExprLit, Ident, Lit, LitStr, Macro, Token};
+    /// use syn::ext::IdentExt;
+    /// use syn::parse::{Error, Parse, ParseStream, Result};
+    /// use syn::punctuated::Punctuated;
+    ///
+    /// // The arguments expected by libcore's format_args macro, and as a
+    /// // result most other formatting and printing macros like println.
+    /// //
+    /// //     println!("{} is {number:.prec$}", "x", prec=5, number=0.01)
+    /// struct FormatArgs {
+    ///     format_string: Expr,
+    ///     positional_args: Vec<Expr>,
+    ///     named_args: Vec<(Ident, Expr)>,
+    /// }
+    ///
+    /// impl Parse for FormatArgs {
+    ///     fn parse(input: ParseStream) -> Result<Self> {
+    ///         let format_string: Expr;
+    ///         let mut positional_args = Vec::new();
+    ///         let mut named_args = Vec::new();
+    ///
+    ///         format_string = input.parse()?;
+    ///         while !input.is_empty() {
+    ///             input.parse::<Token![,]>()?;
+    ///             if input.is_empty() {
+    ///                 break;
+    ///             }
+    ///             if input.peek(Ident::peek_any) && input.peek2(Token![=]) {
+    ///                 while !input.is_empty() {
+    ///                     let name: Ident = input.call(Ident::parse_any)?;
+    ///                     input.parse::<Token![=]>()?;
+    ///                     let value: Expr = input.parse()?;
+    ///                     named_args.push((name, value));
+    ///                     if input.is_empty() {
+    ///                         break;
+    ///                     }
+    ///                     input.parse::<Token![,]>()?;
+    ///                 }
+    ///                 break;
+    ///             }
+    ///             positional_args.push(input.parse()?);
+    ///         }
+    ///
+    ///         Ok(FormatArgs {
+    ///             format_string,
+    ///             positional_args,
+    ///             named_args,
+    ///         })
+    ///     }
+    /// }
+    ///
+    /// // Extract the first argument, the format string literal, from an
+    /// // invocation of a formatting or printing macro.
+    /// fn get_format_string(m: &Macro) -> Result<LitStr> {
+    ///     let args: FormatArgs = m.parse_body()?;
+    ///     match args.format_string {
+    ///         Expr::Lit(ExprLit { lit: Lit::Str(lit), .. }) => Ok(lit),
+    ///         other => {
+    ///             // First argument was not a string literal expression.
+    ///             // Maybe something like: println!(concat!(...), ...)
+    ///             Err(Error::new_spanned(other, "format string must be a string literal"))
+    ///         }
+    ///     }
+    /// }
+    ///
+    /// fn main() {
+    ///     let invocation = parse_quote! {
+    ///         println!("{:?}", Instant::now())
+    ///     };
+    ///     let lit = get_format_string(&invocation).unwrap();
+    ///     assert_eq!(lit.value(), "{:?}");
+    /// }
+    /// ```
+    #[cfg(feature = "parsing")]
+    pub fn parse_body<T: Parse>(&self) -> Result<T> {
+        self.parse_body_with(T::parse)
+    }
+
+    /// Parse the tokens within the macro invocation's delimiters using the
+    /// given parser.
+    #[cfg(feature = "parsing")]
+    pub fn parse_body_with<F: Parser>(&self, parser: F) -> Result<F::Output> {
+        // TODO: see if we can get a group.span_close() span in here as the
+        // scope, rather than the span of the whole group.
+        let scope = delimiter_span(&self.delimiter);
+        crate::parse::parse_scoped(parser, scope, self.tokens.clone())
+    }
+}
+
+#[cfg(feature = "parsing")]
+pub fn parse_delimiter(input: ParseStream) -> Result<(MacroDelimiter, TokenStream)> {
+    input.step(|cursor| {
+        if let Some((TokenTree::Group(g), rest)) = cursor.token_tree() {
+            let span = g.span();
+            let delimiter = match g.delimiter() {
+                Delimiter::Parenthesis => MacroDelimiter::Paren(Paren(span)),
+                Delimiter::Brace => MacroDelimiter::Brace(Brace(span)),
+                Delimiter::Bracket => MacroDelimiter::Bracket(Bracket(span)),
+                Delimiter::None => {
+                    return Err(cursor.error("expected delimiter"));
+                }
+            };
+            Ok(((delimiter, g.stream()), rest))
+        } else {
+            Err(cursor.error("expected delimiter"))
+        }
+    })
 }
 
 #[cfg(feature = "parsing")]
 pub mod parsing {
     use super::*;
-    use Lifetime;
-    use generics::parsing::lifetime;
-    use ident::parsing::word;
-    use lit::parsing::lit;
-    use synom::space::{block_comment, whitespace};
-    use ty::parsing::path;
 
-    named!(pub mac -> Mac, do_parse!(
-        what: path >>
-        punct!("!") >>
-        body: delimited >>
-        (Mac {
-            path: what,
-            tts: vec![TokenTree::Delimited(body)],
-        })
-    ));
+    use crate::parse::{Parse, ParseStream, Result};
 
-    named!(pub token_trees -> Vec<TokenTree>, many0!(token_tree));
-
-    named!(pub delimited -> Delimited, alt!(
-        delimited!(
-            punct!("("),
-            token_trees,
-            punct!(")")
-        ) => { |tts| Delimited { delim: DelimToken::Paren, tts: tts } }
-        |
-        delimited!(
-            punct!("["),
-            token_trees,
-            punct!("]")
-        ) => { |tts| Delimited { delim: DelimToken::Bracket, tts: tts } }
-        |
-        delimited!(
-            punct!("{"),
-            token_trees,
-            punct!("}")
-        ) => { |tts| Delimited { delim: DelimToken::Brace, tts: tts } }
-    ));
-
-    named!(pub token_tree -> TokenTree, alt!(
-        map!(token, TokenTree::Token)
-        |
-        map!(delimited, TokenTree::Delimited)
-    ));
-
-    named!(token -> Token, alt!(
-        keyword!("_") => { |_| Token::Underscore }
-        |
-        punct!("&&") => { |_| Token::AndAnd } // must be before BinOp
-        |
-        punct!("||") => { |_| Token::OrOr } // must be before BinOp
-        |
-        punct!("->") => { |_| Token::RArrow } // must be before BinOp
-        |
-        punct!("<-") => { |_| Token::LArrow } // must be before Lt
-        |
-        punct!("=>") => { |_| Token::FatArrow } // must be before Eq
-        |
-        punct!("...") => { |_| Token::DotDotDot } // must be before DotDot
-        |
-        punct!("..") => { |_| Token::DotDot } // must be before Dot
-        |
-        punct!(".") => { |_| Token::Dot }
-        |
-        map!(doc_comment, Token::DocComment) // must be before bin_op
-        |
-        map!(bin_op_eq, Token::BinOpEq) // must be before bin_op
-        |
-        map!(bin_op, Token::BinOp)
-        |
-        map!(lit, Token::Literal)
-        |
-        map!(word, Token::Ident)
-        |
-        map!(lifetime, |lt: Lifetime| Token::Lifetime(lt.ident))
-        |
-        punct!("<=") => { |_| Token::Le }
-        |
-        punct!("==") => { |_| Token::EqEq }
-        |
-        punct!("!=") => { |_| Token::Ne }
-        |
-        punct!(">=") => { |_| Token::Ge }
-        |
-        punct!("::") => { |_| Token::ModSep }
-        |
-        punct!("=") => { |_| Token::Eq }
-        |
-        punct!("<") => { |_| Token::Lt }
-        |
-        punct!(">") => { |_| Token::Gt }
-        |
-        punct!("!") => { |_| Token::Not }
-        |
-        punct!("~") => { |_| Token::Tilde }
-        |
-        punct!("@") => { |_| Token::At }
-        |
-        punct!(",") => { |_| Token::Comma }
-        |
-        punct!(";") => { |_| Token::Semi }
-        |
-        punct!(":") => { |_| Token::Colon }
-        |
-        punct!("#") => { |_| Token::Pound }
-        |
-        punct!("$") => { |_| Token::Dollar }
-        |
-        punct!("?") => { |_| Token::Question }
-    ));
-
-    named!(bin_op -> BinOpToken, alt!(
-        punct!("+") => { |_| BinOpToken::Plus }
-        |
-        punct!("-") => { |_| BinOpToken::Minus }
-        |
-        punct!("*") => { |_| BinOpToken::Star }
-        |
-        punct!("/") => { |_| BinOpToken::Slash }
-        |
-        punct!("%") => { |_| BinOpToken::Percent }
-        |
-        punct!("^") => { |_| BinOpToken::Caret }
-        |
-        punct!("&") => { |_| BinOpToken::And }
-        |
-        punct!("|") => { |_| BinOpToken::Or }
-        |
-        punct!("<<") => { |_| BinOpToken::Shl }
-        |
-        punct!(">>") => { |_| BinOpToken::Shr }
-    ));
-
-    named!(bin_op_eq -> BinOpToken, alt!(
-        punct!("+=") => { |_| BinOpToken::Plus }
-        |
-        punct!("-=") => { |_| BinOpToken::Minus }
-        |
-        punct!("*=") => { |_| BinOpToken::Star }
-        |
-        punct!("/=") => { |_| BinOpToken::Slash }
-        |
-        punct!("%=") => { |_| BinOpToken::Percent }
-        |
-        punct!("^=") => { |_| BinOpToken::Caret }
-        |
-        punct!("&=") => { |_| BinOpToken::And }
-        |
-        punct!("|=") => { |_| BinOpToken::Or }
-        |
-        punct!("<<=") => { |_| BinOpToken::Shl }
-        |
-        punct!(">>=") => { |_| BinOpToken::Shr }
-    ));
-
-    named!(doc_comment -> String, alt!(
-        do_parse!(
-            punct!("//!") >>
-            content: take_until!("\n") >>
-            (format!("//!{}", content))
-        )
-        |
-        do_parse!(
-            option!(whitespace) >>
-            peek!(tag!("/*!")) >>
-            com: block_comment >>
-            (com.to_owned())
-        )
-        |
-        do_parse!(
-            punct!("///") >>
-            not!(tag!("/")) >>
-            content: take_until!("\n") >>
-            (format!("///{}", content))
-        )
-        |
-        do_parse!(
-            option!(whitespace) >>
-            peek!(tuple!(tag!("/**"), not!(tag!("*")))) >>
-            com: block_comment >>
-            (com.to_owned())
-        )
-    ));
+    impl Parse for Macro {
+        fn parse(input: ParseStream) -> Result<Self> {
+            let tokens;
+            Ok(Macro {
+                path: input.call(Path::parse_mod_style)?,
+                bang_token: input.parse()?,
+                delimiter: {
+                    let (delimiter, content) = parse_delimiter(input)?;
+                    tokens = content;
+                    delimiter
+                },
+                tokens,
+            })
+        }
+    }
 }
 
 #[cfg(feature = "printing")]
 mod printing {
     use super::*;
-    use quote::{Tokens, ToTokens};
+    use proc_macro2::TokenStream;
+    use quote::ToTokens;
 
-    impl ToTokens for Mac {
-        fn to_tokens(&self, tokens: &mut Tokens) {
+    impl ToTokens for Macro {
+        fn to_tokens(&self, tokens: &mut TokenStream) {
             self.path.to_tokens(tokens);
-            tokens.append("!");
-            for tt in &self.tts {
-                tt.to_tokens(tokens);
-            }
-        }
-    }
-
-    impl ToTokens for TokenTree {
-        fn to_tokens(&self, tokens: &mut Tokens) {
-            match *self {
-                TokenTree::Token(ref token) => token.to_tokens(tokens),
-                TokenTree::Delimited(ref delimited) => delimited.to_tokens(tokens),
-            }
-        }
-    }
-
-    impl DelimToken {
-        fn open(&self) -> &'static str {
-            match *self {
-                DelimToken::Paren => "(",
-                DelimToken::Bracket => "[",
-                DelimToken::Brace => "{",
-            }
-        }
-
-        fn close(&self) -> &'static str {
-            match *self {
-                DelimToken::Paren => ")",
-                DelimToken::Bracket => "]",
-                DelimToken::Brace => "}",
-            }
-        }
-    }
-
-    impl ToTokens for Delimited {
-        fn to_tokens(&self, tokens: &mut Tokens) {
-            tokens.append(self.delim.open());
-            for tt in &self.tts {
-                tt.to_tokens(tokens);
-            }
-            tokens.append(self.delim.close());
-        }
-    }
-
-    impl ToTokens for Token {
-        fn to_tokens(&self, tokens: &mut Tokens) {
-            match *self {
-                Token::Eq => tokens.append("="),
-                Token::Lt => tokens.append("<"),
-                Token::Le => tokens.append("<="),
-                Token::EqEq => tokens.append("=="),
-                Token::Ne => tokens.append("!="),
-                Token::Ge => tokens.append(">="),
-                Token::Gt => tokens.append(">"),
-                Token::AndAnd => tokens.append("&&"),
-                Token::OrOr => tokens.append("||"),
-                Token::Not => tokens.append("!"),
-                Token::Tilde => tokens.append("~"),
-                Token::BinOp(binop) => tokens.append(binop.op()),
-                Token::BinOpEq(binop) => tokens.append(binop.assign_op()),
-                Token::At => tokens.append("@"),
-                Token::Dot => tokens.append("."),
-                Token::DotDot => tokens.append(".."),
-                Token::DotDotDot => tokens.append("..."),
-                Token::Comma => tokens.append(","),
-                Token::Semi => tokens.append(";"),
-                Token::Colon => tokens.append(":"),
-                Token::ModSep => tokens.append("::"),
-                Token::RArrow => tokens.append("->"),
-                Token::LArrow => tokens.append("<-"),
-                Token::FatArrow => tokens.append("=>"),
-                Token::Pound => tokens.append("#"),
-                Token::Dollar => tokens.append("$"),
-                Token::Question => tokens.append("?"),
-                Token::Literal(ref lit) => lit.to_tokens(tokens),
-                Token::Ident(ref ident) |
-                Token::Lifetime(ref ident) => ident.to_tokens(tokens),
-                Token::Underscore => tokens.append("_"),
-                Token::DocComment(ref com) => {
-                    tokens.append(&format!("{}\n", com));
+            self.bang_token.to_tokens(tokens);
+            match &self.delimiter {
+                MacroDelimiter::Paren(paren) => {
+                    paren.surround(tokens, |tokens| self.tokens.to_tokens(tokens));
+                }
+                MacroDelimiter::Brace(brace) => {
+                    brace.surround(tokens, |tokens| self.tokens.to_tokens(tokens));
+                }
+                MacroDelimiter::Bracket(bracket) => {
+                    bracket.surround(tokens, |tokens| self.tokens.to_tokens(tokens));
                 }
             }
-        }
-    }
-
-    impl BinOpToken {
-        fn op(&self) -> &'static str {
-            match *self {
-                BinOpToken::Plus => "+",
-                BinOpToken::Minus => "-",
-                BinOpToken::Star => "*",
-                BinOpToken::Slash => "/",
-                BinOpToken::Percent => "%",
-                BinOpToken::Caret => "^",
-                BinOpToken::And => "&",
-                BinOpToken::Or => "|",
-                BinOpToken::Shl => "<<",
-                BinOpToken::Shr => ">>",
-            }
-        }
-
-        fn assign_op(&self) -> &'static str {
-            match *self {
-                BinOpToken::Plus => "+=",
-                BinOpToken::Minus => "-=",
-                BinOpToken::Star => "*=",
-                BinOpToken::Slash => "/=",
-                BinOpToken::Percent => "%=",
-                BinOpToken::Caret => "^=",
-                BinOpToken::And => "&=",
-                BinOpToken::Or => "|=",
-                BinOpToken::Shl => "<<=",
-                BinOpToken::Shr => ">>=",
-            }
-        }
-    }
-
-    impl ToTokens for BinOpToken {
-        fn to_tokens(&self, tokens: &mut Tokens) {
-            tokens.append(self.op());
         }
     }
 }

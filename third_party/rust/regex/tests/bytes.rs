@@ -3,7 +3,7 @@
 
 // A silly wrapper to make it possible to write and match raw bytes.
 struct R<'a>(&'a [u8]);
-impl<'a> R<'a> { fn as_bytes(&self) -> &'a [u8] { &self.0 } }
+impl<'a> R<'a> { fn as_bytes(&self) -> &'a [u8] { self.0 } }
 
 mat!(word_boundary, r"(?-u) \b", " δ", None);
 mat!(word_boundary_unicode, r" \b", " δ", Some((0, 1)));

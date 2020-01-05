@@ -3,7 +3,7 @@
 # When uploading crates to the registry Cargo will automatically
 # "normalize" Cargo.toml files for maximal compatibility
 # with all versions of Cargo and also rewrite `path` dependencies
-# to registry (e.g. crates.io) dependencies
+# to registry (e.g., crates.io) dependencies
 #
 # If you believe there's an error in this file please file an
 # issue against the rust-lang/cargo repository. If you're
@@ -12,32 +12,33 @@
 
 [package]
 name = "serde"
-version = "1.0.8"
+version = "1.0.104"
 authors = ["Erick Tryzelaar <erick.tryzelaar@gmail.com>", "David Tolnay <dtolnay@gmail.com>"]
-include = ["Cargo.toml", "src/**/*.rs", "README.md", "LICENSE-APACHE", "LICENSE-MIT"]
+build = "build.rs"
+include = ["Cargo.toml", "build.rs", "src/**/*.rs", "crates-io.md", "README.md", "LICENSE-APACHE", "LICENSE-MIT"]
 description = "A generic serialization/deserialization framework"
 homepage = "https://serde.rs"
 documentation = "https://docs.serde.rs/serde/"
-readme = "README.md"
+readme = "crates-io.md"
 keywords = ["serde", "serialization", "no_std"]
 categories = ["encoding"]
-license = "MIT/Apache-2.0"
+license = "MIT OR Apache-2.0"
 repository = "https://github.com/serde-rs/serde"
+[package.metadata.playground]
+features = ["derive", "rc"]
 [dependencies.serde_derive]
-version = "1.0"
+version = "=1.0.104"
 optional = true
 [dev-dependencies.serde_derive]
 version = "1.0"
 
 [features]
-playground = ["serde_derive"]
-derive = ["serde_derive"]
-alloc = ["unstable"]
-unstable = []
-std = []
-collections = ["alloc"]
-rc = []
+alloc = []
 default = ["std"]
+derive = ["serde_derive"]
+rc = []
+std = []
+unstable = []
 [badges.appveyor]
 repository = "serde-rs/serde"
 

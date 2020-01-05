@@ -15,15 +15,17 @@
 //! }
 //! ```
 
-#[cfg(windows)]
-extern crate kernel32;
-#[cfg(not(windows))]
+#![cfg_attr(unix, no_std)]
+
+#[cfg(unix)]
 extern crate libc;
 #[cfg(windows)]
 extern crate winapi;
 
 #[cfg(windows)]
-use winapi::minwindef::DWORD;
+use winapi::shared::minwindef::DWORD;
+#[cfg(windows)]
+use winapi::shared::ntdef::WCHAR;
 
 /// possible stream sources
 #[derive(Clone, Copy, Debug)]
@@ -34,7 +36,7 @@ pub enum Stream {
 }
 
 /// returns true if this is a tty
-#[cfg(unix)]
+#[cfg(all(unix, not(target_arch = "wasm32")))]
 pub fn is(stream: Stream) -> bool {
     extern crate libc;
 
@@ -49,10 +51,9 @@ pub fn is(stream: Stream) -> bool {
 /// returns true if this is a tty
 #[cfg(windows)]
 pub fn is(stream: Stream) -> bool {
-    use winapi::{
-        STD_INPUT_HANDLE as STD_INPUT,
-        STD_ERROR_HANDLE as STD_ERROR,
-        STD_OUTPUT_HANDLE as STD_OUTPUT
+    use winapi::um::winbase::{
+        STD_ERROR_HANDLE as STD_ERROR, STD_INPUT_HANDLE as STD_INPUT,
+        STD_OUTPUT_HANDLE as STD_OUTPUT,
     };
 
     let (fd, others) = match stream {
@@ -87,10 +88,12 @@ pub fn isnt(stream: Stream) -> bool {
 /// Returns true if any of the given fds are on a console.
 #[cfg(windows)]
 unsafe fn console_on_any(fds: &[DWORD]) -> bool {
+    use winapi::um::{consoleapi::GetConsoleMode, processenv::GetStdHandle};
+
     for &fd in fds {
         let mut out = 0;
-        let handle = kernel32::GetStdHandle(fd);
-        if kernel32::GetConsoleMode(handle, &mut out) != 0 {
+        let handle = GetStdHandle(fd);
+        if GetConsoleMode(handle, &mut out) != 0 {
             return true;
         }
     }
@@ -100,36 +103,47 @@ unsafe fn console_on_any(fds: &[DWORD]) -> bool {
 /// Returns true if there is an MSYS tty on the given handle.
 #[cfg(windows)]
 unsafe fn msys_tty_on(fd: DWORD) -> bool {
-    use std::ffi::OsString;
-    use std::mem;
-    use std::os::raw::c_void;
-    use std::os::windows::ffi::OsStringExt;
-    use std::slice;
+    use std::{mem, slice};
 
-    use kernel32::GetFileInformationByHandleEx;
-    use winapi::fileapi::FILE_NAME_INFO;
-    use winapi::minwinbase::FileNameInfo;
-    use winapi::minwindef::MAX_PATH;
+    use winapi::{
+        ctypes::c_void,
+        shared::minwindef::MAX_PATH,
+        um::{
+            fileapi::FILE_NAME_INFO, minwinbase::FileNameInfo, processenv::GetStdHandle,
+            winbase::GetFileInformationByHandleEx,
+        },
+    };
 
     let size = mem::size_of::<FILE_NAME_INFO>();
-    let mut name_info_bytes = vec![0u8; size + MAX_PATH];
+    let mut name_info_bytes = vec![0u8; size + MAX_PATH * mem::size_of::<WCHAR>()];
     let res = GetFileInformationByHandleEx(
-        kernel32::GetStdHandle(fd),
+        GetStdHandle(fd),
         FileNameInfo,
         &mut *name_info_bytes as *mut _ as *mut c_void,
-        name_info_bytes.len() as u32);
+        name_info_bytes.len() as u32,
+    );
     if res == 0 {
-        return true;
+        return false;
     }
-    let name_info: FILE_NAME_INFO =
-        *(name_info_bytes[0..size].as_ptr() as *const FILE_NAME_INFO);
-    let name_bytes =
-        &name_info_bytes[size..size + name_info.FileNameLength as usize];
-    let name_u16 = slice::from_raw_parts(
-        name_bytes.as_ptr() as *const u16, name_bytes.len() / 2);
-    let name = OsString::from_wide(name_u16)
-        .as_os_str().to_string_lossy().into_owned();
-    name.contains("msys-") || name.contains("-pty")
+    let name_info: &FILE_NAME_INFO = &*(name_info_bytes.as_ptr() as *const FILE_NAME_INFO);
+    let s = slice::from_raw_parts(
+        name_info.FileName.as_ptr(),
+        name_info.FileNameLength as usize / 2,
+    );
+    let name = String::from_utf16_lossy(s);
+    // This checks whether 'pty' exists in the file name, which indicates that
+    // a pseudo-terminal is attached. To mitigate against false positives
+    // (e.g., an actual file name that contains 'pty'), we also require that
+    // either the strings 'msys-' or 'cygwin-' are in the file name as well.)
+    let is_msys = name.contains("msys-") || name.contains("cygwin-");
+    let is_pty = name.contains("-pty");
+    is_msys && is_pty
+}
+
+/// returns true if this is a tty
+#[cfg(target_arch = "wasm32")]
+pub fn is(_stream: Stream) -> bool {
+    false
 }
 
 #[cfg(test)]
@@ -172,7 +186,7 @@ mod tests {
     #[cfg(target_os = "macos")]
     fn is_in() {
         // macos on travis seems to pipe its input
-        assert!(!is(Stream::Stdin))
+        assert!(is(Stream::Stdin))
     }
 
     #[test]

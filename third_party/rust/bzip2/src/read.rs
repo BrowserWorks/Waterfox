@@ -175,6 +175,7 @@ mod tests {
     use read::{BzEncoder, BzDecoder};
     use Compression;
     use rand::{thread_rng, Rng};
+    use partial_io::{GenInterrupted, PartialRead, PartialWithErrors};
 
     #[test]
     fn smoke() {
@@ -270,6 +271,21 @@ mod tests {
         fn test(v: Vec<u8>) -> bool {
             let r = BzEncoder::new(&v[..], Compression::Default);
             let mut r = BzDecoder::new(r);
+            let mut v2 = Vec::new();
+            r.read_to_end(&mut v2).unwrap();
+            v == v2
+        }
+    }
+
+    #[test]
+    fn qc_partial() {
+        ::quickcheck::quickcheck(test as fn(_, _, _) -> _);
+
+        fn test(v: Vec<u8>,
+                encode_ops: PartialWithErrors<GenInterrupted>,
+                decode_ops: PartialWithErrors<GenInterrupted>) -> bool {
+            let r = BzEncoder::new(PartialRead::new(&v[..], encode_ops), Compression::Default);
+            let mut r = BzDecoder::new(PartialRead::new(r, decode_ops));
             let mut v2 = Vec::new();
             r.read_to_end(&mut v2).unwrap();
             v == v2

@@ -5,7 +5,7 @@
 // http://opensource.org/licenses/MIT>, at your option. This file may not be
 // copied, modified, or distributed except according to those terms.
 
-use std::sync::{Mutex, MutexGuard, Condvar};
+use std::sync::{Condvar, Mutex, MutexGuard};
 use std::cell::Cell;
 use std::time::Instant;
 
@@ -33,6 +33,10 @@ impl ThreadParker {
     // Checks if the park timed out. This should be called while holding the
     // queue lock after park_until has returned false.
     pub unsafe fn timed_out(&self) -> bool {
+        // We need to grab the mutex here because another thread may be
+        // concurrently executing UnparkHandle::unpark, which is done without
+        // holding the queue lock.
+        let _lock = self.mutex.lock().unwrap();
         self.should_park.get()
     }
 

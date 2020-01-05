@@ -23,3 +23,10 @@ fn test_supports_color() {
     assert!(supports_color("linux"));
     assert!(!supports_color("dumb"));
 }
+
+
+#[test]
+fn test_fallback() {
+    TermInfo::from_name("ansi-cargo-test").expect("failed to use fallback");
+    assert!(TermInfo::from_name("really-bad-terminal").is_err());
+}

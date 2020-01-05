@@ -235,17 +235,6 @@ fn test_insert() {
 }
 
 #[test]
-fn test_in_option() {
-    // Sanity check that we are sound w.r.t Option & non-nullable layout optimization.
-    let mut v = Some(ArrayVec::<[&i32; 1]>::new());
-    assert!(v.is_some());
-    unsafe {
-        *v.as_mut().unwrap().get_unchecked_mut(0) = mem::zeroed();
-    }
-    assert!(v.is_some());
-}
-
-#[test]
 fn test_into_inner_1() {
     let mut v = ArrayVec::from([1, 2]);
     v.pop();

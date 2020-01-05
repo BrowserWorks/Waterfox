@@ -13,8 +13,10 @@ use length::Length;
 use point::{TypedPoint2D, TypedPoint3D, point2, point3};
 use size::{TypedSize2D, size2};
 use scale_factor::ScaleFactor;
+use trig::Trig;
+use Radians;
 use num::*;
-use num_traits::{Float, NumCast};
+use num_traits::{Float, NumCast, Signed};
 use std::fmt;
 use std::ops::{Add, Neg, Mul, Sub, Div, AddAssign, SubAssign, MulAssign, DivAssign};
 use std::marker::PhantomData;
@@ -58,13 +60,15 @@ impl<T: fmt::Display, U> fmt::Display for TypedVector2D<T, U> {
     }
 }
 
-impl<T: Copy, U> TypedVector2D<T, U> {
+impl<T, U> TypedVector2D<T, U> {
     /// Constructor taking scalar values directly.
     #[inline]
     pub fn new(x: T, y: T) -> Self {
         TypedVector2D { x: x, y: y, _unit: PhantomData }
     }
+}
 
+impl<T: Copy, U> TypedVector2D<T, U> {
     /// Constructor taking properly typed Lengths instead of scalar values.
     #[inline]
     pub fn from_lengths(x: Length<T, U>, y: Length<T, U>) -> Self {
@@ -83,6 +87,12 @@ impl<T: Copy, U> TypedVector2D<T, U> {
     #[inline]
     pub fn to_point(&self) -> TypedPoint2D<T, U> {
         point2(self.x, self.y)
+    }
+
+    /// Swap x and y.
+    #[inline]
+    pub fn yx(&self) -> Self {
+        vec2(self.y, self.x)
     }
 
     /// Cast this vector into a size.
@@ -115,6 +125,14 @@ impl<T: Copy, U> TypedVector2D<T, U> {
     #[inline]
     pub fn to_array(&self) -> [T; 2] {
         [self.x, self.y]
+    }
+}
+
+impl<T, U> TypedVector2D<T, U>
+where T: Trig + Copy + Sub<T, Output = T> {
+    /// Returns the angle between this vector and the x axis between -PI and PI.
+    pub fn angle_from_x_axis(&self) -> Radians<T> {
+        Radians::new(Trig::fast_atan2(self.y, self.x))
     }
 }
 
@@ -266,7 +284,7 @@ impl<T: Round, U> TypedVector2D<T, U> {
     /// This behavior is preserved for negative values (unlike the basic cast).
     /// For example `{ -0.1, -0.8 }.round() == { 0.0, -1.0 }`.
     #[inline]
-    #[must_use]
+    #[cfg_attr(feature = "unstable", must_use)]
     pub fn round(&self) -> Self {
         vec2(self.x.round(), self.y.round())
     }
@@ -278,7 +296,7 @@ impl<T: Ceil, U> TypedVector2D<T, U> {
     /// This behavior is preserved for negative values (unlike the basic cast).
     /// For example `{ -0.1, -0.8 }.ceil() == { 0.0, 0.0 }`.
     #[inline]
-    #[must_use]
+    #[cfg_attr(feature = "unstable", must_use)]
     pub fn ceil(&self) -> Self {
         vec2(self.x.ceil(), self.y.ceil())
     }
@@ -290,7 +308,7 @@ impl<T: Floor, U> TypedVector2D<T, U> {
     /// This behavior is preserved for negative values (unlike the basic cast).
     /// For example `{ -0.1, -0.8 }.floor() == { -1.0, -1.0 }`.
     #[inline]
-    #[must_use]
+    #[cfg_attr(feature = "unstable", must_use)]
     pub fn floor(&self) -> Self {
         vec2(self.x.floor(), self.y.floor())
     }
@@ -315,6 +333,12 @@ impl<T: NumCast + Copy, U> TypedVector2D<T, U> {
     /// Cast into an `f32` vector.
     #[inline]
     pub fn to_f32(&self) -> TypedVector2D<f32, U> {
+        self.cast().unwrap()
+    }
+
+    /// Cast into an `f64` vector.
+    #[inline]
+    pub fn to_f64(&self) -> TypedVector2D<f64, U> {
         self.cast().unwrap()
     }
 
@@ -378,6 +402,13 @@ impl<T: Copy, U> From<[T; 2]> for TypedVector2D<T, U> {
     }
 }
 
+impl<T, U> TypedVector2D<T, U>
+where T: Signed {
+    pub fn abs(&self) -> Self {
+        vec2(self.x.abs(), self.y.abs())
+    }
+}
+
 define_matrix! {
     /// A 3d Vector tagged with a unit.
     pub struct TypedVector3D<T, U> {
@@ -417,13 +448,15 @@ impl<T: fmt::Display, U> fmt::Display for TypedVector3D<T, U> {
     }
 }
 
-impl<T: Copy, U> TypedVector3D<T, U> {
+impl<T, U> TypedVector3D<T, U> {
     /// Constructor taking scalar values directly.
     #[inline]
     pub fn new(x: T, y: T, z: T) -> Self {
         TypedVector3D { x: x, y: y, z: z, _unit: PhantomData }
     }
+}
 
+impl<T: Copy, U> TypedVector3D<T, U> {
     /// Constructor taking properly typed Lengths instead of scalar values.
     #[inline]
     pub fn from_lengths(x: Length<T, U>, y: Length<T, U>, z: Length<T, U>) -> TypedVector3D<T, U> {
@@ -436,6 +469,24 @@ impl<T: Copy, U> TypedVector3D<T, U> {
     #[inline]
     pub fn to_point(&self) -> TypedPoint3D<T, U> {
         point3(self.x, self.y, self.z)
+    }
+
+    /// Returns a 2d vector using this vector's x and y coordinates
+    #[inline]
+    pub fn xy(&self) -> TypedVector2D<T, U> {
+        vec2(self.x, self.y)
+    }
+
+    /// Returns a 2d vector using this vector's x and z coordinates
+    #[inline]
+    pub fn xz(&self) -> TypedVector2D<T, U> {
+        vec2(self.x, self.z)
+    }
+
+    /// Returns a 2d vector using this vector's x and z coordinates
+    #[inline]
+    pub fn yz(&self) -> TypedVector2D<T, U> {
+        vec2(self.y, self.z)
     }
 
     /// Returns self.x as a Length carrying the unit.
@@ -468,7 +519,7 @@ impl<T: Copy, U> TypedVector3D<T, U> {
     /// Convert into a 2d vector.
     #[inline]
     pub fn to_2d(&self) -> TypedVector2D<T, U> {
-        vec2(self.x, self.y)
+        self.xy()
     }
 }
 
@@ -613,7 +664,7 @@ impl<T: Round, U> TypedVector3D<T, U> {
     ///
     /// This behavior is preserved for negative values (unlike the basic cast).
     #[inline]
-    #[must_use]
+    #[cfg_attr(feature = "unstable", must_use)]
     pub fn round(&self) -> Self {
         vec3(self.x.round(), self.y.round(), self.z.round())
     }
@@ -624,7 +675,7 @@ impl<T: Ceil, U> TypedVector3D<T, U> {
     ///
     /// This behavior is preserved for negative values (unlike the basic cast).
     #[inline]
-    #[must_use]
+    #[cfg_attr(feature = "unstable", must_use)]
     pub fn ceil(&self) -> Self {
         vec3(self.x.ceil(), self.y.ceil(), self.z.ceil())
     }
@@ -635,7 +686,7 @@ impl<T: Floor, U> TypedVector3D<T, U> {
     ///
     /// This behavior is preserved for negative values (unlike the basic cast).
     #[inline]
-    #[must_use]
+    #[cfg_attr(feature = "unstable", must_use)]
     pub fn floor(&self) -> Self {
         vec3(self.x.floor(), self.y.floor(), self.z.floor())
     }
@@ -662,6 +713,12 @@ impl<T: NumCast + Copy, U> TypedVector3D<T, U> {
     /// Cast into an `f32` vector.
     #[inline]
     pub fn to_f32(&self) -> TypedVector3D<f32, U> {
+        self.cast().unwrap()
+    }
+
+    /// Cast into an `f64` vector.
+    #[inline]
+    pub fn to_f64(&self) -> TypedVector3D<f64, U> {
         self.cast().unwrap()
     }
 
@@ -729,16 +786,22 @@ impl<T: Copy, U> From<[T; 3]> for TypedVector3D<T, U> {
     }
 }
 
+impl<T, U> TypedVector3D<T, U>
+where T: Signed {
+    pub fn abs(&self) -> Self {
+        vec3(self.x.abs(), self.y.abs(), self.z.abs())
+    }
+}
 
 /// Convenience constructor.
 #[inline]
-pub fn vec2<T: Copy, U>(x: T, y: T) -> TypedVector2D<T, U> {
+pub fn vec2<T, U>(x: T, y: T) -> TypedVector2D<T, U> {
     TypedVector2D::new(x, y)
 }
 
 /// Convenience constructor.
 #[inline]
-pub fn vec3<T: Copy, U>(x: T, y: T, z: T) -> TypedVector3D<T, U> {
+pub fn vec3<T, U>(x: T, y: T, z: T) -> TypedVector3D<T, U> {
     TypedVector3D::new(x, y, z)
 }
 
@@ -800,11 +863,25 @@ mod vector2d {
 
         assert_eq!(result, vec2(2.0, 3.0));
     }
+
+    #[test]
+    pub fn test_angle_from_x_axis() {
+        use std::f32::consts::FRAC_PI_2;
+        use approxeq::ApproxEq;
+
+        let right: Vec2 = vec2(10.0, 0.0);
+        let down: Vec2 = vec2(0.0, 4.0);
+        let up: Vec2 = vec2(0.0, -1.0);
+
+        assert!(right.angle_from_x_axis().get().approx_eq(&0.0));
+        assert!(down.angle_from_x_axis().get().approx_eq(&FRAC_PI_2));
+        assert!(up.angle_from_x_axis().get().approx_eq(&-FRAC_PI_2));
+    }
 }
 
 #[cfg(test)]
 mod typedvector2d {
-    use super::{TypedVector2D, vec2};
+    use super::{TypedVector2D, Vector2D, vec2};
     use scale_factor::ScaleFactor;
 
     pub enum Mm {}
@@ -840,11 +917,17 @@ mod typedvector2d {
 
         assert_eq!(result, vec2(0.1, 0.2));
     }
+
+    #[test]
+    pub fn test_swizzling() {
+        let p: Vector2D<i32> = vec2(1, 2);
+        assert_eq!(p.yx(), vec2(2, 1));
+    }
 }
 
 #[cfg(test)]
 mod vector3d {
-    use super::{Vector3D, vec3};
+    use super::{Vector3D, vec2, vec3};
     type Vec3 = Vector3D<f32>;
 
     #[test]
@@ -890,5 +973,13 @@ mod vector3d {
         let result = p1.max(p2);
 
         assert_eq!(result, vec3(2.0, 3.0, 5.0));
+    }
+
+    #[test]
+    pub fn test_swizzling() {
+        let p: Vector3D<i32> = vec3(1, 2, 3);
+        assert_eq!(p.xy(), vec2(1, 2));
+        assert_eq!(p.xz(), vec2(1, 3));
+        assert_eq!(p.yz(), vec2(2, 3));
     }
 }

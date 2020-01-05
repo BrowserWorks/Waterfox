@@ -1,13 +1,8 @@
-#[cfg(rayon_unstable)]
-use future::{self, Future, RayonFuture};
-#[allow(unused_imports)]
-use latch::{Latch, SpinLatch};
-use job::*;
-use registry::Registry;
-use std::any::Any;
+use crate::job::*;
+use crate::registry::Registry;
+use crate::unwind;
 use std::mem;
 use std::sync::Arc;
-use unwind;
 
 /// Fires off a task into the Rayon threadpool in the "static" or
 /// "global" scope.  Just like a standard thread, this task is not
@@ -29,14 +24,25 @@ use unwind;
 /// by a mutex, or some such thing). If you want to compute a result,
 /// consider `spawn_future()`.
 ///
+/// There is no guaranteed order of execution for spawns, given that
+/// other threads may steal tasks at any time. However, they are
+/// generally prioritized in a LIFO order on the thread from which
+/// they were spawned. Other threads always steal from the other end of
+/// the deque, like FIFO order.  The idea is that "recent" tasks are
+/// most likely to be fresh in the local CPU's cache, while other
+/// threads can steal older "stale" tasks.  For an alternate approach,
+/// consider [`spawn_fifo()`] instead.
+///
+/// [`spawn_fifo()`]: fn.spawn_fifo.html
+///
 /// # Panic handling
 ///
 /// If this closure should panic, the resulting panic will be
-/// propagated to the panic handler registered in the `Configuration`,
-/// if any.  See [`Configuration::panic_handler()`][ph] for more
+/// propagated to the panic handler registered in the `ThreadPoolBuilder`,
+/// if any.  See [`ThreadPoolBuilder::panic_handler()`][ph] for more
 /// details.
 ///
-/// [ph]: struct.Configuration.html#method.panic_handler
+/// [ph]: struct.ThreadPoolBuilder.html#method.panic_handler
 ///
 /// # Examples
 ///
@@ -53,7 +59,8 @@ use unwind;
 /// });
 /// ```
 pub fn spawn<F>(func: F)
-    where F: FnOnce() + Send + 'static
+where
+    F: FnOnce() + Send + 'static,
 {
     // We assert that current registry has not terminated.
     unsafe { spawn_in(func, &Registry::current()) }
@@ -62,112 +69,100 @@ pub fn spawn<F>(func: F)
 /// Spawn an asynchronous job in `registry.`
 ///
 /// Unsafe because `registry` must not yet have terminated.
-///
-/// Not a public API, but used elsewhere in Rayon.
-pub unsafe fn spawn_in<F>(func: F, registry: &Arc<Registry>)
-    where F: FnOnce() + Send + 'static
+pub(super) unsafe fn spawn_in<F>(func: F, registry: &Arc<Registry>)
+where
+    F: FnOnce() + Send + 'static,
 {
-    // Ensure that registry cannot terminate until this job has
-    // executed. This ref is decremented at the (*) below.
-    registry.increment_terminate_count();
-
-    let async_job = Box::new(HeapJob::new({
-        let registry = registry.clone();
-        move || {
-            match unwind::halt_unwinding(func) {
-                Ok(()) => {
-                }
-                Err(err) => {
-                    registry.handle_panic(err);
-                }
-            }
-            registry.terminate(); // (*) permit registry to terminate now
-        }
-    }));
-
     // We assert that this does not hold any references (we know
     // this because of the `'static` bound in the inferface);
     // moreover, we assert that the code below is not supposed to
     // be able to panic, and hence the data won't leak but will be
     // enqueued into some deque for later execution.
     let abort_guard = unwind::AbortIfPanic; // just in case we are wrong, and code CAN panic
-    let job_ref = HeapJob::as_job_ref(async_job);
+    let job_ref = spawn_job(func, registry);
     registry.inject_or_push(job_ref);
     mem::forget(abort_guard);
 }
 
-/// Spawns a future in the static scope, scheduling it to execute on
-/// Rayon's threadpool. Returns a new future that can be used to poll
-/// for the result. Since this future is executing in the static scope,
-/// it cannot hold references to things in the enclosing stack frame;
-/// if you would like to hold such references, use [the `scope()`
-/// function][scope] to create a scope.
+unsafe fn spawn_job<F>(func: F, registry: &Arc<Registry>) -> JobRef
+where
+    F: FnOnce() + Send + 'static,
+{
+    // Ensure that registry cannot terminate until this job has
+    // executed. This ref is decremented at the (*) below.
+    registry.increment_terminate_count();
+
+    Box::new(HeapJob::new({
+        let registry = registry.clone();
+        move || {
+            match unwind::halt_unwinding(func) {
+                Ok(()) => {}
+                Err(err) => {
+                    registry.handle_panic(err);
+                }
+            }
+            registry.terminate(); // (*) permit registry to terminate now
+        }
+    }))
+    .as_job_ref()
+}
+
+/// Fires off a task into the Rayon threadpool in the "static" or
+/// "global" scope.  Just like a standard thread, this task is not
+/// tied to the current stack frame, and hence it cannot hold any
+/// references other than those with `'static` lifetime. If you want
+/// to spawn a task that references stack data, use [the `scope_fifo()`
+/// function](fn.scope_fifo.html) to create a scope.
 ///
-/// [scope]: fn.scope.html
+/// The behavior is essentially the same as [the `spawn`
+/// function](fn.spawn.html), except that calls from the same thread
+/// will be prioritized in FIFO order. This is similar to the now-
+/// deprecated [`breadth_first`] option, except the effect is isolated
+/// to relative `spawn_fifo` calls, not all threadpool tasks.
+///
+/// For more details on this design, see Rayon [RFC #1].
+///
+/// [`breadth_first`]: struct.ThreadPoolBuilder.html#method.breadth_first
+/// [RFC #1]: https://github.com/rayon-rs/rfcs/blob/master/accepted/rfc0001-scope-scheduling.md
 ///
 /// # Panic handling
 ///
-/// If this future should panic, that panic will be propagated when
-/// `poll()` is invoked on the return value.
-#[cfg(rayon_unstable)]
-pub fn spawn_future<F>(future: F) -> RayonFuture<F::Item, F::Error>
-    where F: Future + Send + 'static
-{
-    /// We assert that the current registry cannot yet have terminated.
-    unsafe { spawn_future_in(future, Registry::current()) }
-}
-
-/// Internal helper function.
+/// If this closure should panic, the resulting panic will be
+/// propagated to the panic handler registered in the `ThreadPoolBuilder`,
+/// if any.  See [`ThreadPoolBuilder::panic_handler()`][ph] for more
+/// details.
 ///
-/// Unsafe because caller must guarantee that `registry` has not yet terminated.
-#[cfg(rayon_unstable)]
-pub unsafe fn spawn_future_in<F>(future: F, registry: Arc<Registry>) -> RayonFuture<F::Item, F::Error>
-    where F: Future + Send + 'static
+/// [ph]: struct.ThreadPoolBuilder.html#method.panic_handler
+pub fn spawn_fifo<F>(func: F)
+where
+    F: FnOnce() + Send + 'static,
 {
-    let scope = StaticFutureScope::new(registry.clone());
-
-    future::new_rayon_future(future, scope)
+    // We assert that current registry has not terminated.
+    unsafe { spawn_fifo_in(func, &Registry::current()) }
 }
 
-#[cfg(rayon_unstable)]
-struct StaticFutureScope {
-    registry: Arc<Registry>
-}
-
-#[cfg(rayon_unstable)]
-impl StaticFutureScope {
-    /// Caller asserts that the registry has not yet terminated.
-    unsafe fn new(registry: Arc<Registry>) -> Self {
-        registry.increment_terminate_count();
-        StaticFutureScope { registry: registry }
-    }
-}
-
-/// We assert that:
+/// Spawn an asynchronous FIFO job in `registry.`
 ///
-/// (a) the scope valid remains valid until a completion method
-///     is called. In this case, "remains valid" means that the
-///     registry is not terminated. This is true because we
-///     acquire a "termination count" in `StaticFutureScope::new()`
-///     which is not released until `future_panicked()` or
-///     `future_completed()` is invoked.
-/// (b) the lifetime `'static` will not end until a completion
-///     method is called. This is true because `'static` doesn't
-///     end until the end of the program.
-#[cfg(rayon_unstable)]
-unsafe impl future::FutureScope<'static> for StaticFutureScope {
-    fn registry(&self) -> Arc<Registry> {
-        self.registry.clone()
-    }
+/// Unsafe because `registry` must not yet have terminated.
+pub(super) unsafe fn spawn_fifo_in<F>(func: F, registry: &Arc<Registry>)
+where
+    F: FnOnce() + Send + 'static,
+{
+    // We assert that this does not hold any references (we know
+    // this because of the `'static` bound in the inferface);
+    // moreover, we assert that the code below is not supposed to
+    // be able to panic, and hence the data won't leak but will be
+    // enqueued into some deque for later execution.
+    let abort_guard = unwind::AbortIfPanic; // just in case we are wrong, and code CAN panic
+    let job_ref = spawn_job(func, registry);
 
-    fn future_panicked(self, err: Box<Any + Send>) {
-        self.registry.handle_panic(err);
-        self.registry.terminate();
+    // If we're in the pool, use our thread's private fifo for this thread to execute
+    // in a locally-FIFO order.  Otherwise, just use the pool's global injector.
+    match registry.current_thread() {
+        Some(worker) => worker.push_fifo(job_ref),
+        None => registry.inject(&[job_ref]),
     }
-
-    fn future_completed(self) {
-        self.registry.terminate();
-    }
+    mem::forget(abort_guard);
 }
 
 #[cfg(test)]

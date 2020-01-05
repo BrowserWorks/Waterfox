@@ -27,21 +27,3 @@ bench = false
 doc = false
 plugin = false
 harness = false
-
-# Explicitly specify what our profiles use.
-[profile.dev]
-opt-level = 1
-rpath = false
-lto = false
-debug-assertions = true
-codegen-units = 4
-panic = "abort"
-
-[profile.release]
-opt-level = 2
-rpath = false
-debug-assertions = false
-panic = "abort"
-
-[patch.crates-io]
-packed_simd = { git = "https://github.com/hsivonen/packed_simd", branch = "rust_1_32" }
