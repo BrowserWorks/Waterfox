@@ -1215,6 +1215,28 @@ def build_ship_it_shipped_payload(config, task, task_def):
     }
 
 
+@payload_builder('shipit-maybe-release', schema={
+    Required('phase'): basestring,
+    Optional('product-key'): basestring,
+})
+def build_ship_it_maybe_release_payload(config, task, task_def):
+    # expect branch name, including path
+    branch = config.params['head_repository'][len('https://hg.mozilla.org/'):]
+    # 'version' is e.g. '71.0b13' (app_version doesn't have beta number)
+    version = config.params['version']
+
+    task_def['payload'] = {
+        'product': task['shipping-product'],
+        'branch': branch,
+        'phase': task['worker']['phase'],
+        'version': version,
+        'cron_revision': config.params['head_rev'],
+    }
+
+    if 'product_key' in task['worker']:
+        task_def['payload'].update({'product_key': task['worker']['product-key']})
+
+
 @payload_builder('sign-and-push-addons', schema={
     Required('channel'): Any('listed', 'unlisted'),
     Required('upstream-artifacts'): [{

@@ -5,6 +5,19 @@
 ---
 
 jobs:
+    - name: daily-releases
+      job:
+          type: decision-task
+          treeherder-symbol: RPd
+          target-tasks-method: daily_releases
+      run-on-projects:
+          - mozilla-esr68
+      when:
+          by-project:
+              # No default branch
+              mozilla-esr68:
+                  - {weekday: 'Monday', hour: 4, minute: 0}
+
     - name: nightly-desktop
       job:
           type: decision-task
