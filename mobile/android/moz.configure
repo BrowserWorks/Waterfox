@@ -121,6 +121,13 @@ set_define('FENNEC_NIGHTLY', depends_if('FENNEC_NIGHTLY')(lambda _: True))
 def fennec_nightly(nightly):
     return bool(nightly)
 
+option(env='FENNEC_BETA',
+       help='Flag indicating that this build is a Beta build.'
+       'Might be used for special configurations.',
+       default=False)
+
+set_config('FENNEC_BETA', depends_if('FENNEC_BETA')(lambda _: True))
+set_define('FENNEC_BETA', depends_if('FENNEC_BETA')(lambda _: True))
 
 imply_option('MOZ_SERVICES_HEALTHREPORT', True)
 imply_option('MOZ_ANDROID_HISTORY', True)
