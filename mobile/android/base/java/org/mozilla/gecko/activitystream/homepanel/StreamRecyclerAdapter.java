@@ -169,7 +169,7 @@ public class StreamRecyclerAdapter extends RecyclerView.Adapter<StreamViewHolder
 
         if (type == RowItemType.PROMO_BANNER.getViewType()) {
             return new FirefoxPromoBannerRow(inflater.inflate(FirefoxPromoBannerRow.LAYOUT_ID, parent, false), onUrlOpenListener);
-        } else if(type == RowItemType.FXA_BANNER.getViewType()) {
+        } else if (type == RowItemType.FXA_BANNER.getViewType()) {
             return new FxaBannerRow(inflater.inflate(FxaBannerRow.LAYOUT_ID, parent, false));
         } else if (type == RowItemType.TOP_PANEL.getViewType()) {
             return new TopPanelRow(inflater.inflate(TopPanelRow.LAYOUT_ID, parent, false), onUrlOpenListener, (topSite, absolutePosition, tabletContextMenuAnchor, faviconWidth, faviconHeight) -> {
