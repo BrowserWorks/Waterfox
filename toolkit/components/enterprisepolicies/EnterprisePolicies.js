@@ -102,6 +102,10 @@ EnterprisePoliciesManager.prototype = {
 
     this.status = Ci.nsIEnterprisePolicies.ACTIVE;
     this._parsedPolicies = {};
+    Services.telemetry.scalarSet(
+      "policies.count",
+      Object.keys(provider.policies).length
+    );
     this._activatePolicies(provider.policies);
   },
 
