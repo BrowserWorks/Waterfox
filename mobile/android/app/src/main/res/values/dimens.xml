@@ -103,19 +103,27 @@
     <dimen name="home_header_item_height">56dp</dimen>
     <dimen name="page_row_divider_height">1dp</dimen>
 
-    <!-- Activity Stream Sign in -->
-    <dimen name="as_signin_margin">16dp</dimen>
-    <dimen name="as_signin_padding">16dp</dimen>
-    <dimen name="as_signin_logo_width_height">48dp</dimen>
-    <dimen name="as_signin_dismiss_width_height">18dp</dimen>
-    <!-- Width of as_signin_logo_width_height + 16dp -->
-    <dimen name="as_signin_layout_margin_left_right">64dp</dimen>
-    <dimen name="as_signin_title_text">18sp</dimen>
-    <dimen name="as_signin_description_text">16sp</dimen>
-    <dimen name="as_signup_button_text">16sp</dimen>
-    <dimen name="as_signup_button_margin_top">24dp</dimen>
-    <dimen name="as_signup_button_height">32dp</dimen>
-    <dimen name="as_signin_text">14sp</dimen>
+    <!-- Activity Stream Banner -->
+    <dimen name="as_banner_margin">16dp</dimen>
+    <dimen name="as_banner_padding">16dp</dimen>
+    <dimen name="as_banner_logo_width_height">48dp</dimen>
+    <dimen name="as_fxa_banner_dismiss_width_height">18dp</dimen>
+    <dimen name="as_promo_banner_dismiss_width_height">24dp</dimen>
+    <!-- Width of as_banner_logo_width_height + 16dp -->
+    <dimen name="as_banner_layout_margin_left_right">64dp</dimen>
+    <dimen name="as_banner_layout_margin_top">4dp</dimen>
+    <dimen name="as_banner_description_margin_top">8dp</dimen>
+    <!--  Description should go to half the width of the dimiss button (24dp)  -->
+    <dimen name="as_promo_banner_description_margin_right">12dp</dimen>
+    <dimen name="as_banner_title_text">18sp</dimen>
+    <dimen name="as_fxa_banner_description_text">16sp</dimen>
+    <dimen name="as_promo_banner_description_text">14sp</dimen>
+    <dimen name="as_promo_banner_description_text_spacing_extra">4sp</dimen>
+    <dimen name="as_fxa_banner_button_text">16sp</dimen>
+    <dimen name="as_promo_banner_button_text">14sp</dimen>
+    <dimen name="as_banner_button_margin_top">24dp</dimen>
+    <dimen name="as_banner_button_height">32dp</dimen>
+    <dimen name="as_fxa_banner_signin_text">14sp</dimen>
 
     <!-- Remote Tabs static view top padding. Less in landscape on phones. -->
     <dimen name="home_remote_tabs_top_padding">48dp</dimen>

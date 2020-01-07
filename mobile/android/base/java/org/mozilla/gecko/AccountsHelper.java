@@ -148,10 +148,10 @@ public class AccountsHelper implements BundleEventListener {
                 // Send a correct telemetry event.
                 if (action.equals("signin")) {
                     MmaDelegate.track(MmaDelegate.USER_SIGNED_IN_TO_FXA);
-                    sharedPreferences.edit().putBoolean(ActivityStreamPanel.PREF_USER_DISMISSED_SIGNIN, false).apply();
+                    sharedPreferences.edit().putBoolean(ActivityStreamPanel.PREF_USER_DISMISSED_FXA_BANNER, false).apply();
                 } else if (action.equals("signup")) {
                     MmaDelegate.track(MmaDelegate.USER_SIGNED_UP_FOR_FXA);
-                    sharedPreferences.edit().putBoolean(ActivityStreamPanel.PREF_USER_DISMISSED_SIGNIN, false).apply();
+                    sharedPreferences.edit().putBoolean(ActivityStreamPanel.PREF_USER_DISMISSED_FXA_BANNER, false).apply();
                 }
 
             } catch (URISyntaxException | GeneralSecurityException |

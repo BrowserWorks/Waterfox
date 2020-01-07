@@ -53,7 +53,8 @@ public class ActivityStreamPanel extends FrameLayout {
     public static final String PREF_POCKET_ENABLED = "pref_activitystream_pocket_enabled";
     public static final String PREF_VISITED_ENABLED = "pref_activitystream_visited_enabled";
     public static final String PREF_BOOKMARKS_ENABLED = "pref_activitystream_recentbookmarks_enabled";
-    public static final String PREF_USER_DISMISSED_SIGNIN = "pref_activitystream_user_dismissed_signin";
+    public static final String PREF_USER_DISMISSED_FXA_BANNER = "pref_activitystream_user_dismissed_signin";
+    public static final String PREF_USER_DISMISSED_PROMO_BANNER = "pref_activitystream_user_dismissed_promo_banner";
 
     private final RecyclerView contentRecyclerView;
 
