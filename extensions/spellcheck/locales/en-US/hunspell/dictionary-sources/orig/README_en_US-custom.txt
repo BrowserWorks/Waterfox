@@ -1,6 +1,6 @@
 en_US-custom Hunspell Dictionary
-Generated from SCOWL Version 2017.01.22
-Tue Jan 24 22:59:27 EST 2017
+Generated from SCOWL Version 2019.10.06
+Tue Jan  7 21:57:05 CET 2020
 
 http://wordlist.sourceforge.net
 
@@ -95,10 +95,10 @@ released as part of Geoff Kuenning's Ispell and as such is covered by
 his BSD license.  Part of SCOWL is also based on Ispell thus the
 Ispell copyright is included with the SCOWL copyright.
 
-The collective work is Copyright 2000-2016 by Kevin Atkinson as well
+The collective work is Copyright 2000-2018 by Kevin Atkinson as well
 as any of the copyrights mentioned below:
 
-  Copyright 2000-2016 by Kevin Atkinson
+  Copyright 2000-2018 by Kevin Atkinson
 
   Permission to use, copy, modify, distribute and sell these word
   lists, the associated scripts, the output created from the scripts,
@@ -344,5 +344,5 @@ and Australian word list.  It is under the following copyright:
   OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
   SUCH DAMAGE.
 
-Build Date: Tue Jan 24 22:59:27 EST 2017
+Build Date: Tue Jan  7 21:57:05 CET 2020
 With Input Command: ../mk-list -v1 --accents=both en_US 60
