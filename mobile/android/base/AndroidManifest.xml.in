@@ -91,7 +91,19 @@
                 <data android:scheme="http" />
                 <data android:scheme="https" />
                 <data android:scheme="about" />
+#ifndef MOZILLA_OFFICIAL
+                <data android:scheme="firefox-dev" />
+#else
+#ifdef FENNEC_NIGHTLY
+                <data android:scheme="firefox-nightly" />
+#else
+#ifdef FENNEC_BETA
+                <data android:scheme="firefox-beta" />
+#else
                 <data android:scheme="firefox" />
+#endif
+#endif
+#endif
             </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
