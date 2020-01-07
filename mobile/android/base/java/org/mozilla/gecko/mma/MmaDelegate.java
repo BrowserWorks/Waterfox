@@ -55,6 +55,8 @@ public class MmaDelegate {
     public static final String ONBOARDING_DEFAULT_VALUES = "E_Onboarding_With_Default_Values";
     public static final String ONBOARDING_REMOTE_VALUES = "E_Onboarding_With_Remote_Values";
     public static final String SIGN_UP_DISMISS = "E_Signup_Dismiss";
+    public static final String OPENED_FIREFOX_PROMO_BANNER = "E_Opened_Firefox_Promo";
+    public static final String DISMISSED_FIREFOX_PROMO_BANNER = "E_Dismissed_Firefox_Promo";
 
     public static final String USER_SIGNED_IN_TO_FXA = "E_User_Signed_In_To_FxA";
     public static final String USER_SIGNED_UP_FOR_FXA = "E_User_Signed_Up_For_FxA";
