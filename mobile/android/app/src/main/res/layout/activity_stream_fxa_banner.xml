@@ -7,23 +7,25 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     xmlns:tools="http://schemas.android.com/tools"
-    android:layout_margin="@dimen/as_signin_margin"
-    android:background="@drawable/as_signin_background_round"
-    android:padding="@dimen/as_signin_padding">
+    android:layout_margin="@dimen/as_banner_margin"
+    android:background="@drawable/as_banner_background_rounded"
+    android:padding="@dimen/as_banner_padding"
+    android:clipChildren="false"
+    android:clipToPadding="false">
 
     <ImageView
-        android:id="@+id/as_logo"
-        android:layout_width="@dimen/as_signin_logo_width_height"
-        android:layout_height="@dimen/as_signin_logo_width_height"
+        android:id="@+id/banner_logo"
+        android:layout_width="@dimen/as_banner_logo_width_height"
+        android:layout_height="@dimen/as_banner_logo_width_height"
         android:layout_alignParentStart="true"
         android:layout_alignParentLeft="true"
         android:layout_alignParentTop="true"
         android:src="@drawable/as_firefox_logo" />
 
     <ImageView
-        android:id="@+id/as_dismiss"
-        android:layout_width="@dimen/as_signin_dismiss_width_height"
-        android:layout_height="@dimen/as_signin_dismiss_width_height"
+        android:id="@+id/banner_dismiss"
+        android:layout_width="@dimen/as_fxa_banner_dismiss_width_height"
+        android:layout_height="@dimen/as_fxa_banner_dismiss_width_height"
         android:layout_alignParentTop="true"
         android:layout_alignParentEnd="true"
         android:layout_alignParentRight="true"
@@ -32,62 +34,62 @@
         app:srcCompat="@drawable/as_dismiss" />
 
     <LinearLayout
-        android:id="@+id/as_signup_layout"
+        android:id="@+id/inner_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
-        android:layout_marginStart="@dimen/as_signin_layout_margin_left_right"
-        android:layout_marginLeft="@dimen/as_signin_layout_margin_left_right"
-        android:layout_marginTop="4dp"
-        android:layout_marginEnd="@dimen/as_signin_layout_margin_left_right"
-        android:layout_marginRight="@dimen/as_signin_layout_margin_left_right"
+        android:layout_marginStart="@dimen/as_banner_layout_margin_left_right"
+        android:layout_marginLeft="@dimen/as_banner_layout_margin_left_right"
+        android:layout_marginTop="@dimen/as_banner_layout_margin_top"
+        android:layout_marginEnd="@dimen/as_banner_layout_margin_left_right"
+        android:layout_marginRight="@dimen/as_banner_layout_margin_left_right"
         android:orientation="vertical">
 
         <TextView
-            android:id="@+id/as_title"
+            android:id="@+id/banner_title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center"
             android:text="@string/activity_stream_signin_title"
             android:textColor="@color/photon_text_main"
-            android:textSize="@dimen/as_signin_title_text"
+            android:textSize="@dimen/as_banner_title_text"
             android:textStyle="bold" />
 
         <TextView
-            android:id="@+id/as_description"
+            android:id="@+id/banner_description"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="@dimen/as_banner_description_margin_top"
             android:gravity="center"
             android:text="@string/activity_stream_signin_description"
             android:textColor="@color/photon_text_main"
-            android:textSize="@dimen/as_signin_description_text" />
+            android:textSize="@dimen/as_fxa_banner_description_text" />
 
         <Button
-            android:id="@+id/as_signup"
+            android:id="@+id/banner_sign_up"
             android:layout_width="match_parent"
-            android:layout_height="@dimen/as_signup_button_height"
-            android:layout_marginTop="@dimen/as_signup_button_margin_top"
+            android:layout_height="@dimen/as_banner_button_height"
+            android:layout_marginTop="@dimen/as_banner_button_margin_top"
             android:background="@drawable/button_background_action_photon_round"
             android:text="@string/activity_stream_signup_button"
             android:textAllCaps="false"
             android:gravity="center"
             android:textColor="@color/photon_text_main_private"
-            android:textSize="@dimen/as_signup_button_text" />
+            android:textSize="@dimen/as_fxa_banner_button_text" />
 
     </LinearLayout>
 
     <TextView
-        android:id="@+id/as_signin"
+        android:id="@+id/banner_sign_in"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@id/as_signup_layout"
+        android:layout_below="@id/inner_layout"
         android:layout_alignParentBottom="true"
         android:layout_marginTop="8dp"
         android:layout_marginBottom="8dp"
         android:gravity="center"
         android:textColor="@color/photon_text_main"
-        android:textSize="@dimen/as_signin_text"
+        android:textSize="@dimen/as_fxa_banner_signin_text"
         tools:text="@string/activity_stream_signin_prompt" />
 
 </RelativeLayout>

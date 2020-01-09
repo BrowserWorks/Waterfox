@@ -308,6 +308,12 @@ Buttons
 ``awesomescreen-signup-dismiss``
   Button action triggered by dismissing the Awesomescreen's "Welcome to Firefox" panel
 
+``firefox_promo_open``
+  Button action triggered by the opening the promo webpage from Awesomescreen's Firefox promo banner.
+
+``firefox_promo_dismiss``
+  Button action triggered by dismissing the Awesomescreen's Firefox promo banner.
+
 Sessions
 --------
 ``activitystream.1``

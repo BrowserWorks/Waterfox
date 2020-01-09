@@ -833,6 +833,8 @@ public class BrowserApp extends GeckoApp
         final SuggestedSites suggestedSites = new SuggestedSites(appContext, distribution);
         db.setSuggestedSites(suggestedSites);
 
+        final int sitesPinnedToTopsites = BrowserDB.from(BrowserApp.this).getPinnedSitesCountForAS(getContentResolver());
+        GeckoSharedPrefs.forApp(getApplicationContext()).edit().putInt("android.not_a_preference.total_sites_pinned_to_topsites", sitesPinnedToTopsites).apply();
         // Remove bookmarks that were marked as soft delete
         ThreadUtils.postToBackgroundThread(new Runnable() {
             @Override
@@ -1865,11 +1867,7 @@ public class BrowserApp extends GeckoApp
                 final GeckoBundle[] engines = message.getBundleArray("searchEngines");
                 final int totalAddedSearchEngines = engines == null ? 0 : engines.length;
                 GeckoSharedPrefs.forApp(getApplicationContext()).edit().putInt("android.not_a_preference.total_added_search_engines", totalAddedSearchEngines).apply();
-
-                final int sitesPinnedToTopsites = BrowserDB.from(this).getPinnedSitesCountForAS(getContentResolver());
-
-                GeckoSharedPrefs.forApp(getApplicationContext()).edit().putInt("android.not_a_preference.total_sites_pinned_to_topsites", sitesPinnedToTopsites).apply();
-                break;
+               break;
 
             case "LightweightTheme:Update":
                 mDynamicToolbar.setVisible(true, VisibilityTransition.ANIMATE);

@@ -211,7 +211,7 @@ tasks:
                   ACTION_PARAMETERS: {$json: {$eval: 'parameters'}}
 
           cache:
-            level-${repository.level}-checkouts-sparse-v2: /builds/worker/checkouts
+            gecko-level-${repository.level}-checkouts-sparse-v2: /builds/worker/checkouts
 
           features:
             taskclusterProxy: true

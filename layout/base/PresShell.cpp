@@ -6437,16 +6437,15 @@ nsIFrame* PresShell::EventHandler::GetNearestFrameContainingPresShell(
   return frame;
 }
 
-static bool FlushThrottledStyles(Document* aDocument, void* aData) {
-  PresShell* presShell = aDocument->GetPresShell();
+static bool FlushThrottledStyles(Document& aDocument, void* aData) {
+  PresShell* presShell = aDocument.GetPresShell();
   if (presShell && presShell->IsVisible()) {
-    nsPresContext* presContext = presShell->GetPresContext();
-    if (presContext) {
+    if (nsPresContext* presContext = presShell->GetPresContext()) {
       presContext->RestyleManager()->UpdateOnlyAnimationStyles();
     }
   }
 
-  aDocument->EnumerateSubDocuments(FlushThrottledStyles, nullptr);
+  aDocument.EnumerateSubDocuments(FlushThrottledStyles, nullptr);
   return true;
 }
 
@@ -7317,7 +7316,7 @@ nsIFrame* PresShell::EventHandler::MaybeFlushThrottledStyles(
   AutoWeakFrame weakFrameForPresShell(aFrameForPresShell);
   {  // scope for scriptBlocker.
     nsAutoScriptBlocker scriptBlocker;
-    FlushThrottledStyles(rootDocument, nullptr);
+    FlushThrottledStyles(*rootDocument, nullptr);
   }
 
   if (weakFrameForPresShell.IsAlive()) {
@@ -8910,9 +8909,8 @@ static void FreezeElement(nsISupports* aSupports, void* /* unused */) {
   }
 }
 
-static bool FreezeSubDocument(Document* aDocument, void* aData) {
-  PresShell* presShell = aDocument->GetPresShell();
-  if (presShell) {
+static bool FreezeSubDocument(Document& aDocument, void*) {
+  if (PresShell* presShell = aDocument.GetPresShell()) {
     presShell->Freeze();
   }
   return true;
@@ -8981,9 +8979,8 @@ static void ThawElement(nsISupports* aSupports, void* aShell) {
   }
 }
 
-static bool ThawSubDocument(Document* aDocument, void* aData) {
-  PresShell* presShell = aDocument->GetPresShell();
-  if (presShell) {
+static bool ThawSubDocument(Document& aDocument, void* aData) {
+  if (PresShell* presShell = aDocument.GetPresShell()) {
     presShell->Thaw();
   }
   return true;
@@ -8998,7 +8995,9 @@ void PresShell::Thaw() {
 
   mDocument->EnumerateActivityObservers(ThawElement, this);
 
-  if (mDocument) mDocument->EnumerateSubDocuments(ThawSubDocument, nullptr);
+  if (mDocument) {
+    mDocument->EnumerateSubDocuments(ThawSubDocument, nullptr);
+  }
 
   // Get the activeness of our presshell, as this might have changed
   // while we were in the bfcache
@@ -10455,9 +10454,8 @@ void PresShell::QueryIsActive() {
 }
 
 // Helper for propagating mIsActive changes to external resources
-static bool SetExternalResourceIsActive(Document* aDocument, void* aClosure) {
-  PresShell* presShell = aDocument->GetPresShell();
-  if (presShell) {
+static bool SetExternalResourceIsActive(Document& aDocument, void* aClosure) {
+  if (PresShell* presShell = aDocument.GetPresShell()) {
     presShell->SetIsActive(*static_cast<bool*>(aClosure));
   }
   return true;
@@ -11195,8 +11193,8 @@ PresShell::EventHandler::HandlingTimeAccumulator::~HandlingTimeAccumulator() {
   }
 }
 
-static bool EndPaintHelper(Document* aDocument, void* aData) {
-  if (PresShell* presShell = aDocument->GetPresShell()) {
+static bool EndPaintHelper(Document& aDocument, void* aData) {
+  if (PresShell* presShell = aDocument.GetPresShell()) {
     presShell->EndPaint();
   }
   return true;

@@ -15,28 +15,30 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import org.mozilla.gecko.AppConstants;
 import org.mozilla.gecko.GeckoSharedPrefs;
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.Telemetry;
 import org.mozilla.gecko.TelemetryContract;
 import org.mozilla.gecko.activitystream.ActivityStreamTelemetry;
 import org.mozilla.gecko.activitystream.homepanel.menu.ActivityStreamContextMenu;
+import org.mozilla.gecko.activitystream.homepanel.model.Highlight;
 import org.mozilla.gecko.activitystream.homepanel.model.RowModel;
 import org.mozilla.gecko.activitystream.homepanel.model.TopSite;
+import org.mozilla.gecko.activitystream.homepanel.model.TopStory;
 import org.mozilla.gecko.activitystream.homepanel.model.WebpageModel;
 import org.mozilla.gecko.activitystream.homepanel.model.WebpageRowModel;
+import org.mozilla.gecko.activitystream.homepanel.stream.FirefoxPromoBannerRow;
+import org.mozilla.gecko.activitystream.homepanel.stream.FxaBannerRow;
 import org.mozilla.gecko.activitystream.homepanel.stream.HighlightsEmptyStateRow;
 import org.mozilla.gecko.activitystream.homepanel.stream.LearnMoreRow;
-import org.mozilla.gecko.activitystream.homepanel.stream.SignInRow;
+import org.mozilla.gecko.activitystream.homepanel.stream.StreamTitleRow;
+import org.mozilla.gecko.activitystream.homepanel.stream.StreamViewHolder;
 import org.mozilla.gecko.activitystream.homepanel.stream.TopPanelRow;
-import org.mozilla.gecko.activitystream.homepanel.model.TopStory;
+import org.mozilla.gecko.activitystream.homepanel.stream.WebpageItemRow;
 import org.mozilla.gecko.activitystream.homepanel.topstories.PocketStoriesLoader;
 import org.mozilla.gecko.fxa.FirefoxAccounts;
 import org.mozilla.gecko.home.HomePager;
-import org.mozilla.gecko.activitystream.homepanel.model.Highlight;
-import org.mozilla.gecko.activitystream.homepanel.stream.WebpageItemRow;
-import org.mozilla.gecko.activitystream.homepanel.stream.StreamTitleRow;
-import org.mozilla.gecko.activitystream.homepanel.stream.StreamViewHolder;
 import org.mozilla.gecko.util.StringUtils;
 import org.mozilla.gecko.widget.RecyclerViewClickSupport;
 
@@ -79,7 +81,8 @@ public class StreamRecyclerAdapter extends RecyclerView.Adapter<StreamViewHolder
         HIGHLIGHTS_EMPTY_STATE(-5),
         HIGHLIGHT_ITEM (-1), // There can be multiple Highlight Items so caller should handle as a special case.
         LEARN_MORE_LINK(-6),
-        SIGN_IN (-7); //The sign in row is available only if the user is not logged in.
+        FXA_BANNER(-7), //The sign in row is available only if the user is not logged in.
+        PROMO_BANNER(-7);
 
         public final int stableId;
 
@@ -106,21 +109,38 @@ public class StreamRecyclerAdapter extends RecyclerView.Adapter<StreamViewHolder
 
     public void clearAndInit() {
         recyclerViewModel.clear();
-        checkSignIn();
+        addBannerIfAvailable();
         for (RowItemType type : ACTIVITY_STREAM_SECTIONS) {
             recyclerViewModel.add(makeRowModelFromType(type));
         }
         topStoriesQueue = Collections.emptyList();
     }
 
-    private void checkSignIn() {
+    private void addBannerIfAvailable() {
         final SharedPreferences sharedPreferences = GeckoSharedPrefs.forProfile(context);
-        boolean userSignedInToFxA = FirefoxAccounts.firefoxAccountExistsAndSignedIn(context);
-        boolean userDismissedSignIn = sharedPreferences.getBoolean(ActivityStreamPanel.PREF_USER_DISMISSED_SIGNIN,
-                context.getResources().getBoolean(R.bool.pref_activitystream_user_dismissed_signin_default));
-        if (!userSignedInToFxA && !userDismissedSignIn) {
-            recyclerViewModel.add(makeRowModelFromType(RowItemType.SIGN_IN));
+
+        if (isFirefoxPromoBannerAvailable(sharedPreferences)) {
+            recyclerViewModel.add(makeRowModelFromType(RowItemType.PROMO_BANNER));
+        } else if (isFxaBannerAvailable(sharedPreferences)) {
+            recyclerViewModel.add(makeRowModelFromType(RowItemType.FXA_BANNER));
         }
+    }
+
+    private boolean isFxaBannerAvailable(@NonNull SharedPreferences preferences) {
+        final boolean isUserSignedInToFxA = FirefoxAccounts.firefoxAccountExistsAndSignedIn(context);
+        final boolean isDismissedByUser = preferences.getBoolean(ActivityStreamPanel.PREF_USER_DISMISSED_FXA_BANNER,
+                context.getResources().getBoolean(R.bool.pref_activitystream_user_dismissed_fxa_banner_default));
+
+        return !isUserSignedInToFxA && !isDismissedByUser;
+    }
+
+    private boolean isFirefoxPromoBannerAvailable(@NonNull SharedPreferences preferences) {
+        final boolean isDismissedByUser = preferences.getBoolean(ActivityStreamPanel.PREF_USER_DISMISSED_PROMO_BANNER,
+                context.getResources().getBoolean(R.bool.pref_activitystream_user_dismissed_promo_banner_default));
+        final boolean isDeviceAndroidVersionSupported = AppConstants.Versions.feature21Plus;
+        final boolean isAppChannelSupported = "org.mozilla.firefox".equals(AppConstants.ANDROID_PACKAGE_NAME);
+
+        return !isDismissedByUser && isDeviceAndroidVersionSupported && isAppChannelSupported;
     }
 
     void setOnUrlOpenListeners(HomePager.OnUrlOpenListener onUrlOpenListener, HomePager.OnUrlOpenInBackgroundListener onUrlOpenInBackgroundListener) {
@@ -147,8 +167,10 @@ public class StreamRecyclerAdapter extends RecyclerView.Adapter<StreamViewHolder
     public StreamViewHolder onCreateViewHolder(@NonNull final ViewGroup parent, final int type) {
         final LayoutInflater inflater = LayoutInflater.from(parent.getContext());
 
-        if (type == RowItemType.SIGN_IN.getViewType()) {
-            return new SignInRow(inflater.inflate(SignInRow.LAYOUT_ID, parent, false));
+        if (type == RowItemType.PROMO_BANNER.getViewType()) {
+            return new FirefoxPromoBannerRow(inflater.inflate(FirefoxPromoBannerRow.LAYOUT_ID, parent, false), onUrlOpenListener);
+        } else if (type == RowItemType.FXA_BANNER.getViewType()) {
+            return new FxaBannerRow(inflater.inflate(FxaBannerRow.LAYOUT_ID, parent, false));
         } else if (type == RowItemType.TOP_PANEL.getViewType()) {
             return new TopPanelRow(inflater.inflate(TopPanelRow.LAYOUT_ID, parent, false), onUrlOpenListener, (topSite, absolutePosition, tabletContextMenuAnchor, faviconWidth, faviconHeight) -> {
                 openContextMenuForTopSite(topSite, absolutePosition, tabletContextMenuAnchor, parent, faviconWidth, faviconHeight);
@@ -507,7 +529,8 @@ public class StreamRecyclerAdapter extends RecyclerView.Adapter<StreamViewHolder
 
         // In Bug 1570880 we've added a new sign in row as the first element in the recyclerview. If the sign in row exists,
         // make sure to notify about the top sites changes at the appropriate position.
-        if (recyclerViewModel.get(0).getRowItemType().getViewType() == RowItemType.SIGN_IN.getViewType()) {
+        if (recyclerViewModel.get(0).getRowItemType().getViewType() == RowItemType.FXA_BANNER.getViewType() ||
+                recyclerViewModel.get(0).getRowItemType().getViewType() == RowItemType.PROMO_BANNER.getViewType()) {
             notifyItemChanged(1);
         } else {
             notifyItemChanged(0);

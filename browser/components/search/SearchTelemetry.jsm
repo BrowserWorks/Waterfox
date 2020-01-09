@@ -25,7 +25,8 @@ const SEARCH_AD_CLICKS_SCALAR = "browser.search.ad_clicks";
  * - {<string>} name
  *     Details for a particular provider with the string name.
  * - {regexp} <string>.regexp
- *     The regular expression used to match the url for the search providers main page.
+ *     The regular expression used to match the url for the search providers
+ *     main page.
  * - {string} <string>.queryParam
  *     The query parameter name that indicates a search has been made.
  * - {string} [<string>.codeParam]
@@ -33,11 +34,29 @@ const SEARCH_AD_CLICKS_SCALAR = "browser.search.ad_clicks";
  * - {array} [<string>.codePrefixes]
  *     An array of the possible string prefixes for a codeParam, indicating a
  *     partner search.
- * - {array} [<string>.followOnParams]
+ * - {array} [<string>.followonParams]
  *     An array of parameters name that indicates this is a follow-on search.
  * - {array} [<string>.extraAdServersRegexps]
  *     An array of regular expressions used to determine if a link on a search
- *     page mightbe an advert.
+ *     page might be an advert.
+ * - {array} [<object>.followonCookies]
+ *     An array of cookie details, which should look like:
+ *     - {string} [extraCodeParam]
+ *         The query parameter name that indicates an extra search provider's
+ *         code.
+ *     - {array} [<string>.extraCodePrefixes]
+ *         An array of the possible string prefixes for a codeParam, indicating
+ *         a partner search.
+ *     - {string} host
+ *         Host name to which the cookie is linked to.
+ *     - {string} name
+ *         Name of the cookie to look for that should contain the search
+ *         provider's code.
+ *     - {string} codeParam
+ *         The cookie parameter name that indicates a search provider's code.
+ *     - {array} <string>.codePrefixes
+ *         An array of the possible string prefixes for a codeParam, indicating
+ *         a partner search.
  */
 const SEARCH_PROVIDER_INFO = {
   google: {
@@ -47,7 +66,7 @@ const SEARCH_PROVIDER_INFO = {
     codePrefixes: ["firefox"],
     followonParams: ["oq", "ved", "ei"],
     extraAdServersRegexps: [
-      /^https:\/\/www\.googleadservices\.com\/(?:pagead\/)?aclk/,
+      /^https:\/\/www\.google(?:adservices)?\.com\/(?:pagead\/)?aclk/,
     ],
   },
   duckduckgo: {
@@ -72,6 +91,16 @@ const SEARCH_PROVIDER_INFO = {
     queryParam: "q",
     codeParam: "pc",
     codePrefixes: ["MOZ", "MZ"],
+    followonCookies: [
+      {
+        extraCodeParam: "form",
+        extraCodePrefixes: ["QBRE"],
+        host: "www.bing.com",
+        name: "SRCHS",
+        codeParam: "PC",
+        codePrefixes: ["MOZ", "MZ"],
+      },
+    ],
   },
 };
 
@@ -371,28 +400,40 @@ class TelemetryHandler {
         } else {
           type = "sap";
         }
-      } else if (provider == "bing") {
-        // Bing requires lots of extra work related to cookies.
-        let secondaryCode = queries.get("form");
-        // This code is used for all Bing follow-on searches.
-        if (secondaryCode == "QBRE") {
+      } else if (searchProviderInfo.followonCookies) {
+        // Especially Bing requires lots of extra work related to cookies.
+        for (let followonCookie of searchProviderInfo.followonCookies) {
+          if (followonCookie.extraCodeParam) {
+            let eCode = queries.get(followonCookie.extraCodeParam);
+            if (
+              !eCode ||
+              !followonCookie.extraCodePrefixes.some(p => eCode.startsWith(p))
+            ) {
+              continue;
+            }
+          }
+
+          // If this cookie is present, it's probably an SAP follow-on.
+          // This might be an organic follow-on in the same session, but there
+          // is no way to tell the difference.
           for (let cookie of Services.cookies.getCookiesFromHost(
-            "www.bing.com",
+            followonCookie.host,
             {}
           )) {
-            if (cookie.name == "SRCHS") {
-              // If this cookie is present, it's probably an SAP follow-on.
-              // This might be an organic follow-on in the same session,
-              // but there is no way to tell the difference.
-              if (
-                searchProviderInfo.codePrefixes.some(p =>
-                  cookie.value.startsWith("PC=" + p)
-                )
-              ) {
-                type = "sap-follow-on";
-                code = cookie.value.split("=")[1];
-                break;
-              }
+            if (cookie.name != followonCookie.name) {
+              continue;
+            }
+
+            let [cookieParam, cookieValue] = cookie.value
+              .split("=")
+              .map(p => p.trim());
+            if (
+              cookieParam == followonCookie.codeParam &&
+              followonCookie.codePrefixes.some(p => cookieValue.startsWith(p))
+            ) {
+              type = "sap-follow-on";
+              code = cookieValue;
+              break;
             }
           }
         }
@@ -417,7 +458,7 @@ class TelemetryHandler {
       SEARCH_COUNTS_HISTOGRAM_KEY
     );
     histogram.add(payload);
-    LOG(`SearchTelemetry: ${payload} for ${url}`);
+    LOG(`${payload} for ${url}`);
   }
 
   /**
@@ -484,7 +525,7 @@ class ContentHandler {
    */
   receiveMessage(msg) {
     if (msg.name != "SearchTelemetry:PageInfo") {
-      LOG(`"Received unexpected message: ${msg.name}`);
+      LOG("Received unexpected message: " + msg.name);
       return;
     }
 
@@ -506,22 +547,19 @@ class ContentHandler {
    * from a search provider page was followed, and if then if that link was an
    * ad click or not.
    *
-   * @param {nsISupports} httpChannel The channel that generated the activity.
-   * @param {number} activityType The type of activity.
-   * @param {number} activitySubtype The subtype for the activity.
-   * @param {PRTime} timestamp The time of the activity.
-   * @param {number} [extraSizeData] Any size data available for the activity.
-   * @param {string} [extraStringData] Any extra string data available for the
-   *   activity.
+   * @param {nsIChannel} nativeChannel   The channel that generated the activity.
+   * @param {number}     activityType    The type of activity.
+   * @param {number}     activitySubtype The subtype for the activity.
    */
   observeActivity(
-    httpChannel,
+    nativeChannel,
     activityType,
-    activitySubtype,
+    activitySubtype /*,
     timestamp,
     extraSizeData,
-    extraStringData
+    extraStringData*/
   ) {
+    // NOTE: the channel handling code here is inspired by WebRequest.jsm.
     if (
       !this._browserInfoByUrl.size ||
       activityType !=
@@ -532,37 +570,48 @@ class ContentHandler {
       return;
     }
 
-    let channel = httpChannel.QueryInterface(Ci.nsIHttpChannel);
-    let loadInfo;
-    try {
-      loadInfo = channel.loadInfo;
-    } catch (e) {
-      // Channels without a loadInfo are not pertinent.
+    // Sometimes we get a NullHttpChannel, which implements nsIHttpChannel but
+    // not nsIChannel.
+    if (!(nativeChannel instanceof Ci.nsIChannel)) {
+      return;
+    }
+    let channel = ChannelWrapper.get(nativeChannel);
+    // The wrapper is consistent across redirects, so we can use it to track state.
+    if (channel._adClickRecorded) {
+      LOG("Ad click already recorded");
       return;
     }
 
-    try {
-      let uri = channel.URI;
-      let triggerURI = loadInfo.triggeringPrincipal.URI;
-
-      if (!triggerURI || !this._browserInfoByUrl.has(triggerURI.spec)) {
+    // Make a trip through the event loop to make sure statuses have a chance to
+    // be processed before we get all the info.
+    Services.tm.dispatchToMainThread(() => {
+      // We suspect that No Content (204) responses are used to transfer or
+      // update beacons. They lead to use double-counting ad-clicks, so let's
+      // ignore them.
+      if (channel.statusCode == 204) {
+        LOG("Ignoring activity from ambiguous responses");
         return;
       }
 
-      let info = this._getProviderInfoForUrl(uri.spec, true);
+      let originURL = channel.originURI && channel.originURI.spec;
+      if (!originURL || !this._browserInfoByUrl.has(originURL)) {
+        return;
+      }
+
+      let URL = channel.finalURL;
+      let info = this._getProviderInfoForUrl(URL, true);
       if (!info) {
         return;
       }
 
-      Services.telemetry.keyedScalarAdd(SEARCH_AD_CLICKS_SCALAR, info[0], 1);
-      LOG(
-        `SearchTelemetry: Counting ad click in page for ${info[0]} ${
-          triggerURI.spec
-        }`
-      );
-    } catch (e) {
-      Cu.reportError(e);
-    }
+      try {
+        Services.telemetry.keyedScalarAdd(SEARCH_AD_CLICKS_SCALAR, info[0], 1);
+        channel._adClickRecorded = true;
+        LOG(`Counting ad click in page for ${info[0]} ${originURL} ${URL}`);
+      } catch (e) {
+        Cu.reportError(e);
+      }
+    });
   }
 
   /**
@@ -595,7 +644,7 @@ class ContentHandler {
   _reportPageWithAds(info) {
     let item = this._browserInfoByUrl.get(info.url);
     if (!item) {
-      LOG(`Expected to report URI with ads but couldn't find the information`);
+      LOG("Expected to report URI with ads but couldn't find the information");
       return;
     }
 
@@ -604,11 +653,7 @@ class ContentHandler {
       item.info.provider,
       1
     );
-    LOG(
-      `SearchTelemetry: Counting ads in page for ${item.info.provider} ${
-        info.url
-      }`
-    );
+    LOG(`Counting ads in page for ${item.info.provider} ${info.url}`);
   }
 }
 

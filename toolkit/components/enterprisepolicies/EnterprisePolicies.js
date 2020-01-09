@@ -55,6 +55,20 @@ let env = Cc["@mozilla.org/process/environment;1"].getService(
 );
 const isXpcshell = env.exists("XPCSHELL_TEST_PROFILE_DIR");
 
+// We're only testing for empty objects, not
+// empty strings or empty arrays.
+function isEmptyObject(obj) {
+  if (typeof obj != "object" || Array.isArray(obj)) {
+    return false;
+  }
+  for (let key of Object.keys(obj)) {
+    if (!isEmptyObject(obj[key])) {
+      return false;
+    }
+  }
+  return true;
+}
+
 function EnterprisePoliciesManager() {
   Services.obs.addObserver(this, "profile-after-change", true);
   Services.obs.addObserver(this, "final-ui-startup", true);
@@ -440,7 +454,7 @@ class JSONPoliciesProvider {
   get hasPolicies() {
     return (
       this._failed ||
-      (this._policies !== null && Object.keys(this._policies).length)
+      (this._policies !== null && !isEmptyObject(this._policies))
     );
   }
 
@@ -546,7 +560,7 @@ class WindowsGPOPoliciesProvider {
   }
 
   get hasPolicies() {
-    return this._policies !== null && Object.keys(this._policies).length;
+    return this._policies !== null && !isEmptyObject(this._policies);
   }
 
   get policies() {

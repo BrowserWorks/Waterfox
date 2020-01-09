@@ -48,7 +48,8 @@ public class ActivityStreamHomeFragment
         final boolean shouldReload = TextUtils.equals(s, ActivityStreamPanel.PREF_BOOKMARKS_ENABLED)
                 || TextUtils.equals(s, ActivityStreamPanel.PREF_VISITED_ENABLED)
                 || TextUtils.equals(s, ActivityStreamPanel.PREF_POCKET_ENABLED)
-                || TextUtils.equals(s, ActivityStreamPanel.PREF_USER_DISMISSED_SIGNIN);
+                || TextUtils.equals(s, ActivityStreamPanel.PREF_USER_DISMISSED_FXA_BANNER)
+                || TextUtils.equals(s, ActivityStreamPanel.PREF_USER_DISMISSED_PROMO_BANNER);
 
         if (shouldReload) {
             activityStreamPanel.reload(getLoaderManager(), getContext(), sharedPreferences);

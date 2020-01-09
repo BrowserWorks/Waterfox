@@ -9,6 +9,7 @@ package org.mozilla.gecko.telemetry.pingbuilders;
 import android.accessibilityservice.AccessibilityServiceInfo;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.pm.ShortcutManager;
 import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -16,18 +17,13 @@ import android.support.annotation.WorkerThread;
 import android.text.TextUtils;
 import android.util.Log;
 
-import org.json.JSONArray;
-import org.json.JSONException;
 import org.mozilla.gecko.AppConstants;
 import org.mozilla.gecko.Experiments;
 import org.mozilla.gecko.GeckoApp;
 import org.mozilla.gecko.GeckoProfile;
 import org.mozilla.gecko.GeckoSharedPrefs;
 import org.mozilla.gecko.Locales;
-import org.mozilla.gecko.PrefsHelper;
-import org.mozilla.gecko.R;
 import org.mozilla.gecko.Tabs;
-import org.mozilla.gecko.activitystream.homepanel.ActivityStreamPanel;
 import org.mozilla.gecko.home.HomeConfig;
 import org.mozilla.gecko.preferences.GeckoPreferences;
 import org.mozilla.gecko.search.SearchEngine;
@@ -48,6 +44,7 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import static org.mozilla.gecko.GeckoApp.ACTION_WEBAPP;
 import static org.mozilla.gecko.home.HomeConfig.PREF_KEY_HISTORY_PANEL_ENABLED;
 import static org.mozilla.gecko.home.HomeConfig.PREF_KEY_TOPSITES_PANEL_ENABLED;
 
@@ -65,6 +62,7 @@ public class TelemetryCorePingBuilder extends TelemetryPingBuilder {
 
     private static final String NAME = "core";
     private static final int VERSION_VALUE = 10; // For version history, see toolkit/components/telemetry/docs/core-ping.rst
+    private static final int UNAVAILABLE_NUMBER_VALUE = -1; // Returning this when a system read is not possible
 
     private static final String DEFAULT_BROWSER = "defaultBrowser";
     private static final String ARCHITECTURE = "arch";
@@ -121,6 +119,7 @@ public class TelemetryCorePingBuilder extends TelemetryPingBuilder {
     private static final String TOTAL_SITES_PINNED_TO_TOPSITES = "total_sites_pinned_to_topsites";
     private static final String VIEW_SOURCE = "view_source";
     private static final String BOOKMARK_WITH_STAR = "bookmark_with_star";
+    private static final String CURRENT_PWAS_COUNT = "current_pwas_count";
     private static final String SYNC = "sync";
     private static final String ONLY_OVER_WIFI = "only_over_wifi";
     private static final String SESSION_DURATION = "durations";
@@ -188,10 +187,11 @@ public class TelemetryCorePingBuilder extends TelemetryPingBuilder {
             final boolean onlyOverWifi = prefs.getBoolean("sync.restrict_metered", false);
             final boolean productFeatureTipsEnabled = prefs.getBoolean(GeckoPreferences.PREFS_NOTIFICATIONS_FEATURES_TIPS, true);
             final boolean restoreTabs = !"quit".equals(prefs.getString(GeckoPreferences.PREFS_RESTORE_SESSION, "always"));
-            final boolean showWebFonts = prefs.getBoolean("browser.display.use_document_fonts", false);
+            final boolean showWebFonts = prefs.getBoolean("browser.display.use_document_fonts", true);
             final int totalSearchEngines = prefs.getInt("android.not_a_preference.total_added_search_engines", 0);
-            final int totalAddedSearchEngines = totalSearchEngines > 0 ? totalSearchEngines - defaultSearchEnginesCount : 0;
+            final int totalAddedSearchEngines = totalSearchEngines - defaultSearchEnginesCount > 0 ? totalSearchEngines - defaultSearchEnginesCount : 0;
             final int bookmarksWithStar = prefs.getInt("android.not_a_preference.bookmarks_with_star", 0);
+            final int currentPwas = getCurrentPwas(context);
             final int totalSitesPinnedToTopsites = prefs.getInt("android.not_a_preference.total_sites_pinned_to_topsites", 0);
             final int saveAsPdf = prefs.getInt("android.not_a_preference.save_as_pdf", 0);
             final int print = prefs.getInt("android.not_a_preference.print", 0);
@@ -207,7 +207,8 @@ public class TelemetryCorePingBuilder extends TelemetryPingBuilder {
                     getSettingsPrivacy(privacyPrefs[0], privacyPrefs[1], masterPasswordUsageCount),
                     getSettingsNotifications(productFeatureTipsEnabled),
                     getAddons(activeAddons, disabledAddons),
-                    getPageOptions(saveAsPdf, print, totalAddedSearchEngines, totalSitesPinnedToTopsites, viewPageSource, bookmarksWithStar),
+                    getPageOptions(saveAsPdf, print, totalAddedSearchEngines, totalSitesPinnedToTopsites,
+                            viewPageSource, bookmarksWithStar, currentPwas),
                     getSync(onlyOverWifi));
             payload.put(FENNEC, fennec);
             resetCounts(prefs);
@@ -463,7 +464,7 @@ public class TelemetryCorePingBuilder extends TelemetryPingBuilder {
 
     public ExtendedJSONObject getPageOptions(final Integer saveAsPdf, final Integer print, final Integer totalAddedSearchEngines,
                                              final Integer totalSitesPinnedToTopsites, final Integer viewSource,
-                                             final Integer bookmarkWithStar) {
+                                             final Integer bookmarkWithStar, final Integer currentPwas) {
         final ExtendedJSONObject pageOptions = new ExtendedJSONObject();
 
         pageOptions.put(SAVE_AS_PDF, saveAsPdf);
@@ -472,6 +473,7 @@ public class TelemetryCorePingBuilder extends TelemetryPingBuilder {
         pageOptions.put(TOTAL_SITES_PINNED_TO_TOPSITES, totalSitesPinnedToTopsites);
         pageOptions.put(VIEW_SOURCE, viewSource);
         pageOptions.put(BOOKMARK_WITH_STAR, bookmarkWithStar);
+        pageOptions.put(CURRENT_PWAS_COUNT, currentPwas);
 
         return pageOptions;
     }
@@ -482,6 +484,20 @@ public class TelemetryCorePingBuilder extends TelemetryPingBuilder {
         sync.put(ONLY_OVER_WIFI, onlyOverWifi);
 
         return sync;
+    }
+
+    private int getCurrentPwas(final Context context) {
+        // ShortcutManager#getPinnedShortcuts is only available on Android >= 25
+        if (Build.VERSION.SDK_INT >= 25) {
+            final ShortcutManager sm = context.getSystemService(ShortcutManager.class);
+            return (int) sm.getPinnedShortcuts()
+                    .stream()
+                    .filter(shortcut -> shortcut.getIntent() != null)
+                    .filter(shortcut -> ACTION_WEBAPP.equals(shortcut.getIntent().getAction()))
+                    .count();
+        }
+
+        return UNAVAILABLE_NUMBER_VALUE;
     }
 
     public TelemetryCorePingBuilder setSessionDuration(final long sessionDuration) {

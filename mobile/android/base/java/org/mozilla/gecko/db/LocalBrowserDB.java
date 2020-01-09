@@ -1807,7 +1807,7 @@ public class LocalBrowserDB extends BrowserDB {
 
     @Override
     public int getPinnedSitesCountForAS(ContentResolver cr) {
-        final Cursor c = cr.query(bookmarksUriWithLimit(1),
+        final Cursor c = cr.query(mBookmarksUriWithProfile,
                 new String[] { Bookmarks._ID },
                 Bookmarks.PARENT + " = ?",
                 new String[] {

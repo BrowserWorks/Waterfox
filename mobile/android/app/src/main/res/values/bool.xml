@@ -17,7 +17,8 @@
     <bool name="is_large_resource">false</bool>
 
     <bool name="pref_activitystream_pocket_enabled_default">false</bool>
-    <bool name="pref_activitystream_visited_enabled_default">false</bool>
-    <bool name="pref_activitystream_recentbookmarks_enabled_default">false</bool>
-    <bool name="pref_activitystream_user_dismissed_signin_default">false</bool>
+    <bool name="pref_activitystream_visited_enabled_default">true</bool>
+    <bool name="pref_activitystream_recentbookmarks_enabled_default">true</bool>
+    <bool name="pref_activitystream_user_dismissed_fxa_banner_default">true</bool>
+    <bool name="pref_activitystream_user_dismissed_promo_banner_default">true</bool>
 </resources>

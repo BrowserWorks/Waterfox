@@ -241,7 +241,7 @@ wa.au
 // 3LDs
 act.edu.au
 catholic.edu.au
-eq.edu.au
+// eq.edu.au - Removed at the request of the Queensland Department of Education
 nsw.edu.au
 nt.edu.au
 qld.edu.au
@@ -7074,7 +7074,7 @@ org.zw
 
 // newGTLDs
 
-// List of new gTLDs imported from https://www.icann.org/resources/registries/gtlds/v2/gtlds.json on 2019-12-02T17:16:24Z
+// List of new gTLDs imported from https://www.icann.org/resources/registries/gtlds/v2/gtlds.json on 2019-12-25T17:26:24Z
 // This list is auto-generated, don't edit it manually.
 // aaa : 2015-02-26 American Automobile Association, Inc.
 aaa
@@ -7196,6 +7196,9 @@ alsace
 // alstom : 2015-07-30 ALSTOM
 alstom
 
+// amazon : 2019-12-19 Amazon EU S.à r.l.
+amazon
+
 // americanexpress : 2015-07-31 American Express Travel Related Services Company, Inc.
 americanexpress
 
@@ -7295,7 +7298,7 @@ auto
 // autos : 2014-01-09 DERAutos, LLC
 autos
 
-// avianca : 2015-01-08 Aerovias del Continente Americano S.A. Avianca
+// avianca : 2015-01-08 Avianca Holdings S.A.
 avianca
 
 // aws : 2015-06-25 Amazon Registry Services, Inc.
@@ -9062,9 +9065,6 @@ mov
 // movie : 2015-02-05 Binky Moon, LLC
 movie
 
-// movistar : 2014-10-16 Telefónica S.A.
-movistar
-
 // msd : 2015-07-23 MSD Registry Holdings, Inc.
 msd
 
@@ -9959,9 +9959,6 @@ tech
 // technology : 2013-09-13 Binky Moon, LLC
 technology
 
-// telefonica : 2014-10-16 Telefónica S.A.
-telefonica
-
 // temasek : 2014-08-07 Temasek Holdings (Private) Limited
 temasek
 
@@ -10403,6 +10400,9 @@ xin
 // xn--cck2b3b : 2015-02-26 Amazon Registry Services, Inc.
 ストア
 
+// xn--cckwcxetd : 2019-12-19 Amazon EU S.à r.l.
+アマゾン
+
 // xn--cg4bki : 2013-09-27 SAMSUNG SDS CO., LTD
 삼성
 
@@ -10471,6 +10471,9 @@ xin
 
 // xn--j1aef : 2015-01-15 VeriSign Sarl
 ком
+
+// xn--jlq480n2rg : 2019-12-19 Amazon EU S.à r.l.
+亚马逊
 
 // xn--jlq61u9w7b : 2015-01-08 Nokia Corporation
 诺基亚
@@ -10607,7 +10610,7 @@ yahoo
 // yamaxun : 2014-12-18 Amazon Registry Services, Inc.
 yamaxun
 
-// yandex : 2014-04-10 YANDEX, LLC
+// yandex : 2014-04-10 Yandex Europe B.V.
 yandex
 
 // yodobashi : 2014-11-20 YODOBASHI CAMERA CO.,LTD.
@@ -10656,6 +10659,12 @@ zuerich
 cc.ua
 inf.ua
 ltd.ua
+
+// Adobe : https://www.adobe.com/
+// Submitted by Ian Boston <boston@adobe.com>
+adobeaemcloud.com
+adobeaemcloud.net
+*.dev.adobeaemcloud.com
 
 // Agnat sp. z o.o. : https://domena.pl
 // Submitted by Przemyslaw Plewa <it-admin@domena.pl>
