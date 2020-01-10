@@ -283,7 +283,7 @@ const normalizeFirstPartyDomain = (details) => {
     return;
   }
   if (Services.prefs.getBoolPref("privacy.firstparty.isolate")) {
-    throw new ExtensionError("First-Party Isolation is enabled, but the required 'firstPartyDomain' ttribute was not set.");
+    throw new ExtensionError("First-Party Isolation is enabled, but the required 'firstPartyDomain' attribute was not set.");
   }
 
   // When FPI is disabled, the "firstPartyDomain" attribute is optional
