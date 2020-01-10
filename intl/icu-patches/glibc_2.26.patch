@@ -1,0 +1,134 @@
+From: Yoshito Umaoka <y.umaoka@gmail.com>
+Subject: [PATCH] ICU-13385 autoconf to detect if xlocale.h exists or not.
+
+diff --git a/intl/icu/source/configure b/intl/icu/source/configure
+--- a/intl/icu/source/configure
++++ b/intl/icu/source/configure
+@@ -752,6 +752,7 @@ infodir
+ docdir
+ oldincludedir
+ includedir
++runstatedir
+ localstatedir
+ sharedstatedir
+ sysconfdir
+@@ -855,6 +856,7 @@ datadir='${datarootdir}'
+ sysconfdir='${prefix}/etc'
+ sharedstatedir='${prefix}/com'
+ localstatedir='${prefix}/var'
++runstatedir='${localstatedir}/run'
+ includedir='${prefix}/include'
+ oldincludedir='/usr/include'
+ docdir='${datarootdir}/doc/${PACKAGE_TARNAME}'
+@@ -1107,6 +1109,15 @@ do
+   | -silent | --silent | --silen | --sile | --sil)
+     silent=yes ;;
+ 
++  -runstatedir | --runstatedir | --runstatedi | --runstated \
++  | --runstate | --runstat | --runsta | --runst | --runs \
++  | --run | --ru | --r)
++    ac_prev=runstatedir ;;
++  -runstatedir=* | --runstatedir=* | --runstatedi=* | --runstated=* \
++  | --runstate=* | --runstat=* | --runsta=* | --runst=* | --runs=* \
++  | --run=* | --ru=* | --r=*)
++    runstatedir=$ac_optarg ;;
++
+   -sbindir | --sbindir | --sbindi | --sbind | --sbin | --sbi | --sb)
+     ac_prev=sbindir ;;
+   -sbindir=* | --sbindir=* | --sbindi=* | --sbind=* | --sbin=* \
+@@ -1244,7 +1255,7 @@ fi
+ for ac_var in	exec_prefix prefix bindir sbindir libexecdir datarootdir \
+ 		datadir sysconfdir sharedstatedir localstatedir includedir \
+ 		oldincludedir docdir infodir htmldir dvidir pdfdir psdir \
+-		libdir localedir mandir
++		libdir localedir mandir runstatedir
+ do
+   eval ac_val=\$$ac_var
+   # Remove trailing slashes.
+@@ -1397,6 +1408,7 @@ Fine tuning of the installation directories:
+   --sysconfdir=DIR        read-only single-machine data [PREFIX/etc]
+   --sharedstatedir=DIR    modifiable architecture-independent data [PREFIX/com]
+   --localstatedir=DIR     modifiable single-machine data [PREFIX/var]
++  --runstatedir=DIR       modifiable per-process data [LOCALSTATEDIR/run]
+   --libdir=DIR            object code libraries [EPREFIX/lib]
+   --includedir=DIR        C header files [PREFIX/include]
+   --oldincludedir=DIR     C header files for non-gcc [/usr/include]
+@@ -7093,11 +7105,23 @@ fi
+ 
+ if test x$ac_cv_func_strtod_l = xyes
+ then
+-     CONFIG_CPPFLAGS="${CONFIG_CPPFLAGS} -DU_HAVE_STRTOD_L=1"
+-     U_HAVE_STRTOD_L=1
++    U_HAVE_STRTOD_L=1
++    ac_fn_c_check_header_mongrel "$LINENO" "xlocale.h" "ac_cv_header_xlocale_h" "$ac_includes_default"
++if test "x$ac_cv_header_xlocale_h" = xyes; then :
++
++fi
++
++
++    if test "$ac_cv_header_xlocale_h" = yes; then
++      U_HAVE_XLOCALE_H=1
++      CONFIG_CPPFLAGS="${CONFIG_CPPFLAGS} -DU_HAVE_STRTOD_L=1 -DU_HAVE_XLOCALE_H=1"
++    else
++      U_HAVE_XLOCALE_H=0
++      CONFIG_CPPFLAGS="${CONFIG_CPPFLAGS} -DU_HAVE_STRTOD_L=1 -DU_HAVE_XLOCALE_H=0"
++    fi
+ else
+-     CONFIG_CPPFLAGS="${CONFIG_CPPFLAGS} -DU_HAVE_STRTOD_L=0"
+-     U_HAVE_STRTOD_L=0
++    CONFIG_CPPFLAGS="${CONFIG_CPPFLAGS} -DU_HAVE_STRTOD_L=0"
++    U_HAVE_STRTOD_L=0
+ fi
+ 
+ 
+diff --git a/intl/icu/source/configure.ac b/intl/icu/source/configure.ac
+--- a/intl/icu/source/configure.ac
++++ b/intl/icu/source/configure.ac
+@@ -883,11 +883,18 @@ AC_SUBST(U_TIMEZONE)
+ AC_CHECK_FUNC(strtod_l)
+ if test x$ac_cv_func_strtod_l = xyes
+ then
+-     CONFIG_CPPFLAGS="${CONFIG_CPPFLAGS} -DU_HAVE_STRTOD_L=1"
+-     U_HAVE_STRTOD_L=1
++    U_HAVE_STRTOD_L=1
++    AC_CHECK_HEADER(xlocale.h)
++    if test "$ac_cv_header_xlocale_h" = yes; then
++      U_HAVE_XLOCALE_H=1
++      CONFIG_CPPFLAGS="${CONFIG_CPPFLAGS} -DU_HAVE_STRTOD_L=1 -DU_HAVE_XLOCALE_H=1"
++    else
++      U_HAVE_XLOCALE_H=0
++      CONFIG_CPPFLAGS="${CONFIG_CPPFLAGS} -DU_HAVE_STRTOD_L=1 -DU_HAVE_XLOCALE_H=0"
++    fi
+ else
+-     CONFIG_CPPFLAGS="${CONFIG_CPPFLAGS} -DU_HAVE_STRTOD_L=0"
+-     U_HAVE_STRTOD_L=0
++    CONFIG_CPPFLAGS="${CONFIG_CPPFLAGS} -DU_HAVE_STRTOD_L=0"
++    U_HAVE_STRTOD_L=0
+ fi
+ AC_SUBST(U_HAVE_STRTOD_L)
+ 
+diff --git a/intl/icu/source/i18n/digitlst.cpp b/intl/icu/source/i18n/digitlst.cpp
+--- a/intl/icu/source/i18n/digitlst.cpp
++++ b/intl/icu/source/i18n/digitlst.cpp
+@@ -53,6 +53,7 @@
+ #if !defined(U_USE_STRTOD_L)
+ # if U_PLATFORM_USES_ONLY_WIN32_API
+ #   define U_USE_STRTOD_L 1
++#   define U_HAVE_XLOCALE_H 0
+ # elif defined(U_HAVE_STRTOD_L)
+ #   define U_USE_STRTOD_L U_HAVE_STRTOD_L
+ # else
+@@ -61,10 +62,10 @@
+ #endif
+ 
+ #if U_USE_STRTOD_L
+-# if U_PLATFORM_USES_ONLY_WIN32_API || U_PLATFORM == U_PF_CYGWIN
+-#   include <locale.h>
+-# else
++# if U_HAVE_XLOCALE_H
+ #   include <xlocale.h>
++# else
++#   include <locale.h>
+ # endif
+ #endif
+ 
