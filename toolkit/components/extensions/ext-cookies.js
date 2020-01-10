@@ -10,6 +10,10 @@ XPCOMUtils.defineLazyModuleGetter(this, "Services",
 
 /* globals DEFAULT_STORE, PRIVATE_STORE */
 
+var {
+  ExtensionError,
+} = ExtensionUtils;
+
 const convertCookie = ({cookie, isPrivate}) => {
   let result = {
     name: cookie.name,
@@ -20,6 +24,7 @@ const convertCookie = ({cookie, isPrivate}) => {
     secure: cookie.isSecure,
     httpOnly: cookie.isHttpOnly,
     session: cookie.isSession,
+    firstPartyDomain: cookie.originAttributes.firstPartyDomain || "",
   };
 
   if (!cookie.isSession) {
@@ -179,6 +184,9 @@ const query = function* (detailsIn, props, context) {
     userContextId,
     privateBrowsingId: isPrivate ? 1 : 0,
   };
+  if ("firstPartyDomain" in details) {
+    originAttributes.firstPartyDomain = details.firstPartyDomain;
+  }
   if ("url" in details) {
     try {
       uri = Services.io.newURI(details.url).QueryInterface(Ci.nsIURL);
@@ -270,14 +278,30 @@ const query = function* (detailsIn, props, context) {
   }
 };
 
+const normalizeFirstPartyDomain = (details) => {
+  if (details.firstPartyDomain != null) {
+    return;
+  }
+  if (Services.prefs.getBoolPref("privacy.firstparty.isolate")) {
+    throw new ExtensionError("First-Party Isolation is enabled, but the required 'firstPartyDomain' ttribute was not set.");
+  }
+
+  // When FPI is disabled, the "firstPartyDomain" attribute is optional
+  // and defaults to the empty string.
+  details.firstPartyDomain = "";
+};
+
 this.cookies = class extends ExtensionAPI {
   getAPI(context) {
     let {extension} = context;
     let self = {
       cookies: {
         get: function(details) {
+          normalizeFirstPartyDomain(details);
+
           // FIXME: We don't sort by length of path and creation time.
-          for (let cookie of query(details, ["url", "name", "storeId"], context)) {
+          let allowed = ["url", "name", "storeId", "firstPartyDomain"];
+          for (let cookie of query(details, allowed, context)) {
             return Promise.resolve(convertCookie(cookie));
           }
 
@@ -286,13 +310,25 @@ this.cookies = class extends ExtensionAPI {
         },
 
         getAll: function(details) {
+          if (!("firstPartyDomain" in details)) {
+            normalizeFirstPartyDomain(details);
+          }
+
           let allowed = ["url", "name", "domain", "path", "secure", "session", "storeId"];
+
+          // firstPartyDomain may be set to null or undefined to not filter by FPD.
+          if (details.firstPartyDomain != null) {
+            allowed.push("firstPartyDomain");
+          }
+
           let result = Array.from(query(details, allowed, context), convertCookie);
 
           return Promise.resolve(result);
         },
 
         set: function(details) {
+          normalizeFirstPartyDomain(details);
+
           let uri = Services.io.newURI(details.url).QueryInterface(Ci.nsIURL);
 
           let path;
@@ -337,6 +373,7 @@ this.cookies = class extends ExtensionAPI {
           let originAttributes = {
             userContextId,
             privateBrowsingId: isPrivate ? 1 : 0,
+            firstPartyDomain: details.firstPartyDomain,
           };
 
           // The permission check may have modified the domain, so use
@@ -348,7 +385,10 @@ this.cookies = class extends ExtensionAPI {
         },
 
         remove: function(details) {
-          for (let {cookie, storeId} of query(details, ["url", "name", "storeId"], context)) {
+          normalizeFirstPartyDomain(details);
+
+          let allowed = ["url", "name", "storeId", "firstPartyDomain"];
+          for (let {cookie, storeId} of query(details, allowed, context)) {
             Services.cookies.remove(cookie.host, cookie.name, cookie.path, false, cookie.originAttributes);
 
             // Todo: could there be multiple per subdomain?
@@ -356,6 +396,7 @@ this.cookies = class extends ExtensionAPI {
               url: details.url,
               name: details.name,
               storeId,
+              firstPartyDomain: details.firstPartyDomain,
             });
           }
 
