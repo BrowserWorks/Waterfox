@@ -180,7 +180,7 @@ XPCArrayHomogenizer::GetTypeForArray(JSContext* cx, HandleObject array,
             type = tDbl;
         } else if (val.isBoolean()) {
             type = tBool;
-        } else if (val.isUndefined() || val.isSymbol() || val.isBigInt()) {
+        } else if (val.isUndefined() || val.isSymbol()) {
             state = tVar;
             break;
         } else if (val.isNull()) {
@@ -275,8 +275,8 @@ bool XPCVariant::InitializeData(JSContext* cx)
         mData.SetFromBool(val.toBoolean());
         return true;
     }
-    // We can't represent symbol or BigInt on C++ side, so pretend it is void.
-    if (val.isUndefined() || val.isSymbol() || val.isBigInt()) {
+    // We can't represent symbol on C++ side, so pretend it is void.
+    if (val.isUndefined() || val.isSymbol()) {
         mData.SetToVoid();
         return true;
     }
