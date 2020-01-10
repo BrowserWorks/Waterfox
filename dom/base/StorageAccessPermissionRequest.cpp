@@ -36,6 +36,8 @@ StorageAccessPermissionRequest::StorageAccessPermissionRequest(
       PermissionRequest(mType, nsTArray<nsString>()));
 }
 
+StorageAccessPermissionRequest::~StorageAccessPermissionRequest() { Cancel(); }
+
 NS_IMETHODIMP
 StorageAccessPermissionRequest::Cancel() {
   if (!mCallbackCalled) {
