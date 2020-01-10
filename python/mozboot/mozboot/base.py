@@ -340,7 +340,8 @@ class BaseBootstrapper(object):
 
         print('Executing as root:', subprocess.list2cmdline(command))
 
-        subprocess.check_call(command, stdin=sys.stdin)
+        # fdavis edited to run in dockerbuild without a tty prompt failure
+        #subprocess.check_call(command, stdin=None, shell=True)
 
     def dnf_install(self, *packages):
         if self.which('dnf'):
