@@ -1447,6 +1447,7 @@ he{
                     "Taishō",
                     "Shōwa",
                     "Heisei",
+                    "Reiwa",
                 }
             }
         }

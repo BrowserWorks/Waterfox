@@ -18,8 +18,13 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import platform
 
-from mozpack import path as mozpath
+if platform.system() == "Linux":
+    import os.path as mozpath
+    mozpath.normsep = lambda p: p
+else:
+    from mozpack import path as mozpath
 
 
 def find_source_file(dir, filename):

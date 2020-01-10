@@ -164,11 +164,6 @@ if [ $dry = false ]; then
     update_icu_data "be" "${icudata_file_be}"
   fi
 
-  hg addremove "${tzdata_dir}/source" "${tzdata_dir}/GIT-INFO" "${tzdata_dir}/VERSION" "${icudata_file_le}"
-  if [ -n "${icudata_file_be}" ]; then
-    hg addremove "${icudata_file_be}"
-  fi
-
   echo "INFO: Successfully updated tzdata!"
   echo "INFO: Please run js/src/builtin/intl/make_intl_data.py to update additional time zone files for SpiderMonkey."
 fi

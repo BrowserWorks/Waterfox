@@ -276,7 +276,8 @@ static const struct {
     {  1868,    9,  8 },   // Meiji    232
     {  1912,    7, 30 },   // Taisho   233
     {  1926,   12, 25 },   // Showa    234
-    {  1989,    1,  8 }   // Heisei    235
+    {  1989,    1,  8 },   // Heisei   235
+    {  2019,    5,  1 }    // Reiwa    236
 };
 
 #define kEraCount UPRV_LENGTHOF(kEraInfo)
