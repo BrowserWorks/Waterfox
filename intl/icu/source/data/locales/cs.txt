@@ -2270,6 +2270,7 @@ cs{
                     "Taishō",
                     "Shōwa",
                     "Heisei",
+                    "Reiwa",
                 }
                 narrow{
                     "Taika (645–650)",
@@ -2508,6 +2509,7 @@ cs{
                     "T",
                     "S",
                     "H",
+                    "R",
                 }
                 wide{
                     "Taika (645–650)",
@@ -2746,6 +2748,7 @@ cs{
                     "Taishō",
                     "Shōwa",
                     "Heisei",
+                    "Reiwa",
                 }
             }
         }
