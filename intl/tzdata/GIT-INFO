@@ -1,0 +1,5 @@
+commit 4d027901ef4d3288b2ca264ba1f532cf826190ac
+Author: Yoshito Umaoka <yumaoka@users.noreply.github.com>
+Date:   Fri Sep 13 18:23:18 2019 -0400
+
+    ICU-20823 ICU time zone data updates for 2019c
