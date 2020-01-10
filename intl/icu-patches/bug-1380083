@@ -3,12 +3,7 @@ Bug 1380083 Change backslaches to forward slashes. Upstream: http://bugs.icu-pro
 diff --git a/intl/icu/source/common/putil.cpp b/intl/icu/source/common/putil.cpp
 --- a/intl/icu/source/common/putil.cpp
 +++ b/intl/icu/source/common/putil.cpp
-@@ -96,25 +96,25 @@
- #   define WIN32_LEAN_AND_MEAN
- #endif
- #   define VC_EXTRALEAN
- #   define NOUSER
- #   define NOSERVICE
+@@ -101,15 +101,15 @@
  #   define NOIME
  #   define NOMCX
  #   include <windows.h>
@@ -24,11 +19,6 @@ diff --git a/intl/icu/source/common/putil.cpp b/intl/icu/source/common/putil.cpp
 -#include <wrl\client.h>
 +#include <wrl/wrappers/corewrappers.h>
 +#include <wrl/client.h>
-
+ 
  using namespace ABI::Windows::Foundation;
  using namespace Microsoft::WRL;
- using namespace Microsoft::WRL::Wrappers;
- #endif
- #elif U_PLATFORM == U_PF_OS400
- #   include <float.h>
- #   include <qusec.h>       /* error code structure */
