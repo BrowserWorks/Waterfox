@@ -1350,21 +1350,15 @@ function moveTabBar()
 }
 
 function moveWindowControls() {
-  var titlebarButtonbox =  windowRoot.ownerGlobal.document.querySelector(".titlebar-buttonbox");
-  var windowControls = windowRoot.ownerGlobal.document.querySelector("#window-controls");
-  var tabsToolbar = windowRoot.ownerGlobal.document.querySelector("#TabsToolbar");
+  var root = windowRoot.ownerGlobal.document.querySelector(":root");
 
   if(Services.prefs.getStringPref("browser.windowControls.position") == "left")
   {
-    titlebarButtonbox.classList.add("left");
-    windowControls.classList.add("left");
-    tabsToolbar.classList.add("leftWindowControls");
+    root.setAttribute("leftWindowControls", "true");
   }
   else
   {
-    titlebarButtonbox.classList.remove("left");
-    windowControls.classList.remove("left");
-    tabsToolbar.classList.remove("leftWindowControls");
+    root.removeAttribute("leftWindowControls");
   }
 }
 

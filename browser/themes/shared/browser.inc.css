@@ -563,38 +563,29 @@
   z-index: 1;
 }
 
-#titlebar.tabs-topAboveAB #TabsToolbar {
-  padding-right: 80px;
-}
-
-:root[inFullscreen] #titlebar.tabs-topAboveAB #TabsToolbar {
-  padding-right: 140px;
-}
-
-.titlebar-buttonbox.left {
+:root[leftWindowControls] .titlebar-buttonbox {
   left: 5px;
   right: auto;
 }
 
-#titlebar.tabs-topAboveAB #TabsToolbar.leftWindowControls
-{
-  padding-left: 110px !important;
+:root[tabsintitlebar][leftWindowControls]:not([inFullscreen]) #titlebar.tabs-topAboveAB #toolbar-menubar[autohide="true"] + #TabsToolbar {
+  padding-left: 95px !important;
 }
 
-#titlebar.tabs-topAboveAB #TabsToolbar.leftWindowControls, :root[inFullscreen] #titlebar.tabs-topAboveAB #TabsToolbar.leftWindowControls
+:root[tabsintitlebar][leftWindowControls] #titlebar.tabs-topAboveAB #TabsToolbar, :root[inFullscreen][tabsintitlebar][leftWindowControls] #titlebar.tabs-topAboveAB #TabsToolbar
 {
   padding-right: 0;
 }
 
-:root[inFullscreen] #titlebar.tabs-topAboveAB #TabsToolbar.leftWindowControls {
-  padding-left: 140px !important;
+:root[tabsintitlebar][inFullscreen][leftWindowControls] #titlebar.tabs-topAboveAB #toolbar-menubar[autohide="true"] + #TabsToolbar {
+  padding-left: 120px !important;
 }
 
-.titlebar-buttonbox.left .titlebar-close, :root[inFullscreen][tabsintitlebar] #window-controls.left #close-button {
+:root[leftWindowControls] .titlebar-buttonbox .titlebar-close, :root[inFullscreen][tabsintitlebar][leftWindowControls] #window-controls #close-button {
   order: -1;
 }
 
-:root[inFullscreen][tabsintitlebar] #window-controls.left {
+:root[inFullscreen][tabsintitlebar][leftWindowControls] #window-controls {
   left: 0;
   right: auto;
   display: flex;
@@ -602,4 +593,12 @@
 
 #PanelUI-menu-button.browser {
   list-style-image: url("chrome://branding/content/icon16.png");
+}
+
+:root[tabsintitlebar][leftWindowControls] #toolbar-menubar {
+  padding-left: 85px;
+}
+
+:root[tabsintitlebar][inFullscreen][leftWindowControls] #toolbar-menubar[autohide="false"] {
+  padding-left: 130px;
 }
