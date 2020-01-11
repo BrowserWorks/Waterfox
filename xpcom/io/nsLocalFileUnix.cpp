@@ -1554,8 +1554,11 @@ nsLocalFile::IsExecutable(bool* aResult)
 
     // Search for any of the set of executable extensions.
     static const char* const executableExts[] = {
-      "air",  // Adobe AIR installer
-      "jar"   // java application bundle
+        "air",  // Adobe AIR installer
+#ifdef MOZ_WIDGET_COCOA
+        "fileloc",  // File location files can be used to point to other files.
+#endif
+        "jar"  // java application bundle
     };
     nsDependentSubstring ext = Substring(path, dotIdx + 1);
     for (auto executableExt : executableExts) {
