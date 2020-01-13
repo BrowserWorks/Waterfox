@@ -1040,3 +1040,15 @@ panel[touchmode] .PanelUI-subView #appMenu-zoom-controls > .subviewbutton-iconic
   padding-top: .9167em;
   padding-bottom: .9167em;
 }
+
+:root[tabsintitlebar][sizemode="maximized"] .titlebar-buttonbox-container {
+  top: 10px;
+}
+
+.titlebar-buttonbox {
+  right: 0;
+}
+
+:root:not([inFullscreen])[tabsintitlebar][sizemode="maximized"] #titlebar:not(.tabs-topAboveAB) {
+  height: 40px;
+}

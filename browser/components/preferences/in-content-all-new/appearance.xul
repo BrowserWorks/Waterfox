@@ -49,6 +49,7 @@
 </groupbox>
 
 <!-- Window Controls Position preferences -->
+#ifdef XP_LINUX
 <groupbox id="windowControlsGroup"
           class="setting-group">
   <html:h3 data-l10n-id="window-controls-position-header"/>
@@ -61,6 +62,7 @@
     </radiogroup>
   </html:div>
 </groupbox>
+#endif
 
 <!-- Bookmarks Toolbar Position preferences -->
 <groupbox id="bookmarksBarPositionGroup"
