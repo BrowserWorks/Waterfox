@@ -57,6 +57,12 @@
     <Bug pattern="VO_VOLATILE_INCREMENT" />
   </Match>
 
+  <!-- Ignore warning for a "public static final List". We need it. -->
+  <Match>
+    <Class name="org.mozilla.gecko.deeplink.DeepLinkContract" />
+    <Bug pattern="MS_MUTABLE_COLLECTION" />
+  </Match>
+
     <!-- FindBugs doesn't like the resource classes provided by both ourselves, and the android
          support libraries. -->
     <Match>

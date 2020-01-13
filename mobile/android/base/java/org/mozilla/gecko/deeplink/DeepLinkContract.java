@@ -5,12 +5,15 @@
 
 package org.mozilla.gecko.deeplink;
 
+import java.util.Arrays;
+import java.util.List;
+
 // This class defines the contract when using deep links
 public class DeepLinkContract {
 
     // Sumo page for setting Fennec as default browser
     public static final String SUMO_DEFAULT_BROWSER = "https://support.mozilla.org/kb/make-firefox-default-browser-android?utm_source=inproduct&amp;utm_medium=settings&amp;utm_campaign=mobileandroid";
-    public static final String DEEP_LINK_SCHEME = "firefox";
+    public static final List<String> DEEP_LINK_SCHEMES = Arrays.asList("firefox", "firefox-beta", "firefox-nightly", "firefox-dev");
 
     public static final String LINK_FXA_SIGNIN = "fxa-signin";
 
