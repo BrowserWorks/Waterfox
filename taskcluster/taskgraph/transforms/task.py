@@ -1233,7 +1233,7 @@ def build_ship_it_maybe_release_payload(config, task, task_def):
         'cron_revision': config.params['head_rev'],
     }
 
-    if 'product_key' in task['worker']:
+    if 'product-key' in task['worker']:
         task_def['payload'].update({'product_key': task['worker']['product-key']})
 
 
