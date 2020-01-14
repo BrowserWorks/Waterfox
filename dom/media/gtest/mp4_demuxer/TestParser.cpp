@@ -72,7 +72,7 @@ protected:
   size_t mSize;
 };
 
-TEST(stagefright_MP4Metadata, EmptyStream)
+TEST(MP4Metadata, EmptyStream)
 {
   RefPtr<Stream> stream = new TestStream(nullptr, 0);
 
@@ -100,7 +100,7 @@ TEST(stagefright_MP4Metadata, EmptyStream)
   EXPECT_FALSE(metadata.Crypto().Ref()->valid);
 }
 
-TEST(stagefright_MoofParser, EmptyStream)
+TEST(MoofParser, EmptyStream)
 {
   RefPtr<Stream> stream = new TestStream(nullptr, 0);
 
@@ -262,7 +262,7 @@ static const TestFileData rustTestFiles[] = {
                                            560, 320, 1, 5589333,
                                                             true,    0, true,  true,  2  },
 };
-TEST(stagefright_MPEG4Metadata, test_case_mp4)
+TEST(MP4Metadata, test_case_mp4)
 {
   for (bool rust : { !MediaPrefs::EnableRustMP4Parser(),
                      MediaPrefs::EnableRustMP4Parser() }) {
@@ -369,7 +369,7 @@ TEST(stagefright_MPEG4Metadata, test_case_mp4)
 
 // Bug 1224019: This test produces way to much output, disabling for now.
 #if 0
-TEST(stagefright_MPEG4Metadata, test_case_mp4_subsets)
+TEST(MPEG4Metadata, test_case_mp4_subsets)
 {
   static const size_t step = 1u;
   for (size_t test = 0; test < ArrayLength(testFiles); ++test) {
@@ -406,7 +406,7 @@ TEST(stagefright_MPEG4Metadata, test_case_mp4_subsets)
 }
 #endif
 
-TEST(stagefright_MoofParser, test_case_mp4)
+TEST(MoofParser, test_case_mp4)
 {
   for (bool rust : { !MediaPrefs::EnableRustMP4Parser(),
                      MediaPrefs::EnableRustMP4Parser() }) {
@@ -462,7 +462,7 @@ TEST(stagefright_MoofParser, test_case_mp4)
 
 // Bug 1224019: This test produces way to much output, disabling for now.
 #if 0
-TEST(stagefright_MoofParser, test_case_mp4_subsets)
+TEST(MoofParser, test_case_mp4_subsets)
 {
   const size_t step = 1u;
   for (size_t test = 0; test < ArrayLength(testFiles); ++test) {
@@ -572,7 +572,7 @@ uint8_t media_libstagefright_gtest_video_init_mp4[] = {
 
 const uint32_t media_libstagefright_gtest_video_init_mp4_len = 745;
 
-TEST(stagefright_MP4Metadata, EmptyCTTS)
+TEST(MP4Metadata, EmptyCTTS)
 {
   RefPtr<MediaByteBuffer> buffer = new MediaByteBuffer(media_libstagefright_gtest_video_init_mp4_len);
   buffer->AppendElements(media_libstagefright_gtest_video_init_mp4, media_libstagefright_gtest_video_init_mp4_len);
