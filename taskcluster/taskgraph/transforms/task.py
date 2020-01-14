@@ -38,6 +38,7 @@ from taskgraph.util.scriptworker import (
 from taskgraph.util.signed_artifacts import get_signed_artifacts
 from voluptuous import Any, Required, Optional, Extra, Match
 from taskgraph import GECKO, MAX_DEPENDENCIES
+from taskgraph.parameters import get_version
 from ..util import docker as dockerutil
 from ..util.workertypes import get_worker_type
 
@@ -1217,13 +1218,16 @@ def build_ship_it_shipped_payload(config, task, task_def):
 
 @payload_builder('shipit-maybe-release', schema={
     Required('phase'): basestring,
-    Optional('product-key'): basestring,
+    Required('product-key'): basestring,
 })
 def build_ship_it_maybe_release_payload(config, task, task_def):
     # expect branch name, including path
     branch = config.params['head_repository'][len('https://hg.mozilla.org/'):]
-    # 'version' is e.g. '71.0b13' (app_version doesn't have beta number)
-    version = config.params['version']
+
+    # maybe-release task runs outside of release promotion context so it
+    # doesn't have useful data in `release_config()`, hence we're reading that
+    # value directly from in-tree
+    version = get_version(version_dir='mobile/android/config/version-files/beta')
 
     task_def['payload'] = {
         'product': task['shipping-product'],
@@ -1231,10 +1235,8 @@ def build_ship_it_maybe_release_payload(config, task, task_def):
         'phase': task['worker']['phase'],
         'version': version,
         'cron_revision': config.params['head_rev'],
+        'product_key': task['worker']['product-key'],
     }
-
-    if 'product-key' in task['worker']:
-        task_def['payload'].update({'product_key': task['worker']['product-key']})
 
 
 @payload_builder('sign-and-push-addons', schema={
