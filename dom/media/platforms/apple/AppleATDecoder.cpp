@@ -6,7 +6,7 @@
 
 #include "AppleUtils.h"
 #include "MP4Decoder.h"
-#include "mp4_demuxer/Adts.h"
+#include "Adts.h"
 #include "MediaInfo.h"
 #include "AppleATDecoder.h"
 #include "mozilla/Logging.h"
