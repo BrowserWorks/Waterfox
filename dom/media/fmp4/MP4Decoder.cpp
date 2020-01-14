@@ -67,10 +67,10 @@ MP4Decoder::IsSupportedType(const MediaContainerType& aType,
   // Whitelist MP4 types, so they explicitly match what we encounter on
   // the web, as opposed to what we use internally (i.e. what our demuxers
   // etc output).
-  const bool isAudio = aType.Type() == MEDIAMIMETYPE("audio/mp4")
-                       || aType.Type() == MEDIAMIMETYPE("audio/x-m4a");
-  const bool isVideo = aType.Type() == MEDIAMIMETYPE("video/mp4")
-                       || aType.Type() == MEDIAMIMETYPE("video/quicktime")
+  const bool isAudio = aType.Type() == MEDIAMIMETYPE("audio/mp4") ||
+                       aType.Type() == MEDIAMIMETYPE("audio/x-m4a");
+  const bool isVideo = aType.Type() == MEDIAMIMETYPE("video/mp4") ||
+                       aType.Type() == MEDIAMIMETYPE("video/quicktime")
   // On B2G, treat 3GPP as MP4 when Gonk PDM is available.
 #ifdef MOZ_GONK_MEDIACODEC
                        || aType.Type() == MEDIAMIMETYPE(VIDEO_3GPP)
