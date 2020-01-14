@@ -13,6 +13,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.AsyncTask;
+import android.support.annotation.NonNull;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
@@ -145,6 +146,14 @@ public class StumblerService extends PersistentIntentService
     @Override
     @SuppressLint("NewApi")
     public int onStartCommand(Intent intent, int flags, int startId) {
+        // Starting this service while collecting location is not allowed would have the effect of
+        // posting a notification about the Mozilla Location Service which would raise user suspicions.
+        // We want to catch that early in our testing.
+        if (!isCollectingLocationAllowed(this, intent.getBooleanExtra(ACTION_NOT_FROM_HOST_APP, false))) {
+            throw new UnsupportedOperationException(
+                    "Stumbling is not permitted. Use isCollectingLocationAllowed to check this before starting StumblerService");
+        }
+
         if (!AppConstants.Versions.preO) {
             final Notification notification = new NotificationCompat.Builder(this,
                     NotificationHelper.getInstance(this)
@@ -214,18 +223,6 @@ public class StumblerService extends PersistentIntentService
             return;
         }
 
-        final boolean isScanEnabledInPrefs = Prefs.getInstance(this).getFirefoxScanEnabled();
-
-        if (!isScanEnabledInPrefs && intent.getBooleanExtra(ACTION_NOT_FROM_HOST_APP, false)) {
-            stopSelf();
-            return;
-        }
-
-        if (!hasLocationPermission()) {
-            Log.d(LOG_TAG, "Location permission not granted. Aborting.");
-            return;
-        }
-
         boolean hasFilesWaiting = !DataStorageManager.getInstance().isDirEmpty();
         if (AppGlobals.isDebug) {
             Log.d(LOG_TAG, "Files waiting:" + hasFilesWaiting);
@@ -249,7 +246,7 @@ public class StumblerService extends PersistentIntentService
             }
         }
 
-        if (!isScanEnabledInPrefs) {
+        if (!isScanEnabledInPrefs(this)) {
             Prefs.getInstance(this).setFirefoxScanEnabled(true);
         }
 
@@ -278,13 +275,31 @@ public class StumblerService extends PersistentIntentService
         }
     }
 
-    private boolean hasLocationPermission() {
-        return ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+    private static boolean hasLocationPermission(@NonNull Context context) {
+        return ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
     }
 
     private PendingIntent createContentIntent() {
         Intent intent = IntentHelper.getPrivacySettingsIntent();
         return PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+    }
+
+    public static boolean isCollectingLocationAllowed(@NonNull Context context, boolean notFromHostApp) {
+        if (!isScanEnabledInPrefs(context) && notFromHostApp) {
+            Log.d(LOG_TAG, "Location service setting disabled. Aborting.");
+            return false;
+        }
+
+        if (!hasLocationPermission(context)) {
+            Log.d(LOG_TAG, "Location permission not granted. Aborting.");
+            return false;
+        }
+
+        return true;
+    }
+
+    private static boolean isScanEnabledInPrefs(@NonNull Context context) {
+        return Prefs.getInstance(context).getFirefoxScanEnabled();
     }
 
     @Override
