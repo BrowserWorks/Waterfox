@@ -8,13 +8,11 @@
 #include "mp4_demuxer/DecoderData.h"
 #include "mozilla/ArrayUtils.h"
 #include "mozilla/EndianUtils.h"
-#include "include/ESDS.h"
 
 // OpusDecoder header is really needed only by MP4 in rust
 #include "OpusDecoder.h"
 #include "mp4parse.h"
 
-using namespace stagefright;
 using mozilla::media::TimeUnit;
 
 namespace mp4_demuxer
