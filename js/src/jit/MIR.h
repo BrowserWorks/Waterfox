@@ -8529,9 +8529,6 @@ class MClassConstructor : public MNullaryInstruction
       return pc_;
     }
 
-    AliasSet getAliasSet() const override {
-        return AliasSet::None();
-    }
 };
 
 struct LambdaFunctionInfo
