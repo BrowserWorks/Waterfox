@@ -8,15 +8,15 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-use decompose::Decompositions;
-use smallvec::SmallVec;
+use std::collections::VecDeque;
 use std::fmt::{self, Write};
+use decompose::Decompositions;
 
 #[derive(Clone)]
 enum RecompositionState {
     Composing,
-    Purging(usize),
-    Finished(usize),
+    Purging,
+    Finished
 }
 
 /// External iterator for a string recomposition's characters.
@@ -24,9 +24,9 @@ enum RecompositionState {
 pub struct Recompositions<I> {
     iter: Decompositions<I>,
     state: RecompositionState,
-    buffer: SmallVec<[char; 4]>,
+    buffer: VecDeque<char>,
     composee: Option<char>,
-    last_ccc: Option<u8>,
+    last_ccc: Option<u8>
 }
 
 #[inline]
@@ -34,7 +34,7 @@ pub fn new_canonical<I: Iterator<Item=char>>(iter: I) -> Recompositions<I> {
     Recompositions {
         iter: super::decompose::new_canonical(iter),
         state: self::RecompositionState::Composing,
-        buffer: SmallVec::new(),
+        buffer: VecDeque::new(),
         composee: None,
         last_ccc: None,
     }
@@ -44,8 +44,8 @@ pub fn new_canonical<I: Iterator<Item=char>>(iter: I) -> Recompositions<I> {
 pub fn new_compatible<I: Iterator<Item=char>>(iter: I) -> Recompositions<I> {
     Recompositions {
         iter: super::decompose::new_compatible(iter),
-        state: self::RecompositionState::Composing,
-        buffer: SmallVec::new(),
+        state : self::RecompositionState::Composing,
+        buffer: VecDeque::new(),
         composee: None,
         last_ccc: None,
     }
@@ -63,16 +63,15 @@ impl<I: Iterator<Item=char>> Iterator for Recompositions<I> {
                 Composing => {
                     for ch in self.iter.by_ref() {
                         let ch_class = super::char::canonical_combining_class(ch);
-                        let k = match self.composee {
-                            None => {
-                                if ch_class != 0 {
-                                    return Some(ch);
-                                }
-                                self.composee = Some(ch);
-                                continue;
-                            },
-                            Some(k) => k,
-                        };
+                        if self.composee.is_none() {
+                            if ch_class != 0 {
+                                return Some(ch);
+                            }
+                            self.composee = Some(ch);
+                            continue;
+                        }
+                        let k = self.composee.clone().unwrap();
+
                         match self.last_ccc {
                             None => {
                                 match super::char::compose(k, ch) {
@@ -85,7 +84,7 @@ impl<I: Iterator<Item=char>> Iterator for Recompositions<I> {
                                             self.composee = Some(ch);
                                             return Some(k);
                                         }
-                                        self.buffer.push(ch);
+                                        self.buffer.push_back(ch);
                                         self.last_ccc = Some(ch_class);
                                     }
                                 }
@@ -96,10 +95,10 @@ impl<I: Iterator<Item=char>> Iterator for Recompositions<I> {
                                     if ch_class == 0 {
                                         self.composee = Some(ch);
                                         self.last_ccc = None;
-                                        self.state = Purging(0);
+                                        self.state = Purging;
                                         return Some(k);
                                     }
-                                    self.buffer.push(ch);
+                                    self.buffer.push_back(ch);
                                     self.last_ccc = Some(ch_class);
                                     continue;
                                 }
@@ -109,40 +108,28 @@ impl<I: Iterator<Item=char>> Iterator for Recompositions<I> {
                                         continue;
                                     }
                                     None => {
-                                        self.buffer.push(ch);
+                                        self.buffer.push_back(ch);
                                         self.last_ccc = Some(ch_class);
                                     }
                                 }
                             }
                         }
                     }
-                    self.state = Finished(0);
+                    self.state = Finished;
                     if self.composee.is_some() {
                         return self.composee.take();
                     }
                 }
-                Purging(next) => {
-                    match self.buffer.get(next).cloned() {
-                        None => {
-                            self.buffer.clear();
-                            self.state = Composing;
-                        }
-                        s => {
-                            self.state = Purging(next + 1);
-                            return s
-                        }
+                Purging => {
+                    match self.buffer.pop_front() {
+                        None => self.state = Composing,
+                        s => return s
                     }
                 }
-                Finished(next) => {
-                    match self.buffer.get(next).cloned() {
-                        None => {
-                            self.buffer.clear();
-                            return self.composee.take()
-                        }
-                        s => {
-                            self.state = Finished(next + 1);
-                            return s
-                        }
+                Finished => {
+                    match self.buffer.pop_front() {
+                        None => return self.composee.take(),
+                        s => return s
                     }
                 }
             }

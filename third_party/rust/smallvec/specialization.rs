@@ -6,12 +6,9 @@
 
 //! Implementations that require `default fn`.
 
-use super::{Array, SmallVec, SpecFrom};
+use super::{SpecFrom, SmallVec, Array};
 
-impl<'a, A: Array> SpecFrom<A, &'a [A::Item]> for SmallVec<A>
-where
-    A::Item: Clone,
-{
+impl<'a, A: Array> SpecFrom<A, &'a [A::Item]> for SmallVec<A> where A::Item: Clone {
     #[inline]
     default fn spec_from(slice: &'a [A::Item]) -> SmallVec<A> {
         slice.into_iter().cloned().collect()
