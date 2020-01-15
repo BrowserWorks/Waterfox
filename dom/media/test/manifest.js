@@ -267,6 +267,8 @@ var gPlayTests = [
   { name:"detodos-short.opus", type:"audio/ogg; codecs=opus", duration:0.22 },
   // Opus data in a webm container
   { name:"detodos-short.webm", type:"audio/webm; codecs=opus", duration:0.26 },
+  // Opus in webm channel mapping=2 sample file
+  { name:"opus-mapping2.webm", type:"audio/webm; codecs=opus", duration:10.01 },
   { name:"bug1066943.webm", type:"audio/webm; codecs=opus", duration:1.383 },
 
   // Multichannel Opus in an ogg container
@@ -283,6 +285,8 @@ var gPlayTests = [
   // Test playback of a MP4 file with a non-zero start time (and audio starting
   // a second later).
   { name:"bipbop-lateaudio.mp4", type:"video/mp4" },
+  // Opus in MP4 channel mapping=2 sample file
+  { name:"opus-mapping2.mp4", type:"audio/mp4; codecs=opus", duration:10.0 },
 
   { name:"small-shot.m4a", type:"audio/mp4", duration:0.29 },
   { name:"small-shot.mp3", type:"audio/mpeg", duration:0.27 },
