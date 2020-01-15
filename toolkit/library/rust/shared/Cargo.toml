@@ -24,6 +24,7 @@ quantum_render = ["webrender_bindings"]
 cubeb_pulse_rust = ["cubeb-pulse"]
 gecko_debug = ["geckoservo/gecko_debug"]
 simd-accel = ["encoding_c/simd-accel", "encoding_glue/simd-accel"]
+moz_memory = ["mp4parse_capi/mp4parse_fallible"]
 
 [lib]
 path = "lib.rs"

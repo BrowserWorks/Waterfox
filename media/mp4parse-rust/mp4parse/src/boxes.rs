@@ -121,8 +121,6 @@ box_database!(
     VP8SampleEntry                    0x76703038, // "vp08"
     VP9SampleEntry                    0x76703039, // "vp09"
     VPCodecConfigurationBox           0x76706343, // "vpcC"
-    AV1SampleEntry                    0x61763031, // "av01"
-    AV1CodecConfigurationBox          0x61763143, // "av1C"
     FLACSampleEntry                   0x664c6143, // "fLaC"
     FLACSpecificBox                   0x64664c61, // "dfLa"
     OpusSampleEntry                   0x4f707573, // "Opus"
@@ -139,4 +137,7 @@ box_database!(
     OriginalFormatBox                 0x66726d61, // "frma"
     MP3AudioSampleEntry               0x2e6d7033, // ".mp3" - from F4V.
     CompositionOffsetBox              0x63747473, // "ctts"
+    LPCMAudioSampleEntry              0x6C70636D, // "lpcm" - quicktime atom
+    ALACSpecificBox                   0x616C6163, // "alac" - Also used by ALACSampleEntry
+    UuidBox                           0x75756964, // "uuid"
 );

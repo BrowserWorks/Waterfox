@@ -575,7 +575,7 @@ dependencies = [
  "encoding_c 0.9.7 (registry+https://github.com/rust-lang/crates.io-index)",
  "encoding_glue 0.1.0",
  "geckoservo 0.0.1",
- "mp4parse_capi 0.8.0",
+ "mp4parse_capi 0.10.1",
  "nserror 0.1.0",
  "nsstring 0.1.0",
  "rust_url_capi 0.0.1",
@@ -859,12 +859,13 @@ dependencies = [
 
 [[package]]
 name = "mp4parse"
-version = "0.8.0"
+version = "0.10.1"
 dependencies = [
  "bitreader 0.3.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "byteorder 1.3.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "mp4parse_fallible 0.0.1",
- "num-traits 0.1.43 (registry+https://github.com/rust-lang/crates.io-index)",
+ "log 0.4.8 (registry+https://github.com/rust-lang/crates.io-index)",
+ "mp4parse_fallible 0.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "num-traits 0.2.10 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -873,16 +874,18 @@ version = "0.1.0"
 
 [[package]]
 name = "mp4parse_capi"
-version = "0.8.0"
+version = "0.10.1"
 dependencies = [
  "byteorder 1.3.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "mp4parse 0.8.0",
- "num-traits 0.1.43 (registry+https://github.com/rust-lang/crates.io-index)",
+ "log 0.4.8 (registry+https://github.com/rust-lang/crates.io-index)",
+ "mp4parse 0.10.1",
+ "num-traits 0.2.10 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "mp4parse_fallible"
 version = "0.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "msdos_time"
@@ -2109,6 +2112,7 @@ dependencies = [
 "checksum mozprofile 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)" = "1a17b8bbde1dc0fbf1c8b073192d7c6f89baa932173ece7c1447de5e9cc7cd7e"
 "checksum mozrunner 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)" = "eb9d113eaa876c004ad5119224e318b36fd358658e47cdd49b45d209b2d7ac82"
 "checksum mozversion 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)" = "597412c9031cfa14e823ace4aa80d0cc19596f2a65d5de960fdeb00ebe285861"
+"checksum mp4parse_fallible 0.0.1 (registry+https://github.com/rust-lang/crates.io-index)" = "6626c2aef76eb8f984eef02e475883d3fe9112e114720446c5810fc5f045cd30"
 "checksum msdos_time 0.1.6 (registry+https://github.com/rust-lang/crates.io-index)" = "aad9dfe950c057b1bfe9c1f2aa51583a8468ef2a5baba2ebbe06d775efeb7729"
 "checksum nodrop 0.1.14 (registry+https://github.com/rust-lang/crates.io-index)" = "72ef4a56884ca558e5ddb05a1d1e7e1bfd9a68d9ed024c21704cc98872dae1bb"
 "checksum nom 3.2.1 (registry+https://github.com/rust-lang/crates.io-index)" = "05aec50c70fd288702bcd93284a8444607f3292dbdf2a30de5ea5dcdbe72287b"

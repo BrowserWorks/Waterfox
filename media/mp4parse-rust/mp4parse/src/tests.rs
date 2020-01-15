@@ -63,6 +63,17 @@ fn make_box<F>(size: BoxSize, name: &[u8; 4], func: F) -> Cursor<Vec<u8>>
     Cursor::new(section.get_contents().unwrap())
 }
 
+fn make_uuid_box<F>(size: BoxSize, uuid: &[u8; 16], func: F) -> Cursor<Vec<u8>>
+    where F: Fn(Section) -> Section
+{
+    make_box(size, b"uuid", |mut s| {
+        for b in uuid {
+            s = s.B8(*b);
+        }
+        func(s)
+    })
+}
+
 fn make_fullbox<F>(size: BoxSize, name: &[u8; 4], version: u8, func: F) -> Cursor<Vec<u8>>
     where F: Fn(Section) -> Section
 {
@@ -80,6 +91,7 @@ fn read_box_header_short() {
     let header = super::read_box_header(&mut stream).unwrap();
     assert_eq!(header.name, BoxType::UnknownBox(0x74657374)); // "test"
     assert_eq!(header.size, 8);
+    assert!(header.uuid.is_none());
 }
 
 #[test]
@@ -88,6 +100,7 @@ fn read_box_header_long() {
     let header = super::read_box_header(&mut stream).unwrap();
     assert_eq!(header.name, BoxType::UnknownBox(0x74657374)); // "test"
     assert_eq!(header.size, 16);
+    assert!(header.uuid.is_none());
 }
 
 #[test]
@@ -115,6 +128,41 @@ fn read_box_header_long_invalid_size() {
         Err(Error::InvalidData(s)) => assert_eq!(s, "malformed wide size"),
         _ => panic!("unexpected result reading box with invalid size"),
     };
+}
+
+#[test]
+fn read_box_header_uuid() {
+    const HEADER_UUID: [u8; 16] = [
+        0x85, 0xc0, 0xb6,0x87,
+        0x82, 0x0f,
+        0x11, 0xe0,
+        0x81, 0x11,
+        0xf4, 0xce, 0x46, 0x2b, 0x6a, 0x48 ];
+
+    let mut stream = make_uuid_box(BoxSize::Short(24), &HEADER_UUID, |s| s);
+    let mut iter = super::BoxIter::new(&mut stream);
+    let stream = iter.next_box().unwrap().unwrap();
+    assert_eq!(stream.head.name, BoxType::UuidBox);
+    assert_eq!(stream.head.size, 24);
+    assert!(stream.head.uuid.is_some());
+    assert_eq!(stream.head.uuid.unwrap(), HEADER_UUID);
+}
+
+#[test]
+fn read_box_header_truncated_uuid() {
+    const HEADER_UUID: [u8; 16] = [
+        0x85, 0xc0, 0xb6,0x87,
+        0x82, 0x0f,
+        0x11, 0xe0,
+        0x81, 0x11,
+        0xf4, 0xce, 0x46, 0x2b, 0x6a, 0x48 ];
+
+    let mut stream = make_uuid_box(BoxSize::UncheckedShort(23), &HEADER_UUID, |s| s);
+    let mut iter = super::BoxIter::new(&mut stream);
+    let stream = iter.next_box().unwrap().unwrap();
+    assert_eq!(stream.head.name, BoxType::UuidBox);
+    assert_eq!(stream.head.size, 23);
+    assert!(stream.head.uuid.is_none());
 }
 
 #[test]
@@ -654,6 +702,28 @@ fn serialize_opus_header() {
 }
 
 #[test]
+fn read_alac() {
+    let mut stream = make_box(BoxSize::Auto, b"alac", |s| {
+        s.append_repeated(0, 6) // reserved
+         .B16(1) // data reference index
+         .B32(0) // reserved
+         .B32(0) // reserved
+         .B16(2) // channel count
+         .B16(16) // bits per sample
+         .B16(0) // pre_defined
+         .B16(0) // reserved
+         .B32(44100 << 16) // Sample rate
+         .append_bytes(&make_fullbox(BoxSize::Auto, b"alac", 0, |s| {
+             s.append_bytes(&vec![0xfa; 24])
+         }).into_inner())
+    });
+    let mut iter = super::BoxIter::new(&mut stream);
+    let mut stream = iter.next_box().unwrap().unwrap();
+    let r = super::read_audio_sample_entry(&mut stream);
+    assert!(r.is_ok());
+}
+
+#[test]
 fn avcc_limit() {
     let mut stream = make_box(BoxSize::Auto, b"avc1", |s| {
         s.append_repeated(0, 6)
@@ -737,9 +807,8 @@ fn read_elst_zero_entries() {
     let mut iter = super::BoxIter::new(&mut stream);
     let mut stream = iter.next_box().unwrap().unwrap();
     match super::read_elst(&mut stream) {
-        Err(Error::InvalidData(s)) => assert_eq!(s, "invalid edit count"),
-        Ok(_) => panic!("expected an error result"),
-        _ => panic!("expected a different error result"),
+        Ok(elst) => assert_eq!(elst.edits.len(), 0),
+        _ => panic!("expected no error"),
     }
 }
 
@@ -758,6 +827,7 @@ fn make_elst() -> Cursor<Vec<u8>> {
 fn read_edts_bogus() {
     // First edit list entry has a media_time of -1, so we expect a second
     // edit list entry to be present to provide a valid media_time.
+    // Bogus edts are ignored.
     let mut stream = make_box(BoxSize::Auto, b"edts", |s| {
         s.append_bytes(&make_elst().into_inner())
     });
@@ -765,9 +835,11 @@ fn read_edts_bogus() {
     let mut stream = iter.next_box().unwrap().unwrap();
     let mut track = super::Track::new(0);
     match super::read_edts(&mut stream, &mut track) {
-        Err(Error::InvalidData(s)) => assert_eq!(s, "expected additional edit"),
-        Ok(_) => panic!("expected an error result"),
-        _ => panic!("expected a different error result"),
+        Ok(_) => {
+            assert_eq!(track.media_time, None);
+            assert_eq!(track.empty_duration, None);
+        }
+        _ => panic!("expected no error"),
     }
 }
 
@@ -848,6 +920,9 @@ fn read_qt_wave_atom() {
          .B8(0x6b)  // mp3
          .append_repeated(0, 12)
     }).into_inner();
+    let chan = make_box(BoxSize::Auto, b"chan", |s| {
+        s.append_repeated(0, 10)    // we don't care its data.
+    }).into_inner();
     let wave = make_box(BoxSize::Auto, b"wave", |s| {
         s.append_bytes(esds.as_slice())
     }).into_inner();
@@ -862,6 +937,7 @@ fn read_qt_wave_atom() {
          .B32(48000 << 16)
          .append_repeated(0, 16)
          .append_bytes(wave.as_slice())
+         .append_bytes(chan.as_slice())
     });
 
     let mut iter = super::BoxIter::new(&mut stream);
@@ -869,6 +945,34 @@ fn read_qt_wave_atom() {
     let (codec_type, _) = super::read_audio_sample_entry(&mut stream)
           .expect("fail to read qt wave atom");
     assert_eq!(codec_type, super::CodecType::MP3);
+}
+
+#[test]
+fn read_descriptor_80() {
+    let aac_esds =
+        vec![
+            0x03, 0x80, 0x80, 0x80, 0x22, 0x00, 0x02, 0x00,
+            0x04, 0x80, 0x80, 0x80, 0x17, 0x40, 0x15, 0x00,
+            0x00, 0x00, 0x00, 0x03, 0x22, 0xBC, 0x00, 0x01,
+            0xF5, 0x83, 0x05, 0x80, 0x80, 0x80, 0x02, 0x11,
+            0x90, 0x06, 0x80, 0x80, 0x80, 0x01, 0x02
+        ];
+    let aac_dc_descriptor = &aac_esds[31 .. 33];
+    let mut stream = make_box(BoxSize::Auto, b"esds", |s| {
+        s.B32(0) // reserved
+         .append_bytes(aac_esds.as_slice())
+    });
+    let mut iter = super::BoxIter::new(&mut stream);
+    let mut stream = iter.next_box().unwrap().unwrap();
+
+    let es = super::read_esds(&mut stream).unwrap();
+
+    assert_eq!(es.audio_codec, super::CodecType::AAC);
+    assert_eq!(es.audio_object_type, Some(2));
+    assert_eq!(es.audio_sample_rate, Some(48000));
+    assert_eq!(es.audio_channel_count, Some(2));
+    assert_eq!(es.codec_esds, aac_esds);
+    assert_eq!(es.decoder_specific_data, aac_dc_descriptor);
 }
 
 #[test]
@@ -1104,6 +1208,29 @@ fn read_esds_invalid_descriptor() {
 }
 
 #[test]
+fn read_esds_redundant_descriptor() {
+    // the '2' at the end is redundant data.
+    let esds =
+        vec![  3, 25,   0, 1, 0, 4, 19, 64,
+              21,  0,   0, 0, 0, 0,  0,  0,
+               0,  1, 119, 0, 5, 2, 18, 16,
+               6,  1,   2,
+            ];
+
+    let mut stream = make_box(BoxSize::Auto, b"esds", |s| {
+        s.B32(0) // reserved
+         .append_bytes(esds.as_slice())
+    });
+    let mut iter = super::BoxIter::new(&mut stream);
+    let mut stream = iter.next_box().unwrap().unwrap();
+
+    match super::read_esds(&mut stream) {
+        Ok(esds) => assert_eq!(esds.audio_codec, super::CodecType::AAC),
+        _ => panic!("unexpected result with invalid descriptor"),
+    }
+}
+
+#[test]
 fn read_invalid_pssh() {
     // invalid pssh header length
     let pssh =
@@ -1126,4 +1253,48 @@ fn read_invalid_pssh() {
         Err(Error::InvalidData(s)) => assert_eq!(s, "read_buf size exceeds BUF_SIZE_LIMIT"),
         _ => panic!("unexpected result with invalid descriptor"),
     }
+}
+
+#[test]
+fn read_stsd_lpcm() {
+    // Extract from sample converted by ffmpeg.
+    // "ffmpeg -i ./gizmo-short.mp4 -acodec pcm_s16le -ar 96000 -vcodec copy -f mov gizmo-short.mov"
+    let lpcm =
+        vec![
+                              0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x01, 0x00, 0x02, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x10, 0xff,
+            0xfe, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x48, 0x40, 0xf7, 0x70, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x7f,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x00,
+            0x00, 0x00, 0x0c, 0x00, 0x00, 0x00, 0x02, 0x00,
+            0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x18, 0x63,
+            0x68, 0x61, 0x6e, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x64, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00,
+        ];
+
+    let mut stream = make_box(BoxSize::Auto, b"lpcm", |s| {
+        s.append_bytes(lpcm.as_slice())
+    });
+    let mut iter = super::BoxIter::new(&mut stream);
+    let mut stream = iter.next_box().unwrap().unwrap();
+
+    let (codec_type, sample_entry) = super::read_audio_sample_entry(&mut stream).unwrap();
+
+    assert_eq!(codec_type, super::CodecType::LPCM);
+
+    match sample_entry {
+        super::SampleEntry::Audio(a) => {
+            assert_eq!(a.samplerate, 96000.0);
+            assert_eq!(a.channelcount, 1);
+            match a.codec_specific {
+                super::AudioCodecSpecific::LPCM => (),
+                _ => panic!("it should be LPCM!"),
+            }
+        },
+        _ => panic!("it should be a audio sample entry!"),
+    }
+
 }
