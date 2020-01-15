@@ -13,6 +13,7 @@
 #include "mozilla/EndianUtils.h"
 #include "mozilla/Pair.h"
 #include "mozilla/ResultExtensions.h"
+#include "mozilla/ScopeExit.h"
 #include "VideoUtils.h"
 
 extern mozilla::LazyLogModule gMediaDemuxerLog;
@@ -104,8 +105,7 @@ FrameParser::Parse(BufferReader* aReader, uint32_t* aBytesToSkip)
     // ID3v1 tags may only be at file end.
     // TODO: should we try to read ID3 tags at end of file/mid-stream, too?
     const size_t prevReaderOffset = aReader->Offset();
-    uint32_t tagSize;
-    MOZ_TRY_VAR(tagSize, mID3Parser.Parse(aReader));
+    const uint32_t tagSize = mID3Parser.Parse(aReader).unwrapOr(0);
     if (!!tagSize) {
       // ID3 tag found, skip past it.
       const uint32_t skipSize = tagSize - ID3Parser::ID3Header::SIZE;
@@ -450,7 +450,10 @@ FrameParser::VBRHeader::ParseXing(BufferReader* aReader)
   };
 
   MOZ_ASSERT(aReader);
+
+  // Seek backward to the original position before leaving this scope.
   const size_t prevReaderOffset = aReader->Offset();
+  auto scopeExit = MakeScopeExit([&] { aReader->Seek(prevReaderOffset); });
 
   // We have to search for the Xing header as its position can change.
   for (auto res = aReader->PeekU32();
@@ -496,7 +499,6 @@ FrameParser::VBRHeader::ParseXing(BufferReader* aReader)
     mScale = Some(scale);
   }
 
-  aReader->Seek(prevReaderOffset);
   return mType == XING;
 }
 
@@ -516,7 +518,10 @@ FrameParser::VBRHeader::ParseVBRI(BufferReader* aReader)
   if (sync.isOk()) { // To avoid compiler complains 'set but unused'.
     MOZ_ASSERT((sync.unwrap() & 0xFFE0) == 0xFFE0);
   }
+
+  // Seek backward to the original position before leaving this scope.
   const size_t prevReaderOffset = aReader->Offset();
+  auto scopeExit = MakeScopeExit([&] { aReader->Seek(prevReaderOffset); });
 
   // VBRI have a fixed relative position, so let's check for it there.
   if (aReader->Remaining() > MIN_FRAME_SIZE) {
@@ -528,11 +533,9 @@ FrameParser::VBRHeader::ParseVBRI(BufferReader* aReader)
       MOZ_TRY_VAR(frames, aReader->ReadU32());
       mNumAudioFrames = Some(frames);
       mType = VBRI;
-      aReader->Seek(prevReaderOffset);
       return true;
     }
   }
-  aReader->Seek(prevReaderOffset);
   return false;
 }
 
