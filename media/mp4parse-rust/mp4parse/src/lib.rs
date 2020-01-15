@@ -277,8 +277,8 @@ struct HandlerBox {
 
 // Sample description box 'stsd'
 #[derive(Debug)]
-struct SampleDescriptionBox {
-    descriptions: Vec<SampleEntry>,
+pub struct SampleDescriptionBox {
+    pub descriptions: Vec<SampleEntry>,
 }
 
 #[derive(Debug, Clone)]
@@ -293,6 +293,7 @@ pub enum SampleEntry {
 pub struct ES_Descriptor {
     pub audio_codec: CodecType,
     pub audio_object_type: Option<u16>,
+    pub extended_audio_object_type: Option<u16>,
     pub audio_sample_rate: Option<u32>,
     pub audio_channel_count: Option<u16>,
     pub codec_esds: Vec<u8>,
@@ -312,6 +313,7 @@ pub enum AudioCodecSpecific {
 
 #[derive(Debug, Clone)]
 pub struct AudioSampleEntry {
+    pub codec_type: CodecType,
     data_reference_index: u16,
     pub channelcount: u32,
     pub samplesize: u16,
@@ -330,6 +332,7 @@ pub enum VideoCodecSpecific {
 
 #[derive(Debug, Clone)]
 pub struct VideoSampleEntry {
+    pub codec_type: CodecType,
     data_reference_index: u16,
     pub width: u16,
     pub height: u16,
@@ -423,15 +426,27 @@ pub struct ProtectionSystemSpecificHeaderBox {
 }
 
 #[derive(Debug, Default, Clone)]
+pub struct SchemeTypeBox {
+    pub scheme_type: FourCC,
+    pub scheme_version: u32,
+}
+
+#[derive(Debug, Default, Clone)]
 pub struct TrackEncryptionBox {
-    pub is_encrypted: u32,
+    pub is_encrypted: u8,
     pub iv_size: u8,
     pub kid: Vec<u8>,
+    // Members for pattern encryption schemes
+    pub crypt_byte_block_count: Option<u8>,
+    pub skip_byte_block_count: Option<u8>,
+    pub constant_iv: Option<Vec<u8>>,
+    // End pattern encryption scheme members
 }
 
 #[derive(Debug, Default, Clone)]
 pub struct ProtectionSchemeInfoBox {
     pub code_name: String,
+    pub scheme_type: Option<SchemeTypeBox>,
     pub tenc: Option<TrackEncryptionBox>,
 }
 
@@ -520,9 +535,8 @@ pub struct Track {
     pub timescale: Option<TrackTimeScale<u64>>,
     pub duration: Option<TrackScaledTime<u64>>,
     pub track_id: Option<u32>,
-    pub codec_type: CodecType,
-    pub data: Option<SampleEntry>,
     pub tkhd: Option<TrackHeaderBox>, // TODO(kinetik): find a nicer way to export this.
+    pub stsd: Option<SampleDescriptionBox>,
     pub stts: Option<TimeToSampleBox>,
     pub stsc: Option<SampleToChunkBox>,
     pub stsz: Option<SampleSizeBox>,
@@ -961,6 +975,7 @@ fn read_stbl<T: Read>(f: &mut BMFFBox<T>, track: &mut Track) -> Result<()> {
             BoxType::SampleDescriptionBox => {
                 let stsd = read_stsd(&mut b, track)?;
                 debug!("{:?}", stsd);
+                track.stsd = Some(stsd);
             }
             BoxType::TimeToSampleBox => {
                 let stts = read_stts(&mut b)?;
@@ -1506,6 +1521,17 @@ fn find_descriptor(data: &[u8], esds: &mut ES_Descriptor) -> Result<()> {
     Ok(())
 }
 
+fn get_audio_object_type(bit_reader: &mut BitReader) -> Result<u16> {
+    let mut audio_object_type: u16 = ReadInto::read(bit_reader, 5)?;
+
+    // Extend audio object type, for example, HE-AAC.
+    if audio_object_type == 31 {
+        let audio_object_type_ext: u16 = ReadInto::read(bit_reader, 6)?;
+        audio_object_type = 32 + audio_object_type_ext;
+    }
+    Ok(audio_object_type)
+}
+
 fn read_ds_descriptor(data: &[u8], esds: &mut ES_Descriptor) -> Result<()> {
     let frequency_table =
         vec![(0x0, 96000), (0x1, 88200), (0x2, 64000), (0x3, 48000),
@@ -1515,13 +1541,7 @@ fn read_ds_descriptor(data: &[u8], esds: &mut ES_Descriptor) -> Result<()> {
 
     let bit_reader = &mut BitReader::new(data);
 
-    let mut audio_object_type: u16 = ReadInto::read(bit_reader, 5)?;
-
-    // Extend audio object type, for example, HE-AAC.
-    if audio_object_type == 31 {
-        let audio_object_type_ext: u16 = ReadInto::read(bit_reader, 6)?;
-        audio_object_type = 32 + audio_object_type_ext;
-    }
+    let mut audio_object_type = get_audio_object_type(bit_reader)?;
 
     let sample_index: u32 = ReadInto::read(bit_reader, 4)?;
 
@@ -1536,60 +1556,124 @@ fn read_ds_descriptor(data: &[u8], esds: &mut ES_Descriptor) -> Result<()> {
         },
     };
 
-    let mut channel_counts: u16 = ReadInto::read(bit_reader, 4)?;
+    let channel_configuration: u16 = ReadInto::read(bit_reader, 4)?;
 
-    // parsing GASpecificConfig
-    bit_reader.skip(1)?;        // frameLengthFlag
-    let depend_on_core_order: u8 = ReadInto::read(bit_reader, 1)?;
-    if depend_on_core_order > 0 {
-        bit_reader.skip(14)?;   // codeCoderDelay
+    let extended_audio_object_type = match audio_object_type {
+        5 | 29 => Some(5),
+        _ => None,
+    };
+
+    if audio_object_type == 5 || audio_object_type == 29 {
+        // We have an explicit signaling for BSAC extension, should the decoder
+        // decode the BSAC extension (all Gecko's AAC decoders do), then this is
+        // what the stream will actually look like once decoded.
+        let _extended_sample_index = ReadInto::read(bit_reader, 4)?;
+        let _extended_sample_frequency: Option<u32> = match _extended_sample_index {
+            0x0F => Some(ReadInto::read(bit_reader, 24)?),
+            _ => frequency_table.iter().find(|item| item.0 == sample_index).map(|x| x.1)
+        };
+        audio_object_type = get_audio_object_type(bit_reader)?;
+        let _extended_channel_configuration = match audio_object_type {
+            22 => ReadInto::read(bit_reader, 4)?,
+            _ => channel_configuration
+        };
+    };
+
+    match audio_object_type {
+        1 ... 4 | 6 | 7 | 17 | 19 ... 23 => {
+            if sample_frequency.is_none() {
+                return Err(Error::Unsupported("unknown frequency"));
+            }
+
+            // parsing GASpecificConfig
+
+            // If the sampling rate is not one of the rates listed in the right
+            // column in Table 4.82, the sampling frequency dependent tables
+            // (code tables, scale factor band tables etc.) must be deduced in
+            // order for the bitstream payload to be parsed. Since a given
+            // sampling frequency is associated with only one sampling frequency
+            // table, and since maximum flexibility is desired in the range of
+            // possible sampling frequencies, the following table shall be used
+            // to associate an implied sampling frequency with the desired
+            // sampling frequency dependent tables.
+            let sample_frequency_value = match sample_frequency.unwrap() {
+                0 ... 9390 => 8000,
+                9391 ... 11501 => 11025,
+                11502 ... 13855 => 12000,
+                13856 ... 18782 => 16000,
+                18783 ... 23003 => 22050,
+                23004 ... 27712 => 24000,
+                27713 ... 37565 => 32000,
+                37566 ... 46008 => 44100,
+                46009 ... 55425 => 48000,
+                55426 ... 75131 => 64000,
+                75132 ... 92016 => 88200,
+                _ => 96000
+            };
+
+            bit_reader.skip(1)?;        // frameLengthFlag
+            let depend_on_core_order: u8 = ReadInto::read(bit_reader, 1)?;
+            if depend_on_core_order > 0 {
+                bit_reader.skip(14)?;   // codeCoderDelay
+            }
+            bit_reader.skip(1)?;        // extensionFlag
+
+            let channel_counts = match channel_configuration {
+                0 => {
+                    debug!("Parsing program_config_element for channel counts");
+
+                    bit_reader.skip(4)?;    // element_instance_tag
+                    bit_reader.skip(2)?;    // object_type
+                    bit_reader.skip(4)?;    // sampling_frequency_index
+                    let num_front_channel: u8 = ReadInto::read(bit_reader, 4)?;
+                    let num_side_channel: u8 = ReadInto::read(bit_reader, 4)?;
+                    let num_back_channel:u8 = ReadInto::read(bit_reader, 4)?;
+                    let num_lfe_channel: u8 = ReadInto::read(bit_reader, 2)?;
+                    bit_reader.skip(3)?;    // num_assoc_data
+                    bit_reader.skip(4)?;    // num_valid_cc
+
+                    let mono_mixdown_present: bool = ReadInto::read(bit_reader, 1)?;
+                    if mono_mixdown_present {
+                        bit_reader.skip(4)?;    // mono_mixdown_element_number
+                    }
+
+                    let stereo_mixdown_present: bool = ReadInto::read(bit_reader, 1)?;
+                    if stereo_mixdown_present {
+                        bit_reader.skip(4)?;    // stereo_mixdown_element_number
+                    }
+
+                    let matrix_mixdown_idx_present: bool = ReadInto::read(bit_reader, 1)?;
+                    if matrix_mixdown_idx_present {
+                        bit_reader.skip(2)?;    // matrix_mixdown_idx
+                        bit_reader.skip(1)?;    // pseudo_surround_enable
+                    }
+                    let mut _channel_counts = 0;
+                    _channel_counts += read_surround_channel_count(bit_reader, num_front_channel)?;
+                    _channel_counts += read_surround_channel_count(bit_reader, num_side_channel)?;
+                    _channel_counts += read_surround_channel_count(bit_reader, num_back_channel)?;
+                    _channel_counts += read_surround_channel_count(bit_reader, num_lfe_channel)?;
+                    _channel_counts
+                },
+                1 ... 7 => channel_configuration,
+                // Amendment 4 of the AAC standard in 2013 below
+                11 => 7, // 6.1 Amendment 4 of the AAC standard in 2013
+                12 | 14 => 8, // 7.1 (a/d) of ITU BS.2159
+                _ => {
+                    return Err(Error::Unsupported("invalid channel configuration"));
+                }
+            };
+
+            esds.audio_object_type = Some(audio_object_type);
+            esds.extended_audio_object_type = extended_audio_object_type;
+            esds.audio_sample_rate = Some(sample_frequency_value);
+            esds.audio_channel_count = Some(channel_counts);
+            assert!(esds.decoder_specific_data.is_empty());
+            esds.decoder_specific_data.extend_from_slice(data);
+
+            Ok(())
+        },
+        _ => Err(Error::Unsupported("unknown aac audio object type"))
     }
-    bit_reader.skip(1)?;        // extensionFlag
-
-    // When channel_counts is 0, we need to parse the program_config_element
-    // to calculate the channel counts.
-    if channel_counts == 0 {
-        debug!("Parsing program_config_element for channel counts");
-
-        bit_reader.skip(4)?;    // element_instance_tag
-        bit_reader.skip(2)?;    // object_type
-        bit_reader.skip(4)?;    // sampling_frequency_index
-        let num_front_channel: u8 = ReadInto::read(bit_reader, 4)?;
-        let num_side_channel: u8 = ReadInto::read(bit_reader, 4)?;
-        let num_back_channel:u8 = ReadInto::read(bit_reader, 4)?;
-        let num_lfe_channel: u8 = ReadInto::read(bit_reader, 2)?;
-        bit_reader.skip(3)?;    // num_assoc_data
-        bit_reader.skip(4)?;    // num_valid_cc
-
-        let mono_mixdown_present: bool = ReadInto::read(bit_reader, 1)?;
-        if mono_mixdown_present {
-            bit_reader.skip(4)?;    // mono_mixdown_element_number
-        }
-
-        let stereo_mixdown_present: bool = ReadInto::read(bit_reader, 1)?;
-        if stereo_mixdown_present {
-            bit_reader.skip(4)?;    // stereo_mixdown_element_number
-        }
-
-        let matrix_mixdown_idx_present: bool = ReadInto::read(bit_reader, 1)?;
-        if matrix_mixdown_idx_present {
-            bit_reader.skip(2)?;    // matrix_mixdown_idx
-            bit_reader.skip(1)?;    // pseudo_surround_enable
-        }
-
-        channel_counts += read_surround_channel_count(bit_reader, num_front_channel)?;
-        channel_counts += read_surround_channel_count(bit_reader, num_side_channel)?;
-        channel_counts += read_surround_channel_count(bit_reader, num_back_channel)?;
-        channel_counts += read_surround_channel_count(bit_reader, num_lfe_channel)?;
-    }
-
-    esds.audio_object_type = Some(audio_object_type);
-    esds.audio_sample_rate = sample_frequency;
-    esds.audio_channel_count = Some(channel_counts);
-    assert!(esds.decoder_specific_data.is_empty());
-    esds.decoder_specific_data.extend_from_slice(data);
-
-    Ok(())
 }
 
 fn read_surround_channel_count(bit_reader: &mut BitReader, channels: u8) -> Result<u16> {
@@ -1652,6 +1736,8 @@ fn read_es_descriptor(data: &[u8], esds: &mut ES_Descriptor) -> Result<()> {
 fn read_esds<T: Read>(src: &mut BMFFBox<T>) -> Result<ES_Descriptor> {
     let (_, _) = read_fullbox_extra(src)?;
 
+    // Subtract 4 extra to offset the members of fullbox not accounted for in
+    // head.offset
     let esds_size = src.head.size - src.head.offset - 4;
     let esds_array = read_buf(src, esds_size as usize)?;
 
@@ -1819,7 +1905,7 @@ fn read_hdlr<T: Read>(src: &mut BMFFBox<T>) -> Result<HandlerBox> {
 }
 
 /// Parse an video description inside an stsd box.
-fn read_video_sample_entry<T: Read>(src: &mut BMFFBox<T>) -> Result<(CodecType, SampleEntry)> {
+fn read_video_sample_entry<T: Read>(src: &mut BMFFBox<T>) -> Result<SampleEntry> {
     let name = src.get_header().name;
     let codec_type = match name {
         BoxType::AVCSampleEntry | BoxType::AVC3SampleEntry => CodecType::H264,
@@ -1889,6 +1975,8 @@ fn read_video_sample_entry<T: Read>(src: &mut BMFFBox<T>) -> Result<(CodecType, 
                     return Err(Error::InvalidData("malformed video sample entry"));
                 }
                 let (_, _) = read_fullbox_extra(&mut b.content)?;
+                // Subtract 4 extra to offset the members of fullbox not
+                // accounted for in head.offset
                 let esds_size = b.head.size - b.head.offset - 4;
                 let esds = read_buf(&mut b.content, esds_size as usize)?;
                 codec_specific = Some(VideoCodecSpecific::ESDSConfig(esds));
@@ -1909,14 +1997,15 @@ fn read_video_sample_entry<T: Read>(src: &mut BMFFBox<T>) -> Result<(CodecType, 
         check_parser_state!(b.content);
     }
 
-    Ok(codec_specific.map_or((CodecType::Unknown, SampleEntry::Unknown),
-        |codec_specific| (codec_type, SampleEntry::Video(VideoSampleEntry {
+    Ok(codec_specific.map_or(SampleEntry::Unknown,
+        |codec_specific| SampleEntry::Video(VideoSampleEntry {
+            codec_type: codec_type,
             data_reference_index: data_reference_index,
             width: width,
             height: height,
             codec_specific: codec_specific,
             protection_info: protection_info,
-        })))
+        }))
     )
 }
 
@@ -1937,7 +2026,7 @@ fn read_qt_wave_atom<T: Read>(src: &mut BMFFBox<T>) -> Result<ES_Descriptor> {
 }
 
 /// Parse an audio description inside an stsd box.
-fn read_audio_sample_entry<T: Read>(src: &mut BMFFBox<T>) -> Result<(CodecType, SampleEntry)> {
+fn read_audio_sample_entry<T: Read>(src: &mut BMFFBox<T>) -> Result<SampleEntry> {
     let name = src.get_header().name;
 
     // Skip uninteresting fields.
@@ -2049,15 +2138,16 @@ fn read_audio_sample_entry<T: Read>(src: &mut BMFFBox<T>) -> Result<(CodecType, 
         check_parser_state!(b.content);
     }
 
-    Ok(codec_specific.map_or((CodecType::Unknown, SampleEntry::Unknown),
-        |codec_specific| (codec_type, SampleEntry::Audio(AudioSampleEntry {
+    Ok(codec_specific.map_or(SampleEntry::Unknown,
+        |codec_specific| SampleEntry::Audio(AudioSampleEntry {
+            codec_type: codec_type,
             data_reference_index: data_reference_index,
             channelcount: channelcount,
             samplesize: samplesize,
             samplerate: samplerate,
             codec_specific: codec_specific,
             protection_info: protection_info,
-        })))
+        }))
     )
 }
 
@@ -2069,7 +2159,6 @@ fn read_stsd<T: Read>(src: &mut BMFFBox<T>, track: &mut Track) -> Result<SampleD
     let mut descriptions = Vec::new();
 
     {
-        // TODO(kinetik): check if/when more than one desc per track? do we need to support?
         let mut iter = src.box_iter();
         while let Some(mut b) = iter.next_box()? {
             let description = match track.track_type {
@@ -2079,10 +2168,7 @@ fn read_stsd<T: Read>(src: &mut BMFFBox<T>, track: &mut Track) -> Result<SampleD
                 TrackType::Unknown => Err(Error::Unsupported("unknown track type")),
             };
             let description = match description {
-                Ok((codec_type, desc)) => {
-                    track.codec_type = codec_type;
-                    desc
-                }
+                Ok(desc) => desc,
                 Err(Error::Unsupported(_)) => {
                     // read_{audio,video}_desc may have returned Unsupported
                     // after partially reading the box content, so we can't
@@ -2090,14 +2176,9 @@ fn read_stsd<T: Read>(src: &mut BMFFBox<T>, track: &mut Track) -> Result<SampleD
                     let to_skip = b.bytes_left();
                     skip(&mut b, to_skip)?;
                     SampleEntry::Unknown
-                }
+                },
                 Err(e) => return Err(e),
             };
-            if track.data.is_none() {
-                track.data = Some(description.clone());
-            } else {
-                debug!("** don't know how to handle multiple descriptions **");
-            }
             vec_push(&mut descriptions, description)?;
             check_parser_state!(b.content);
             if descriptions.len() == description_count as usize {
@@ -2124,6 +2205,9 @@ fn read_sinf<T: Read>(src: &mut BMFFBox<T>) -> Result<ProtectionSchemeInfoBox> {
                 let frma = read_frma(&mut b)?;
                 sinf.code_name = frma;
             },
+            BoxType::SchemeTypeBox => {
+                sinf.scheme_type = Some(read_schm(&mut b)?);
+            }
             BoxType::SchemeInformationBox => {
                 // We only need tenc box in schi box so far.
                 sinf.tenc = read_schi(&mut b)?;
@@ -2155,22 +2239,62 @@ fn read_schi<T: Read>(src: &mut BMFFBox<T>) -> Result<Option<TrackEncryptionBox>
 }
 
 fn read_tenc<T: Read>(src: &mut BMFFBox<T>) -> Result<TrackEncryptionBox> {
-    let (_, _) = read_fullbox_extra(src)?;
+    let (version, _) = read_fullbox_extra(src)?;
 
-    let default_is_encrypted = be_u24(src)?;
+    // reserved byte
+    skip(src, 1)?;
+    // the next byte is used to signal the default pattern in version >= 1
+    let (default_crypt_byte_block, default_skip_byte_block) = match version {
+        0 => {
+            skip(src, 1)?;
+            (None, None)
+        },
+        _ => {
+            let pattern_byte = src.read_u8()?;
+            let crypt_bytes = pattern_byte >> 4;
+            let skip_bytes = pattern_byte & 0x0f;
+            (Some(crypt_bytes), Some(skip_bytes))
+        }
+    };
+    let default_is_encrypted = src.read_u8()?;
     let default_iv_size = src.read_u8()?;
     let default_kid = read_buf(src, 16)?;
+    // If default_is_encrypted == 1 && default_iv_size == 0 we expect a default_constant_iv
+    let default_constant_iv = match (default_is_encrypted, default_iv_size) {
+        (1, 0) => {
+            let default_constant_iv_size = src.read_u8()?;
+            Some(read_buf(src, default_constant_iv_size as usize)?)
+        },
+        _ => None,
+    };
 
     Ok(TrackEncryptionBox {
         is_encrypted: default_is_encrypted,
         iv_size: default_iv_size,
         kid: default_kid,
+        crypt_byte_block_count: default_crypt_byte_block,
+        skip_byte_block_count: default_skip_byte_block,
+        constant_iv: default_constant_iv
     })
 }
 
 fn read_frma<T: Read>(src: &mut BMFFBox<T>) -> Result<String> {
     let code_name = read_buf(src, 4)?;
     String::from_utf8(code_name).map_err(From::from)
+}
+
+fn read_schm<T: Read>(src: &mut BMFFBox<T>) -> Result<SchemeTypeBox> {
+    // Flags can be used to signal presence of URI in the box, but we don't
+    // use the URI so don't bother storing the flags.
+    let (_, _) = read_fullbox_extra(src)?;
+    let scheme_type =  FourCC::from(be_u32(src)?);
+    let scheme_version = be_u32(src)?;
+    // Null terminated scheme URI may follow, but we don't use it right now.
+    skip_box_remain(src)?;
+    Ok(SchemeTypeBox {
+        scheme_type: scheme_type,
+        scheme_version: scheme_version,
+    })
 }
 
 /// Skip a number of bytes that we don't care to parse.
