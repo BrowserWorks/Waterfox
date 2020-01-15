@@ -23,15 +23,13 @@ exclude = [
 
   # Excluded because these crates have their own Cargo workspaces so they can't
   # be included in the top-level one.
-#   "media/audioipc",
-#   "media/cubeb-rs",
+   "media/cubeb-rs",
 
   # Excluded because they are used only as dependencies, not top-level targets,
   # so we don't need to vendor their dev-dependencies.
-#   "dom/webauthn/u2f-hid-rs",
-  "media/libstagefright/binding/mp4parse",
-  "media/libstagefright/binding/mp4parse_capi",
-  "media/libstagefright/binding/mp4parse_fallible",
+  "media/mp4parse-rust/mp4parse",
+  "media/mp4parse-rust/mp4parse_capi",
+  "media/mp4parse-rust/mp4parse_fallible",
 ]
 
 # Explicitly specify what our profiles use.
