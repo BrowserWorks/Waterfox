@@ -56,7 +56,7 @@ public:
   // bytes.
   bool Parse(const uint8_t* aPacket)
   {
-    mp4_demuxer::BitReader br(aPacket, FLAC_MAX_FRAME_HEADER_SIZE * 8);
+    BitReader br(aPacket, FLAC_MAX_FRAME_HEADER_SIZE * 8);
 
     // Frame sync code.
     if ((br.ReadBits(15) & 0x7fff) != 0x7ffc) {
