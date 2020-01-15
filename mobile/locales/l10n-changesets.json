@@ -303,7 +303,7 @@
         "platforms": [
             "android-multilocale"
         ],
-        "revision": "e8490b1a1c98"
+        "revision": "ed3113e03686"
     },
     "lij": {
         "platforms": [
@@ -501,7 +501,7 @@
         "platforms": [
             "android-multilocale"
         ],
-        "revision": "dab5ba080518"
+        "revision": "406a6cce26d2"
     },
     "uz": {
         "platforms": [
