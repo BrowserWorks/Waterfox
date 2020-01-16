@@ -2806,10 +2806,9 @@ gfxFontGroup::GetEllipsisTextRun(int32_t aAppUnitsPerDevPixel,
 }
 
 gfxFont*
-gfxFontGroup::FindFallbackFaceForChar(gfxFontFamily* aFamily, uint32_t aCh,
-                                      Script aRunScript)
+gfxFontGroup::FindFallbackFaceForChar(gfxFontFamily* aFamily, uint32_t aCh)
 {
-    GlobalFontMatch data(aCh, aRunScript, &mStyle);
+    GlobalFontMatch data(aCh, &mStyle);
     aFamily->SearchAllFontsForChar(&data);
     gfxFontEntry* fe = data.mBestMatch;
     if (!fe) {
@@ -2908,23 +2907,13 @@ gfxFontGroup::FindFontForChar(uint32_t aCh, uint32_t aPrevCh, uint32_t aNextCh,
 
             gfxFont* font = nullptr;
             if (mFonts[0].CheckForFallbackFaces()) {
-                font = FindFallbackFaceForChar(mFonts[0].Family(), aCh,
-                                               aRunScript);
+                font = FindFallbackFaceForChar(mFonts[0].Family(), aCh);
             } else if (!firstFont->GetFontEntry()->IsUserFont()) {
                 // For platform fonts (but not userfonts), we may need to do
                 // fallback within the family to handle cases where some faces
                 // such as Italic or Black have reduced character sets compared
                 // to the family's Regular face.
-                gfxFontEntry* fe = firstFont->GetFontEntry();
-                if (!fe->IsUpright() ||
-                    fe->Weight() != NS_FONT_WEIGHT_NORMAL ||
-                    fe->Stretch() != NS_FONT_STRETCH_NORMAL) {
-                    // If style/weight/stretch was not Normal, see if we can
-                    // fall back to a next-best face (e.g. Arial Black -> Bold,
-                    // or Arial Narrow -> Regular).
-                    font = FindFallbackFaceForChar(mFonts[0].Family(), aCh,
-                                                   aRunScript);
-                }
+                font = FindFallbackFaceForChar(mFonts[0].Family(), aCh);
             }
             if (font) {
                 *aMatchType = gfxTextRange::kFontGroup;
@@ -3025,7 +3014,7 @@ gfxFontGroup::FindFontForChar(uint32_t aCh, uint32_t aPrevCh, uint32_t aNextCh,
                          !mFonts[i-1].CheckForFallbackFaces() ||
                          !mFonts[i-1].Family()->Name().Equals(ff.Family()->Name()),
                          "should only do fallback once per font family");
-            font = FindFallbackFaceForChar(ff.Family(), aCh, aRunScript);
+            font = FindFallbackFaceForChar(ff.Family(), aCh);
             if (font) {
                 *aMatchType = gfxTextRange::kFontGroup;
                 return font;
@@ -3035,11 +3024,8 @@ gfxFontGroup::FindFontForChar(uint32_t aCh, uint32_t aPrevCh, uint32_t aNextCh,
             // fallback to handle styles with reduced character sets (see
             // also above).
             fe = ff.FontEntry();
-            if (!fe->mIsUserFontContainer && !fe->IsUserFont() &&
-                (!fe->IsUpright() ||
-                 fe->Weight() != NS_FONT_WEIGHT_NORMAL ||
-                 fe->Stretch() != NS_FONT_STRETCH_NORMAL)) {
-                font = FindFallbackFaceForChar(ff.Family(), aCh, aRunScript);
+            if (!fe->mIsUserFontContainer && !fe->IsUserFont()) {
+                font = FindFallbackFaceForChar(ff.Family(), aCh);
                 if (font) {
                     *aMatchType = gfxTextRange::kFontGroup;
                     return font;
@@ -3385,7 +3371,9 @@ gfxFontGroup::WhichPrefFontSupportsChar(uint32_t aCh, uint32_t aNextCh)
         for (j = 0; j < numPrefs; j++) {
             // look up the appropriate face
             gfxFontFamily *family = (*families)[j];
-            if (!family) continue;
+            if (!family) {
+                continue;
+            }
 
             // if a pref font is used, it's likely to be used again in the same text run.
             // the style doesn't change so the face lookup can be cached rather than calling
@@ -3397,8 +3385,12 @@ gfxFontGroup::WhichPrefFontSupportsChar(uint32_t aCh, uint32_t aNextCh)
 
             bool needsBold;
             gfxFontEntry *fe = family->FindFontForStyle(mStyle, needsBold);
+            if (!fe) {
+                continue;
+            }
+
             // if ch in cmap, create and return a gfxFont
-            if (fe && fe->HasCharacter(aCh)) {
+            if (fe->HasCharacter(aCh)) {
                 gfxFont* prefFont = fe->FindOrMakeFont(&mStyle, needsBold);
                 if (!prefFont) {
                     continue;
@@ -3410,6 +3402,16 @@ gfxFontGroup::WhichPrefFontSupportsChar(uint32_t aCh, uint32_t aNextCh)
                 return prefFont;
             }
 
+            // If the char was not available, see if we can fall back to an
+            // alternative face in the same family.
+            gfxFont* prefFont = FindFallbackFaceForChar(family, aCh);
+            if (prefFont) {
+                mLastPrefFamily = family;
+                mLastPrefFont = prefFont;
+                mLastPrefLang = charLang;
+                mLastPrefFirstFont = (i == 0 && j == 0);
+                return prefFont;
+            }
         }
     }
 
