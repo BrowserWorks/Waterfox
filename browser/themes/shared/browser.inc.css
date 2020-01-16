@@ -563,6 +563,14 @@
   z-index: 1;
 }
 
+:root:not([leftWindowControls]) #titlebar.tabs-topAboveAB #toolbar-menubar[autohide="true"] + #TabsToolbar {
+  padding-right: 80px;
+}
+
+:root[inFullscreen]:not([leftWindowControls]) #titlebar.tabs-topAboveAB #toolbar-menubar[autohide="true"] + #TabsToolbar {
+  padding-right: 140px;
+}
+
 :root[leftWindowControls] .titlebar-buttonbox {
   left: 5px;
   right: auto;
