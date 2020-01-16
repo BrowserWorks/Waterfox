@@ -563,12 +563,12 @@
   z-index: 1;
 }
 
-:root:not([leftWindowControls]) #titlebar.tabs-topAboveAB #toolbar-menubar[autohide="true"] + #TabsToolbar {
-  padding-right: 80px;
+:root:not([leftWindowControls])[tabsintitlebar] #titlebar.tabs-topAboveAB #toolbar-menubar[autohide="true"] + #TabsToolbar {
+  padding-right: 95px;
 }
 
-:root[inFullscreen]:not([leftWindowControls]) #titlebar.tabs-topAboveAB #toolbar-menubar[autohide="true"] + #TabsToolbar {
-  padding-right: 140px;
+:root[inFullscreen]:not([leftWindowControls])[tabsintitlebar] #titlebar.tabs-topAboveAB #toolbar-menubar[autohide="true"] + #TabsToolbar {
+  padding-right: 120px;
 }
 
 :root[leftWindowControls] .titlebar-buttonbox {
