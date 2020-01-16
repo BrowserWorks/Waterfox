@@ -1052,3 +1052,27 @@ panel[touchmode] .PanelUI-subView #appMenu-zoom-controls > .subviewbutton-iconic
 :root:not([inFullscreen])[tabsintitlebar][sizemode="maximized"] #titlebar:not(.tabs-topAboveAB) {
   height: 40px;
 }
+
+@media (-moz-os-version: windows-win10) {
+  :root:not([leftWindowControls])[tabsintitlebar] #titlebar.tabs-topAboveAB #toolbar-menubar[autohide="true"] + #TabsToolbar {
+    padding-right: 160px;
+  }
+}
+
+@media not (-moz-os-version: windows-win10) {
+  :root:not([leftWindowControls])[tabsintitlebar] #titlebar.tabs-topAboveAB #toolbar-menubar[autohide="true"] + #TabsToolbar {
+    padding-right: 130px;
+  }
+}
+
+@media (-moz-os-version: windows-win7) {
+  :root[inFullscreen]:not([leftWindowControls])[tabsintitlebar] #titlebar.tabs-topAboveAB #toolbar-menubar[autohide="true"] + #TabsToolbar {
+    padding-right: 80px;
+  }
+}
+
+@media (-moz-os-version: windows-win8) {
+  :root[inFullscreen]:not([leftWindowControls])[tabsintitlebar] #titlebar.tabs-topAboveAB #toolbar-menubar[autohide="true"] + #TabsToolbar {
+    padding-right: 120px;
+  }
+}

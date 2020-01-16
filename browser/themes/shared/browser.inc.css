@@ -564,7 +564,7 @@
 }
 
 :root:not([leftWindowControls])[tabsintitlebar] #titlebar.tabs-topAboveAB #toolbar-menubar[autohide="true"] + #TabsToolbar {
-  padding-right: 95px;
+  padding-right: 100px;
 }
 
 :root[inFullscreen]:not([leftWindowControls])[tabsintitlebar] #titlebar.tabs-topAboveAB #toolbar-menubar[autohide="true"] + #TabsToolbar {
@@ -577,7 +577,7 @@
 }
 
 :root[tabsintitlebar][leftWindowControls]:not([inFullscreen]) #titlebar.tabs-topAboveAB #toolbar-menubar[autohide="true"] + #TabsToolbar {
-  padding-left: 95px !important;
+  padding-left: 100px !important;
 }
 
 :root[tabsintitlebar][leftWindowControls] #titlebar.tabs-topAboveAB #TabsToolbar, :root[inFullscreen][tabsintitlebar][leftWindowControls] #titlebar.tabs-topAboveAB #TabsToolbar
