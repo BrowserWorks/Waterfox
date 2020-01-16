@@ -350,6 +350,7 @@
 </groupbox>
 
 <!-- Window Controls Position preferences -->
+#ifdef XP_LINUX
 <groupbox id="windowControlsGroup"
           data-category="paneGeneral"
           hidden="true">
@@ -361,6 +362,7 @@
              data-l10n-id="left-side"/>
     </radiogroup>
 </groupbox>
+#endif
 
 <!-- Menu Icon Style preferences -->
 <groupbox id="menuIconStyleGroup"

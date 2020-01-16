@@ -611,7 +611,7 @@
 /* Drag space */
 
 .titlebar-spacer[type="pre-tabs"],
-.titlebar-spacer[type="post-tabs"] {
+#titlebar.tabs-topAboveAB + .titlebar-spacer[type="post-tabs"] {
   width: 40px;
 }
 
