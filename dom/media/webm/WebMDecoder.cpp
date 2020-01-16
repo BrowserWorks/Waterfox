@@ -10,23 +10,13 @@
 #endif
 #include "MediaContainerType.h"
 #include "MediaPrefs.h"
-#include "MediaDecoderStateMachine.h"
+#include "MediaFormatReader.h"
+#include "PDMFactory.h"
 #include "WebMDemuxer.h"
 #include "WebMDecoder.h"
 #include "VideoUtils.h"
 
 namespace mozilla {
-
-MediaDecoderStateMachine* WebMDecoder::CreateStateMachine()
-{
-  MediaFormatReaderInit init;
-  init.mVideoFrameContainer = GetVideoFrameContainer();
-  init.mKnowsCompositor = GetCompositor();
-  init.mCrashHelper = GetOwner()->CreateGMPCrashHelper();
-  init.mFrameStats = mFrameStats;
-  mReader = new MediaFormatReader(init, new WebMDemuxer(mResource));
-  return new MediaDecoderStateMachine(this, mReader);
-}
 
 /* static */
 bool
@@ -54,10 +44,31 @@ WebMDecoder::IsSupportedType(const MediaContainerType& aContainerType)
     }
     // Note: Only accept VP8/VP9 in a video container type, not in an audio
     // container type.
-    if (isVideo &&
-        (codec.EqualsLiteral("vp8") || codec.EqualsLiteral("vp8.0") ||
-         codec.EqualsLiteral("vp9") || codec.EqualsLiteral("vp9.0"))) {
-      continue;
+    if (isVideo) {
+      UniquePtr<TrackInfo> trackInfo;
+      if (IsVP9CodecString(codec))  {
+        trackInfo = CreateTrackInfoWithMIMETypeAndContainerTypeExtraParameters(
+          NS_LITERAL_CSTRING("video/vp9"), aContainerType);
+      } else if (IsVP8CodecString(codec)) {
+        trackInfo = CreateTrackInfoWithMIMETypeAndContainerTypeExtraParameters(
+          NS_LITERAL_CSTRING("video/vp8"), aContainerType);
+      }
+      // If it is vp8 or vp9, check the bit depth.
+      if (trackInfo) {
+        uint8_t profile = 0;
+        uint8_t level = 0;
+        uint8_t bitDepth = 0;
+        if (ExtractVPXCodecDetails(codec, profile, level, bitDepth)) {
+          trackInfo->GetAsVideoInfo()->mBitDepth = bitDepth;
+
+          // Verify that we have a PDM that supports this bit depth.
+          RefPtr<PDMFactory> platform = new PDMFactory();
+          if (!platform->Supports(*trackInfo, nullptr)) {
+            return false;
+          }
+        }
+        continue;
+      }
     }
 #ifdef MOZ_AV1
     if (MediaPrefs::AV1Enabled() && IsAV1CodecString(codec)) {

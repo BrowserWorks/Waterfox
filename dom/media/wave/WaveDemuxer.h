@@ -5,15 +5,11 @@
 #ifndef WAV_DEMUXER_H_
 #define WAV_DEMUXER_H_
 
-#include "mozilla/Attributes.h"
-#include "mozilla/Maybe.h"
 #include "MediaDataDemuxer.h"
 #include "MediaResource.h"
-#include "mp4_demuxer/ByteReader.h"
-
-using mp4_demuxer::ByteReader;
 
 namespace mozilla {
+class BufferReader;
 
 static const uint32_t FRMT_CODE = 0x666d7420;
 static const uint32_t DATA_CODE = 0x64617461;
@@ -57,7 +53,7 @@ private:
 public:
   const RIFFHeader& RiffHeader() const;
 
-  uint32_t Parse(ByteReader& aReader);
+  Result<uint32_t, nsresult> Parse(BufferReader& aReader);
 
   void Reset();
 
@@ -91,7 +87,7 @@ private:
 public:
   const ChunkHeader& GiveHeader() const;
 
-  uint32_t Parse(ByteReader& aReader);
+  Result<uint32_t, nsresult> Parse(BufferReader& aReader);
 
   void Reset();
 
@@ -127,7 +123,7 @@ private:
 public:
   const FormatChunk& FmtChunk() const;
 
-  uint32_t Parse(ByteReader& aReader);
+  Result<uint32_t, nsresult> Parse(BufferReader& aReader);
 
   void Reset();
 

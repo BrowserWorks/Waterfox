@@ -18,8 +18,8 @@
 #include "mozilla/dom/MediaKeyMessageEventBinding.h"
 #include "mozilla/gmp/GMPTypes.h"
 #include "mozilla/Unused.h"
-#include "mp4_demuxer/AnnexB.h"
-#include "mp4_demuxer/H264.h"
+#include "AnnexB.h"
+#include "H264.h"
 
 namespace mozilla {
 namespace gmp {
@@ -956,8 +956,8 @@ ChromiumCDMParent::InitializeVideoDecoder(
   }
 
   mMaxRefFrames = (aConfig.mCodec() == cdm::VideoCodec::kCodecH264)
-                    ? mp4_demuxer::H264::HasSPS(aInfo.mExtraData)
-                        ? mp4_demuxer::H264::ComputeMaxRefFrames(aInfo.mExtraData)
+                    ? H264::HasSPS(aInfo.mExtraData)
+                        ? H264::ComputeMaxRefFrames(aInfo.mExtraData)
                         : 16
                     : 0;
 

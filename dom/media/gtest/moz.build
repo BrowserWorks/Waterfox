@@ -12,6 +12,7 @@ UNIFIED_SOURCES += [
     'TestAudioPacketizer.cpp',
     'TestAudioSegment.cpp',
     'TestBlankVideoDataCreator.cpp',
+    'TestBufferReader.cpp',
     'TestCDMStorage.cpp',
     'TestDataMutex.cpp',
     'TestGMPCrossOrigin.cpp',
@@ -55,6 +56,11 @@ TEST_HARNESS_FILES.gtest += [
     'test_case_1224361.vp8.ivf',
     'test_case_1224363.vp8.ivf',
     'test_case_1224369.vp8.ivf',
+    'test_vbri.mp3',
+]
+
+TEST_DIRS += [
+    'mp4_demuxer',
 ]
 
 include('/ipc/chromium/chromium-config.mozbuild')
@@ -62,8 +68,8 @@ include('/ipc/chromium/chromium-config.mozbuild')
 LOCAL_INCLUDES += [
     '/dom/media',
     '/dom/media/encoder',
-    '/dom/media/fmp4',
     '/dom/media/gmp',
+    '/dom/media/mp4',
     '/dom/media/platforms',
     '/dom/media/platforms/agnostic',
     '/security/certverifier',

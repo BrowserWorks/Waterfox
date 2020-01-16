@@ -7,95 +7,58 @@
 // <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
-use smallvec::SmallVec;
+
 use std::fmt::{self, Write};
-use std::iter::Fuse;
-use std::ops::Range;
+
+// Helper functions used for Unicode normalization
+fn canonical_sort(comb: &mut [(char, u8)]) {
+    let len = comb.len();
+    for i in 0..len {
+        let mut swapped = false;
+        for j in 1..len-i {
+            let class_a = comb[j-1].1;
+            let class_b = comb[j].1;
+            if class_a != 0 && class_b != 0 && class_a > class_b {
+                comb.swap(j-1, j);
+                swapped = true;
+            }
+        }
+        if !swapped { break; }
+    }
+}
 
 #[derive(Clone)]
 enum DecompositionType {
     Canonical,
-    Compatible,
+    Compatible
 }
 
 /// External iterator for a string decomposition's characters.
 #[derive(Clone)]
 pub struct Decompositions<I> {
     kind: DecompositionType,
-    iter: Fuse<I>,
-
-    // This buffer stores pairs of (canonical combining class, character),
-    // pushed onto the end in text order.
-    //
-    // It's divided into up to three sections:
-    // 1) A prefix that is free space;
-    // 2) "Ready" characters which are sorted and ready to emit on demand;
-    // 3) A "pending" block which stills needs more characters for us to be able
-    //    to sort in canonical order and is not safe to emit.
-    buffer: SmallVec<[(u8, char); 4]>,
-    ready: Range<usize>,
+    iter: I,
+    buffer: Vec<(char, u8)>,
+    sorted: bool
 }
 
 #[inline]
 pub fn new_canonical<I: Iterator<Item=char>>(iter: I) -> Decompositions<I> {
     Decompositions {
+        iter: iter,
+        buffer: Vec::new(),
+        sorted: false,
         kind: self::DecompositionType::Canonical,
-        iter: iter.fuse(),
-        buffer: SmallVec::new(),
-        ready: 0..0,
     }
 }
 
 #[inline]
 pub fn new_compatible<I: Iterator<Item=char>>(iter: I) -> Decompositions<I> {
     Decompositions {
+        iter: iter,
+        buffer: Vec::new(),
+        sorted: false,
         kind: self::DecompositionType::Compatible,
-        iter: iter.fuse(),
-        buffer: SmallVec::new(),
-        ready: 0..0,
-    }
-}
-
-impl<I> Decompositions<I> {
-    #[inline]
-    fn push_back(&mut self, ch: char) {
-        let class = super::char::canonical_combining_class(ch);
-
-        if class == 0 {
-            self.sort_pending();
-        }
-
-        self.buffer.push((class, ch));
-    }
-
-    #[inline]
-    fn sort_pending(&mut self) {
-        // NB: `sort_by_key` is stable, so it will preserve the original text's
-        // order within a combining class.
-        self.buffer[self.ready.end..].sort_by_key(|k| k.0);
-        self.ready.end = self.buffer.len();
-    }
-
-    #[inline]
-    fn reset_buffer(&mut self) {
-        // Equivalent to `self.buffer.drain(0..self.ready.end)` (if SmallVec
-        // supported this API)
-        let pending = self.buffer.len() - self.ready.end;
-        for i in 0..pending {
-            self.buffer[i] = self.buffer[i + self.ready.end];
-        }
-        self.buffer.truncate(pending);
-        self.ready = 0..0;
-    }
-
-    #[inline]
-    fn increment_next_ready(&mut self) {
-        let next = self.ready.start + 1;
-        if next == self.ready.end {
-            self.reset_buffer();
-        } else {
-            self.ready.start = next;
-        }
     }
 }
 
@@ -104,43 +67,66 @@ impl<I: Iterator<Item=char>> Iterator for Decompositions<I> {
 
     #[inline]
     fn next(&mut self) -> Option<char> {
-        while self.ready.end == 0 {
-            match (self.iter.next(), &self.kind) {
-                (Some(ch), &DecompositionType::Canonical) => {
-                    super::char::decompose_canonical(ch, |d| self.push_back(d));
-                }
-                (Some(ch), &DecompositionType::Compatible) => {
-                    super::char::decompose_compatible(ch, |d| self.push_back(d));
-                }
-                (None, _) => {
-                    if self.buffer.is_empty() {
-                        return None;
-                    } else {
-                        self.sort_pending();
+        use self::DecompositionType::*;
 
-                        // This implementation means that we can call `next`
-                        // on an exhausted iterator; the last outer `next` call
-                        // will result in an inner `next` call. To make this
-                        // safe, we use `fuse`.
-                        break;
+        match self.buffer.first() {
+            Some(&(c, 0)) => {
+                self.sorted = false;
+                self.buffer.remove(0);
+                return Some(c);
+            }
+            Some(&(c, _)) if self.sorted => {
+                self.buffer.remove(0);
+                return Some(c);
+            }
+            _ => self.sorted = false
+        }
+
+        if !self.sorted {
+            for ch in self.iter.by_ref() {
+                let buffer = &mut self.buffer;
+                let sorted = &mut self.sorted;
+                {
+                    let callback = |d| {
+                        let class =
+                            super::char::canonical_combining_class(d);
+                        if class == 0 && !*sorted {
+                            canonical_sort(buffer);
+                            *sorted = true;
+                        }
+                        buffer.push((d, class));
+                    };
+                    match self.kind {
+                        Canonical => {
+                            super::char::decompose_canonical(ch, callback)
+                        }
+                        Compatible => {
+                            super::char::decompose_compatible(ch, callback)
+                        }
                     }
+                }
+                if *sorted {
+                    break
                 }
             }
         }
 
-        // We can assume here that, if `self.ready.end` is greater than zero,
-        // it's also greater than `self.ready.start`. That's because we only
-        // increment `self.ready.start` inside `increment_next_ready`, and
-        // whenever it reaches equality with `self.ready.end`, we reset both
-        // to zero, maintaining the invariant that:
-        //      self.ready.start < self.ready.end || self.ready.end == self.ready.start == 0
-        //
-        // This less-than-obviously-safe implementation is chosen for performance,
-        // minimizing the number & complexity of branches in `next` in the common
-        // case of buffering then unbuffering a single character with each call.
-        let (_, ch) = self.buffer[self.ready.start];
-        self.increment_next_ready();
-        Some(ch)
+        if !self.sorted {
+            canonical_sort(&mut self.buffer);
+            self.sorted = true;
+        }
+
+        if self.buffer.is_empty() {
+            None
+        } else {
+            match self.buffer.remove(0) {
+                (c, 0) => {
+                    self.sorted = false;
+                    Some(c)
+                }
+                (c, _) => Some(c),
+            }
+        }
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {

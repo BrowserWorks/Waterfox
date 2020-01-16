@@ -96,6 +96,72 @@ fn test_nfkc() {
 }
 
 #[test]
+fn test_official() {
+    use testdata::TEST_NORM;
+    macro_rules! normString {
+        ($method: ident, $input: expr) => { $input.$method().collect::<String>() }
+    }
+
+    for &(s1, s2, s3, s4, s5) in TEST_NORM {
+        // these invariants come from the CONFORMANCE section of
+        // http://www.unicode.org/Public/UNIDATA/NormalizationTest.txt
+        {
+            let r1 = normString!(nfc, s1);
+            let r2 = normString!(nfc, s2);
+            let r3 = normString!(nfc, s3);
+            let r4 = normString!(nfc, s4);
+            let r5 = normString!(nfc, s5);
+            assert_eq!(s2, &r1[..]);
+            assert_eq!(s2, &r2[..]);
+            assert_eq!(s2, &r3[..]);
+            assert_eq!(s4, &r4[..]);
+            assert_eq!(s4, &r5[..]);
+        }
+
+        {
+            let r1 = normString!(nfd, s1);
+            let r2 = normString!(nfd, s2);
+            let r3 = normString!(nfd, s3);
+            let r4 = normString!(nfd, s4);
+            let r5 = normString!(nfd, s5);
+            assert_eq!(s3, &r1[..]);
+            assert_eq!(s3, &r2[..]);
+            assert_eq!(s3, &r3[..]);
+            assert_eq!(s5, &r4[..]);
+            assert_eq!(s5, &r5[..]);
+        }
+
+        {
+            let r1 = normString!(nfkc, s1);
+            let r2 = normString!(nfkc, s2);
+            let r3 = normString!(nfkc, s3);
+            let r4 = normString!(nfkc, s4);
+            let r5 = normString!(nfkc, s5);
+            assert_eq!(s4, &r1[..]);
+            assert_eq!(s4, &r2[..]);
+            assert_eq!(s4, &r3[..]);
+            assert_eq!(s4, &r4[..]);
+            assert_eq!(s4, &r5[..]);
+        }
+
+        {
+            let r1 = normString!(nfkd, s1);
+            let r2 = normString!(nfkd, s2);
+            let r3 = normString!(nfkd, s3);
+            let r4 = normString!(nfkd, s4);
+            let r5 = normString!(nfkd, s5);
+            assert_eq!(s5, &r1[..]);
+            assert_eq!(s5, &r2[..]);
+            assert_eq!(s5, &r3[..]);
+            assert_eq!(s5, &r4[..]);
+            assert_eq!(s5, &r5[..]);
+        }
+    }
+}
+
+
+
+#[test]
 fn test_is_combining_mark_ascii() {
     for cp in 0..0x7f {
         assert!(!is_combining_mark(char::from_u32(cp).unwrap()));

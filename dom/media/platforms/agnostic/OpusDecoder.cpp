@@ -307,6 +307,10 @@ OpusDataDecoder::ProcessDecode(MediaRawData* aSample)
 
   mFrames += frames;
 
+  if (!frames) {
+    return DecodePromise::CreateAndResolve(DecodedData(), __func__);
+  }
+
   return DecodePromise::CreateAndResolve(
     DecodedData{ new AudioData(aSample->mOffset, time, duration,
                                frames, Move(buffer), mOpusParser->mChannels,

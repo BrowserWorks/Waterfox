@@ -7,7 +7,7 @@
 #include "FlacDemuxer.h"
 
 #include "mozilla/Maybe.h"
-#include "mp4_demuxer/BitReader.h"
+#include "BitReader.h"
 #include "nsAutoPtr.h"
 #include "prenv.h"
 #include "FlacFrameParser.h"
@@ -56,7 +56,7 @@ public:
   // bytes.
   bool Parse(const uint8_t* aPacket)
   {
-    mp4_demuxer::BitReader br(aPacket, FLAC_MAX_FRAME_HEADER_SIZE * 8);
+    BitReader br(aPacket, FLAC_MAX_FRAME_HEADER_SIZE * 8);
 
     // Frame sync code.
     if ((br.ReadBits(15) & 0x7fff) != 0x7ffc) {
@@ -430,7 +430,8 @@ public:
   // Convenience methods to external FlacFrameParser ones.
   bool IsHeaderBlock(const uint8_t* aPacket, size_t aLength) const
   {
-    return mParser.IsHeaderBlock(aPacket, aLength);
+    auto res = mParser.IsHeaderBlock(aPacket, aLength);
+    return res.isOk() ? res.unwrap() : false;
   }
 
   uint32_t HeaderBlockLength(const uint8_t* aPacket) const
@@ -440,7 +441,7 @@ public:
 
   bool DecodeHeaderBlock(const uint8_t* aPacket, size_t aLength)
   {
-    return mParser.DecodeHeaderBlock(aPacket, aLength);
+    return mParser.DecodeHeaderBlock(aPacket, aLength).isOk();
   }
 
   bool HasFullMetadata() const { return mParser.HasFullMetadata(); }
