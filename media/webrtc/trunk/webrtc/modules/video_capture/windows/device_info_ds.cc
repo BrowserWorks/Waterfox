@@ -184,20 +184,20 @@ uint32_t DeviceInfoDS::NumberOfDevices()
 int32_t DeviceInfoDS::GetDeviceName(
                                        uint32_t deviceNumber,
                                        char* deviceNameUTF8,
-                                       uint32_t deviceNameLength,
+                                       uint32_t deviceNameSize,
                                        char* deviceUniqueIdUTF8,
-                                       uint32_t deviceUniqueIdUTF8Length,
+                                       uint32_t deviceUniqueIdUTF8Size,
                                        char* productUniqueIdUTF8,
-                                       uint32_t productUniqueIdUTF8Length,
+                                       uint32_t productUniqueIdUTF8Size,
                                        pid_t* pid)
 {
     ReadLockScoped cs(_apiLock);
     const int32_t result = GetDeviceInfo(deviceNumber, deviceNameUTF8,
-                                         deviceNameLength,
+                                         deviceNameSize,
                                          deviceUniqueIdUTF8,
-                                         deviceUniqueIdUTF8Length,
+                                         deviceUniqueIdUTF8Size,
                                          productUniqueIdUTF8,
-                                         productUniqueIdUTF8Length,
+                                         productUniqueIdUTF8Size,
                                          pid);
     return result > (int32_t) deviceNumber ? 0 : -1;
 }
@@ -205,11 +205,11 @@ int32_t DeviceInfoDS::GetDeviceName(
 int32_t DeviceInfoDS::GetDeviceInfo(
                                        uint32_t deviceNumber,
                                        char* deviceNameUTF8,
-                                       uint32_t deviceNameLength,
+                                       uint32_t deviceNameSize,
                                        char* deviceUniqueIdUTF8,
-                                       uint32_t deviceUniqueIdUTF8Length,
+                                       uint32_t deviceUniqueIdUTF8Size,
                                        char* productUniqueIdUTF8,
-                                       uint32_t productUniqueIdUTF8Length,
+                                       uint32_t productUniqueIdUTF8Size,
                                        pid_t* pid)
 
 {
@@ -257,12 +257,12 @@ int32_t DeviceInfoDS::GetDeviceInfo(
                     if (index == static_cast<int>(deviceNumber))
                     {
                         int convResult = 0;
-                        if (deviceNameLength > 0)
+                        if (deviceNameSize > 0)
                         {
                             convResult = WideCharToMultiByte(CP_UTF8, 0,
                                                              varName.bstrVal, -1,
                                                              (char*) deviceNameUTF8,
-                                                             deviceNameLength, NULL,
+                                                             deviceNameSize, NULL,
                                                              NULL);
                             if (convResult == 0)
                             {
@@ -274,13 +274,13 @@ int32_t DeviceInfoDS::GetDeviceInfo(
                                 return -1;
                             }
                         }
-                        if (deviceUniqueIdUTF8Length > 0)
+                        if (deviceUniqueIdUTF8Size > 0)
                         {
                             hr = pBag->Read(L"DevicePath", &varName, 0);
                             if (FAILED(hr))
                             {
                                 strncpy_s((char *) deviceUniqueIdUTF8,
-                                          deviceUniqueIdUTF8Length,
+                                          deviceUniqueIdUTF8Size,
                                           (char *) deviceNameUTF8, convResult);
                                 WEBRTC_TRACE(webrtc::kTraceError,
                                              webrtc::kTraceVideoCapture, 0,
@@ -294,7 +294,7 @@ int32_t DeviceInfoDS::GetDeviceInfo(
                                                           varName.bstrVal,
                                                           -1,
                                                           (char*) deviceUniqueIdUTF8,
-                                                          deviceUniqueIdUTF8Length,
+                                                          deviceUniqueIdUTF8Size,
                                                           NULL, NULL);
                                 if (convResult == 0)
                                 {
@@ -306,11 +306,11 @@ int32_t DeviceInfoDS::GetDeviceInfo(
                                     return -1;
                                 }
                                 if (productUniqueIdUTF8
-                                    && productUniqueIdUTF8Length > 0)
+                                    && productUniqueIdUTF8Size > 0)
                                 {
                                     GetProductId(deviceUniqueIdUTF8,
                                                  productUniqueIdUTF8,
-                                                 productUniqueIdUTF8Length);
+                                                 productUniqueIdUTF8Size);
                                 }
                             }
                         }
@@ -325,7 +325,7 @@ int32_t DeviceInfoDS::GetDeviceInfo(
         }
 
     }
-    if (deviceNameLength)
+    if (deviceNameSize)
     {
         WEBRTC_TRACE(webrtc::kTraceDebug, webrtc::kTraceVideoCapture, 0, "%s %s",
                      __FUNCTION__, deviceNameUTF8);
@@ -337,12 +337,12 @@ int32_t DeviceInfoDS::GetDeviceInfo(
 IBaseFilter * DeviceInfoDS::GetDeviceFilter(
                                      const char* deviceUniqueIdUTF8,
                                      char* productUniqueIdUTF8,
-                                     uint32_t productUniqueIdUTF8Length)
+                                     uint32_t productUniqueIdUTF8Size)
 {
 
-    const int32_t deviceUniqueIdUTF8Length =
+    const int32_t deviceUniqueIdUTF8Size =
         (int32_t) strlen((char*) deviceUniqueIdUTF8); // UTF8 is also NULL terminated
-    if (deviceUniqueIdUTF8Length > kVideoCaptureUniqueNameLength)
+    if (deviceUniqueIdUTF8Size > kVideoCaptureUniqueNameSize)
     {
         WEBRTC_TRACE(webrtc::kTraceError, webrtc::kTraceVideoCapture, 0,
                      "Device name too long");
@@ -376,7 +376,7 @@ IBaseFilter * DeviceInfoDS::GetDeviceFilter(
             // Find the description or friendly name.
             VARIANT varName;
             VariantInit(&varName);
-            if (deviceUniqueIdUTF8Length > 0)
+            if (deviceUniqueIdUTF8Size > 0)
             {
                 hr = pBag->Read(L"DevicePath", &varName, 0);
                 if (FAILED(hr))
@@ -397,7 +397,7 @@ IBaseFilter * DeviceInfoDS::GetDeviceFilter(
                                         NULL);
                     if (strncmp(tempDevicePathUTF8,
                                 (const char*) deviceUniqueIdUTF8,
-                                deviceUniqueIdUTF8Length) == 0)
+                                deviceUniqueIdUTF8Size) == 0)
                     {
                         // We have found the requested device
                         deviceFound = true;
@@ -410,12 +410,12 @@ IBaseFilter * DeviceInfoDS::GetDeviceFilter(
                         }
 
                         if (productUniqueIdUTF8
-                            && productUniqueIdUTF8Length > 0) // Get the device name
+                            && productUniqueIdUTF8Size > 0) // Get the device name
                         {
 
                             GetProductId(deviceUniqueIdUTF8,
                                          productUniqueIdUTF8,
-                                         productUniqueIdUTF8Length);
+                                         productUniqueIdUTF8Size);
                         }
 
                     }
@@ -451,9 +451,9 @@ int32_t DeviceInfoDS::CreateCapabilityMap(
     // Reset old capability list
     _captureCapabilities.clear();
 
-    const int32_t deviceUniqueIdUTF8Length =
+    const int32_t deviceUniqueIdUTF8Size =
         (int32_t) strlen((char*) deviceUniqueIdUTF8);
-    if (deviceUniqueIdUTF8Length > kVideoCaptureUniqueNameLength)
+    if (deviceUniqueIdUTF8Size > kVideoCaptureUniqueNameSize)
     {
         WEBRTC_TRACE(webrtc::kTraceError, webrtc::kTraceVideoCapture, 0,
                      "Device name too long");
@@ -463,11 +463,11 @@ int32_t DeviceInfoDS::CreateCapabilityMap(
                  "CreateCapabilityMap called for device %s", deviceUniqueIdUTF8);
 
 
-    char productId[kVideoCaptureProductIdLength];
+    char productId[kVideoCaptureProductIdSize];
     IBaseFilter* captureDevice = DeviceInfoDS::GetDeviceFilter(
                                                deviceUniqueIdUTF8,
                                                productId,
-                                               kVideoCaptureProductIdLength);
+                                               kVideoCaptureProductIdSize);
     if (!captureDevice)
         return -1;
     IPin* outputCapturePin = GetOutputPin(captureDevice, GUID_NULL);
@@ -752,11 +752,11 @@ int32_t DeviceInfoDS::CreateCapabilityMap(
     RELEASE_AND_CLEAR(captureDevice); // Release the capture device
 
     // Store the new used device name
-    _lastUsedDeviceNameLength = deviceUniqueIdUTF8Length;
+    _lastUseddeviceNameSize = deviceUniqueIdUTF8Size;
     _lastUsedDeviceName = (char*) realloc(_lastUsedDeviceName,
-                                                   _lastUsedDeviceNameLength
+                                                   _lastUseddeviceNameSize
                                                        + 1);
-    memcpy(_lastUsedDeviceName, deviceUniqueIdUTF8, _lastUsedDeviceNameLength+ 1);
+    memcpy(_lastUsedDeviceName, deviceUniqueIdUTF8, _lastUseddeviceNameSize+ 1);
     WEBRTC_TRACE(webrtc::kTraceInfo, webrtc::kTraceVideoCapture, 0,
                  "CreateCapabilityMap %d", _captureCapabilities.size());
 
@@ -771,13 +771,13 @@ int32_t DeviceInfoDS::CreateCapabilityMap(
  */
 void DeviceInfoDS::GetProductId(const char* devicePath,
                                       char* productUniqueIdUTF8,
-                                      uint32_t productUniqueIdUTF8Length)
+                                      uint32_t productUniqueIdUTF8Size)
 {
     *productUniqueIdUTF8 = '\0';
     char* startPos = strstr((char*) devicePath, "\\\\?\\");
     if (!startPos)
     {
-        strncpy_s((char*) productUniqueIdUTF8, productUniqueIdUTF8Length, "", 1);
+        strncpy_s((char*) productUniqueIdUTF8, productUniqueIdUTF8Size, "", 1);
         WEBRTC_TRACE(webrtc::kTraceError, webrtc::kTraceVideoCapture, -1,
                      "Failed to get the product Id");
         return;
@@ -787,7 +787,7 @@ void DeviceInfoDS::GetProductId(const char* devicePath,
     char* pos = strchr(startPos, '&');
     if (!pos || pos >= (char*) devicePath + strlen((char*) devicePath))
     {
-        strncpy_s((char*) productUniqueIdUTF8, productUniqueIdUTF8Length, "", 1);
+        strncpy_s((char*) productUniqueIdUTF8, productUniqueIdUTF8Size, "", 1);
         WEBRTC_TRACE(webrtc::kTraceError, webrtc::kTraceVideoCapture, -1,
                      "Failed to get the product Id");
         return;
@@ -795,15 +795,15 @@ void DeviceInfoDS::GetProductId(const char* devicePath,
     // Find the second occurrence.
     pos = strchr(pos + 1, '&');
     uint32_t bytesToCopy = (uint32_t)(pos - startPos);
-    if (pos && (bytesToCopy <= productUniqueIdUTF8Length) && bytesToCopy
-        <= kVideoCaptureProductIdLength)
+    if (pos && (bytesToCopy <= productUniqueIdUTF8Size) && bytesToCopy
+        <= kVideoCaptureProductIdSize)
     {
-        strncpy_s((char*) productUniqueIdUTF8, productUniqueIdUTF8Length,
+        strncpy_s((char*) productUniqueIdUTF8, productUniqueIdUTF8Size,
                   (char*) startPos, bytesToCopy);
     }
     else
     {
-        strncpy_s((char*) productUniqueIdUTF8, productUniqueIdUTF8Length, "", 1);
+        strncpy_s((char*) productUniqueIdUTF8, productUniqueIdUTF8Size, "", 1);
         WEBRTC_TRACE(webrtc::kTraceError, webrtc::kTraceVideoCapture, -1,
                      "Failed to get the product Id");
     }

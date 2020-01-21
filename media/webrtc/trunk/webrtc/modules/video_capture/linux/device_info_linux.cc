@@ -262,9 +262,9 @@ uint32_t DeviceInfoLinux::NumberOfDevices()
 int32_t DeviceInfoLinux::GetDeviceName(
                                          uint32_t deviceNumber,
                                          char* deviceNameUTF8,
-                                         uint32_t deviceNameLength,
+                                         uint32_t deviceNameSize,
                                          char* deviceUniqueIdUTF8,
-                                         uint32_t deviceUniqueIdUTF8Length,
+                                         uint32_t deviceUniqueIdUTF8Size,
                                          char* /*productUniqueIdUTF8*/,
                                          uint32_t /*productUniqueIdUTF8Length*/,
                                          pid_t* /*pid*/)
@@ -311,10 +311,10 @@ int32_t DeviceInfoLinux::GetDeviceName(
     close(fd);
 
     char cameraName[64];
-    memset(deviceNameUTF8, 0, deviceNameLength);
+    memset(deviceNameUTF8, 0, deviceNameSize);
     memcpy(cameraName, cap.card, sizeof(cap.card));
 
-    if (deviceNameLength >= strlen(cameraName))
+    if (deviceNameSize >= strlen(cameraName))
     {
         memcpy(deviceNameUTF8, cameraName, strlen(cameraName));
     }
@@ -328,9 +328,9 @@ int32_t DeviceInfoLinux::GetDeviceName(
     if (cap.bus_info[0] != 0) // may not available in all drivers
     {
         // copy device id
-        if (deviceUniqueIdUTF8Length >= strlen((const char*) cap.bus_info))
+        if (deviceUniqueIdUTF8Size >= strlen((const char*) cap.bus_info))
         {
-            memset(deviceUniqueIdUTF8, 0, deviceUniqueIdUTF8Length);
+            memset(deviceUniqueIdUTF8, 0, deviceUniqueIdUTF8Size);
             memcpy(deviceUniqueIdUTF8, cap.bus_info,
                    strlen((const char*) cap.bus_info));
         }
@@ -342,8 +342,8 @@ int32_t DeviceInfoLinux::GetDeviceName(
         }
     } else {
         // if there's no bus info to use for uniqueId, invent one - and it has to be repeatable
-        if (snprintf(deviceUniqueIdUTF8, deviceUniqueIdUTF8Length, "fake_%u", device_index) >=
-            (int) deviceUniqueIdUTF8Length)
+        if (snprintf(deviceUniqueIdUTF8, deviceUniqueIdUTF8Size, "fake_%u", device_index) >=
+            (int) deviceUniqueIdUTF8Size)
         {
             WEBRTC_TRACE(webrtc::kTraceError, webrtc::kTraceVideoCapture, 0,
                        "buffer passed is too small");
@@ -362,9 +362,9 @@ int32_t DeviceInfoLinux::CreateCapabilityMap(
     bool found = false;
     int device_index;
 
-    const int32_t deviceUniqueIdUTF8Length =
+    const int32_t deviceUniqueIdUTF8Size =
                             (int32_t) strlen((char*) deviceUniqueIdUTF8);
-    if (deviceUniqueIdUTF8Length > kVideoCaptureUniqueNameLength)
+    if (deviceUniqueIdUTF8Size > kVideoCaptureUniqueNameSize)
     {
         WEBRTC_TRACE(webrtc::kTraceError,
                      webrtc::kTraceVideoCapture, 0, "Device name too long");
@@ -424,10 +424,10 @@ int32_t DeviceInfoLinux::CreateCapabilityMap(
     close(fd);
 
     // Store the new used device name
-    _lastUsedDeviceNameLength = deviceUniqueIdUTF8Length;
+    _lastUseddeviceNameSize = deviceUniqueIdUTF8Size;
     _lastUsedDeviceName = (char*) realloc(_lastUsedDeviceName,
-                                                   _lastUsedDeviceNameLength + 1);
-    memcpy(_lastUsedDeviceName, deviceUniqueIdUTF8, _lastUsedDeviceNameLength + 1);
+                                                   _lastUseddeviceNameSize + 1);
+    memcpy(_lastUsedDeviceName, deviceUniqueIdUTF8, _lastUseddeviceNameSize + 1);
 
     WEBRTC_TRACE(webrtc::kTraceInfo,
                  webrtc::kTraceVideoCapture,
