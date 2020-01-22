@@ -2830,7 +2830,7 @@ var gMainPane = {
   },
 
   toggleMoveWindowControls() {
-    if(Services.prefs.getBoolPref("browser.tabs.drawInTitlebar", true))
+    if(Services.prefs.getBoolPref("browser.tabs.drawInTitlebar", window.matchMedia("(-moz-gtk-csd-hide-titlebar-by-default)").matches))
     {
       document.getElementById("windowControlsRadioGroup").disabled = "";
     }
