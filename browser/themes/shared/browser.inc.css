@@ -604,7 +604,7 @@
 }
 
 :root[tabsintitlebar][leftWindowControls] #toolbar-menubar {
-  padding-left: 85px;
+  padding-left: 100px;
 }
 
 :root[tabsintitlebar][inFullscreen][leftWindowControls] #toolbar-menubar[autohide="false"] {
