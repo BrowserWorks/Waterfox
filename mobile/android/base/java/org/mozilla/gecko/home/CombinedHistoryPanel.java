@@ -683,8 +683,10 @@ public class CombinedHistoryPanel extends HomeFragment implements RemoteClientsD
     public void onDestroyView() {
         super.onDestroyView();
 
-        mRecentTabsAdapter.stopListeningForClosedTabs();
-        mRecentTabsAdapter.stopListeningForHistorySanitize();
+        if (mRecentTabsAdapter != null) {
+            mRecentTabsAdapter.stopListeningForClosedTabs();
+            mRecentTabsAdapter.stopListeningForHistorySanitize();
+        }
     }
 
     @Override
