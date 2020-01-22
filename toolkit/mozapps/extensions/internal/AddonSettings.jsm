@@ -63,7 +63,7 @@ if (AppConstants.MOZ_ALLOW_LEGACY_EXTENSIONS || Cu.isInAutomation) {
 }
 
 if (AppConstants.MOZ_DEV_EDITION) {
-  makeConstant("DEFAULT_THEME_ID", "firefox-compact-dark@mozilla.org");
+  makeConstant("DEFAULT_THEME_ID", "australis-dark@waterfox.net");
 } else {
   makeConstant("DEFAULT_THEME_ID", "default-theme@mozilla.org");
 }

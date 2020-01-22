@@ -1173,6 +1173,16 @@ BrowserGlue.prototype = {
     SessionStore.init();
 
     AddonManager.maybeInstallBuiltinAddon(
+      "australis-light@waterfox.net",
+      "1.0",
+      "resource:///modules/themes/auslight/"
+    );
+    AddonManager.maybeInstallBuiltinAddon(
+      "australis-dark@waterfox.net",
+      "1.0",
+      "resource:///modules/themes/ausdark/"
+    );
+    AddonManager.maybeInstallBuiltinAddon(
       "firefox-compact-light@mozilla.org",
       "1.0",
       "resource:///modules/themes/light/"

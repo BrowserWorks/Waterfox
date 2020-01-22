@@ -3,12 +3,12 @@
 
   "applications": {
     "gecko": {
-      "id": "firefox-compact-light@mozilla.org"
+      "id": "australis-light@waterfox.net"
     }
   },
 
-  "name": "Photon Compact Light",
-  "description": "A theme with a light color scheme.",
+  "name": "Australis Light",
+  "description": "Light australis theme.",
   "author": "Mozilla",
   "version": "1.0",
 

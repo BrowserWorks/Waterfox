@@ -3,12 +3,12 @@
 
   "applications": {
     "gecko": {
-      "id": "firefox-compact-dark@mozilla.org"
+      "id": "australis-dark@waterfox.net"
     }
   },
 
-  "name": "Photon Compact Dark",
-  "description": "A theme with a dark color scheme.",
+  "name": "Australis Dark",
+  "description": "Dark australis theme.",
   "author": "Mozilla",
   "version": "1.0",
 
