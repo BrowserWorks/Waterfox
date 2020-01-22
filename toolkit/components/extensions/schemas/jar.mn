@@ -8,6 +8,7 @@ toolkit.jar:
     content/extensions/schemas/browser_settings.json
     content/extensions/schemas/contextual_identities.json
     content/extensions/schemas/cookies.json
+    content/extensions/schemas/dns.json
     content/extensions/schemas/downloads.json
     content/extensions/schemas/events.json
     content/extensions/schemas/experiments.json

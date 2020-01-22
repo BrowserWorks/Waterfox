@@ -11,6 +11,7 @@ toolkit.jar:
     content/extensions/ext-browserSettings.js
     content/extensions/ext-contextualIdentities.js
     content/extensions/ext-cookies.js
+    content/extensions/ext-dns.js
     content/extensions/ext-downloads.js
     content/extensions/ext-extension.js
     content/extensions/ext-geolocation.js

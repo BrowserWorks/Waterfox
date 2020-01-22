@@ -120,6 +120,14 @@ extensions.registerModules({
       ["cookies"],
     ],
   },
+  dns: {
+    url: "chrome://extensions/content/ext-dns.js",
+    schema: "chrome://extensions/content/schemas/dns.json",
+    scopes: ["addon_parent"],
+    paths: [
+      ["dns"],
+    ],
+  },
   downloads: {
     url: "chrome://extensions/content/ext-downloads.js",
     schema: "chrome://extensions/content/schemas/downloads.json",
