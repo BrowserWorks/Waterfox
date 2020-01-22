@@ -1926,6 +1926,12 @@ pref("extensions.getAddons.showPane", false);
 #ifdef XP_LINUX
 pref("browser.windowControls.position", "right");
 #endif
+#ifdef XP_WIN
+pref("browser.windowControls.position", "right");
+#endif
+#ifdef XP_MACOSX
+pref("browser.windowControls.position", "left");
+#endif
 
 // Menu Icon Style
 // 0 - Menu Icon
