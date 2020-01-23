@@ -456,7 +456,7 @@
   display: flex;
   align-items: center;
   min-width: 0;
-  background: var(--statusbar-background);
+  background: var(--toolbar-bgcolor);
 }
 
 .button-toolbar {
