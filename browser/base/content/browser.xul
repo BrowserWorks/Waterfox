@@ -62,6 +62,7 @@
         chromemargin="0,-1,-1,-1"
 #endif
         tabsintitlebar="true"
+        tabBarPosition="topAboveAB"
         titlemenuseparator="&mainWindow.titlemodifiermenuseparator;"
         windowtype="navigator:browser"
         macanimationtype="document"
@@ -690,27 +691,7 @@
   <box id="appMenu-viewCache" hidden="true"/>
 
   <toolbox id="navigator-toolbox">
-#include titlebar-items.inc.xul
-  <html:div id="window-controls" hidden="true" pack="end" skipintoolbarset="true"
-            ordinal="1000">
-    <toolbarbutton id="minimize-button"
-                       tooltiptext="&fullScreenMinimize.tooltip;"
-                       oncommand="window.minimize();"/>
-
-    <toolbarbutton id="restore-button"
-#ifdef XP_MACOSX
-# Prior to 10.7 there wasn't a native fullscreen button so we use #restore-button
-# to exit fullscreen and want it to behave like other toolbar buttons.
-                       class="toolbarbutton-1"
-#endif
-                       tooltiptext="&fullScreenRestore.tooltip;"
-                       oncommand="BrowserFullScreen();"/>
-
-    <toolbarbutton id="close-button"
-                       tooltiptext="&fullScreenClose.tooltip;"
-                       oncommand="BrowserTryToCloseWindow();"/>
-  </html:div>
-    <vbox id="titlebar" class="tabs-topAboveAB">
+    <vbox id="titlebar">
       <!-- Menu -->
       <toolbar type="menubar" id="toolbar-menubar"
                class="browser-toolbar chromeclass-menubar titlebar-color"
@@ -727,6 +708,9 @@
 # shared with other top level windows in macWindow.inc.xul.
 #include browser-menubar.inc
         </toolbaritem>
+        <spacer flex="1" skipintoolbarset="true" ordinal="1000"/>
+#include titlebar-items.inc.xul
+#include titlebar-fs-items.inc.xul
       </toolbar>
 
       <toolbar id="TabsToolbar"
@@ -780,6 +764,9 @@
                 aria-live="polite"/>
         <hbox class="private-browsing-indicator"/>
 #endif
+
+#include titlebar-items.inc.xul
+#include titlebar-fs-items.inc.xul
 
 #ifdef XP_MACOSX
         <!-- OS X does not natively support RTL for its titlebar items, so we prevent this secondary
@@ -1102,6 +1089,8 @@
                        label="&brandShortName;"
                        tooltiptext="&appmenu.tooltip;"/>
       </toolbaritem>
+
+#include titlebar-fs-items.inc.xul
 
       <box id="library-animatable-box" class="toolbarbutton-animatable-box">
         <image class="toolbarbutton-animatable-image"/>

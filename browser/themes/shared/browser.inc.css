@@ -535,78 +535,41 @@
   background: var(--lwt-accent-color);
 }
 
-.titlebar-buttonbox-container {
-  position: absolute;
-  width: 100%;
-  top: 0;
-}
-
-.titlebar-buttonbox {
-  position: absolute;
-  right: 5px;
-  display: flex;
-}
-
-:root:not([tabsintitlebar]) .titlebar-buttonbox-container, :root[inFullscreen] .titlebar-buttonbox-container {
-  display: none;
-}
-
-:root[tabsintitlebar] #titlebar:not(.tabs-topAboveAB), :root[inFullscreen]:not([tabsintitlebar]) #titlebar:not(.tabs-topAboveAB) {
-  min-height: 30px;
-  position: relative;
-}
-
-:root[inFullscreen] #window-controls {
-  position: absolute;
-  top: 2px;
-  right: 0;
-  z-index: 1;
-}
-
-:root:not([leftWindowControls])[tabsintitlebar] #titlebar.tabs-topAboveAB #toolbar-menubar[autohide="true"] + #TabsToolbar {
-  padding-right: 100px;
-}
-
-:root[inFullscreen]:not([leftWindowControls])[tabsintitlebar] #titlebar.tabs-topAboveAB #toolbar-menubar[autohide="true"] + #TabsToolbar {
-  padding-right: 120px;
-}
-
-:root[leftWindowControls] .titlebar-buttonbox {
-  left: 5px;
-  right: auto;
-}
-
-:root[tabsintitlebar][leftWindowControls]:not([inFullscreen]) #titlebar.tabs-topAboveAB #toolbar-menubar[autohide="true"] + #TabsToolbar {
-  padding-left: 100px !important;
-}
-
-:root[tabsintitlebar][leftWindowControls] #titlebar.tabs-topAboveAB #TabsToolbar, :root[inFullscreen][tabsintitlebar][leftWindowControls] #titlebar.tabs-topAboveAB #TabsToolbar
-{
-  padding-right: 0;
-}
-
-:root[tabsintitlebar][inFullscreen][leftWindowControls] #titlebar.tabs-topAboveAB #toolbar-menubar[autohide="true"] + #TabsToolbar {
-  padding-left: 120px !important;
-}
-
-:root[leftWindowControls] .titlebar-buttonbox .titlebar-close, :root[inFullscreen][tabsintitlebar][leftWindowControls] #window-controls #close-button {
-  order: -1;
-}
-
-:root[inFullscreen][tabsintitlebar][leftWindowControls] #window-controls {
-  left: 0;
-  right: auto;
-  display: flex;
-}
-
 #PanelUI-menu-button.browser {
   list-style-image: url("chrome://branding/content/icon16.png");
 }
 
-:root[tabsintitlebar][leftWindowControls] #toolbar-menubar {
-  padding-left: 100px;
+:root[tabsintitlebar]:not([tabBarPosition="topAboveAB"]) #toolbar-menubar[autohide="true"],
+:root:not([tabBarPosition="topAboveAB"])[inFullscreen] #toolbar-menubar{
+  min-height: 20px !important;
+  height: var(--tab-min-height) !important;
 }
 
-:root[tabsintitlebar][inFullscreen][leftWindowControls] #toolbar-menubar[autohide="false"] {
-  padding-left: 130px;
+:root[tabsintitlebar]:not([tabBarPosition="topAboveAB"]) #toolbar-menubar[autohide="true"] #menubar-items,
+:root:not([tabBarPosition="topAboveAB"])[inFullscreen] #toolbar-menubar #menubar-items{
+  display: none !important;
+}
+
+:root[tabsintitlebar]:not([tabBarPosition="topAboveAB"]) #TabsToolbar .titlebar-buttonbox-container {
+  display: none !important;
+}
+
+:root[inFullscreen]:not([tabBarPosition="topAboveAB"]) #toolbar-menubar #window-controls {
+  display: inherit !important;
+}
+
+:root[inFullscreen][tabBarPosition="topAboveAB"] #toolbar-menubar + #TabsToolbar #window-controls {
+  display: inherit !important;
+}
+
+#window-controls {
+  -moz-box-ordinal-group: 1000;
+}
+
+:root[tabsintitlebar]:not([tabBarPosition="topAboveAB"]) #TabsToolbar .titlebar-spacer {
+  display: none !important;
+}
+
+:root[inFullscreen]:not([tabBarPosition="topAboveAB"]) #toolbar-menubar {
+  visibility: visible;
 }

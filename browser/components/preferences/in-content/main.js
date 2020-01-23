@@ -2830,7 +2830,7 @@ var gMainPane = {
   },
 
   toggleMoveWindowControls() {
-    if(Services.prefs.getBoolPref("browser.tabs.drawInTitlebar", window.matchMedia("(-moz-gtk-csd-hide-titlebar-by-default)").matches))
+    if(Services.prefs.getBoolPref("browser.tabs.drawInTitlebar", window.matchMedia("(-moz-gtk-csd-hide-titlebar-by-default)").matches) && window.matchMedia("(-moz-gtk-csd-reversed-placement)").matches == false)
     {
       document.getElementById("windowControlsRadioGroup").disabled = "";
     }
