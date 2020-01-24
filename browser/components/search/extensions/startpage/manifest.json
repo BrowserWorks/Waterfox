@@ -1,0 +1,30 @@
+{
+  "name": "Startpage",
+  "description": "Startpage.com Search",
+  "manifest_version": 2,
+  "version": "1.0",
+  "applications": {
+    "gecko": {
+      "id": "startpage@search.waterfox.net"
+    }
+  },
+  "hidden": true,
+  "icons": {
+    "16": "favicon.ico"
+  },
+  "web_accessible_resources": [
+    "favicon.ico"
+  ],
+  "chrome_settings_overrides": {
+    "search_provider": {
+      "name": "Startpage",
+      "search_url": "https://www.startpage.com/do/dsearch",
+      "search_form": "https://www.startpage.com/do/dsearch?query={searchTerms}",
+      "search_url_get_params": "query={searchTerms}",
+      "params": [
+      ],
+      "suggest_url": "https://www.startpage.com/cgi-bin/csuggest",
+      "suggest_url_get_params": "query={searchTerms}&limit=10&lang=english&format=json"
+    }
+  }
+}
