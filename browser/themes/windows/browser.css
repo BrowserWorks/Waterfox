@@ -441,13 +441,17 @@ menuitem.bookmark-item {
   background-color: hsla(0,0%,0%,.22);
 }
 
-:root[lwt-popup-brighttext] #window-controls #minimize-button:hover,
-:root[lwt-popup-brighttext] #window-controls #restore-button:hover {
+#TabsToolbar[brighttext] > #window-controls > #minimize-button:hover,
+#TabsToolbar[brighttext] > #window-controls > #restore-button:hover,
+:root[lwt-popup-brighttext="true"] #titlebar #window-controls #minimize-button:hover,
+:root[lwt-popup-brighttext="true"] #titlebar #window-controls #restore-button:hover {
   background-color: hsla(0,0%,100%,.12);
 }
 
-:root[lwt-popup-brighttext] #window-controls #minimize-button:hover:active,
-:root[lwt-popup-brighttext] #window-controls #restore-button:hover:active {
+#TabsToolbar[brighttext] > #window-controls > #minimize-button:hover:active,
+#TabsToolbar[brighttext] > #window-controls > #restore-button:hover:active,
+:root[lwt-popup-brighttext="true"] #titlebar #window-controls #minimize-button:hover,
+:root[lwt-popup-brighttext="true"] #titlebar #window-controls #restore-button:hover {
   background-color: hsla(0,0%,100%,.22);
 }
 
@@ -1039,40 +1043,4 @@ panel[touchmode] .PanelUI-subView #appMenu-zoom-controls > .subviewbutton-iconic
      font-size with 11px being the preferred padding size. */
   padding-top: .9167em;
   padding-bottom: .9167em;
-}
-
-:root[tabsintitlebar][sizemode="maximized"] .titlebar-buttonbox-container {
-  top: 10px;
-}
-
-.titlebar-buttonbox {
-  right: 0;
-}
-
-:root:not([inFullscreen])[tabsintitlebar][sizemode="maximized"] #titlebar:not(.tabs-topAboveAB) {
-  height: 40px;
-}
-
-@media (-moz-os-version: windows-win10) {
-  :root:not([leftWindowControls])[tabsintitlebar] #titlebar.tabs-topAboveAB #toolbar-menubar[autohide="true"] + #TabsToolbar {
-    padding-right: 160px;
-  }
-}
-
-@media not (-moz-os-version: windows-win10) {
-  :root:not([leftWindowControls])[tabsintitlebar] #titlebar.tabs-topAboveAB #toolbar-menubar[autohide="true"] + #TabsToolbar {
-    padding-right: 130px;
-  }
-}
-
-@media (-moz-os-version: windows-win7) {
-  :root[inFullscreen]:not([leftWindowControls])[tabsintitlebar] #titlebar.tabs-topAboveAB #toolbar-menubar[autohide="true"] + #TabsToolbar {
-    padding-right: 80px;
-  }
-}
-
-@media (-moz-os-version: windows-win8) {
-  :root[inFullscreen]:not([leftWindowControls])[tabsintitlebar] #titlebar.tabs-topAboveAB #toolbar-menubar[autohide="true"] + #TabsToolbar {
-    padding-right: 120px;
-  }
 }

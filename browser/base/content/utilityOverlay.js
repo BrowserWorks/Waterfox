@@ -1313,15 +1313,13 @@ function moveTabBar()
   var bottomBookmarksBar = windowRoot.ownerGlobal.document.querySelector("#browser-bottombox #PersonalToolbar");
   var tabsToolbar = windowRoot.ownerGlobal.document.querySelector("#TabsToolbar");
   var titlebar = windowRoot.ownerGlobal.document.querySelector("#titlebar");
+  var root = windowRoot.ownerGlobal.document.querySelector(":root");
 
   if(Services.prefs.getStringPref("browser.tabBar.position") == "topUnderAB")
   {
     windowRoot.ownerGlobal.document.querySelector("#navigator-toolbox").appendChild(tabsToolbar);
     windowRoot.ownerGlobal.gBrowser.setTabTitle(windowRoot.ownerGlobal.document.querySelector(".tabbrowser-tab[first-visible-tab]"));
-    if (titlebar.classList.contains("tabs-topAboveAB"))
-    {
-      titlebar.classList.remove("tabs-topAboveAB");
-    }
+    root.setAttribute("tabBarPosition", Services.prefs.getStringPref("browser.tabBar.position"));
   }
   else if (Services.prefs.getStringPref("browser.tabBar.position") == "bottom")
   {
@@ -1334,18 +1332,13 @@ function moveTabBar()
       windowRoot.ownerGlobal.document.querySelector("#browser-bottombox").insertAdjacentElement('afterbegin', tabsToolbar);
     }
     windowRoot.ownerGlobal.gBrowser.setTabTitle(windowRoot.ownerGlobal.document.querySelector(".tabbrowser-tab[first-visible-tab]"));
-    if (titlebar.classList.contains("tabs-topAboveAB"))
-    {
-      titlebar.classList.remove("tabs-topAboveAB");
-    }
+    root.setAttribute("tabBarPosition", Services.prefs.getStringPref("browser.tabBar.position"));
   }
   else if (Services.prefs.getStringPref("browser.tabBar.position") == "topAboveAB")
   {
     titlebar.insertAdjacentElement('beforeend', tabsToolbar);
     windowRoot.ownerGlobal.gBrowser.setTabTitle(windowRoot.ownerGlobal.document.querySelector(".tabbrowser-tab[first-visible-tab]"));
-    if (!titlebar.classList.contains("tabs-topAboveAB")) {
-      titlebar.classList.add("tabs-topAboveAB");
-    }
+    root.setAttribute("tabBarPosition", Services.prefs.getStringPref("browser.tabBar.position"));
  }
 }
 
