@@ -1558,7 +1558,7 @@ bool TokenStreamSpecific<Unit, AnyCharsAccess>::advance(size_t position) {
 }
 
 template <typename Unit, class AnyCharsAccess>
-void TokenStreamSpecific<Unit, AnyCharsAccess>::seek(const Position& pos) {
+void TokenStreamSpecific<Unit, AnyCharsAccess>::seekTo(const Position& pos) {
   TokenStreamAnyChars& anyChars = anyCharsAccess();
 
   this->sourceUnits.setAddressOfNextCodeUnit(pos.buf,
@@ -1576,13 +1576,13 @@ void TokenStreamSpecific<Unit, AnyCharsAccess>::seek(const Position& pos) {
 }
 
 template <typename Unit, class AnyCharsAccess>
-bool TokenStreamSpecific<Unit, AnyCharsAccess>::seek(
+bool TokenStreamSpecific<Unit, AnyCharsAccess>::seekTo(
     const Position& pos, const TokenStreamAnyChars& other) {
   if (!anyCharsAccess().srcCoords.fill(other.srcCoords)) {
     return false;
   }
 
-  seek(pos);
+  seekTo(pos);
   return true;
 }
 
