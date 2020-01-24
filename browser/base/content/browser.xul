@@ -709,6 +709,7 @@
 #include browser-menubar.inc
         </toolbaritem>
         <spacer flex="1" skipintoolbarset="true" ordinal="1000"/>
+        <hbox id="toolbar-menubar-pagetitle"></hbox>
 #include titlebar-items.inc.xul
 #include titlebar-fs-items.inc.xul
       </toolbar>

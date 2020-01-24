@@ -573,3 +573,20 @@
 :root[inFullscreen]:not([tabBarPosition="topAboveAB"]) #toolbar-menubar {
   visibility: visible;
 }
+
+:root[tabsintitlebar]:not([tabBarPosition="topAboveAB"]) #toolbar-menubar-pagetitle {
+  display: inherit;
+  margin-right: 30px;
+  margin-left: 30px;
+  align-items: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+  -moz-box-ordinal-group: 1000;
+  -moz-box-flex: 1;
+  margin-top: 5px;
+}
+
+#toolbar-menubar-pagetitle {
+  display: none;
+}
