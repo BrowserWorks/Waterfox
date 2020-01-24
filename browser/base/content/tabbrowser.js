@@ -1019,6 +1019,7 @@
 
     updateTitlebar() {
       document.title = this.getWindowTitleForBrowser(this.selectedBrowser);
+      windowRoot.ownerGlobal.document.querySelector("#toolbar-menubar-pagetitle").textContent = this.getWindowTitleForBrowser(this.selectedBrowser).replace(' - '+windowRoot.ownerGlobal.document.querySelector("window").getAttribute("titlemodifier"), '');
     },
 
     updateCurrentBrowser(aForceUpdate) {
