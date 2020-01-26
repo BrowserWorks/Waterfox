@@ -1406,7 +1406,7 @@ pref("privacy.firstparty.isolate.restrict_opener_access", true);
 pref("privacy.firstparty.isolate.block_post_message", false);
 
 // If true, DISABLES navigator.mozAddonManager entirely
-sticky_pref("privacy.resistFingerprinting.block_mozAddonManager", true);
+sticky_pref("privacy.resistFingerprinting.block_mozAddonManager", false);
 
 // We automatically decline canvas permission requests if they are not initiated
 // from user input. Just in case that breaks something, we allow the user to revert
