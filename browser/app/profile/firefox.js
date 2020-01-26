@@ -974,7 +974,7 @@ pref("toolkit.crashreporter.infoURL",
      "", locked);
 
 // base URL for web-based support pages
-pref("app.support.baseURL", "about:preferences");
+pref("app.support.baseURL", "https://support.mozilla.org/1/firefox/%VERSION%/%OS%/%LOCALE%/");
 
 // base url for web-based feedback pages
 #ifdef MOZ_DEV_EDITION
