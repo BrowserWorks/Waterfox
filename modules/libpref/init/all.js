@@ -306,7 +306,7 @@ pref("browser.display.focus_ring_style", 1);
 
 pref("browser.helperApps.neverAsk.saveToDisk", "");
 pref("browser.helperApps.neverAsk.openFile", "");
-pref("browser.helperApps.deleteTempFileOnExit", false);
+pref("browser.helperApps.deleteTempFileOnExit", true);
 
 // xxxbsmedberg: where should prefs for the toolkit go?
 pref("browser.chrome.toolbar_tips",         true);
