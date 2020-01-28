@@ -5934,7 +5934,7 @@ pref("media.default_volume", "1.0");
 pref("media.seekToNextFrame.enabled", true);
 
 // return the maximum number of cores that navigator.hardwareCurrency returns
-pref("dom.maxHardwareConcurrency", 16);
+pref("dom.maxHardwareConcurrency", 2);
 
 // Shutdown the osfile worker if its no longer needed.
 #if !defined(RELEASE_OR_BETA)
