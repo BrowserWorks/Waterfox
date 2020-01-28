@@ -9,7 +9,7 @@
         "platforms": [
             "android-multilocale"
         ],
-        "revision": "caba8a6f9578"
+        "revision": "954f2b278ad5"
     },
     "ast": {
         "platforms": [
@@ -57,7 +57,7 @@
         "platforms": [
             "android-multilocale"
         ],
-        "revision": "d43d71f5fc07"
+        "revision": "e448de377758"
     },
     "cak": {
         "platforms": [
@@ -381,7 +381,7 @@
         "platforms": [
             "android-multilocale"
         ],
-        "revision": "ff1d5c2fad28"
+        "revision": "c84c2b5223dc"
     },
     "pa-IN": {
         "platforms": [
