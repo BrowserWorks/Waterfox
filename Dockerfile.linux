@@ -14,6 +14,7 @@ RUN apt-get install -y \
     libasound2-dev \
     libcairo2-dev \
     libdbus-glib-1-dev \
+    libgconf2-dev \
     libgtk2.0-dev \
     libgtk-3-dev \
     libpango1.0-dev \
@@ -41,10 +42,13 @@ RUN apt-get install -y \
     uuid \
     zip
 
-ENV SHELL=/bin/bash
+ENV SHELL /bin/bash
 ENV LANG C.UTF-8
 ENV LC_ALL C.UTF-8
+# prevent libnotify-send attempt which will fail
 ENV MOZ_NOSPAM 1
+# help classic env with trouble finding rustc/cargo
+ENV PATH ${PATH}:/home/ubuntu/.cargo/bin
 RUN adduser ubuntu
 RUN echo 'ubuntu ALL=(ALL) NOPASSWD: ALL' > /etc/sudoers.d/ubuntu
 ADD . /home/ubuntu/
@@ -52,6 +56,8 @@ RUN mkdir /home/ubuntu/.mozbuild
 WORKDIR /home/ubuntu
 RUN chown -R ubuntu /home/ubuntu
 USER ubuntu
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+RUN rustup default 1.37.0
 
 #RUN python /root/bootstrap.py --application-choice=browser --vcs git --no-interactive
 RUN ./mach bootstrap --application-choice=browser --no-interactive
