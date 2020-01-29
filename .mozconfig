@@ -57,11 +57,11 @@ ac_add_options --disable-verify-mar
 ac_add_options --enable-application=browser
 #Crashes PPC64LE builds
 if test `uname -m` != ppc64le; then
-ac_add_options --enable-ccache=sccache
+ac_add_options --enable-ccache=ccache
 elif test `uname -m` = ppc64le; then
 ac_add_options --enable-ccache=ccache
 fi
-ac_add_options --enable-lto
+#ac_add_options --enable-lto
 # Stick to the same channel as Dev Edition would be
 ac_add_options --enable-update-channel=aurora
 ac_add_options --enable-rust-simd
