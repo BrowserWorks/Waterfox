@@ -161,6 +161,34 @@ class ContextWrapper(object):
         setattr(object.__getattribute__(self, '_context'), key, value)
 
 
+def enable_windows_terminal_escapes():
+    """On Windows, terminal escape sequences are not enabled by default, but newer versions of
+    Windows support them. Some programs (notably cargo) will emit escapes when asked to enable
+    color output to a pipe, so this is necessary for those escapes to be displayed properly
+    by the console.
+
+    See MSDN for more details:
+    https://docs.microsoft.com/en-us/windows/console/console-virtual-terminal-sequences
+    """
+    import ctypes
+    import ctypes.wintypes
+
+    ENABLE_VIRTUAL_TERMINAL_PROCESSING = 0x0004
+    STD_OUTPUT_HANDLE = -11
+    STD_ERROR_HANDLE = -12
+
+    stdout = ctypes.windll.kernel32.GetStdHandle(STD_OUTPUT_HANDLE)
+    stderr = ctypes.windll.kernel32.GetStdHandle(STD_ERROR_HANDLE)
+    for handle in (stdout, stderr):
+        mode = ctypes.wintypes.DWORD()
+        if handle != -1 and ctypes.windll.kernel32.GetConsoleMode(handle, ctypes.byref(mode)):
+            # We could use a failure return from SetConsoleMode to note that escape sequences
+            # are not supported, but we're not terribly interested in supporting older versions
+            # of Windows here.
+            ctypes.windll.kernel32.SetConsoleMode(handle,
+                                                  mode.value | ENABLE_VIRTUAL_TERMINAL_PROCESSING)
+
+
 @CommandProvider
 class Mach(object):
     """Main mach driver type.
@@ -354,6 +382,8 @@ To see more help for a specific command, run:
             # enable emitting code codes, for example.
             if os.isatty(orig_stdout.fileno()):
                 os.environ[b'MACH_STDOUT_ISATTY'] = b'1'
+                if sys.platform == 'win32':
+                    enable_windows_terminal_escapes()
 
             return self._run(argv)
         except KeyboardInterrupt:
