@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<updates>
+    <update type="major" appVersion="VERSION"  buildID="BUILDID" detailsURL="https://www.waterfox.net/blog/waterfox-DISPLAYVERSION-release" displayVersion="DISPLAYVERSION" extensionVersion="VERSION" platformVersion="VERSION" version="VERSION">
+        <patch type="complete" URL="https://storage-waterfox.netdna-ssl.com/releases/osx64/update/waterfox-current-DISPLAYVERSION.en-US.osx64.complete.xz.mar" hashFunction="SHA512" hashValue="HASH" size="SIZE"/>
+    </update>
+</updates>
