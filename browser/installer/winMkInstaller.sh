@@ -5,6 +5,17 @@ set -e
 BROWSER_CHANNEL="current"
 OPERATING_SYSTEM="win64"
 
+# Loop through arguments and process them
+for arg in "$@"
+do
+    case $arg in
+        -c=*|--channel=*)
+        BROWSER_CHANNEL="${arg#*=}"
+        shift # current or classic
+        ;;
+    esac
+done
+
 DISPLAYVERSION=$(grep 'DisplayVersion=' objdir-$BROWSER_CHANNEL/dist/bin/application.ini | cut -d'=' -f2)
 echo "# DisplayVersion: $DISPLAYVERSION"
 VERSION=$(grep '\<Version\>' objdir-$BROWSER_CHANNEL/dist/bin/application.ini | cut -d'=' -f2)
