@@ -38,7 +38,7 @@ fi
 if test `uname -s` = MINGW32_NT-6.2; then
 mk_add_options MOZ_MAKE_FLAGS=-j4
 else
-X=$(getconf NPROCESSORS_ONLN)
+X=$(getconf NPROCESSORS_ONLN 2>/dev/null || getconf _NPROCESSORS_ONLN 2>/dev/null)
 mk_add_options MOZ_MAKE_FLAGS=-j${X}
 fi
 mk_add_options AUTOCLOBBER=1
