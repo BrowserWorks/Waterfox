@@ -182,8 +182,6 @@
           <button id="advancedJSButton" label="&advancedFonts.label;"
                   oncommand="gContentPane.showAdvancedJS();"
                   preference="pref.advanced.javascript.disable_button.advanced"/>
-          <button label="&popupExceptions.label;"
-                  oncommand="gContentPane.showScriptExceptions();"/>
         </vbox>
       </row>
     </rows>

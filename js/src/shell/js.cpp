@@ -4961,11 +4961,6 @@ NewGlobal(JSContext* cx, unsigned argc, Value* vp)
         if (v.isBoolean())
             creationOptions.setCloneSingletons(v.toBoolean());
 
-        if (!JS_GetProperty(cx, opts, "experimentalNumberFormatFormatToPartsEnabled", &v))
-            return false;
-        if (v.isBoolean())
-            creationOptions.setExperimentalNumberFormatFormatToPartsEnabled(v.toBoolean());
-
         if (!JS_GetProperty(cx, opts, "sameZoneAs", &v))
             return false;
         if (v.isObject())
