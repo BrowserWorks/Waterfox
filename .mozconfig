@@ -35,7 +35,7 @@ ac_add_options --target=x86_64-pc-linux-gnu
 ac_add_options --enable-pulseaudio
 ac_add_options --enable-alsa
 ac_add_options --enable-rust-simd # on x86 requires SSE2
-ac_add_options --enable-stylo=build
+ac_add_options --disable-stylo
 fi
 
 ac_add_options --enable-av1
