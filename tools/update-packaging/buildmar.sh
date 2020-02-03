@@ -4,7 +4,7 @@ set -e
 
 # Shell script parsing from https://pretzelhands.com/posts/command-line-flags
 # Default values of arguments
-BROWSER_CHANNEL="current"
+BROWSER_CHANNEL="classic"
 OPERATING_SYSTEM="osx64"
 
 PATH=$PATH:objdir-$BROWSER_CHANNEL/dist/host/bin
@@ -32,24 +32,24 @@ echo "# DisplayVersion: $DISPLAYVERSION"
 VERSION=$(grep '\<Version\>' objdir-$BROWSER_CHANNEL/dist/bin/application.ini | cut -d'=' -f2)
 echo "# Version: $DISPLAYVERSION"
 BUILDID=$(grep 'BuildID=' objdir-$BROWSER_CHANNEL/dist/bin/application.ini | cut -d'=' -f2)
-echo "# Build ID: $DISPLAYVERSION"
+echo "# Build ID: $BUILDID"
 
 mkdir -p ./objdir-$BROWSER_CHANNEL/dist/update
 if test `uname -s` = Darwin; then
 ./tools/update-packaging/make_full_update.sh \
-./objdir-$BROWSER_CHANNEL/dist/update/waterfox-current-$DISPLAYVERSION.en-US.$OPERATING_SYSTEM.complete.xz.mar \
-./objdir-$BROWSER_CHANNEL/dist/waterfox/Waterfox\ Current.app/
+./objdir-$BROWSER_CHANNEL/dist/update/waterfox-$BROWSER_CHANNEL-$DISPLAYVERSION.en-US.$OPERATING_SYSTEM.complete.xz.mar \
+./objdir-$BROWSER_CHANNEL/dist/waterfox/Waterfox.app/
 else
 ./tools/update-packaging/make_full_update.sh \
-./objdir-$BROWSER_CHANNEL/dist/update/waterfox-current-$DISPLAYVERSION.en-US.$OPERATING_SYSTEM.complete.xz.mar \
+./objdir-$BROWSER_CHANNEL/dist/update/waterfox-$BROWSER_CHANNEL-$DISPLAYVERSION.en-US.$OPERATING_SYSTEM.complete.xz.mar \
 ./objdir-$BROWSER_CHANNEL/dist/waterfox/
 fi
 
 
 
-SHA512=$(shasum -a 512 objdir-$BROWSER_CHANNEL/dist/update/waterfox-current-$DISPLAYVERSION.en-US.$OPERATING_SYSTEM.complete.xz.mar | awk '{print $1}')
+SHA512=$(shasum -a 512 objdir-$BROWSER_CHANNEL/dist/update/waterfox-$BROWSER_CHANNEL-$DISPLAYVERSION.en-US.$OPERATING_SYSTEM.complete.xz.mar | awk '{print $1}')
 echo "# SHA512: $SHA512"
-SIZE=$(ls -l objdir-$BROWSER_CHANNEL/dist/update/waterfox-current-2020.01.1.en-US.$OPERATING_SYSTEM.complete.xz.mar | awk '{print $5}')
+SIZE=$(ls -l objdir-$BROWSER_CHANNEL/dist/update/waterfox-$BROWSER_CHANNEL-$DISPLAYVERSION.en-US.$OPERATING_SYSTEM.complete.xz.mar | awk '{print $5}')
 echo "# File Size: $SIZE"
 
 cp ./tools/update-packaging/update.xml ./objdir-$BROWSER_CHANNEL/dist/update/update.xml
