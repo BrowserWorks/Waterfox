@@ -313,13 +313,13 @@ already_AddRefed<QuotaObject> GetQuotaObjectFromName(const char* zName,
     return nullptr;
   }
 
-  const char* group = sqlite3_uri_parameter(zURIParameterKey, "group");
+  const char* group = sqlite3_uri_parameter(filename, "group");
   if (!group) {
     NS_WARNING("SQLite URI had 'persistenceType' but not 'group'?!");
     return nullptr;
   }
 
-  const char* origin = sqlite3_uri_parameter(zURIParameterKey, "origin");
+  const char* origin = sqlite3_uri_parameter(filename, "origin");
   if (!origin) {
     NS_WARNING(
         "SQLite URI had 'persistenceType' and 'group' but not "
