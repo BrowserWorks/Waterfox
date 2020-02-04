@@ -8198,12 +8198,10 @@ class MDefFun
 class MRegExp : public MNullaryInstruction
 {
     CompilerGCPointer<RegExpObject*> source_;
-    bool mustClone_;
     bool hasShared_;
 
     MRegExp(CompilerConstraintList* constraints, RegExpObject* source, bool hasShared)
       : source_(source),
-        mustClone_(true),
         hasShared_(hasShared)
     {
         setResultType(MIRType::Object);
@@ -8214,12 +8212,6 @@ class MRegExp : public MNullaryInstruction
     INSTRUCTION_HEADER(RegExp)
     TRIVIAL_NEW_WRAPPERS
 
-    void setDoNotClone() {
-        mustClone_ = false;
-    }
-    bool mustClone() const {
-        return mustClone_;
-    }
     bool hasShared() const {
         return hasShared_;
     }
