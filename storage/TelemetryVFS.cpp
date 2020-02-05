@@ -294,24 +294,32 @@ const char* DatabasePathFromWALPath(const char* zWALName) {
   MOZ_CRASH("Should never get here!");
 }
 
-already_AddRefed<QuotaObject> GetQuotaObjectFromNameAndParameters(
-    const char* zName, const char* zURIParameterKey) {
-  MOZ_ASSERT(zName);
-  MOZ_ASSERT(zURIParameterKey);
-
+already_AddRefed<QuotaObject> GetQuotaObjectFromName(const char* zName,
+                                                     bool deriveFromWal) {
+  // From Sqlite 3.31.0 the zName format changed to work consistently across
+  // database, wal and journal names.
+  // We must support both ways because this code will be uplifted to ensure
+  // that if system Sqlite is upgraded before us, we keep working properly.
+  // Once the Firefox minimum Sqlite version is 3.31.0, we can remove the else
+  // branch, DatabasePathFromWALPath, and the deriveFromWal argument.
+  const char* filename = zName;
+  if (deriveFromWal && sqlite3_libversion_number() < 3031000) {
+    filename = DatabasePathFromWALPath(zName);
+  }
+  MOZ_ASSERT(filename);
   const char* persistenceType =
-      sqlite3_uri_parameter(zURIParameterKey, "persistenceType");
+      sqlite3_uri_parameter(filename, "persistenceType");
   if (!persistenceType) {
     return nullptr;
   }
 
-  const char* group = sqlite3_uri_parameter(zURIParameterKey, "group");
+  const char* group = sqlite3_uri_parameter(filename, "group");
   if (!group) {
     NS_WARNING("SQLite URI had 'persistenceType' but not 'group'?!");
     return nullptr;
   }
 
-  const char* origin = sqlite3_uri_parameter(zURIParameterKey, "origin");
+  const char* origin = sqlite3_uri_parameter(filename, "origin");
   if (!origin) {
     NS_WARNING(
         "SQLite URI had 'persistenceType' and 'group' but not "
@@ -351,15 +359,7 @@ void MaybeEstablishQuotaControl(const char* zName, telemetry_file* pFile,
     return;
   }
 
-  MOZ_ASSERT(zName);
-
-  const char* zURIParameterKey =
-      (flags & SQLITE_OPEN_WAL) ? DatabasePathFromWALPath(zName) : zName;
-
-  MOZ_ASSERT(zURIParameterKey);
-
-  pFile->quotaObject =
-      GetQuotaObjectFromNameAndParameters(zName, zURIParameterKey);
+  pFile->quotaObject = GetQuotaObjectFromName(zName, flags & SQLITE_OPEN_WAL);
 }
 
 /*
@@ -712,10 +712,7 @@ int xDelete(sqlite3_vfs* vfs, const char* zName, int syncDir) {
   RefPtr<QuotaObject> quotaObject;
 
   if (StringEndsWith(nsDependentCString(zName), NS_LITERAL_CSTRING("-wal"))) {
-    const char* zURIParameterKey = DatabasePathFromWALPath(zName);
-    MOZ_ASSERT(zURIParameterKey);
-
-    quotaObject = GetQuotaObjectFromNameAndParameters(zName, zURIParameterKey);
+    quotaObject = GetQuotaObjectFromName(zName, true);
   }
 
   rc = orig_vfs->xDelete(orig_vfs, zName, syncDir);
