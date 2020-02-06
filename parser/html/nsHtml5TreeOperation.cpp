@@ -60,7 +60,7 @@ class MOZ_STACK_CLASS nsHtml5OtherDocUpdate {
         mDocument = nullptr;
       } else {
         mDocument = aCurrentDoc;
-        aCurrentDoc->BeginUpdate(UPDATE_CONTENT_MODEL);        
+        aCurrentDoc->BeginUpdate(UPDATE_CONTENT_MODEL);
       }
     }
 
@@ -151,9 +151,9 @@ nsHtml5TreeOperation::AppendText(const char16_t* aBuffer,
   if (lastChild && lastChild->IsNodeOfType(nsINode::eTEXT)) {
     nsHtml5OtherDocUpdate update(aParent->OwnerDoc(),
                                  aBuilder->GetDocument());
-    return AppendTextToTextNode(aBuffer, 
-                                aLength, 
-                                lastChild, 
+    return AppendTextToTextNode(aBuffer,
+                                aLength,
+                                lastChild,
                                 aBuilder);
   }
 
@@ -434,7 +434,9 @@ nsHtml5TreeOperation::CreateElement(int32_t aNs,
                           false);
 
       // Custom element setup may be needed if there is an "is" attribute.
-      if (kNameSpaceID_None == nsuri && !prefix && nsGkAtoms::is == localName) {
+        if (nsContentUtils::IsWebComponentsEnabled() &&
+            kNameSpaceID_None == nsuri &&
+            !prefix && nsGkAtoms::is == localName) {
         nsContentUtils::SetupCustomElement(newContent, &value);
       }
     }
