@@ -199,10 +199,8 @@ private:
 class CustomElementReaction
 {
 public:
-  explicit CustomElementReaction(CustomElementRegistry* aRegistry,
-                                 CustomElementDefinition* aDefinition)
-    : mRegistry(aRegistry)
-    , mDefinition(aDefinition)
+  explicit CustomElementReaction(CustomElementDefinition* aDefinition)
+    : mDefinition(aDefinition)
   {
   }
 
@@ -213,16 +211,14 @@ public:
   }
 
 protected:
-  CustomElementRegistry* mRegistry;
   CustomElementDefinition* mDefinition;
 };
 
 class CustomElementUpgradeReaction final : public CustomElementReaction
 {
 public:
-  explicit CustomElementUpgradeReaction(CustomElementRegistry* aRegistry,
-                                        CustomElementDefinition* aDefinition)
-    : CustomElementReaction(aRegistry, aDefinition)
+  explicit CustomElementUpgradeReaction(CustomElementDefinition* aDefinition)
+    : CustomElementReaction(aDefinition)
   {
   }
 
@@ -233,10 +229,9 @@ private:
 class CustomElementCallbackReaction final : public CustomElementReaction
 {
   public:
-    CustomElementCallbackReaction(CustomElementRegistry* aRegistry,
-                                  CustomElementDefinition* aDefinition,
+    CustomElementCallbackReaction(CustomElementDefinition* aDefinition,
                                   UniquePtr<CustomElementCallback> aCustomElementCallback)
-      : CustomElementReaction(aRegistry, aDefinition)
+      : CustomElementReaction(aDefinition)
       , mCustomElementCallback(Move(aCustomElementCallback))
     {
     }
@@ -272,16 +267,14 @@ public:
    * Enqueue a custom element upgrade reaction
    * https://html.spec.whatwg.org/multipage/scripting.html#enqueue-a-custom-element-upgrade-reaction
    */
-  void EnqueueUpgradeReaction(CustomElementRegistry* aRegistry,
-                              Element* aElement,
+  void EnqueueUpgradeReaction(Element* aElement,
                               CustomElementDefinition* aDefinition);
 
   /**
    * Enqueue a custom element callback reaction
    * https://html.spec.whatwg.org/multipage/scripting.html#enqueue-a-custom-element-callback-reaction
    */
-  void EnqueueCallbackReaction(CustomElementRegistry* aRegistry,
-                               Element* aElement,
+  void EnqueueCallbackReaction(Element* aElement,
                                CustomElementDefinition* aDefinition,
                                UniquePtr<CustomElementCallback> aCustomElementCallback);
 
@@ -372,10 +365,10 @@ public:
    */
   void SetupCustomElement(Element* aElement, const nsAString* aTypeExtension);
 
-  void EnqueueLifecycleCallback(nsIDocument::ElementCallbackType aType,
-                                Element* aCustomElement,
-                                LifecycleCallbackArgs* aArgs,
-                                CustomElementDefinition* aDefinition);
+  static void EnqueueLifecycleCallback(nsIDocument::ElementCallbackType aType,
+                                       Element* aCustomElement,
+                                       LifecycleCallbackArgs* aArgs,
+                                       CustomElementDefinition* aDefinition);
 
   void GetCustomPrototype(nsIAtom* aAtom,
                           JS::MutableHandle<JSObject*> aPrototype);
@@ -393,7 +386,7 @@ public:
 private:
   ~CustomElementRegistry();
 
-  UniquePtr<CustomElementCallback> CreateCustomElementCallback(
+  static UniquePtr<CustomElementCallback> CreateCustomElementCallback(
     nsIDocument::ElementCallbackType aType, Element* aCustomElement,
     LifecycleCallbackArgs* aArgs, CustomElementDefinition* aDefinition);
 
