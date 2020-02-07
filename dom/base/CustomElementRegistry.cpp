@@ -256,8 +256,7 @@ NS_INTERFACE_MAP_END
 /* static */ bool
 CustomElementRegistry::IsCustomElementEnabled(JSContext* aCx, JSObject* aObject)
 {
-  return nsContentUtils::IsCustomElementsEnabled() ||
-         nsContentUtils::IsWebComponentsEnabled();
+  return nsContentUtils::IsCustomElementsEnabled();
 }
 
 CustomElementRegistry::CustomElementRegistry(nsPIDOMWindowInner* aWindow)
