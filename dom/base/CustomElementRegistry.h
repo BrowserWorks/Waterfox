@@ -50,8 +50,7 @@ class CustomElementCallback
 public:
   CustomElementCallback(Element* aThisObject,
                         nsIDocument::ElementCallbackType aCallbackType,
-                        CallbackFunction* aCallback,
-                        CustomElementData* aOwnerData);
+                        CallbackFunction* aCallback);
   void Traverse(nsCycleCollectionTraversalCallback& aCb) const;
   void Call();
   void SetArgs(LifecycleCallbackArgs& aArgs)
@@ -78,9 +77,6 @@ private:
   // used by the attribute changed callback.
   LifecycleCallbackArgs mArgs;
   LifecycleAdoptedCallbackArgs mAdoptedCallbackArgs;
-  // CustomElementData that contains this callback in the
-  // callback queue.
-  CustomElementData* mOwnerData;
 };
 
 class CustomElementConstructor final : public CallbackFunction
@@ -114,11 +110,6 @@ struct CustomElementData
   explicit CustomElementData(nsIAtom* aType);
   CustomElementData(nsIAtom* aType, State aState);
 
-  // Element is being created flag as described in the custom elements spec.
-  bool mElementIsBeingCreated;
-  // Flag to determine if the created callback has been invoked, thus it
-  // determines if other callbacks can be enqueued.
-  bool mCreatedCallbackInvoked;
   // Custom element state as described in the custom element spec.
   State mState;
   // custom element reaction queue as described in the custom element spec.
@@ -381,10 +372,6 @@ public:
   void GetCustomPrototype(nsIAtom* aAtom,
                           JS::MutableHandle<JSObject*> aPrototype);
 
-  void SyncInvokeReactions(nsIDocument::ElementCallbackType aType,
-                           Element* aCustomElement,
-                           CustomElementDefinition* aDefinition);
-
   /**
    * Upgrade an element.
    * https://html.spec.whatwg.org/multipage/scripting.html#upgrades
@@ -471,31 +458,6 @@ private:
 
     private:
       CustomElementRegistry* mRegistry;
-  };
-
-  class SyncInvokeReactionRunnable : public mozilla::Runnable {
-    public:
-      SyncInvokeReactionRunnable(
-        UniquePtr<CustomElementReaction> aReaction, Element* aCustomElement)
-        : Runnable(
-            "dom::CustomElementRegistry::SyncInvokeReactionRunnable")
-        , mReaction(Move(aReaction))
-        , mCustomElement(aCustomElement)
-      {
-      }
-
-      NS_IMETHOD Run() override
-      {
-        // It'll never throw exceptions, because all the exceptions are handled
-        // by Lifecycle*Callback::Call function.
-        ErrorResult rv;
-        mReaction->Invoke(mCustomElement, rv);
-        return NS_OK;
-      }
-
-    private:
-      UniquePtr<CustomElementReaction> mReaction;
-      Element* mCustomElement;
   };
 
 public:

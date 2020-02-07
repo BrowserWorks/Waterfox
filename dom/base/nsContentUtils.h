@@ -2993,10 +2993,6 @@ public:
                                       nsIAtom* aExtensionType,
                                       nsIAtom* aAttrName);
 
-  static void SyncInvokeReactions(nsIDocument::ElementCallbackType aType,
-                                  Element* aCustomElement,
-                                  mozilla::dom::CustomElementDefinition* aDefinition);
-
   static void EnqueueUpgradeReaction(Element* aElement,
                                      mozilla::dom::CustomElementDefinition* aDefinition);
 
