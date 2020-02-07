@@ -1515,6 +1515,11 @@ nsHTMLDocument::Open(JSContext* cx,
     return nullptr;
   }
 
+  if (ShouldThrowOnDynamicMarkupInsertion()) {
+    rv.Throw(NS_ERROR_DOM_INVALID_STATE_ERR);
+    return nullptr;
+  }
+
   nsAutoCString contentType;
   contentType.AssignLiteral("text/html");
 
@@ -1864,6 +1869,11 @@ nsHTMLDocument::Close(ErrorResult& rv)
     return;
   }
 
+  if (ShouldThrowOnDynamicMarkupInsertion()) {
+    rv.Throw(NS_ERROR_DOM_INVALID_STATE_ERR);
+    return;
+  }
+
   if (!mParser || !mParser->IsScriptCreated()) {
     return;
   }
@@ -1945,6 +1955,11 @@ nsHTMLDocument::WriteCommon(JSContext *cx,
   if (!IsHTMLDocument() || mDisableDocWrite) {
     // No calling document.write*() on XHTML!
 
+    return NS_ERROR_DOM_INVALID_STATE_ERR;
+  }
+
+
+  if (ShouldThrowOnDynamicMarkupInsertion()) {
     return NS_ERROR_DOM_INVALID_STATE_ERR;
   }
 
