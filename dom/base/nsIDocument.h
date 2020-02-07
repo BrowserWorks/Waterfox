@@ -2728,6 +2728,7 @@ public:
     eCreated,
     eConnected,
     eDisconnected,
+    eAdopted,
     eAttributeChanged
   };
 

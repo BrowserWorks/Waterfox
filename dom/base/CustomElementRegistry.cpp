@@ -48,7 +48,7 @@ CustomElementCallback::Call()
             extType.IsEmpty() ? nullptr : &extType);
 
         nsContentUtils::EnqueueLifecycleCallback(
-          nsIDocument::eConnected, mThisObject, nullptr, definition);
+          nsIDocument::eConnected, mThisObject, nullptr, nullptr, definition);
       }
 
       static_cast<LifecycleCreatedCallback *>(mCallback.get())->Call(mThisObject, rv);
@@ -60,6 +60,10 @@ CustomElementCallback::Call()
       break;
     case nsIDocument::eDisconnected:
       static_cast<LifecycleDisconnectedCallback *>(mCallback.get())->Call(mThisObject, rv);
+      break;
+    case nsIDocument::eAdopted:
+      static_cast<LifecycleAdoptedCallback *>(mCallback.get())->Call(mThisObject,
+        mAdoptedCallbackArgs.mOldDocument, mAdoptedCallbackArgs.mNewDocument, rv);
       break;
     case nsIDocument::eAttributeChanged:
       static_cast<LifecycleAttributeChangedCallback *>(mCallback.get())->Call(mThisObject,
@@ -330,7 +334,9 @@ CustomElementRegistry::SetupCustomElement(Element* aElement,
 /* static */ UniquePtr<CustomElementCallback>
 CustomElementRegistry::CreateCustomElementCallback(
   nsIDocument::ElementCallbackType aType, Element* aCustomElement,
-  LifecycleCallbackArgs* aArgs, CustomElementDefinition* aDefinition)
+  LifecycleCallbackArgs* aArgs,
+  LifecycleAdoptedCallbackArgs* aAdoptedCallbackArgs,
+  CustomElementDefinition* aDefinition)
 {
   MOZ_ASSERT(aDefinition, "CustomElementDefinition should not be null");
 
@@ -355,6 +361,12 @@ CustomElementRegistry::CreateCustomElementCallback(
     case nsIDocument::eDisconnected:
       if (aDefinition->mCallbacks->mDisconnectedCallback.WasPassed()) {
         func = aDefinition->mCallbacks->mDisconnectedCallback.Value();
+      }
+      break;
+
+    case nsIDocument::eAdopted:
+      if (aDefinition->mCallbacks->mAdoptedCallback.WasPassed()) {
+        func = aDefinition->mCallbacks->mAdoptedCallback.Value();
       }
       break;
 
@@ -386,6 +398,9 @@ CustomElementRegistry::CreateCustomElementCallback(
     callback->SetArgs(*aArgs);
   }
 
+  if (aAdoptedCallbackArgs) {
+    callback->SetAdoptedCallbackArgs(*aAdoptedCallbackArgs);
+  }
   return Move(callback);
 }
 
@@ -395,7 +410,7 @@ CustomElementRegistry::SyncInvokeReactions(nsIDocument::ElementCallbackType aTyp
                                            CustomElementDefinition* aDefinition)
 {
   auto callback = CreateCustomElementCallback(aType, aCustomElement, nullptr,
-                                              aDefinition);
+                                              nullptr, aDefinition);
   if (!callback) {
     return;
   }
@@ -414,6 +429,7 @@ CustomElementRegistry::SyncInvokeReactions(nsIDocument::ElementCallbackType aTyp
 CustomElementRegistry::EnqueueLifecycleCallback(nsIDocument::ElementCallbackType aType,
                                                 Element* aCustomElement,
                                                 LifecycleCallbackArgs* aArgs,
+                                                LifecycleAdoptedCallbackArgs* aAdoptedCallbackArgs,
                                                 CustomElementDefinition* aDefinition)
 {
   CustomElementDefinition* definition = aDefinition;
@@ -426,7 +442,8 @@ CustomElementRegistry::EnqueueLifecycleCallback(nsIDocument::ElementCallbackType
   }
 
   auto callback =
-    CreateCustomElementCallback(aType, aCustomElement, aArgs, definition);
+    CreateCustomElementCallback(aType, aCustomElement, aArgs,
+                                aAdoptedCallbackArgs, definition);
   if (!callback) {
     return;
   }
@@ -945,7 +962,7 @@ CustomElementRegistry::Upgrade(Element* aElement,
         };
         nsContentUtils::EnqueueLifecycleCallback(nsIDocument::eAttributeChanged,
                                                  aElement,
-                                                 &args, aDefinition);
+                                                 &args, nullptr, aDefinition);
       }
     }
   }
@@ -953,7 +970,7 @@ CustomElementRegistry::Upgrade(Element* aElement,
   // Step 4.
   if (aElement->IsInComposedDoc()) {
     nsContentUtils::EnqueueLifecycleCallback(nsIDocument::eConnected, aElement,
-                                             nullptr, aDefinition);
+      nullptr, nullptr, aDefinition);
   }
 
   // Step 5.
@@ -977,7 +994,8 @@ CustomElementRegistry::Upgrade(Element* aElement,
 
   // This is for old spec.
   nsContentUtils::EnqueueLifecycleCallback(nsIDocument::eCreated,
-                                           aElement, nullptr, aDefinition);
+                                           aElement, nullptr,
+                                           nullptr, aDefinition);
 }
 
 //-----------------------------------------------------
@@ -1158,6 +1176,11 @@ NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN(CustomElementDefinition)
   if (callbacks->mDisconnectedCallback.WasPassed()) {
     NS_CYCLE_COLLECTION_NOTE_EDGE_NAME(cb, "mCallbacks->mDisconnectedCallback");
     cb.NoteXPCOMChild(callbacks->mDisconnectedCallback.Value());
+  }
+
+  if (callbacks->mAdoptedCallback.WasPassed()) {
+    NS_CYCLE_COLLECTION_NOTE_EDGE_NAME(cb, "mCallbacks->mAdoptedCallback");
+    cb.NoteXPCOMChild(callbacks->mAdoptedCallback.Value());
   }
 
   NS_CYCLE_COLLECTION_NOTE_EDGE_NAME(cb, "mConstructor");
