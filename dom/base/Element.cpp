@@ -4242,6 +4242,26 @@ Element::SetCustomElementData(CustomElementData* aData)
   slots->mCustomElementData = aData;
 }
 
+CustomElementDefinition*
+Element::GetCustomElementDefinition() const
+{
+  CustomElementData* data = GetCustomElementData();
+  if (!data) {
+    return nullptr;
+  }
+
+  return data->GetCustomElementDefinition();
+}
+
+void
+Element::SetCustomElementDefinition(CustomElementDefinition* aDefinition)
+{
+  CustomElementData* data = GetCustomElementData();
+  MOZ_ASSERT(data);
+
+  data->SetCustomElementDefinition(aDefinition);
+}
+
 size_t
 Element::SizeOfExcludingThis(SizeOfState& aState) const
 {
