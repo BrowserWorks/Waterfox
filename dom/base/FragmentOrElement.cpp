@@ -726,19 +726,7 @@ FragmentOrElement::nsDOMSlots::Traverse(nsCycleCollectionTraversalCallback &cb)
   cb.NoteXPCOMChild(mExtendedSlots->mXBLInsertionParent.get());
 
   if (mExtendedSlots->mCustomElementData) {
-    for (uint32_t i = 0;
-         i < mExtendedSlots->mCustomElementData->mReactionQueue.Length(); i++) {
-      if (mExtendedSlots->mCustomElementData->mReactionQueue[i]) {
-        mExtendedSlots->mCustomElementData->mReactionQueue[i]->Traverse(cb);
-      }
-    }
-
-    if (mExtendedSlots->mCustomElementData->mCustomElementDefinition) {
-      NS_CYCLE_COLLECTION_NOTE_EDGE_NAME(cb,
-        "mExtendedSlots->mCustomElementData->mCustomElementDefinition");
-      cb.NoteNativeChild(mExtendedSlots->mCustomElementData->mCustomElementDefinition,
-        NS_CYCLE_COLLECTION_PARTICIPANT(CustomElementDefinition));
-    }
+    mExtendedSlots->mCustomElementData->Traverse(cb);
   }
 
   for (auto iter = mExtendedSlots->mRegisteredIntersectionObservers.Iter();
@@ -776,9 +764,7 @@ FragmentOrElement::nsDOMSlots::Unlink()
   MOZ_ASSERT(!(mExtendedSlots->mXBLBinding));
   mExtendedSlots->mXBLInsertionParent = nullptr;
   if (mExtendedSlots->mCustomElementData) {
-    if (mExtendedSlots->mCustomElementData->mCustomElementDefinition) {
-      mExtendedSlots->mCustomElementData->mCustomElementDefinition = nullptr;
-    }
+    mExtendedSlots->mCustomElementData->Unlink();
     mExtendedSlots->mCustomElementData = nullptr;
   }
   mExtendedSlots->mRegisteredIntersectionObservers.Clear();

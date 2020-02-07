@@ -137,6 +137,48 @@ CustomElementData::CustomElementData(nsIAtom* aType, State aState)
 {
 }
 
+void
+CustomElementData::SetCustomElementDefinition(CustomElementDefinition* aDefinition)
+{
+  MOZ_ASSERT(mState == State::eCustom);
+  MOZ_ASSERT(!mCustomElementDefinition);
+  MOZ_ASSERT(aDefinition->mType == mType);
+
+  mCustomElementDefinition = aDefinition;
+}
+
+CustomElementDefinition*
+CustomElementData::GetCustomElementDefinition()
+{
+  MOZ_ASSERT(mCustomElementDefinition ? mState == State::eCustom
+                                      : mState != State::eCustom);
+
+  return mCustomElementDefinition;
+}
+
+void
+CustomElementData::Traverse(nsCycleCollectionTraversalCallback& aCb) const
+{
+  for (uint32_t i = 0; i < mReactionQueue.Length(); i++) {
+    if (mReactionQueue[i]) {
+      mReactionQueue[i]->Traverse(aCb);
+    }
+  }
+
+  if (mCustomElementDefinition) {
+    NS_CYCLE_COLLECTION_NOTE_EDGE_NAME(aCb, "mCustomElementDefinition");
+    aCb.NoteNativeChild(mCustomElementDefinition,
+      NS_CYCLE_COLLECTION_PARTICIPANT(CustomElementDefinition));
+  }
+}
+
+void
+CustomElementData::Unlink()
+{
+  mReactionQueue.Clear();
+  mCustomElementDefinition = nullptr;
+}
+
 //-----------------------------------------------------
 // CustomElementRegistry
 
