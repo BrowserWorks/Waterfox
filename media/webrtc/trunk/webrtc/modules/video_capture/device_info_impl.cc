@@ -287,7 +287,7 @@ int32_t DeviceInfoImpl::GetExpectedCaptureDelay(
     {
         if (delayValues[device].productId && strncmp((char*) productId,
                                                      (char*) delayValues[device].productId,
-                                                     kVideoCaptureProductIdLength) == 0)
+                                                     kVideoCaptureProductIdSize) == 0)
         {
             // We have found the camera
 

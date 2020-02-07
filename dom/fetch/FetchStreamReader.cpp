@@ -271,7 +271,7 @@ FetchStreamReader::ResolvedCallback(JSContext* aCx,
 
   // Let's take a copy of the data.
   if (!mBuffer.AppendElements(array.Data(), len, fallible)) {
-    CloseAndRelease(aCx, NS_ERROR_OUT_OF_MEMORY);
+    CloseAndRelease(NS_ERROR_OUT_OF_MEMORY);
     return;
   }
 
