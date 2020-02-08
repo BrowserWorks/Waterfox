@@ -414,7 +414,7 @@ public:
    * https://html.spec.whatwg.org/#look-up-a-custom-element-definition
    */
   CustomElementDefinition* LookupCustomElementDefinition(
-    const nsAString& aLocalName, nsIAtom* aTypeAtom) const;
+    nsIAtom* aNameAtom, nsIAtom* aTypeAtom) const;
 
   CustomElementDefinition* LookupCustomElementDefinition(
     JSContext* aCx, JSObject *aConstructor) const;

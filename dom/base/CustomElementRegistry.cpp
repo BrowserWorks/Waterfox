@@ -242,12 +242,11 @@ CustomElementRegistry::~CustomElementRegistry()
 }
 
 CustomElementDefinition*
-CustomElementRegistry::LookupCustomElementDefinition(const nsAString& aLocalName,
+CustomElementRegistry::LookupCustomElementDefinition(nsIAtom* aNameAtom,
                                                      nsIAtom* aTypeAtom) const
 {
-  nsCOMPtr<nsIAtom> localNameAtom = NS_Atomize(aLocalName);
   CustomElementDefinition* data = mCustomDefinitions.GetWeak(aTypeAtom);
-  if (data && data->mLocalName == localNameAtom) {
+  if (data && data->mLocalName == aNameAtom) {
     return data;
   }
 

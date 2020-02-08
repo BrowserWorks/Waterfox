@@ -284,9 +284,10 @@ NS_NewHTMLElement(Element** aResult, already_AddRefed<mozilla::dom::NodeInfo>&& 
   CustomElementDefinition* definition = aDefinition;
   if (CustomElementRegistry::IsCustomElementEnabled() && isCustomElement &&
       !definition) {
+    MOZ_ASSERT(nodeInfo->NameAtom()->Equals(nodeInfo->LocalName()));
     definition =
       nsContentUtils::LookupCustomElementDefinition(nodeInfo->GetDocument(),
-                                                    nodeInfo->LocalName(),
+                                                    nodeInfo->NameAtom(),
                                                     nodeInfo->NamespaceID(),
                                                     typeAtom);
   }
