@@ -5079,7 +5079,7 @@ nsContentUtils::ParseFragmentHTML(const nsAString& aSourceBuffer,
     NS_ADDREF(sHTMLFragmentParser = new nsHtml5StringParser());
     // Now sHTMLFragmentParser owns the object
   }
-  
+
   nsIContent* target = aTargetNode;
 
   // If this is a chrome-privileged document, create a fragment first, and
@@ -5089,7 +5089,7 @@ nsContentUtils::ParseFragmentHTML(const nsAString& aSourceBuffer,
     fragment = new DocumentFragment(aTargetNode->OwnerDoc()->NodeInfoManager());
     target = fragment;
   }
-  
+
   nsresult rv =
     sHTMLFragmentParser->ParseFragment(aSourceBuffer,
                                        target,
@@ -5097,7 +5097,7 @@ nsContentUtils::ParseFragmentHTML(const nsAString& aSourceBuffer,
                                        aContextNamespace,
                                        aQuirks,
                                        aPreventScriptExecution);
-                                       
+
   NS_ENSURE_SUCCESS(rv, rv);
 
   if (fragment) {
@@ -5113,7 +5113,7 @@ nsContentUtils::ParseFragmentHTML(const nsAString& aSourceBuffer,
     rv = error.StealNSResult();
   }
 
-                                       
+
   return rv;
 }
 
@@ -10122,7 +10122,7 @@ nsContentUtils::HttpsStateIsModern(nsIDocument* aDocument)
 nsContentUtils::LookupCustomElementDefinition(nsIDocument* aDoc,
                                               const nsAString& aLocalName,
                                               uint32_t aNameSpaceID,
-                                              const nsAString* aIs)
+                                              nsIAtom* aTypeAtom)
 {
   MOZ_ASSERT(aDoc);
 
@@ -10141,37 +10141,7 @@ nsContentUtils::LookupCustomElementDefinition(nsIDocument* aDoc,
     return nullptr;
   }
 
-  return registry->LookupCustomElementDefinition(aLocalName, aIs);
-}
-
-/* static */ void
-nsContentUtils::SetupCustomElement(Element* aElement,
-                                   const nsAString* aTypeExtension)
-{
-  MOZ_ASSERT(aElement);
-
-  nsCOMPtr<nsIDocument> doc = aElement->OwnerDoc();
-
-  if (!doc) {
-    return;
-  }
-
-  if (aElement->GetNameSpaceID() != kNameSpaceID_XHTML ||
-      !doc->GetDocShell()) {
-    return;
-  }
-
-  nsCOMPtr<nsPIDOMWindowInner> window(doc->GetInnerWindow());
-  if (!window) {
-    return;
-  }
-
-  RefPtr<CustomElementRegistry> registry(window->CustomElements());
-  if (!registry) {
-    return;
-  }
-
-  return registry->SetupCustomElement(aElement, aTypeExtension);
+  return registry->LookupCustomElementDefinition(aLocalName, aTypeAtom);
 }
 
 /* static */ CustomElementDefinition*

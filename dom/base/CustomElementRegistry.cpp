@@ -36,8 +36,6 @@ CustomElementCallback::Call()
       nsIDocument* document = mThisObject->GetComposedDoc();
       if (document) {
         NodeInfo* ni = mThisObject->NodeInfo();
-        nsDependentAtomString extType(mOwnerData->mType);
-
         // We need to do this because at this point, CustomElementDefinition is
         // not set to CustomElementData yet, so EnqueueLifecycleCallback will
         // fail to find the CE definition for this custom element.
@@ -45,7 +43,7 @@ CustomElementCallback::Call()
         CustomElementDefinition* definition =
           nsContentUtils::LookupCustomElementDefinition(document,
             ni->LocalName(), ni->NamespaceID(),
-            extType.IsEmpty() ? nullptr : &extType);
+            mOwnerData->GetCustomElementType());
 
         nsContentUtils::EnqueueLifecycleCallback(
           nsIDocument::eConnected, mThisObject, nullptr, nullptr, definition);
@@ -130,10 +128,10 @@ CustomElementData::CustomElementData(nsIAtom* aType)
 }
 
 CustomElementData::CustomElementData(nsIAtom* aType, State aState)
-  : mType(aType)
-  , mElementIsBeingCreated(false)
+  : mElementIsBeingCreated(false)
   , mCreatedCallbackInvoked(true)
   , mState(aState)
+  , mType(aType)
 {
 }
 
@@ -154,6 +152,12 @@ CustomElementData::GetCustomElementDefinition()
                                       : mState != State::eCustom);
 
   return mCustomElementDefinition;
+}
+
+nsIAtom*
+CustomElementData::GetCustomElementType()
+{
+  return mType;
 }
 
 void
@@ -274,12 +278,10 @@ CustomElementRegistry::~CustomElementRegistry()
 
 CustomElementDefinition*
 CustomElementRegistry::LookupCustomElementDefinition(const nsAString& aLocalName,
-                                                     const nsAString* aIs) const
+                                                     nsIAtom* aTypeAtom) const
 {
   nsCOMPtr<nsIAtom> localNameAtom = NS_Atomize(aLocalName);
-  nsCOMPtr<nsIAtom> typeAtom = aIs ? NS_Atomize(*aIs) : localNameAtom;
-
-  CustomElementDefinition* data = mCustomDefinitions.GetWeak(typeAtom);
+  CustomElementDefinition* data = mCustomDefinitions.GetWeak(aTypeAtom);
   if (data && data->mLocalName == localNameAtom) {
     return data;
   }
@@ -325,50 +327,6 @@ CustomElementRegistry::RegisterUnresolvedElement(Element* aElement, nsIAtom* aTy
   nsWeakPtr* elem = unresolved->AppendElement();
   *elem = do_GetWeakReference(aElement);
   aElement->AddStates(NS_EVENT_STATE_UNRESOLVED);
-}
-
-void
-CustomElementRegistry::SetupCustomElement(Element* aElement,
-                                          const nsAString* aTypeExtension)
-{
-  nsCOMPtr<nsIAtom> tagAtom = aElement->NodeInfo()->NameAtom();
-  nsCOMPtr<nsIAtom> typeAtom = aTypeExtension ?
-    NS_Atomize(*aTypeExtension) : tagAtom;
-
-  if (aTypeExtension && !aElement->HasAttr(kNameSpaceID_None, nsGkAtoms::is)) {
-    // Custom element setup in the parser happens after the "is"
-    // attribute is added.
-    aElement->SetAttr(kNameSpaceID_None, nsGkAtoms::is, *aTypeExtension, true);
-  }
-
-  // SetupCustomElement() should be called with an element that don't have
-  // CustomElementData setup, if not we will hit the assertion in
-  // SetCustomElementData().
-  aElement->SetCustomElementData(new CustomElementData(typeAtom));
-
-  CustomElementDefinition* definition = LookupCustomElementDefinition(
-    aElement->NodeInfo()->LocalName(), aTypeExtension);
-
-  if (!definition) {
-    // The type extension doesn't exist in the registry,
-    // thus we don't need to enqueue callback or adjust
-    // the "is" attribute, but it is possibly an upgrade candidate.
-    RegisterUnresolvedElement(aElement, typeAtom);
-    return;
-  }
-
-  if (definition->mLocalName != tagAtom) {
-    // The element doesn't match the local name for the
-    // definition, thus the element isn't a custom element
-    // and we don't need to do anything more.
-    return;
-  }
-
-  // Enqueuing the created callback will set the CustomElementData on the
-  // element, causing prototype swizzling to occur in Element::WrapObject.
-  // We make it synchronously for createElement/createElementNS in order to
-  // pass tests. It'll be removed when we deprecate custom elements v0.
-  SyncInvokeReactions(nsIDocument::eCreated, aElement, definition);
 }
 
 /* static */ UniquePtr<CustomElementCallback>

@@ -1505,7 +1505,7 @@ public:
    */
   static bool IsValidNodeName(nsIAtom *aLocalName, nsIAtom *aPrefix,
                                 int32_t aNamespaceID);
-                                
+
   enum SanitizeFragments {
     SanitizeSystemPrivileged,
     NeverSanitize,
@@ -2977,10 +2977,8 @@ public:
     LookupCustomElementDefinition(nsIDocument* aDoc,
                                   const nsAString& aLocalName,
                                   uint32_t aNameSpaceID,
-                                  const nsAString* aIs = nullptr);
+                                  nsIAtom* aTypeAtom);
 
-  static void SetupCustomElement(Element* aElement,
-                                 const nsAString* aTypeExtension = nullptr);
 
   static mozilla::dom::CustomElementDefinition*
   GetElementDefinitionIfObservingAttr(Element* aCustomElement,
