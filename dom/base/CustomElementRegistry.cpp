@@ -741,11 +741,7 @@ CustomElementRegistry::Define(const nsAString& aName,
               aRv.StealExceptionFromJSContext(cx);
               return;
             }
-
-            if (!observedAttributes.AppendElement(NS_Atomize(attrStr))) {
-              aRv.Throw(NS_ERROR_OUT_OF_MEMORY);
-              return;
-            }
+            observedAttributes.AppendElement(NS_Atomize(attrStr));
           }
         }
       } // Leave constructor's compartment.
