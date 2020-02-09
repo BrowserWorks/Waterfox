@@ -18,6 +18,7 @@
 #include "nsCycleCollectionParticipant.h"
 #include "nsGenericHTMLElement.h"
 #include "nsWrapperCache.h"
+#include "nsContentUtils.h"
 
 class nsDocument;
 
@@ -405,7 +406,10 @@ public:
 
 public:
   static bool IsCustomElementEnabled(JSContext* aCx = nullptr,
-                                     JSObject* aObject = nullptr);
+                                     JSObject* aObject = nullptr)
+  {
+    return nsContentUtils::IsCustomElementsEnabled();
+  }
 
   explicit CustomElementRegistry(nsPIDOMWindowInner* aWindow);
 
