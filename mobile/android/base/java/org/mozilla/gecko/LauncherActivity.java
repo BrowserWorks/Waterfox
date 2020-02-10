@@ -33,7 +33,7 @@ import org.mozilla.gecko.tabqueue.TabQueueHelper;
 import org.mozilla.gecko.tabqueue.TabQueueService;
 
 import static org.mozilla.gecko.BrowserApp.ACTIVITY_REQUEST_PREFERENCES;
-import static org.mozilla.gecko.deeplink.DeepLinkContract.DEEP_LINK_SCHEME;
+import static org.mozilla.gecko.deeplink.DeepLinkContract.DEEP_LINK_SCHEMES;
 import static org.mozilla.gecko.deeplink.DeepLinkContract.LINK_BOOKMARK_LIST;
 import static org.mozilla.gecko.deeplink.DeepLinkContract.LINK_DEFAULT_BROWSER;
 import static org.mozilla.gecko.deeplink.DeepLinkContract.LINK_HISTORY_LIST;
@@ -198,7 +198,7 @@ public class LauncherActivity extends Activity {
                 || intent.getAction() == null) {
             return false;
         }
-        boolean schemeMatched = intent.getData().getScheme().equalsIgnoreCase(DEEP_LINK_SCHEME);
+        boolean schemeMatched = DEEP_LINK_SCHEMES.contains(intent.getData().getScheme().toLowerCase());
         boolean actionMatched = intent.getAction().equals(Intent.ACTION_VIEW);
         return schemeMatched && actionMatched;
     }

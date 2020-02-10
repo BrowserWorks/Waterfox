@@ -634,7 +634,17 @@ nsCORSListenerProxy::OnStopRequest(nsIRequest* aRequest, nsresult aStatusCode) {
     MutexAutoLock lock(mMutex);
     listener = mOuterListener.forget();
   }
+
+#if defined(FENNEC_NIGHTLY) || defined(FENNEC_BETA)
+  // To workaround bug 1546191 (which is likely harmless) we want to add a
+  // non-null check.  As it's just an Android/Fennec crash, we also don't want
+  // to mask other platforms from possible regressions of this code.
+  nsresult rv =
+      listener ? listener->OnStopRequest(aRequest, aStatusCode) : NS_OK;
+#else
   nsresult rv = listener->OnStopRequest(aRequest, aStatusCode);
+#endif
+
   mOuterNotificationCallbacks = nullptr;
   mHttpChannel = nullptr;
   return rv;

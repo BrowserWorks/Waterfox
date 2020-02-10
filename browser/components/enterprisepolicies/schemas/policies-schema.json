@@ -277,7 +277,8 @@
     },
 
     "DisplayMenuBar": {
-      "type": "boolean"
+      "type": ["boolean", "string"],
+      "enum": ["always", "never", "default-on", "default-off"]
     },
 
     "DNSOverHTTPS": {
@@ -329,6 +330,13 @@
         },
         "Fingerprinting": {
           "type": "boolean"
+        },
+        "Exceptions": {
+          "type": "array",
+          "strict": false,
+          "items": {
+            "type": "origin"
+          }
         }
       }
     },
@@ -837,6 +845,12 @@
         },
         "widget.content.gtk-theme-override": {
           "type": "string"
+        },
+        "dom.xmldocument.load.enabled": {
+          "type": "boolean"
+        },
+        "dom.xmldocument.async.enabled": {
+          "type": "boolean"
         }
       }
     },

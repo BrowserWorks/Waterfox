@@ -33,6 +33,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONArray;
 import org.mozilla.gecko.AppConstants;
+import org.mozilla.gecko.Experiments;
 import org.mozilla.gecko.GeckoSharedPrefs;
 import org.mozilla.gecko.search.SearchEngineManager;
 import org.mozilla.gecko.util.HardwareUtils;
@@ -156,6 +157,17 @@ public class SwitchBoard {
             return override;
         }
 
+        // Leanplum should be enabled for anyone that has master password enabled otherwise
+        // make the normal checks
+        if (experimentName.equalsIgnoreCase(Experiments.LEANPLUM_DEBUG) ||
+                (experimentName.equalsIgnoreCase(Experiments.LEANPLUM))) {
+            final boolean isMasterPasswordEnabled = GeckoSharedPrefs.forProfile(c)
+                    .getBoolean("android.not_a_preference.master_password_enabled", false);
+            if (isMasterPasswordEnabled) {
+                return true;
+            }
+        }
+
         final String config = Preferences.getDynamicConfigJson(c);
         if (config == null) {
             return false;
@@ -173,8 +185,7 @@ public class SwitchBoard {
                     final boolean isMatch = isMatch(c, entry.optJSONObject(KEY_MATCH));
                     final JSONObject buckets = entry.getJSONObject(KEY_BUCKETS);
                     final boolean isInBucket = isInBucket(c, buckets.getInt(KEY_MIN), buckets.getInt(KEY_MAX));
-                    final boolean isMasterPasswordEnabled = GeckoSharedPrefs.forProfile(c).getBoolean("android.not_a_preference.master_password_enabled", false);
-                    if (isMatch && isInBucket || isMasterPasswordEnabled) {
+                    if (isMatch && isInBucket) {
                         return true;
                     }
                 }

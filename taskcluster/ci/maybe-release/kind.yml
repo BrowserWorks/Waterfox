@@ -25,11 +25,17 @@ job-defaults:
                 - project:releng:ship-it:server:staging
                 - project:releng:ship-it:action:create-new-release
     run-on-projects: []
+    treeherder:
+        symbol: Rel(maybe-release)
+        tier: 1
+        kind: build
 
 jobs:
     fennec:
         name: maybe-release-fennec
         shipping-product: fennec
         worker:
-            phase: promote_fennec_beta
+            phase: ship_fennec_beta
             product-key: fennec_beta
+        treeherder:
+            platform: fennec-release/opt

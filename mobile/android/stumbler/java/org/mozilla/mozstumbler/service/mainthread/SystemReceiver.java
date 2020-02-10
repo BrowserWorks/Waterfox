@@ -35,12 +35,14 @@ public class SystemReceiver extends BroadcastReceiver {
             return;
         }
 
-        final Intent startServiceIntent = new Intent(context, StumblerService.class);
-        startServiceIntent.putExtra(StumblerService.ACTION_NOT_FROM_HOST_APP, true);
-        if (AppConstants.Versions.preO) {
-            context.startService(startServiceIntent);
-        } else {
-            context.startForegroundService(startServiceIntent);
+        if (StumblerService.isCollectingLocationAllowed(context, true)) {
+            final Intent startServiceIntent = new Intent(context, StumblerService.class);
+            startServiceIntent.putExtra(StumblerService.ACTION_NOT_FROM_HOST_APP, true);
+            if (AppConstants.Versions.preO) {
+                context.startService(startServiceIntent);
+            } else {
+                context.startForegroundService(startServiceIntent);
+            }
         }
 
         Log.d(LOG_TAG, "Responded to a system intent");

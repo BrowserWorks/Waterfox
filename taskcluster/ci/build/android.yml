@@ -70,6 +70,7 @@ android-api-16-beta/debug:
     worker-type: b-linux
     worker:
         env:
+            FENNEC_BETA: "1"
             TOOLTOOL_MANIFEST: "mobile/android/config/tooltool-manifests/android/releng.manifest"
         artifacts:
             - name: public/build/target.maven.zip
@@ -141,6 +142,7 @@ android-x86-beta/debug:
     worker-type: b-linux
     worker:
         env:
+            FENNEC_BETA: "1"
             TOOLTOOL_MANIFEST: "mobile/android/config/tooltool-manifests/android-x86/releng.manifest"
         artifacts:
             - name: public/build/target.maven.zip
@@ -200,6 +202,7 @@ android-x86-beta/opt:
     worker-type: b-linux
     worker:
         env:
+            FENNEC_BETA: "1"
             TOOLTOOL_MANIFEST: "mobile/android/config/tooltool-manifests/android-x86/releng.manifest"
         artifacts:
             - name: public/build/target.maven.zip
@@ -360,6 +363,7 @@ android-api-16-beta/opt:
     worker-type: b-linux
     worker:
         env:
+            FENNEC_BETA: "1"
             TOOLTOOL_MANIFEST: "mobile/android/config/tooltool-manifests/android/releng.manifest"
         artifacts:
             - name: public/build/target.maven.zip
@@ -424,6 +428,7 @@ android-api-16-beta-test/opt:
     worker-type: b-linux
     worker:
         env:
+            FENNEC_BETA: "1"
             TOOLTOOL_MANIFEST: "mobile/android/config/tooltool-manifests/android/releng.manifest"
     run:
         actions: [get-secrets, build]
@@ -536,6 +541,7 @@ android-aarch64-beta/debug:
     worker-type: b-linux
     worker:
         env:
+            FENNEC_BETA: "1"
             TOOLTOOL_MANIFEST: "mobile/android/config/tooltool-manifests/android/releng.manifest"
         artifacts:
             - name: public/build/target.maven.zip
@@ -599,6 +605,7 @@ android-aarch64-beta/opt:
     worker-type: b-linux
     worker:
         env:
+            FENNEC_BETA: "1"
             TOOLTOOL_MANIFEST: "mobile/android/config/tooltool-manifests/android/releng.manifest"
         artifacts:
             - name: public/build/target.maven.zip
@@ -716,6 +723,7 @@ android-x86_64-beta/opt:
     worker-type: b-linux
     worker:
         env:
+            FENNEC_BETA: "1"
             TOOLTOOL_MANIFEST: "mobile/android/config/tooltool-manifests/android-x86/releng.manifest"
         artifacts:
             - name: public/build/target.maven.zip
@@ -778,6 +786,7 @@ android-x86_64-beta-test/opt:
     worker-type: b-linux
     worker:
         env:
+            FENNEC_BETA: "1"
             TOOLTOOL_MANIFEST: "mobile/android/config/tooltool-manifests/android-x86/releng.manifest"
     run:
         actions: [get-secrets, build]
@@ -844,6 +853,7 @@ android-x86_64-beta/debug:
     worker-type: b-linux
     worker:
         env:
+            FENNEC_BETA: "1"
             TOOLTOOL_MANIFEST: "mobile/android/config/tooltool-manifests/android-x86/releng.manifest"
         artifacts:
             - name: public/build/target.maven.zip

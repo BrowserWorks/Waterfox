@@ -52,25 +52,29 @@ public class LocalPreferenceReceiver extends BroadcastReceiver {
         // For testing service messages were received
         context.sendBroadcast(new Intent(AppGlobals.ACTION_TEST_SETTING_ENABLED));
 
-        Log.d(LOG_TAG, "Sending passive start message | isDebug:" + AppGlobals.isDebug);
+        if (StumblerService.isCollectingLocationAllowed(context, false)) {
+            Log.d(LOG_TAG, "Sending passive start message | isDebug:" + AppGlobals.isDebug);
 
-        final Intent startServiceIntent = new Intent(context, StumblerService.class);
+            final Intent startServiceIntent = new Intent(context, StumblerService.class);
 
-        startServiceIntent.putExtra(StumblerService.ACTION_START_PASSIVE, true);
-        startServiceIntent.putExtra(
-                StumblerService.ACTION_EXTRA_MOZ_API_KEY,
-                intent.getStringExtra("moz_mozilla_api_key")
-        );
-        startServiceIntent.putExtra(
-                StumblerService.ACTION_EXTRA_USER_AGENT,
-                intent.getStringExtra("user_agent")
-        );
+            startServiceIntent.putExtra(StumblerService.ACTION_START_PASSIVE, true);
+            startServiceIntent.putExtra(
+                    StumblerService.ACTION_EXTRA_MOZ_API_KEY,
+                    intent.getStringExtra("moz_mozilla_api_key")
+            );
+            startServiceIntent.putExtra(
+                    StumblerService.ACTION_EXTRA_USER_AGENT,
+                    intent.getStringExtra("user_agent")
+            );
 
-        intent.setClass(context, StumblerService.class);
-        if (AppConstants.Versions.preO) {
-            context.startService(intent);
+            intent.setClass(context, StumblerService.class);
+            if (AppConstants.Versions.preO) {
+                context.startService(intent);
+            } else {
+                context.startForegroundService(intent);
+            }
         } else {
-            context.startForegroundService(intent);
+            Log.d(LOG_TAG, "Not allowed to start StumblerService | isDebug:" + AppGlobals.isDebug);
         }
     }
 }

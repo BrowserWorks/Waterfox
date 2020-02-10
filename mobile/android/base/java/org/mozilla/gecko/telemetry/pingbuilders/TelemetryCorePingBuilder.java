@@ -160,7 +160,6 @@ public class TelemetryCorePingBuilder extends TelemetryPingBuilder {
         synchronized (this) {
             SharedPreferences prefs = GeckoSharedPrefs.forApp(context);
             final int count = prefs.getInt(GeckoApp.PREFS_FLASH_USAGE, 0);
-            final int defaultSearchEnginesCount = 6;
             payload.put(FLASH_USAGE, count);
             prefs.edit().putInt(GeckoApp.PREFS_FLASH_USAGE, 0).apply();
 
@@ -189,7 +188,6 @@ public class TelemetryCorePingBuilder extends TelemetryPingBuilder {
             final boolean restoreTabs = !"quit".equals(prefs.getString(GeckoPreferences.PREFS_RESTORE_SESSION, "always"));
             final boolean showWebFonts = prefs.getBoolean("browser.display.use_document_fonts", true);
             final int totalSearchEngines = prefs.getInt("android.not_a_preference.total_added_search_engines", 0);
-            final int totalAddedSearchEngines = totalSearchEngines - defaultSearchEnginesCount > 0 ? totalSearchEngines - defaultSearchEnginesCount : 0;
             final int bookmarksWithStar = prefs.getInt("android.not_a_preference.bookmarks_with_star", 0);
             final int currentPwas = getCurrentPwas(context);
             final int totalSitesPinnedToTopsites = prefs.getInt("android.not_a_preference.total_sites_pinned_to_topsites", 0);
@@ -207,7 +205,7 @@ public class TelemetryCorePingBuilder extends TelemetryPingBuilder {
                     getSettingsPrivacy(privacyPrefs[0], privacyPrefs[1], masterPasswordUsageCount),
                     getSettingsNotifications(productFeatureTipsEnabled),
                     getAddons(activeAddons, disabledAddons),
-                    getPageOptions(saveAsPdf, print, totalAddedSearchEngines, totalSitesPinnedToTopsites,
+                    getPageOptions(saveAsPdf, print, totalSearchEngines, totalSitesPinnedToTopsites,
                             viewPageSource, bookmarksWithStar, currentPwas),
                     getSync(onlyOverWifi));
             payload.put(FENNEC, fennec);
@@ -462,14 +460,14 @@ public class TelemetryCorePingBuilder extends TelemetryPingBuilder {
         return addons;
     }
 
-    public ExtendedJSONObject getPageOptions(final Integer saveAsPdf, final Integer print, final Integer totalAddedSearchEngines,
+    public ExtendedJSONObject getPageOptions(final Integer saveAsPdf, final Integer print, final Integer totalSearchEngines,
                                              final Integer totalSitesPinnedToTopsites, final Integer viewSource,
                                              final Integer bookmarkWithStar, final Integer currentPwas) {
         final ExtendedJSONObject pageOptions = new ExtendedJSONObject();
 
         pageOptions.put(SAVE_AS_PDF, saveAsPdf);
         pageOptions.put(PRINT, print);
-        pageOptions.put(TOTAL_ADDED_SEARCH_ENGINES, totalAddedSearchEngines);
+        pageOptions.put(TOTAL_ADDED_SEARCH_ENGINES, totalSearchEngines);
         pageOptions.put(TOTAL_SITES_PINNED_TO_TOPSITES, totalSitesPinnedToTopsites);
         pageOptions.put(VIEW_SOURCE, viewSource);
         pageOptions.put(BOOKMARK_WITH_STAR, bookmarkWithStar);
@@ -488,7 +486,8 @@ public class TelemetryCorePingBuilder extends TelemetryPingBuilder {
 
     private int getCurrentPwas(final Context context) {
         // ShortcutManager#getPinnedShortcuts is only available on Android >= 25
-        if (Build.VERSION.SDK_INT >= 25) {
+        // But it only seems to return a valid result on Android >= 26
+        if (Build.VERSION.SDK_INT >= 26) {
             final ShortcutManager sm = context.getSystemService(ShortcutManager.class);
             return (int) sm.getPinnedShortcuts()
                     .stream()

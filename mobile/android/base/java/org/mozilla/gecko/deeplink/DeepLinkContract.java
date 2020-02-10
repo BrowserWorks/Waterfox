@@ -5,6 +5,9 @@
 
 package org.mozilla.gecko.deeplink;
 
+import java.util.Arrays;
+import java.util.List;
+
 // This class defines the contract when using deep links
 public class DeepLinkContract {
 

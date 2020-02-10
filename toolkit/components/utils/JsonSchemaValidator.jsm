@@ -39,13 +39,6 @@ var JsonSchemaValidator = {
 };
 
 function validateAndParseParamRecursive(param, properties) {
-  if (properties.enum) {
-    if (properties.enum.includes(param)) {
-      return [true, param];
-    }
-    return [false, null];
-  }
-
   log.debug(`checking @${param}@ for type ${properties.type}`);
 
   if (Array.isArray(properties.type)) {
@@ -73,7 +66,13 @@ function validateAndParseParamRecursive(param, properties) {
     case "URL":
     case "URLorEmpty":
     case "origin":
-      return validateAndParseSimpleParam(param, properties.type);
+      let [valid, data] = validateAndParseSimpleParam(param, properties.type);
+      if (properties.enum && typeof data !== "boolean") {
+        if (!properties.enum.includes(param)) {
+          return [false, null];
+        }
+      }
+      return [valid, data];
 
     case "array":
       if (!Array.isArray(param)) {

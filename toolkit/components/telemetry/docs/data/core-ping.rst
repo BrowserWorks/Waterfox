@@ -134,9 +134,9 @@ Structure:
                                 // Resets after each sent core ping.
           "bookmark_with_star": <int>, // The number of times the user has used the "Menu / <Star>".
                                        // Resets after each sent core ping.
-          "current_pwas_count": <int>, // On Android >=25 - a positive number of PWAs currently on
+          "current_pwas_count": <int>, // On Android >=26 - a positive number of PWAs currently on
                                        // homescreen, installed from this app.
-                                       // On Android <25 - a default of "-1".
+                                       // On Android <26 - a default of "-1".
         },
         "sync": {
           "only_over_wifi": <boolean>, // "true" if the "Settings/Sync/Sync only over Wi-Fi"
@@ -441,7 +441,7 @@ Fennec.page_options.current_pwas_count
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 The `current_pwas_count` field contains the number of currently installed PWAs
 from this application.
-As Android APIs for querying this are only available on Android >=25 for lower
+As Android APIs for querying this are only available on Android >=26 for lower
 versions of Android the value of this key will be "-1".
 The value is determined at the time of sending the core ping.
 

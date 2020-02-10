@@ -3324,6 +3324,10 @@ void BackgroundCursorChild::HandleResponse(
   auto& responses =
       const_cast<nsTArray<ObjectStoreCursorResponse>&>(aResponses);
 
+  // If a new cursor is created, we need to keep a reference to it until the
+  // ResultHelper creates a DOM Binding.
+  RefPtr<IDBCursor> newCursor;
+
   for (ObjectStoreCursorResponse& response : responses) {
     StructuredCloneReadInfo cloneReadInfo(std::move(response.cloneInfo()));
     cloneReadInfo.mDatabase = mTransaction->Database();
@@ -3332,7 +3336,6 @@ void BackgroundCursorChild::HandleResponse(
                                     response.cloneInfo().files(), nullptr,
                                     cloneReadInfo.mFiles);
 
-    RefPtr<IDBCursor> newCursor;
 
     if (mCursor) {
       mCursor->Reset(std::move(response.key()), std::move(cloneReadInfo));
