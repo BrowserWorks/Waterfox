@@ -83,6 +83,7 @@ linux64-fuzzing/debug:
     worker:
         max-run-time: 5400
         env:
+            MOZ_LOW_PARALLELISM_BUILD: '1'
             PERFHERDER_EXTRA_OPTIONS: fuzzing
             FORCE_GCC: '1'
     run:
@@ -700,6 +701,7 @@ linux64-fuzzing-ccov/opt:
     worker:
         max-run-time: 5400
         env:
+            MOZ_LOW_PARALLELISM_BUILD: '1'
             PERFHERDER_EXTRA_OPTIONS: fuzzing-ccov
             FORCE_GCC: '1'
     run:
@@ -1045,6 +1047,7 @@ linux64-ccov/opt:
     worker:
         max-run-time: 7200
         env:
+            MOZ_LOW_PARALLELISM_BUILD: '1'
             FORCE_GCC: '1'
     run:
         using: mozharness
