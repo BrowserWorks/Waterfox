@@ -46,8 +46,10 @@ amContentHandler.prototype = {
     const { triggeringPrincipal } = aRequest.loadInfo;
 
     let sourceHost;
+    let sourceURL;
 
     try {
+      sourceURL = triggeringPrincipal.URI.spec;
       sourceHost = triggeringPrincipal.URI.host;
     } catch (err) {
       // Ignore errors when retrieving the host for the principal (e.g. null principals raise
@@ -64,6 +66,7 @@ amContentHandler.prototype = {
       callbackID: -1,
       method: "link",
       sourceHost,
+      sourceURL,
     };
 
     if (Services.appinfo.processType == Ci.nsIXULRuntime.PROCESS_TYPE_DEFAULT) {
