@@ -752,7 +752,7 @@ int32_t DeviceInfoDS::CreateCapabilityMap(
     RELEASE_AND_CLEAR(captureDevice); // Release the capture device
 
     // Store the new used device name
-    _lastUseddeviceNameSize = deviceUniqueIdUTF8Size;
+    _lastUsedDeviceNameLength = deviceUniqueIdUTF8Size;
     _lastUsedDeviceName = (char*) realloc(_lastUsedDeviceName,
                                                    _lastUseddeviceNameSize
                                                        + 1);
