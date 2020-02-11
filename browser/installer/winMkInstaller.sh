@@ -2,7 +2,7 @@
 
 set -e
 
-BROWSER_CHANNEL="current"
+BROWSER_CHANNEL="classic"
 OPERATING_SYSTEM="win64"
 
 # Loop through arguments and process them
@@ -23,8 +23,8 @@ echo "# Version: $DISPLAYVERSION"
 BUILDID=$(grep 'BuildID=' objdir-$BROWSER_CHANNEL/dist/bin/application.ini | cut -d'=' -f2)
 echo "# Build ID: $DISPLAYVERSION"
 
-7z x objdir-$BROWSER_CHANNEL/dist/install/sea/waterfox-$DISPLAYVERSION.en-US.win64.installer.exe -oobjdir-$BROWSER_CHANNEL/dist/install/sea/
-rm "objdir-$BROWSER_CHANNEL/dist/install/sea/waterfox-$DISPLAYVERSION.en-US.win64.installer.exe"
+7z x objdir-$BROWSER_CHANNEL/dist/install/sea/waterfox-$BROWSER_CHANNEL-$DISPLAYVERSION.en-US.win64.installer.exe -oobjdir-$BROWSER_CHANNEL/dist/install/sea/
+rm "objdir-$BROWSER_CHANNEL/dist/install/sea/waterfox-$BROWSER_CHANNEL-$DISPLAYVERSION.en-US.win64.installer.exe"
 find objdir-$BROWSER_CHANNEL/dist/install/sea/ -type f -name "*.exe" -exec signtool sign -a -n Waterfox\ Limited -tr http://timestamp.globalsign.com/?signature=sha2 -td SHA256 {} \;
 find objdir-$BROWSER_CHANNEL/dist/install/sea/ -type f -name "*.dll" -exec signtool sign -a -n Waterfox\ Limited -tr http://timestamp.globalsign.com/?signature=sha2 -td SHA256 {} \;
 pushd objdir-$BROWSER_CHANNEL/dist/install/sea/

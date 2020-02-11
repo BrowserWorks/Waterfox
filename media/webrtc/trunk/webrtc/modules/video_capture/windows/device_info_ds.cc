@@ -754,9 +754,9 @@ int32_t DeviceInfoDS::CreateCapabilityMap(
     // Store the new used device name
     _lastUsedDeviceNameLength = deviceUniqueIdUTF8Size;
     _lastUsedDeviceName = (char*) realloc(_lastUsedDeviceName,
-                                                   _lastUseddeviceNameSize
+                                                   _lastUsedDeviceNameLength
                                                        + 1);
-    memcpy(_lastUsedDeviceName, deviceUniqueIdUTF8, _lastUseddeviceNameSize+ 1);
+    memcpy(_lastUsedDeviceName, deviceUniqueIdUTF8, _lastUsedDeviceNameLength+ 1);
     WEBRTC_TRACE(webrtc::kTraceInfo, webrtc::kTraceVideoCapture, 0,
                  "CreateCapabilityMap %d", _captureCapabilities.size());
 

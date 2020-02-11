@@ -39,7 +39,11 @@ if test `uname -s` = Darwin; then
 ./tools/update-packaging/make_full_update.sh \
 ./objdir-$BROWSER_CHANNEL/dist/update/waterfox-$BROWSER_CHANNEL-$DISPLAYVERSION.en-US.$OPERATING_SYSTEM.complete.xz.mar \
 ./objdir-$BROWSER_CHANNEL/dist/waterfox/Waterfox.app/
-else
+elif test `uname -s` = MINGW32_NT-6.2; then
+./tools/update-packaging/make_full_update.sh \
+./objdir-$BROWSER_CHANNEL/dist/update/waterfox-$BROWSER_CHANNEL-$DISPLAYVERSION.en-US.$OPERATING_SYSTEM.complete.xz.mar \
+./objdir-$BROWSER_CHANNEL/dist/install/sea/core
+elif test `uname -s` = Linux; then
 ./tools/update-packaging/make_full_update.sh \
 ./objdir-$BROWSER_CHANNEL/dist/update/waterfox-$BROWSER_CHANNEL-$DISPLAYVERSION.en-US.$OPERATING_SYSTEM.complete.xz.mar \
 ./objdir-$BROWSER_CHANNEL/dist/waterfox/
@@ -60,7 +64,7 @@ sed -i '' -e "s/VERSION/$VERSION/g" objdir-$BROWSER_CHANNEL/dist/update/update.x
 sed -i '' -e "s/BUILDID/$BUILDID/g" objdir-$BROWSER_CHANNEL/dist/update/update.xml
 sed -i '' -e "s/SIZE/$SIZE/g" objdir-$BROWSER_CHANNEL/dist/update/update.xml
 sed -i '' -e "s/HASH/"$SHA512"/g" objdir-$BROWSER_CHANNEL/dist/update/update.xml
-else
+elif test `uname -s` = MINGW32_NT-6.2; then
 sed -i "s/OPERATING_SYSTEM/$OPERATING_SYSTEM/g" objdir-$BROWSER_CHANNEL/dist/update/update.xml
 sed -i "s/DISPLAYVERSION/$DISPLAYVERSION/g" objdir-$BROWSER_CHANNEL/dist/update/update.xml
 sed -i "s/VERSION/$VERSION/g" objdir-$BROWSER_CHANNEL/dist/update/update.xml
