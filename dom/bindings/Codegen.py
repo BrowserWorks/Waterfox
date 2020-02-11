@@ -6930,7 +6930,7 @@ def getWrapTemplateForType(type, descriptorProvider, result, successCode,
         # Callbacks can store null if we nuked the compartments their
         # objects lived in.
         wrapCode = setObjectOrNull(
-            "GetCallbackFromCallbackObject(%(result)s)",
+            "GetCallbackFromCallbackObject(cx, %(result)s)",
             wrapAsType=type)
         if type.nullable():
             wrapCode = (
@@ -7736,7 +7736,7 @@ class CGPerSignatureCall(CGThing):
             argsPre.append("global")
 
         if isConstructor and idlNode.isHTMLConstructor():
-            argsPre.append("args")
+            argsPre.extend(["args", "desiredProto"])
 
         # For JS-implemented interfaces we do not want to base the
         # needsCx decision on the types involved, just on our extended
@@ -7870,10 +7870,12 @@ class CGPerSignatureCall(CGThing):
             not getter):
             cgThings.append(CGGeneric(fill(
                 """
-                CustomElementReactionsStack* reactionsStack = GetCustomElementReactionsStack(${obj});
                 Maybe<AutoCEReaction> ceReaction;
-                if (reactionsStack) {
-                  ceReaction.emplace(reactionsStack);
+                if (CustomElementRegistry::IsCustomElementEnabled()) {
+                  CustomElementReactionsStack* reactionsStack = GetCustomElementReactionsStack(${obj});
+                  if (reactionsStack) {
+                    ceReaction.emplace(reactionsStack, cx);
+                  }
                 }
                 """, obj=objectName)))
 

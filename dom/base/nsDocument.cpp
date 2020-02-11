@@ -170,7 +170,6 @@
 #include "mozilla/dom/HTMLIFrameElement.h"
 #include "mozilla/dom/HTMLImageElement.h"
 #include "mozilla/dom/MediaSource.h"
-#include "mozilla/dom/FlyWebService.h"
 
 #include "mozAutoDocUpdate.h"
 #include "nsGlobalWindow.h"
@@ -1385,7 +1384,8 @@ nsIDocument::nsIDocument()
     mChildDocumentUseCounters(0),
     mNotifiedPageForUseCounter(0),
     mIncCounters(),
-    mUserHasInteracted(false)
+    mUserHasInteracted(false),
+    mThrowOnDynamicMarkupInsertionCounter(0)
 {
   SetIsInDocument();
   for (auto& cnt : mIncCounters) {
@@ -2806,7 +2806,7 @@ nsDocument::InitCSP(nsIChannel* aChannel)
     (cspSandboxFlags & SANDBOXED_ORIGIN) && !(mSandboxFlags & SANDBOXED_ORIGIN);
 
   mSandboxFlags |= cspSandboxFlags;
-  
+
   if (needNewNullPrincipal) {
     principal = NullPrincipal::CreateWithInheritedAttributes(principal);
     principal->SetCsp(csp);
@@ -5808,6 +5808,10 @@ nsDocument::CreateElement(const nsAString& aTagName,
     elem->SetPseudoElementType(pseudoType);
   }
 
+  if (is) {
+    elem->SetAttr(kNameSpaceID_None, nsGkAtoms::is, *is, true);
+  }
+
   return elem.forget();
 }
 
@@ -5857,6 +5861,10 @@ nsDocument::CreateElementNS(const nsAString& aNamespaceURI,
                      NOT_FROM_PARSER, is);
   if (rv.Failed()) {
     return nullptr;
+  }
+
+  if (is) {
+    element->SetAttr(kNameSpaceID_None, nsGkAtoms::is, *is, true);
   }
 
   return element.forget();
@@ -6081,24 +6089,69 @@ nsDocument::CustomElementConstructor(JSContext* aCx, unsigned aArgc, JS::Value* 
   }
 
   nsCOMPtr<nsIAtom> typeAtom(NS_Atomize(elemName));
-  CustomElementDefinition* definition = registry->mCustomDefinitions.Get(typeAtom);
+  CustomElementDefinition* definition =
+    registry->mCustomDefinitions.GetWeak(typeAtom);
   if (!definition) {
     return true;
   }
 
-  nsDependentAtomString localName(definition->mLocalName);
+  RefPtr<Element> element;
 
-  nsCOMPtr<Element> element =
-    document->CreateElem(localName, nullptr, kNameSpaceID_XHTML);
-  NS_ENSURE_TRUE(element, true);
+  // We integrate with construction stack and do prototype swizzling here, so
+  // that old upgrade behavior could also share the new upgrade steps.
+  // And this old upgrade will be remove at some point (when everything is
+  // switched to latest custom element spec).
+  nsTArray<RefPtr<nsGenericHTMLElement>>& constructionStack =
+    definition->mConstructionStack;
+  if (constructionStack.Length()) {
+    element = constructionStack.LastElement();
+    NS_ENSURE_TRUE(element != ALEADY_CONSTRUCTED_MARKER, false);
 
-  if (definition->mLocalName != typeAtom) {
-    // This element is a custom element by extension, thus we need to
-    // do some special setup. For non-extended custom elements, this happens
-    // when the element is created.
-    nsContentUtils::SetupCustomElement(element, &elemName);
+    // Do prototype swizzling if dom reflector exists.
+    JS::Rooted<JSObject*> reflector(aCx, element->GetWrapper());
+    if (reflector) {
+      Maybe<JSAutoCompartment> ac;
+      JS::Rooted<JSObject*> prototype(aCx, definition->mPrototype);
+      if (element->NodePrincipal()->SubsumesConsideringDomain(nsContentUtils::ObjectPrincipal(prototype))) {
+        ac.emplace(aCx, reflector);
+        if (!JS_WrapObject(aCx, &prototype) ||
+            !JS_SetPrototype(aCx, reflector, prototype)) {
+          return false;
+        }
+      } else {
+        // We want to set the custom prototype in the compartment where it was
+        // registered. We store the prototype from define() without unwrapped,
+        // hence the prototype's compartment is the compartment where it was
+        // registered.
+        // In the case that |reflector| and |prototype| are in different
+        // compartments, this will set the prototype on the |reflector|'s wrapper
+        // and thus only visible in the wrapper's compartment, since we know
+        // reflector's principal does not subsume prototype's in this case.
+        ac.emplace(aCx, prototype);
+        if (!JS_WrapObject(aCx, &reflector) ||
+            !JS_SetPrototype(aCx, reflector, prototype)) {
+          return false;
+        }
+      }
+
+      // Wrap into current context.
+      if (!JS_WrapObject(aCx, &reflector)) {
+        return false;
+      }
+
+      args.rval().setObject(*reflector);
+      return true;
+    }
+  } else {
+    nsDependentAtomString localName(definition->mLocalName);
+    element =
+      document->CreateElem(localName, nullptr, kNameSpaceID_XHTML,
+                           (definition->mLocalName != typeAtom) ? &elemName
+                                                                : nullptr);
+    NS_ENSURE_TRUE(element, false);
   }
 
+  // The prototype setup happens in Element::WrapObject().
   nsresult rv = nsContentUtils::WrapNative(aCx, element, element, args.rval());
   NS_ENSURE_SUCCESS(rv, true);
 
@@ -6185,7 +6238,8 @@ nsDocument::RegisterElement(JSContext* aCx, const nsAString& aType,
     return;
   }
 
-  AutoCEReaction ceReaction(this->GetDocGroup()->CustomElementReactionsStack());
+  AutoCEReaction ceReaction(this->GetDocGroup()->CustomElementReactionsStack(),
+                            aCx);
   // Unconditionally convert TYPE to lowercase.
   nsAutoString lcType;
   nsContentUtils::ASCIIToLower(aType, lcType);
@@ -6289,6 +6343,9 @@ nsDocument::RegisterElement(JSContext* aCx, const nsAString& aType,
     options.mExtends.Construct(lcName);
   }
 
+  // Note: No calls that might run JS or trigger CC after this, or there's a
+  // (vanishingly small) risk of our constructor being nulled before Define()
+  // can access it.
   RefPtr<Function> functionConstructor =
     new Function(aCx, wrappedConstructor, sgo);
 
@@ -8700,13 +8757,6 @@ nsDocument::CanSavePresentation(nsIRequest *aNewRequest)
   // Don't save presentations for documents containing MSE content, to
   // reduce memory usage.
   if (ContainsMSEContent()) {
-    return false;
-  }
-
-  // Don't save presentation if there are active FlyWeb connections or FlyWeb
-  // servers.
-  FlyWebService* flyWebService = FlyWebService::GetExisting();
-  if (flyWebService && flyWebService->HasConnectionOrServer(win->WindowID())) {
     return false;
   }
 
@@ -13054,8 +13104,12 @@ MarkDocumentTreeToBeInSyncOperation(nsIDocument* aDoc, void* aData)
 
 nsAutoSyncOperation::nsAutoSyncOperation(nsIDocument* aDoc)
 {
-  mMicroTaskLevel = nsContentUtils::MicroTaskLevel();
-  nsContentUtils::SetMicroTaskLevel(0);
+  mMicroTaskLevel = 0;
+  CycleCollectedJSContext* ccjs = CycleCollectedJSContext::Get();
+  if (ccjs) {
+    mMicroTaskLevel = ccjs->MicroTaskLevel();
+    ccjs->SetMicroTaskLevel(0);
+  }
   if (aDoc) {
     if (nsPIDOMWindowOuter* win = aDoc->GetWindow()) {
       if (nsCOMPtr<nsPIDOMWindowOuter> top = win->GetTop()) {
@@ -13074,7 +13128,10 @@ nsAutoSyncOperation::~nsAutoSyncOperation()
     }
     mDocuments[i]->SetIsInSyncOperation(false);
   }
-  nsContentUtils::SetMicroTaskLevel(mMicroTaskLevel);
+  CycleCollectedJSContext* ccjs = CycleCollectedJSContext::Get();
+  if (ccjs) {
+    ccjs->SetMicroTaskLevel(mMicroTaskLevel);
+  }
 }
 
 gfxUserFontSet*
