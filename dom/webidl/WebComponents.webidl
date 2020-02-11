@@ -10,15 +10,19 @@
  * liability, trademark and document use rules apply.
  */
 
-callback LifecycleCreatedCallback = void();
-callback LifecycleAttachedCallback = void();
-callback LifecycleDetachedCallback = void();
-callback LifecycleAttributeChangedCallback = void(DOMString attrName, DOMString? oldValue, DOMString? newValue);
+callback LifecycleConnectedCallback = void();
+callback LifecycleDisconnectedCallback = void();
+callback LifecycleAdoptedCallback = void(Document? oldDocument,
+                                         Document? newDocment);
+callback LifecycleAttributeChangedCallback = void(DOMString attrName,
+                                                  DOMString? oldValue,
+                                                  DOMString? newValue,
+                                                  DOMString? namespaceURI);
 
 dictionary LifecycleCallbacks {
-  LifecycleCreatedCallback? createdCallback;
-  LifecycleAttachedCallback? attachedCallback;
-  LifecycleDetachedCallback? detachedCallback;
+  LifecycleConnectedCallback? connectedCallback;
+  LifecycleDisconnectedCallback? disconnectedCallback;
+  LifecycleAdoptedCallback? adoptedCallback;
   LifecycleAttributeChangedCallback? attributeChangedCallback;
 };
 

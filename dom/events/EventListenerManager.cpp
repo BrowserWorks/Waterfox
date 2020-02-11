@@ -1128,7 +1128,10 @@ EventListenerManager::HandleEventSubType(Listener* aListener,
 
   if (NS_SUCCEEDED(result)) {
     if (mIsMainThreadELM) {
-      nsContentUtils::EnterMicroTask();
+      CycleCollectedJSContext* ccjs = CycleCollectedJSContext::Get();
+      if (ccjs) {
+        ccjs->EnterMicroTask();
+      }
     }
     // nsIDOMEvent::currentTarget is set in EventDispatcher.
     if (listenerHolder.HasWebIDLCallback()) {
@@ -1140,7 +1143,10 @@ EventListenerManager::HandleEventSubType(Listener* aListener,
       result = listenerHolder.GetXPCOMCallback()->HandleEvent(aDOMEvent);
     }
     if (mIsMainThreadELM) {
-      nsContentUtils::LeaveMicroTask();
+      CycleCollectedJSContext* ccjs = CycleCollectedJSContext::Get();
+      if (ccjs) {
+        ccjs->LeaveMicroTask();
+      }
     }
   }
 

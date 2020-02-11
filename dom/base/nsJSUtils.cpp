@@ -25,7 +25,7 @@
 #include "xpcpublic.h"
 #include "nsContentUtils.h"
 #include "nsGlobalWindow.h"
-
+#include "mozilla/CycleCollectedJSContext.h"
 #include "mozilla/dom/BindingUtils.h"
 #include "mozilla/dom/Date.h"
 #include "mozilla/dom/Element.h"
@@ -152,7 +152,8 @@ nsJSUtils::ExecutionContext::ExecutionContext(JSContext* aCx,
 {
   MOZ_ASSERT(aCx == nsContentUtils::GetCurrentJSContext());
   MOZ_ASSERT(NS_IsMainThread());
-  MOZ_ASSERT(nsContentUtils::IsInMicroTask());
+  MOZ_ASSERT(CycleCollectedJSContext::Get() &&
+             CycleCollectedJSContext::Get()->MicroTaskLevel());
   MOZ_ASSERT(mRetValue.isUndefined());
 
   MOZ_ASSERT(js::GetGlobalForObjectCrossCompartment(aGlobal) == aGlobal);
@@ -390,7 +391,8 @@ nsJSUtils::CompileModule(JSContext* aCx,
              aEvaluationGlobal);
   MOZ_ASSERT(JS::CurrentGlobalOrNull(aCx) == aEvaluationGlobal);
   MOZ_ASSERT(NS_IsMainThread());
-  MOZ_ASSERT(nsContentUtils::IsInMicroTask());
+  MOZ_ASSERT(CycleCollectedJSContext::Get() &&
+             CycleCollectedJSContext::Get()->MicroTaskLevel());
 
   NS_ENSURE_TRUE(xpc::Scriptability::Get(aEvaluationGlobal).Allowed(), NS_OK);
 
@@ -425,7 +427,8 @@ nsJSUtils::ModuleEvaluation(JSContext* aCx, JS::Handle<JSObject*> aModule)
 
   MOZ_ASSERT(aCx == nsContentUtils::GetCurrentJSContext());
   MOZ_ASSERT(NS_IsMainThread());
-  MOZ_ASSERT(nsContentUtils::IsInMicroTask());
+  MOZ_ASSERT(CycleCollectedJSContext::Get() &&
+             CycleCollectedJSContext::Get()->MicroTaskLevel());
 
   NS_ENSURE_TRUE(xpc::Scriptability::Get(aModule).Allowed(), NS_OK);
 

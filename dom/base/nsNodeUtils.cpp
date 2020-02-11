@@ -477,19 +477,33 @@ nsNodeUtils::CloneAndAdopt(nsINode *aNode, bool aClone, bool aDeep,
     rv = aNode->Clone(nodeInfo, getter_AddRefs(clone), aDeep);
     NS_ENSURE_SUCCESS(rv, rv);
 
-    if (clone->IsElement()) {
+    if (CustomElementRegistry::IsCustomElementEnabled() &&
+        clone->IsHTMLElement()) {
       // The cloned node may be a custom element that may require
-      // enqueing created callback and prototype swizzling.
-      Element* elem = clone->AsElement();
-      if (nsContentUtils::IsCustomElementName(nodeInfo->NameAtom())) {
-        nsContentUtils::SetupCustomElement(elem);
-      } else {
-        // Check if node may be custom element by type extension.
-        // ex. <button is="x-button">
-        nsAutoString extension;
-        if (elem->GetAttr(kNameSpaceID_None, nsGkAtoms::is, extension) &&
-            !extension.IsEmpty()) {
-          nsContentUtils::SetupCustomElement(elem, &extension);
+      // enqueing upgrade reaction.
+      Element* cloneElem = clone->AsElement();
+      RefPtr<nsIAtom> tagAtom = nodeInfo->NameAtom();
+      CustomElementData* data = elem->GetCustomElementData();
+
+      // Check if node may be custom element by type extension.
+      // ex. <button is="x-button">
+      nsAutoString extension;
+      if (!data || data->GetCustomElementType() != tagAtom) {
+        cloneElem->GetAttr(kNameSpaceID_None, nsGkAtoms::is, extension);
+      }
+
+      if (data || !extension.IsEmpty()) {
+        RefPtr<nsIAtom> typeAtom = extension.IsEmpty() ? tagAtom : NS_Atomize(extension);
+        cloneElem->SetCustomElementData(new CustomElementData(typeAtom));
+
+        MOZ_ASSERT(nodeInfo->NameAtom()->Equals(nodeInfo->LocalName()));
+        CustomElementDefinition* definition =
+          nsContentUtils::LookupCustomElementDefinition(nodeInfo->GetDocument(),
+                                                        nodeInfo->NameAtom(),
+                                                        nodeInfo->NamespaceID(),
+                                                        typeAtom);
+        if (definition) {
+          nsContentUtils::EnqueueUpgradeReaction(cloneElem, definition);
         }
       }
     }
@@ -524,6 +538,23 @@ nsNodeUtils::CloneAndAdopt(nsINode *aNode, bool aClone, bool aDeep,
 
     nsIDocument* newDoc = aNode->OwnerDoc();
     if (newDoc) {
+      if (CustomElementRegistry::IsCustomElementEnabled()) {
+        // Adopted callback must be enqueued whenever a node’s
+        // shadow-including inclusive descendants that is custom.
+        Element* element = aNode->IsElement() ? aNode->AsElement() : nullptr;
+        if (element) {
+          CustomElementData* data = element->GetCustomElementData();
+          if (data && data->mState == CustomElementData::State::eCustom) {
+            LifecycleAdoptedCallbackArgs args = {
+              oldDoc,
+              newDoc
+            };
+            nsContentUtils::EnqueueLifecycleCallback(nsIDocument::eAdopted,
+                                                     element, nullptr, &args);
+          }
+        }
+      }
+
       // XXX what if oldDoc is null, we don't know if this should be
       // registered or not! Can that really happen?
       if (wasRegistered) {

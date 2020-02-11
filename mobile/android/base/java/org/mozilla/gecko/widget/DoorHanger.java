@@ -50,7 +50,6 @@ public abstract class DoorHanger extends LinearLayout {
         DESKTOPNOTIFICATION2,
         WEBRTC,
         VIBRATION,
-        FLYWEBPUBLISHSERVER,
         ADDON
     }
 

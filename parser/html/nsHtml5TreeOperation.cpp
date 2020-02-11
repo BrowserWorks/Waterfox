@@ -60,7 +60,7 @@ class MOZ_STACK_CLASS nsHtml5OtherDocUpdate {
         mDocument = nullptr;
       } else {
         mDocument = aCurrentDoc;
-        aCurrentDoc->BeginUpdate(UPDATE_CONTENT_MODEL);        
+        aCurrentDoc->BeginUpdate(UPDATE_CONTENT_MODEL);
       }
     }
 
@@ -72,6 +72,29 @@ class MOZ_STACK_CLASS nsHtml5OtherDocUpdate {
     }
   private:
     nsCOMPtr<nsIDocument> mDocument;
+};
+
+/**
+ * Helper class to temporary break out of the document update batch. Use this
+ * with caution as this will cause blocked scripts to run.
+ */
+class MOZ_RAII mozAutoPauseContentUpdate final
+{
+public:
+  explicit mozAutoPauseContentUpdate(nsIDocument* aDocument)
+    : mDocument(aDocument)
+  {
+    MOZ_ASSERT(mDocument);
+    mDocument->EndUpdate(UPDATE_CONTENT_MODEL);
+  }
+
+  ~mozAutoPauseContentUpdate()
+  {
+    mDocument->BeginUpdate(UPDATE_CONTENT_MODEL);
+  }
+
+private:
+  nsCOMPtr<nsIDocument> mDocument;
 };
 
 nsHtml5TreeOperation::nsHtml5TreeOperation()
@@ -88,8 +111,11 @@ nsHtml5TreeOperation::~nsHtml5TreeOperation()
     case eTreeOpAddAttributes:
       delete mTwo.attributes;
       break;
-    case eTreeOpCreateElementNetwork:
-    case eTreeOpCreateElementNotNetwork:
+    case eTreeOpCreateHTMLElementNetwork:
+    case eTreeOpCreateHTMLElementNotNetwork:
+    case eTreeOpCreateSVGElementNetwork:
+    case eTreeOpCreateSVGElementNotNetwork:
+    case eTreeOpCreateMathMLElement:
       delete mThree.attributes;
       break;
     case eTreeOpAppendDoctypeToDocument:
@@ -151,9 +177,9 @@ nsHtml5TreeOperation::AppendText(const char16_t* aBuffer,
   if (lastChild && lastChild->IsNodeOfType(nsINode::eTEXT)) {
     nsHtml5OtherDocUpdate update(aParent->OwnerDoc(),
                                  aBuilder->GetDocument());
-    return AppendTextToTextNode(aBuffer, 
-                                aLength, 
-                                lastChild, 
+    return AppendTextToTextNode(aBuffer,
+                                aLength,
+                                lastChild,
                                 aBuilder);
   }
 
@@ -328,75 +354,232 @@ nsHtml5TreeOperation::AddAttributes(nsIContent* aNode,
   return NS_OK;
 }
 
+void
+nsHtml5TreeOperation::SetHTMLElementAttributes(dom::Element* aElement,
+                                               nsIAtom* aName,
+                                               nsHtml5HtmlAttributes* aAttributes)
+{
+  int32_t len = aAttributes->getLength();
+  for (int32_t i = 0; i < len; i++) {
+      // prefix doesn't need regetting. it is always null or a static atom
+      // local name is never null
+      RefPtr<nsIAtom> localName =
+        Reget(aAttributes->getLocalNameNoBoundsCheck(i));
+      RefPtr<nsIAtom> prefix = aAttributes->getPrefixNoBoundsCheck(i);
+      int32_t nsuri = aAttributes->getURINoBoundsCheck(i);
+
+      nsString value; // Not Auto, because using it to hold nsStringBuffer*
+      aAttributes->getValueNoBoundsCheck(i).ToString(value);
+      if (nsGkAtoms::a == aName && nsGkAtoms::name == localName) {
+        // This is an HTML5-incompliant Geckoism.
+        // Remove when fixing bug 582361
+        NS_ConvertUTF16toUTF8 cname(value);
+        NS_ConvertUTF8toUTF16 uv(nsUnescape(cname.BeginWriting()));
+        aElement->SetAttr(nsuri,
+                          localName,
+                          prefix,
+                          uv,
+                          false);
+      } else {
+        aElement->SetAttr(nsuri,
+                          localName,
+                          prefix,
+                          value,
+                          false);
+      }
+    }
+}
 
 nsIContent*
-nsHtml5TreeOperation::CreateElement(int32_t aNs,
-                                    nsIAtom* aName,
-                                    nsHtml5HtmlAttributes* aAttributes,
-                                    mozilla::dom::FromParser aFromParser,
-                                    nsNodeInfoManager* aNodeInfoManager,
-                                    nsHtml5DocumentBuilder* aBuilder)
+nsHtml5TreeOperation::CreateHTMLElement(
+  nsIAtom* aName,
+  nsHtml5HtmlAttributes* aAttributes,
+  mozilla::dom::FromParser aFromParser,
+  nsNodeInfoManager* aNodeInfoManager,
+  nsHtml5DocumentBuilder* aBuilder,
+  mozilla::dom::HTMLContentCreatorFunction aCreator)
 {
-  bool isKeygen = (aName == nsGkAtoms::keygen && aNs == kNameSpaceID_XHTML);
+  bool isKeygen = (aName == nsGkAtoms::keygen);
   if (MOZ_UNLIKELY(isKeygen)) {
     aName = nsGkAtoms::select;
+    aCreator = NS_NewHTMLSelectElement;
   }
 
-  nsCOMPtr<dom::Element> newElement;
-  RefPtr<dom::NodeInfo> nodeInfo = aNodeInfoManager->
-    GetNodeInfo(aName, nullptr, aNs, nsIDOMNode::ELEMENT_NODE);
+  RefPtr<dom::NodeInfo> nodeInfo = aNodeInfoManager->GetNodeInfo(
+    aName, nullptr, kNameSpaceID_XHTML, nsIDOMNode::ELEMENT_NODE);
   NS_ASSERTION(nodeInfo, "Got null nodeinfo.");
-  NS_NewElement(getter_AddRefs(newElement),
-                nodeInfo.forget(),
-                aFromParser);
-  NS_ASSERTION(newElement, "Element creation created null pointer.");
 
-  dom::Element* newContent = newElement;
+  dom::Element* newContent = nullptr;
+  nsIDocument* document = nodeInfo->GetDocument();
+  bool willExecuteScript = false;
+  bool isCustomElement = false;
+  nsString isValue;
+  dom::CustomElementDefinition* definition = nullptr;
+
+  // Avoid overhead by checking if custom elements pref is enabled or not.
+  if (nsContentUtils::IsCustomElementsEnabled()) {
+    if (aAttributes) {
+      nsHtml5String is = aAttributes->getValue(nsHtml5AttributeName::ATTR_IS);
+      if (is) {
+        is.ToString(isValue);
+      }
+    }
+
+    isCustomElement = (aCreator == NS_NewCustomElement || !isValue.IsEmpty());
+    if (isCustomElement && aFromParser != dom::FROM_PARSER_FRAGMENT) {
+      RefPtr<nsIAtom> tagAtom = nodeInfo->NameAtom();
+      RefPtr<nsIAtom> typeAtom =
+        isValue.IsEmpty() ? tagAtom : NS_Atomize(isValue);
+      MOZ_ASSERT(nodeInfo->NameAtom()->Equals(nodeInfo->LocalName()));
+      definition = nsContentUtils::LookupCustomElementDefinition(document,
+        nodeInfo->NameAtom(), nodeInfo->NamespaceID(), typeAtom);
+
+      if (definition) {
+        willExecuteScript = true;
+      }
+    }
+  }
+
+  if (willExecuteScript) { // This will cause custom element constructors to run
+    AutoSetThrowOnDynamicMarkupInsertionCounter
+      throwOnDynamicMarkupInsertionCounter(document);
+    mozAutoPauseContentUpdate autoPauseContentUpdate(document);
+    {
+      nsAutoMicroTask mt;
+    }
+    dom::AutoCEReaction
+      autoCEReaction(document->GetDocGroup()->CustomElementReactionsStack(),
+                     nullptr);
+
+    nsCOMPtr<dom::Element> newElement;
+    NS_NewHTMLElement(getter_AddRefs(newElement), nodeInfo.forget(),
+                      aFromParser, (isValue.IsEmpty() ? nullptr : &isValue),
+                      definition);
+
+    MOZ_ASSERT(newElement, "Element creation created null pointer.");
+    newContent = newElement;
+    aBuilder->HoldElement(newElement.forget());
+
+    if (MOZ_UNLIKELY(aName == nsGkAtoms::style || aName == nsGkAtoms::link)) {
+      nsCOMPtr<nsIStyleSheetLinkingElement> ssle(do_QueryInterface(newContent));
+      if (ssle) {
+        ssle->InitStyleLinkElement(false);
+        ssle->SetEnableUpdates(false);
+      }
+    }
+
+    if (!aAttributes) {
+      return newContent;
+    }
+
+    SetHTMLElementAttributes(newContent, aName, aAttributes);
+  } else {
+    nsCOMPtr<dom::Element> newElement;
+
+    if (isCustomElement) {
+      NS_NewHTMLElement(getter_AddRefs(newElement), nodeInfo.forget(),
+                        aFromParser, (isValue.IsEmpty() ? nullptr : &isValue),
+                        definition);
+    } else {
+      newElement = aCreator(nodeInfo.forget(), aFromParser);
+    }
+
+    MOZ_ASSERT(newElement, "Element creation created null pointer.");
+
+    newContent = newElement;
+    aBuilder->HoldElement(newElement.forget());
+
+    if (MOZ_UNLIKELY(aName == nsGkAtoms::style || aName == nsGkAtoms::link)) {
+      nsCOMPtr<nsIStyleSheetLinkingElement> ssle(do_QueryInterface(newContent));
+      if (ssle) {
+        ssle->InitStyleLinkElement(false);
+        ssle->SetEnableUpdates(false);
+      }
+    } else if (MOZ_UNLIKELY(isKeygen)) {
+      // Adapted from CNavDTD
+      nsresult rv;
+      nsCOMPtr<nsIFormProcessor> theFormProcessor =
+        do_GetService(kFormProcessorCID, &rv);
+      if (NS_FAILED(rv)) {
+        return newContent;
+      }
+
+      nsTArray<nsString> theContent;
+      nsAutoString theAttribute;
+
+      (void) theFormProcessor->ProvideContent(NS_LITERAL_STRING("select"),
+                                              theContent,
+                                              theAttribute);
+
+      newContent->SetAttr(kNameSpaceID_None,
+                          nsGkAtoms::moztype,
+                          nullptr,
+                          theAttribute,
+                          false);
+
+      RefPtr<dom::NodeInfo> optionNodeInfo = aNodeInfoManager->GetNodeInfo(
+        nsGkAtoms::option, nullptr, kNameSpaceID_XHTML, nsIDOMNode::ELEMENT_NODE);
+
+      for (uint32_t i = 0; i < theContent.Length(); ++i) {
+        RefPtr<dom::NodeInfo> ni = optionNodeInfo;
+        nsCOMPtr<dom::Element> optionElt =
+          NS_NewHTMLOptionElement(ni.forget(), aFromParser);
+        RefPtr<nsTextNode> optionText = new nsTextNode(aNodeInfoManager);
+        (void) optionText->SetText(theContent[i], false);
+        optionElt->AppendChildTo(optionText, false);
+        newContent->AppendChildTo(optionElt, false);
+      }
+      newContent->DoneAddingChildren(false);
+    }
+    if (!aAttributes) {
+      return newContent;
+    }
+
+    SetHTMLElementAttributes(newContent, aName, aAttributes);
+  }
+  return newContent;
+}
+
+nsIContent*
+nsHtml5TreeOperation::CreateSVGElement(
+  nsIAtom* aName,
+  nsHtml5HtmlAttributes* aAttributes,
+  mozilla::dom::FromParser aFromParser,
+  nsNodeInfoManager* aNodeInfoManager,
+  nsHtml5DocumentBuilder* aBuilder,
+  mozilla::dom::SVGContentCreatorFunction aCreator)
+{
+  nsCOMPtr<nsIContent> newElement;
+  if (MOZ_LIKELY(aNodeInfoManager->SVGEnabled())) {
+    RefPtr<dom::NodeInfo> nodeInfo = aNodeInfoManager->GetNodeInfo(
+      aName, nullptr, kNameSpaceID_SVG, nsIDOMNode::ELEMENT_NODE);
+    MOZ_ASSERT(nodeInfo, "Got null nodeinfo.");
+
+    mozilla::DebugOnly<nsresult> rv =
+      aCreator(getter_AddRefs(newElement), nodeInfo.forget(), aFromParser);
+    MOZ_ASSERT(NS_SUCCEEDED(rv) && newElement);
+  } else {
+    RefPtr<dom::NodeInfo> nodeInfo = aNodeInfoManager->GetNodeInfo(
+      aName, nullptr, kNameSpaceID_disabled_SVG, nsIDOMNode::ELEMENT_NODE);
+    MOZ_ASSERT(nodeInfo, "Got null nodeinfo.");
+
+    // The mismatch between NS_NewXMLElement and SVGContentCreatorFunction
+    // argument types is annoying.
+    nsCOMPtr<dom::Element> xmlElement;
+    mozilla::DebugOnly<nsresult> rv =
+      NS_NewXMLElement(getter_AddRefs(xmlElement), nodeInfo.forget());
+    MOZ_ASSERT(NS_SUCCEEDED(rv) && xmlElement);
+    newElement = xmlElement;
+  }
+
+  dom::Element* newContent = newElement->AsElement();
   aBuilder->HoldElement(newElement.forget());
 
-  if (MOZ_UNLIKELY(aName == nsGkAtoms::style || aName == nsGkAtoms::link)) {
+  if (MOZ_UNLIKELY(aName == nsGkAtoms::style)) {
     nsCOMPtr<nsIStyleSheetLinkingElement> ssle(do_QueryInterface(newContent));
     if (ssle) {
       ssle->InitStyleLinkElement(false);
       ssle->SetEnableUpdates(false);
-    }
-  } else if (MOZ_UNLIKELY(isKeygen)) {
-    // Adapted from CNavDTD
-    nsresult rv;
-    nsCOMPtr<nsIFormProcessor> theFormProcessor =
-      do_GetService(kFormProcessorCID, &rv);
-    if (NS_FAILED(rv)) {
-      return newContent;
-    }
-
-    nsTArray<nsString> theContent;
-    nsAutoString theAttribute;
-
-    (void) theFormProcessor->ProvideContent(NS_LITERAL_STRING("select"),
-                                            theContent,
-                                            theAttribute);
-
-    newContent->SetAttr(kNameSpaceID_None,
-                        nsGkAtoms::moztype,
-                        nullptr,
-                        theAttribute,
-                        false);
-
-    RefPtr<dom::NodeInfo> optionNodeInfo = aNodeInfoManager->GetNodeInfo(
-      nsGkAtoms::option, nullptr, kNameSpaceID_XHTML, nsIDOMNode::ELEMENT_NODE);
-
-    for (uint32_t i = 0; i < theContent.Length(); ++i) {
-      nsCOMPtr<dom::Element> optionElt;
-      RefPtr<dom::NodeInfo> ni = optionNodeInfo;
-      NS_NewElement(getter_AddRefs(optionElt),
-                    ni.forget(),
-                    aFromParser);
-      RefPtr<nsTextNode> optionText = new nsTextNode(aNodeInfoManager);
-      (void) optionText->SetText(theContent[i], false);
-      optionElt->AppendChildTo(optionText, false);
-      newContent->AppendChildTo(optionElt, false);
-      // XXXsmaug Shouldn't we call this after adding all the child nodes.
-      newContent->DoneAddingChildren(false);
     }
   }
 
@@ -415,29 +598,55 @@ nsHtml5TreeOperation::CreateElement(int32_t aNs,
 
     nsString value; // Not Auto, because using it to hold nsStringBuffer*
     aAttributes->getValueNoBoundsCheck(i).ToString(value);
-    if (aNs == kNameSpaceID_XHTML && nsGkAtoms::a == aName &&
-        nsGkAtoms::name == localName) {
-      // This is an HTML5-incompliant Geckoism.
-      // Remove when fixing bug 582361
-      NS_ConvertUTF16toUTF8 cname(value);
-      NS_ConvertUTF8toUTF16 uv(nsUnescape(cname.BeginWriting()));
-      newContent->SetAttr(nsuri,
-                          localName,
-                          prefix,
-                          uv,
-                          false);
-    } else {
-      newContent->SetAttr(nsuri,
-                          localName,
-                          prefix,
-                          value,
-                          false);
+    newContent->SetAttr(nsuri, localName, prefix, value, false);
+  }
+  return newContent;
+}
 
-      // Custom element setup may be needed if there is an "is" attribute.
-      if (kNameSpaceID_None == nsuri && !prefix && nsGkAtoms::is == localName) {
-        nsContentUtils::SetupCustomElement(newContent, &value);
-      }
-    }
+nsIContent*
+nsHtml5TreeOperation::CreateMathMLElement(nsIAtom* aName,
+                                          nsHtml5HtmlAttributes* aAttributes,
+                                          nsNodeInfoManager* aNodeInfoManager,
+                                          nsHtml5DocumentBuilder* aBuilder)
+{
+  nsCOMPtr<dom::Element> newElement;
+  if (MOZ_LIKELY(aNodeInfoManager->MathMLEnabled())) {
+    RefPtr<dom::NodeInfo> nodeInfo = aNodeInfoManager->GetNodeInfo(
+      aName, nullptr, kNameSpaceID_MathML, nsIDOMNode::ELEMENT_NODE);
+    NS_ASSERTION(nodeInfo, "Got null nodeinfo.");
+
+    mozilla::DebugOnly<nsresult> rv =
+      NS_NewMathMLElement(getter_AddRefs(newElement), nodeInfo.forget());
+    MOZ_ASSERT(NS_SUCCEEDED(rv) && newElement);
+  } else {
+    RefPtr<dom::NodeInfo> nodeInfo = aNodeInfoManager->GetNodeInfo(
+      aName, nullptr, kNameSpaceID_disabled_MathML, nsIDOMNode::ELEMENT_NODE);
+    NS_ASSERTION(nodeInfo, "Got null nodeinfo.");
+
+    mozilla::DebugOnly<nsresult> rv =
+      NS_NewXMLElement(getter_AddRefs(newElement), nodeInfo.forget());
+    MOZ_ASSERT(NS_SUCCEEDED(rv) && newElement);
+  }
+
+  dom::Element* newContent = newElement;
+  aBuilder->HoldElement(newElement.forget());
+
+  if (!aAttributes) {
+    return newContent;
+  }
+
+  int32_t len = aAttributes->getLength();
+  for (int32_t i = 0; i < len; i++) {
+    // prefix doesn't need regetting. it is always null or a static atom
+    // local name is never null
+    nsCOMPtr<nsIAtom> localName =
+      Reget(aAttributes->getLocalNameNoBoundsCheck(i));
+    nsCOMPtr<nsIAtom> prefix = aAttributes->getPrefixNoBoundsCheck(i);
+    int32_t nsuri = aAttributes->getURINoBoundsCheck(i);
+
+    nsString value; // Not Auto, because using it to hold nsStringBuffer*
+    aAttributes->getValueNoBoundsCheck(i).ToString(value);
+    newContent->SetAttr(nsuri, localName, prefix, value, false);
   }
   return newContent;
 }
@@ -659,10 +868,56 @@ nsHtml5TreeOperation::Perform(nsHtml5TreeOpExecutor* aBuilder,
       aBuilder->SetDocumentMode(mOne.mode);
       return NS_OK;
     }
-    case eTreeOpCreateElementNetwork:
-    case eTreeOpCreateElementNotNetwork: {
+    case eTreeOpCreateHTMLElementNetwork:
+    case eTreeOpCreateHTMLElementNotNetwork: {
       nsIContent** target = mOne.node;
-      int32_t ns = mFour.integer;
+      mozilla::dom::HTMLContentCreatorFunction creator = mFour.htmlCreator;
+      nsCOMPtr<nsIAtom> name = Reget(mTwo.atom);
+      nsHtml5HtmlAttributes* attributes = mThree.attributes;
+      nsIContent* intendedParent = mFive.node ? *(mFive.node) : nullptr;
+
+      // intendedParent == nullptr is a special case where the
+      // intended parent is the document.
+      nsNodeInfoManager* nodeInfoManager =
+        intendedParent ? intendedParent->OwnerDoc()->NodeInfoManager()
+                       : aBuilder->GetNodeInfoManager();
+
+      *target = CreateHTMLElement(name,
+                                  attributes,
+                                  mOpCode == eTreeOpCreateHTMLElementNetwork
+                                    ? dom::FROM_PARSER_NETWORK
+                                    : dom::FROM_PARSER_DOCUMENT_WRITE,
+                                  nodeInfoManager,
+                                  aBuilder,
+                                  creator);
+      return NS_OK;
+    }
+    case eTreeOpCreateSVGElementNetwork:
+    case eTreeOpCreateSVGElementNotNetwork: {
+      nsIContent** target = mOne.node;
+      mozilla::dom::SVGContentCreatorFunction creator = mFour.svgCreator;
+      nsCOMPtr<nsIAtom> name = Reget(mTwo.atom);
+      nsHtml5HtmlAttributes* attributes = mThree.attributes;
+      nsIContent* intendedParent = mFive.node ? *(mFive.node) : nullptr;
+
+      // intendedParent == nullptr is a special case where the
+      // intended parent is the document.
+      nsNodeInfoManager* nodeInfoManager =
+        intendedParent ? intendedParent->OwnerDoc()->NodeInfoManager()
+                       : aBuilder->GetNodeInfoManager();
+
+      *target = CreateSVGElement(name,
+                                 attributes,
+                                 mOpCode == eTreeOpCreateSVGElementNetwork
+                                   ? dom::FROM_PARSER_NETWORK
+                                   : dom::FROM_PARSER_DOCUMENT_WRITE,
+                                 nodeInfoManager,
+                                 aBuilder,
+                                 creator);
+      return NS_OK;
+    }
+    case eTreeOpCreateMathMLElement: {
+      nsIContent** target = mOne.node;
       nsCOMPtr<nsIAtom> name = Reget(mTwo.atom);
       nsHtml5HtmlAttributes* attributes = mThree.attributes;
       nsIContent* intendedParent = mFive.node ? *(mFive.node) : nullptr;
@@ -673,14 +928,8 @@ nsHtml5TreeOperation::Perform(nsHtml5TreeOpExecutor* aBuilder,
          intendedParent->OwnerDoc()->NodeInfoManager() :
          aBuilder->GetNodeInfoManager();
 
-      *target = CreateElement(ns,
-                              name,
-                              attributes,
-                              mOpCode == eTreeOpCreateElementNetwork ?
-                                dom::FROM_PARSER_NETWORK :
-                                dom::FROM_PARSER_DOCUMENT_WRITE,
-                              nodeInfoManager,
-                              aBuilder);
+      *target =
+        CreateMathMLElement(name, attributes, nodeInfoManager, aBuilder);
       return NS_OK;
     }
     case eTreeOpSetFormElement: {

@@ -726,12 +726,7 @@ FragmentOrElement::nsDOMSlots::Traverse(nsCycleCollectionTraversalCallback &cb)
   cb.NoteXPCOMChild(mExtendedSlots->mXBLInsertionParent.get());
 
   if (mExtendedSlots->mCustomElementData) {
-    for (uint32_t i = 0;
-         i < mExtendedSlots->mCustomElementData->mReactionQueue.Length(); i++) {
-      if (mExtendedSlots->mCustomElementData->mReactionQueue[i]) {
-        mExtendedSlots->mCustomElementData->mReactionQueue[i]->Traverse(cb);
-      }
-    }
+    mExtendedSlots->mCustomElementData->Traverse(cb);
   }
 
   for (auto iter = mExtendedSlots->mRegisteredIntersectionObservers.Iter();
@@ -768,7 +763,10 @@ FragmentOrElement::nsDOMSlots::Unlink()
   mExtendedSlots->mContainingShadow = nullptr;
   MOZ_ASSERT(!(mExtendedSlots->mXBLBinding));
   mExtendedSlots->mXBLInsertionParent = nullptr;
-  mExtendedSlots->mCustomElementData = nullptr;
+  if (mExtendedSlots->mCustomElementData) {
+    mExtendedSlots->mCustomElementData->Unlink();
+    mExtendedSlots->mCustomElementData = nullptr;
+  }
   mExtendedSlots->mRegisteredIntersectionObservers.Clear();
   nsCOMPtr<nsIFrameLoader> frameLoader =
     do_QueryInterface(mExtendedSlots->mFrameLoaderOrOpener);

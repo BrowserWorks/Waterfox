@@ -1,3 +1,14 @@
+#ifdef XP_UNIX
+#ifndef XP_MACOSX
+#define OS_SLICE X11; Linux x86_64;
+#else
+#define OS_SLICE Macintosh; Intel Mac OS X 10.13;
+#endif
+#else
+#define OS_SLICE Windows NT 10.0; Win64;
+#endif
+
+#filter substitution
 #filter slashslash
 // Everything after the first // on a line will be removed by the preproccesor.
 // Send these sites a custom user-agent. Bugs should be included with an entry.
@@ -6,28 +17,30 @@
 // "#" hash sign is the separator. If no hash sign, the full string is used as replacement.
 // NOTE: trailing commas are not valid JSON and will prevent the CDN from syncing.
 {
-  "addons.mozilla.org": "Mozilla/5.0 (Windows NT 10.0; Win64; rv:57.0) Gecko/20100101 Firefox/57.0",
-  "studio.youtube.com": "Mozilla/5.0 (Windows NT 10.0; Win64; rv:68.0) Gecko/20100101 Firefox/60.0",
-  "netflix.com": "Mozilla/5.0 (Windows NT 10.0; Win64; rv:68.0) Gecko/20100101 Firefox/68.0",
-  "internet.xfinity.com": "Mozilla/5.0 (Windows NT 10.0; Win64; rv:68.0) Gecko/20100101 Firefox/68.0",
-  "chase.com": "Mozilla/5.0 (Windows NT 10.0; Win64; rv:68.0) Gecko/20100101 Firefox/68.0",
-  "web.whatsapp.com": "Mozilla/5.0 (Windows NT 10.0; Win64; rv:68.0) Gecko/20100101 Firefox/68.0",
-  "spotify.com": "Mozilla/5.0 (Windows NT 10.0; Win64; rv:68.0) Gecko/20100101 Firefox/68.0",
-  "amazon.com": "Mozilla/5.0 (Windows NT 10.0; Win64; rv:68.0) Gecko/20100101 Firefox/68.0",
-  "amazon.co.uk": "Mozilla/5.0 (Windows NT 10.0; Win64; rv:68.0) Gecko/20100101 Firefox/68.0",
-  "amazon.de": "Mozilla/5.0 (Windows NT 10.0; Win64; rv:68.0) Gecko/20100101 Firefox/68.0",
-  "amazon.co.jp": "Mozilla/5.0 (Windows NT 10.0; Win64; rv:68.0) Gecko/20100101 Firefox/68.0",
-  "cosmicshambles.com": "Mozilla/5.0 (Windows NT 10.0; Win64; rv:68.0) Gecko/20100101 Firefox/68.0",
-  "volunteerlogin.org": "Mozilla/5.0 (Windows NT 10.0; Win64; rv:68.0) Gecko/20100101 Firefox/68.0",
-  "polar.com": "Mozilla/5.0 (Windows NT 10.0; Win64; rv:68.0) Gecko/20100101 Firefox/68.0",
-  "eon.tv": "Mozilla/5.0 (Windows NT 10.0; Win64; rv:68.0) Gecko/20100101 Firefox/68.0",
-  "slack.com": "Mozilla/5.0 (Windows NT 10.0; Win64; rv:68.0) Gecko/20100101 Firefox/68.0",
-  "wire.com": "Mozilla/5.0 (Windows NT 10.0; Win64; rv:68.0) Gecko/20100101 Firefox/68.0",
-  "trello.com": "Mozilla/5.0 (Windows NT 10.0; Win64; rv:68.0) Gecko/20100101 Firefox/68.0",
-  "tresorit.com": "Mozilla/5.0 (Windows NT 10.0; Win64; rv:68.0) Gecko/20100101 Firefox/68.0",
-  "discordapp.com": "Mozilla/5.0 (Windows NT 10.0; Win64; rv:68.0) Gecko/20100101 Firefox/68.0",
-  "hoopladigital.com": "Mozilla/5.0 (Windows NT 10.0; Win64; rv:68.0) Gecko/20100101 Firefox/68.0",
-  "ucf.org.au": "Mozilla/5.0 (Windows NT 10.0; Win64; rv:68.0) Gecko/20100101 Firefox/68.0",
-  "westpac.com.au": "Mozilla/5.0 (Windows NT 10.0; Win64; rv:68.0) Gecko/20100101 Firefox/68.0",
-  "gizmodo.com": "Mozilla/5.0 (Windows NT 10.0; Win64; rv:68.0) Gecko/20100101 Firefox/68.0"
+  "addons.mozilla.org": "Mozilla/5.0 (@OS_SLICE@ rv:57.0) Gecko/20100101 Firefox/57.0",
+  "studio.youtube.com": "Mozilla/5.0 (@OS_SLICE@ rv:68.0) Gecko/20100101 Firefox/60.0",
+  "netflix.com": "Mozilla/5.0 (@OS_SLICE@ rv:68.0) Gecko/20100101 Firefox/68.0",
+  "internet.xfinity.com": "Mozilla/5.0 (@OS_SLICE@ rv:68.0) Gecko/20100101 Firefox/68.0",
+  "chase.com": "Mozilla/5.0 (@OS_SLICE@ rv:68.0) Gecko/20100101 Firefox/68.0",
+  "web.whatsapp.com": "Mozilla/5.0 (@OS_SLICE@ rv:68.0) Gecko/20100101 Firefox/68.0",
+  "spotify.com": "Mozilla/5.0 (@OS_SLICE@ rv:68.0) Gecko/20100101 Firefox/68.0",
+  "amazon.com": "Mozilla/5.0 (@OS_SLICE@ rv:68.0) Gecko/20100101 Firefox/68.0",
+  "amazon.co.uk": "Mozilla/5.0 (@OS_SLICE@ rv:68.0) Gecko/20100101 Firefox/68.0",
+  "amazon.de": "Mozilla/5.0 (@OS_SLICE@ rv:68.0) Gecko/20100101 Firefox/68.0",
+  "amazon.co.jp": "Mozilla/5.0 (@OS_SLICE@ rv:68.0) Gecko/20100101 Firefox/68.0",
+  "cosmicshambles.com": "Mozilla/5.0 (@OS_SLICE@ rv:68.0) Gecko/20100101 Firefox/68.0",
+  "volunteerlogin.org": "Mozilla/5.0 (@OS_SLICE@ rv:68.0) Gecko/20100101 Firefox/68.0",
+  "polar.com": "Mozilla/5.0 (@OS_SLICE@ rv:68.0) Gecko/20100101 Firefox/68.0",
+  "eon.tv": "Mozilla/5.0 (@OS_SLICE@ rv:68.0) Gecko/20100101 Firefox/68.0",
+  "slack.com": "Mozilla/5.0 (@OS_SLICE@ rv:68.0) Gecko/20100101 Firefox/68.0",
+  "wire.com": "Mozilla/5.0 (@OS_SLICE@ rv:68.0) Gecko/20100101 Firefox/68.0",
+  "trello.com": "Mozilla/5.0 (@OS_SLICE@ rv:68.0) Gecko/20100101 Firefox/68.0",
+  "tresorit.com": "Mozilla/5.0 (@OS_SLICE@ rv:68.0) Gecko/20100101 Firefox/68.0",
+  "discordapp.com": "Mozilla/5.0 (@OS_SLICE@ rv:68.0) Gecko/20100101 Firefox/68.0",
+  "hoopladigital.com": "Mozilla/5.0 (@OS_SLICE@ rv:68.0) Gecko/20100101 Firefox/68.0",
+  "ucf.org.au": "Mozilla/5.0 (@OS_SLICE@ rv:68.0) Gecko/20100101 Firefox/68.0",
+  "westpac.com.au": "Mozilla/5.0 (@OS_SLICE@ rv:68.0) Gecko/20100101 Firefox/68.0",
+  "gizmodo.com": "Mozilla/5.0 (@OS_SLICE@ rv:68.0) Gecko/20100101 Firefox/68.0",
+  "zoho.com": "Mozilla/5.0 (@OS_SLICE@ rv:60.0) Gecko/20100101 Firefox/60.0",
+  "att.tv": "Mozilla/5.0 (@OS_SLICE@) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.132 Safari/537.36"
 }
