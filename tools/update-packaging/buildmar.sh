@@ -4,7 +4,7 @@ set -e
 
 # Shell script parsing from https://pretzelhands.com/posts/command-line-flags
 # Default values of arguments
-BROWSER_CHANNEL="classic"
+BROWSER_CHANNEL="current"
 OPERATING_SYSTEM="osx64"
 
 PATH=$PATH:objdir-$BROWSER_CHANNEL/dist/host/bin
@@ -38,7 +38,7 @@ mkdir -p ./objdir-$BROWSER_CHANNEL/dist/update
 if test `uname -s` = Darwin; then
 ./tools/update-packaging/make_full_update.sh \
 ./objdir-$BROWSER_CHANNEL/dist/update/waterfox-$BROWSER_CHANNEL-$DISPLAYVERSION.en-US.$OPERATING_SYSTEM.complete.xz.mar \
-./objdir-$BROWSER_CHANNEL/dist/waterfox/Waterfox.app/
+./objdir-$BROWSER_CHANNEL/dist/waterfox/Waterfox\ Current.app/
 elif test `uname -s` = MINGW32_NT-6.2; then
 ./tools/update-packaging/make_full_update.sh \
 ./objdir-$BROWSER_CHANNEL/dist/update/waterfox-$BROWSER_CHANNEL-$DISPLAYVERSION.en-US.$OPERATING_SYSTEM.complete.xz.mar \
@@ -46,7 +46,7 @@ elif test `uname -s` = MINGW32_NT-6.2; then
 elif test `uname -s` = Linux; then
 ./tools/update-packaging/make_full_update.sh \
 ./objdir-$BROWSER_CHANNEL/dist/update/waterfox-$BROWSER_CHANNEL-$DISPLAYVERSION.en-US.$OPERATING_SYSTEM.complete.xz.mar \
-./objdir-$BROWSER_CHANNEL/dist/waterfox-classic/
+./objdir-$BROWSER_CHANNEL/dist/waterfox/
 fi
 
 
