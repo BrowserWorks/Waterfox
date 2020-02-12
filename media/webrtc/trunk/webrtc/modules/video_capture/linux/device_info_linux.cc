@@ -424,10 +424,10 @@ int32_t DeviceInfoLinux::CreateCapabilityMap(
     close(fd);
 
     // Store the new used device name
-    _lastUseddeviceNameSize = deviceUniqueIdUTF8Size;
+    _lastUsedDeviceNameLength = deviceUniqueIdUTF8Size;
     _lastUsedDeviceName = (char*) realloc(_lastUsedDeviceName,
-                                                   _lastUseddeviceNameSize + 1);
-    memcpy(_lastUsedDeviceName, deviceUniqueIdUTF8, _lastUseddeviceNameSize + 1);
+                                                   _lastUsedDeviceNameLength + 1);
+    memcpy(_lastUsedDeviceName, deviceUniqueIdUTF8, _lastUsedDeviceNameLength + 1);
 
     WEBRTC_TRACE(webrtc::kTraceInfo,
                  webrtc::kTraceVideoCapture,
