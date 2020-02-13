@@ -677,7 +677,6 @@ nsWindowWatcher::OpenWindowInternal(mozIDOMWindowProxy* aParent,
   bool windowNeedsName = false;
   bool windowIsModal = false;
   bool uriToLoadIsChrome = false;
-  bool windowIsModalContentDialog = false;
 
   uint32_t chromeFlags;
   nsAutoString name;          // string version of aName
@@ -769,8 +768,6 @@ nsWindowWatcher::OpenWindowInternal(mozIDOMWindowProxy* aParent,
   } else {
     chromeFlags = CalculateChromeFlagsForChild(features);
 
-    // Until ShowModalDialog is removed, it's still possible for content to
-    // request dialogs, but only in single-process mode.
     if (aDialog) {
       MOZ_ASSERT(XRE_IsParentProcess());
       chromeFlags |= nsIWebBrowserChrome::CHROME_OPENAS_DIALOG;
@@ -1037,7 +1034,7 @@ nsWindowWatcher::OpenWindowInternal(mozIDOMWindowProxy* aParent,
     MaybeDisablePersistence(features, newTreeOwner);
   }
 
-  if ((aDialog || windowIsModalContentDialog) && aArgv) {
+  if (aDialog && aArgv) {
     // Set the args on the new window.
     nsCOMPtr<nsPIDOMWindowOuter> piwin(do_QueryInterface(*aResult));
     NS_ENSURE_TRUE(piwin, NS_ERROR_UNEXPECTED);
@@ -1247,8 +1244,7 @@ nsWindowWatcher::OpenWindowInternal(mozIDOMWindowProxy* aParent,
     SizeOpenedWindow(newTreeOwner, aParent, isCallerChrome, sizeSpec);
   }
 
-  // XXXbz isn't windowIsModal always true when windowIsModalContentDialog?
-  if (windowIsModal || windowIsModalContentDialog) {
+  if (windowIsModal) {
     nsCOMPtr<nsIDocShellTreeOwner> newTreeOwner;
     newDocShellItem->GetTreeOwner(getter_AddRefs(newTreeOwner));
     nsCOMPtr<nsIWebBrowserChrome> newChrome(do_GetInterface(newTreeOwner));
