@@ -4027,17 +4027,6 @@ function getDefaultHomePage() {
 
 function BrowserFullScreen() {
   window.fullScreen = !window.fullScreen;
-  if (Services.prefs.getIntPref("browser.statusbar.mode") == 2)
-  {
-    if (window.fullScreen)
-    {
-      windowRoot.ownerGlobal.document.querySelector(".toolbar-statusbar").style.display = "none";
-    }
-    else
-    {
-      windowRoot.ownerGlobal.document.querySelector(".toolbar-statusbar").style.display = "flex";
-    }
-  }
 }
 
 function getWebNavigation() {
