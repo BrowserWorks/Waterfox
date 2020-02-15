@@ -5671,8 +5671,10 @@ var XULBrowserWindow = {
       }
     }
 
-    this.overLink = url;
-    LinkTargetDisplay.update();
+    if (Services.prefs.getBoolPref("browser.statusbar.showlinks", true)) {
+      this.overLink = url;
+      LinkTargetDisplay.update();
+    }
   },
 
   showTooltip(x, y, tooltip, direction, browser) {
