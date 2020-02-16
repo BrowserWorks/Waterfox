@@ -2004,6 +2004,8 @@ class MOZ_STACK_CLASS IfThenElseEmitter
 
 class ForOfLoopControl : public LoopControl
 {
+    using EmitterScope = BytecodeEmitter::EmitterScope;
+
     // The stack depth of the iterator.
     int32_t iterDepth_;
 
@@ -2096,8 +2098,8 @@ class ForOfLoopControl : public LoopControl
         MOZ_ASSERT(slotFromTop == unsigned(bce->stackDepth - iterDepth_));
         if (!bce->emitDupAt(slotFromTop))         // ITER ... EXCEPTION ITER
             return false;
-        if (!emitIteratorClose(bce, CompletionKind::Throw)) // ITER ... EXCEPTION
-            return false;
+        if (!emitIteratorCloseInInnermostScope(bce, CompletionKind::Throw))
+            return false;                         // ITER ... EXCEPTION
 
         if (!ifIteratorIsNotClosed.emitEnd())     // ITER ... EXCEPTION
             return false;
@@ -2120,7 +2122,7 @@ class ForOfLoopControl : public LoopControl
                 return false;
             if (!bce->emitDupAt(slotFromTop + 1)) // ITER ... FTYPE FVALUE ITER
                 return false;
-            if (!emitIteratorClose(bce, CompletionKind::Normal)) // ITER ... FTYPE FVALUE
+            if (!emitIteratorCloseInInnermostScope(bce, CompletionKind::Normal))
                 return false;
             if (!ifGeneratorClosing.emitEnd())    // ITER ... FTYPE FVALUE
                 return false;
@@ -2135,16 +2137,27 @@ class ForOfLoopControl : public LoopControl
         return true;
     }
 
-    bool emitIteratorClose(BytecodeEmitter* bce,
-                           CompletionKind completionKind = CompletionKind::Normal) {
+    bool emitIteratorCloseInInnermostScope(BytecodeEmitter* bce,
+                                           CompletionKind completionKind = CompletionKind::Normal) {
+        return emitIteratorCloseInScope(bce,  *bce->innermostEmitterScope, completionKind);
+    }
+
+    bool emitIteratorCloseInScope(BytecodeEmitter* bce,
+                                  EmitterScope& currentScope,
+                                  CompletionKind completionKind = CompletionKind::Normal) {
         ptrdiff_t start = bce->offset();
-        if (!bce->emitIteratorClose(iterKind_, completionKind, allowSelfHosted_))
+        if (!bce->emitIteratorCloseInScope(currentScope, iterKind_, completionKind,
+                                           allowSelfHosted_))
+        {
             return false;
+        }
         ptrdiff_t end = bce->offset();
         return bce->tryNoteList.append(JSTRY_FOR_OF_ITERCLOSE, 0, start, end);
     }
 
-    bool emitPrepareForNonLocalJump(BytecodeEmitter* bce, bool isTarget) {
+    bool emitPrepareForNonLocalJumpFromScope(BytecodeEmitter* bce,
+                                             EmitterScope& currentScope,
+                                             bool isTarget) {
         // Pop unnecessary value from the stack.  Effectively this means
         // leaving try-catch block.  However, the performing IteratorClose can
         // reach the depth for try-catch, and effectively re-enter the
@@ -2159,7 +2172,7 @@ class ForOfLoopControl : public LoopControl
         if (!bce->emit1(JSOP_SWAP))                       // UNDEF ITER
             return false;
 
-        if (!emitIteratorClose(bce))                      // UNDEF
+        if (!emitIteratorCloseInScope(bce, currentScope, CompletionKind::Normal)) // UNDEF
             return false;
 
         if (isTarget) {
@@ -2850,8 +2863,11 @@ NonLocalExitControl::prepareForNonLocalJump(BytecodeEmitter::NestableControl* ta
                     return false;
 
                 ForOfLoopControl& loopinfo = control->as<ForOfLoopControl>();
-                if (!loopinfo.emitPrepareForNonLocalJump(bce_, /* isTarget = */ false)) // ...
+                if (!loopinfo.emitPrepareForNonLocalJumpFromScope(bce_, *es,
+                                                                  /* isTarget = */ false))
+                {                                         // ...
                     return false;
+                }
             } else {
                 npops += 2;
             }
@@ -2878,8 +2894,11 @@ NonLocalExitControl::prepareForNonLocalJump(BytecodeEmitter::NestableControl* ta
 
     if (target && emitIteratorCloseAtTarget && target->is<ForOfLoopControl>()) {
         ForOfLoopControl& loopinfo = target->as<ForOfLoopControl>();
-        if (!loopinfo.emitPrepareForNonLocalJump(bce_, /* isTarget = */ true)) // ... UNDEF UNDEF
+        if (!loopinfo.emitPrepareForNonLocalJumpFromScope(bce_, *es,
+                                                          /* isTarget = */ true))
+        {                                                 // ... UNDEF UNDEF UNDEF
             return false;
+        }
     }
 
     EmitterScope* targetEmitterScope = target ? target->emitterScope() : bce_->varEmitterScope;
@@ -5332,7 +5351,7 @@ BytecodeEmitter::emitIteratorNext(ParseNode* pn, IteratorKind iterKind /* = Iter
         return false;
 
     if (iterKind == IteratorKind::Async) {
-        if (!emitAwait())                                 // ... RESULT
+        if (!emitAwaitInInnermostScope())                 // ... RESULT
             return false;
     }
 
@@ -5343,9 +5362,10 @@ BytecodeEmitter::emitIteratorNext(ParseNode* pn, IteratorKind iterKind /* = Iter
 }
 
 bool
-BytecodeEmitter::emitIteratorClose(IteratorKind iterKind /* = IteratorKind::Sync */,
-                                   CompletionKind completionKind /* = CompletionKind::Normal */,
-                                   bool allowSelfHosted /* = false */)
+BytecodeEmitter::emitIteratorCloseInScope(EmitterScope& currentScope,
+                                          IteratorKind iterKind /* = IteratorKind::Sync */,
+                                          CompletionKind completionKind /* = CompletionKind::Normal */,
+                                          bool allowSelfHosted /* = false */)
 {
     MOZ_ASSERT(allowSelfHosted || emitterMode != BytecodeEmitter::SelfHosting,
                ".close() on iterators is prohibited in self-hosted code because it "
@@ -5437,7 +5457,7 @@ BytecodeEmitter::emitIteratorClose(IteratorKind iterKind /* = IteratorKind::Sync
             if (!emit1(JSOP_SWAP))                        // ... ... RVAL RESULT
                 return false;
         }
-        if (!emitAwait())                                 // ... ... RVAL? RESULT
+        if (!emitAwaitInScope(currentScope))              // ... ... RVAL? RESULT
             return false;
     }
 
@@ -5697,7 +5717,7 @@ BytecodeEmitter::emitDestructuringOpsArray(ParseNode* pattern, DestructuringFlav
     // For an empty pattern [], call IteratorClose unconditionally. Nothing
     // else needs to be done.
     if (!pattern->pn_head)
-        return emitIteratorClose();                               // ... OBJ
+        return emitIteratorCloseInInnermostScope();               // ... OBJ
 
     // Push an initial FALSE value for DONE.
     if (!emit1(JSOP_FALSE))                                       // ... OBJ ITER FALSE
@@ -5893,7 +5913,7 @@ BytecodeEmitter::emitDestructuringOpsArray(ParseNode* pattern, DestructuringFlav
         return false;
     if (!ifDone.emitElse())                                       // ... OBJ ITER
         return false;
-    if (!emitIteratorClose())                                     // ... OBJ
+    if (!emitIteratorCloseInInnermostScope())                     // ... OBJ
         return false;
     if (!ifDone.emitEnd())
         return false;
@@ -8620,7 +8640,7 @@ BytecodeEmitter::emitReturn(ParseNode* pn)
         bool isAsyncGenerator = sc->asFunctionBox()->isAsync() &&
                                 sc->asFunctionBox()->isStarGenerator();
         if (isAsyncGenerator) {
-            if (!emitAwait())
+            if (!emitAwaitInInnermostScope())
                 return false;
         }
     } else {
@@ -8696,9 +8716,9 @@ BytecodeEmitter::emitReturn(ParseNode* pn)
 }
 
 bool
-BytecodeEmitter::emitGetDotGenerator()
+BytecodeEmitter::emitGetDotGeneratorInScope(EmitterScope& currentScope)
 {
-    NameLocation loc = *locationOfNameBoundInFunctionScope(cx->names().dotGenerator);
+    NameLocation loc = *locationOfNameBoundInFunctionScope(cx->names().dotGenerator, &currentScope);
     return emitGetNameAtLocation(cx->names().dotGenerator, loc);
 }
 
@@ -8739,7 +8759,7 @@ BytecodeEmitter::emitYield(ParseNode* pn)
     // 11.4.3.7 AsyncGeneratorYield step 5.
     bool isAsyncGenerator = sc->asFunctionBox()->isAsync();
     if (isAsyncGenerator) {
-        if (!emitAwait())                                 // RESULT
+        if (!emitAwaitInInnermostScope())                 // RESULT
             return false;
     }
 
@@ -8748,7 +8768,7 @@ BytecodeEmitter::emitYield(ParseNode* pn)
             return false;
     }
 
-    if (!emitGetDotGenerator())
+    if (!emitGetDotGeneratorInInnermostScope())
         return false;
 
     if (!emitYieldOp(JSOP_YIELD))
@@ -8758,24 +8778,24 @@ BytecodeEmitter::emitYield(ParseNode* pn)
 }
 
 bool
-BytecodeEmitter::emitAwait()
+BytecodeEmitter::emitAwaitInInnermostScope(ParseNode* pn)
 {
-    if (!emitGetDotGenerator())
+    MOZ_ASSERT(sc->isFunctionBox());
+    MOZ_ASSERT(pn->isKind(ParseNodeKind::Await));
+
+    if (!emitTree(pn->pn_kid))
+        return false;
+    return emitAwaitInInnermostScope();
+}
+
+bool
+BytecodeEmitter::emitAwaitInScope(EmitterScope& currentScope)
+{
+    if (!emitGetDotGeneratorInScope(currentScope))
         return false;
     if (!emitYieldOp(JSOP_AWAIT))
         return false;
     return true;
-}
-
-bool
-BytecodeEmitter::emitAwait(ParseNode* pn)
-{
-    MOZ_ASSERT(sc->isFunctionBox());
-    MOZ_ASSERT(pn->getOp() == JSOP_AWAIT);
-
-    if (!emitTree(pn->pn_kid))
-        return false;
-    return emitAwait();
 }
 
 bool
@@ -8817,12 +8837,12 @@ BytecodeEmitter::emitYieldStar(ParseNode* iter)
 
     // 11.4.3.7 AsyncGeneratorYield step 5.
     if (isAsyncGenerator) {
-        if (!emitAwait())                                 // ITER RESULT
+        if (!emitAwaitInInnermostScope())                 // NEXT ITER RESULT
             return false;
     }
 
     // Load the generator object.
-    if (!emitGetDotGenerator())                           // ITER RESULT GENOBJ
+    if (!emitGetDotGeneratorInInnermostScope())           // NEXT ITER RESULT GENOBJ
         return false;
 
     // Yield RESULT as-is, without re-boxing.
@@ -8859,7 +8879,7 @@ BytecodeEmitter::emitYieldStar(ParseNode* iter)
     // If the iterator does not have a "throw" method, it calls IteratorClose
     // and then throws a TypeError.
     IteratorKind iterKind = isAsyncGenerator ? IteratorKind::Async : IteratorKind::Sync;
-    if (!emitIteratorClose(iterKind))                    // ITER RESULT EXCEPTION
+    if (!emitIteratorCloseInInnermostScope(iterKind))     // NEXT ITER RESULT EXCEPTION
         return false;
     if (!emitUint16Operand(JSOP_THROWMSG, JSMSG_ITERATOR_NO_THROW)) // throw
         return false;
@@ -8877,7 +8897,7 @@ BytecodeEmitter::emitYieldStar(ParseNode* iter)
     checkTypeSet(JSOP_CALL);
 
     if (isAsyncGenerator) {
-        if (!emitAwait())                                 // ITER OLDRESULT RESULT
+        if (!emitAwaitInInnermostScope())                 // NEXT ITER OLDRESULT RESULT
             return false;
     }
 
@@ -8948,7 +8968,7 @@ BytecodeEmitter::emitYieldStar(ParseNode* iter)
     checkTypeSet(JSOP_CALL);
 
     if (iterKind == IteratorKind::Async) {
-        if (!emitAwait())                                 // ... FTYPE FVALUE RESULT
+        if (!emitAwaitInInnermostScope())                 // ... FTYPE FVALUE RESULT
             return false;
     }
 
@@ -9028,7 +9048,7 @@ BytecodeEmitter::emitYieldStar(ParseNode* iter)
     checkTypeSet(JSOP_CALL);
 
     if (isAsyncGenerator) {
-        if (!emitAwait())                                        // ITER RESULT RESULT
+        if (!emitAwaitInInnermostScope())                        // NEXT ITER RESULT RESULT
             return false;
     }
 
@@ -10610,7 +10630,7 @@ BytecodeEmitter::emitFunctionBody(ParseNode* funBody)
         if (!emit1(JSOP_SETRVAL))
             return false;
 
-        if (!emitGetDotGenerator())
+        if (!emitGetDotGeneratorInInnermostScope())
             return false;
 
         // No need to check for finally blocks, etc as in EmitReturn.
@@ -10972,7 +10992,7 @@ BytecodeEmitter::emitTree(ParseNode* pn, ValueUsage valueUsage /* = ValueUsage::
         break;
 
       case PNK_AWAIT:
-        if (!emitAwait(pn))
+        if (!emitAwaitInInnermostScope(pn))
             return false;
         break;
 
