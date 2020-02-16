@@ -235,8 +235,22 @@ struct MOZ_STACK_CLASS BytecodeEmitter
 
     EmitterScope*    varEmitterScope;
     NestableControl* innermostNestableControl;
-    EmitterScope*    innermostEmitterScope;
+    EmitterScope*    innermostEmitterScope_;
     TDZCheckCache*   innermostTDZCheckCache;
+
+#ifdef DEBUG
+    bool unstableEmitterScope;
+
+    friend class AutoCheckUnstableEmitterScope;
+#endif
+
+    EmitterScope* innermostEmitterScope() const {
+        MOZ_ASSERT(!unstableEmitterScope);
+        return innermostEmitterScopeNoCheck();
+    }
+    EmitterScope* innermostEmitterScopeNoCheck() const {
+        return innermostEmitterScope_;
+    }
 
     CGConstList      constList;      /* constants to be included with the script */
     CGObjectList     objectList;     /* list of emitted objects */
@@ -342,7 +356,7 @@ struct MOZ_STACK_CLASS BytecodeEmitter
                                                                     EmitterScope* source);
 
     mozilla::Maybe<NameLocation> locationOfNameBoundInFunctionScope(JSAtom* name) {
-        return locationOfNameBoundInFunctionScope(name, innermostEmitterScope);
+        return locationOfNameBoundInFunctionScope(name, innermostEmitterScope());
     }
 
     void setVarEmitterScope(EmitterScope* emitterScope) {
@@ -638,7 +652,7 @@ struct MOZ_STACK_CLASS BytecodeEmitter
     MOZ_MUST_USE bool emitToIteratorResult(bool done);
 
     MOZ_MUST_USE bool emitGetDotGeneratorInInnermostScope() {
-        return emitGetDotGeneratorInScope(*innermostEmitterScope);
+        return emitGetDotGeneratorInScope(*innermostEmitterScope());
     }
     MOZ_MUST_USE bool emitGetDotGeneratorInScope(EmitterScope& currentScope);
 
@@ -647,7 +661,7 @@ struct MOZ_STACK_CLASS BytecodeEmitter
     MOZ_MUST_USE bool emitYieldOp(JSOp op);
     MOZ_MUST_USE bool emitYieldStar(ParseNode* iter);
     MOZ_MUST_USE bool emitAwaitInInnermostScope() {
-        return emitAwaitInScope(*innermostEmitterScope);
+        return emitAwaitInScope(*innermostEmitterScope());
     }
     MOZ_MUST_USE bool emitAwaitInInnermostScope(ParseNode* pn);
     MOZ_MUST_USE bool emitAwaitInScope(EmitterScope& currentScope);
@@ -754,7 +768,7 @@ struct MOZ_STACK_CLASS BytecodeEmitter
     MOZ_MUST_USE bool emitIteratorCloseInInnermostScope(IteratorKind iterKind = IteratorKind::Sync,
                                                         CompletionKind completionKind = CompletionKind::Normal,
                                                         bool allowSelfHosted = false) {
-        return emitIteratorCloseInScope(*innermostEmitterScope, iterKind, completionKind,
+        return emitIteratorCloseInScope(*innermostEmitterScope(), iterKind, completionKind,
                                         allowSelfHosted);
     }
 
@@ -853,6 +867,31 @@ struct MOZ_STACK_CLASS BytecodeEmitter
     MOZ_MUST_USE bool emitSuperElemOperands(ParseNode* pn,
                                             EmitElemOption opts = EmitElemOption::Get);
     MOZ_MUST_USE bool emitSuperElemOp(ParseNode* pn, JSOp op, bool isCall = false);
+};
+
+class MOZ_RAII AutoCheckUnstableEmitterScope {
+#ifdef DEBUG
+    bool prev_;
+    BytecodeEmitter* bce_;
+#endif
+
+  public:
+    AutoCheckUnstableEmitterScope() = delete;
+    explicit AutoCheckUnstableEmitterScope(BytecodeEmitter* bce)
+#ifdef DEBUG
+      : bce_(bce)
+#endif
+    {
+#ifdef DEBUG
+        prev_ = bce_->unstableEmitterScope;
+        bce_->unstableEmitterScope = true;
+#endif
+    }
+    ~AutoCheckUnstableEmitterScope() {
+#ifdef DEBUG
+        bce_->unstableEmitterScope = prev_;
+#endif
+    }
 };
 
 } /* namespace frontend */
