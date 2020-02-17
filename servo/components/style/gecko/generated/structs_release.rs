@@ -4602,9 +4602,7 @@ pub mod root {
         #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
         pub enum StyleUserInput {
             None = 0,
-            Enabled = 1,
-            Disabled = 2,
-            Auto = 3,
+            Auto = 1,
         }
         #[repr(u8)]
         #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
