@@ -2507,7 +2507,7 @@ TemporaryTypeSet::propertyNeedsBarrier(CompilerConstraintList* constraints, jsid
 bool
 js::ClassCanHaveExtraProperties(const Class* clasp)
 {
-    if (clasp == &UnboxedPlainObject::class_ || clasp == &UnboxedArrayObject::class_)
+    if (clasp == &UnboxedPlainObject::class_)
         return false;
     return clasp->getResolve()
         || clasp->getGetProperty()

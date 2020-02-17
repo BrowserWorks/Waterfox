@@ -3011,32 +3011,6 @@ LIRGenerator::visitSetInitializedLength(MSetInitializedLength* ins)
 }
 
 void
-LIRGenerator::visitUnboxedArrayLength(MUnboxedArrayLength* ins)
-{
-    define(new(alloc()) LUnboxedArrayLength(useRegisterAtStart(ins->object())), ins);
-}
-
-void
-LIRGenerator::visitUnboxedArrayInitializedLength(MUnboxedArrayInitializedLength* ins)
-{
-    define(new(alloc()) LUnboxedArrayInitializedLength(useRegisterAtStart(ins->object())), ins);
-}
-
-void
-LIRGenerator::visitIncrementUnboxedArrayInitializedLength(MIncrementUnboxedArrayInitializedLength* ins)
-{
-    add(new(alloc()) LIncrementUnboxedArrayInitializedLength(useRegister(ins->object())), ins);
-}
-
-void
-LIRGenerator::visitSetUnboxedArrayInitializedLength(MSetUnboxedArrayInitializedLength* ins)
-{
-    add(new(alloc()) LSetUnboxedArrayInitializedLength(useRegister(ins->object()),
-                                                       useRegisterOrConstant(ins->length()),
-                                                       temp()), ins);
-}
-
-void
 LIRGenerator::visitNot(MNot* ins)
 {
     MDefinition* op = ins->input();
@@ -3354,8 +3328,6 @@ LIRGenerator::visitStoreElementHole(MStoreElementHole* ins)
 
     // Use a temp register when adding new elements to unboxed arrays.
     LDefinition tempDef = LDefinition::BogusTemp();
-    if (ins->unboxedType() != JSVAL_TYPE_MAGIC)
-        tempDef = temp();
 
     LInstruction* lir;
     switch (ins->value()->type()) {
@@ -3388,8 +3360,6 @@ LIRGenerator::visitFallibleStoreElement(MFallibleStoreElement* ins)
 
     // Use a temp register when adding new elements to unboxed arrays.
     LDefinition tempDef = LDefinition::BogusTemp();
-    if (ins->unboxedType() != JSVAL_TYPE_MAGIC)
-        tempDef = temp();
 
     LInstruction* lir;
     switch (ins->value()->type()) {
