@@ -1982,7 +1982,6 @@ IonBuilder::inspectOpcode(JSOp op)
         return jsop_newobject();
 
       case JSOP_NEWARRAY:
-      case JSOP_SPREADCALLARRAY:
         return jsop_newarray(GET_UINT32(pc));
 
       case JSOP_NEWARRAY_COPYONWRITE:
@@ -2426,6 +2425,7 @@ IonBuilder::inspectOpcode(JSOp op)
         // Intentionally not implemented.
         break;
 
+      case JSOP_UNUSED126:
       case JSOP_UNUSED222:
       case JSOP_UNUSED223:
       case JSOP_LIMIT:
@@ -5174,7 +5174,7 @@ IonBuilder::jsop_funapply(uint32_t argc)
 AbortReasonOr<Ok>
 IonBuilder::jsop_spreadcall()
 {
-    // The arguments array is constructed by a JSOP_SPREADCALLARRAY and not
+    // The arguments array is constructed by a JSOP_NEWARRAY and not
     // leaked to user. The complications of spread call iterator behaviour are
     // handled when the user objects are expanded and copied into this hidden
     // array.
