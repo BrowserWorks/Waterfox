@@ -1128,7 +1128,7 @@ nsDNSService::Observe(nsISupports* subject, const char* topic,
     Shutdown();
   }
 
-  if (flushCache) {
+  if (flushCache && mResolver) {
     mResolver->FlushCache(false);
     return NS_OK;
   }
@@ -1198,6 +1198,7 @@ nsDNSService::GetDNSCacheEntries(
 
 NS_IMETHODIMP
 nsDNSService::ClearCache(bool aTrrToo) {
+  NS_ENSURE_TRUE(mResolver, NS_ERROR_NOT_INITIALIZED);
   mResolver->FlushCache(aTrrToo);
   return NS_OK;
 }
