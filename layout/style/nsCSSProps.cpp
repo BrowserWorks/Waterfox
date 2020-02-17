@@ -2145,7 +2145,6 @@ const KTableEntry nsCSSProps::kUserFocusKTable[] = {
 
 const KTableEntry nsCSSProps::kUserInputKTable[] = {
   { eCSSKeyword_none,     StyleUserInput::None },
-  { eCSSKeyword_enabled,  StyleUserInput::Enabled },
   { eCSSKeyword_auto,     StyleUserInput::Auto },
   { eCSSKeyword_UNKNOWN,  -1 }
 };
