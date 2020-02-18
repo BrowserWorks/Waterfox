@@ -67,8 +67,6 @@ public:
   NS_IMETHOD Reset() override;
   NS_IMETHOD SubmitNamesValues(HTMLFormSubmission *aFormSubmission) override;
 
-  virtual bool IsDisabled() const override { return false; }
-
   virtual void DoneAddingChildren(bool aHaveNotified) override;
   virtual bool IsDoneAddingChildren() override;
 
