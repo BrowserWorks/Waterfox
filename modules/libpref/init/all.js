@@ -4961,7 +4961,7 @@ pref("webgl.perf.spew-frame-allocs", true);
 
 pref("webgl.enable-webgl2", true);
 
-pref("webgl.enable-debug-renderer-info", true);
+pref("webgl.enable-debug-renderer-info", false);
 pref("webgl.renderer-string-override", "");
 pref("webgl.vendor-string-override", "");
 
