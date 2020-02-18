@@ -1391,7 +1391,7 @@ pref("privacy.restrict3rdpartystorage.userInteractionRequiredForHosts", "");
 pref("privacy.popups.maxReported", 100);
 
 // Enforce tracking protection in all modes
-pref("privacy.trackingprotection.enabled",  false);
+pref("privacy.trackingprotection.enabled",  true);
 // Enforce tracking protection in Private Browsing mode
 pref("privacy.trackingprotection.pbmode.enabled",  true);
 // First Party Isolation (double keying), disabled by default
