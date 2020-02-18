@@ -38,11 +38,20 @@ GetUnwrappedAsyncGenerator(JSFunction* wrapped);
 
 MOZ_MUST_USE bool
 AsyncGeneratorAwaitedFulfilled(JSContext* cx, Handle<AsyncGeneratorObject*> asyncGenObj,
-                              HandleValue value);
-
+                               HandleValue value);
 MOZ_MUST_USE bool
 AsyncGeneratorAwaitedRejected(JSContext* cx, Handle<AsyncGeneratorObject*> asyncGenObj,
-                             HandleValue reason);
+                              HandleValue reason);
+MOZ_MUST_USE bool
+AsyncGeneratorYieldReturnAwaitedFulfilled(JSContext* cx,
+                                          Handle<AsyncGeneratorObject*> asyncGenObj,
+                                          HandleValue value);
+MOZ_MUST_USE bool
+AsyncGeneratorYieldReturnAwaitedRejected(JSContext* cx,
+                                         Handle<AsyncGeneratorObject*> asyncGenObj,
+                                         HandleValue reason);
+
+class AsyncGeneratorObject;
 
 class AsyncGeneratorRequest : public NativeObject
 {
@@ -54,23 +63,26 @@ class AsyncGeneratorRequest : public NativeObject
         Slots,
     };
 
-    void setCompletionKind(CompletionKind completionKind_) {
+    void init(CompletionKind completionKind, HandleValue completionValue,
+              HandleObject promise) {
         setFixedSlot(Slot_CompletionKind,
-                     Int32Value(static_cast<int32_t>(completionKind_)));
+                     Int32Value(static_cast<int32_t>(completionKind)));
+        setFixedSlot(Slot_CompletionValue, completionValue);
+        setFixedSlot(Slot_Promise, ObjectValue(*promise));
     }
-    void setCompletionValue(HandleValue completionValue_) {
-        setFixedSlot(Slot_CompletionValue, completionValue_);
+
+    void clearData() {
+        setFixedSlot(Slot_CompletionValue, NullValue());
+        setFixedSlot(Slot_Promise, NullValue());
     }
-    void setPromise(HandleObject promise_) {
-        setFixedSlot(Slot_Promise, ObjectValue(*promise_));
-    }
+
+    friend AsyncGeneratorObject;
 
   public:
     static const Class class_;
 
-    static AsyncGeneratorRequest*
-    create(JSContext* cx, CompletionKind completionKind, HandleValue completionValue,
-           HandleObject promise);
+    static AsyncGeneratorRequest* create(JSContext* cx, CompletionKind completionKind,
+                                         HandleValue completionValue, HandleObject promise);
 
     CompletionKind completionKind() const {
         return static_cast<CompletionKind>(getFixedSlot(Slot_CompletionKind).toInt32());
@@ -90,6 +102,7 @@ class AsyncGeneratorObject : public NativeObject
         Slot_State = 0,
         Slot_Generator,
         Slot_QueueOrRequest,
+        Slot_CachedRequest,
         Slots
     };
 
@@ -97,6 +110,12 @@ class AsyncGeneratorObject : public NativeObject
         State_SuspendedStart,
         State_SuspendedYield,
         State_Executing,
+        // State_AwaitingYieldReturn corresponds to the case that
+        // AsyncGenerator#return is called while State_Executing,
+        // just like the case that AsyncGenerator#return is called
+        // while State_Completed.
+        State_AwaitingYieldReturn,
+        State_AwaitingReturn,
         State_Completed
     };
 
@@ -127,14 +146,14 @@ class AsyncGeneratorObject : public NativeObject
         setFixedSlot(Slot_QueueOrRequest, ObjectValue(*request));
     }
     void clearSingleQueueRequest() {
-        setFixedSlot(Slot_QueueOrRequest, NullHandleValue);
+        setFixedSlot(Slot_QueueOrRequest, NullValue());
     }
     AsyncGeneratorRequest* singleQueueRequest() const {
         return &getFixedSlot(Slot_QueueOrRequest).toObject().as<AsyncGeneratorRequest>();
     }
 
-    ArrayObject* queue() const {
-        return &getFixedSlot(Slot_QueueOrRequest).toObject().as<ArrayObject>();
+    NativeObject* queue() const {
+        return &getFixedSlot(Slot_QueueOrRequest).toObject().as<NativeObject>();
     }
     void setQueue(JSObject* queue_) {
         setFixedSlot(Slot_QueueOrRequest, ObjectValue(*queue_));
@@ -155,6 +174,12 @@ class AsyncGeneratorObject : public NativeObject
     bool isExecuting() const {
         return state() == State_Executing;
     }
+    bool isAwaitingYieldReturn() const {
+        return state() == State_AwaitingYieldReturn;
+    }
+    bool isAwaitingReturn() const {
+        return state() == State_AwaitingReturn;
+    }
     bool isCompleted() const {
         return state() == State_Completed;
     }
@@ -167,6 +192,12 @@ class AsyncGeneratorObject : public NativeObject
     }
     void setExecuting() {
         setState(State_Executing);
+    }
+    void setAwaitingYieldReturn() {
+        setState(State_AwaitingYieldReturn);
+    }
+    void setAwaitingReturn() {
+        setState(State_AwaitingReturn);
     }
     void setCompleted() {
         setState(State_Completed);
@@ -192,7 +223,42 @@ class AsyncGeneratorObject : public NativeObject
     bool isQueueEmpty() const {
         if (isSingleQueue())
             return isSingleQueueEmpty();
-        return queue()->length() == 0;
+        return queue()->getDenseInitializedLength() == 0;
+    }
+
+    // This function does either of the following:
+    //   * return a cached request object with the slots updated
+    //   * create a new request object with the slots set
+    static AsyncGeneratorRequest* createRequest(JSContext* cx,
+                                                Handle<AsyncGeneratorObject*> asyncGenObj,
+                                                CompletionKind completionKind,
+                                                HandleValue completionValue,
+                                                HandleObject promise);
+
+    // Stores the given request to the generator's cache after clearing its data
+    // slots.  The cached request will be reused in the subsequent createRequest
+    // call.
+    void cacheRequest(AsyncGeneratorRequest* request) {
+        if (hasCachedRequest())
+            return;
+
+        request->clearData();
+        setFixedSlot(Slot_CachedRequest, ObjectValue(*request));
+    }
+
+  private:
+    bool hasCachedRequest() const {
+        return getFixedSlot(Slot_CachedRequest).isObject();
+    }
+
+    AsyncGeneratorRequest* takeCachedRequest() {
+        auto request = &getFixedSlot(Slot_CachedRequest).toObject().as<AsyncGeneratorRequest>();
+        clearCachedRequest();
+        return request;
+    }
+
+    void clearCachedRequest() {
+        setFixedSlot(Slot_CachedRequest, NullValue());
     }
 };
 
@@ -223,7 +289,8 @@ class AsyncFromSyncIteratorObject : public NativeObject
 };
 
 MOZ_MUST_USE bool
-AsyncGeneratorResumeNext(JSContext* cx, Handle<AsyncGeneratorObject*> asyncGenObj);
+AsyncGeneratorResume(JSContext* cx, Handle<AsyncGeneratorObject*> asyncGenObj,
+                     CompletionKind completionKind, HandleValue argument);
 
 } // namespace js
 

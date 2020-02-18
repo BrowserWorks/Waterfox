@@ -547,7 +547,7 @@ class InterpreterFrame
     ArgumentsObject& argsObj() const;
     void initArgsObj(ArgumentsObject& argsobj);
 
-    JSObject* createRestParameter(JSContext* cx);
+    ArrayObject* createRestParameter(JSContext* cx);
 
     /*
      * Environment chain

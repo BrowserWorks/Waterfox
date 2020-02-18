@@ -1024,6 +1024,7 @@ BaselineCompiler::emitBody()
             // Intentionally not implemented.
           case JSOP_SETINTRINSIC:
             // Run-once opcode during self-hosting initialization.
+          case JSOP_UNUSED126:
           case JSOP_UNUSED222:
           case JSOP_UNUSED223:
           case JSOP_LIMIT:
@@ -1690,7 +1691,7 @@ bool
 BaselineCompiler::emit_JSOP_CALLSITEOBJ()
 {
     RootedObject cso(cx, script->getObject(pc));
-    RootedObject raw(cx, script->getObject(GET_UINT32_INDEX(pc) + 1));
+    RootedArrayObject raw(cx, &script->getObject(GET_UINT32_INDEX(pc) + 1)->as<ArrayObject>());
     if (!cso || !raw)
         return false;
 
@@ -2084,13 +2085,7 @@ BaselineCompiler::emit_JSOP_NEWARRAY()
     return true;
 }
 
-bool
-BaselineCompiler::emit_JSOP_SPREADCALLARRAY()
-{
-    return emit_JSOP_NEWARRAY();
-}
-
-typedef JSObject* (*NewArrayCopyOnWriteFn)(JSContext*, HandleArrayObject, gc::InitialHeap);
+typedef ArrayObject* (*NewArrayCopyOnWriteFn)(JSContext*, HandleArrayObject, gc::InitialHeap);
 const VMFunction jit::NewArrayCopyOnWriteInfo =
     FunctionInfo<NewArrayCopyOnWriteFn>(js::NewDenseCopyOnWriteArray, "NewDenseCopyOnWriteArray");
 
@@ -4494,14 +4489,14 @@ BaselineCompiler::emit_JSOP_REST()
 {
     frame.syncStack(0);
 
-    JSObject* templateObject =
+    ArrayObject* templateObject =
         ObjectGroup::newArrayObject(cx, nullptr, 0, TenuredObject,
                                     ObjectGroup::NewArrayKind::UnknownIndex);
     if (!templateObject)
         return false;
 
     // Call IC.
-    ICRest_Fallback::Compiler compiler(cx, &templateObject->as<ArrayObject>());
+    ICRest_Fallback::Compiler compiler(cx, templateObject);
     if (!emitOpIC(compiler.getStub(&stubSpace_)))
         return false;
 
@@ -4847,20 +4842,19 @@ BaselineCompiler::emit_JSOP_RESUME()
         Register initLength = regs.takeAny();
         masm.loadPtr(Address(scratch2, NativeObject::offsetOfElements()), scratch2);
         masm.load32(Address(scratch2, ObjectElements::offsetOfInitializedLength()), initLength);
+        masm.store32(Imm32(0), Address(scratch2, ObjectElements::offsetOfInitializedLength()));
 
         Label loop, loopDone;
         masm.bind(&loop);
         masm.branchTest32(Assembler::Zero, initLength, initLength, &loopDone);
         {
             masm.pushValue(Address(scratch2, 0));
+            masm.guardedCallPreBarrier(Address(scratch2, 0), MIRType::Value);
             masm.addPtr(Imm32(sizeof(Value)), scratch2);
             masm.sub32(Imm32(1), initLength);
             masm.jump(&loop);
         }
         masm.bind(&loopDone);
-
-        masm.guardedCallPreBarrier(exprStackSlot, MIRType::Value);
-        masm.storeValue(NullValue(), exprStackSlot);
         regs.add(initLength);
     }
 

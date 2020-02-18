@@ -331,7 +331,7 @@ bool StringSplitHelper(JSContext* cx, HandleString str, HandleString sep,
 bool
 ArrayPopDense(JSContext* cx, HandleObject obj, MutableHandleValue rval)
 {
-    MOZ_ASSERT(obj->is<ArrayObject>() || obj->is<UnboxedArrayObject>());
+    MOZ_ASSERT(obj->is<ArrayObject>());
 
     AutoDetectInvalidation adi(cx, rval);
 
@@ -350,21 +350,20 @@ ArrayPopDense(JSContext* cx, HandleObject obj, MutableHandleValue rval)
 }
 
 bool
-ArrayPushDense(JSContext* cx, HandleObject obj, HandleValue v, uint32_t* length)
+ArrayPushDense(JSContext* cx, HandleArrayObject arr, HandleValue v, uint32_t* length)
 {
-    *length = GetAnyBoxedOrUnboxedArrayLength(obj);
-    DenseElementResult result =
-        SetOrExtendAnyBoxedOrUnboxedDenseElements(cx, obj, *length, v.address(), 1,
-                                                  ShouldUpdateTypes::DontUpdate);
+   *length = arr->length();
+    DenseElementResult result = arr->setOrExtendDenseElements(cx, *length, v.address(), 1,
+                                                              ShouldUpdateTypes::DontUpdate);
     if (result != DenseElementResult::Incomplete) {
         (*length)++;
         return result == DenseElementResult::Success;
     }
 
     // AutoDetectInvalidation uses GetTopJitJSScript(cx)->ionScript(), but it's
-    // possible the SetOrExtendAnyBoxedOrUnboxedDenseElements call already
-    // invalidated the IonScript. JitFrameIterator::ionScript works when the
-    // script is invalidated so we use that instead.
+    // possible the setOrExtendDenseElements call already invalidated the
+    // IonScript. JSJitFrameIter::ionScript works when the script is invalidated
+    // so we use that instead.
     JitFrameIterator it(cx);
     MOZ_ASSERT(it.type() == JitFrame_Exit);
     ++it;
@@ -373,7 +372,7 @@ ArrayPushDense(JSContext* cx, HandleObject obj, HandleValue v, uint32_t* length)
     JS::AutoValueArray<3> argv(cx);
     AutoDetectInvalidation adi(cx, argv[0], ionScript);
     argv[0].setUndefined();
-    argv[1].setObject(*obj);
+    argv[1].setObject(*arr);
     argv[2].set(v);
     if (!js::array_push(cx, 1, argv.begin()))
         return false;
@@ -396,7 +395,7 @@ ArrayPushDense(JSContext* cx, HandleObject obj, HandleValue v, uint32_t* length)
 bool
 ArrayShiftDense(JSContext* cx, HandleObject obj, MutableHandleValue rval)
 {
-    MOZ_ASSERT(obj->is<ArrayObject>() || obj->is<UnboxedArrayObject>());
+    MOZ_ASSERT(obj->is<ArrayObject>());
 
     AutoDetectInvalidation adi(cx, rval);
 
@@ -1042,8 +1041,7 @@ InitRestParameter(JSContext* cx, uint32_t length, Value* rest, HandleObject temp
         if (length > 0) {
             if (!arrRes->ensureElements(cx, length))
                 return nullptr;
-            arrRes->setDenseInitializedLength(length);
-            arrRes->initDenseElements(0, rest, length);
+            arrRes->initDenseElements(rest, length);
             arrRes->setLengthInt32(length);
         }
         return arrRes;
@@ -1288,16 +1286,15 @@ Recompile(JSContext* cx)
 }
 
 bool
-SetDenseOrUnboxedArrayElement(JSContext* cx, HandleObject obj, int32_t index,
-                              HandleValue value, bool strict)
+SetDenseElement(JSContext* cx, HandleNativeObject obj, int32_t index, HandleValue value,
+                bool strict)
 {
     // This function is called from Ion code for StoreElementHole's OOL path.
-    // In this case we know the object is native or an unboxed array and that
-    // no type changes are needed.
+    // In this case we know the object is native and that no type changes are
+    // needed.
 
-    DenseElementResult result =
-        SetOrExtendAnyBoxedOrUnboxedDenseElements(cx, obj, index, value.address(), 1,
-                                                  ShouldUpdateTypes::DontUpdate);
+    DenseElementResult result = obj->setOrExtendDenseElements(cx, index, value.address(), 1,
+                                                              ShouldUpdateTypes::DontUpdate);
     if (result != DenseElementResult::Incomplete)
         return result == DenseElementResult::Success;
 
