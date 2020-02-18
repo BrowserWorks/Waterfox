@@ -38,7 +38,7 @@ mkdir -p ./objdir-$BROWSER_CHANNEL/dist/update
 if test `uname -s` = Darwin; then
 ./tools/update-packaging/make_full_update.sh \
 ./objdir-$BROWSER_CHANNEL/dist/update/waterfox-$BROWSER_CHANNEL-$DISPLAYVERSION.en-US.$OPERATING_SYSTEM.complete.xz.mar \
-./objdir-$BROWSER_CHANNEL/dist/waterfox/Waterfox.app/
+./objdir-$BROWSER_CHANNEL/dist/waterfox-classic/Waterfox.app/
 elif test `uname -s` = MINGW32_NT-6.2; then
 ./tools/update-packaging/make_full_update.sh \
 ./objdir-$BROWSER_CHANNEL/dist/update/waterfox-$BROWSER_CHANNEL-$DISPLAYVERSION.en-US.$OPERATING_SYSTEM.complete.xz.mar \
