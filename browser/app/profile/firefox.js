@@ -1940,3 +1940,6 @@ pref("browser.menuIcon.style", 0);
 
 // Bookmarks Toolbar Position
 pref("browser.bookmarksBar.position", "top");
+
+// Show links on Status Bar or overlay
+pref("browser.statusbar.showlinks", true);

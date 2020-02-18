@@ -17,6 +17,7 @@ Preferences.addAll([
   // Status Bar
   { id: "browser.statusbar.mode", type: "int" },
   { id: "browser.statusbar.showbtn", type: "bool" },
+  { id: "browser.statusbar.showlinks", type: "bool" },
 
   // Window Controls Position
   { id: "browser.windowControls.position", type: "wstring" },

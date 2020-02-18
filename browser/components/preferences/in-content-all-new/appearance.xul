@@ -44,6 +44,8 @@
     <checkbox id="showButtonsRange" preference="browser.statusbar.showbtn"
                 data-l10n-id="show-btn-range"
                 onsyncfrompreference="showBtnRange();"/>
+    <checkbox id="showLinks" preference="browser.statusbar.showlinks"
+                data-l10n-id="show-links"/>
   </vbox>
   </html:div>
 </groupbox>

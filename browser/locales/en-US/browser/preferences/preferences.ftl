@@ -1127,6 +1127,9 @@ hide-status-bar =
 show-btn-range =
     .label = Use buttons in range control
 
+show-links =
+    .label = Show links
+
 tab-bar-position = Tab Bar Position
 
 tab-top-above-ab =

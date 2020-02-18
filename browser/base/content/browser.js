@@ -4027,17 +4027,6 @@ function getDefaultHomePage() {
 
 function BrowserFullScreen() {
   window.fullScreen = !window.fullScreen;
-  if (Services.prefs.getIntPref("browser.statusbar.mode") == 2)
-  {
-    if (window.fullScreen)
-    {
-      windowRoot.ownerGlobal.document.querySelector(".toolbar-statusbar").style.display = "none";
-    }
-    else
-    {
-      windowRoot.ownerGlobal.document.querySelector(".toolbar-statusbar").style.display = "flex";
-    }
-  }
 }
 
 function getWebNavigation() {
@@ -5671,8 +5660,10 @@ var XULBrowserWindow = {
       }
     }
 
-    this.overLink = url;
-    LinkTargetDisplay.update();
+    if (Services.prefs.getBoolPref("browser.statusbar.showlinks", true)) {
+      this.overLink = url;
+      LinkTargetDisplay.update();
+    }
   },
 
   showTooltip(x, y, tooltip, direction, browser) {
