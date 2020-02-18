@@ -41,6 +41,7 @@ ac_add_options --enable-av1
 export MOZ_GECKO_PROFILER=
 export MOZ_ENABLE_PROFILER_SPS=
 export MOZ_PROFILING=
+export MOZ_INCLUDE_SOURCE_INFO=1
 
 if test `uname -s` = MINGW32_NT-6.2; then
 mk_add_options MOZ_MAKE_FLAGS=-j6
