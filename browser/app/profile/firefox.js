@@ -421,11 +421,8 @@ pref("permissions.desktop-notification.postPrompt.enabled", false);
 pref("permissions.postPrompt.animate", true);
 
 // This is primarily meant to be enabled for studies.
-#ifdef NIGHTLY_BUILD
 pref("permissions.eventTelemetry.enabled", false, locked);
-#else
-pref("permissions.eventTelemetry.enabled", false, locked);
-#endif
+
 
 // handle links targeting new windows
 // 1=current window/tab, 2=new window, 3=new tab in most recent window
@@ -1546,11 +1543,8 @@ pref("toolkit.telemetry.bhrPing.enabled", false, locked);
 // Enables using Hybrid Content Telemetry from Mozilla privileged pages.
 pref("toolkit.telemetry.hybridContent.enabled", false, locked);
 // Whether to enable Ecosystem Telemetry, requires a restart.
-#ifdef NIGHTLY_BUILD
 pref("toolkit.telemetry.ecosystemtelemetry.enabled", false, locked);
-#else
-pref("toolkit.telemetry.ecosystemtelemetry.enabled", false, locked);
-#endif
+
 
 // Ping Centre Telemetry settings.
 pref("browser.ping-centre.telemetry", false, locked);
@@ -1632,19 +1626,11 @@ pref("privacy.trackingprotection.introURL", "");
 // Always enable newtab segregation using containers
 pref("privacy.usercontext.about_newtab_segregation.enabled", true);
 // Enable Contextual Identity Containers
-#ifdef NIGHTLY_BUILD
 pref("privacy.userContext.enabled", true);
 pref("privacy.userContext.ui.enabled", true);
 
 // 0 disables long press, 1 when clicked, the menu is shown, 2 the menu is shown after X milliseconds.
 pref("privacy.userContext.longPressBehavior", 2);
-#else
-pref("privacy.userContext.enabled", true);
-pref("privacy.userContext.ui.enabled", true);
-
-// 0 disables long press, 1 when clicked, the menu is shown, 2 the menu is shown after X milliseconds.
-pref("privacy.userContext.longPressBehavior", 2);
-#endif
 pref("privacy.userContext.extension", "");
 
 // Start the browser in e10s mode
