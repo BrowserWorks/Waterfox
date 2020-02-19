@@ -1303,7 +1303,7 @@ nsHtml5ElementName::initializeStatics()
                                     OPTIONAL_END_TAG);
   ELT_APPLET = new nsHtml5ElementName(nsGkAtoms::applet,
                                       nsGkAtoms::applet,
-                                      NS_NewHTMLUnknownElement,
+                                      NS_NewHTMLSharedObjectElement,
                                       NS_NewSVGUnknownElement,
                                       nsHtml5TreeBuilder::MARQUEE_OR_APPLET |
                                         SPECIAL | SCOPING);
