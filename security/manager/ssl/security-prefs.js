@@ -112,9 +112,9 @@ pref("security.webauth.webauthn", false);
 pref("security.webauth.webauthn_enable_softtoken", false);
 pref("security.webauth.webauthn_enable_usbtoken", false);
 
-pref("security.ssl.errorReporting.enabled", false, locked);
-pref("security.ssl.errorReporting.url", "", locked);
-pref("security.ssl.errorReporting.automatic", false, locked);
+pref("security.ssl.errorReporting.enabled", false);
+pref("security.ssl.errorReporting.url", "");
+pref("security.ssl.errorReporting.automatic", false);
 
 // Impose a maximum age on HPKP headers, to avoid sites getting permanently
 // blacking themselves out by setting a bad pin.  (60 days by default)
