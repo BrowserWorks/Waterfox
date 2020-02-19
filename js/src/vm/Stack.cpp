@@ -84,7 +84,7 @@ InterpreterFrame::isNonGlobalEvalFrame() const
     return isEvalFrame() && script()->bodyScope()->as<EvalScope>().isNonGlobal();
 }
 
-ArrayObject*
+JSObject*
 InterpreterFrame::createRestParameter(JSContext* cx)
 {
     MOZ_ASSERT(script()->hasRest());

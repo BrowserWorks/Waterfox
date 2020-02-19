@@ -20,7 +20,7 @@ ZoneGroup::ZoneGroup(JSRuntime* runtime)
     ownerContext_(TlsContext.get()),
     enterCount(1),
     zones_(this),
-    helperThreadUse(HelperThreadUse::None),
+    usedByHelperThread(false),
 #ifdef DEBUG
     ionBailAfter_(this, 0),
 #endif
@@ -45,7 +45,6 @@ ZoneGroup::init()
 ZoneGroup::~ZoneGroup()
 {
 #ifdef DEBUG
-    MOZ_ASSERT(helperThreadUse == HelperThreadUse::None);
     {
         AutoLockHelperThreadState lock;
         MOZ_ASSERT(ionLazyLinkListSize_ == 0);
@@ -66,7 +65,7 @@ ZoneGroup::enter(JSContext* cx)
         MOZ_ASSERT(enterCount);
     } else {
         if (useExclusiveLocking) {
-            MOZ_ASSERT(!usedByHelperThread());
+            MOZ_ASSERT(!usedByHelperThread);
             while (ownerContext().context() != nullptr) {
                 cx->yieldToEmbedding();
             }

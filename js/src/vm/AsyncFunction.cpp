@@ -135,7 +135,8 @@ js::WrapAsyncFunctionWithProto(JSContext* cx, HandleFunction unwrapped, HandleOb
     RootedFunction wrapped(cx, NewFunctionWithProto(cx, WrappedAsyncFunction, length,
                                                     JSFunction::NATIVE_FUN, nullptr,
                                                     funName, proto,
-                                                    AllocKind::FUNCTION_EXTENDED));
+                                                    AllocKind::FUNCTION_EXTENDED,
+                                                    TenuredObject));
     if (!wrapped)
         return nullptr;
 

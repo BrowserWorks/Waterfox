@@ -3911,6 +3911,12 @@ Parser<ParseHandler, CharT>::functionStmt(uint32_t toStringStart, YieldHandling 
 
     GeneratorKind generatorKind = NotGenerator;
     if (tt == TOK_MUL) {
+        if (!asyncIterationSupported()) {
+            if (asyncKind != SyncFunction) {
+                error(JSMSG_ASYNC_GENERATOR);
+                return null();
+            }
+        }
         generatorKind = StarGenerator;
         if (!tokenStream.getToken(&tt))
             return null();
@@ -3980,6 +3986,12 @@ Parser<ParseHandler, CharT>::functionExpr(uint32_t toStringStart, InvokedPredict
         return null();
 
     if (tt == TOK_MUL) {
+        if (!asyncIterationSupported()) {
+            if (asyncKind != SyncFunction) {
+                error(JSMSG_ASYNC_GENERATOR);
+                return null();
+            }
+        }
         generatorKind = StarGenerator;
         if (!tokenStream.getToken(&tt))
             return null();
@@ -6276,14 +6288,16 @@ Parser<ParseHandler, CharT>::forStatement(YieldHandling yieldHandling)
         }
     }
 
-    if (pc->isAsync()) {
-        bool matched;
-        if (!tokenStream.matchToken(&matched, TOK_AWAIT))
-            return null();
+    if (asyncIterationSupported()) {
+        if (pc->isAsync()) {
+            bool matched;
+            if (!tokenStream.matchToken(&matched, TOK_AWAIT))
+                return null();
 
-        if (matched) {
-            iflags |= JSITER_FORAWAITOF;
-            iterKind = IteratorKind::Async;
+            if (matched) {
+                iflags |= JSITER_FORAWAITOF;
+                iterKind = IteratorKind::Async;
+            }
         }
     }
 
@@ -9699,6 +9713,12 @@ Parser<ParseHandler, CharT>::propertyName(YieldHandling yieldHandling,
     }
 
     if (ltok == TOK_MUL) {
+        if (!asyncIterationSupported()) {
+            if (isAsync) {
+                error(JSMSG_ASYNC_GENERATOR);
+                return null();
+            }
+        }
         isGenerator = true;
         if (!tokenStream.getToken(&ltok))
             return null();

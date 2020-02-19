@@ -624,10 +624,10 @@ JSCompartment::addToVarNames(JSContext* cx, JS::Handle<JSAtom*> name)
 /* static */ HashNumber
 TemplateRegistryHashPolicy::hash(const Lookup& lookup)
 {
-    size_t length = lookup->as<NativeObject>().getDenseInitializedLength();
+    size_t length = GetAnyBoxedOrUnboxedInitializedLength(lookup);
     HashNumber hash = 0;
     for (uint32_t i = 0; i < length; i++) {
-        JSAtom& lookupAtom = lookup->as<NativeObject>().getDenseElement(i).toString()->asAtom();
+        JSAtom& lookupAtom = GetAnyBoxedOrUnboxedDenseElement(lookup, i).toString()->asAtom();
         hash = mozilla::AddToHash(hash, lookupAtom.hash());
     }
     return hash;
@@ -636,13 +636,13 @@ TemplateRegistryHashPolicy::hash(const Lookup& lookup)
 /* static */ bool
 TemplateRegistryHashPolicy::match(const Key& key, const Lookup& lookup)
 {
-    size_t length = lookup->as<NativeObject>().getDenseInitializedLength();
-    if (key->as<NativeObject>().getDenseInitializedLength() != length)
+    size_t length = GetAnyBoxedOrUnboxedInitializedLength(lookup);
+    if (GetAnyBoxedOrUnboxedInitializedLength(key) != length)
         return false;
 
     for (uint32_t i = 0; i < length; i++) {
-        JSAtom* a = &key->as<NativeObject>().getDenseElement(i).toString()->asAtom();
-        JSAtom* b = &lookup->as<NativeObject>().getDenseElement(i).toString()->asAtom();
+        JSAtom* a = &GetAnyBoxedOrUnboxedDenseElement(key, i).toString()->asAtom();
+        JSAtom* b = &GetAnyBoxedOrUnboxedDenseElement(lookup, i).toString()->asAtom();
         if (a != b)
             return false;
     }
@@ -651,7 +651,7 @@ TemplateRegistryHashPolicy::match(const Key& key, const Lookup& lookup)
 }
 
 bool
-JSCompartment::getTemplateLiteralObject(JSContext* cx, HandleArrayObject rawStrings,
+JSCompartment::getTemplateLiteralObject(JSContext* cx, HandleObject rawStrings,
                                         MutableHandleObject templateObj)
 {
     if (TemplateRegistry::AddPtr p = templateLiteralMap_.lookupForAdd(rawStrings)) {
@@ -678,7 +678,7 @@ JSCompartment::getTemplateLiteralObject(JSContext* cx, HandleArrayObject rawStri
 }
 
 JSObject*
-JSCompartment::getExistingTemplateLiteralObject(ArrayObject* rawStrings)
+JSCompartment::getExistingTemplateLiteralObject(JSObject* rawStrings)
 {
     TemplateRegistry::Ptr p = templateLiteralMap_.lookup(rawStrings);
     MOZ_ASSERT(p);

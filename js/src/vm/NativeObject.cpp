@@ -998,8 +998,6 @@ void
 NativeObject::shrinkElements(JSContext* cx, uint32_t reqCapacity)
 {
     MOZ_ASSERT(canHaveNonEmptyElements());
-    MOZ_ASSERT(reqCapacity >= getDenseInitializedLength());
-
     if (denseElementsAreCopyOnWrite())
         MOZ_CRASH();
 

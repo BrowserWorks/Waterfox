@@ -989,11 +989,11 @@ struct JSCompartment
     // and a template object. If a template object is found in template
     // registry, that object is returned. Otherwise, the passed-in templateObj
     // is added to the registry.
-    bool getTemplateLiteralObject(JSContext* cx, js::HandleArrayObject rawStrings,
+    bool getTemplateLiteralObject(JSContext* cx, js::HandleObject rawStrings,
                                   js::MutableHandleObject templateObj);
 
     // Per above, but an entry must already exist in the template registry.
-    JSObject* getExistingTemplateLiteralObject(js::ArrayObject* rawStrings);
+    JSObject* getExistingTemplateLiteralObject(JSObject* rawStrings);
 
     void findOutgoingEdges(js::gc::ZoneComponentFinder& finder);
 

@@ -136,7 +136,7 @@ JSRuntime::JSRuntime(JSRuntime* parentRuntime)
 #ifdef DEBUG
     activeThreadHasExclusiveAccess(false),
 #endif
-    numActiveHelperThreadZones(0),
+    numHelperThreadZones(0),
     numCompartments(0),
     localeCallbacks(nullptr),
     defaultLocale(nullptr),
@@ -878,18 +878,18 @@ JSRuntime::destroyAtomsAddedWhileSweepingTable()
 void
 JSRuntime::setUsedByHelperThread(Zone* zone)
 {
-    MOZ_ASSERT(!zone->group()->usedByHelperThread());
+    MOZ_ASSERT(!zone->group()->usedByHelperThread);
     MOZ_ASSERT(!zone->wasGCStarted());
-    zone->group()->setUsedByHelperThread();
-    numActiveHelperThreadZones++;
+    zone->group()->usedByHelperThread = true;
+    numHelperThreadZones++;
 }
 
 void
 JSRuntime::clearUsedByHelperThread(Zone* zone)
 {
-    MOZ_ASSERT(zone->group()->usedByHelperThread());
-    zone->group()->clearUsedByHelperThread();
-    numActiveHelperThreadZones--;
+    MOZ_ASSERT(zone->group()->usedByHelperThread);
+    zone->group()->usedByHelperThread = false;
+    numHelperThreadZones--;
     JSContext* cx = TlsContext.get();
     if (gc.fullGCForAtomsRequested() && cx->canCollectAtoms())
         gc.triggerFullGCForAtoms(cx);

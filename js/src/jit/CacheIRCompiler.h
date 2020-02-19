@@ -41,6 +41,7 @@ namespace jit {
     _(LoadUndefinedResult)                \
     _(LoadBooleanResult)                  \
     _(LoadInt32ArrayLengthResult)         \
+    _(LoadUnboxedArrayLengthResult)       \
     _(LoadArgumentsObjectLengthResult)    \
     _(LoadFunctionLengthResult)           \
     _(LoadStringLengthResult)             \
@@ -50,6 +51,7 @@ namespace jit {
     _(LoadDenseElementHoleResult)         \
     _(LoadDenseElementExistsResult)       \
     _(LoadDenseElementHoleExistsResult)   \
+    _(LoadUnboxedArrayElementResult)      \
     _(LoadTypedElementResult)             \
     _(LoadObjectResult)                   \
     _(LoadTypeOfObjectResult)             \

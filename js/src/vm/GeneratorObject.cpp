@@ -11,7 +11,6 @@
 #include "jsatominlines.h"
 #include "jsscriptinlines.h"
 
-#include "vm/ArrayObject-inl.h"
 #include "vm/NativeObject-inl.h"
 #include "vm/Stack-inl.h"
 
@@ -68,7 +67,7 @@ GeneratorObject::suspend(JSContext* cx, HandleObject obj, AbstractFramePtr frame
     MOZ_ASSERT(*pc == JSOP_INITIALYIELD || *pc == JSOP_YIELD || *pc == JSOP_AWAIT);
 
     Rooted<GeneratorObject*> genObj(cx, &obj->as<GeneratorObject>());
-    MOZ_ASSERT(!genObj->hasExpressionStack() || genObj->isExpressionStackEmpty());
+    MOZ_ASSERT(!genObj->hasExpressionStack());
     MOZ_ASSERT_IF(*pc == JSOP_AWAIT, genObj->callee().isAsync());
     MOZ_ASSERT_IF(*pc == JSOP_YIELD,
                   genObj->callee().isStarGenerator() ||
@@ -82,23 +81,9 @@ GeneratorObject::suspend(JSContext* cx, HandleObject obj, AbstractFramePtr frame
 
     ArrayObject* stack = nullptr;
     if (nvalues > 0) {
-        do {
-            if (genObj->hasExpressionStack()) {
-                MOZ_ASSERT(genObj->expressionStack().getDenseInitializedLength() == 0);
-                auto result = genObj->expressionStack().setOrExtendDenseElements(
-                    cx, 0, vp, nvalues, ShouldUpdateTypes::DontUpdate);
-                if (result == DenseElementResult::Success) {
-                    MOZ_ASSERT(genObj->expressionStack().getDenseInitializedLength() == nvalues);
-                    break;
-                }
-                if (result == DenseElementResult::Failure)
-                    return false;
-            }
-
-            stack = NewDenseCopiedArray(cx, nvalues, vp);
-            if (!stack)
-                return false;
-        } while (false);
+        stack = NewDenseCopiedArray(cx, nvalues, vp);
+        if (!stack)
+            return false;
     }
 
     uint32_t yieldAndAwaitIndex = GET_UINT24(pc);
@@ -184,13 +169,13 @@ GeneratorObject::resume(JSContext* cx, InterpreterActivation& activation,
     if (genObj->hasArgsObj())
         activation.regs().fp()->initArgsObj(genObj->argsObj());
 
-    if (genObj->hasExpressionStack() && !genObj->isExpressionStackEmpty()) {
-        uint32_t len = genObj->expressionStack().getDenseInitializedLength();
+    if (genObj->hasExpressionStack()) {
+        uint32_t len = genObj->expressionStack().length();
         MOZ_ASSERT(activation.regs().spForStackDepth(len));
         const Value* src = genObj->expressionStack().getDenseElements();
         mozilla::PodCopy(activation.regs().sp, src, len);
         activation.regs().sp += len;
-        genObj->expressionStack().setDenseInitializedLength(0);
+        genObj->clearExpressionStack();
     }
 
     JSScript* script = callee->nonLazyScript();

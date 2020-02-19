@@ -943,7 +943,7 @@ ModuleObject::evaluate(JSContext* cx, HandleModuleObject self, MutableHandleValu
 ModuleObject::createNamespace(JSContext* cx, HandleModuleObject self, HandleObject exports)
 {
     MOZ_ASSERT(!self->namespace_());
-    MOZ_ASSERT(exports->is<ArrayObject>());
+    MOZ_ASSERT(exports->is<ArrayObject>() || exports->is<UnboxedArrayObject>());
 
     RootedModuleNamespaceObject ns(cx, ModuleNamespaceObject::create(cx, self));
     if (!ns)

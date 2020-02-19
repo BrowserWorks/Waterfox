@@ -451,7 +451,7 @@ Snapshot(JSContext* cx, HandleObject pobj_, unsigned flags, AutoIdVector* props)
             } else {
                 // The newEnumerate hook may return duplicates. Whitelist the
                 // unboxed object hooks because we know they are well-behaved.
-                if (!pobj->is<UnboxedPlainObject>())
+                if (!pobj->is<UnboxedPlainObject>() && !pobj->is<UnboxedArrayObject>())
                     checkForDuplicates = true;
 
                 if (checkForDuplicates) {
