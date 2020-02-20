@@ -14,9 +14,11 @@
 #include "jit/JitcodeMap.h"
 #include "jit/JitSpewer.h"
 #include "js/TrackedOptimizationInfo.h"
+#include "vm/UnboxedObject.h"
 
 #include "vm/ObjectGroup-inl.h"
 #include "vm/TypeInference-inl.h"
+#include "vm/UnboxedObject-inl.h"
 
 using namespace js;
 using namespace js::jit;
