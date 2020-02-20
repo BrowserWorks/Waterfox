@@ -4151,7 +4151,7 @@ IonBuilder::selectInliningTargets(const InliningTargets& targets, CallInfo& call
             // Non-function targets are not supported by polymorphic inlining.
             inlineable = false;
         }
-        
+
         // Only use a group guard and inline the target if we will recompile when
         // the target function gets a new group.
         if (inlineable && targets[i].group) {
@@ -7717,8 +7717,6 @@ IonBuilder::jsop_getelem()
     }
 
     obj = maybeUnboxForPropertyAccess(obj);
-    if (obj->type() == MIRType::Object)
-        obj = convertUnboxedObjects(obj);
 
     if (!forceInlineCaches()) {
         // Note: no trackOptimizationAttempt call is needed, getElemTryGetProp
@@ -8857,7 +8855,7 @@ IonBuilder::jsop_setelem()
 
     MDefinition* value = current->pop();
     MDefinition* index = current->pop();
-    MDefinition* object = convertUnboxedObjects(current->pop());
+    MDefinition* object = current->pop();
 
     trackTypeInfo(TrackedTypeSite::Receiver, object->type(), object->resultTypeSet());
     trackTypeInfo(TrackedTypeSite::Index, index->type(), index->resultTypeSet());
@@ -10237,8 +10235,6 @@ IonBuilder::jsop_getprop(PropertyName* name)
     }
 
     obj = maybeUnboxForPropertyAccess(obj);
-    if (obj->type() == MIRType::Object)
-        obj = convertUnboxedObjects(obj);
 
     BarrierKind barrier = PropertyReadNeedsTypeBarrier(analysisContext, constraints(),
                                                        obj, name, types);
@@ -10666,49 +10662,6 @@ IonBuilder::getPropTryComplexPropOfTypedObject(bool* emitted,
                                   fieldPrediction, fieldTypeObj);
 }
 
-MDefinition*
-IonBuilder::convertUnboxedObjects(MDefinition* obj)
-{
-    // If obj might be in any particular unboxed group which should be
-    // converted to a native representation, perform that conversion. This does
-    // not guarantee the object will not have such a group afterwards, if the
-    // object's possible groups are not precisely known.
-    TemporaryTypeSet* types = obj->resultTypeSet();
-    if (!types || types->unknownObject() || !types->objectOrSentinel())
-        return obj;
-
-    BaselineInspector::ObjectGroupVector list(alloc());
-    for (size_t i = 0; i < types->getObjectCount(); i++) {
-        TypeSet::ObjectKey* key = obj->resultTypeSet()->getObject(i);
-        if (!key || !key->isGroup())
-            continue;
-
-        if (UnboxedLayout* layout = key->group()->maybeUnboxedLayout()) {
-            AutoEnterOOMUnsafeRegion oomUnsafe;
-            if (layout->nativeGroup() && !list.append(key->group()))
-                oomUnsafe.crash("IonBuilder::convertUnboxedObjects");
-        }
-    }
-
-    return convertUnboxedObjects(obj, list);
-}
-
-MDefinition*
-IonBuilder::convertUnboxedObjects(MDefinition* obj,
-                                  const BaselineInspector::ObjectGroupVector& list)
-{
-    for (size_t i = 0; i < list.length(); i++) {
-        ObjectGroup* group = list[i];
-        if (TemporaryTypeSet* types = obj->resultTypeSet()) {
-            if (!types->hasType(TypeSet::ObjectType(group)))
-                continue;
-        }
-        obj = MConvertUnboxedObjectToNative::New(alloc(), obj, group);
-        current->add(obj->toInstruction());
-    }
-    return obj;
-}
-
 AbortReasonOr<Ok>
 IonBuilder::getPropTryDefiniteSlot(bool* emitted, MDefinition* obj, PropertyName* name,
                                    BarrierKind barrier, TemporaryTypeSet* types)
@@ -10887,13 +10840,10 @@ IonBuilder::getPropTryUnboxed(bool* emitted, MDefinition* obj, PropertyName* nam
 MDefinition*
 IonBuilder::addShapeGuardsForGetterSetter(MDefinition* obj, JSObject* holder, Shape* holderShape,
                 const BaselineInspector::ReceiverVector& receivers,
-                const BaselineInspector::ObjectGroupVector& convertUnboxedGroups,
                 bool isOwnProperty)
 {
     MOZ_ASSERT(isOwnProperty == !holder);
     MOZ_ASSERT(holderShape);
-
-    obj = convertUnboxedObjects(obj, convertUnboxedGroups);
 
     if (isOwnProperty) {
         MOZ_ASSERT(receivers.empty());
@@ -10924,10 +10874,9 @@ IonBuilder::getPropTryCommonGetter(bool* emitted, MDefinition* obj, PropertyName
         JSObject* foundProto = nullptr;
         bool isOwnProperty = false;
         BaselineInspector::ReceiverVector receivers(alloc());
-        BaselineInspector::ObjectGroupVector convertUnboxedGroups(alloc());
         if (inspector->commonGetPropFunction(pc, innerized, &foundProto, &lastProperty, &commonGetter,
                                               &globalShape, &isOwnProperty,
-                                              receivers, convertUnboxedGroups))
+                                              receivers))
         {
             bool canUseTIForGetter = false;
             if (!isOwnProperty) {
@@ -10941,7 +10890,7 @@ IonBuilder::getPropTryCommonGetter(bool* emitted, MDefinition* obj, PropertyName
                 // If it's an own property or type information is bad, we can still
                 // optimize the getter if we shape guard.
                 obj = addShapeGuardsForGetterSetter(obj, foundProto, lastProperty,
-                                                    receivers, convertUnboxedGroups,
+                                                    receivers,
                                                     isOwnProperty);
                 if (!obj)
                     return abort(AbortReason::Alloc);
@@ -11130,14 +11079,11 @@ IonBuilder::getPropTryInlineAccess(bool* emitted, MDefinition* obj, PropertyName
     MOZ_ASSERT(*emitted == false);
 
     BaselineInspector::ReceiverVector receivers(alloc());
-    BaselineInspector::ObjectGroupVector convertUnboxedGroups(alloc());
-    if (!inspector->maybeInfoForPropertyOp(pc, receivers, convertUnboxedGroups))
+    if (!inspector->maybeInfoForPropertyOp(pc, receivers))
         return abort(AbortReason::Alloc);
 
     if (!canInlinePropertyOpShapes(receivers))
         return Ok();
-
-    obj = convertUnboxedObjects(obj, convertUnboxedGroups);
 
     MIRType rvalType = types->getKnownMIRType();
     if (barrier != BarrierKind::NoBarrier || IsNullOrUndefined(rvalType))
@@ -11416,7 +11362,7 @@ AbortReasonOr<Ok>
 IonBuilder::jsop_setprop(PropertyName* name)
 {
     MDefinition* value = current->pop();
-    MDefinition* obj = convertUnboxedObjects(current->pop());
+    MDefinition* obj = current->pop();
 
     bool emitted = false;
     startTrackingOptimizations();
@@ -11495,10 +11441,9 @@ IonBuilder::setPropTryCommonSetter(bool* emitted, MDefinition* obj,
         JSObject* foundProto = nullptr;
         bool isOwnProperty;
         BaselineInspector::ReceiverVector receivers(alloc());
-        BaselineInspector::ObjectGroupVector convertUnboxedGroups(alloc());
         if (inspector->commonSetPropFunction(pc, &foundProto, &lastProperty, &commonSetter,
                                               &isOwnProperty,
-                                              receivers, convertUnboxedGroups))
+                                              receivers))
         {
             bool canUseTIForSetter = false;
             if (!isOwnProperty) {
@@ -11511,7 +11456,7 @@ IonBuilder::setPropTryCommonSetter(bool* emitted, MDefinition* obj,
                 // If it's an own property or type information is bad, we can still
                 // optimize the setter if we shape guard.
                 obj = addShapeGuardsForGetterSetter(obj, foundProto, lastProperty,
-                                                    receivers, convertUnboxedGroups,
+                                                    receivers,
                                                     isOwnProperty);
                 if (!obj)
                     return abort(AbortReason::Alloc);
@@ -11886,14 +11831,11 @@ IonBuilder::setPropTryInlineAccess(bool* emitted, MDefinition* obj,
     }
 
     BaselineInspector::ReceiverVector receivers(alloc());
-    BaselineInspector::ObjectGroupVector convertUnboxedGroups(alloc());
-    if (!inspector->maybeInfoForPropertyOp(pc, receivers, convertUnboxedGroups))
+    if (!inspector->maybeInfoForPropertyOp(pc, receivers))
         return abort(AbortReason::Alloc);
 
     if (!canInlinePropertyOpShapes(receivers))
         return Ok();
-
-    obj = convertUnboxedObjects(obj, convertUnboxedGroups);
 
     if (receivers.length() == 1) {
         if (!receivers[0].group) {
@@ -12709,7 +12651,7 @@ IonBuilder::jsop_setaliasedvar(EnvironmentCoordinate ec)
 AbortReasonOr<Ok>
 IonBuilder::jsop_in()
 {
-    MDefinition* obj = convertUnboxedObjects(current->pop());
+    MDefinition* obj = current->pop();
     MDefinition* id = current->pop();
 
     if (!forceInlineCaches()) {
@@ -12811,7 +12753,7 @@ IonBuilder::hasTryNotDefined(bool* emitted, MDefinition* obj, MDefinition* id, b
 AbortReasonOr<Ok>
 IonBuilder::jsop_hasown()
 {
-    MDefinition* obj = convertUnboxedObjects(current->pop());
+    MDefinition* obj = current->pop();
     MDefinition* id = current->pop();
 
     if (!forceInlineCaches()) {

@@ -311,13 +311,6 @@ class UnboxedPlainObject : public UnboxedObject
     }
 };
 
-// Try to construct an UnboxedLayout for each of the preliminary objects,
-// provided they all match the template shape. If successful, converts the
-// preliminary objects and their group to the new unboxed representation.
-bool
-TryConvertToUnboxedLayout(JSContext* cx, AutoEnterAnalysis& enter, Shape* templateShape,
-                          ObjectGroup* group, PreliminaryObjectArray* objects);
-
 inline gc::AllocKind
 UnboxedLayout::getAllocKind() const
 {
