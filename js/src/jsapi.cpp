@@ -7155,9 +7155,6 @@ JS_SetGlobalJitCompilerOption(JSContext* cx, JSJitCompilerOption opt, uint32_t v
         }
         jit::JitOptions.jumpThreshold = value;
         break;
-      case JSJITCOMPILER_UNBOXED_OBJECTS:
-        jit::JitOptions.disableUnboxedObjects = !value;
-        break;
       case JSJITCOMPILER_SIMULATOR_ALWAYS_INTERRUPT:
         jit::JitOptions.simulatorAlwaysInterrupt = !!value;
         break;

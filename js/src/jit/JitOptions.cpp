@@ -233,7 +233,7 @@ DefaultJitOptions::DefaultJitOptions()
     }
 
     // Toggles whether unboxed plain objects can be created by the VM.
-    SET_DEFAULT(disableUnboxedObjects, false);
+    SET_DEFAULT(disableUnboxedObjects, true);
 
     // Test whether Atomics are allowed in asm.js code.
     SET_DEFAULT(asmJSAtomicsEnable, false);
