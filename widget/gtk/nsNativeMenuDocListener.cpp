@@ -64,7 +64,7 @@ nsNativeMenuDocListener::~nsNativeMenuDocListener()
 {
     MOZ_ASSERT(mContentToObserverTable.Count() == 0,
                "Some nodes forgot to unregister listeners. This is bad! (and we're lucky we made it this far)");
-    MOZ_COUNT_DTOR(nsNativeMenuDocListener);
+    //MOZ_COUNT_DTOR(nsNativeMenuDocListener);
 }
 
 void
@@ -287,7 +287,7 @@ nsNativeMenuDocListener::nsNativeMenuDocListener(nsIContent *aRootNode) :
     mLastSource(nullptr),
     mLastTarget(nullptr)
 {
-    MOZ_COUNT_CTOR(nsNativeMenuDocListener);
+    //MOZ_COUNT_CTOR(nsNativeMenuDocListener);
 }
 
 void

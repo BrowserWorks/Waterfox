@@ -224,7 +224,6 @@ private:
 void
 ThreadedDriver::Start()
 {
-  MOZ_ASSERT(!ThreadRunning());
   LOG(LogLevel::Debug,
       ("Starting thread for a SystemClockDriver  %p", mGraphImpl.get()));
   Unused << NS_WARN_IF(mThread);

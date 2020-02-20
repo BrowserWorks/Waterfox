@@ -4600,7 +4600,6 @@ AutoClearTypeInferenceStateOnOOM::AutoClearTypeInferenceStateOnOOM(Zone* zone)
   : zone(zone), oom(false)
 {
     MOZ_RELEASE_ASSERT(CurrentThreadCanAccessZone(zone));
-    MOZ_ASSERT(!TlsContext.get()->inUnsafeCallWithABI);
     zone->types.setSweepingTypes(true);
 }
 
