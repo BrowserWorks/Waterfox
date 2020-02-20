@@ -260,8 +260,6 @@
     _(GuardObjectGroup)             \
     _(GuardObjectIdentity)          \
     _(GuardClass)                   \
-    _(GuardUnboxedExpando)          \
-    _(LoadUnboxedExpando)           \
     _(TypeBarrierV)                 \
     _(TypeBarrierO)                 \
     _(MonitorTypes)                 \
@@ -286,7 +284,6 @@
     _(StoreElementT)                \
     _(StoreUnboxedScalar)           \
     _(StoreUnboxedPointer)          \
-    _(ConvertUnboxedObjectToNative) \
     _(ArrayPopShiftV)               \
     _(ArrayPopShiftT)               \
     _(ArrayPushV)                   \

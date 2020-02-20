@@ -108,8 +108,6 @@ GetObject(const MDefinition* ins)
       case MDefinition::Op_GuardObjectGroup:
       case MDefinition::Op_GuardObjectIdentity:
       case MDefinition::Op_GuardClass:
-      case MDefinition::Op_GuardUnboxedExpando:
-      case MDefinition::Op_LoadUnboxedExpando:
       case MDefinition::Op_LoadSlot:
       case MDefinition::Op_StoreSlot:
       case MDefinition::Op_InArray:

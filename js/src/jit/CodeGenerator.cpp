@@ -3247,15 +3247,6 @@ GuardReceiver(MacroAssembler& masm, const ReceiverGuard& guard,
 {
     if (guard.group) {
         masm.branchTestObjGroup(Assembler::NotEqual, obj, guard.group, miss);
-
-        Address expandoAddress(obj, UnboxedPlainObject::offsetOfExpando());
-        if (guard.shape) {
-            masm.loadPtr(expandoAddress, scratch);
-            masm.branchPtr(Assembler::Equal, scratch, ImmWord(0), miss);
-            masm.branchTestObjShape(Assembler::NotEqual, scratch, guard.shape, miss);
-        } else if (checkNullExpando) {
-            masm.branchPtr(Assembler::NotEqual, expandoAddress, ImmWord(0), miss);
-        }
     } else {
         masm.branchTestObjShape(Assembler::NotEqual, obj, guard.shape, miss);
     }
@@ -3293,13 +3284,6 @@ CodeGenerator::emitGetPropertyPolymorphic(LInstruction* ins, Register obj, Regis
                 masm.loadPtr(Address(target, NativeObject::offsetOfSlots()), scratch);
                 masm.loadTypedOrValue(Address(scratch, offset), output);
             }
-        } else {
-            masm.comment("loadUnboxedProperty");
-            const UnboxedLayout::Property* property =
-                receiver.group->unboxedLayout().lookup(mir->name());
-            Address propertyAddr(obj, UnboxedPlainObject::offsetOfData() + property->offset);
-
-            masm.loadUnboxedProperty(propertyAddr, property->type, output);
         }
 
         if (i == mir->numReceivers() - 1) {
@@ -3340,8 +3324,6 @@ EmitUnboxedPreBarrier(MacroAssembler &masm, T address, JSValueType type)
         masm.guardedCallPreBarrier(address, MIRType::Object);
     else if (type == JSVAL_TYPE_STRING)
         masm.guardedCallPreBarrier(address, MIRType::String);
-    else
-        MOZ_ASSERT(!UnboxedTypeNeedsPreBarrier(type));
 }
 
 void
@@ -3377,13 +3359,6 @@ CodeGenerator::emitSetPropertyPolymorphic(LInstruction* ins, Register obj, Regis
                     emitPreBarrier(addr);
                 masm.storeConstantOrRegister(value, addr);
             }
-        } else {
-            const UnboxedLayout::Property* property =
-                receiver.group->unboxedLayout().lookup(mir->name());
-            Address propertyAddr(obj, UnboxedPlainObject::offsetOfData() + property->offset);
-
-            EmitUnboxedPreBarrier(masm, propertyAddr, property->type);
-            masm.storeUnboxedProperty(propertyAddr, property->type, value, nullptr);
         }
 
         if (i == mir->numReceivers() - 1) {
@@ -3573,27 +3548,6 @@ CodeGenerator::visitGuardReceiverPolymorphic(LGuardReceiverPolymorphic* lir)
     }
 
     masm.bind(&done);
-}
-
-void
-CodeGenerator::visitGuardUnboxedExpando(LGuardUnboxedExpando* lir)
-{
-    Label miss;
-
-    Register obj = ToRegister(lir->object());
-    masm.branchPtr(lir->mir()->requireExpando() ? Assembler::Equal : Assembler::NotEqual,
-                   Address(obj, UnboxedPlainObject::offsetOfExpando()), ImmWord(0), &miss);
-
-    bailoutFrom(&miss, lir->snapshot());
-}
-
-void
-CodeGenerator::visitLoadUnboxedExpando(LLoadUnboxedExpando* lir)
-{
-    Register obj = ToRegister(lir->object());
-    Register result = ToRegister(lir->getDef(0));
-
-    masm.loadPtr(Address(obj, UnboxedPlainObject::offsetOfExpando()), result);
 }
 
 void
@@ -8838,19 +8792,6 @@ typedef bool (*ConvertUnboxedObjectToNativeFn)(JSContext*, JSObject*);
 static const VMFunction ConvertUnboxedPlainObjectToNativeInfo =
     FunctionInfo<ConvertUnboxedObjectToNativeFn>(UnboxedPlainObject::convertToNative,
                                                  "UnboxedPlainObject::convertToNative");
-
-void
-CodeGenerator::visitConvertUnboxedObjectToNative(LConvertUnboxedObjectToNative* lir)
-{
-    Register object = ToRegister(lir->getOperand(0));
-
-    OutOfLineCode* ool = oolCallVM(ConvertUnboxedPlainObjectToNativeInfo,
-                                   lir, ArgList(object), StoreNothing());
-
-    masm.branchPtr(Assembler::Equal, Address(object, JSObject::offsetOfGroup()),
-                   ImmGCPtr(lir->mir()->group()), ool->entry());
-    masm.bind(ool->rejoin());
-}
 
 typedef bool (*ArrayPopShiftFn)(JSContext*, HandleObject, MutableHandleValue);
 static const VMFunction ArrayPopDenseInfo =
