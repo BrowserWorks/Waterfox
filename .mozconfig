@@ -9,7 +9,10 @@ ac_add_options --with-macos-sdk=/Applications/Xcode.app/Contents/Developer/Platf
 mk_add_options AUTOCONF=/usr/local/Cellar/autoconf213/2.13/bin/autoconf213
 # Windows 10 Specific Options
 elif test `uname -s` = MINGW32_NT-6.2; then
-ac_add_options --enable-optimize="-O2 -w"
+export LINKER=lld-link
+export CC=clang-cl
+export CXX=clang-cl
+ac_add_options --enable-optimize="-O2 -Qvec -w -clang:-arch:SSE3"
 ac_add_options --enable-rust-simd # on x86 requires SSE2
 ac_add_options --enable-eme=widevine
 ac_add_options --disable-stylo
