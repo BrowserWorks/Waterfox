@@ -55,7 +55,7 @@ jobs:
         worker:
             google-play-track:
                 by-release-level:
-                    production: production
+                    production: beta
                     staging: alpha
             rollout-percentage:
                 by-release-level:
