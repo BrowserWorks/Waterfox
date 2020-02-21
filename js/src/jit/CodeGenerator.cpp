@@ -26,6 +26,7 @@
 #include "builtin/SelfHostingDefines.h"
 #include "builtin/TypedObject.h"
 #include "gc/Nursery.h"
+#include "gc/StoreBuffer-inl.h"
 #include "irregexp/NativeRegExpMacroAssembler.h"
 #include "jit/AtomicOperations.h"
 #include "jit/BaselineCompiler.h"
