@@ -1476,36 +1476,6 @@ CacheIRCompiler::emitGuardMagicValue()
 }
 
 bool
-CacheIRCompiler::emitGuardNoUnboxedExpando()
-{
-    Register obj = allocator.useRegister(masm, reader.objOperandId());
-
-    FailurePath* failure;
-    if (!addFailurePath(&failure))
-        return false;
-
-    Address expandoAddr(obj, UnboxedPlainObject::offsetOfExpando());
-    masm.branchPtr(Assembler::NotEqual, expandoAddr, ImmWord(0), failure->label());
-    return true;
-}
-
-bool
-CacheIRCompiler::emitGuardAndLoadUnboxedExpando()
-{
-    Register obj = allocator.useRegister(masm, reader.objOperandId());
-    Register output = allocator.defineRegister(masm, reader.objOperandId());
-
-    FailurePath* failure;
-    if (!addFailurePath(&failure))
-        return false;
-
-    Address expandoAddr(obj, UnboxedPlainObject::offsetOfExpando());
-    masm.loadPtr(expandoAddr, output);
-    masm.branchTestPtr(Assembler::Zero, output, output, failure->label());
-    return true;
-}
-
-bool
 CacheIRCompiler::emitGuardNoDetachedTypedObjects()
 {
     FailurePath* failure;

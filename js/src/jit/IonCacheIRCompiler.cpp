@@ -1188,19 +1188,6 @@ IonCacheIRCompiler::emitCallProxyHasOwnResult()
     return true;
 }
 
-
-bool
-IonCacheIRCompiler::emitLoadUnboxedPropertyResult()
-{
-    AutoOutputRegister output(*this);
-    Register obj = allocator.useRegister(masm, reader.objOperandId());
-
-    JSValueType fieldType = reader.valueType();
-    int32_t fieldOffset = int32StubField(reader.stubOffset());
-    masm.loadUnboxedProperty(Address(obj, fieldOffset), fieldType, output);
-    return true;
-}
-
 bool
 IonCacheIRCompiler::emitGuardFrameHasNoArgumentsObject()
 {
@@ -1581,35 +1568,6 @@ bool
 IonCacheIRCompiler::emitAllocateAndStoreDynamicSlot()
 {
     return emitAddAndStoreSlotShared(CacheOp::AllocateAndStoreDynamicSlot);
-}
-
-bool
-IonCacheIRCompiler::emitStoreUnboxedProperty()
-{
-    Register obj = allocator.useRegister(masm, reader.objOperandId());
-    JSValueType fieldType = reader.valueType();
-    int32_t offset = int32StubField(reader.stubOffset());
-    ConstantOrRegister val = allocator.useConstantOrRegister(masm, reader.valOperandId());
-
-    Maybe<AutoScratchRegister> scratch;
-    if (needsPostBarrier() && UnboxedTypeNeedsPostBarrier(fieldType))
-        scratch.emplace(allocator, masm);
-
-    if (fieldType == JSVAL_TYPE_OBJECT && typeCheckInfo_->isSet()) {
-        FailurePath* failure;
-        if (!addFailurePath(&failure))
-            return false;
-        EmitCheckPropertyTypes(masm, typeCheckInfo_, obj, val, *liveRegs_, failure->label());
-    }
-
-    // Note that the storeUnboxedProperty call here is infallible, as the
-    // IR emitter is responsible for guarding on |val|'s type.
-    Address fieldAddr(obj, offset);
-    EmitICUnboxedPreBarrier(masm, fieldAddr, fieldType);
-    masm.storeUnboxedProperty(fieldAddr, fieldType, val, /* failure = */ nullptr);
-    if (needsPostBarrier() && UnboxedTypeNeedsPostBarrier(fieldType))
-        emitPostBarrierSlot(obj, val, scratch.ref());
-    return true;
 }
 
 bool

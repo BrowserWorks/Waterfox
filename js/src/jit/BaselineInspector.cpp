@@ -70,19 +70,11 @@ AddReceiver(const ReceiverGuard& receiver,
 static bool
 GetCacheIRReceiverForNativeReadSlot(ICCacheIR_Monitored* stub, ReceiverGuard* receiver)
 {
-    // We match either:
+    // We match:
     //
     //   GuardIsObject 0
     //   GuardShape 0
     //   LoadFixedSlotResult 0 or LoadDynamicSlotResult 0
-    //
-    // or
-    //
-    //   GuardIsObject 0
-    //   GuardGroup 0
-    //   1: GuardAndLoadUnboxedExpando 0
-    //   GuardShape 1
-    //   LoadFixedSlotResult 1 or LoadDynamicSlotResult 1
 
     *receiver = ReceiverGuard();
     CacheIRReader reader(stub->stubInfo());
@@ -90,14 +82,6 @@ GetCacheIRReceiverForNativeReadSlot(ICCacheIR_Monitored* stub, ReceiverGuard* re
     ObjOperandId objId = ObjOperandId(0);
     if (!reader.matchOp(CacheOp::GuardIsObject, objId))
         return false;
-
-    if (reader.matchOp(CacheOp::GuardGroup, objId)) {
-        receiver->group = stub->stubInfo()->getStubField<ObjectGroup*>(stub, reader.stubOffset());
-
-        if (!reader.matchOp(CacheOp::GuardAndLoadUnboxedExpando, objId))
-            return false;
-        objId = reader.objOperandId();
-    }
 
     if (reader.matchOp(CacheOp::GuardShape, objId)) {
         receiver->shape = stub->stubInfo()->getStubField<Shape*>(stub, reader.stubOffset());
@@ -108,45 +92,14 @@ GetCacheIRReceiverForNativeReadSlot(ICCacheIR_Monitored* stub, ReceiverGuard* re
 }
 
 static bool
-GetCacheIRReceiverForUnboxedProperty(ICCacheIR_Monitored* stub, ReceiverGuard* receiver)
+GetCacheIRReceiverForNativeSetSlot(ICCacheIR_Updated* stub, ReceiverGuard* receiver)
 {
     // We match:
     //
     //   GuardIsObject 0
     //   GuardGroup 0
-    //   LoadUnboxedPropertyResult 0 ..
-
-    *receiver = ReceiverGuard();
-    CacheIRReader reader(stub->stubInfo());
-
-    ObjOperandId objId = ObjOperandId(0);
-    if (!reader.matchOp(CacheOp::GuardIsObject, objId))
-        return false;
-
-    if (!reader.matchOp(CacheOp::GuardGroup, objId))
-        return false;
-    receiver->group = stub->stubInfo()->getStubField<ObjectGroup*>(stub, reader.stubOffset());
-
-    return reader.matchOp(CacheOp::LoadUnboxedPropertyResult, objId);
-}
-
-static bool
-GetCacheIRReceiverForNativeSetSlot(ICCacheIR_Updated* stub, ReceiverGuard* receiver)
-{
-    // We match either:
-    //
-    //   GuardIsObject 0
-    //   GuardGroup 0
     //   GuardShape 0
     //   StoreFixedSlot 0 or StoreDynamicSlot 0
-    //
-    // or
-    //
-    //   GuardIsObject 0
-    //   GuardGroup 0
-    //   1: GuardAndLoadUnboxedExpando 0
-    //   GuardShape 1
-    //   StoreFixedSlot 1 or StoreDynamicSlot 1
 
     *receiver = ReceiverGuard();
     CacheIRReader reader(stub->stubInfo());
@@ -158,9 +111,6 @@ GetCacheIRReceiverForNativeSetSlot(ICCacheIR_Updated* stub, ReceiverGuard* recei
     if (!reader.matchOp(CacheOp::GuardGroup, objId))
         return false;
     ObjectGroup* group = stub->stubInfo()->getStubField<ObjectGroup*>(stub, reader.stubOffset());
-
-    if (reader.matchOp(CacheOp::GuardAndLoadUnboxedExpando, objId))
-        objId = reader.objOperandId();
 
     if (!reader.matchOp(CacheOp::GuardShape, objId))
         return false;
@@ -170,42 +120,6 @@ GetCacheIRReceiverForNativeSetSlot(ICCacheIR_Updated* stub, ReceiverGuard* recei
         return false;
 
     *receiver = ReceiverGuard(group, shape);
-    return true;
-}
-
-static bool
-GetCacheIRReceiverForUnboxedProperty(ICCacheIR_Updated* stub, ReceiverGuard* receiver)
-{
-    // We match:
-    //
-    //   GuardIsObject 0
-    //   GuardGroup 0
-    //   GuardType 1 type | GuardIsObjectOrNull 1
-    //   StoreUnboxedProperty 0
-
-    *receiver = ReceiverGuard();
-    CacheIRReader reader(stub->stubInfo());
-
-    ObjOperandId objId = ObjOperandId(0);
-    ValOperandId rhsId = ValOperandId(1);
-    if (!reader.matchOp(CacheOp::GuardIsObject, objId))
-        return false;
-
-    if (!reader.matchOp(CacheOp::GuardGroup, objId))
-        return false;
-    ObjectGroup* group = stub->stubInfo()->getStubField<ObjectGroup*>(stub, reader.stubOffset());
-
-    if (reader.matchOp(CacheOp::GuardType, rhsId)) {
-        reader.valueType(); // Skip.
-    } else {
-        if (!reader.matchOp(CacheOp::GuardIsObjectOrNull, rhsId))
-            return false;
-    }
-
-    if (!reader.matchOp(CacheOp::StoreUnboxedProperty))
-        return false;
-
-    *receiver = ReceiverGuard(group, nullptr);
     return true;
 }
 
@@ -227,15 +141,13 @@ BaselineInspector::maybeInfoForPropertyOp(jsbytecode* pc, ReceiverVector& receiv
     while (stub->next()) {
         ReceiverGuard receiver;
         if (stub->isCacheIR_Monitored()) {
-            if (!GetCacheIRReceiverForNativeReadSlot(stub->toCacheIR_Monitored(), &receiver) &&
-                !GetCacheIRReceiverForUnboxedProperty(stub->toCacheIR_Monitored(), &receiver))
+            if (!GetCacheIRReceiverForNativeReadSlot(stub->toCacheIR_Monitored(), &receiver))
             {
                 receivers.clear();
                 return true;
             }
         } else if (stub->isCacheIR_Updated()) {
-            if (!GetCacheIRReceiverForNativeSetSlot(stub->toCacheIR_Updated(), &receiver) &&
-                !GetCacheIRReceiverForUnboxedProperty(stub->toCacheIR_Updated(), &receiver))
+            if (!GetCacheIRReceiverForNativeSetSlot(stub->toCacheIR_Updated(), &receiver))
             {
                 receivers.clear();
                 return true;
@@ -711,16 +623,6 @@ MatchCacheIRReceiverGuard(CacheIRReader& reader, ICStub* stub, const CacheIRStub
     //
     //   GuardShape objId
     //
-    // or:
-    //
-    //   GuardGroup objId
-    //   [GuardNoUnboxedExpando objId]
-    //
-    // or:
-    //
-    //   GuardGroup objId
-    //   expandoId: GuardAndLoadUnboxedExpando
-    //   GuardShape expandoId
 
     *receiver = ReceiverGuard();
 
@@ -730,23 +632,7 @@ MatchCacheIRReceiverGuard(CacheIRReader& reader, ICStub* stub, const CacheIRStub
         return true;
     }
 
-    if (!reader.matchOp(CacheOp::GuardGroup, objId))
-        return false;
-    receiver->group = stubInfo->getStubField<ObjectGroup*>(stub, reader.stubOffset());
-
-    if (!reader.matchOp(CacheOp::GuardAndLoadUnboxedExpando, objId)) {
-        // Second case, just a group guard.
-        reader.matchOp(CacheOp::GuardNoUnboxedExpando, objId);
-        return true;
-    }
-
-    // Third case.
-    ObjOperandId expandoId = reader.objOperandId();
-    if (!reader.matchOp(CacheOp::GuardShape, expandoId))
-        return false;
-
-    receiver->shape = stubInfo->getStubField<Shape*>(stub, reader.stubOffset());
-    return true;
+    return false;
 }
 
 static bool
