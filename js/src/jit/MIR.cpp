@@ -4889,7 +4889,7 @@ MCreateThisWithTemplate::canRecoverOnBailout() const
 
 MObjectState::MObjectState(MObjectState* state)
   : numSlots_(state->numSlots_),
-    numFixedSlots_(state->numFixedSlots_)
+    numFixedSlots_(state->numFixedSlots_) {
     // This instruction is only used as a summary for bailout paths.
     setResultType(MIRType::Object);
     setRecoveredOnBailout();
