@@ -16,6 +16,7 @@
 #include "mozilla/gfx/2D.h"
 #include "mozilla/gfx/Helpers.h"
 #include "mozilla/gfx/PathHelpers.h"
+#include "mozilla/dom/HTMLImageElement.h"
 #include "mozilla/layers/WebRenderLayerManager.h"
 #include "mozilla/MouseEvents.h"
 #include "mozilla/Unused.h"
@@ -790,6 +791,15 @@ nsImageFrame::PredictedDestRect(const nsRect& aFrameContentBox)
 bool
 nsImageFrame::ShouldShowBrokenImageIcon() const
 {
+  // <img alt=""> is special, and it shouldn't draw the broken image icon,
+  // unlike the no-alt attribute or non-empty-alt-attribute case.
+  if (auto* image = HTMLImageElement::FromContent(mContent)) {
+    const nsAttrValue* alt = image->GetParsedAttr(nsGkAtoms::alt);
+    if (alt && alt->IsEmptyString()) {
+      return false;
+    }
+  }
+
   // check for broken images. valid null images (eg. img src="") are
   // not considered broken because they have no image requests
   nsCOMPtr<nsIImageLoadingContent> imageLoader = do_QueryInterface(mContent);
