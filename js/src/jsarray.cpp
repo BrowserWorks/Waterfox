@@ -505,7 +505,8 @@ SetArrayElement(JSContext* cx, HandleObject obj, uint64_t index, HandleValue v)
 static bool
 DeleteArrayElement(JSContext* cx, HandleObject obj, uint64_t index, ObjectOpResult& result)
 {
-    if (obj->is<ArrayObject>() && !obj->isIndexed() &&
+    if (obj->is<ArrayObject>() &&
+        !obj->as<NativeObject>().isIndexed() &&
         !obj->as<NativeObject>().denseElementsAreFrozen())
     {
         ArrayObject* aobj = &obj->as<ArrayObject>();
@@ -553,7 +554,8 @@ DeletePropertyOrThrow(JSContext* cx, HandleObject obj, uint64_t index)
 static bool
 DeletePropertiesOrThrow(JSContext* cx, HandleObject obj, uint64_t len, uint64_t finalLength)
 {
-    if (obj->is<ArrayObject>() && !obj->isIndexed() &&
+    if (obj->is<ArrayObject>() &&
+        !obj->as<NativeObject>().isIndexed() &&
         !obj->as<NativeObject>().denseElementsAreFrozen())
     {
         if (len <= UINT32_MAX) {
@@ -956,10 +958,16 @@ array_addProperty(JSContext* cx, HandleObject obj, HandleId id, HandleValue v)
 static inline bool
 ObjectMayHaveExtraIndexedOwnProperties(JSObject* obj)
 {
-    return !obj->isNative() ||
-           obj->isIndexed() ||
-           obj->is<TypedArrayObject>() ||
-           ClassMayResolveId(*obj->runtimeFromAnyThread()->commonNames,
+    if (!obj->isNative())
+        return true;
+
+    if (obj->as<NativeObject>().isIndexed())
+        return true;
+
+    if (obj->is<TypedArrayObject>())
+        return true;
+
+    return ClassMayResolveId(*obj->runtimeFromAnyThread()->commonNames,
                              obj->getClass(), INT_TO_JSID(0), obj);
 }
 
@@ -3065,8 +3073,8 @@ GetIndexedPropertiesInRange(JSContext* cx, HandleObject obj, uint64_t begin, uin
         }
 
         // Append typed array elements.
-        if (pobj->is<TypedArrayObject>()) {
-            uint32_t len = pobj->as<TypedArrayObject>().length();
+        if (nativeObj->is<TypedArrayObject>()) {
+            uint32_t len = nativeObj->as<TypedArrayObject>().length();
             for (uint32_t i = begin; i < len && i < end; i++) {
                 if (!indexes.append(i))
                     return false;
@@ -3074,8 +3082,8 @@ GetIndexedPropertiesInRange(JSContext* cx, HandleObject obj, uint64_t begin, uin
         }
 
         // Append sparse elements.
-        if (pobj->isIndexed()) {
-            Shape::Range<NoGC> r(pobj->as<NativeObject>().lastProperty());
+        if (nativeObj->isIndexed()) {
+            Shape::Range<NoGC> r(nativeObj->lastProperty());
             for (; !r.empty(); r.popFront()) {
                 Shape& shape = r.front();
                 jsid id = shape.propid();
@@ -3207,7 +3215,7 @@ ArraySliceOrdinary(JSContext* cx, HandleObject obj, uint64_t begin, uint64_t end
         }
     }
 
-    if (obj->isNative() && obj->isIndexed() && count > 1000) {
+    if (obj->isNative() && obj->as<NativeObject>().isIndexed() && count > 1000) {
         if (!SliceSparse(cx, obj, begin, end, narr))
             return false;
     } else {

@@ -3402,7 +3402,6 @@ JSObject::dump(FILE* fp) const
     fprintf(fp, "flags:");
     if (obj->isDelegate()) fprintf(fp, " delegate");
     if (!obj->is<ProxyObject>() && !obj->nonProxyIsExtensible()) fprintf(fp, " not_extensible");
-    if (obj->isIndexed()) fprintf(fp, " indexed");
     if (obj->maybeHasInterestingSymbolProperty()) fprintf(fp, " maybe_has_interesting_symbol");
     if (obj->isBoundFunction()) fprintf(fp, " bound_function");
     if (obj->isQualifiedVarObj()) fprintf(fp, " varobj");
@@ -3410,8 +3409,6 @@ JSObject::dump(FILE* fp) const
     if (obj->isIteratedSingleton()) fprintf(fp, " iterated_singleton");
     if (obj->isNewGroupUnknown()) fprintf(fp, " new_type_unknown");
     if (obj->hasUncacheableProto()) fprintf(fp, " has_uncacheable_proto");
-    if (obj->hadElementsAccess()) fprintf(fp, " had_elements_access");
-    if (obj->wasNewScriptCleared()) fprintf(fp, " new_script_cleared");
     if (obj->hasStaticPrototype() && obj->staticPrototypeIsImmutable())
         fprintf(fp, " immutable_prototype");
 
@@ -3421,6 +3418,12 @@ JSObject::dump(FILE* fp) const
             fprintf(fp, " inDictionaryMode");
         if (nobj->hasShapeTable())
             fprintf(fp, " hasShapeTable");
+        if (nobj->hadElementsAccess())
+            out.put(" had_elements_access");
+        if (nobj->isIndexed())
+            out.put(" indexed");
+        if (nobj->wasNewScriptCleared())
+            out.put(" new_script_cleared");
     }
     fprintf(fp, "\n");
 
