@@ -23,7 +23,6 @@
 #include "vm/SharedArrayObject.h"
 #include "vm/StringObject.h"
 #include "vm/TypedArrayObject.h"
-#include "vm/UnboxedObject.h"
 
 #include "jscntxtinlines.h"
 
@@ -285,10 +284,6 @@ TypeIdString(jsid id)
  */
 struct AutoEnterAnalysis
 {
-    // For use when initializing an UnboxedLayout.  The UniquePtr's destructor
-    // must run when GC is not suppressed.
-    UniquePtr<UnboxedLayout> unboxedLayoutToCleanUp;
-
     // Prevent GC activity in the middle of analysis.
     gc::AutoSuppressGC suppressGC;
 

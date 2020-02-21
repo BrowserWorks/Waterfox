@@ -67,7 +67,6 @@
 #include "vm/NumberObject-inl.h"
 #include "vm/Shape-inl.h"
 #include "vm/StringObject-inl.h"
-#include "vm/UnboxedObject-inl.h"
 
 using namespace js;
 using namespace js::gc;
@@ -3752,7 +3751,6 @@ size_t
 JSObject::sizeOfIncludingThisInNursery() const
 {
     // This function doesn't concern itself yet with typed objects (bug 1133593)
-    // nor unboxed objects (bug 1133592).
 
     MOZ_ASSERT(!isTenured());
 

@@ -5000,11 +5000,6 @@ js::NewObjectOperationWithTemplate(JSContext* cx, HandleObject templateObject)
 
     NewObjectKind newKind = templateObject->group()->shouldPreTenure() ? TenuredObject : GenericObject;
 
-    if (templateObject->group()->maybeUnboxedLayout()) {
-        RootedObjectGroup group(cx, templateObject->group());
-        return UnboxedPlainObject::create(cx, group, newKind);
-    }
-
     JSObject* obj = CopyInitializerObject(cx, templateObject.as<PlainObject>(), newKind);
     if (!obj)
         return nullptr;

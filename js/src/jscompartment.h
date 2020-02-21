@@ -792,9 +792,6 @@ struct JSCompartment
     // table manages references from such typed objects to their buffers.
     js::ObjectWeakMap* lazyArrayBuffers;
 
-    // All unboxed layouts in the compartment.
-    mozilla::LinkedList<js::UnboxedLayout> unboxedLayouts;
-
     // WebAssembly state for the compartment.
     js::wasm::Compartment wasm;
 

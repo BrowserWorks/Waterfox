@@ -358,7 +358,6 @@ UNIFIED_SOURCES += [
     'vm/UbiNode.cpp',
     'vm/UbiNodeCensus.cpp',
     'vm/UbiNodeShortestPaths.cpp',
-    'vm/UnboxedObject.cpp',
     'vm/Unicode.cpp',
     'vm/Value.cpp',
     'vm/WeakMapPtr.cpp',
