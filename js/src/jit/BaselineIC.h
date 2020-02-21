@@ -22,7 +22,6 @@
 #include "jit/SharedICRegisters.h"
 #include "js/GCVector.h"
 #include "vm/ArrayObject.h"
-#include "vm/UnboxedObject.h"
 
 namespace js {
 namespace jit {
@@ -1700,9 +1699,6 @@ IsCacheableDOMProxy(JSObject* obj)
 }
 
 struct IonOsrTempData;
-
-template <typename T>
-void EmitICUnboxedPreBarrier(MacroAssembler &masm, const T& address, JSValueType type);
 
 // Write an arbitrary value to a typed array or typed object address at dest.
 // If the value could not be converted to the appropriate format, jump to

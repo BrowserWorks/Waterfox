@@ -14,11 +14,9 @@
 #include "jit/JitcodeMap.h"
 #include "jit/JitSpewer.h"
 #include "js/TrackedOptimizationInfo.h"
-#include "vm/UnboxedObject.h"
 
 #include "vm/ObjectGroup-inl.h"
 #include "vm/TypeInference-inl.h"
-#include "vm/UnboxedObject-inl.h"
 
 using namespace js;
 using namespace js::jit;
@@ -847,8 +845,6 @@ MaybeConstructorFromType(TypeSet::Type ty)
         return nullptr;
     ObjectGroup* obj = ty.group();
     TypeNewScript* newScript = obj->newScript();
-    if (!newScript && obj->maybeUnboxedLayout())
-        newScript = obj->unboxedLayout().newScript();
     return newScript ? newScript->function() : nullptr;
 }
 
