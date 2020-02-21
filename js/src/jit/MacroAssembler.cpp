@@ -126,19 +126,13 @@ MacroAssembler::guardTypeSetMightBeIncomplete(TypeSet* types, Register obj, Regi
 {
     // Type set guards might miss when an object's group changes. In this case
     // either its old group's properties will become unknown, or it will change
-    // to a native object with an original unboxed group. Jump to label if this
-    // might have happened for the input object.
+    // to a native object. Jump to label if this might have happened for the
+    // input object.
 
     if (types->unknownObject()) {
         jump(label);
         return;
     }
-
-    loadPtr(Address(obj, JSObject::offsetOfGroup()), scratch);
-    load32(Address(scratch, ObjectGroup::offsetOfFlags()), scratch);
-    and32(Imm32(OBJECT_FLAG_ADDENDUM_MASK), scratch);
-    branch32(Assembler::Equal,
-             scratch, Imm32(ObjectGroup::addendumOriginalUnboxedGroupValue()), label);
 
     for (size_t i = 0; i < types->getObjectCount(); i++) {
         if (JSObject* singleton = types->getSingletonNoBarrier(i)) {
