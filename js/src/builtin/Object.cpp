@@ -495,7 +495,7 @@ GetBuiltinTagFast(JSObject* obj, const Class* clasp, JSContext* cx)
     MOZ_ASSERT(!clasp->isProxy());
 
     // Optimize the non-proxy case to bypass GetBuiltinClass.
-    if (clasp == &PlainObject::class_ || clasp == &UnboxedPlainObject::class_) {
+    if (clasp == &PlainObject::class_) {
         // This is not handled by GetBuiltinTagSlow, but this case is by far
         // the most common so we optimize it here.
         return cx->names().objectObject;
@@ -573,7 +573,7 @@ js::obj_toString(JSContext* cx, unsigned argc, Value* vp)
         RootedString builtinTagSlow(cx);
         if (!GetBuiltinTagSlow(cx, obj, &builtinTagSlow))
             return false;
-        if (clasp == &PlainObject::class_ || clasp == &UnboxedPlainObject::class_)
+        if (clasp == &PlainObject::class_)
             MOZ_ASSERT(!builtinTagSlow);
         else
             MOZ_ASSERT(builtinTagSlow == builtinTag);

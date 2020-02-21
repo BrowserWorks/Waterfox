@@ -42,6 +42,7 @@
 #include "frontend/BytecodeCompiler.h"
 #include "gc/Marking.h"
 #include "gc/Policy.h"
+#include "gc/StoreBuffer-inl.h"
 #include "jit/BaselineJIT.h"
 #include "js/MemoryMetrics.h"
 #include "js/Proxy.h"

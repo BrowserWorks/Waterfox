@@ -8789,11 +8789,6 @@ CodeGenerator::visitStoreUnboxedPointer(LStoreUnboxedPointer* lir)
     }
 }
 
-typedef bool (*ConvertUnboxedObjectToNativeFn)(JSContext*, JSObject*);
-static const VMFunction ConvertUnboxedPlainObjectToNativeInfo =
-    FunctionInfo<ConvertUnboxedObjectToNativeFn>(UnboxedPlainObject::convertToNative,
-                                                 "UnboxedPlainObject::convertToNative");
-
 typedef bool (*ArrayPopShiftFn)(JSContext*, HandleObject, MutableHandleValue);
 static const VMFunction ArrayPopDenseInfo =
     FunctionInfo<ArrayPopShiftFn>(jit::ArrayPopDense, "ArrayPopDense");
