@@ -1044,6 +1044,7 @@ DoSetElemFallback(JSContext* cx, BaselineFrame* frame, ICSetElem_Fallback* stub_
     }
 
     bool isTemporarilyUnoptimizable = false;
+    bool canAddSlot = false;
     bool attached = false;
 
     if (stub->state().maybeTransition())
@@ -1051,7 +1052,7 @@ DoSetElemFallback(JSContext* cx, BaselineFrame* frame, ICSetElem_Fallback* stub_
 
     if (stub->state().canAttachStub()) {
         SetPropIRGenerator gen(cx, script, pc, CacheKind::SetElem, stub->state().mode(),
-                               &isTemporarilyUnoptimizable, objv, index, rhs);
+                               &isTemporarilyUnoptimizable, &canAddSlot, objv, index, rhs);
         if (gen.tryAttachStub()) {
             ICStub* newStub = AttachBaselineCacheIRStub(cx, gen.writerRef(), gen.cacheKind(),
                                                         BaselineCacheIRStubKind::Updated,
@@ -1115,8 +1116,8 @@ DoSetElemFallback(JSContext* cx, BaselineFrame* frame, ICSetElem_Fallback* stub_
 
     if (stub->state().canAttachStub()) {
         SetPropIRGenerator gen(cx, script, pc, CacheKind::SetElem, stub->state().mode(),
-                               &isTemporarilyUnoptimizable, objv, index, rhs);
-        if (gen.tryAttachAddSlotStub(oldGroup, oldShape)) {
+                               &isTemporarilyUnoptimizable, &canAddSlot, objv, index, rhs);
+         if (canAddSlot && gen.tryAttachAddSlotStub(oldGroup, oldShape)) {
             ICStub* newStub = AttachBaselineCacheIRStub(cx, gen.writerRef(), gen.cacheKind(),
                                                         BaselineCacheIRStubKind::Updated,
                                                         ICStubEngine::Baseline, frame->script(),
@@ -1701,15 +1702,16 @@ DoSetPropFallback(JSContext* cx, BaselineFrame* frame, ICSetProp_Fallback* stub_
     // failed to attach a stub is one of those temporary reasons, since we might
     // end up attaching a stub for the exact same access later.
     bool isTemporarilyUnoptimizable = false;
-
+    bool canAddSlot = false;
     bool attached = false;
+
     if (stub->state().maybeTransition())
         stub->discardStubs(cx);
 
     if (stub->state().canAttachStub()) {
         RootedValue idVal(cx, StringValue(name));
         SetPropIRGenerator gen(cx, script, pc, CacheKind::SetProp, stub->state().mode(),
-                               &isTemporarilyUnoptimizable, lhs, idVal, rhs);
+                               &isTemporarilyUnoptimizable, &canAddSlot, lhs, idVal, rhs);
         if (gen.tryAttachStub()) {
             ICStub* newStub = AttachBaselineCacheIRStub(cx, gen.writerRef(), gen.cacheKind(),
                                                         BaselineCacheIRStubKind::Updated,
@@ -1781,8 +1783,8 @@ DoSetPropFallback(JSContext* cx, BaselineFrame* frame, ICSetProp_Fallback* stub_
     if (stub->state().canAttachStub()) {
         RootedValue idVal(cx, StringValue(name));
         SetPropIRGenerator gen(cx, script, pc, CacheKind::SetProp, stub->state().mode(),
-                               &isTemporarilyUnoptimizable, lhs, idVal, rhs);
-        if (gen.tryAttachAddSlotStub(oldGroup, oldShape)) {
+                               &isTemporarilyUnoptimizable, &canAddSlot, lhs, idVal, rhs);
+        if (canAddSlot && gen.tryAttachAddSlotStub(oldGroup, oldShape)) {
             ICStub* newStub = AttachBaselineCacheIRStub(cx, gen.writerRef(), gen.cacheKind(),
                                                         BaselineCacheIRStubKind::Updated,
                                                         ICStubEngine::Baseline, frame->script(),

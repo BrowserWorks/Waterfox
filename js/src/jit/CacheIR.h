@@ -1295,6 +1295,7 @@ class MOZ_RAII SetPropIRGenerator : public IRGenerator
     HandleValue idVal_;
     HandleValue rhsVal_;
     bool* isTemporarilyUnoptimizable_;
+    bool* canAddSlot_;
     PropertyTypeCheckInfo typeCheckInfo_;
 
     enum class PreliminaryObjectAction { None, Unlink, NotePreliminary };
@@ -1348,11 +1349,12 @@ class MOZ_RAII SetPropIRGenerator : public IRGenerator
     bool tryAttachProxy(HandleObject obj, ObjOperandId objId, HandleId id, ValOperandId rhsId);
     bool tryAttachProxyElement(HandleObject obj, ObjOperandId objId, ValOperandId rhsId);
 
+    bool canAttachAddSlotStub(HandleObject obj, HandleId id);
     void trackAttached(const char* name);
 
   public:
     SetPropIRGenerator(JSContext* cx, HandleScript script, jsbytecode* pc, CacheKind cacheKind,
-                       ICState::Mode mode, bool* isTemporarilyUnoptimizable, HandleValue lhsVal,
+                       ICState::Mode mode, bool* isTemporarilyUnoptimizable, bool* canAddSlot, HandleValue lhsVal,
                        HandleValue idVal, HandleValue rhsVal, bool needsTypeBarrier = true,
                        bool maybeHasExtraIndexedProps = true);
 

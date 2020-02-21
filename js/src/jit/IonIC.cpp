@@ -195,6 +195,7 @@ IonSetPropertyIC::update(JSContext* cx, HandleScript outerScript, IonSetProperty
 
     bool attached = false;
     bool isTemporarilyUnoptimizable = false;
+    bool canAddSlot = false;
 
     if (ic->state().maybeTransition())
         ic->discardStubs(cx->zone());
@@ -214,7 +215,7 @@ IonSetPropertyIC::update(JSContext* cx, HandleScript outerScript, IonSetProperty
         RootedScript script(cx, ic->script());
         jsbytecode* pc = ic->pc();
         SetPropIRGenerator gen(cx, script, pc, ic->kind(), ic->state().mode(),
-                               &isTemporarilyUnoptimizable,
+                               &isTemporarilyUnoptimizable, &canAddSlot,
                                objv, idVal, rhs, ic->needsTypeBarrier(), ic->guardHoles());
         if (gen.tryAttachStub()) {
             ic->attachCacheIRStub(cx, gen.writerRef(), gen.cacheKind(), ionScript, &attached,
@@ -267,9 +268,9 @@ IonSetPropertyIC::update(JSContext* cx, HandleScript outerScript, IonSetProperty
         RootedScript script(cx, ic->script());
         jsbytecode* pc = ic->pc();
         SetPropIRGenerator gen(cx, script, pc, ic->kind(), ic->state().mode(),
-                               &isTemporarilyUnoptimizable,
+                               &isTemporarilyUnoptimizable, &canAddSlot,
                                objv, idVal, rhs, ic->needsTypeBarrier(), ic->guardHoles());
-        if (gen.tryAttachAddSlotStub(oldGroup, oldShape)) {
+        if (canAddSlot && gen.tryAttachAddSlotStub(oldGroup, oldShape)) {
             ic->attachCacheIRStub(cx, gen.writerRef(), gen.cacheKind(), ionScript, &attached,
                                   gen.typeCheckInfo());
         } else {
