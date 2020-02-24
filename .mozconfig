@@ -22,6 +22,7 @@ elif test `uname -s` = Linux; then
 if test `uname -m` = x86_64; then
 export CC=$HOME/.mozbuild/clang/bin/clang
 export CXX=$HOME/.mozbuild/clang/bin/clang++
+export NASM=$HOME/.mozbuild/nasm/nasm
 ac_add_options --enable-optimize="-O2 -march=nocona -mtune=nocona -w"
 ac_add_options --target=x86_64-pc-linux-gnu
 #ppc64le specific options
