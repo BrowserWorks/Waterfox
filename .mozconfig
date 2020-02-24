@@ -57,7 +57,7 @@ ac_add_options --disable-verify-mar
 ac_add_options --enable-application=browser
 #Crashes PPC64LE builds
 if test `uname -m` != ppc64le; then
-ac_add_options --enable-ccache=ccache
+ac_add_options --enable-ccache=sccache
 elif test `uname -m` = ppc64le; then
 ac_add_options --enable-ccache=ccache
 fi
