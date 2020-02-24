@@ -79,8 +79,10 @@ ModuleValueGetter(JSContext* cx, unsigned argc, Value* vp)
     cls::name() const                                                         \
     {                                                                         \
         Value value = cls##_##name##Value(this);                              \
-        MOZ_ASSERT(value.toInt32() >= 0);                                     \
-        return value.toInt32();                                               \
+        MOZ_ASSERT(value.toNumber() >= 0);                                    \
+        if (value.isInt32())                                                  \
+            return value.toInt32();                                           \
+        return JS::ToUint32(value.toDouble());                                \
     }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -142,8 +144,6 @@ ImportEntryObject::create(JSContext* cx,
                           uint32_t lineNumber,
                           uint32_t columnNumber)
 {
-    MOZ_ASSERT(lineNumber > 0);
-
     RootedObject proto(cx, cx->global()->getImportEntryPrototype());
     RootedObject obj(cx, NewObjectWithGivenProto(cx, &class_, proto));
     if (!obj)
@@ -153,8 +153,8 @@ ImportEntryObject::create(JSContext* cx,
     self->initReservedSlot(ModuleRequestSlot, StringValue(moduleRequest));
     self->initReservedSlot(ImportNameSlot, StringValue(importName));
     self->initReservedSlot(LocalNameSlot, StringValue(localName));
-    self->initReservedSlot(LineNumberSlot, Int32Value(lineNumber));
-    self->initReservedSlot(ColumnNumberSlot, Int32Value(columnNumber));
+    self->initReservedSlot(LineNumberSlot, NumberValue(lineNumber));
+    self->initReservedSlot(ColumnNumberSlot, NumberValue(columnNumber));
     return self;
 }
 
@@ -240,8 +240,8 @@ ExportEntryObject::create(JSContext* cx,
     self->initReservedSlot(ModuleRequestSlot, StringOrNullValue(maybeModuleRequest));
     self->initReservedSlot(ImportNameSlot, StringOrNullValue(maybeImportName));
     self->initReservedSlot(LocalNameSlot, StringOrNullValue(maybeLocalName));
-    self->initReservedSlot(LineNumberSlot, Int32Value(lineNumber));
-    self->initReservedSlot(ColumnNumberSlot, Int32Value(columnNumber));
+    self->initReservedSlot(LineNumberSlot, NumberValue(lineNumber));
+    self->initReservedSlot(ColumnNumberSlot, NumberValue(columnNumber));
     return self;
 }
 
@@ -296,8 +296,6 @@ RequestedModuleObject::create(JSContext* cx,
                               uint32_t lineNumber,
                               uint32_t columnNumber)
 {
-    MOZ_ASSERT(lineNumber > 0);
-
     RootedObject proto(cx, cx->global()->getRequestedModulePrototype());
     RootedObject obj(cx, NewObjectWithGivenProto(cx, &class_, proto));
     if (!obj)
@@ -305,8 +303,8 @@ RequestedModuleObject::create(JSContext* cx,
 
     RootedRequestedModuleObject self(cx, &obj->as<RequestedModuleObject>());
     self->initReservedSlot(ModuleSpecifierSlot, StringValue(moduleSpecifier));
-    self->initReservedSlot(LineNumberSlot, Int32Value(lineNumber));
-    self->initReservedSlot(ColumnNumberSlot, Int32Value(columnNumber));
+    self->initReservedSlot(LineNumberSlot, NumberValue(lineNumber));
+    self->initReservedSlot(ColumnNumberSlot, NumberValue(columnNumber));
     return self;
 }
 
@@ -1190,7 +1188,6 @@ ModuleBuilder::buildTables()
                     if (!localExportEntries_.append(exp))
                         return false;
                 } else {
-                    MOZ_ASSERT(exp->lineNumber());
                     RootedAtom exportName(cx_, exp->exportName());
                     RootedAtom moduleRequest(cx_, importEntry->moduleRequest());
                     RootedAtom importName(cx_, importEntry->importName());
@@ -1210,7 +1207,6 @@ ModuleBuilder::buildTables()
             if (!starExportEntries_.append(exp))
                 return false;
         } else {
-            MOZ_ASSERT(exp->lineNumber());
             if (!indirectExportEntries_.append(exp))
                 return false;
         }
