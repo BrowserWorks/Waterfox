@@ -128,7 +128,7 @@ GeckoViewPermission.prototype = {
             type: device.type,
             id: device.id,
             rawId: device.rawId,
-            name: device.name,
+            name: device.rawName, // unfiltered device name to show to the user
             mediaSource: device.mediaSource,
           };
         });
