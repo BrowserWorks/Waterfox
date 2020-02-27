@@ -222,7 +222,7 @@ function prompt(
         // getting a microphone instead.
         if (audio && (device.mediaSource == "microphone") != sharingAudio) {
           audioDevices.push({
-            name: device.rawName, // unfiltered device name to show to the user
+            name: device.name,
             deviceIndex: devices.length,
             id: device.rawId,
             mediaSource: device.mediaSource,
@@ -235,7 +235,7 @@ function prompt(
         // or that if we requested a screen share we aren't getting a camera.
         if (video && (device.mediaSource == "camera") != sharingScreen) {
           let deviceObject = {
-            name: device.rawName, // unfiltered device name to show to the user
+            name: device.name,
             deviceIndex: devices.length,
             id: device.rawId,
             mediaSource: device.mediaSource,

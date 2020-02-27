@@ -77,10 +77,6 @@ class MediaDevice : public nsIMediaDevice {
   MediaDevice(const RefPtr<MediaDevice>& aOther, const nsString& aID,
               const nsString& aGroupID, const nsString& aRawID);
 
-  MediaDevice(const RefPtr<MediaDevice>& aOther, const nsString& aID,
-              const nsString& aGroupID, const nsString& aRawID,
-              const nsString& aName);
-
   uint32_t GetBestFitnessDistance(
       const nsTArray<const NormalizedConstraintSet*>& aConstraintSets,
       bool aIsChrome);
@@ -131,7 +127,6 @@ class MediaDevice : public nsIMediaDevice {
   const nsString mID;
   const nsString mGroupID;
   const nsString mRawID;
-  const nsString mRawName;
 };
 
 typedef nsRefPtrHashtable<nsUint64HashKey, GetUserMediaWindowListener>
