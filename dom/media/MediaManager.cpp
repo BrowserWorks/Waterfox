@@ -744,11 +744,12 @@ MediaDevice::MediaDevice(const RefPtr<AudioDeviceInfo>& aAudioDeviceInfo,
 
 MediaDevice::MediaDevice(const RefPtr<MediaDevice>& aOther, const nsString& aID,
                          const nsString& aGroupID, const nsString& aRawID)
-    : MediaDevice(aOther, aID, aGroupID, aRawID, aOther->mName) {}
+    : MediaDevice(aOther, aID, aGroupID, aRawID, aOther->mName, false) {}
 
 MediaDevice::MediaDevice(const RefPtr<MediaDevice>& aOther, const nsString& aID,
                          const nsString& aGroupID, const nsString& aRawID,
-                         const nsString& aName)
+                         const nsString& aName,
+                         bool aCompilerBugWorkaround)
     : mSource(aOther->mSource),
       mSinkInfo(aOther->mSinkInfo),
       mKind(aOther->mKind),
@@ -2994,7 +2995,7 @@ void MediaManager::AnonymizeDevices(MediaDeviceSet& aDevices,
       if (name.Find(NS_LITERAL_STRING("AirPods")) != -1) {
         name = NS_LITERAL_STRING("AirPods");
       }
-      device = new MediaDevice(device, id, groupId, rawId, name);
+      device = new MediaDevice(device, id, groupId, rawId, name, false);
     }
   }
 }

@@ -79,7 +79,7 @@ class MediaDevice : public nsIMediaDevice {
 
   MediaDevice(const RefPtr<MediaDevice>& aOther, const nsString& aID,
               const nsString& aGroupID, const nsString& aRawID,
-              const nsString& aName);
+              const nsString& aName, bool aCompilerBugWorkaround);
 
   uint32_t GetBestFitnessDistance(
       const nsTArray<const NormalizedConstraintSet*>& aConstraintSets,
