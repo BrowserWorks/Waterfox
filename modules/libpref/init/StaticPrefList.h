@@ -2223,7 +2223,7 @@ VARCACHE_PREF(
 VARCACHE_PREF(
   "network.predictor.enabled",
    network_predictor_enabled,
-  bool, true
+  bool, false
 )
 
 // Allow CookieSettings to be unblocked for channels without a document.
