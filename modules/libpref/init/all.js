@@ -2020,7 +2020,10 @@ pref("network.dns.get-ttl", true);
 pref("network.dnsCacheExpirationGracePeriod", 60);
 
 // This preference can be used to turn off DNS prefetch.
-pref("network.dns.disablePrefetch", false);
+pref("network.dns.disablePrefetch", true);
+
+// This preference can be used to turn off DNS prefetch (HTTPS).
+pref("network.dns.disablePrefetchFromHTTPS", true)
 
 // This preference controls whether .onion hostnames are
 // rejected before being given to DNS. RFC 7686
@@ -2059,12 +2062,12 @@ pref("network.dir.format", 2);
 
 // enables the prefetch service (i.e., prefetching of <link rel="next"> and
 // <link rel="prefetch"> URLs).
-pref("network.prefetch-next", true);
+pref("network.prefetch-next", false);
 // enables the preloading (i.e., preloading of <link rel="preload"> URLs).
 pref("network.preload", true);
 
 // enables the predictive service
-pref("network.predictor.enabled", true);
+pref("network.predictor.enabled", false);
 pref("network.predictor.enable-hover-on-ssl", false);
 pref("network.predictor.enable-prefetch", false);
 pref("network.predictor.page-degradation.day", 0);
