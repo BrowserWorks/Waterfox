@@ -459,6 +459,12 @@
   background: var(--toolbar-bgcolor);
 }
 
+:root[inDOMFullscreen] .toolbar-statusbar,
+:root[inDOMFullscreen] #TabsToolbar,
+:root[inDOMFullscreen] #PersonalToolbar {
+  display: none !important;
+}
+
 .button-toolbar {
   display: flex;
   min-width: 0;
