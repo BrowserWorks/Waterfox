@@ -1389,7 +1389,7 @@ pref("privacy.donottrackheader.enabled",    false);
 // the popup will be called when the popup is dismissed.
 pref("privacy.permissionPrompts.showCloseButton", false);
 // Enforce tracking protection in all modes
-pref("privacy.trackingprotection.enabled",  false);
+pref("privacy.trackingprotection.enabled",  true);
 // Enforce tracking protection in Private Browsing mode
 pref("privacy.trackingprotection.pbmode.enabled",  true);
 // Annotate channels based on the tracking protection list in all modes
