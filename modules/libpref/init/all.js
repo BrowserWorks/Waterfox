@@ -2023,7 +2023,7 @@ pref("network.dnsCacheExpirationGracePeriod", 60);
 pref("network.dns.disablePrefetch", true);
 
 // This preference can be used to turn off DNS prefetch (HTTPS).
-pref("network.dns.disablePrefetchFromHTTPS", true)
+pref("network.dns.disablePrefetchFromHTTPS", true);
 
 // This preference controls whether .onion hostnames are
 // rejected before being given to DNS. RFC 7686
