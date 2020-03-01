@@ -1022,16 +1022,16 @@ pref("toolkit.scrollbox.clickToScroll.scrollDelay", 150);
 
 // Telemetry settings.
 // Server to submit telemetry pings to.
-sticky_pref("toolkit.telemetry.server", "");
+sticky_pref("toolkit.telemetry.server", "", locked);
 // Telemetry server owner. Please change if you set toolkit.telemetry.server to a different server
-sticky_pref("toolkit.telemetry.server_owner", "");
+sticky_pref("toolkit.telemetry.server_owner", "", locked);
 // Information page about telemetry (temporary ; will be about:telemetry in the end)
-sticky_pref("toolkit.telemetry.infoURL", "");
+sticky_pref("toolkit.telemetry.infoURL", "", locked);
 // Determines whether full SQL strings are returned when they might contain sensitive info
 // i.e. dynamically constructed SQL strings or SQL executed by addons against addon DBs
-pref("toolkit.telemetry.debugSlowSql", false);
+pref("toolkit.telemetry.debugSlowSql", false, locked);
 // Whether to use the unified telemetry behavior, requires a restart.
-sticky_pref("toolkit.telemetry.unified", false);
+sticky_pref("toolkit.telemetry.unified", false, locked);
 // AsyncShutdown delay before crashing in case of shutdown freeze
 pref("toolkit.asyncshutdown.crash_timeout", 60000);
 // Extra logging for AsyncShutdown barriers and phases
@@ -1514,7 +1514,7 @@ pref("logging.config.clear_on_startup", true);
 // Allow necko to do A/B testing. Will generally only happen if
 // telemetry is also enabled as otherwise there is no way to report
 // the results
-pref("network.allow-experiments", true);
+pref("network.allow-experiments", false, locked);
 
 // Allow the network changed event to get sent when a network topology or
 // setup change is noticed while running.
@@ -5854,11 +5854,7 @@ pref("dom.xhr.lowercase_header.enabled", false);
 
 // When a crash happens, whether to include heap regions of the crash context
 // in the minidump. Enabled by default on nightly and aurora.
-#ifdef RELEASE_OR_BETA
-pref("toolkit.crashreporter.include_context_heap", false);
-#else
-pref("toolkit.crashreporter.include_context_heap", true);
-#endif
+pref("toolkit.crashreporter.include_context_heap", false, locked);
 
 // Open noopener links in a new process
 pref("dom.noopener.newprocess.enabled", true);
