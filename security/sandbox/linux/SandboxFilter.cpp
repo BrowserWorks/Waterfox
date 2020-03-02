@@ -186,6 +186,7 @@ public:
     case __NR_time:
 #endif
     case __NR_nanosleep:
+    case __NR_clock_nanosleep:
       return Allow();
 
       // Thread synchronization
