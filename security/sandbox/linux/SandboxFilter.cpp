@@ -166,7 +166,13 @@ public:
   ResultExpr EvaluateSyscall(int sysno) const override {
     switch (sysno) {
       // Timekeeping
+    case __NR_clock_nanosleep:
     case __NR_clock_gettime: {
+        // clockid_t can encode a pid or tid to monitor another
+        // process or thread's CPU usage (see CPUCLOCK_PID and related
+        // definitions in include/linux/posix-timers.h in the kernel
+        // source).  Those values could be detected by bit masking,
+        // but it's simpler to just have a default-deny policy.
       Arg<clockid_t> clk_id(0);
       return If(clk_id == CLOCK_MONOTONIC, Allow())
 #ifdef CLOCK_MONOTONIC_COARSE
@@ -181,12 +187,12 @@ public:
         .ElseIf(clk_id == CLOCK_THREAD_CPUTIME_ID, Allow())
         .Else(InvalidSyscall());
     }
+
     case __NR_gettimeofday:
 #ifdef __NR_time
     case __NR_time:
 #endif
     case __NR_nanosleep:
-    case __NR_clock_nanosleep:
       return Allow();
 
       // Thread synchronization
