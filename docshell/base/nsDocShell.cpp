@@ -5846,18 +5846,20 @@ nsDocShell::Create()
 NS_IMETHODIMP
 nsDocShell::Destroy()
 {
+  if (mIsBeingDestroyed) {
+    return NS_ERROR_DOCSHELL_DYING;
+  }
+
   NS_ASSERTION(mItemType == typeContent || mItemType == typeChrome,
                "Unexpected item type in docshell");
 
   AssertOriginAttributesMatchPrivateBrowsing();
 
-  if (!mIsBeingDestroyed) {
-    nsCOMPtr<nsIObserverService> serv = services::GetObserverService();
-    if (serv) {
-      const char* msg = mItemType == typeContent ?
-        NS_WEBNAVIGATION_DESTROY : NS_CHROME_WEBNAVIGATION_DESTROY;
-      serv->NotifyObservers(GetAsSupports(this), msg, nullptr);
-    }
+  nsCOMPtr<nsIObserverService> serv = services::GetObserverService();
+  if (serv) {
+    const char* msg = mItemType == typeContent ?
+      NS_WEBNAVIGATION_DESTROY : NS_CHROME_WEBNAVIGATION_DESTROY;
+    serv->NotifyObservers(GetAsSupports(this), msg, nullptr);
   }
 
   mIsBeingDestroyed = true;
@@ -11052,7 +11054,7 @@ nsDocShell::DoURILoad(nsIURI* aURI,
     // we don't want to block those loads. Only exception, loads coming
     // from an external applicaton (e.g. Thunderbird) don't load
     // using a codeBasePrincipal, but we want to block those loads.
-    if (isDataURI && (aLoadFromExternal || 
+    if (isDataURI && (aLoadFromExternal ||
         !nsContentUtils::IsSystemPrincipal(aTriggeringPrincipal))) {
       NS_ConvertUTF8toUTF16 specUTF16(aURI->GetSpecOrDefault());
       if (specUTF16.Length() > 50) {
