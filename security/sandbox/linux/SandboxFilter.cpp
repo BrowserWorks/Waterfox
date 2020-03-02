@@ -219,6 +219,7 @@ public:
       return Allow();
 
       // Simple I/O
+    case __NR_pread64:
     case __NR_write:
     case __NR_read:
     case __NR_readv:
@@ -707,7 +708,6 @@ public:
     CASES_FOR_getdents:
     CASES_FOR_ftruncate:
     case __NR_writev:
-    case __NR_pread64:
 #ifdef DESKTOP
     case __NR_pwrite64:
     case __NR_readahead:
