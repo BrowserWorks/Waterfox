@@ -28,7 +28,7 @@
 #include "vm/NativeObject-inl.h"
 #include "vm/StringObject-inl.h"
 #include "vm/TypeInference-inl.h"
-#include "vm/UnboxedObject-inl.h"
+#include "gc/StoreBuffer-inl.h"
 
 using namespace js;
 using namespace js::jit;
@@ -1773,11 +1773,6 @@ HasOwnNativeDataProperty(JSContext* cx, JSObject* obj, Value* vp)
         return false;
 
     if (!obj->isNative()) {
-        if (obj->is<UnboxedPlainObject>()) {
-            bool res = obj->as<UnboxedPlainObject>().containsUnboxedOrExpandoProperty(cx, id);
-            vp[1].setBoolean(res);
-            return true;
-        }
         return false;
     }
 

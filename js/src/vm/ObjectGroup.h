@@ -20,7 +20,6 @@
 namespace js {
 
 class TypeDescr;
-class UnboxedLayout;
 
 class PreliminaryObjectArrayWithTemplate;
 class TypeNewScript;
@@ -155,16 +154,6 @@ class ObjectGroup : public gc::TenuredCell
         // For some plain objects, the addendum stores a PreliminaryObjectArrayWithTemplate.
         Addendum_PreliminaryObjects,
 
-        // When objects in this group have an unboxed representation, the
-        // addendum stores an UnboxedLayout (which might have a TypeNewScript
-        // as well, if the group is also constructed using 'new').
-        Addendum_UnboxedLayout,
-
-        // If this group is used by objects that have been converted from an
-        // unboxed representation and/or have the same allocation kind as such
-        // objects, the addendum points to that unboxed group.
-        Addendum_OriginalUnboxedGroup,
-
         // When used by typed objects, the addendum stores a TypeDescr.
         Addendum_TypeDescr
     };
@@ -187,7 +176,6 @@ class ObjectGroup : public gc::TenuredCell
         return nullptr;
     }
 
-    TypeNewScript* anyNewScript();
     void detachNewScript(bool writeBarrier, ObjectGroup* replacement);
 
     ObjectGroupFlags flagsDontCheckGeneration() const {
@@ -229,34 +217,6 @@ class ObjectGroup : public gc::TenuredCell
     bool hasUnanalyzedPreliminaryObjects() {
         return (newScriptDontCheckGeneration() && !newScriptDontCheckGeneration()->analyzed()) ||
                maybePreliminaryObjectsDontCheckGeneration();
-    }
-
-    inline UnboxedLayout* maybeUnboxedLayout();
-    inline UnboxedLayout& unboxedLayout();
-
-    UnboxedLayout* maybeUnboxedLayoutDontCheckGeneration() const {
-        if (addendumKind() == Addendum_UnboxedLayout)
-            return reinterpret_cast<UnboxedLayout*>(addendum_);
-        return nullptr;
-    }
-
-    UnboxedLayout& unboxedLayoutDontCheckGeneration() const {
-        MOZ_ASSERT(addendumKind() == Addendum_UnboxedLayout);
-        return *maybeUnboxedLayoutDontCheckGeneration();
-    }
-
-    void setUnboxedLayout(UnboxedLayout* layout) {
-        setAddendum(Addendum_UnboxedLayout, layout);
-    }
-
-    ObjectGroup* maybeOriginalUnboxedGroup() const {
-        if (addendumKind() == Addendum_OriginalUnboxedGroup)
-            return reinterpret_cast<ObjectGroup*>(addendum_);
-        return nullptr;
-    }
-
-    void setOriginalUnboxedGroup(ObjectGroup* group) {
-        setAddendum(Addendum_OriginalUnboxedGroup, group);
     }
 
     TypeDescr* maybeTypeDescr() {
@@ -319,9 +279,8 @@ class ObjectGroup : public gc::TenuredCell
      * that can be read out of that property in actual JS objects. In native
      * objects, property types account for plain data properties (those with a
      * slot and no getter or setter hook) and dense elements. In typed objects
-     * and unboxed objects, property types account for object and value
-     * properties and elements in the object, and expando properties in unboxed
-     * objects.
+     * property types account for object and value properties and elements in
+     * the object.
      *
      * For accesses on these properties, the correspondence is as follows:
      *
@@ -344,10 +303,9 @@ class ObjectGroup : public gc::TenuredCell
      * 2. Array lengths are special cased by the compiler and VM and are not
      *    reflected in property types.
      *
-     * 3. In typed objects (but not unboxed objects), the initial values of
-     *    properties (null pointers and undefined values) are not reflected in
-     *    the property types. These values are always possible when reading the
-     *    property.
+     * 3. In typed objects, the initial values of properties (null pointers and
+     *    undefined values) are not reflected in the property types. These
+     *    values are always possible when reading the property.
      *
      * We establish these by using write barriers on calls to setProperty and
      * defineProperty which are on native properties, and on any jitcode which
@@ -465,12 +423,6 @@ class ObjectGroup : public gc::TenuredCell
         return &flags_;
     }
 
-    // Get the bit pattern stored in an object's addendum when it has an
-    // original unboxed group.
-    static inline int32_t addendumOriginalUnboxedGroupValue() {
-        return Addendum_OriginalUnboxedGroup << OBJECT_FLAG_ADDENDUM_SHIFT;
-    }
-
     inline uint32_t basePropertyCount();
 
   private:
@@ -521,7 +473,7 @@ class ObjectGroup : public gc::TenuredCell
                                        NewObjectKind newKind,
                                        NewArrayKind arrayKind = NewArrayKind::Normal);
 
-    // Create a PlainObject or UnboxedPlainObject with the specified properties
+    // Create a PlainObject with the specified properties
     // and a group specialized for those properties.
     static JSObject* newPlainObject(JSContext* cx,
                                     IdValuePair* properties, size_t nproperties,

@@ -108,20 +108,6 @@ ObjectGroup::maybePreliminaryObjects()
     return maybePreliminaryObjectsDontCheckGeneration();
 }
 
-inline UnboxedLayout*
-ObjectGroup::maybeUnboxedLayout()
-{
-    maybeSweep(nullptr);
-    return maybeUnboxedLayoutDontCheckGeneration();
-}
-
-inline UnboxedLayout&
-ObjectGroup::unboxedLayout()
-{
-    maybeSweep(nullptr);
-    return unboxedLayoutDontCheckGeneration();
-}
-
 } // namespace js
 
 #endif /* vm_ObjectGroup_inl_h */

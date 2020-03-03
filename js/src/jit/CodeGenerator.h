@@ -158,8 +158,6 @@ class CodeGenerator final : public CodeGeneratorSpecific
     void visitMaybeCopyElementsForWrite(LMaybeCopyElementsForWrite* lir);
     void visitGuardObjectIdentity(LGuardObjectIdentity* guard);
     void visitGuardReceiverPolymorphic(LGuardReceiverPolymorphic* lir);
-    void visitGuardUnboxedExpando(LGuardUnboxedExpando* lir);
-    void visitLoadUnboxedExpando(LLoadUnboxedExpando* lir);
     void visitTypeBarrierV(LTypeBarrierV* lir);
     void visitTypeBarrierO(LTypeBarrierO* lir);
     void visitMonitorTypes(LMonitorTypes* lir);
@@ -323,7 +321,6 @@ class CodeGenerator final : public CodeGeneratorSpecific
     void visitFallibleStoreElementV(LFallibleStoreElementV* lir);
     void visitFallibleStoreElementT(LFallibleStoreElementT* lir);
     void visitStoreUnboxedPointer(LStoreUnboxedPointer* lir);
-    void visitConvertUnboxedObjectToNative(LConvertUnboxedObjectToNative* lir);
     void emitArrayPopShift(LInstruction* lir, const MArrayPopShift* mir, Register obj,
                            Register elementsTemp, Register lengthTemp, TypedOrValueRegister out);
     void visitArrayPopShiftV(LArrayPopShiftV* lir);

@@ -36,7 +36,6 @@
 #include "jsscriptinlines.h"
 
 #include "vm/NativeObject-inl.h"
-#include "vm/UnboxedObject-inl.h"
 
 using namespace js;
 using namespace js::gc;
@@ -119,13 +118,6 @@ JSCompartment::~JSCompartment()
     js_delete(lazyArrayBuffers);
     js_delete(nonSyntacticLexicalEnvironments_);
     js_free(enumerators);
-
-#ifdef DEBUG
-    // Avoid assertion destroying the unboxed layouts list if the embedding
-    // leaked GC things.
-    if (!rt->gc.shutdownCollectedEverything())
-        unboxedLayouts.clear();
-#endif
 
     runtime_->numCompartments--;
 }

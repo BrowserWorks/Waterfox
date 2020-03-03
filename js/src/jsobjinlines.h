@@ -34,15 +34,6 @@
 
 namespace js {
 
-// This is needed here for ensureShape() below.
-inline bool
-MaybeConvertUnboxedObjectToNative(JSContext* cx, JSObject* obj)
-{
-    if (obj->is<UnboxedPlainObject>())
-        return UnboxedPlainObject::convertToNative(cx, obj);
-    return true;
-}
-
 static MOZ_ALWAYS_INLINE bool
 ClassMayResolveId(const JSAtomState& names, const Class* clasp, jsid id, JSObject* maybeObj)
 {
@@ -79,8 +70,6 @@ JSObject::maybeShape() const
 inline js::Shape*
 JSObject::ensureShape(JSContext* cx)
 {
-    if (!js::MaybeConvertUnboxedObjectToNative(cx, this))
-        return nullptr;
     js::Shape* shape = maybeShape();
     MOZ_ASSERT(shape);
     return shape;
@@ -456,33 +445,14 @@ JSObject::hasUncacheableProto() const
     return hasAllFlags(js::BaseShape::UNCACHEABLE_PROTO);
 }
 
-inline bool
-JSObject::hadElementsAccess() const
-{
-    return hasAllFlags(js::BaseShape::HAD_ELEMENTS_ACCESS);
-}
-
-inline bool
-JSObject::isIndexed() const
-{
-    return hasAllFlags(js::BaseShape::INDEXED);
-}
-
 MOZ_ALWAYS_INLINE bool
 JSObject::maybeHasInterestingSymbolProperty() const
 {
-    const js::NativeObject* nobj;
     if (isNative()) {
-        nobj = &as<js::NativeObject>();
-    } else if (is<js::UnboxedPlainObject>()) {
-        nobj = as<js::UnboxedPlainObject>().maybeExpando();
-        if (!nobj)
-            return false;
-    } else {
-        return true;
+       return as<js::NativeObject>().hasInterestingSymbol();
     }
 
-    return nobj->hasAllFlags(js::BaseShape::HAS_INTERESTING_SYMBOL);
+    return true;
 }
 
 inline bool
@@ -502,12 +472,6 @@ inline bool
 JSObject::isNewGroupUnknown() const
 {
     return hasAllFlags(js::BaseShape::NEW_GROUP_UNKNOWN);
-}
-
-inline bool
-JSObject::wasNewScriptCleared() const
-{
-    return hasAllFlags(js::BaseShape::NEW_SCRIPT_CLEARED);
 }
 
 namespace js {

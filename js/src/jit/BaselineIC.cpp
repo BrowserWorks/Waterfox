@@ -43,8 +43,8 @@
 #include "jit/shared/Lowering-shared-inl.h"
 #include "vm/EnvironmentObject-inl.h"
 #include "vm/Interpreter-inl.h"
+#include "vm/NativeObject-inl.h"
 #include "vm/StringObject-inl.h"
-#include "vm/UnboxedObject-inl.h"
 
 using mozilla::DebugOnly;
 
@@ -286,15 +286,10 @@ DoTypeUpdateFallback(JSContext* cx, BaselineFrame* frame, ICUpdatedStub* stub, H
     RootedId id(cx, stub->toCacheIR_Updated()->updateStubId());
     MOZ_ASSERT(id != JSID_EMPTY);
 
-    // The group should match the object's group, except when the object is
-    // an unboxed expando object: in that case, the group is the group of
-    // the unboxed object.
+    // The group should match the object's group.
     RootedObjectGroup group(cx, stub->toCacheIR_Updated()->updateStubGroup());
 #ifdef DEBUG
-    if (obj->is<UnboxedExpandoObject>())
-        MOZ_ASSERT(group->clasp() == &UnboxedPlainObject::class_);
-    else
-        MOZ_ASSERT(obj->group() == group);
+    MOZ_ASSERT(obj->group() == group);
 #endif
 
     // If we're storing null/undefined to a typed object property, check if
@@ -1037,13 +1032,8 @@ DoSetElemFallback(JSContext* cx, BaselineFrame* frame, ICSetElem_Fallback* stub_
     if (!oldGroup)
         return false;
 
-    if (obj->is<UnboxedPlainObject>()) {
-        MOZ_ASSERT(!oldShape);
-        if (UnboxedExpandoObject* expando = obj->as<UnboxedPlainObject>().maybeExpando())
-            oldShape = expando->lastProperty();
-    }
-
     bool isTemporarilyUnoptimizable = false;
+    bool canAddSlot = false;
     bool attached = false;
 
     if (stub->state().maybeTransition())
@@ -1051,7 +1041,7 @@ DoSetElemFallback(JSContext* cx, BaselineFrame* frame, ICSetElem_Fallback* stub_
 
     if (stub->state().canAttachStub()) {
         SetPropIRGenerator gen(cx, script, pc, CacheKind::SetElem, stub->state().mode(),
-                               &isTemporarilyUnoptimizable, objv, index, rhs);
+                               &isTemporarilyUnoptimizable, &canAddSlot, objv, index, rhs);
         if (gen.tryAttachStub()) {
             ICStub* newStub = AttachBaselineCacheIRStub(cx, gen.writerRef(), gen.cacheKind(),
                                                         BaselineCacheIRStubKind::Updated,
@@ -1115,8 +1105,8 @@ DoSetElemFallback(JSContext* cx, BaselineFrame* frame, ICSetElem_Fallback* stub_
 
     if (stub->state().canAttachStub()) {
         SetPropIRGenerator gen(cx, script, pc, CacheKind::SetElem, stub->state().mode(),
-                               &isTemporarilyUnoptimizable, objv, index, rhs);
-        if (gen.tryAttachAddSlotStub(oldGroup, oldShape)) {
+                               &isTemporarilyUnoptimizable, &canAddSlot, objv, index, rhs);
+         if (canAddSlot && gen.tryAttachAddSlotStub(oldGroup, oldShape)) {
             ICStub* newStub = AttachBaselineCacheIRStub(cx, gen.writerRef(), gen.cacheKind(),
                                                         BaselineCacheIRStubKind::Updated,
                                                         ICStubEngine::Baseline, frame->script(),
@@ -1193,24 +1183,6 @@ BaselineScript::noteHasDenseAdd(uint32_t pcOffset)
     if (stub->isSetElem_Fallback())
         stub->toSetElem_Fallback()->noteHasDenseAdd();
 }
-
-template <typename T>
-void
-EmitICUnboxedPreBarrier(MacroAssembler& masm, const T& address, JSValueType type)
-{
-    if (type == JSVAL_TYPE_OBJECT)
-        EmitPreBarrier(masm, address, MIRType::Object);
-    else if (type == JSVAL_TYPE_STRING)
-        EmitPreBarrier(masm, address, MIRType::String);
-    else
-        MOZ_ASSERT(!UnboxedTypeNeedsPreBarrier(type));
-}
-
-template void
-EmitICUnboxedPreBarrier(MacroAssembler& masm, const Address& address, JSValueType type);
-
-template void
-EmitICUnboxedPreBarrier(MacroAssembler& masm, const BaseIndex& address, JSValueType type);
 
 template <typename T>
 void
@@ -1690,26 +1662,21 @@ DoSetPropFallback(JSContext* cx, BaselineFrame* frame, ICSetProp_Fallback* stub_
     if (!oldGroup)
         return false;
 
-    if (obj->is<UnboxedPlainObject>()) {
-        MOZ_ASSERT(!oldShape);
-        if (UnboxedExpandoObject* expando = obj->as<UnboxedPlainObject>().maybeExpando())
-            oldShape = expando->lastProperty();
-    }
-
     // There are some reasons we can fail to attach a stub that are temporary.
     // We want to avoid calling noteUnoptimizableAccess() if the reason we
     // failed to attach a stub is one of those temporary reasons, since we might
     // end up attaching a stub for the exact same access later.
     bool isTemporarilyUnoptimizable = false;
-
+    bool canAddSlot = false;
     bool attached = false;
+
     if (stub->state().maybeTransition())
         stub->discardStubs(cx);
 
     if (stub->state().canAttachStub()) {
         RootedValue idVal(cx, StringValue(name));
         SetPropIRGenerator gen(cx, script, pc, CacheKind::SetProp, stub->state().mode(),
-                               &isTemporarilyUnoptimizable, lhs, idVal, rhs);
+                               &isTemporarilyUnoptimizable, &canAddSlot, lhs, idVal, rhs);
         if (gen.tryAttachStub()) {
             ICStub* newStub = AttachBaselineCacheIRStub(cx, gen.writerRef(), gen.cacheKind(),
                                                         BaselineCacheIRStubKind::Updated,
@@ -1781,8 +1748,8 @@ DoSetPropFallback(JSContext* cx, BaselineFrame* frame, ICSetProp_Fallback* stub_
     if (stub->state().canAttachStub()) {
         RootedValue idVal(cx, StringValue(name));
         SetPropIRGenerator gen(cx, script, pc, CacheKind::SetProp, stub->state().mode(),
-                               &isTemporarilyUnoptimizable, lhs, idVal, rhs);
-        if (gen.tryAttachAddSlotStub(oldGroup, oldShape)) {
+                               &isTemporarilyUnoptimizable, &canAddSlot, lhs, idVal, rhs);
+        if (canAddSlot && gen.tryAttachAddSlotStub(oldGroup, oldShape)) {
             ICStub* newStub = AttachBaselineCacheIRStub(cx, gen.writerRef(), gen.cacheKind(),
                                                         BaselineCacheIRStubKind::Updated,
                                                         ICStubEngine::Baseline, frame->script(),
@@ -2308,8 +2275,9 @@ TryAttachCallStub(JSContext* cx, ICCall_Fallback* stub, HandleScript script, jsb
             if (!thisObject)
                 return false;
 
-            if (thisObject->is<PlainObject>() || thisObject->is<UnboxedPlainObject>())
+            if (thisObject->is<PlainObject>()) {
                 templateObject = thisObject;
+            }
         }
 
         JitSpew(JitSpew_BaselineIC,

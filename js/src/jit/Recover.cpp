@@ -1611,37 +1611,12 @@ RObjectState::recover(JSContext* cx, SnapshotIterator& iter) const
     RootedObject object(cx, &iter.read().toObject());
     RootedValue val(cx);
 
-    if (object->is<UnboxedPlainObject>()) {
-        const UnboxedLayout& layout = object->as<UnboxedPlainObject>().layout();
+    RootedNativeObject nativeObject(cx, &object->as<NativeObject>());
+    MOZ_ASSERT(nativeObject->slotSpan() == numSlots());
 
-        RootedId id(cx);
-        RootedValue receiver(cx, ObjectValue(*object));
-        const UnboxedLayout::PropertyVector& properties = layout.properties();
-        for (size_t i = 0; i < properties.length(); i++) {
-            val = iter.read();
-
-            // This is the default placeholder value of MObjectState, when no
-            // properties are defined yet.
-            if (val.isUndefined())
-                continue;
-
-            id = NameToId(properties[i].name);
-            ObjectOpResult result;
-
-            // SetProperty can only fail due to OOM.
-            if (!SetProperty(cx, object, id, val, receiver, result))
-                return false;
-            if (!result)
-                return result.reportError(cx, object, id);
-        }
-    } else {
-        RootedNativeObject nativeObject(cx, &object->as<NativeObject>());
-        MOZ_ASSERT(nativeObject->slotSpan() == numSlots());
-
-        for (size_t i = 0; i < numSlots(); i++) {
-            val = iter.read();
-            nativeObject->setSlot(i, val);
-        }
+    for (size_t i = 0; i < numSlots(); i++) {
+        val = iter.read();
+        nativeObject->setSlot(i, val);
     }
 
     val.setObject(*object);

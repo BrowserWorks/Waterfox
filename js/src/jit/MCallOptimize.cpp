@@ -32,7 +32,6 @@
 #include "jit/shared/Lowering-shared-inl.h"
 #include "vm/NativeObject-inl.h"
 #include "vm/StringObject-inl.h"
-#include "vm/UnboxedObject-inl.h"
 
 using mozilla::ArrayLength;
 using mozilla::AssertedCast;
@@ -672,7 +671,7 @@ IonBuilder::inlineArrayPopShift(CallInfo& callInfo, MArrayPopShift::Mode mode)
         OBJECT_FLAG_LENGTH_OVERFLOW |
         OBJECT_FLAG_ITERATED;
 
-    MDefinition* obj = convertUnboxedObjects(callInfo.thisArg());
+    MDefinition* obj = callInfo.thisArg();
     TemporaryTypeSet* thisTypes = obj->resultTypeSet();
     if (!thisTypes)
         return InliningStatus_NotInlined;
@@ -754,7 +753,7 @@ IonBuilder::inlineArrayPush(CallInfo& callInfo)
         return InliningStatus_NotInlined;
     }
 
-    MDefinition* obj = convertUnboxedObjects(callInfo.thisArg());
+    MDefinition* obj = callInfo.thisArg();
     MDefinition* value = callInfo.getArg(0);
     if (PropertyWriteNeedsTypeBarrier(alloc(), constraints(), current,
                                       &obj, nullptr, &value, /* canModify = */ false))
@@ -820,7 +819,7 @@ IonBuilder::inlineArraySlice(CallInfo& callInfo)
         return InliningStatus_NotInlined;
     }
 
-    MDefinition* obj = convertUnboxedObjects(callInfo.thisArg());
+    MDefinition* obj = callInfo.thisArg();
 
     // Ensure |this| and result are objects.
     if (getInlineReturnType() != MIRType::Object)
@@ -2301,7 +2300,7 @@ IonBuilder::inlineObjectToString(CallInfo& callInfo)
 
     // Try to constant fold some common cases.
     if (const Class* knownClass = types->getKnownClass(constraints())) {
-        if (knownClass == &PlainObject::class_ || knownClass == &UnboxedPlainObject::class_) {
+        if (knownClass == &PlainObject::class_) {
             pushConstant(StringValue(names().objectObject));
             return InliningStatus_Inlined;
         }
@@ -2806,6 +2805,10 @@ IonBuilder::inlineUnsafeSetReservedSlot(CallInfo& callInfo)
         return InliningStatus_NotInlined;
     uint32_t slot = uint32_t(arg->toConstant()->toInt32());
 
+    // Don't inline if it's not a fixed slot.
+    if (slot >= NativeObject::MAX_FIXED_SLOTS)
+        return InliningStatus_NotInlined;
+
     callInfo.setImplicitlyUsedUnchecked();
 
     MStoreFixedSlot* store =
@@ -2839,6 +2842,10 @@ IonBuilder::inlineUnsafeGetReservedSlot(CallInfo& callInfo, MIRType knownValueTy
     if (!arg->isConstant())
         return InliningStatus_NotInlined;
     uint32_t slot = uint32_t(arg->toConstant()->toInt32());
+
+    // Don't inline if it's not a fixed slot.
+    if (slot >= NativeObject::MAX_FIXED_SLOTS)
+        return InliningStatus_NotInlined;
 
     callInfo.setImplicitlyUsedUnchecked();
 

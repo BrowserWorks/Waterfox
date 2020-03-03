@@ -2303,13 +2303,13 @@ BytecodeEmitter::emitCheck(ptrdiff_t delta, ptrdiff_t* offset)
 
     size_t oldLength = code().length();
     *offset = ptrdiff_t(oldLength);
-    
+
     size_t newLength = oldLength + size_t(delta);
     if (MOZ_UNLIKELY(newLength > MaxBytecodeLength)) {
         ReportAllocationOverflow(cx);
         return false;
     }
-    
+
     if (!code().growBy(delta)) {
         return false;
     }
@@ -8286,7 +8286,7 @@ BytecodeEmitter::emitFunction(ParseNode* pn, bool needsProto)
     if (topLevelFunction) {
         if (sc->isModuleContext()) {
             // For modules, we record the function and instantiate the binding
-            // during ModuleDeclarationInstantiation(), before the script is run.
+            // during ModuleInstantiate(), before the script is run.
 
             RootedModuleObject module(cx, sc->asModuleContext()->module());
             if (!module->noteFunctionDeclaration(cx, name, fun))
@@ -8786,7 +8786,7 @@ bool
 BytecodeEmitter::emitAwaitInInnermostScope(ParseNode* pn)
 {
     MOZ_ASSERT(sc->isFunctionBox());
-    MOZ_ASSERT(pn->isKind(ParseNodeKind::Await));
+    MOZ_ASSERT(pn->getOp() == JSOP_AWAIT);
 
     if (!emitTree(pn->pn_kid))
         return false;
@@ -11325,14 +11325,14 @@ AllocSrcNote(JSContext* cx, SrcNotesVector& notes, unsigned* index)
     // ~99% of cases fit within 256 bytes.
     if (notes.capacity() == 0 && !notes.reserve(256))
         return false;
-    
+
     size_t oldLength = notes.length();
-    
+
     if (MOZ_UNLIKELY(oldLength + 1 > MaxSrcNotesLength)) {
         ReportAllocationOverflow(cx);
         return false;
     }
-    
+
 
     if (!notes.growBy(1)) {
         return false;

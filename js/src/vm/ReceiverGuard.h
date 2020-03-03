@@ -28,11 +28,6 @@ namespace js {
 // TypedObject: The structure of a typed object is determined by its group.
 //   All typed objects with the same group have the same class, prototype, and
 //   own properties.
-//
-// UnboxedPlainObject: The structure of an unboxed plain object is determined
-//   by its group and its expando object's shape, if there is one. All unboxed
-//   plain objects with the same group and expando shape have the same
-//   properties except those stored in the expando's dense elements.
 
 class HeapReceiverGuard;
 

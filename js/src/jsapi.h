@@ -4519,45 +4519,53 @@ extern JS_PUBLIC_API(JS::Value)
 GetModuleHostDefinedField(JSObject* module);
 
 /*
- * Perform the ModuleDeclarationInstantiation operation on on the give source
- * text module record.
+ * Perform the ModuleInstantiate operation on the given source text module
+ * record.
  *
  * This transitively resolves all module dependencies (calling the
  * HostResolveImportedModule hook) and initializes the environment record for
  * the module.
  */
 extern JS_PUBLIC_API(bool)
-ModuleDeclarationInstantiation(JSContext* cx, JS::HandleObject moduleRecord);
+ModuleInstantiate(JSContext* cx, JS::HandleObject moduleRecord);
 
 /*
- * Perform the ModuleEvaluation operation on on the give source text module
- * record.
+ * Perform the ModuleEvaluate operation on the given source text module record.
  *
  * This does nothing if this module has already been evaluated. Otherwise, it
  * transitively evaluates all dependences of this module and then evaluates this
  * module.
  *
- * ModuleDeclarationInstantiation must have completed prior to calling this.
+ * ModuleInstantiate must have completed prior to calling this.
  */
 extern JS_PUBLIC_API(bool)
-ModuleEvaluation(JSContext* cx, JS::HandleObject moduleRecord);
+ModuleEvaluate(JSContext* cx, JS::HandleObject moduleRecord);
 
 /*
  * Get a list of the module specifiers used by a source text module
  * record to request importation of modules.
  *
- * The result is a JavaScript array of string values.  To extract the individual
- * values use only JS_GetArrayLength and JS_GetElement with indices 0 to
- * length - 1.
+ * The result is a JavaScript array of object values.  To extract the individual
+ * values use only JS_GetArrayLength and JS_GetElement with indices 0 to length
+ * - 1.
+ *
+ * The element values are objects with the following properties:
+ *  - moduleSpecifier: the module specifier string
+ *  - lineNumber: the line number of the import in the source text
+ *  - columnNumber: the column number of the import in the source text
+ *
+ * These property values can be extracted with GetRequestedModuleSpecifier() and
+ * GetRequestedModuleSourcePos()
  */
 extern JS_PUBLIC_API(JSObject*)
 GetRequestedModules(JSContext* cx, JS::HandleObject moduleRecord);
 
-/*
- * Get the script associated with a module.
- */
-extern JS_PUBLIC_API(JSScript*)
-GetModuleScript(JSContext* cx, JS::HandleObject moduleRecord);
+extern JS_PUBLIC_API(JSString*)
+GetRequestedModuleSpecifier(JSContext* cx, JS::HandleValue requestedModuleObject);
+
+extern JS_PUBLIC_API(void)
+GetRequestedModuleSourcePos(JSContext* cx, JS::HandleValue requestedModuleObject,
+                            uint32_t* lineNumber, uint32_t* columnNumber);
 
 } /* namespace JS */
 
@@ -6081,7 +6089,6 @@ JS_SetOffthreadIonCompilationEnabled(JSContext* cx, bool enabled);
     Register(OFFTHREAD_COMPILATION_ENABLE, "offthread-compilation.enable")  \
     Register(FULL_DEBUG_CHECKS, "jit.full-debug-checks")                    \
     Register(JUMP_THRESHOLD, "jump-threshold")                              \
-    Register(UNBOXED_OBJECTS, "unboxed_objects")                            \
     Register(SIMULATOR_ALWAYS_INTERRUPT, "simulator.always-interrupt")      \
     Register(ASMJS_ATOMICS_ENABLE, "asmjs.atomics.enable")                  \
     Register(WASM_TEST_MODE, "wasm.test-mode")                              \

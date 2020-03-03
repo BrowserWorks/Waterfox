@@ -3869,16 +3869,12 @@ SetRNGState(JSContext* cx, unsigned argc, Value* vp)
 #endif
 
 static ModuleEnvironmentObject*
-GetModuleEnvironment(JSContext* cx, HandleValue moduleValue)
+GetModuleEnvironment(JSContext* cx, HandleModuleObject module)
 {
-    RootedModuleObject module(cx, &moduleValue.toObject().as<ModuleObject>());
-
     // Use the initial environment so that tests can check bindings exists
     // before they have been instantiated.
     RootedModuleEnvironmentObject env(cx, &module->initialEnvironment());
     MOZ_ASSERT(env);
-    MOZ_ASSERT_IF(module->environment(), module->environment() == env);
-
     return env;
 }
 
@@ -3896,7 +3892,13 @@ GetModuleEnvironmentNames(JSContext* cx, unsigned argc, Value* vp)
         return false;
     }
 
-    RootedModuleEnvironmentObject env(cx, GetModuleEnvironment(cx, args[0]));
+    RootedModuleObject module(cx, &args[0].toObject().as<ModuleObject>());
+    if (module->hadEvaluationError()) {
+        JS_ReportErrorASCII(cx, "Module environment unavailable");
+        return false;
+    }
+
+    RootedModuleEnvironmentObject env(cx, GetModuleEnvironment(cx, module));
     Rooted<IdVector> ids(cx, IdVector(cx));
     if (!JS_Enumerate(cx, env, &ids))
         return false;
@@ -3933,7 +3935,13 @@ GetModuleEnvironmentValue(JSContext* cx, unsigned argc, Value* vp)
         return false;
     }
 
-    RootedModuleEnvironmentObject env(cx, GetModuleEnvironment(cx, args[0]));
+    RootedModuleObject module(cx, &args[0].toObject().as<ModuleObject>());
+    if (module->hadEvaluationError()) {
+        JS_ReportErrorASCII(cx, "Module environment unavailable");
+        return false;
+    }
+
+    RootedModuleEnvironmentObject env(cx, GetModuleEnvironment(cx, module));
     RootedString name(cx, args[1].toString());
     RootedId id(cx);
     if (!JS_StringToId(cx, name, &id))

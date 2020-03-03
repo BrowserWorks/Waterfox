@@ -20,9 +20,9 @@
 #include "jsobjinlines.h"
 
 #include "vm/EnvironmentObject-inl.h"
+#include "vm/NativeObject-inl.h"
 #include "vm/Stack-inl.h"
 #include "vm/String-inl.h"
-#include "vm/UnboxedObject-inl.h"
 
 namespace js {
 
@@ -404,14 +404,10 @@ InitGlobalLexicalOperation(JSContext* cx, LexicalEnvironmentObject* lexicalEnvAr
 inline bool
 InitPropertyOperation(JSContext* cx, JSOp op, HandleObject obj, HandleId id, HandleValue rhs)
 {
-    if (obj->is<PlainObject>() || obj->is<JSFunction>()) {
-        unsigned propAttrs = GetInitDataPropAttrs(op);
-        return NativeDefineProperty(cx, obj.as<NativeObject>(), id, rhs, nullptr, nullptr,
-                                    propAttrs);
-    }
-
-    MOZ_ASSERT(obj->as<UnboxedPlainObject>().layout().lookup(id));
-    return PutProperty(cx, obj, id, rhs, false);
+  MOZ_ASSERT(obj->is<PlainObject>() || obj->is<JSFunction>());
+  unsigned propAttrs = GetInitDataPropAttrs(op);
+  return NativeDefineProperty(cx, obj.as<NativeObject>(), id, rhs,
+                              nullptr, nullptr, propAttrs);
 }
 
 inline bool

@@ -1610,10 +1610,10 @@ SetObjectElementOperation(JSContext* cx, HandleObject obj, HandleId id, HandleVa
     if (obj->isNative() &&
         JSID_IS_ATOM(id) &&
         !obj->as<NativeObject>().inDictionaryMode() &&
-        !obj->hadElementsAccess() &&
+        !obj->as<NativeObject>().hadElementsAccess() &&
         obj->as<NativeObject>().slotSpan() > PropertyTree::MAX_HEIGHT_WITH_ELEMENTS_ACCESS / 3)
     {
-        if (!JSObject::setHadElementsAccess(cx, obj))
+        if (!NativeObject::setHadElementsAccess(cx, obj.as<NativeObject>()))
             return false;
     }
 
@@ -4193,7 +4193,7 @@ CASE(JSOP_INITHOMEOBJECT)
     /* Load the home object */
     ReservedRooted<JSObject*> obj(&rootObject0);
     obj = &REGS.sp[int(-2 - skipOver)].toObject();
-    MOZ_ASSERT(obj->is<PlainObject>() || obj->is<UnboxedPlainObject>() || obj->is<JSFunction>());
+    MOZ_ASSERT(obj->is<PlainObject>() || obj->is<JSFunction>());
 
     func->setExtendedSlot(FunctionExtended::METHOD_HOMEOBJECT_SLOT, ObjectValue(*obj));
 }
@@ -4957,15 +4957,10 @@ js::NewObjectOperation(JSContext* cx, HandleScript script, jsbytecode* pc,
             return nullptr;
         if (group->maybePreliminaryObjects()) {
             group->maybePreliminaryObjects()->maybeAnalyze(cx, group);
-            if (group->maybeUnboxedLayout())
-                group->maybeUnboxedLayout()->setAllocationSite(script, pc);
         }
 
         if (group->shouldPreTenure() || group->maybePreliminaryObjects())
             newKind = TenuredObject;
-
-        if (group->maybeUnboxedLayout())
-            return UnboxedPlainObject::create(cx, group, newKind);
     }
 
     RootedPlainObject obj(cx);
@@ -5004,11 +4999,6 @@ js::NewObjectOperationWithTemplate(JSContext* cx, HandleObject templateObject)
     MOZ_ASSERT(!templateObject->isSingleton());
 
     NewObjectKind newKind = templateObject->group()->shouldPreTenure() ? TenuredObject : GenericObject;
-
-    if (templateObject->group()->maybeUnboxedLayout()) {
-        RootedObjectGroup group(cx, templateObject->group());
-        return UnboxedPlainObject::create(cx, group, newKind);
-    }
 
     JSObject* obj = CopyInitializerObject(cx, templateObject.as<PlainObject>(), newKind);
     if (!obj)

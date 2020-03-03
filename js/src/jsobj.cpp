@@ -42,6 +42,7 @@
 #include "frontend/BytecodeCompiler.h"
 #include "gc/Marking.h"
 #include "gc/Policy.h"
+#include "gc/StoreBuffer-inl.h"
 #include "jit/BaselineJIT.h"
 #include "js/MemoryMetrics.h"
 #include "js/Proxy.h"
@@ -896,9 +897,6 @@ static inline JSObject*
 CreateThisForFunctionWithGroup(JSContext* cx, HandleObjectGroup group,
                                NewObjectKind newKind)
 {
-    if (group->maybeUnboxedLayout() && newKind != SingletonObject)
-        return UnboxedPlainObject::create(cx, group, newKind);
-
     if (TypeNewScript* newScript = group->newScript()) {
         if (newScript->analyzed()) {
             // The definite properties analysis has been performed for this
@@ -1179,8 +1177,8 @@ static bool
 GetScriptPlainObjectProperties(JSContext* cx, HandleObject obj,
                                MutableHandle<IdValueVector> properties)
 {
-    if (obj->is<PlainObject>()) {
-        PlainObject* nobj = &obj->as<PlainObject>();
+    MOZ_ASSERT(obj->is<PlainObject>());
+    PlainObject* nobj = &obj->as<PlainObject>();
 
         if (!properties.appendN(IdValuePair(), nobj->slotSpan()))
             return false;
@@ -1197,28 +1195,9 @@ GetScriptPlainObjectProperties(JSContext* cx, HandleObject obj,
             Value v = nobj->getDenseElement(i);
             if (!v.isMagic(JS_ELEMENTS_HOLE) && !properties.append(IdValuePair(INT_TO_JSID(i), v)))
                 return false;
-        }
-
-        return true;
     }
 
-    if (obj->is<UnboxedPlainObject>()) {
-        UnboxedPlainObject* nobj = &obj->as<UnboxedPlainObject>();
-
-        const UnboxedLayout& layout = nobj->layout();
-        if (!properties.appendN(IdValuePair(), layout.properties().length()))
-            return false;
-
-        for (size_t i = 0; i < layout.properties().length(); i++) {
-            const UnboxedLayout::Property& property = layout.properties()[i];
-            properties[i].get().id = NameToId(property.name);
-            properties[i].get().value = nobj->getValue(property);
-        }
-
-        return true;
-    }
-
-    MOZ_CRASH("Bad object kind");
+    return true;
 }
 
 static bool
@@ -1242,8 +1221,7 @@ js::DeepCloneObjectLiteral(JSContext* cx, HandleObject obj, NewObjectKind newKin
     /* NB: Keep this in sync with XDRObjectLiteral. */
     MOZ_ASSERT_IF(obj->isSingleton(),
                   cx->compartment()->behaviors().getSingletonsAsTemplates());
-    MOZ_ASSERT(obj->is<PlainObject>() || obj->is<UnboxedPlainObject>() ||
-               obj->is<ArrayObject>());
+    MOZ_ASSERT(obj->is<PlainObject>() || obj->is<ArrayObject>());
     MOZ_ASSERT(newKind != SingletonObject);
 
     if (obj->is<ArrayObject>()) {
@@ -1362,7 +1340,6 @@ js::XDRObjectLiteral(XDRState<mode>* xdr, MutableHandleObject obj)
     {
         if (mode == XDR_ENCODE) {
             MOZ_ASSERT(obj->is<PlainObject>() ||
-                       obj->is<UnboxedPlainObject>() ||
                        obj->is<ArrayObject>());
             isArray = obj->is<ArrayObject>() ? 1 : 0;
         }
@@ -2401,11 +2378,6 @@ js::LookupOwnPropertyPure(JSContext* cx, JSObject* obj, jsid id, PropertyResult*
         // us the resolve hook won't define a property with this id.
         if (ClassMayResolveId(cx->names(), obj->getClass(), id, obj))
             return false;
-    } else if (obj->is<UnboxedPlainObject>()) {
-        if (obj->as<UnboxedPlainObject>().containsUnboxedOrExpandoProperty(cx, id)) {
-            propp->setNonNativeProperty();
-            return true;
-        }
     } else if (obj->is<TypedObject>()) {
         if (obj->as<TypedObject>().typeDescr().hasProperty(cx->names(), id)) {
             propp->setNonNativeProperty();
@@ -2664,11 +2636,6 @@ js::SetPrototype(JSContext* cx, HandleObject obj, HandleObject proto, JS::Object
             break;
     }
 
-    // Convert unboxed objects to their native representations before changing
-    // their prototype/group, as they depend on the group for their layout.
-    if (!MaybeConvertUnboxedObjectToNative(cx, obj))
-        return false;
-
     Rooted<TaggedProto> taggedProto(cx, TaggedProto(proto));
     if (!SetClassAndProto(cx, obj, obj->getClass(), taggedProto))
         return false;
@@ -2691,9 +2658,6 @@ js::PreventExtensions(JSContext* cx, HandleObject obj, ObjectOpResult& result, I
 
     if (!obj->nonProxyIsExtensible())
         return result.succeed();
-
-    if (!MaybeConvertUnboxedObjectToNative(cx, obj))
-        return false;
 
     // Force lazy properties to be resolved.
     if (obj->isNative()) {
@@ -3439,7 +3403,6 @@ JSObject::dump(FILE* fp) const
     fprintf(fp, "flags:");
     if (obj->isDelegate()) fprintf(fp, " delegate");
     if (!obj->is<ProxyObject>() && !obj->nonProxyIsExtensible()) fprintf(fp, " not_extensible");
-    if (obj->isIndexed()) fprintf(fp, " indexed");
     if (obj->maybeHasInterestingSymbolProperty()) fprintf(fp, " maybe_has_interesting_symbol");
     if (obj->isBoundFunction()) fprintf(fp, " bound_function");
     if (obj->isQualifiedVarObj()) fprintf(fp, " varobj");
@@ -3447,8 +3410,6 @@ JSObject::dump(FILE* fp) const
     if (obj->isIteratedSingleton()) fprintf(fp, " iterated_singleton");
     if (obj->isNewGroupUnknown()) fprintf(fp, " new_type_unknown");
     if (obj->hasUncacheableProto()) fprintf(fp, " has_uncacheable_proto");
-    if (obj->hadElementsAccess()) fprintf(fp, " had_elements_access");
-    if (obj->wasNewScriptCleared()) fprintf(fp, " new_script_cleared");
     if (obj->hasStaticPrototype() && obj->staticPrototypeIsImmutable())
         fprintf(fp, " immutable_prototype");
 
@@ -3458,6 +3419,12 @@ JSObject::dump(FILE* fp) const
             fprintf(fp, " inDictionaryMode");
         if (nobj->hasShapeTable())
             fprintf(fp, " hasShapeTable");
+        if (nobj->hadElementsAccess())
+            out.put(" had_elements_access");
+        if (nobj->isIndexed())
+            out.put(" indexed");
+        if (nobj->wasNewScriptCleared())
+            out.put(" new_script_cleared");
     }
     fprintf(fp, "\n");
 
@@ -3703,12 +3670,6 @@ JSObject::allocKindForTenure(const js::Nursery& nursery) const
     if (IsProxy(this))
         return as<ProxyObject>().allocKindForTenure();
 
-    // Unboxed plain objects are sized according to the data they store.
-    if (is<UnboxedPlainObject>()) {
-        size_t nbytes = as<UnboxedPlainObject>().layoutDontCheckGeneration().size();
-        return GetGCObjectKindForBytes(UnboxedPlainObject::offsetOfData() + nbytes);
-    }
-
     // Inlined typed objects are followed by their data, so make sure we copy
     // it all over to the new object.
     if (is<InlineTypedObject>()) {
@@ -3794,7 +3755,6 @@ size_t
 JSObject::sizeOfIncludingThisInNursery() const
 {
     // This function doesn't concern itself yet with typed objects (bug 1133593)
-    // nor unboxed objects (bug 1133592).
 
     MOZ_ASSERT(!isTenured());
 

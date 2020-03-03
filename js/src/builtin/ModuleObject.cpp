@@ -6,6 +6,8 @@
 
 #include "builtin/ModuleObject.h"
 
+#include "mozilla/EnumSet.h"
+
 #include "builtin/SelfHostingDefines.h"
 #include "frontend/ParseNode.h"
 #include "frontend/SharedContext.h"
@@ -20,10 +22,11 @@
 using namespace js;
 using namespace js::frontend;
 
-static_assert(MODULE_STATE_FAILED < MODULE_STATE_PARSED &&
-              MODULE_STATE_PARSED < MODULE_STATE_INSTANTIATED &&
-              MODULE_STATE_INSTANTIATED < MODULE_STATE_EVALUATED,
-              "Module states are ordered incorrectly");
+static_assert(MODULE_STATUS_UNINSTANTIATED < MODULE_STATUS_INSTANTIATING &&
+              MODULE_STATUS_INSTANTIATING < MODULE_STATUS_INSTANTIATED &&
+              MODULE_STATUS_INSTANTIATED < MODULE_STATUS_EVALUATED &&
+              MODULE_STATUS_EVALUATED < MODULE_STATUS_EVALUATED_ERROR,
+              "Module statuses are ordered incorrectly");
 
 template<typename T, Value ValueGetter(const T* obj)>
 static bool
@@ -44,7 +47,7 @@ ModuleValueGetter(JSContext* cx, unsigned argc, Value* vp)
 #define DEFINE_GETTER_FUNCTIONS(cls, name, slot)                              \
     static Value                                                              \
     cls##_##name##Value(const cls* obj) {                                     \
-        return obj->getFixedSlot(cls::slot);                                  \
+        return obj->getReservedSlot(cls::slot);                               \
     }                                                                         \
                                                                               \
     static bool                                                               \
@@ -71,6 +74,17 @@ ModuleValueGetter(JSContext* cx, unsigned argc, Value* vp)
         return &value.toString()->asAtom();                                   \
     }
 
+#define DEFINE_UINT32_ACCESSOR_METHOD(cls, name)                              \
+    uint32_t                                                                  \
+    cls::name() const                                                         \
+    {                                                                         \
+        Value value = cls##_##name##Value(this);                              \
+        MOZ_ASSERT(value.toNumber() >= 0);                                    \
+        if (value.isInt32())                                                  \
+            return value.toInt32();                                           \
+        return JS::ToUint32(value.toDouble());                                \
+    }
+
 ///////////////////////////////////////////////////////////////////////////
 // ImportEntryObject
 
@@ -84,10 +98,14 @@ ImportEntryObject::class_ = {
 DEFINE_GETTER_FUNCTIONS(ImportEntryObject, moduleRequest, ModuleRequestSlot)
 DEFINE_GETTER_FUNCTIONS(ImportEntryObject, importName, ImportNameSlot)
 DEFINE_GETTER_FUNCTIONS(ImportEntryObject, localName, LocalNameSlot)
+DEFINE_GETTER_FUNCTIONS(ImportEntryObject, lineNumber, LineNumberSlot)
+DEFINE_GETTER_FUNCTIONS(ImportEntryObject, columnNumber, ColumnNumberSlot)
 
 DEFINE_ATOM_ACCESSOR_METHOD(ImportEntryObject, moduleRequest)
 DEFINE_ATOM_ACCESSOR_METHOD(ImportEntryObject, importName)
 DEFINE_ATOM_ACCESSOR_METHOD(ImportEntryObject, localName)
+DEFINE_UINT32_ACCESSOR_METHOD(ImportEntryObject, lineNumber)
+DEFINE_UINT32_ACCESSOR_METHOD(ImportEntryObject, columnNumber)
 
 /* static */ bool
 ImportEntryObject::isInstance(HandleValue value)
@@ -102,6 +120,8 @@ GlobalObject::initImportEntryProto(JSContext* cx, Handle<GlobalObject*> global)
         JS_PSG("moduleRequest", ImportEntryObject_moduleRequestGetter, 0),
         JS_PSG("importName", ImportEntryObject_importNameGetter, 0),
         JS_PSG("localName", ImportEntryObject_localNameGetter, 0),
+        JS_PSG("lineNumber", ImportEntryObject_lineNumberGetter, 0),
+        JS_PSG("columnNumber", ImportEntryObject_columnNumberGetter, 0),
         JS_PS_END
     };
 
@@ -112,7 +132,7 @@ GlobalObject::initImportEntryProto(JSContext* cx, Handle<GlobalObject*> global)
     if (!DefinePropertiesAndFunctions(cx, proto, protoAccessors, nullptr))
         return false;
 
-    global->setReservedSlot(IMPORT_ENTRY_PROTO, ObjectValue(*proto));
+    global->initReservedSlot(IMPORT_ENTRY_PROTO, ObjectValue(*proto));
     return true;
 }
 
@@ -120,7 +140,9 @@ GlobalObject::initImportEntryProto(JSContext* cx, Handle<GlobalObject*> global)
 ImportEntryObject::create(JSContext* cx,
                           HandleAtom moduleRequest,
                           HandleAtom importName,
-                          HandleAtom localName)
+                          HandleAtom localName,
+                          uint32_t lineNumber,
+                          uint32_t columnNumber)
 {
     RootedObject proto(cx, cx->global()->getImportEntryPrototype());
     RootedObject obj(cx, NewObjectWithGivenProto(cx, &class_, proto));
@@ -131,6 +153,8 @@ ImportEntryObject::create(JSContext* cx,
     self->initReservedSlot(ModuleRequestSlot, StringValue(moduleRequest));
     self->initReservedSlot(ImportNameSlot, StringValue(importName));
     self->initReservedSlot(LocalNameSlot, StringValue(localName));
+    self->initReservedSlot(LineNumberSlot, NumberValue(lineNumber));
+    self->initReservedSlot(ColumnNumberSlot, NumberValue(columnNumber));
     return self;
 }
 
@@ -148,11 +172,15 @@ DEFINE_GETTER_FUNCTIONS(ExportEntryObject, exportName, ExportNameSlot)
 DEFINE_GETTER_FUNCTIONS(ExportEntryObject, moduleRequest, ModuleRequestSlot)
 DEFINE_GETTER_FUNCTIONS(ExportEntryObject, importName, ImportNameSlot)
 DEFINE_GETTER_FUNCTIONS(ExportEntryObject, localName, LocalNameSlot)
+DEFINE_GETTER_FUNCTIONS(ExportEntryObject, lineNumber, LineNumberSlot)
+DEFINE_GETTER_FUNCTIONS(ExportEntryObject, columnNumber, ColumnNumberSlot)
 
 DEFINE_ATOM_OR_NULL_ACCESSOR_METHOD(ExportEntryObject, exportName)
 DEFINE_ATOM_OR_NULL_ACCESSOR_METHOD(ExportEntryObject, moduleRequest)
 DEFINE_ATOM_OR_NULL_ACCESSOR_METHOD(ExportEntryObject, importName)
 DEFINE_ATOM_OR_NULL_ACCESSOR_METHOD(ExportEntryObject, localName)
+DEFINE_UINT32_ACCESSOR_METHOD(ExportEntryObject, lineNumber)
+DEFINE_UINT32_ACCESSOR_METHOD(ExportEntryObject, columnNumber)
 
 /* static */ bool
 ExportEntryObject::isInstance(HandleValue value)
@@ -168,6 +196,8 @@ GlobalObject::initExportEntryProto(JSContext* cx, Handle<GlobalObject*> global)
         JS_PSG("moduleRequest", ExportEntryObject_moduleRequestGetter, 0),
         JS_PSG("importName", ExportEntryObject_importNameGetter, 0),
         JS_PSG("localName", ExportEntryObject_localNameGetter, 0),
+        JS_PSG("lineNumber", ExportEntryObject_lineNumberGetter, 0),
+        JS_PSG("columnNumber", ExportEntryObject_columnNumberGetter, 0),
         JS_PS_END
     };
 
@@ -178,7 +208,7 @@ GlobalObject::initExportEntryProto(JSContext* cx, Handle<GlobalObject*> global)
     if (!DefinePropertiesAndFunctions(cx, proto, protoAccessors, nullptr))
         return false;
 
-    global->setReservedSlot(EXPORT_ENTRY_PROTO, ObjectValue(*proto));
+    global->initReservedSlot(EXPORT_ENTRY_PROTO, ObjectValue(*proto));
     return true;
 }
 
@@ -193,8 +223,13 @@ ExportEntryObject::create(JSContext* cx,
                           HandleAtom maybeExportName,
                           HandleAtom maybeModuleRequest,
                           HandleAtom maybeImportName,
-                          HandleAtom maybeLocalName)
+                          HandleAtom maybeLocalName,
+                          uint32_t lineNumber,
+                          uint32_t columnNumber)
 {
+    // Line and column numbers are optional for export entries since direct
+    // entries are checked at parse time.
+
     RootedObject proto(cx, cx->global()->getExportEntryPrototype());
     RootedObject obj(cx, NewObjectWithGivenProto(cx, &class_, proto));
     if (!obj)
@@ -205,6 +240,71 @@ ExportEntryObject::create(JSContext* cx,
     self->initReservedSlot(ModuleRequestSlot, StringOrNullValue(maybeModuleRequest));
     self->initReservedSlot(ImportNameSlot, StringOrNullValue(maybeImportName));
     self->initReservedSlot(LocalNameSlot, StringOrNullValue(maybeLocalName));
+    self->initReservedSlot(LineNumberSlot, NumberValue(lineNumber));
+    self->initReservedSlot(ColumnNumberSlot, NumberValue(columnNumber));
+    return self;
+}
+
+///////////////////////////////////////////////////////////////////////////
+// RequestedModuleObject
+
+/* static */ const Class
+RequestedModuleObject::class_ = {
+    "RequestedModule",
+    JSCLASS_HAS_RESERVED_SLOTS(RequestedModuleObject::SlotCount) |
+    JSCLASS_IS_ANONYMOUS
+};
+
+DEFINE_GETTER_FUNCTIONS(RequestedModuleObject, moduleSpecifier, ModuleSpecifierSlot)
+DEFINE_GETTER_FUNCTIONS(RequestedModuleObject, lineNumber, LineNumberSlot)
+DEFINE_GETTER_FUNCTIONS(RequestedModuleObject, columnNumber, ColumnNumberSlot)
+
+DEFINE_ATOM_ACCESSOR_METHOD(RequestedModuleObject, moduleSpecifier)
+DEFINE_UINT32_ACCESSOR_METHOD(RequestedModuleObject, lineNumber)
+DEFINE_UINT32_ACCESSOR_METHOD(RequestedModuleObject, columnNumber)
+
+/* static */ bool
+RequestedModuleObject::isInstance(HandleValue value)
+{
+    return value.isObject() && value.toObject().is<RequestedModuleObject>();
+}
+
+/* static */ bool
+GlobalObject::initRequestedModuleProto(JSContext* cx, Handle<GlobalObject*> global)
+{
+    static const JSPropertySpec protoAccessors[] = {
+        JS_PSG("moduleSpecifier", RequestedModuleObject_moduleSpecifierGetter, 0),
+        JS_PSG("lineNumber", RequestedModuleObject_lineNumberGetter, 0),
+        JS_PSG("columnNumber", RequestedModuleObject_columnNumberGetter, 0),
+        JS_PS_END
+    };
+
+    RootedObject proto(cx, GlobalObject::createBlankPrototype<PlainObject>(cx, global));
+    if (!proto)
+        return false;
+
+    if (!DefinePropertiesAndFunctions(cx, proto, protoAccessors, nullptr))
+        return false;
+
+    global->initReservedSlot(REQUESTED_MODULE_PROTO, ObjectValue(*proto));
+    return true;
+}
+
+/* static */ RequestedModuleObject*
+RequestedModuleObject::create(JSContext* cx,
+                              HandleAtom moduleSpecifier,
+                              uint32_t lineNumber,
+                              uint32_t columnNumber)
+{
+    RootedObject proto(cx, cx->global()->getRequestedModulePrototype());
+    RootedObject obj(cx, NewObjectWithGivenProto(cx, &class_, proto));
+    if (!obj)
+        return nullptr;
+
+    RootedRequestedModuleObject self(cx, &obj->as<RequestedModuleObject>());
+    self->initReservedSlot(ModuleSpecifierSlot, StringValue(moduleSpecifier));
+    self->initReservedSlot(LineNumberSlot, NumberValue(lineNumber));
+    self->initReservedSlot(ColumnNumberSlot, NumberValue(columnNumber));
     return self;
 }
 
@@ -215,21 +315,13 @@ IndirectBindingMap::Binding::Binding(ModuleEnvironmentObject* environment, Shape
   : environment(environment), shape(shape)
 {}
 
-IndirectBindingMap::IndirectBindingMap(Zone* zone)
-  : map_(ZoneAllocPolicy(zone))
-{
-}
-
-bool
-IndirectBindingMap::init()
-{
-    return map_.init();
-}
-
 void
 IndirectBindingMap::trace(JSTracer* trc)
 {
-    for (Map::Enum e(map_); !e.empty(); e.popFront()) {
+    if (!map_)
+        return;
+
+    for (Map::Enum e(*map_); !e.empty(); e.popFront()) {
         Binding& b = e.front().value();
         TraceEdge(trc, &b.environment, "module bindings environment");
         TraceEdge(trc, &b.shape, "module bindings shape");
@@ -240,12 +332,25 @@ IndirectBindingMap::trace(JSTracer* trc)
 }
 
 bool
-IndirectBindingMap::putNew(JSContext* cx, HandleId name,
-                           HandleModuleEnvironmentObject environment, HandleId localName)
+IndirectBindingMap::put(JSContext* cx, HandleId name,
+                        HandleModuleEnvironmentObject environment, HandleId localName)
 {
+    // This object might have been allocated on the background parsing thread in
+    // different zone to the final module. Lazily allocate the map so we don't
+    // have to switch its zone when merging compartments.
+    if (!map_) {
+        MOZ_ASSERT(!cx->zone()->group()->createdForHelperThread());
+        map_.emplace(cx->zone());
+        if (!map_->init()) {
+            map_.reset();
+            ReportOutOfMemory(cx);
+            return false;
+        }
+    }
+
     RootedShape shape(cx, environment->lookup(cx, localName));
     MOZ_ASSERT(shape);
-    if (!map_.putNew(name, Binding(environment, shape))) {
+    if (!map_->put(name, Binding(environment, shape))) {
         ReportOutOfMemory(cx);
         return false;
     }
@@ -256,7 +361,10 @@ IndirectBindingMap::putNew(JSContext* cx, HandleId name,
 bool
 IndirectBindingMap::lookup(jsid name, ModuleEnvironmentObject** envOut, Shape** shapeOut) const
 {
-    auto ptr = map_.lookup(name);
+    if (!map_)
+        return false;
+
+    auto ptr = map_->lookup(name);
     if (!ptr)
         return false;
 
@@ -281,7 +389,8 @@ ModuleNamespaceObject::isInstance(HandleValue value)
 }
 
 /* static */ ModuleNamespaceObject*
-ModuleNamespaceObject::create(JSContext* cx, HandleModuleObject module)
+ModuleNamespaceObject::create(JSContext* cx, HandleModuleObject module, HandleObject exports,
+                              UniquePtr<IndirectBindingMap> bindings)
 {
     RootedValue priv(cx, ObjectValue(*module));
     ProxyOptions options;
@@ -290,6 +399,9 @@ ModuleNamespaceObject::create(JSContext* cx, HandleModuleObject module)
     RootedObject object(cx, NewProxyObject(cx, &proxyHandler, priv, nullptr, options));
     if (!object)
         return nullptr;
+
+    SetProxyReservedSlot(object, ExportsSlot, ObjectValue(*exports));
+    SetProxyReservedSlot(object, BindingsSlot, PrivateValue(bindings.release()));
 
     return &object->as<ModuleNamespaceObject>();
 }
@@ -303,15 +415,14 @@ ModuleNamespaceObject::module()
 JSObject&
 ModuleNamespaceObject::exports()
 {
-    JSObject* exports = module().namespaceExports();
-    MOZ_ASSERT(exports);
-    return *exports;
+    return GetProxyReservedSlot(this, ExportsSlot).toObject();
 }
 
 IndirectBindingMap&
 ModuleNamespaceObject::bindings()
 {
-    IndirectBindingMap* bindings = module().namespaceBindings();
+    Value value = GetProxyReservedSlot(this, BindingsSlot);
+    auto bindings = static_cast<IndirectBindingMap*>(value.toPrivate());
     MOZ_ASSERT(bindings);
     return *bindings;
 }
@@ -320,13 +431,10 @@ bool
 ModuleNamespaceObject::addBinding(JSContext* cx, HandleAtom exportedName,
                                   HandleModuleObject targetModule, HandleAtom localName)
 {
-    IndirectBindingMap* bindings(this->module().namespaceBindings());
-    MOZ_ASSERT(bindings);
-
     RootedModuleEnvironmentObject environment(cx, &targetModule->initialEnvironment());
     RootedId exportedNameId(cx, AtomToId(exportedName));
     RootedId localNameId(cx, AtomToId(localName));
-    return bindings->putNew(cx, exportedNameId, environment, localNameId);
+    return bindings().put(cx, exportedNameId, environment, localNameId);
 }
 
 const char ModuleNamespaceObject::ProxyHandler::family = 0;
@@ -525,6 +633,19 @@ ModuleNamespaceObject::ProxyHandler::ownPropertyKeys(JSContext* cx, HandleObject
     return true;
 }
 
+void
+ModuleNamespaceObject::ProxyHandler::trace(JSTracer* trc, JSObject* proxy) const
+{
+    auto& self = proxy->as<ModuleNamespaceObject>();
+    self.bindings().trace(trc);
+}
+
+void ModuleNamespaceObject::ProxyHandler::finalize(JSFreeOp* fop, JSObject* proxy) const
+{
+    auto& self = proxy->as<ModuleNamespaceObject>();
+    js_delete(&self.bindings());
+}
+
 ///////////////////////////////////////////////////////////////////////////
 // FunctionDeclaration
 
@@ -571,7 +692,7 @@ ModuleObject::class_ = {
     ArrayObject&                                                              \
     cls::name() const                                                         \
     {                                                                         \
-        return getFixedSlot(cls::slot).toObject().as<ArrayObject>();          \
+        return getReservedSlot(cls::slot).toObject().as<ArrayObject>();       \
     }
 
 DEFINE_ARRAY_SLOT_ACCESSOR(ModuleObject, requestedModules, RequestedModulesSlot)
@@ -597,10 +718,9 @@ ModuleObject::create(JSContext* cx)
     RootedModuleObject self(cx, &obj->as<ModuleObject>());
 
     Zone* zone = cx->zone();
-    IndirectBindingMap* bindings = zone->new_<IndirectBindingMap>(zone);
-    if (!bindings || !bindings->init()) {
+    IndirectBindingMap* bindings = zone->new_<IndirectBindingMap>();
+    if (!bindings) {
         ReportOutOfMemory(cx);
-        js_delete<IndirectBindingMap>(bindings);
         return nullptr;
     }
 
@@ -623,20 +743,28 @@ ModuleObject::finalize(js::FreeOp* fop, JSObject* obj)
     ModuleObject* self = &obj->as<ModuleObject>();
     if (self->hasImportBindings())
         fop->delete_(&self->importBindings());
-    if (IndirectBindingMap* bindings = self->namespaceBindings())
-        fop->delete_(bindings);
     if (FunctionDeclarationVector* funDecls = self->functionDeclarations())
         fop->delete_(funDecls);
+}
+
+ModuleEnvironmentObject&
+ModuleObject::initialEnvironment() const
+{
+    Value value = getReservedSlot(EnvironmentSlot);
+    return value.toObject().as<ModuleEnvironmentObject>();
 }
 
 ModuleEnvironmentObject*
 ModuleObject::environment() const
 {
-    Value value = getReservedSlot(EnvironmentSlot);
-    if (value.isUndefined())
+    MOZ_ASSERT(!hadEvaluationError());
+
+    // According to the spec the environment record is created during
+    // instantiation, but we create it earlier than that.
+    if (status() < MODULE_STATUS_INSTANTIATED)
         return nullptr;
 
-    return &value.toObject().as<ModuleEnvironmentObject>();
+    return &initialEnvironment();
 }
 
 bool
@@ -650,26 +778,6 @@ IndirectBindingMap&
 ModuleObject::importBindings()
 {
     return *static_cast<IndirectBindingMap*>(getReservedSlot(ImportBindingsSlot).toPrivate());
-}
-
-JSObject*
-ModuleObject::namespaceExports()
-{
-    Value value = getReservedSlot(NamespaceExportsSlot);
-    if (value.isUndefined())
-        return nullptr;
-
-    return &value.toObject();
-}
-
-IndirectBindingMap*
-ModuleObject::namespaceBindings()
-{
-    Value value = getReservedSlot(NamespaceBindingsSlot);
-    if (value.isUndefined())
-        return nullptr;
-
-    return static_cast<IndirectBindingMap*>(value.toPrivate());
 }
 
 ModuleNamespaceObject*
@@ -695,13 +803,13 @@ void
 ModuleObject::init(HandleScript script)
 {
     initReservedSlot(ScriptSlot, PrivateValue(script));
-    initReservedSlot(StateSlot, Int32Value(MODULE_STATE_FAILED));
+    initReservedSlot(StatusSlot, Int32Value(MODULE_STATUS_UNINSTANTIATED));
 }
 
 void
 ModuleObject::setInitialEnvironment(HandleModuleEnvironmentObject initialEnvironment)
 {
-    initReservedSlot(InitialEnvironmentSlot, ObjectValue(*initialEnvironment));
+    initReservedSlot(EnvironmentSlot, ObjectValue(*initialEnvironment));
 }
 
 void
@@ -716,7 +824,7 @@ ModuleObject::initImportExportData(HandleArrayObject requestedModules,
     initReservedSlot(LocalExportEntriesSlot, ObjectValue(*localExportEntries));
     initReservedSlot(IndirectExportEntriesSlot, ObjectValue(*indirectExportEntries));
     initReservedSlot(StarExportEntriesSlot, ObjectValue(*starExportEntries));
-    setReservedSlot(StateSlot, Int32Value(MODULE_STATE_PARSED));
+    setReservedSlot(StatusSlot, Int32Value(MODULE_STATUS_UNINSTANTIATED));
 }
 
 static bool
@@ -740,29 +848,41 @@ ModuleObject::Freeze(JSContext* cx, HandleModuleObject self)
 #ifdef DEBUG
 
 static inline bool
-IsObjectFrozen(JSContext* cx, HandleObject obj)
+CheckObjectFrozen(JSContext* cx, HandleObject obj, bool* result)
 {
-    bool frozen = false;
-    MOZ_ALWAYS_TRUE(TestIntegrityLevel(cx, obj, IntegrityLevel::Frozen, &frozen));
-    return frozen;
+    return TestIntegrityLevel(cx, obj, IntegrityLevel::Frozen, result);
 }
 
 static inline bool
-IsObjectPropertyFrozen(JSContext* cx, HandleNativeObject obj, uint32_t slot)
+CheckObjectPropertyFrozen(JSContext* cx, HandleNativeObject obj, uint32_t slot, bool* result)
 {
     RootedObject property(cx, &obj->getSlot(slot).toObject());
-    return IsObjectFrozen(cx, property);
+    return CheckObjectFrozen(cx, property, result);
 }
 
 /* static */ inline bool
-ModuleObject::IsFrozen(JSContext* cx, HandleModuleObject self)
+ModuleObject::AssertFrozen(JSContext* cx, HandleModuleObject self)
 {
-    return IsObjectPropertyFrozen(cx, self, RequestedModulesSlot) &&
-           IsObjectPropertyFrozen(cx, self, ImportEntriesSlot) &&
-           IsObjectPropertyFrozen(cx, self, LocalExportEntriesSlot) &&
-           IsObjectPropertyFrozen(cx, self, IndirectExportEntriesSlot) &&
-           IsObjectPropertyFrozen(cx, self, StarExportEntriesSlot) &&
-           IsObjectFrozen(cx, self);
+    static const mozilla::EnumSet<ModuleSlot> slotsToCheck = {
+        RequestedModulesSlot,
+        ImportEntriesSlot,
+        LocalExportEntriesSlot,
+        IndirectExportEntriesSlot,
+        StarExportEntriesSlot
+    };
+
+    bool frozen = false;
+    for (auto slot : slotsToCheck) {
+        if (!CheckObjectPropertyFrozen(cx, self, slot, &frozen))
+            return false;
+        MOZ_ASSERT(frozen);
+    }
+
+    if (!CheckObjectFrozen(cx, self, &frozen))
+        return false;
+    MOZ_ASSERT(frozen);
+
+    return true;
 }
 
 #endif
@@ -797,17 +917,31 @@ ModuleObject::script() const
 }
 
 static inline void
-AssertValidModuleState(ModuleState state)
+AssertValidModuleStatus(ModuleStatus status)
 {
-    MOZ_ASSERT(state >= MODULE_STATE_FAILED && state <= MODULE_STATE_EVALUATED);
+    MOZ_ASSERT(status >= MODULE_STATUS_UNINSTANTIATED &&
+               status <= MODULE_STATUS_EVALUATED_ERROR);
 }
 
-ModuleState
-ModuleObject::state() const
+ModuleStatus
+ModuleObject::status() const
 {
-    ModuleState state = getReservedSlot(StateSlot).toInt32();
-    AssertValidModuleState(state);
-    return state;
+    ModuleStatus status = getReservedSlot(StatusSlot).toInt32();
+    AssertValidModuleStatus(status);
+    return status;
+}
+
+bool
+ModuleObject::hadEvaluationError() const
+{
+    return status() == MODULE_STATUS_EVALUATED_ERROR;
+}
+
+Value
+ModuleObject::evaluationError() const
+{
+    MOZ_ASSERT(hadEvaluationError());
+    return getReservedSlot(EvaluationErrorSlot);
 }
 
 Value
@@ -820,12 +954,6 @@ void
 ModuleObject::setHostDefinedField(const JS::Value& value)
 {
     setReservedSlot(HostDefinedSlot, value);
-}
-
-ModuleEnvironmentObject&
-ModuleObject::initialEnvironment() const
-{
-    return getReservedSlot(InitialEnvironmentSlot).toObject().as<ModuleEnvironmentObject>();
 }
 
 Scope*
@@ -846,21 +974,9 @@ ModuleObject::trace(JSTracer* trc, JSObject* obj)
 
     if (module.hasImportBindings())
         module.importBindings().trace(trc);
-    if (IndirectBindingMap* bindings = module.namespaceBindings())
-        bindings->trace(trc);
 
     if (FunctionDeclarationVector* funDecls = module.functionDeclarations())
         funDecls->trace(trc);
-}
-
-void
-ModuleObject::createEnvironment()
-{
-    // The environment has already been created, we just neet to set it in the
-    // right slot.
-    MOZ_ASSERT(!getReservedSlot(InitialEnvironmentSlot).isUndefined());
-    MOZ_ASSERT(getReservedSlot(EnvironmentSlot).isUndefined());
-    setReservedSlot(EnvironmentSlot, getReservedSlot(InitialEnvironmentSlot));
 }
 
 bool
@@ -878,7 +994,11 @@ ModuleObject::noteFunctionDeclaration(JSContext* cx, HandleAtom name, HandleFunc
 /* static */ bool
 ModuleObject::instantiateFunctionDeclarations(JSContext* cx, HandleModuleObject self)
 {
-    MOZ_ASSERT(IsFrozen(cx, self));
+#ifdef DEBUG
+    MOZ_ASSERT(self->status() == MODULE_STATUS_INSTANTIATING);
+    if (!AssertFrozen(cx, self))
+        return false;
+#endif
 
     FunctionDeclarationVector* funDecls = self->functionDeclarations();
     if (!funDecls) {
@@ -915,19 +1035,14 @@ ModuleObject::instantiateFunctionDeclarations(JSContext* cx, HandleModuleObject 
     return true;
 }
 
-void
-ModuleObject::setState(int32_t newState)
-{
-    AssertValidModuleState(newState);
-    MOZ_ASSERT(state() != MODULE_STATE_FAILED);
-    MOZ_ASSERT(newState == MODULE_STATE_FAILED || newState > state());
-    setReservedSlot(StateSlot, Int32Value(newState));
-}
-
 /* static */ bool
-ModuleObject::evaluate(JSContext* cx, HandleModuleObject self, MutableHandleValue rval)
+ModuleObject::execute(JSContext* cx, HandleModuleObject self, MutableHandleValue rval)
 {
-    MOZ_ASSERT(IsFrozen(cx, self));
+#ifdef DEBUG
+    MOZ_ASSERT(self->status() == MODULE_STATUS_EVALUATING);
+    if (!AssertFrozen(cx, self))
+        return false;
+#endif
 
     RootedScript script(cx, self->script());
     RootedModuleEnvironmentObject scope(cx, self->environment());
@@ -945,21 +1060,18 @@ ModuleObject::createNamespace(JSContext* cx, HandleModuleObject self, HandleObje
     MOZ_ASSERT(!self->namespace_());
     MOZ_ASSERT(exports->is<ArrayObject>());
 
-    RootedModuleNamespaceObject ns(cx, ModuleNamespaceObject::create(cx, self));
-    if (!ns)
-        return nullptr;
-
     Zone* zone = cx->zone();
-    IndirectBindingMap* bindings = zone->new_<IndirectBindingMap>(zone);
-    if (!bindings || !bindings->init()) {
+    auto bindings = zone->make_unique<IndirectBindingMap>();
+    if (!bindings) {
         ReportOutOfMemory(cx);
-        js_delete<IndirectBindingMap>(bindings);
         return nullptr;
     }
 
+    auto ns = ModuleNamespaceObject::create(cx, self, exports, Move(bindings));
+    if (!ns)
+        return nullptr;
+
     self->initReservedSlot(NamespaceSlot, ObjectValue(*ns));
-    self->initReservedSlot(NamespaceExportsSlot, ObjectValue(*exports));
-    self->initReservedSlot(NamespaceBindingsSlot, PrivateValue(bindings));
     return ns;
 }
 
@@ -975,44 +1087,50 @@ InvokeSelfHostedMethod(JSContext* cx, HandleModuleObject self, HandlePropertyNam
 }
 
 /* static */ bool
-ModuleObject::DeclarationInstantiation(JSContext* cx, HandleModuleObject self)
+ModuleObject::Instantiate(JSContext* cx, HandleModuleObject self)
 {
-    return InvokeSelfHostedMethod(cx, self, cx->names().ModuleDeclarationInstantiation);
+    return InvokeSelfHostedMethod(cx, self, cx->names().ModuleInstantiate);
 }
 
 /* static */ bool
-ModuleObject::Evaluation(JSContext* cx, HandleModuleObject self)
+ModuleObject::Evaluate(JSContext* cx, HandleModuleObject self)
 {
-    return InvokeSelfHostedMethod(cx, self, cx->names().ModuleEvaluation);
+    return InvokeSelfHostedMethod(cx, self, cx->names().ModuleEvaluate);
 }
 
 DEFINE_GETTER_FUNCTIONS(ModuleObject, namespace_, NamespaceSlot)
-DEFINE_GETTER_FUNCTIONS(ModuleObject, state, StateSlot)
+DEFINE_GETTER_FUNCTIONS(ModuleObject, status, StatusSlot)
+DEFINE_GETTER_FUNCTIONS(ModuleObject, evaluationError, EvaluationErrorSlot)
 DEFINE_GETTER_FUNCTIONS(ModuleObject, requestedModules, RequestedModulesSlot)
 DEFINE_GETTER_FUNCTIONS(ModuleObject, importEntries, ImportEntriesSlot)
 DEFINE_GETTER_FUNCTIONS(ModuleObject, localExportEntries, LocalExportEntriesSlot)
 DEFINE_GETTER_FUNCTIONS(ModuleObject, indirectExportEntries, IndirectExportEntriesSlot)
 DEFINE_GETTER_FUNCTIONS(ModuleObject, starExportEntries, StarExportEntriesSlot)
+DEFINE_GETTER_FUNCTIONS(ModuleObject, dfsIndex, DFSIndexSlot)
+DEFINE_GETTER_FUNCTIONS(ModuleObject, dfsAncestorIndex, DFSAncestorIndexSlot)
 
 /* static */ bool
 GlobalObject::initModuleProto(JSContext* cx, Handle<GlobalObject*> global)
 {
     static const JSPropertySpec protoAccessors[] = {
         JS_PSG("namespace", ModuleObject_namespace_Getter, 0),
-        JS_PSG("state", ModuleObject_stateGetter, 0),
+        JS_PSG("status", ModuleObject_statusGetter, 0),
+        JS_PSG("evaluationError", ModuleObject_evaluationErrorGetter, 0),
         JS_PSG("requestedModules", ModuleObject_requestedModulesGetter, 0),
         JS_PSG("importEntries", ModuleObject_importEntriesGetter, 0),
         JS_PSG("localExportEntries", ModuleObject_localExportEntriesGetter, 0),
         JS_PSG("indirectExportEntries", ModuleObject_indirectExportEntriesGetter, 0),
         JS_PSG("starExportEntries", ModuleObject_starExportEntriesGetter, 0),
+        JS_PSG("dfsIndex", ModuleObject_dfsIndexGetter, 0),
+        JS_PSG("dfsAncestorIndex", ModuleObject_dfsAncestorIndexGetter, 0),
         JS_PS_END
     };
 
     static const JSFunctionSpec protoFunctions[] = {
         JS_SELF_HOSTED_FN("getExportedNames", "ModuleGetExportedNames", 1, 0),
         JS_SELF_HOSTED_FN("resolveExport", "ModuleResolveExport", 2, 0),
-        JS_SELF_HOSTED_FN("declarationInstantiation", "ModuleDeclarationInstantiation", 0, 0),
-        JS_SELF_HOSTED_FN("evaluation", "ModuleEvaluation", 0, 0),
+        JS_SELF_HOSTED_FN("declarationInstantiation", "ModuleInstantiate", 0, 0),
+        JS_SELF_HOSTED_FN("evaluation", "ModuleEvaluate", 0, 0),
         JS_FS_END
     };
 
@@ -1034,10 +1152,13 @@ GlobalObject::initModuleProto(JSContext* cx, Handle<GlobalObject*> global)
 ///////////////////////////////////////////////////////////////////////////
 // ModuleBuilder
 
-ModuleBuilder::ModuleBuilder(JSContext* cx, HandleModuleObject module)
+ModuleBuilder::ModuleBuilder(JSContext* cx, HandleModuleObject module,
+                             const frontend::TokenStream& tokenStream)
   : cx_(cx),
     module_(cx, module),
-    requestedModules_(cx, AtomVector(cx)),
+    tokenStream_(tokenStream),
+    requestedModuleSpecifiers_(cx, AtomSet(cx)),
+    requestedModules_(cx, RequestedModuleVector(cx)),
     importedBoundNames_(cx, AtomVector(cx)),
     importEntries_(cx, ImportEntryVector(cx)),
     exportEntries_(cx, ExportEntryVector(cx)),
@@ -1045,6 +1166,12 @@ ModuleBuilder::ModuleBuilder(JSContext* cx, HandleModuleObject module)
     indirectExportEntries_(cx, ExportEntryVector(cx)),
     starExportEntries_(cx, ExportEntryVector(cx))
 {}
+
+bool
+ModuleBuilder::init()
+{
+    return requestedModuleSpecifiers_.init();
+}
 
 bool
 ModuleBuilder::buildTables()
@@ -1069,7 +1196,9 @@ ModuleBuilder::buildTables()
                                                             exportName,
                                                             moduleRequest,
                                                             importName,
-                                                            nullptr);
+                                                            nullptr,
+                                                            exp->lineNumber(),
+                                                            exp->columnNumber());
                     if (!exportEntry || !indirectExportEntries_.append(exportEntry))
                         return false;
                 }
@@ -1089,24 +1218,23 @@ ModuleBuilder::buildTables()
 bool
 ModuleBuilder::initModule()
 {
-    RootedArrayObject requestedModules(cx_, createArray<JSAtom*>(requestedModules_));
+    RootedArrayObject requestedModules(cx_, createArray(requestedModules_));
     if (!requestedModules)
         return false;
 
-    RootedArrayObject importEntries(cx_, createArray<ImportEntryObject*>(importEntries_));
+    RootedArrayObject importEntries(cx_, createArray(importEntries_));
     if (!importEntries)
         return false;
 
-    RootedArrayObject localExportEntries(cx_, createArray<ExportEntryObject*>(localExportEntries_));
+    RootedArrayObject localExportEntries(cx_, createArray(localExportEntries_));
     if (!localExportEntries)
         return false;
 
-    RootedArrayObject indirectExportEntries(cx_);
-    indirectExportEntries = createArray<ExportEntryObject*>(indirectExportEntries_);
+    RootedArrayObject indirectExportEntries(cx_, createArray(indirectExportEntries_));
     if (!indirectExportEntries)
         return false;
 
-    RootedArrayObject starExportEntries(cx_, createArray<ExportEntryObject*>(starExportEntries_));
+    RootedArrayObject starExportEntries(cx_, createArray(starExportEntries_));
     if (!starExportEntries)
         return false;
 
@@ -1128,7 +1256,7 @@ ModuleBuilder::processImport(frontend::ParseNode* pn)
     MOZ_ASSERT(pn->pn_right->isKind(PNK_STRING));
 
     RootedAtom module(cx_, pn->pn_right->pn_atom);
-    if (!maybeAppendRequestedModule(module))
+    if (!maybeAppendRequestedModule(module, pn->pn_right))
         return false;
 
     for (ParseNode* spec = pn->pn_left->pn_head; spec; spec = spec->pn_next) {
@@ -1142,8 +1270,12 @@ ModuleBuilder::processImport(frontend::ParseNode* pn)
         if (!importedBoundNames_.append(localName))
             return false;
 
+        uint32_t line;
+        uint32_t column;
+        tokenStream_.lineNumAndColumnIndex(spec->pn_left->pn_pos.begin, &line, &column);
+
         RootedImportEntryObject importEntry(cx_);
-        importEntry = ImportEntryObject::create(cx_, module, importName, localName);
+        importEntry = ImportEntryObject::create(cx_, module, importName, localName, line, column);
         if (!importEntry || !importEntries_.append(importEntry))
             return false;
     }
@@ -1174,7 +1306,7 @@ ModuleBuilder::processExport(frontend::ParseNode* pn)
             MOZ_ASSERT(spec->isKind(PNK_EXPORT_SPEC));
             RootedAtom localName(cx_, spec->pn_left->pn_atom);
             RootedAtom exportName(cx_, spec->pn_right->pn_atom);
-            if (!appendExportEntry(exportName, localName))
+            if (!appendExportEntry(exportName, localName, spec))
                 return false;
         }
         break;
@@ -1232,19 +1364,19 @@ ModuleBuilder::processExportFrom(frontend::ParseNode* pn)
     MOZ_ASSERT(pn->pn_right->isKind(PNK_STRING));
 
     RootedAtom module(cx_, pn->pn_right->pn_atom);
-    if (!maybeAppendRequestedModule(module))
+    if (!maybeAppendRequestedModule(module, pn->pn_right))
         return false;
 
     for (ParseNode* spec = pn->pn_left->pn_head; spec; spec = spec->pn_next) {
         if (spec->isKind(PNK_EXPORT_SPEC)) {
             RootedAtom bindingName(cx_, spec->pn_left->pn_atom);
             RootedAtom exportName(cx_, spec->pn_right->pn_atom);
-            if (!appendExportFromEntry(exportName, module, bindingName))
+            if (!appendExportFromEntry(exportName, module, bindingName, spec->pn_left))
                 return false;
         } else {
             MOZ_ASSERT(spec->isKind(PNK_EXPORT_BATCH_SPEC));
             RootedAtom importName(cx_, cx_->names().star);
-            if (!appendExportFromEntry(nullptr, module, importName))
+            if (!appendExportFromEntry(nullptr, module, importName, spec))
                 return false;
         }
     }
@@ -1273,46 +1405,55 @@ ModuleBuilder::hasExportedName(JSAtom* name) const
 }
 
 bool
-ModuleBuilder::appendExportEntry(HandleAtom exportName, HandleAtom localName)
+ModuleBuilder::appendExportEntry(HandleAtom exportName, HandleAtom localName, ParseNode* node)
 {
+    uint32_t line = 0;
+    uint32_t column = 0;
+    if (node)
+        tokenStream_.lineNumAndColumnIndex(node->pn_pos.begin, &line, &column);
+
     Rooted<ExportEntryObject*> exportEntry(cx_);
-    exportEntry = ExportEntryObject::create(cx_, exportName, nullptr, nullptr, localName);
+    exportEntry = ExportEntryObject::create(cx_, exportName, nullptr, nullptr, localName,
+                                            line, column);
     return exportEntry && exportEntries_.append(exportEntry);
 }
 
 bool
 ModuleBuilder::appendExportFromEntry(HandleAtom exportName, HandleAtom moduleRequest,
-                                     HandleAtom importName)
+                                     HandleAtom importName, ParseNode* node)
 {
+    uint32_t line;
+    uint32_t column;
+    tokenStream_.lineNumAndColumnIndex(node->pn_pos.begin, &line, &column);
+
     Rooted<ExportEntryObject*> exportEntry(cx_);
-    exportEntry = ExportEntryObject::create(cx_, exportName, moduleRequest, importName, nullptr);
+    exportEntry = ExportEntryObject::create(cx_, exportName, moduleRequest, importName, nullptr,
+                                            line, column);
     return exportEntry && exportEntries_.append(exportEntry);
 }
 
 bool
-ModuleBuilder::maybeAppendRequestedModule(HandleAtom module)
+ModuleBuilder::maybeAppendRequestedModule(HandleAtom specifier, ParseNode* node)
 {
-    for (auto m : requestedModules_) {
-        if (m == module)
-            return true;
-    }
-    return requestedModules_.append(module);
-}
+    if (requestedModuleSpecifiers_.has(specifier))
+        return true;
 
-static Value
-MakeElementValue(JSString *string)
-{
-    return StringValue(string);
-}
+    uint32_t line;
+    uint32_t column;
+    tokenStream_.lineNumAndColumnIndex(node->pn_pos.begin, &line, &column);
 
-static Value
-MakeElementValue(JSObject *object)
-{
-    return ObjectValue(*object);
+    JSContext* cx = cx_;
+    RootedRequestedModuleObject req(cx, RequestedModuleObject::create(cx, specifier, line, column));
+    if (!req)
+        return false;
+
+    return FreezeObject(cx, req) &&
+           requestedModules_.append(req) &&
+           requestedModuleSpecifiers_.put(specifier);
 }
 
 template <typename T>
-ArrayObject* ModuleBuilder::createArray(const GCVector<T>& vector)
+ArrayObject* ModuleBuilder::createArray(const JS::Rooted<GCVector<T>>& vector)
 {
     uint32_t length = vector.length();
     RootedArrayObject array(cx_, NewDenseFullyAllocatedArray(cx_, length));
@@ -1321,7 +1462,7 @@ ArrayObject* ModuleBuilder::createArray(const GCVector<T>& vector)
 
     array->setDenseInitializedLength(length);
     for (uint32_t i = 0; i < length; i++)
-        array->initDenseElement(i, MakeElementValue(vector[i]));
+        array->initDenseElement(i, ObjectValue(*vector[i]));
 
     return array;
 }

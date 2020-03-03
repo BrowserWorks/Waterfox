@@ -922,7 +922,7 @@ nsComputedDOMStyle::UpdateCurrentStyleSources(bool aNeedsLayoutFlush)
       assertMsg.Append(nsDependentString(pseudoAtom->GetUTF16String()));
       assertMsg.Append(')');
       NS_ASSERTION(nsCSSPseudoElements::PseudoElementContainsElements(pseudo) ||
-                   mContent->IsNativeAnonymous(),
+                   mElement->IsNativeAnonymous(),
                    NS_LossyConvertUTF16toASCII(assertMsg).get());
     }
 #endif

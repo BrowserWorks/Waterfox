@@ -121,7 +121,6 @@ Enumerate(JSContext* cx, HandleObject pobj, jsid id,
     return props->append(id);
 }
 
-template <bool CheckForDuplicates>
 static bool
 EnumerateExtraProperties(JSContext* cx, HandleObject obj, unsigned flags, Maybe<IdSet>& ht,
                          AutoIdVector* props)
@@ -142,7 +141,7 @@ EnumerateExtraProperties(JSContext* cx, HandleObject obj, unsigned flags, Maybe<
         // `enumerableOnly` to the hook to filter out non-enumerable
         // properties, it doesn't really matter what we pass here.
         bool enumerable = true;
-        if (!Enumerate<CheckForDuplicates>(cx, obj, id, enumerable, flags, ht, props))
+        if (!Enumerate<true>(cx, obj, id, enumerable, flags, ht, props))
             return false;
     }
 
@@ -162,7 +161,7 @@ SortComparatorIntegerIds(jsid a, jsid b, bool* lessOrEqualp)
 template <bool CheckForDuplicates>
 static bool
 EnumerateNativeProperties(JSContext* cx, HandleNativeObject pobj, unsigned flags, Maybe<IdSet>& ht,
-                          AutoIdVector* props, Handle<UnboxedPlainObject*> unboxed = nullptr)
+                          AutoIdVector* props)
 {
     bool enumerateSymbols;
     if (flags & JSITER_SYMBOLSONLY) {
@@ -233,16 +232,6 @@ EnumerateNativeProperties(JSContext* cx, HandleNativeObject pobj, unsigned flags
                 return false;
         }
 
-        if (unboxed) {
-            // If |unboxed| is set then |pobj| is the expando for an unboxed
-            // plain object we are enumerating. Add the unboxed properties
-            // themselves here since they are all property names that were
-            // given to the object before any of the expando's properties.
-            MOZ_ASSERT(pobj->is<UnboxedExpandoObject>());
-            if (!EnumerateExtraProperties<CheckForDuplicates>(cx, unboxed, flags, ht, props))
-                return false;
-        }
-
         size_t initialLength = props->length();
 
         /* Collect all unique property names from this object's shape. */
@@ -293,12 +282,11 @@ EnumerateNativeProperties(JSContext* cx, HandleNativeObject pobj, unsigned flags
 
 static bool
 EnumerateNativeProperties(JSContext* cx, HandleNativeObject pobj, unsigned flags, Maybe<IdSet>& ht,
-                          AutoIdVector* props, bool checkForDuplicates,
-                          Handle<UnboxedPlainObject*> unboxed = nullptr)
+                          AutoIdVector* props, bool checkForDuplicates)
 {
     if (checkForDuplicates)
-        return EnumerateNativeProperties<true>(cx, pobj, flags, ht, props, unboxed);
-    return EnumerateNativeProperties<false>(cx, pobj, flags, ht, props, unboxed);
+        return EnumerateNativeProperties<true>(cx, pobj, flags, ht, props);
+    return EnumerateNativeProperties<false>(cx, pobj, flags, ht, props);
 }
 
 template <bool CheckForDuplicates>
@@ -440,36 +428,15 @@ Snapshot(JSContext* cx, HandleObject pobj_, unsigned flags, AutoIdVector* props)
 
     do {
         if (pobj->getClass()->getNewEnumerate()) {
-            if (pobj->is<UnboxedPlainObject>() && pobj->as<UnboxedPlainObject>().maybeExpando()) {
-                // Special case unboxed objects with an expando object.
-                RootedNativeObject expando(cx, pobj->as<UnboxedPlainObject>().maybeExpando());
-                if (!EnumerateNativeProperties(cx, expando, flags, ht, props, checkForDuplicates,
-                                               pobj.as<UnboxedPlainObject>()))
-                {
+            if (!EnumerateExtraProperties(cx, pobj, flags, ht, props)) {
+                    return false;
+            }
+            if (pobj->isNative()) {
+                if (!EnumerateNativeProperties(cx, pobj.as<NativeObject>(), flags, ht, props, true)) {
                     return false;
                 }
-            } else {
-                // The newEnumerate hook may return duplicates. Whitelist the
-                // unboxed object hooks because we know they are well-behaved.
-                if (!pobj->is<UnboxedPlainObject>())
-                    checkForDuplicates = true;
-
-                if (checkForDuplicates) {
-                    if (!EnumerateExtraProperties<true>(cx, pobj, flags, ht, props))
-                        return false;
-                } else {
-                    if (!EnumerateExtraProperties<false>(cx, pobj, flags, ht, props))
-                        return false;
-                }
-
-                if (pobj->isNative()) {
-                    if (!EnumerateNativeProperties(cx, pobj.as<NativeObject>(), flags, ht, props,
-                                                   checkForDuplicates))
-                    {
-                        return false;
-                    }
-                }
             }
+
         } else if (pobj->isNative()) {
             // Give the object a chance to resolve all lazy properties
             if (JSEnumerateOp enumerate = pobj->getClass()->getEnumerate()) {
@@ -856,12 +823,7 @@ static inline bool
 CanCompareIterableObjectToCache(JSObject* obj)
 {
     if (obj->isNative())
-        return obj->as<NativeObject>().hasEmptyElements();
-    if (obj->is<UnboxedPlainObject>()) {
-        if (UnboxedExpandoObject* expando = obj->as<UnboxedPlainObject>().maybeExpando())
-            return expando->hasEmptyElements();
-        return true;
-    }
+        return obj->as<NativeObject>().getDenseInitializedLength() == 0;
     return false;
 }
 
@@ -916,23 +878,21 @@ static bool
 CanStoreInIteratorCache(JSContext* cx, JSObject* obj)
 {
     do {
-        if (obj->isNative()) {
-            MOZ_ASSERT(obj->as<NativeObject>().hasEmptyElements());
+        MOZ_ASSERT(obj->isNative());
+        MOZ_ASSERT(obj->as<NativeObject>().getDenseInitializedLength() == 0);
 
-            // Typed arrays have indexed properties not captured by the Shape guard.
-            // Enumerate hooks may add extra properties.
-            const Class* clasp = obj->getClass();
-            if (MOZ_UNLIKELY(IsTypedArrayClass(clasp)))
-                return false;
-            if (MOZ_UNLIKELY(clasp->getNewEnumerate() || clasp->getEnumerate()))
-                return false;
-
-            if (MOZ_UNLIKELY(obj->as<NativeObject>().containsPure(cx->names().iteratorIntrinsic)))
-                return false;
-        } else {
-            MOZ_ASSERT(obj->is<UnboxedPlainObject>());
+        // Typed arrays have indexed properties not captured by the Shape guard.
+        // Enumerate hooks may add extra properties.
+        const Class* clasp = obj->getClass();
+        if (MOZ_UNLIKELY(IsTypedArrayClass(clasp))) {
+            return false;
         }
-
+        if (MOZ_UNLIKELY(clasp->getNewEnumerate() || clasp->getEnumerate())) {
+            return false;
+        }
+        if (MOZ_UNLIKELY(obj->as<NativeObject>().containsPure(cx->names().iteratorIntrinsic))) {
+            return false;
+        }
         obj = obj->staticPrototype();
     } while (obj);
 

@@ -12,10 +12,13 @@
 #include "jscntxt.h"
 
 #include "builtin/TypedObject.h"
+#include "gc/GCTrace.h"
 #include "proxy/Proxy.h"
 #include "vm/ProxyObject.h"
 #include "vm/TypedArrayObject.h"
+#include "vm/TypeInference-inl.h"
 
+#include "jscompartment.h"
 #include "jsobjinlines.h"
 
 #include "gc/Heap-inl.h"

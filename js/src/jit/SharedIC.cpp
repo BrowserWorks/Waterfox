@@ -26,6 +26,7 @@
 #endif
 #include "jit/VMFunctions.h"
 #include "vm/Interpreter.h"
+#include "vm/NativeObject-inl.h"
 
 #include "jit/MacroAssembler-inl.h"
 #include "vm/Interpreter-inl.h"
@@ -1959,9 +1960,6 @@ CheckHasNoSuchOwnProperty(JSContext* cx, JSObject* obj, jsid id)
             return false;
         if (obj->getClass()->getGetProperty())
             return false;
-    } else if (obj->is<UnboxedPlainObject>()) {
-        if (obj->as<UnboxedPlainObject>().containsUnboxedOrExpandoProperty(cx, id))
-            return false;
     } else if (obj->is<TypedObject>()) {
         if (obj->as<TypedObject>().typeDescr().hasProperty(cx->names(), id))
             return false;
@@ -2893,8 +2891,7 @@ DoNewObject(JSContext* cx, void* payload, ICNewObject_Fallback* stub, MutableHan
                 return false;
 
             if (!stub->invalid() &&
-                (templateObject->is<UnboxedPlainObject>() ||
-                 !templateObject->as<PlainObject>().hasDynamicSlots()))
+                (!templateObject->as<PlainObject>().hasDynamicSlots()))
             {
                 JitCode* code = GenerateNewObjectWithTemplateCode(cx, templateObject);
                 if (!code)

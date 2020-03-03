@@ -201,7 +201,6 @@ class IonBuilder
     MInstruction* addBoundsCheck(MDefinition* index, MDefinition* length);
     MInstruction* addShapeGuard(MDefinition* obj, Shape* const shape, BailoutKind bailoutKind);
     MInstruction* addGroupGuard(MDefinition* obj, ObjectGroup* group, BailoutKind bailoutKind);
-    MInstruction* addUnboxedExpandoGuard(MDefinition* obj, bool hasExpando, BailoutKind bailoutKind);
     MInstruction* addSharedTypedArrayGuard(MDefinition* obj);
 
     MInstruction*
@@ -241,8 +240,6 @@ class IonBuilder
                                              BarrierKind barrier, TemporaryTypeSet* types);
     AbortReasonOr<Ok> getPropTryModuleNamespace(bool* emitted, MDefinition* obj, PropertyName* name,
                                                 BarrierKind barrier, TemporaryTypeSet* types);
-    AbortReasonOr<Ok> getPropTryUnboxed(bool* emitted, MDefinition* obj, PropertyName* name,
-                                        BarrierKind barrier, TemporaryTypeSet* types);
     AbortReasonOr<Ok> getPropTryCommonGetter(bool* emitted, MDefinition* obj, PropertyName* name,
                                              TemporaryTypeSet* types, bool innerized = false);
     AbortReasonOr<Ok> getPropTryInlineAccess(bool* emitted, MDefinition* obj, PropertyName* name,
@@ -273,9 +270,6 @@ class IonBuilder
     AbortReasonOr<Ok> setPropTryDefiniteSlot(bool* emitted, MDefinition* obj,
                                              PropertyName* name, MDefinition* value,
                                              bool barrier, TemporaryTypeSet* objTypes);
-    AbortReasonOr<Ok> setPropTryUnboxed(bool* emitted, MDefinition* obj,
-                                        PropertyName* name, MDefinition* value,
-                                        bool barrier, TemporaryTypeSet* objTypes);
     AbortReasonOr<Ok> setPropTryInlineAccess(bool* emitted, MDefinition* obj,
                                              PropertyName* name, MDefinition* value,
                                              bool barrier, TemporaryTypeSet* objTypes);
@@ -851,7 +845,6 @@ class IonBuilder
     MDefinition*
     addShapeGuardsForGetterSetter(MDefinition* obj, JSObject* holder, Shape* holderShape,
                                   const BaselineInspector::ReceiverVector& receivers,
-                                  const BaselineInspector::ObjectGroupVector& convertUnboxedGroups,
                                   bool isOwnProperty);
 
     AbortReasonOr<Ok> annotateGetPropertyCache(MDefinition* obj, PropertyName* name,
@@ -869,22 +862,7 @@ class IonBuilder
     AbortReasonOr<bool> testNotDefinedProperty(MDefinition* obj, jsid id, bool ownProperty = false);
 
     uint32_t getDefiniteSlot(TemporaryTypeSet* types, PropertyName* name, uint32_t* pnfixed);
-    MDefinition* convertUnboxedObjects(MDefinition* obj);
-    MDefinition* convertUnboxedObjects(MDefinition* obj,
-                                       const BaselineInspector::ObjectGroupVector& list);
-    uint32_t getUnboxedOffset(TemporaryTypeSet* types, PropertyName* name,
-                              JSValueType* punboxedType);
-    MInstruction* loadUnboxedProperty(MDefinition* obj, size_t offset, JSValueType unboxedType,
-                                      BarrierKind barrier, TemporaryTypeSet* types);
-    MInstruction* loadUnboxedValue(MDefinition* elements, size_t elementsOffset,
-                                   MDefinition* scaledOffset, JSValueType unboxedType,
-                                   BarrierKind barrier, TemporaryTypeSet* types);
-    MInstruction* storeUnboxedProperty(MDefinition* obj, size_t offset, JSValueType unboxedType,
-                                       MDefinition* value);
-    MInstruction* storeUnboxedValue(MDefinition* obj,
-                                    MDefinition* elements, int32_t elementsOffset,
-                                    MDefinition* scaledOffset, JSValueType unboxedType,
-                                    MDefinition* value, bool preBarrier = true);
+
     AbortReasonOr<Ok> checkPreliminaryGroups(MDefinition *obj);
     AbortReasonOr<Ok> freezePropTypeSets(TemporaryTypeSet* types,
                                          JSObject* foundProto, PropertyName* name);

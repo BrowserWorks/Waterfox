@@ -186,8 +186,6 @@ extern const char* CacheKindNames[];
     _(GuardMagicValue)                    \
     _(GuardFrameHasNoArgumentsObject)     \
     _(GuardNoDenseElements)               \
-    _(GuardNoUnboxedExpando)              \
-    _(GuardAndLoadUnboxedExpando)         \
     _(GuardAndGetIndexFromString)         \
     _(GuardAndGetIterator)                \
     _(GuardHasGetterSetter)               \
@@ -218,7 +216,6 @@ extern const char* CacheKindNames[];
     _(AllocateAndStoreDynamicSlot)        \
     _(StoreTypedObjectReferenceProperty)  \
     _(StoreTypedObjectScalarProperty)     \
-    _(StoreUnboxedProperty)               \
     _(StoreDenseElement)                  \
     _(StoreDenseElementHole)              \
     _(ArrayPush)                          \
@@ -232,7 +229,6 @@ extern const char* CacheKindNames[];
     /* The *Result ops load a value into the cache's result register. */ \
     _(LoadFixedSlotResult)                \
     _(LoadDynamicSlotResult)              \
-    _(LoadUnboxedPropertyResult)          \
     _(LoadTypedObjectResult)              \
     _(LoadDenseElementResult)             \
     _(LoadDenseElementHoleResult)         \
@@ -640,15 +636,6 @@ class MOZ_RAII CacheIRWriter : public JS::CustomAutoRooter
     void guardNoDenseElements(ObjOperandId obj) {
         writeOpWithOperandId(CacheOp::GuardNoDenseElements, obj);
     }
-    void guardNoUnboxedExpando(ObjOperandId obj) {
-        writeOpWithOperandId(CacheOp::GuardNoUnboxedExpando, obj);
-    }
-    ObjOperandId guardAndLoadUnboxedExpando(ObjOperandId obj) {
-        ObjOperandId res(nextOperandId_++);
-        writeOpWithOperandId(CacheOp::GuardAndLoadUnboxedExpando, obj);
-        writeOperandId(res);
-        return res;
-    }
 
     ValOperandId loadStackValue(uint32_t idx) {
         ValOperandId res(nextOperandId_++);
@@ -772,14 +759,6 @@ class MOZ_RAII CacheIRWriter : public JS::CustomAutoRooter
         buffer_.writeByte(uint32_t(type));
         writeOperandId(rhs);
     }
-    void storeUnboxedProperty(ObjOperandId obj, JSValueType type, size_t offset,
-                              ValOperandId rhs)
-    {
-        writeOpWithOperandId(CacheOp::StoreUnboxedProperty, obj);
-        buffer_.writeByte(uint32_t(type));
-        addStubField(offset, StubField::Type::RawWord);
-        writeOperandId(rhs);
-    }
     void storeDenseElement(ObjOperandId obj, Int32OperandId index, ValOperandId rhs) {
         writeOpWithOperandId(CacheOp::StoreDenseElement, obj);
         writeOperandId(index);
@@ -874,11 +853,6 @@ class MOZ_RAII CacheIRWriter : public JS::CustomAutoRooter
     }
     void loadDynamicSlotResult(ObjOperandId obj, size_t offset) {
         writeOpWithOperandId(CacheOp::LoadDynamicSlotResult, obj);
-        addStubField(offset, StubField::Type::RawWord);
-    }
-    void loadUnboxedPropertyResult(ObjOperandId obj, JSValueType type, size_t offset) {
-        writeOpWithOperandId(CacheOp::LoadUnboxedPropertyResult, obj);
-        buffer_.writeByte(uint32_t(type));
         addStubField(offset, StubField::Type::RawWord);
     }
     void loadTypedObjectResult(ObjOperandId obj, uint32_t offset, TypedThingLayout layout,
@@ -1164,8 +1138,6 @@ class MOZ_RAII GetPropIRGenerator : public IRGenerator
     PreliminaryObjectAction preliminaryObjectAction_;
 
     bool tryAttachNative(HandleObject obj, ObjOperandId objId, HandleId id);
-    bool tryAttachUnboxed(HandleObject obj, ObjOperandId objId, HandleId id);
-    bool tryAttachUnboxedExpando(HandleObject obj, ObjOperandId objId, HandleId id);
     bool tryAttachTypedObject(HandleObject obj, ObjOperandId objId, HandleId id);
     bool tryAttachObjectLength(HandleObject obj, ObjOperandId objId, HandleId id);
     bool tryAttachModuleNamespace(HandleObject obj, ObjOperandId objId, HandleId id);
@@ -1323,6 +1295,7 @@ class MOZ_RAII SetPropIRGenerator : public IRGenerator
     HandleValue idVal_;
     HandleValue rhsVal_;
     bool* isTemporarilyUnoptimizable_;
+    bool* canAddSlot_;
     PropertyTypeCheckInfo typeCheckInfo_;
 
     enum class PreliminaryObjectAction { None, Unlink, NotePreliminary };
@@ -1348,10 +1321,6 @@ class MOZ_RAII SetPropIRGenerator : public IRGenerator
 
     bool tryAttachNativeSetSlot(HandleObject obj, ObjOperandId objId, HandleId id,
                                  ValOperandId rhsId);
-    bool tryAttachUnboxedExpandoSetSlot(HandleObject obj, ObjOperandId objId, HandleId id,
-                                        ValOperandId rhsId);
-    bool tryAttachUnboxedProperty(HandleObject obj, ObjOperandId objId, HandleId id,
-                                  ValOperandId rhsId);
     bool tryAttachTypedObjectProperty(HandleObject obj, ObjOperandId objId, HandleId id,
                                       ValOperandId rhsId);
     bool tryAttachSetter(HandleObject obj, ObjOperandId objId, HandleId id,
@@ -1380,11 +1349,12 @@ class MOZ_RAII SetPropIRGenerator : public IRGenerator
     bool tryAttachProxy(HandleObject obj, ObjOperandId objId, HandleId id, ValOperandId rhsId);
     bool tryAttachProxyElement(HandleObject obj, ObjOperandId objId, ValOperandId rhsId);
 
+    bool canAttachAddSlotStub(HandleObject obj, HandleId id);
     void trackAttached(const char* name);
 
   public:
     SetPropIRGenerator(JSContext* cx, HandleScript script, jsbytecode* pc, CacheKind cacheKind,
-                       ICState::Mode mode, bool* isTemporarilyUnoptimizable, HandleValue lhsVal,
+                       ICState::Mode mode, bool* isTemporarilyUnoptimizable, bool* canAddSlot, HandleValue lhsVal,
                        HandleValue idVal, HandleValue rhsVal, bool needsTypeBarrier = true,
                        bool maybeHasExtraIndexedProps = true);
 

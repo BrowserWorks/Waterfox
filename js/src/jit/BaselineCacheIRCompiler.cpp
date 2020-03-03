@@ -784,20 +784,6 @@ BaselineCacheIRCompiler::emitCallProxyHasOwnResult()
 }
 
 bool
-BaselineCacheIRCompiler::emitLoadUnboxedPropertyResult()
-{
-    AutoOutputRegister output(*this);
-    Register obj = allocator.useRegister(masm, reader.objOperandId());
-    AutoScratchRegisterMaybeOutput scratch(allocator, masm, output);
-
-    JSValueType fieldType = reader.valueType();
-    Address fieldOffset(stubAddress(reader.stubOffset()));
-    masm.load32(fieldOffset, scratch);
-    masm.loadUnboxedProperty(BaseIndex(obj, scratch, TimesOne), fieldType, output);
-    return true;
-}
-
-bool
 BaselineCacheIRCompiler::emitGuardFrameHasNoArgumentsObject()
 {
     FailurePath* failure;
@@ -1194,44 +1180,6 @@ bool
 BaselineCacheIRCompiler::emitAllocateAndStoreDynamicSlot()
 {
     return emitAddAndStoreSlotShared(CacheOp::AllocateAndStoreDynamicSlot);
-}
-
-bool
-BaselineCacheIRCompiler::emitStoreUnboxedProperty()
-{
-    ObjOperandId objId = reader.objOperandId();
-    JSValueType fieldType = reader.valueType();
-    Address offsetAddr = stubAddress(reader.stubOffset());
-
-    // Allocate the fixed registers first. These need to be fixed for
-    // callTypeUpdateIC.
-    AutoScratchRegister scratch(allocator, masm, R1.scratchReg());
-    ValueOperand val = allocator.useFixedValueRegister(masm, reader.valOperandId(), R0);
-
-    Register obj = allocator.useRegister(masm, objId);
-
-    // We only need the type update IC if we are storing an object.
-    if (fieldType == JSVAL_TYPE_OBJECT) {
-        LiveGeneralRegisterSet saveRegs;
-        saveRegs.add(obj);
-        saveRegs.add(val);
-        if (!callTypeUpdateIC(obj, val, scratch, saveRegs))
-            return false;
-    }
-
-    masm.load32(offsetAddr, scratch);
-    BaseIndex fieldAddr(obj, scratch, TimesOne);
-
-    // Note that the storeUnboxedProperty call here is infallible, as the
-    // IR emitter is responsible for guarding on |val|'s type.
-    EmitICUnboxedPreBarrier(masm, fieldAddr, fieldType);
-    masm.storeUnboxedProperty(fieldAddr, fieldType,
-                              ConstantOrRegister(TypedOrValueRegister(val)),
-                              /* failure = */ nullptr);
-
-    if (UnboxedTypeNeedsPostBarrier(fieldType))
-        emitPostBarrierSlot(obj, val, scratch);
-    return true;
 }
 
 bool
