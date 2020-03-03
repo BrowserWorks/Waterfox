@@ -193,15 +193,11 @@ IDBTransaction::CreateVersionChange(
 
   transaction->SetScriptOwner(aDatabase->GetScriptOwner());
 
-  nsCOMPtr<nsIRunnable> runnable = do_QueryObject(transaction);
-  nsContentUtils::RunInMetastableState(runnable.forget());
-
   transaction->NoteActiveTransaction();
 
   transaction->mBackgroundActor.mVersionChangeBackgroundActor = aActor;
   transaction->mNextObjectStoreId = aNextObjectStoreId;
   transaction->mNextIndexId = aNextIndexId;
-  transaction->mCreating = true;
 
   aDatabase->RegisterTransaction(transaction);
   transaction->mRegistered = true;
@@ -231,7 +227,7 @@ IDBTransaction::Create(JSContext* aCx, IDBDatabase* aDatabase,
   transaction->SetScriptOwner(aDatabase->GetScriptOwner());
 
   nsCOMPtr<nsIRunnable> runnable = do_QueryObject(transaction);
-  nsContentUtils::RunInMetastableState(runnable.forget());
+  nsContentUtils::AddPendingIDBTransaction(runnable.forget());
 
   transaction->mCreating = true;
 

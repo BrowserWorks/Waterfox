@@ -105,14 +105,6 @@ public:
                                            // specializations in the .cpp for
                                            // the T values we support.
 
-  // Called by DOM to let us execute our callbacks.  May be called recursively.
-  // Returns true if at least one microtask was processed.
-  static bool PerformMicroTaskCheckpoint();
-
-  static void PerformWorkerMicroTaskCheckpoint();
-
-  static void PerformWorkerDebuggerMicroTaskCheckpoint();
-
   // WebIDL
 
   nsIGlobalObject* GetParentObject() const
