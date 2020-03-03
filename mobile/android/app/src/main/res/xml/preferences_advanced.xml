@@ -19,12 +19,6 @@
             android:negativeButtonText="@string/button_cancel"
             android:persistent="false" />
 
-    <ListPreference android:key="app.update.autodownload"
-                    android:title="@string/pref_update_autodownload"
-                    android:entries="@array/pref_update_autodownload_entries"
-                    android:entryValues="@array/pref_update_autodownload_values"
-                    android:persistent="false" />
-
     <ListPreference android:key="android.not_a_preference.restoreSession3"
                     android:title="@string/pref_restore"
                     android:defaultValue="always"

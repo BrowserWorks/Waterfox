@@ -30,7 +30,6 @@ import org.mozilla.gecko.prompts.PromptService;
 import org.mozilla.gecko.restrictions.Restrictions;
 import org.mozilla.gecko.tabqueue.TabQueueHelper;
 import org.mozilla.gecko.text.TextSelection;
-import org.mozilla.gecko.updater.UpdateServiceHelper;
 import org.mozilla.gecko.util.ActivityUtils;
 import org.mozilla.gecko.util.BundleEventListener;
 import org.mozilla.gecko.util.EventCallback;
@@ -787,15 +786,6 @@ public abstract class GeckoApp extends GeckoActivity
         } else if ("ToggleChrome:Show".equals(event)) {
             toggleChrome(true);
 
-        } else if ("Update:Check".equals(event)) {
-            UpdateServiceHelper.checkForUpdate(this);
-
-        } else if ("Update:Download".equals(event)) {
-            UpdateServiceHelper.downloadUpdate(this);
-
-        } else if ("Update:Install".equals(event)) {
-            UpdateServiceHelper.applyUpdate(this);
-
         } else if ("Mma:reader_available".equals(event)) {
             MmaDelegate.track(READER_AVAILABLE);
 
@@ -1042,9 +1032,6 @@ public abstract class GeckoApp extends GeckoActivity
 
         EventDispatcher.getInstance().registerUiThreadListener(this,
                 "Gecko:CorruptAPK",
-                "Update:Check",
-                "Update:Download",
-                "Update:Install",
                 null);
 
         if (sAlreadyLoaded) {
@@ -1614,14 +1601,6 @@ public abstract class GeckoApp extends GeckoActivity
             }
         }, 50);
 
-        final int updateServiceDelay = 30 * 1000;
-        ThreadUtils.getBackgroundHandler().postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                UpdateServiceHelper.registerForUpdates(GeckoAppShell.getApplicationContext());
-            }
-        }, updateServiceDelay);
-
         if (mIsRestoringActivity) {
             Tab selectedTab = Tabs.getInstance().getSelectedTab();
             if (selectedTab != null) {
@@ -2158,9 +2137,6 @@ public abstract class GeckoApp extends GeckoActivity
 
         EventDispatcher.getInstance().unregisterUiThreadListener(this,
             "Gecko:CorruptAPK",
-            "Update:Check",
-            "Update:Download",
-            "Update:Install",
             null);
 
         getAppEventDispatcher().unregisterGeckoThreadListener(this,

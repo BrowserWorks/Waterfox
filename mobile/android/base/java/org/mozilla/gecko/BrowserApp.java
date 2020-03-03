@@ -150,7 +150,6 @@ import org.mozilla.gecko.toolbar.BrowserToolbar.CommitEventSource;
 import org.mozilla.gecko.toolbar.BrowserToolbar.TabEditingState;
 import org.mozilla.gecko.toolbar.PwaConfirm;
 import org.mozilla.gecko.updater.PostUpdateHandler;
-import org.mozilla.gecko.updater.UpdateServiceHelper;
 import org.mozilla.gecko.util.ActivityUtils;
 import org.mozilla.gecko.util.ContextUtils;
 import org.mozilla.gecko.util.DrawableUtil;
@@ -792,7 +791,6 @@ public class BrowserApp extends GeckoApp
             "CharEncoding:Data",
             "CharEncoding:State",
             "Settings:Show",
-            "Updater:Launch",
             "Sanitize:Finished",
             "Sanitize:OpenTabs",
             "NotificationSettings:FeatureTipsStatusUpdated",
@@ -878,22 +876,6 @@ public class BrowserApp extends GeckoApp
 
         // Set the maximum bits-per-pixel the favicon system cares about.
         IconDirectoryEntry.setMaxBPP(GeckoAppShell.getScreenDepth());
-
-        // The update service is enabled for RELEASE_OR_BETA, which includes the release and beta channels.
-        // However, no updates are served.  Therefore, we don't trust the update service directly, and
-        // try to avoid prompting unnecessarily. See Bug 1232798.
-        if (!AppConstants.RELEASE_OR_BETA && UpdateServiceHelper.isUpdaterEnabled(this)) {
-            Permissions.from(this)
-                       .withPermissions(Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                       .doNotPrompt()
-                       .andFallback(new Runnable() {
-                           @Override
-                           public void run() {
-                               showUpdaterPermissionSnackbar();
-                           }
-                       })
-                      .run();
-        }
 
         for (final BrowserAppDelegate delegate : delegates) {
             delegate.onCreate(this, savedInstanceState);
@@ -997,24 +979,6 @@ public class BrowserApp extends GeckoApp
 
     private static void initTelemetryUploader(final boolean isInAutomation) {
         TelemetryUploadService.setDisabled(isInAutomation);
-    }
-
-    private void showUpdaterPermissionSnackbar() {
-        SnackbarBuilder.SnackbarCallback allowCallback = new SnackbarBuilder.SnackbarCallback() {
-            @Override
-            public void onClick(View v) {
-                Permissions.from(BrowserApp.this)
-                        .withPermissions(Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                        .run();
-            }
-        };
-
-        SnackbarBuilder.builder(this)
-                .message(R.string.updater_permission_text)
-                .duration(Snackbar.LENGTH_INDEFINITE)
-                .action(R.string.updater_permission_allow)
-                .callback(allowCallback)
-                .buildAndShow();
     }
 
     private Class<?> getMediaPlayerManager() {
@@ -1606,7 +1570,6 @@ public class BrowserApp extends GeckoApp
             "CharEncoding:Data",
             "CharEncoding:State",
             "Settings:Show",
-            "Updater:Launch",
             "Sanitize:Finished",
             "Sanitize:OpenTabs",
             "NotificationSettings:FeatureTipsStatusUpdated",
@@ -2086,31 +2049,6 @@ public class BrowserApp extends GeckoApp
                 final String title = message.getString("title");
                 final String bookmarkUrl = message.getString("url");
                 GeckoApplication.createBrowserShortcut(title, bookmarkUrl);
-                break;
-
-            case "Updater:Launch":
-                /**
-                 * Launch UI that lets the user update Firefox.
-                 *
-                 * This depends on the current channel: Release and Beta both direct to
-                 * the Google Play Store. If updating is enabled, Aurora, Nightly, and
-                 * custom builds open about:firefox, which provides an update interface.
-                 *
-                 * If updating is not enabled, this simply logs an error.
-                 */
-                if (AppConstants.RELEASE_OR_BETA) {
-                    Intent intent = new Intent(Intent.ACTION_VIEW);
-                    intent.setData(Uri.parse("market://details?id=" + getPackageName()));
-                    startActivity(intent);
-                    break;
-                }
-
-                if (AppConstants.MOZ_UPDATER) {
-                    Tabs.getInstance().loadUrlInTab(AboutPages.FIREFOX);
-                    break;
-                }
-
-                Log.w(LOGTAG, "No candidate updater found; ignoring launch request.");
                 break;
 
             case "Download:AndroidDownloadManager":

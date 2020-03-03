@@ -292,10 +292,6 @@
   <string name="pref_private_data_syncedTabs">&pref_private_data_syncedTabs;</string>
   <string name="pref_import_android">&pref_import_options;</string>
   <string name="pref_import_android_summary">&pref_import_android_summary;</string>
-  <string name="pref_update_autodownload">&pref_update_autodownload3;</string>
-  <string name="pref_update_autodownload_wifi">&pref_update_autodownload_wifi;</string>
-  <string name="pref_update_autodownload_disabled">&pref_update_autodownload_never;</string>
-  <string name="pref_update_autodownload_enabled">&pref_update_autodownload_always;</string>
 
   <string name="pref_tab_queue_title">&pref_tab_queue_title3;</string>
   <string name="pref_tab_queue_summary">&pref_tab_queue_summary4;</string>
@@ -544,22 +540,6 @@
 
   <string name="searchable_description">&searchable_description;</string>
 
-  <!-- Updater notifications -->
-  <string name="updater_start_title">&updater_start_title2;</string>
-  <string name="updater_start_select">&updater_start_select2;</string>
-
-  <string name="updater_downloading_title">&updater_downloading_title2;</string>
-  <string name="updater_downloading_title_failed">&updater_downloading_title_failed2;</string>
-  <string name="updater_downloading_select">&updater_downloading_select2;</string>
-  <string name="updater_downloading_retry">&updater_downloading_retry2;</string>
-
-  <string name="updater_apply_title">&updater_apply_title3;</string>
-  <string name="updater_apply_select">&updater_apply_select3;</string>
-
-  <string name="updater_permission_title">&brandShortName;</string>
-  <string name="updater_permission_text">&updater_permission_text;</string>
-  <string name="updater_permission_allow">&updater_permission_allow;</string>
-
   <!-- Awesomescreen screen -->
   <string name="suggestions_prompt">&suggestions_prompt3;</string>
   <string name="search_bar_item_desc">&search_bar_item_desc;</string>
@@ -679,7 +659,6 @@
   <string name="media_notification_channel2">&media_notification_channel2;</string>
   <string name="download_notification_channel">&download_notification_channel;</string>
   <string name="leanplum_default_notifications_channel2">&leanplum_default_notifications_channel2;</string>
-  <string name="updater_notification_channel">&updater_notification_channel;</string>
   <string name="synced_tabs_notification_channel">&synced_tabs_notification_channel;</string>
   <string name="site_notifications_channel">&site_notifications_channel;</string>
   <string name="crash_handler_notifications_channel">&crash_handler_notifications_channel;</string>

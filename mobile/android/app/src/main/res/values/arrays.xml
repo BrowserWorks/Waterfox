@@ -123,16 +123,6 @@
         <item>always</item>
         <item>quit</item>
     </string-array>
-    <string-array name="pref_update_autodownload_entries">
-        <item>@string/pref_update_autodownload_enabled</item>
-        <item>@string/pref_update_autodownload_wifi</item>
-        <item>@string/pref_update_autodownload_disabled</item>
-    </string-array>
-    <string-array name="pref_update_autodownload_values">
-        <item>enabled</item>
-        <item>wifi</item>
-        <item>disabled</item>
-    </string-array>
     <!-- browser.image_blocking -->
     <string-array name="pref_browser_image_blocking_entries">
         <item>@string/pref_tap_to_load_images_enabled</item>

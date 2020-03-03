@@ -26,7 +26,6 @@ import org.mozilla.gecko.FennecNativeDriver;
 import org.mozilla.gecko.FennecTalosAssert;
 import org.mozilla.gecko.GeckoProfile;
 import org.mozilla.gecko.firstrun.OnboardingHelper;
-import org.mozilla.gecko.updater.UpdateServiceHelper;
 
 import java.lang.reflect.Method;
 import java.net.HttpURLConnection;
@@ -143,8 +142,6 @@ public abstract class BaseRobocopTest extends ActivityInstrumentationTestCase2<A
 
     @Override
     protected void setUp() throws Exception {
-        // Disable the updater.
-        UpdateServiceHelper.setEnabled(false);
 
         // Load config file from root path (set up by Python script).
         mRootPath = FennecInstrumentationTestRunner.getFennecArguments().getString("deviceroot");
