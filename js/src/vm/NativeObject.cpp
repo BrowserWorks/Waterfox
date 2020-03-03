@@ -194,6 +194,14 @@ js::NativeObject::checkShapeConsistency()
 #endif
 
 void
+js::NativeObject::updateShapeAfterMovingGC()
+{
+    Shape* shape = shape_;
+    if (IsForwarded(shape))
+        shape_.unsafeSet(Forwarded(shape));
+}
+
+void
 js::NativeObject::initializeSlotRange(uint32_t start, uint32_t length)
 {
     /*

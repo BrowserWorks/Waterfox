@@ -88,6 +88,8 @@ ScriptFromCalleeToken(CalleeToken token)
     MOZ_CRASH("invalid callee token tag");
 }
 
+JSScript* MaybeForwardedScriptFromCalleeToken(CalleeToken token);
+
 // In between every two frames lies a small header describing both frames. This
 // header, minimally, contains a returnAddress word and a descriptor word. The
 // descriptor describes the size and type of the previous frame, whereas the

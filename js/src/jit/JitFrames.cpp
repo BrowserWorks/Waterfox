@@ -770,6 +770,19 @@ EnsureBareExitFrame(JSContext* cx, JitFrameLayout* frame)
     *exitFrame->footer()->addressOfJitCode() = ExitFrameLayout::BareToken();
     MOZ_ASSERT(exitFrame->isBareExit());
 }
+    
+JSScript* MaybeForwardedScriptFromCalleeToken(CalleeToken token) {
+  switch (GetCalleeTokenTag(token)) {
+    case CalleeToken_Script:
+      return MaybeForwarded(CalleeTokenToScript(token));
+    case CalleeToken_Function:
+    case CalleeToken_FunctionConstructing: {
+      JSFunction* fun = MaybeForwarded(CalleeTokenToFunction(token));
+      return MaybeForwarded(fun)->nonLazyScript();
+    }
+  }
+  MOZ_CRASH("invalid callee token tag");
+}
 
 CalleeToken
 TraceCalleeToken(JSTracer* trc, CalleeToken token)
