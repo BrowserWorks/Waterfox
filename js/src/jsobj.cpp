@@ -3420,11 +3420,11 @@ JSObject::dump(FILE* fp) const
         if (nobj->hasShapeTable())
             fprintf(fp, " hasShapeTable");
         if (nobj->hadElementsAccess())
-            out.put(" had_elements_access");
+            fprintf(fp, " had_elements_access");
         if (nobj->isIndexed())
-            out.put(" indexed");
+            fprintf(fp, " indexed");
         if (nobj->wasNewScriptCleared())
-            out.put(" new_script_cleared");
+            fprintf(fp, " new_script_cleared");
     }
     fprintf(fp, "\n");
 
@@ -3974,10 +3974,7 @@ JSObject::debugCheckNewObject(ObjectGroup* group, Shape* shape, js::gc::AllocKin
     const js::Class* clasp = group->clasp();
     MOZ_ASSERT(clasp != &ArrayObject::class_);
 
-    if (shape)
-        MOZ_ASSERT(clasp == shape->getObjectClass());
-    else
-        MOZ_ASSERT(clasp == &UnboxedPlainObject::class_);
+    MOZ_ASSERT_IF(shape, clasp == shape->getObjectClass());
 
     if (!ClassCanHaveFixedData(clasp)) {
         MOZ_ASSERT(shape);
