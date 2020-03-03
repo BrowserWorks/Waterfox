@@ -423,7 +423,6 @@ pref("permissions.postPrompt.animate", true);
 // This is primarily meant to be enabled for studies.
 pref("permissions.eventTelemetry.enabled", false, locked);
 
-
 // handle links targeting new windows
 // 1=current window/tab, 2=new window, 3=new tab in most recent window
 pref("browser.link.open_newwindow", 3);
@@ -1473,11 +1472,7 @@ pref("identity.fxaccounts.commands.missed.fetch_interval", 86400);
 pref("ui.key.menuAccessKeyFocuses", true);
 #endif
 
-#ifdef NIGHTLY_BUILD
 pref("media.eme.vp9-in-mp4.enabled", true);
-#else
-pref("media.eme.vp9-in-mp4.enabled", true);
-#endif
 
 pref("media.eme.hdcp-policy-check.enabled", false);
 
@@ -1544,7 +1539,6 @@ pref("toolkit.telemetry.bhrPing.enabled", false, locked);
 pref("toolkit.telemetry.hybridContent.enabled", false, locked);
 // Whether to enable Ecosystem Telemetry, requires a restart.
 pref("toolkit.telemetry.ecosystemtelemetry.enabled", false, locked);
-
 
 // Ping Centre Telemetry settings.
 pref("browser.ping-centre.telemetry", false, locked);
