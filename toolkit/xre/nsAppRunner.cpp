@@ -1744,9 +1744,14 @@ static int MSCRTReportHook( int aReportType, char *aMessage, int *oReturnValue)
 static inline void
 DumpVersion()
 {
-  if (gAppData->vendor)
-    printf("%s ", (const char*) gAppData->vendor);
-  printf("%s %s", (const char*) gAppData->name, (const char*) gAppData->version);
+  if (gAppData->vendor) {
+    nsCString name(gAppData->name);
+    nsCString vendor(gAppData->vendor);
+    if (name != vendor) {
+      printf("%s ", (const char*) gAppData->vendor);
+    }
+  }
+  printf("%s %s", NS_STRINGIFY(MOZ_APP_DISPLAYNAME), NS_STRINGIFY(MOZ_APP_VERSION_DISPLAY));
   if (gAppData->copyright)
       printf(", %s", (const char*) gAppData->copyright);
   printf("\n");
@@ -3822,11 +3827,7 @@ XREMain::XRE_mainStartup(bool* aExitFlag)
 #endif
 
   // Set program name to the one defined in application.ini.
-  {
-    nsAutoCString program(gAppData->name);
-    ToLowerCase(program);
-    g_set_prgname(program.get());
-  }
+  g_set_prgname(gAppData->remotingName);
 
   // Initialize GTK here for splash.
 
