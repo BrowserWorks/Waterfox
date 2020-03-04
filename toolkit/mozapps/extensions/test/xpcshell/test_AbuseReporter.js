@@ -579,11 +579,17 @@ add_task(async function test_truncated_string_properties() {
   const generateString = len => new Array(len).fill("a").join("");
 
   const LONG_STRINGS_ADDON_ID = "addon-with-long-strings-props@mochi.test";
+  const longString = generateString(400);
+  const sourceURL = `https://another.host/installExtension?name=${longString}`;
+
   const { extension } = await installTestExtension({
     manifest: {
-      name: generateString(400),
-      description: generateString(400),
+      name: longString,
+      description: longString,
       applications: { gecko: { id: LONG_STRINGS_ADDON_ID } },
+    },
+    amInstallTelemetryInfo: {
+      sourceURL,
     },
   });
 
@@ -605,12 +611,14 @@ add_task(async function test_truncated_string_properties() {
   const expected = {
     addon_name: generateString(255),
     addon_summary: generateString(255),
+    addon_install_source_url: sourceURL.slice(0, 255),
   };
 
   Assert.deepEqual(
     {
       addon_name: reportSubmitted.addon_name,
       addon_summary: reportSubmitted.addon_summary,
+      addon_install_source_url: reportSubmitted.addon_install_source_url,
     },
     expected,
     "Got the long strings truncated as expected"

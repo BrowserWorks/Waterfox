@@ -713,7 +713,8 @@ MediaDevice::MediaDevice(const RefPtr<MediaEngineSource>& aSource,
       mName(aName),
       mID(aID),
       mGroupID(aGroupID),
-      mRawID(aRawID) {
+      mRawID(aRawID),
+      mRawName(aName) {
   MOZ_ASSERT(mSource);
 }
 
@@ -731,7 +732,8 @@ MediaDevice::MediaDevice(const RefPtr<AudioDeviceInfo>& aAudioDeviceInfo,
       mName(mSinkInfo->Name()),
       mID(aID),
       mGroupID(aGroupID),
-      mRawID(aRawID) {
+      mRawID(aRawID),
+      mRawName(mSinkInfo->Name()) {
   // For now this ctor is used only for Audiooutput.
   // It could be used for Audioinput and Videoinput
   // when we do not instantiate a MediaEngineSource
@@ -742,15 +744,22 @@ MediaDevice::MediaDevice(const RefPtr<AudioDeviceInfo>& aAudioDeviceInfo,
 
 MediaDevice::MediaDevice(const RefPtr<MediaDevice>& aOther, const nsString& aID,
                          const nsString& aGroupID, const nsString& aRawID)
+    : MediaDevice(aOther, aID, aGroupID, aRawID, aOther->mName, false) {}
+
+MediaDevice::MediaDevice(const RefPtr<MediaDevice>& aOther, const nsString& aID,
+                         const nsString& aGroupID, const nsString& aRawID,
+                         const nsString& aName,
+                         bool aCompilerBugWorkaround)
     : mSource(aOther->mSource),
       mSinkInfo(aOther->mSinkInfo),
       mKind(aOther->mKind),
       mScary(aOther->mScary),
       mType(aOther->mType),
-      mName(aOther->mName),
+      mName(aName),
       mID(aID),
       mGroupID(aGroupID),
-      mRawID(aRawID) {
+      mRawID(aRawID),
+      mRawName(aOther->mRawName) {
   MOZ_ASSERT(aOther);
 }
 
@@ -819,6 +828,13 @@ NS_IMETHODIMP
 MediaDevice::GetName(nsAString& aName) {
   MOZ_ASSERT(NS_IsMainThread());
   aName.Assign(mName);
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+MediaDevice::GetRawName(nsAString& aName) {
+  MOZ_ASSERT(NS_IsMainThread());
+  aName.Assign(mRawName);
   return NS_OK;
 }
 
@@ -2974,7 +2990,12 @@ void MediaManager::AnonymizeDevices(MediaDeviceSet& aDevices,
       groupId.AppendInt(aWindowId);
       AnonymizeId(groupId, aOriginKey);
 
-      device = new MediaDevice(device, id, groupId, rawId);
+      nsString name;
+      device->GetName(name);
+      if (name.Find(NS_LITERAL_STRING("AirPods")) != -1) {
+        name = NS_LITERAL_STRING("AirPods");
+      }
+      device = new MediaDevice(device, id, groupId, rawId, name, false);
     }
   }
 }

@@ -136,6 +136,8 @@ const AbuseReporter = {
     const truncateString = text =>
       typeof text == "string" ? text.slice(0, MAX_STRING_LENGTH) : text;
 
+    let installInfo = addon.installTelemetryInfo;
+
     const data = {
       addon: addon.id,
       addon_version: addon.version,
@@ -143,6 +145,10 @@ const AbuseReporter = {
       addon_summary: truncateString(addon.description),
       addon_install_origin:
         addon.sourceURI && truncateString(addon.sourceURI.spec),
+      addon_install_source_url:
+        installInfo &&
+        installInfo.sourceURL &&
+        truncateString(installInfo.sourceURL),
       install_date: addon.installDate && addon.installDate.toISOString(),
     };
 
@@ -150,8 +156,8 @@ const AbuseReporter = {
     // values supported by the API endpoint (See API endpoint docs at
     // https://addons-server.readthedocs.io/en/latest/topics/api/abuse.html).
     let install_method = "other";
-    if (addon.installTelemetryInfo) {
-      const { source, method } = addon.installTelemetryInfo;
+    if (installInfo) {
+      const { source, method } = installInfo;
       switch (source) {
         case "enterprise-policy":
         case "file-url":

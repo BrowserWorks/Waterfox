@@ -982,8 +982,19 @@ fi
 // TODO: Check for updates (expected to be phased out around Q1/2009)
 aland.fi
 
-// fj : https://en.wikipedia.org/wiki/.fj
-*.fj
+// fj : http://domains.fj/
+// Submitted by registry <garth.miller@cocca.org.nz> 2020-02-11
+fj
+ac.fj
+biz.fj
+com.fj
+gov.fj
+info.fj
+mil.fj
+name.fj
+net.fj
+org.fj
+pro.fj
 
 // fk : https://en.wikipedia.org/wiki/.fk
 *.fk
@@ -6795,7 +6806,12 @@ yt
 مصر
 
 // xn--e1a4c ("eu", Cyrillic) : EU
+// https://eurid.eu
 ею
+
+// xn--qxa6a ("eu", Greek) : EU
+// https://eurid.eu
+ευ
 
 // xn--mgbah1a3hjkrd ("Mauritania", Arabic) : MR
 موريتانيا
@@ -7074,7 +7090,7 @@ org.zw
 
 // newGTLDs
 
-// List of new gTLDs imported from https://www.icann.org/resources/registries/gtlds/v2/gtlds.json on 2020-02-01T17:46:27Z
+// List of new gTLDs imported from https://www.icann.org/resources/registries/gtlds/v2/gtlds.json on 2020-02-25T18:19:40Z
 // This list is auto-generated, don't edit it manually.
 // aaa : 2015-02-26 American Automobile Association, Inc.
 aaa
@@ -10049,7 +10065,7 @@ trading
 // training : 2013-11-07 Binky Moon, LLC
 training
 
-// travel :  Dog Beach, LLC
+// travel : 2015-10-09 Dog Beach, LLC
 travel
 
 // travelchannel : 2015-07-02 Lifestyle Domain Holdings, Inc.
@@ -10532,7 +10548,7 @@ xin
 // xn--nyqy26a : 2014-11-07 Stable Tone Limited
 健康
 
-// xn--otu796d : 2017-08-06 Internet DotTrademark Organisation Limited
+// xn--otu796d : 2017-08-06 Jiang Yu Liang Cai Technology Company Limited
 招聘
 
 // xn--p1acf : 2013-12-12 Rusnames Limited
