@@ -184,9 +184,38 @@ angle::Result TextureD3D::setStorageMultisample(const gl::Context *context,
     return angle::Result::Continue;
 }
 
+angle::Result TextureD3D::setStorageExternalMemory(const gl::Context *context,
+                                                   gl::TextureType type,
+                                                   size_t levels,
+                                                   GLenum internalFormat,
+                                                   const gl::Extents &size,
+                                                   gl::MemoryObject *memoryObject,
+                                                   GLuint64 offset)
+{
+    ANGLE_HR_UNREACHABLE(GetImplAs<ContextD3D>(context));
+    return angle::Result::Continue;
+}
+
+bool TextureD3D::couldUseSetData() const
+{
+    if (!mRenderer->getFeatures().setDataFasterThanImageUpload.enabled)
+    {
+        return false;
+    }
+
+    if (!mRenderer->getFeatures().setDataFasterThanImageUploadOn128bitFormats.enabled)
+    {
+        gl::InternalFormat internalFormat =
+            gl::GetSizedInternalFormatInfo(getBaseLevelInternalFormat());
+        return internalFormat.pixelBytes < 16;
+    }
+
+    return true;
+}
+
 bool TextureD3D::shouldUseSetData(const ImageD3D *image) const
 {
-    if (!mRenderer->getWorkarounds().setDataFasterThanImageUpload)
+    if (!couldUseSetData())
     {
         return false;
     }
@@ -426,7 +455,7 @@ angle::Result TextureD3D::generateMipmap(const gl::Context *context)
     const GLuint maxLevel  = mState.getMipmapMaxLevel();
     ASSERT(maxLevel > baseLevel);  // Should be checked before calling this.
 
-    if (mTexStorage && mRenderer->getWorkarounds().zeroMaxLodWorkaround)
+    if (mTexStorage && mRenderer->getFeatures().zeroMaxLodWorkaround.enabled)
     {
         // Switch to using the mipmapped texture.
         TextureStorage *textureStorage = nullptr;
@@ -462,7 +491,7 @@ angle::Result TextureD3D::generateMipmapUsingImages(const gl::Context *context,
     // When making mipmaps with the setData workaround enabled, the texture storage has
     // the image data already. For non-render-target storage, we have to pull it out into
     // an image layer.
-    if (mRenderer->getWorkarounds().setDataFasterThanImageUpload && mTexStorage)
+    if (mTexStorage && couldUseSetData())
     {
         if (!mTexStorage->isRenderTarget())
         {
@@ -489,7 +518,7 @@ angle::Result TextureD3D::generateMipmapUsingImages(const gl::Context *context,
     // Blit9::boxFilter). Feature Level 9_3 could do something similar, or it could continue to use
     // CPU-side mipmap generation, or something else.
     bool renderableStorage = (mTexStorage && mTexStorage->isRenderTarget() &&
-                              !(mRenderer->getWorkarounds().zeroMaxLodWorkaround));
+                              !(mRenderer->getFeatures().zeroMaxLodWorkaround.enabled));
 
     for (GLint layer = 0; layer < layerCount; ++layer)
     {
@@ -569,6 +598,9 @@ angle::Result TextureD3D::ensureRenderTarget(const gl::Context *context)
             ANGLE_TRY(mTexStorage->copyToStorage(context, newRenderTargetStorage.get()));
             ANGLE_TRY(setCompleteTexStorage(context, newRenderTargetStorage.get()));
             newRenderTargetStorage.release();
+            // If this texture is used in compute shader, we should invalidate this texture so that
+            // the UAV/SRV is rebound again with this new texture storage in next dispatch call.
+            mTexStorage->invalidateTextures();
         }
     }
 
@@ -717,7 +749,10 @@ angle::Result TextureD3D::initializeContents(const gl::Context *context,
     // Fast path: can use a render target clear.
     // We don't use the fast path with the zero max lod workaround because it would introduce a race
     // between the rendertarget and the staging images.
-    if (canCreateRenderTargetForImage(index) && !mRenderer->getWorkarounds().zeroMaxLodWorkaround)
+    const angle::FeaturesD3D &features = mRenderer->getFeatures();
+    bool shouldUseClear                = (image == nullptr);
+    if (canCreateRenderTargetForImage(index) && !features.zeroMaxLodWorkaround.enabled &&
+        (shouldUseClear || features.allowClearForRobustResourceInit.enabled))
     {
         ANGLE_TRY(ensureRenderTarget(context));
         ASSERT(mTexStorage);
@@ -726,6 +761,8 @@ angle::Result TextureD3D::initializeContents(const gl::Context *context,
         ANGLE_TRY(mRenderer->initRenderTarget(context, renderTarget));
         return angle::Result::Continue;
     }
+
+    ASSERT(image != nullptr);
 
     // Slow path: non-renderable texture or the texture levels aren't set up.
     const auto &formatInfo = gl::GetSizedInternalFormatInfo(image->getInternalFormat());
@@ -964,7 +1001,7 @@ angle::Result TextureD3D_2D::copyImage(const gl::Context *context,
     ANGLE_TRY(redefineImage(context, index.getLevelIndex(), internalFormatInfo.sizedInternalFormat,
                             sourceExtents, false));
 
-    gl::Extents fbSize = source->getReadColorbuffer()->getSize();
+    gl::Extents fbSize = source->getReadColorAttachment()->getSize();
 
     // Does the read area extend beyond the framebuffer?
     bool outside = sourceArea.x < 0 || sourceArea.y < 0 ||
@@ -991,7 +1028,8 @@ angle::Result TextureD3D_2D::copyImage(const gl::Context *context,
 
     // If the zero max LOD workaround is active, then we can't sample from individual layers of the
     // framebuffer in shaders, so we should use the non-rendering copy path.
-    if (!canCreateRenderTargetForImage(index) || mRenderer->getWorkarounds().zeroMaxLodWorkaround)
+    if (!canCreateRenderTargetForImage(index) ||
+        mRenderer->getFeatures().zeroMaxLodWorkaround.enabled)
     {
         ANGLE_TRY(mImageArray[index.getLevelIndex()]->copyFromFramebuffer(context, destOffset,
                                                                           clippedArea, source));
@@ -1021,7 +1059,7 @@ angle::Result TextureD3D_2D::copySubImage(const gl::Context *context,
 {
     ASSERT(index.getTarget() == gl::TextureTarget::_2D && destOffset.z == 0);
 
-    gl::Extents fbSize = source->getReadColorbuffer()->getSize();
+    gl::Extents fbSize = source->getReadColorAttachment()->getSize();
     gl::Rectangle clippedArea;
     if (!ClipRectangle(sourceArea, gl::Rectangle(0, 0, fbSize.width, fbSize.height), &clippedArea))
     {
@@ -1036,7 +1074,8 @@ angle::Result TextureD3D_2D::copySubImage(const gl::Context *context,
 
     // If the zero max LOD workaround is active, then we can't sample from individual layers of the
     // framebuffer in shaders, so we should use the non-rendering copy path.
-    if (!canCreateRenderTargetForImage(index) || mRenderer->getWorkarounds().zeroMaxLodWorkaround)
+    if (!canCreateRenderTargetForImage(index) ||
+        mRenderer->getFeatures().zeroMaxLodWorkaround.enabled)
     {
         ANGLE_TRY(mImageArray[index.getLevelIndex()]->copyFromFramebuffer(context, clippedOffset,
                                                                           clippedArea, source));
@@ -1416,7 +1455,7 @@ angle::Result TextureD3D_2D::createCompleteStorage(bool renderTarget,
     GLint levels = (mTexStorage ? mTexStorage->getLevelCount() : creationLevels(width, height, 1));
 
     bool hintLevelZeroOnly = false;
-    if (mRenderer->getWorkarounds().zeroMaxLodWorkaround)
+    if (mRenderer->getFeatures().zeroMaxLodWorkaround.enabled)
     {
         // If any of the CPU images (levels >= 1) are dirty, then the textureStorage2D should use
         // the mipped texture to begin with. Otherwise, it should use the level-zero-only texture.
@@ -1712,7 +1751,7 @@ angle::Result TextureD3D_Cube::copyImage(const gl::Context *context,
     ANGLE_TRY(redefineImage(context, faceIndex, index.getLevelIndex(),
                             internalFormatInfo.sizedInternalFormat, size, false));
 
-    gl::Extents fbSize = source->getReadColorbuffer()->getSize();
+    gl::Extents fbSize = source->getReadColorAttachment()->getSize();
 
     // Does the read area extend beyond the framebuffer?
     bool outside = sourceArea.x < 0 || sourceArea.y < 0 ||
@@ -1739,7 +1778,8 @@ angle::Result TextureD3D_Cube::copyImage(const gl::Context *context,
 
     // If the zero max LOD workaround is active, then we can't sample from individual layers of the
     // framebuffer in shaders, so we should use the non-rendering copy path.
-    if (!canCreateRenderTargetForImage(index) || mRenderer->getWorkarounds().zeroMaxLodWorkaround)
+    if (!canCreateRenderTargetForImage(index) ||
+        mRenderer->getFeatures().zeroMaxLodWorkaround.enabled)
     {
         ANGLE_TRY(mImageArray[faceIndex][index.getLevelIndex()]->copyFromFramebuffer(
             context, destOffset, clippedArea, source));
@@ -1769,7 +1809,7 @@ angle::Result TextureD3D_Cube::copySubImage(const gl::Context *context,
                                             const gl::Rectangle &sourceArea,
                                             gl::Framebuffer *source)
 {
-    gl::Extents fbSize = source->getReadColorbuffer()->getSize();
+    gl::Extents fbSize = source->getReadColorAttachment()->getSize();
     gl::Rectangle clippedArea;
     if (!ClipRectangle(sourceArea, gl::Rectangle(0, 0, fbSize.width, fbSize.height), &clippedArea))
     {
@@ -1782,7 +1822,8 @@ angle::Result TextureD3D_Cube::copySubImage(const gl::Context *context,
 
     // If the zero max LOD workaround is active, then we can't sample from individual layers of the
     // framebuffer in shaders, so we should use the non-rendering copy path.
-    if (!canCreateRenderTargetForImage(index) || mRenderer->getWorkarounds().zeroMaxLodWorkaround)
+    if (!canCreateRenderTargetForImage(index) ||
+        mRenderer->getFeatures().zeroMaxLodWorkaround.enabled)
     {
         ANGLE_TRY(mImageArray[faceIndex][index.getLevelIndex()]->copyFromFramebuffer(
             context, clippedOffset, clippedArea, source));
@@ -2070,7 +2111,7 @@ angle::Result TextureD3D_Cube::createCompleteStorage(bool renderTarget,
     GLint levels = (mTexStorage ? mTexStorage->getLevelCount() : creationLevels(size, size, 1));
 
     bool hintLevelZeroOnly = false;
-    if (mRenderer->getWorkarounds().zeroMaxLodWorkaround)
+    if (mRenderer->getFeatures().zeroMaxLodWorkaround.enabled)
     {
         // If any of the CPU images (levels >= 1) are dirty, then the textureStorage should use the
         // mipped texture to begin with. Otherwise, it should use the level-zero-only texture.
@@ -2163,14 +2204,6 @@ bool TextureD3D_Cube::isFaceLevelComplete(int faceIndex, int level) const
     if (levelZeroSize <= 0)
     {
         return false;
-    }
-
-    // "isCubeComplete" checks for base level completeness and we must call that
-    // to determine if any face at level 0 is complete. We omit that check here
-    // to avoid re-checking cube-completeness for every face at level 0.
-    if (level == 0)
-    {
-        return true;
     }
 
     // Check that non-zero levels are consistent with the base level.
@@ -2493,7 +2526,7 @@ angle::Result TextureD3D_3D::copySubImage(const gl::Context *context,
 {
     ASSERT(index.getTarget() == gl::TextureTarget::_3D);
 
-    gl::Extents fbSize = source->getReadColorbuffer()->getSize();
+    gl::Extents fbSize = source->getReadColorAttachment()->getSize();
     gl::Rectangle clippedSourceArea;
     if (!ClipRectangle(sourceArea, gl::Rectangle(0, 0, fbSize.width, fbSize.height),
                        &clippedSourceArea))
@@ -3185,7 +3218,7 @@ angle::Result TextureD3D_2DArray::copySubImage(const gl::Context *context,
 {
     ASSERT(index.getTarget() == gl::TextureTarget::_2DArray);
 
-    gl::Extents fbSize = source->getReadColorbuffer()->getSize();
+    gl::Extents fbSize = source->getReadColorAttachment()->getSize();
     gl::Rectangle clippedSourceArea;
     if (!ClipRectangle(sourceArea, gl::Rectangle(0, 0, fbSize.width, fbSize.height),
                        &clippedSourceArea))
@@ -3276,8 +3309,8 @@ angle::Result TextureD3D_2DArray::copyTexture(const gl::Context *context,
             ANGLE_TRY(getImageAndSyncFromStorage(context, currentDestDepthIndex, &destImage));
             ANGLE_TRY(sourceD3D->getImageAndSyncFromStorage(context, currentSourceDepthIndex,
                                                             &sourceImage));
-
-            ANGLE_TRY(mRenderer->copyImage(context, destImage, sourceImage, sourceBox, destOffset,
+            gl::Box imageBox(sourceBox.x, sourceBox.y, 0, sourceBox.width, sourceBox.height, 1);
+            ANGLE_TRY(mRenderer->copyImage(context, destImage, sourceImage, imageBox, destOffset,
                                            unpackFlipY, unpackPremultiplyAlpha,
                                            unpackUnmultiplyAlpha));
         }
