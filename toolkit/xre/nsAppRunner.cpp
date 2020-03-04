@@ -1448,9 +1448,13 @@ static void DumpHelp() {
 
 static inline void DumpVersion() {
   if (gAppData->vendor) {
-    printf("%s ", (const char*)gAppData->vendor);
+    nsCString name(gAppData->name);
+    nsCString vendor(gAppData->vendor);
+    if (name != vendor) {
+      printf("%s ", (const char*)gAppData->vendor);
+    }
   }
-  printf("%s ", (const char*)gAppData->name);
+  printf("%s ", MOZ_APP_DISPLAYNAME);
 
   // Use the displayed version
   // For example, for beta, we would display 42.0b2 instead of 42.0
@@ -3763,11 +3767,7 @@ int XREMain::XRE_mainStartup(bool* aExitFlag) {
   // consistently.
 
   // Set program name to the one defined in application.ini.
-  {
-    nsAutoCString program(gAppData->name);
-    ToLowerCase(program);
-    g_set_prgname(program.get());
-  }
+  g_set_prgname(gAppData->remotingName);
 
   // Initialize GTK here for splash.
 
