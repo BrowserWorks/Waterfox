@@ -194,11 +194,9 @@ void TranslatorGLSL::translate(TIntermBlock *root,
         }
     }
 
-    if (getShaderType() == GL_COMPUTE_SHADER && isComputeShaderLocalSizeDeclared())
+    if (getShaderType() == GL_COMPUTE_SHADER)
     {
-        const sh::WorkGroupSize &localSize = getComputeShaderLocalSize();
-        sink << "layout (local_size_x=" << localSize[0] << ", local_size_y=" << localSize[1]
-             << ", local_size_z=" << localSize[2] << ") in;\n";
+        EmitWorkGroupSizeGLSL(*this, sink);
     }
 
     if (getShaderType() == GL_GEOMETRY_SHADER_EXT)
@@ -277,14 +275,11 @@ void TranslatorGLSL::writeExtensionBehavior(TIntermNode *root, ShCompileOptions 
             }
         }
 
-        const bool isMultiview = (iter.first == TExtension::OVR_multiview2);
-        if (isMultiview && getShaderType() == GL_VERTEX_SHADER &&
-            (compileOptions & SH_SELECT_VIEW_IN_NV_GLSL_VERTEX_SHADER) != 0u)
+        const bool isMultiview =
+            (iter.first == TExtension::OVR_multiview) || (iter.first == TExtension::OVR_multiview2);
+        if (isMultiview)
         {
-            // Emit the NV_viewport_array2 extension in a vertex shader if the
-            // SH_SELECT_VIEW_IN_NV_GLSL_VERTEX_SHADER option is set and the OVR_multiview2(2)
-            // extension is requested.
-            sink << "#extension GL_NV_viewport_array2 : require\n";
+            EmitMultiviewGLSL(*this, compileOptions, iter.second, sink);
         }
 
         // Support ANGLE_texture_multisample extension on GLSL300
