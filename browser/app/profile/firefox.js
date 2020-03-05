@@ -985,15 +985,15 @@ pref("browser.zoom.siteSpecific", true);
 pref("browser.zoom.updateBackgroundTabs", true);
 
 // The breakpad report server to link to in about:crashes
-pref("breakpad.reportURL", "", locked);
+pref("breakpad.reportURL", "");
 
 // URL for "Learn More" for DataCollection
 pref("toolkit.datacollection.infoURL",
-     "", locked);
+     "");
 
 // URL for "Learn More" for Crash Reporter
 pref("toolkit.crashreporter.infoURL",
-     "", locked);
+     "");
 
 // base URL for web-based support pages
 pref("app.support.baseURL", "https://support.mozilla.org/1/firefox/%VERSION%/%OS%/%LOCALE%/");
@@ -1480,22 +1480,22 @@ pref("browser.translation.engine", "bing");
 
 // Telemetry settings.
 // Determines if Telemetry pings can be archived locally.
-sticky_pref("toolkit.telemetry.archive.enabled", false, locked);
+sticky_pref("toolkit.telemetry.archive.enabled", false);
 // Enables sending the shutdown ping when Firefox shuts down.
-sticky_pref("toolkit.telemetry.shutdownPingSender.enabled", false, locked);
+sticky_pref("toolkit.telemetry.shutdownPingSender.enabled", false);
 // Enables sending the shutdown ping using the pingsender from the first session.
-sticky_pref("toolkit.telemetry.shutdownPingSender.enabledFirstSession", false, locked);
+sticky_pref("toolkit.telemetry.shutdownPingSender.enabledFirstSession", false);
 // Enables sending the 'new-profile' ping on new profiles.
-sticky_pref("toolkit.telemetry.newProfilePing.enabled", false, locked);
+sticky_pref("toolkit.telemetry.newProfilePing.enabled", false);
 // Enables sending 'update' pings on Firefox updates.
-sticky_pref("toolkit.telemetry.updatePing.enabled", false, locked);
+sticky_pref("toolkit.telemetry.updatePing.enabled", false);
 
 // Telemetry experiments settings.
-sticky_pref("experiments.enabled", false, locked);
+sticky_pref("experiments.enabled", false);
 sticky_pref("experiments.manifest.fetchIntervalSeconds", 86400);
-sticky_pref("experiments.manifest.uri", "", locked);
+sticky_pref("experiments.manifest.uri", "");
 // Whether experiments are supported by the current application profile.
-sticky_pref("experiments.supported", false, locked);
+sticky_pref("experiments.supported", false);
 
 // Enable GMP support in the addon manager.
 pref("media.gmp-provider.enabled", true);
@@ -1525,11 +1525,11 @@ pref("browser.tabs.remote.autostart.2", true);
 #endif
 
 // For the about:tabcrashed page
-pref("browser.tabs.crashReporting.sendReport", false, locked);
-pref("browser.tabs.crashReporting.includeURL", false, locked);
-pref("browser.tabs.crashReporting.requestEmail", false, locked);
-pref("browser.tabs.crashReporting.emailMe", false, locked);
-pref("browser.tabs.crashReporting.email", "", locked);
+pref("browser.tabs.crashReporting.sendReport", false);
+pref("browser.tabs.crashReporting.includeURL", false);
+pref("browser.tabs.crashReporting.requestEmail", false);
+pref("browser.tabs.crashReporting.emailMe", false);
+pref("browser.tabs.crashReporting.email", "");
 
 // Enable e10s add-on interposition by default.
 pref("extensions.interposition.enabled", true);
@@ -1639,14 +1639,14 @@ pref("webchannel.allowObject.urlWhitelist", "https://accounts.firefox.com https:
 // Whether or not the browser should scan for unsubmitted
 // crash reports, and then show a notification for submitting
 // those reports.
-pref("browser.crashReports.unsubmittedCheck.enabled", false, locked);
+pref("browser.crashReports.unsubmittedCheck.enabled", false);
 
 // chancesUntilSuppress is how many times we'll show the unsubmitted
 // crash report notification across different days and shutdown
 // without a user choice before we suppress the notification for
 // some number of days.
 pref("browser.crashReports.unsubmittedCheck.chancesUntilSuppress", 4);
-pref("browser.crashReports.unsubmittedCheck.autoSubmit", false, locked);
+pref("browser.crashReports.unsubmittedCheck.autoSubmit", false);
 
 // Preferences for the form autofill system extension
 // The truthy values of "extensions.formautofill.available" are "on" and "detect",
@@ -1671,7 +1671,7 @@ pref("browser.sessionstore.restore_tabs_lazily", true);
 pref("browser.suppress_first_window_animation", true);
 
 // Preferences for Photon onboarding system extension
-sticky_pref("browser.onboarding.enabled", false, locked);
+sticky_pref("browser.onboarding.enabled", false);
 // Mark this as an upgraded profile so we don't offer the initial new user onboarding tour.
 pref("browser.onboarding.tourset-version", 1);
 pref("browser.onboarding.hidden", false);

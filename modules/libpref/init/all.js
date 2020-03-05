@@ -1022,16 +1022,16 @@ pref("toolkit.scrollbox.clickToScroll.scrollDelay", 150);
 
 // Telemetry settings.
 // Server to submit telemetry pings to.
-sticky_pref("toolkit.telemetry.server", "", locked);
+sticky_pref("toolkit.telemetry.server", "");
 // Telemetry server owner. Please change if you set toolkit.telemetry.server to a different server
-sticky_pref("toolkit.telemetry.server_owner", "", locked);
+sticky_pref("toolkit.telemetry.server_owner", "");
 // Information page about telemetry (temporary ; will be about:telemetry in the end)
-sticky_pref("toolkit.telemetry.infoURL", "", locked);
+sticky_pref("toolkit.telemetry.infoURL", "");
 // Determines whether full SQL strings are returned when they might contain sensitive info
 // i.e. dynamically constructed SQL strings or SQL executed by addons against addon DBs
-pref("toolkit.telemetry.debugSlowSql", false, locked);
+pref("toolkit.telemetry.debugSlowSql", false);
 // Whether to use the unified telemetry behavior, requires a restart.
-sticky_pref("toolkit.telemetry.unified", false, locked);
+sticky_pref("toolkit.telemetry.unified", false);
 // AsyncShutdown delay before crashing in case of shutdown freeze
 pref("toolkit.asyncshutdown.crash_timeout", 60000);
 // Extra logging for AsyncShutdown barriers and phases
@@ -1513,7 +1513,7 @@ pref("logging.config.clear_on_startup", true);
 // Allow necko to do A/B testing. Will generally only happen if
 // telemetry is also enabled as otherwise there is no way to report
 // the results
-pref("network.allow-experiments", false, locked);
+pref("network.allow-experiments", false);
 
 // Allow the network changed event to get sent when a network topology or
 // setup change is noticed while running.
@@ -5856,7 +5856,7 @@ pref("dom.xhr.lowercase_header.enabled", false);
 
 // When a crash happens, whether to include heap regions of the crash context
 // in the minidump. Enabled by default on nightly and aurora.
-pref("toolkit.crashreporter.include_context_heap", false, locked);
+pref("toolkit.crashreporter.include_context_heap", false);
 
 // Open noopener links in a new process
 pref("dom.noopener.newprocess.enabled", true);
