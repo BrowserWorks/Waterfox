@@ -2034,7 +2034,7 @@ XMLHttpRequestWorker::Send(JSContext* aCx, ErrorResult& aRv)
     return;
   }
 
-  if (!mProxy) {
+  if (!mProxy || mStateData.mFlagSend) {
     aRv.Throw(NS_ERROR_DOM_INVALID_STATE_ERR);
     return;
   }
