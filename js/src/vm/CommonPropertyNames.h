@@ -342,12 +342,7 @@
           "ReadableStreamDefaultReader_releaseLock") \
     macro(ReadableStreamTee, ReadableStreamTee, "ReadableStreamTee") \
     macro(reason, reason, "reason") \
-    macro(RegExpBuiltinExec, RegExpBuiltinExec, "RegExpBuiltinExec") \
     macro(RegExpFlagsGetter, RegExpFlagsGetter, "RegExpFlagsGetter") \
-    macro(RegExpMatcher, RegExpMatcher, "RegExpMatcher") \
-    macro(RegExpSearcher, RegExpSearcher, "RegExpSearcher") \
-    macro(RegExpTester, RegExpTester, "RegExpTester") \
-    macro(RegExp_prototype_Exec, RegExp_prototype_Exec, "RegExp_prototype_Exec") \
     macro(Reify, Reify, "Reify") \
     macro(reject, reject, "reject") \
     macro(rejected, rejected, "rejected") \
@@ -422,7 +417,6 @@
     macro(uninitialized, uninitialized, "uninitialized") \
     macro(unsized, unsized, "unsized") \
     macro(unwatch, unwatch, "unwatch") \
-    macro(UnwrapAndCallRegExpBuiltinExec, UnwrapAndCallRegExpBuiltinExec, "UnwrapAndCallRegExpBuiltinExec") \
     macro(url, url, "url") \
     macro(usage, usage, "usage") \
     macro(useAsm, useAsm, "use asm") \
