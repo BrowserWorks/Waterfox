@@ -377,6 +377,11 @@ CustomElementRegistry::EnqueueLifecycleCallback(nsIDocument::ElementCallbackType
         definition->mLocalName != aCustomElement->NodeInfo()->NameAtom()) {
       return;
     }
+
+    if (!definition->mCallbacks) {
+      // definition has been unlinked.  Don't try to mess with it.
+      return;
+    }
   }
 
   auto callback =
@@ -1037,7 +1042,7 @@ CustomElementReactionsStack::Enqueue(Element* aElement,
 
   CycleCollectedJSContext* context = CycleCollectedJSContext::Get();
   RefPtr<BackupQueueMicroTask> bqmt = new BackupQueueMicroTask(this);
-  context->DispatchMicroTaskRunnable(bqmt.forget());
+  context->DispatchToMicroTask(bqmt.forget());
 }
 
 void

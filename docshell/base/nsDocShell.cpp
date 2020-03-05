@@ -908,6 +908,8 @@ nsDocShell::~nsDocShell()
 nsresult
 nsDocShell::Init()
 {
+  MOZ_ASSERT(!mIsBeingDestroyed);
+
   nsresult rv = nsDocLoader::Init();
   NS_ENSURE_SUCCESS(rv, rv);
 
@@ -2003,6 +2005,8 @@ bool
 nsDocShell::SetCurrentURI(nsIURI* aURI, nsIRequest* aRequest,
                           bool aFireOnLocationChange, uint32_t aLocationFlags)
 {
+  MOZ_ASSERT(!mIsBeingDestroyed);
+
   MOZ_LOG(gDocShellLeakLog, LogLevel::Debug,
           ("DOCSHELL %p SetCurrentURI %s\n",
            this, aURI ? aURI->GetSpecOrDefault().get() : ""));
@@ -2326,6 +2330,8 @@ nsDocShell::SetUsePrivateBrowsing(bool aUsePrivateBrowsing)
 NS_IMETHODIMP
 nsDocShell::SetPrivateBrowsing(bool aUsePrivateBrowsing)
 {
+  MOZ_ASSERT(!mIsBeingDestroyed);
+
   bool changed = aUsePrivateBrowsing != (mPrivateBrowsingId > 0);
   if (changed) {
     mPrivateBrowsingId = aUsePrivateBrowsing ? 1 : 0;
@@ -2403,6 +2409,8 @@ nsDocShell::SetRemoteTabs(bool aUseRemoteTabs)
 NS_IMETHODIMP
 nsDocShell::SetAffectPrivateSessionLifetime(bool aAffectLifetime)
 {
+  MOZ_ASSERT(!mIsBeingDestroyed);
+
   bool change = aAffectLifetime != mAffectPrivateSessionLifetime;
   if (change && UsePrivateBrowsing()) {
     AssertOriginAttributesMatchPrivateBrowsing();
@@ -2905,6 +2913,8 @@ nsDocShell::GetSecurityUI(nsISecureBrowserUI** aSecurityUI)
 NS_IMETHODIMP
 nsDocShell::SetSecurityUI(nsISecureBrowserUI* aSecurityUI)
 {
+  MOZ_ASSERT(!mIsBeingDestroyed);
+
   mSecurityUI = aSecurityUI;
   mSecurityUI->SetDocShell(this);
   return NS_OK;
@@ -4031,6 +4041,10 @@ PrintDocTree(nsIDocShellTreeItem* aParentNode)
 NS_IMETHODIMP
 nsDocShell::SetTreeOwner(nsIDocShellTreeOwner* aTreeOwner)
 {
+  if (mIsBeingDestroyed && aTreeOwner) {
+    return NS_ERROR_FAILURE;
+  }
+
 #ifdef DEBUG_DOCSHELL_FOCUS
   nsCOMPtr<nsIDocShellTreeItem> item(do_QueryInterface(aTreeOwner));
   if (item) {
@@ -5355,6 +5369,8 @@ nsDocShell::LoadErrorPage(nsIURI* aURI, const char16_t* aURL,
                           const char* aCSSClass,
                           nsIChannel* aFailedChannel)
 {
+  MOZ_ASSERT(!mIsBeingDestroyed);
+
 #if defined(DEBUG)
   if (MOZ_LOG_TEST(gDocShellLog, LogLevel::Debug)) {
     nsAutoCString chanName;
@@ -5665,6 +5681,8 @@ nsDocShell::SetSessionHistory(nsISHistory* aSessionHistory)
   // make sure that we are the root docshell and
   // set a handle to root docshell in SH.
 
+  MOZ_ASSERT(!mIsBeingDestroyed);
+
   nsCOMPtr<nsIDocShellTreeItem> root;
   /* Get the root docshell. If *this* is the root docshell
    * then save a handle to *this* in SH. SH needs it to do
@@ -5846,18 +5864,24 @@ nsDocShell::Create()
 NS_IMETHODIMP
 nsDocShell::Destroy()
 {
+  // XXX: We allow this function to be called just once.  If you are going to
+  // reset new variables in this function, please make sure the variables will
+  // never be re-initialized.  Adding assertions to check |mIsBeingDestroyed|
+  // in the setter functions for the variables would be enough.
+  if (mIsBeingDestroyed) {
+    return NS_ERROR_DOCSHELL_DYING;
+  }
+
   NS_ASSERTION(mItemType == typeContent || mItemType == typeChrome,
                "Unexpected item type in docshell");
 
   AssertOriginAttributesMatchPrivateBrowsing();
 
-  if (!mIsBeingDestroyed) {
-    nsCOMPtr<nsIObserverService> serv = services::GetObserverService();
-    if (serv) {
-      const char* msg = mItemType == typeContent ?
-        NS_WEBNAVIGATION_DESTROY : NS_CHROME_WEBNAVIGATION_DESTROY;
-      serv->NotifyObservers(GetAsSupports(this), msg, nullptr);
-    }
+  nsCOMPtr<nsIObserverService> serv = services::GetObserverService();
+  if (serv) {
+    const char* msg = mItemType == typeContent ?
+      NS_WEBNAVIGATION_DESTROY : NS_CHROME_WEBNAVIGATION_DESTROY;
+    serv->NotifyObservers(GetAsSupports(this), msg, nullptr);
   }
 
   mIsBeingDestroyed = true;
@@ -6140,6 +6164,7 @@ nsDocShell::GetParentWidget(nsIWidget** aParentWidget)
 NS_IMETHODIMP
 nsDocShell::SetParentWidget(nsIWidget* aParentWidget)
 {
+  MOZ_ASSERT(!mIsBeingDestroyed);
   mParentWidget = aParentWidget;
 
   return NS_OK;
@@ -6420,6 +6445,8 @@ nsDocShell::SetOnePermittedSandboxedNavigator(nsIDocShell* aSandboxedNavigator)
     NS_ERROR("One Permitted Sandboxed Navigator should only be set once.");
     return NS_OK;
   }
+
+  MOZ_ASSERT(!mIsBeingDestroyed);
 
   mOnePermittedSandboxedNavigator = do_GetWeakReference(aSandboxedNavigator);
   NS_ASSERTION(mOnePermittedSandboxedNavigator,
@@ -6773,6 +6800,8 @@ NS_IMETHODIMP
 nsDocShell::RefreshURI(nsIURI* aURI, int32_t aDelay, bool aRepeat,
                        bool aMetaRefresh)
 {
+  MOZ_ASSERT(!mIsBeingDestroyed);
+
   NS_ENSURE_ARG(aURI);
 
   /* Check if Meta refresh/redirects are permitted. Some
@@ -8163,6 +8192,10 @@ nsDocShell::CreateAboutBlankContentViewer(nsIPrincipal* aPrincipal,
     // wrong information :-(
     //
     (void)FirePageHideNotification(!mSavingOldViewer);
+    // pagehide notification might destroy this docshell.
+    if (mIsBeingDestroyed) {
+      return NS_ERROR_DOCSHELL_DYING;
+    }
   }
 
   // Now make sure we don't think we're in the middle of firing unload after
@@ -8309,6 +8342,8 @@ nsDocShell::CanSavePresentation(uint32_t aLoadType,
 void
 nsDocShell::ReattachEditorToWindow(nsISHEntry* aSHEntry)
 {
+  MOZ_ASSERT(!mIsBeingDestroyed);
+
   NS_ASSERTION(!mEditorData,
                "Why reattach an editor when we already have one?");
   NS_ASSERTION(aSHEntry && aSHEntry->HasDetachedEditor(),
@@ -8346,6 +8381,9 @@ nsDocShell::DetachEditorFromWindow()
   if (NS_SUCCEEDED(res)) {
     // Make mOSHE hold the owning ref to the editor data.
     if (mOSHE) {
+      MOZ_ASSERT(!mIsBeingDestroyed || !mOSHE->HasDetachedEditor(),
+                 "We should not set the editor data again once after we "
+                 "detached the editor data during destroying this docshell");
       mOSHE->SetEditorData(mEditorData.forget());
     } else {
       mEditorData = nullptr;
@@ -8532,6 +8570,8 @@ nsDocShell::GetRestoringDocument(bool* aRestoring)
 nsresult
 nsDocShell::RestorePresentation(nsISHEntry* aSHEntry, bool* aRestoring)
 {
+  MOZ_ASSERT(!mIsBeingDestroyed);
+
   NS_ASSERTION(mLoadType & LOAD_CMD_HISTORY,
                "RestorePresentation should only be called for history loads");
 
@@ -8694,6 +8734,10 @@ nsDocShell::RestoreFromHistory()
 
   // Notify the old content viewer that it's being hidden.
   FirePageHideNotification(!mSavingOldViewer);
+  // pagehide notification might destroy this docshell.
+  if (mIsBeingDestroyed) {
+    return NS_ERROR_DOCSHELL_DYING;
+  }
 
   // If mLSHE was changed as a result of the pagehide event, then
   // something else was loaded.  Don't finish restoring.
@@ -9144,7 +9188,7 @@ nsDocShell::CreateContentViewer(const nsACString& aContentType,
 {
   *aContentHandler = nullptr;
 
-  if (!mTreeOwner) {
+  if (!mTreeOwner || mIsBeingDestroyed) {
     // If we don't have a tree owner, then we're in the process of being
     // destroyed. Rather than continue trying to load something, just give up.
     return NS_ERROR_DOCSHELL_DYING;
@@ -9189,6 +9233,11 @@ nsDocShell::CreateContentViewer(const nsACString& aContentType,
     aOpenedChannel->GetURI(getter_AddRefs(mLoadingURI));
   }
   FirePageHideNotification(!mSavingOldViewer);
+  if (mIsBeingDestroyed) {
+    // Force to stop the newly created orphaned viewer.
+    viewer->Stop();
+    return NS_ERROR_DOCSHELL_DYING;
+  }
   mLoadingURI = nullptr;
 
   // Set mFiredUnloadEvent = false so that the unload handler for the
@@ -9379,6 +9428,8 @@ nsDocShell::NewContentViewerObj(const nsACString& aContentType,
 nsresult
 nsDocShell::SetupNewViewer(nsIContentViewer* aNewViewer)
 {
+  MOZ_ASSERT(!mIsBeingDestroyed);
+
   //
   // Copy content viewer state from previous or parent content viewer.
   //
@@ -11039,7 +11090,7 @@ nsDocShell::DoURILoad(nsIURI* aURI,
     // we don't want to block those loads. Only exception, loads coming
     // from an external applicaton (e.g. Thunderbird) don't load
     // using a codeBasePrincipal, but we want to block those loads.
-    if (isDataURI && (aLoadFromExternal || 
+    if (isDataURI && (aLoadFromExternal ||
         !nsContentUtils::IsSystemPrincipal(aTriggeringPrincipal))) {
       NS_ConvertUTF8toUTF16 specUTF16(aURI->GetSpecOrDefault());
       if (specUTF16.Length() > 50) {
@@ -13511,6 +13562,8 @@ nsDocShell::EnsureScriptEnvironment()
 NS_IMETHODIMP
 nsDocShell::EnsureEditorData()
 {
+  MOZ_ASSERT(!mIsBeingDestroyed);
+
   bool openDocHasDetachedEditor = mOSHE && mOSHE->HasDetachedEditor();
   if (!mEditorData && !mIsBeingDestroyed && !openDocHasDetachedEditor) {
     // We shouldn't recreate the editor data if it already exists, or
@@ -13526,6 +13579,8 @@ nsDocShell::EnsureEditorData()
 nsresult
 nsDocShell::EnsureTransferableHookData()
 {
+  MOZ_ASSERT(!mIsBeingDestroyed);
+
   if (!mTransferableHookData) {
     mTransferableHookData = new nsTransferableHookData();
   }
@@ -14640,6 +14695,8 @@ nsDocShell::CanSetOriginAttributes()
 nsresult
 nsDocShell::SetOriginAttributes(const OriginAttributes& aAttrs)
 {
+  MOZ_ASSERT(!mIsBeingDestroyed);
+
   if (!CanSetOriginAttributes()) {
     return NS_ERROR_FAILURE;
   }

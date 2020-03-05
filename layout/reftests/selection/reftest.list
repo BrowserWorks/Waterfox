@@ -48,3 +48,4 @@ fuzzy-if(OSX==1010,9,1) fuzzy-if(OSX&&skiaContent,6,1) fuzzy-if(skiaContent&&!OS
 == invalidation-2d.html invalidation-2-ref.html
 == invalidation-2e.html invalidation-2-ref.html
 == invalidation-2f.html invalidation-2-ref.html
+needs-focus == 1478604.html 1478604-ref.html
