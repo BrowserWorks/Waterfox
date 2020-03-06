@@ -472,14 +472,6 @@ shown from Android O while a tab is being queued.-->
      service is running. -->
 <!ENTITY datareporting_stumbler_notification_title "&vendorShortName; Location Service running">
 
-<!-- Localization note (pref_update_autodownload2) : This should mention downloading
-     specifically, since the pref only prevents automatic downloads and not the
-     actual notification that an update is available. -->
-<!ENTITY pref_update_autodownload3 "Automatic updates">
-<!ENTITY pref_update_autodownload_wifi "Only over Wi-Fi">
-<!ENTITY pref_update_autodownload_never "Never">
-<!ENTITY pref_update_autodownload_always "Always">
-
 <!-- Localization note (help_menu) : This string is used in the main menu-->
 <!ENTITY help_menu "Help">
 
@@ -748,25 +740,6 @@ just addresses the organization to follow, e.g. "This site is run by " -->
 
 <!ENTITY searchable_description "Bookmarks and history">
 
- <!-- Updater notifications -->
-<!ENTITY updater_start_title2 "Update available for &brandShortName;">
-<!ENTITY updater_start_select2 "Touch to download">
-
-<!ENTITY updater_downloading_title2 "Downloading &brandShortName;">
-<!ENTITY updater_downloading_title_failed2 "Download failed">
-<!ENTITY updater_downloading_select2 "Touch to apply update once downloaded">
-<!ENTITY updater_downloading_retry2 "Touch to retry">
-
-<!ENTITY updater_apply_title3 "Update downloaded for &brandShortName;">
-<!ENTITY updater_apply_select3 "Touch to install">
-
-<!-- Localization note (updater_permission_text): This text is shown in a notification and as a snackbar
-     if the app requires a runtime permission to download updates. Currently, the updater only sees
-     remotely advertised updates in the Nightly and Aurora channels. -->
-<!ENTITY updater_permission_text "To download files and updates, allow &brandShortName; permission to access storage.">
-<!-- LOCALIZATION NOTE (updater_permission_allow): This action is shown in a snackbar along with updater_permission_text. -->
-<!ENTITY updater_permission_allow "Allow">
-
     <!-- Guest mode -->
 <!ENTITY new_guest_session "New Guest Session">
 <!ENTITY exit_guest_session "Exit Guest Session">
@@ -951,7 +924,6 @@ Picture-in-picture mini window -->
 <!ENTITY media_notification_channel2 "Sound and video">
 <!-- These push notifications come without a specific channel and/or name from Leanplum -->
 <!ENTITY leanplum_default_notifications_channel2 "&vendorShortName; tips and tricks">
-<!ENTITY updater_notification_channel "App updates">
 <!ENTITY synced_tabs_notification_channel "Synced tabs">
 <!-- LOCALIZATION NOTE (site_notifications_channel): This is for system notifications displayed by
 web sites through the HTML Notifications API. -->

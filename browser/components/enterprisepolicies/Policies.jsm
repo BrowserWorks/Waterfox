@@ -1184,8 +1184,10 @@ var Policies = {
     onBeforeAddons(manager, param) {
       if (Array.isArray(param)) {
         Services.locale.requestedLocales = param;
-      } else {
+      } else if (param) {
         Services.locale.requestedLocales = param.split(",");
+      } else {
+        Services.locale.requestedLocales = [];
       }
     },
   },
