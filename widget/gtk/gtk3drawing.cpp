@@ -17,6 +17,7 @@
 #include "WidgetStyleCache.h"
 
 #include <math.h>
+#include <dlfcn.h>
 
 static gboolean checkbox_check_state;
 static gboolean notebook_has_tab_gap;
@@ -451,9 +452,9 @@ moz_gtk_header_bar_button_paint(cairo_t *cr, GdkRectangle* rect,
     moz_gtk_button_paint(cr, rect, state, relief, widget, direction);
 
     GtkWidget* iconWidget = gtk_bin_get_child(GTK_BIN(widget));
-    GdkPixbuf* pixbuf = GetWidgetIconPixbuf(iconWidget);
+    cairo_surface_t *surface = GetWidgetIconSurface(iconWidget, state->scale);
 
-    if (pixbuf) {
+    if (surface) {
         GtkStyleContext* style = gtk_widget_get_style_context(iconWidget);
         GtkStateFlags state_flags = GetStateFlagsFromGtkWidgetState(state);
 
@@ -463,8 +464,13 @@ moz_gtk_header_bar_button_paint(cairo_t *cr, GdkRectangle* rect,
         const ToolbarButtonGTKMetrics *metrics =
             GetToolbarButtonMetrics(aWidgetType);
 
-        gtk_render_icon(style, cr, pixbuf,
-                        metrics->iconXPosition, metrics->iconYPosition);
+        /* This is available since Gtk+ 3.10 as well as GtkHeaderBar */
+        static auto sGtkRenderIconSurfacePtr =
+          (void (*)(GtkStyleContext *, cairo_t *, cairo_surface_t *, gdouble, gdouble))
+        dlsym(RTLD_DEFAULT, "gtk_render_icon_surface");
+
+        sGtkRenderIconSurfacePtr(style, cr, surface,
+                                 metrics->iconXPosition, metrics->iconYPosition);
         gtk_style_context_restore(style);
     }
 
