@@ -780,7 +780,7 @@ nsMediaFeatures::features[] = {
     &nsGkAtoms::_moz_gtk_csd_available,
     nsMediaFeature::eMinMaxNotAllowed,
     nsMediaFeature::eBoolInteger,
-    nsMediaFeature::eUserAgentAndChromeOnly,
+    nsMediaFeature::eNoRequirements,
     { &nsGkAtoms::gtk_csd_available },
     GetSystemMetric
   },
@@ -789,7 +789,7 @@ nsMediaFeatures::features[] = {
     &nsGkAtoms::_moz_gtk_csd_minimize_button,
     nsMediaFeature::eMinMaxNotAllowed,
     nsMediaFeature::eBoolInteger,
-    nsMediaFeature::eUserAgentAndChromeOnly,
+    nsMediaFeature::eNoRequirements,
     { &nsGkAtoms::gtk_csd_minimize_button },
     GetSystemMetric
   },
@@ -798,7 +798,7 @@ nsMediaFeatures::features[] = {
     &nsGkAtoms::_moz_gtk_csd_maximize_button,
     nsMediaFeature::eMinMaxNotAllowed,
     nsMediaFeature::eBoolInteger,
-    nsMediaFeature::eUserAgentAndChromeOnly,
+    nsMediaFeature::eNoRequirements,
     { &nsGkAtoms::gtk_csd_maximize_button },
     GetSystemMetric
   },
@@ -807,7 +807,7 @@ nsMediaFeatures::features[] = {
     &nsGkAtoms::_moz_gtk_csd_close_button,
     nsMediaFeature::eMinMaxNotAllowed,
     nsMediaFeature::eBoolInteger,
-    nsMediaFeature::eUserAgentAndChromeOnly,
+    nsMediaFeature::eNoRequirements,
     { &nsGkAtoms::gtk_csd_close_button },
     GetSystemMetric
   },

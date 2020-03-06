@@ -411,7 +411,7 @@ nsLookAndFeel::NativeGetColor(ColorID aID, nscolor& aColor)
     }
     case eColorID_inactiveborder: {
         // inactive window border
-        tkStyleContext *style = GetStyleContext(MOZ_GTK_WINDOW);
+        GtkStyleContext *style = GetStyleContext(MOZ_GTK_WINDOW);
         gtk_style_context_get_border_color(style,
                                            GTK_STATE_FLAG_INSENSITIVE,
                                            &gdk_color);
