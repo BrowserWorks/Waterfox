@@ -94,7 +94,7 @@ typedef struct {
   bool lastButton;
 } ToolbarButtonGTKMetrics;
 
-#define TOOLBAR_BUTTONS 4
+#define TOOLBAR_BUTTONS 3
 typedef struct {
   bool initialized;
   ToolbarButtonGTKMetrics button[TOOLBAR_BUTTONS];
@@ -320,7 +320,12 @@ typedef enum {
   MOZ_GTK_HEADER_BAR_BUTTON_CLOSE,
   MOZ_GTK_HEADER_BAR_BUTTON_MINIMIZE,
   MOZ_GTK_HEADER_BAR_BUTTON_MAXIMIZE,
-  MOZ_GTK_HEADER_BAR_BUTTON_RESTORE,
+
+  /* MOZ_GTK_HEADER_BAR_BUTTON_MAXIMIZE_RESTORE is a state of
+   * MOZ_GTK_HEADER_BAR_BUTTON_MAXIMIZE button and it's used as
+   * an icon placeholder only.
+   */
+  MOZ_GTK_HEADER_BAR_BUTTON_MAXIMIZE_RESTORE,
 
   MOZ_GTK_WIDGET_NODE_COUNT
 } WidgetNodeType;
@@ -585,10 +590,18 @@ moz_gtk_get_tab_thickness(WidgetNodeType aNodeType);
 const ToolbarButtonGTKMetrics*
 GetToolbarButtonMetrics(WidgetNodeType aWidgetType);
 
-/* Get toolbar button state.
-*/
-bool
-IsToolbarButtonEnabled(WidgetNodeType aWidgetType);
+/**
+ * Get toolbar button layout.
+ * aButtonLayout:  [IN][OUT] An array which will be filled by WidgetNodeType
+ *                           references to visible titlebar buttons.
+                             Must contains at least TOOLBAR_BUTTONS entries.
+ * aMaxButtonNums: [IN] Allocated aButtonLayout entries. Must be at least
+                        TOOLBAR_BUTTONS wide.
+ *
+ * returns:    Number of returned entries at aButtonLayout.
+ */
+int
+GetGtkHeaderBarButtonLayout(WidgetNodeType* aButtonLayout, int aMaxButtonNums);;
 
 #if (MOZ_WIDGET_GTK == 2)
 #ifdef __cplusplus
