@@ -7357,50 +7357,6 @@ ClearRequestBase::DeleteFiles(QuotaManager* aQuotaManager,
       return;
     }
 
-    bool initialized;
-    if (aPersistenceType == PERSISTENCE_TYPE_PERSISTENT) {
-      initialized = aQuotaManager->IsOriginInitialized(origin);
-    } else {
-      initialized = aQuotaManager->IsTemporaryStorageInitialized();
-    }
-
-    UsageInfo usageInfo;
-
-    if (!mClientType.IsNull()) {
-      nsAutoString clientDirectoryName;
-      nsresult rv = Client::TypeToText(mClientType.Value(), clientDirectoryName);
-      if (NS_WARN_IF(NS_FAILED(rv))) {
-        return;
-      }
-
-      rv = file->Append(clientDirectoryName);
-      if (NS_WARN_IF(NS_FAILED(rv))) {
-        return;
-      }
-
-      bool exists;
-      rv = file->Exists(&exists);
-      if (NS_WARN_IF(NS_FAILED(rv))) {
-        return;
-      }
-
-      if (!exists) {
-        continue;
-      }
-
-      if (initialized) {
-        Client* client = aQuotaManager->GetClient(mClientType.Value());
-        MOZ_ASSERT(client);
-
-        Atomic<bool> dummy(false);
-        rv = client->GetUsageForOrigin(aPersistenceType, group, origin, dummy,
-                                       &usageInfo);
-        if (NS_WARN_IF(NS_FAILED(rv))) {
-          return;
-        }
-      }
-    }
-
     for (uint32_t index = 0; index < 10; index++) {
       // We can't guarantee that this will always succeed on Windows...
       if (NS_SUCCEEDED((rv = file->Remove(true)))) {
@@ -7417,11 +7373,7 @@ ClearRequestBase::DeleteFiles(QuotaManager* aQuotaManager,
     }
 
     if (aPersistenceType != PERSISTENCE_TYPE_PERSISTENT) {
-      if (mClientType.IsNull()) {
-        aQuotaManager->RemoveQuotaForOrigin(aPersistenceType, group, origin);
-      } else {
-        aQuotaManager->DecreaseUsageForOrigin(aPersistenceType, group, origin,
-                                              usageInfo.TotalUsage());
+      aQuotaManager->RemoveQuotaForOrigin(aPersistenceType, group, origin);
     }
 
     aQuotaManager->OriginClearCompleted(aPersistenceType, origin);

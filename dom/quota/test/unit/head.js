@@ -24,11 +24,8 @@ function info(name, message)
   do_print(name);
 }
 
-function todo(cond, msg) {
-  todo_check_true(cond);
-}
-
-function run_test() {
+function run_test()
+{
   runTest();
 };
 
