@@ -24,6 +24,7 @@
 #include "nsStyleConsts.h"
 #include "gfxFontConstants.h"
 #include "WidgetUtils.h"
+#include "nsWindow.h"
 
 #include <dlfcn.h>
 
@@ -1511,11 +1512,12 @@ nsLookAndFeel::EnsureInit()
 
     gtk_widget_destroy(window);
 
-    // Require GTK 3.10 for client-side decoration support.
-    mCSDAvailable = gtk_check_version(3, 10, 0) == nullptr;
+    // Require GTK 3.10 for GtkHeaderBar support and compatible window manager.
+    mCSDAvailable = (gtk_check_version(3, 10, 0) == nullptr &&
+        nsWindow::GetCSDSupportLevel() != nsWindow::CSD_SUPPORT_NONE);
     if (mCSDAvailable) {
         mCSDAvailable =
-            mozilla::Preferences::GetBool("widget.allow-client-side-decoration",
+            mozilla::Preferences::GetBool("browser.tabs.drawInTitlebar",
                                           false);
     }
 
