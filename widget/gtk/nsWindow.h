@@ -374,9 +374,9 @@ public:
     virtual bool WidgetTypeSupportsAcceleration() override;
 
     bool DoDrawTitlebar() const;
-    typedef enum { CSD_SUPPORT_FULL,    // CSD including shadows
-                   CSD_SUPPORT_FLAT,    // CSD without shadows
-                   CSD_SUPPORT_NONE,    // WM does not support CSD at all
+    typedef enum { CSD_SUPPORT_SYSTEM,    // CSD including shadows
+                   CSD_SUPPORT_CLIENT,    // CSD without shadows
+                   CSD_SUPPORT_NONE,      // WM does not support CSD at all
                    CSD_SUPPORT_UNKNOWN
     } CSDSupportLevel;
     /**
