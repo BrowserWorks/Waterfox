@@ -25,6 +25,7 @@ def FirefoxBranding():
         ]
     elif 'gtk' in CONFIG['MOZ_WIDGET_TOOLKIT']:
         FINAL_TARGET_FILES.chrome.icons.default += [
+            'default256.png',
             'default128.png',
             'default16.png',
             'default32.png',
