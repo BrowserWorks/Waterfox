@@ -871,19 +871,19 @@ nsLookAndFeel::GetIntImpl(IntID aID, int32_t &aResult)
         break;
     case eIntID_GTKCSDAvailable:
         EnsureInit();
-        aResult = sCSDAvailable;
+        aResult = mCSDAvailable;
         break;
     case eIntID_GTKCSDMaximizeButton:
         EnsureInit();
-        aResult = sCSDMaximizeButton;
+        aResult = mCSDMaximizeButton;
         break;
     case eIntID_GTKCSDMinimizeButton:
         EnsureInit();
-        aResult = sCSDMinimizeButton;
+        aResult = mCSDMinimizeButton;
         break;
     case eIntID_GTKCSDCloseButton:
         EnsureInit();
-        aResult = sCSDCloseButton;
+        aResult = mCSDCloseButton;
         break;
     default:
         aResult = 0;
@@ -1512,20 +1512,20 @@ nsLookAndFeel::EnsureInit()
     gtk_widget_destroy(window);
 
     // Require GTK 3.20 for client-side decoration support.
-    sCSDAvailable = gtk_check_version(3, 20, 0) == nullptr;
-    if (sCSDAvailable) {
-        sCSDAvailable =
+    mCSDAvailable = gtk_check_version(3, 20, 0) == nullptr;
+    if (mCSDAvailable) {
+        mCSDAvailable =
             mozilla::Preferences::GetBool("widget.allow-client-side-decoration",
                                           false);
     }
 
     // We need to initialize whole CSD config explicitly because it's queried
     // as -moz-gtk* media features.
-    sCSDCloseButton = false;
-    sCSDMaximizeButton = false;
-    sCSDMinimizeButton = false;
+    mCSDCloseButton = false;
+    mCSDMaximizeButton = false;
+    mCSDMinimizeButton = false;
 
-    if (sCSDAvailable) {
+    if (mCSDAvailable) {
         static auto sGtkHeaderBarGetDecorationLayoutPtr =
           (const gchar* (*)(GtkWidget*))
           dlsym(RTLD_DEFAULT, "gtk_header_bar_get_decoration_layout");
@@ -1539,9 +1539,9 @@ nsLookAndFeel::EnsureInit()
         }
 
         if (decorationLayout) {
-            sCSDCloseButton = (strstr(decorationLayout, "close") != nullptr);
-            sCSDMaximizeButton = (strstr(decorationLayout, "maximize") != nullptr);
-            sCSDMinimizeButton = (strstr(decorationLayout, "minimize") != nullptr);
+            mCSDCloseButton = (strstr(decorationLayout, "close") != nullptr);
+            mCSDMaximizeButton = (strstr(decorationLayout, "maximize") != nullptr);
+            mCSDMinimizeButton = (strstr(decorationLayout, "minimize") != nullptr);
         }
     }
 }
