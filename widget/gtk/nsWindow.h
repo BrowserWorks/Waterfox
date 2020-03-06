@@ -353,6 +353,8 @@ public:
 #endif
     virtual void GetCompositorWidgetInitData(mozilla::widget::CompositorWidgetInitData* aInitData) override;
 
+    void SetDrawsInTitlebar(bool aState) override;
+
     // HiDPI scale conversion
     gint GdkScaleFactor();
 
@@ -369,6 +371,8 @@ public:
     LayoutDeviceIntRect GdkRectToDevicePixels(GdkRectangle rect);
 
     virtual bool WidgetTypeSupportsAcceleration() override;
+
+    bool DoDrawTitlebar() const;
 protected:
     virtual ~nsWindow();
 
@@ -471,6 +475,10 @@ private:
     // window. See bug 1225044.
     unsigned int mPendingConfigures;
 
+    bool               mIsCSDAvailable;
+    // If true, draw our own window titlebar.
+    bool               mIsCSDEnabled;
+
 #ifdef ACCESSIBILITY
     RefPtr<mozilla::a11y::Accessible> mRootAccessible;
 
@@ -567,6 +575,18 @@ private:
     mozilla::UniquePtr<mozilla::CurrentX11TimeGetter> mCurrentTimeGetter;
 
     mozilla::UniquePtr<nsMenuBar> mMenuBar;
+
+    typedef enum { CSD_SUPPORT_FULL,    // CSD including shadows
+                   CSD_SUPPORT_FLAT,    // CSD without shadows
+                   CSD_SUPPORT_NONE,    // WM does not support CSD at all
+                   CSD_SUPPORT_UNKNOWN
+    } CSDSupportLevel;
+    /**
+     * Get the support of Client Side Decoration by checking
+     * the XDG_CURRENT_DESKTOP environment variable.
+     */
+    static CSDSupportLevel GetCSDSupportLevel();
+    static CSDSupportLevel sCSDSupportLevel;
 };
 
 #endif /* __nsWindow_h__ */
