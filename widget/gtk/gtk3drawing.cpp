@@ -2925,9 +2925,13 @@ GetScrollbarMetrics(GtkOrientation aOrientation)
  * to implement it.
  */
 bool
-GetCSDDecorationSize(GtkBorder* aDecorationSize)
+GetCSDDecorationSize(GtkWindow *aGtkWindow, GtkBorder* aDecorationSize)
 {
-    GtkStyleContext* context = GetStyleContext(MOZ_GTK_WINDOW_DECORATION);
+    GtkStyleContext* context = gtk_widget_get_style_context(GTK_WIDGET(aGtkWindow));
+    bool solidDecorations = gtk_style_context_has_class(context, "solid-csd");
+    context = GetStyleContext(solidDecorations ?
+                              MOZ_GTK_WINDOW_DECORATION_SOLID :
+                              MOZ_GTK_WINDOW_DECORATION);
 
     /* Always sum border + padding */
     GtkBorder padding;
@@ -2956,10 +2960,14 @@ GetCSDDecorationSize(GtkBorder* aDecorationSize)
         extents.bottom = clip.height + clip.y;
         extents.left = -clip.x;
 
-        extents.top = MAX(extents.top, margin.top);
-        extents.right = MAX(extents.right, margin.right);
-        extents.bottom = MAX(extents.bottom, margin.bottom);
-        extents.left = MAX(extents.left, margin.left);
+        // Margin is used for resize grip size - it's not present on
+        // popup windows.
+        if (gtk_window_get_window_type(aGtkWindow) != GTK_WINDOW_POPUP) {
+            extents.top = MAX(extents.top, margin.top);
+            extents.right = MAX(extents.right, margin.right);
+            extents.bottom = MAX(extents.bottom, margin.bottom);
+            extents.left = MAX(extents.left, margin.left);
+        }
     } else {
         /* If we can't get shadow extents use decoration-resize-handle instead
          * as a workaround. This is inspired by update_border_windows()

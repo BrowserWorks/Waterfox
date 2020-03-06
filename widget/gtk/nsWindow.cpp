@@ -6639,7 +6639,7 @@ nsWindow::UpdateClientOffsetForCSDWindow()
     // so we need to read offset between mContainer and toplevel mShell
     // window.
     GtkBorder decorationSize;
-    GetCSDDecorationSize(&decorationSize);
+    GetCSDDecorationSize(GTK_WINDOW(mShell), &decorationSize);
     mClientOffset = nsIntPoint(decorationSize.left, decorationSize.top);
 
     // Send a WindowMoved notification. This ensures that TabParent
