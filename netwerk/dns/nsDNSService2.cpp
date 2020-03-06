@@ -1091,7 +1091,7 @@ nsDNSService::Observe(nsISupports *subject, const char *topic, const char16_t *d
     } else if (!strcmp(topic, "last-pb-context-exited")) {
         flushCache = true;
     }
-    if (flushCache) {
+  if (flushCache && mResolver) {
         mResolver->FlushCache();
         return NS_OK;
     }
@@ -1178,9 +1178,17 @@ nsDNSService::GetDNSCacheEntries(nsTArray<mozilla::net::DNSCacheEntries> *args)
     return NS_OK;
 }
 
-size_t
-nsDNSService::SizeOfIncludingThis(mozilla::MallocSizeOf mallocSizeOf) const
-{
+#if 0 // New Not used in classic so compiled out
+NS_IMETHODIMP
+nsDNSService::ClearCache(bool aTrrToo) {
+  NS_ENSURE_TRUE(mResolver, NS_ERROR_NOT_INITIALIZED);
+  mResolver->FlushCache(aTrrToo);
+  return NS_OK;
+}
+#endif
+
+size_t nsDNSService::SizeOfIncludingThis(
+    mozilla::MallocSizeOf mallocSizeOf) const {
     // Measurement of the following members may be added later if DMD finds it
     // is worthwhile:
     // - mIDN
