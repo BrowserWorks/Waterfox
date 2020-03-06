@@ -177,6 +177,9 @@ moz_gtk_refresh()
     sScrollbarMetrics[GTK_ORIENTATION_HORIZONTAL].initialized = false;
     sScrollbarMetrics[GTK_ORIENTATION_VERTICAL].initialized = false;
     sToolbarMetrics.initialized = false;
+
+    /* This will destroy all of our widgets */
+    ResetWidgetCache();
 }
 
 gint
