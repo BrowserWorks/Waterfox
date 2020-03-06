@@ -1490,9 +1490,8 @@ nsLookAndFeel::EnsureInit()
 
     gtk_widget_destroy(window);
 
-    // Require GTK 3.10 for GtkHeaderBar support and compatible window manager.
-    mCSDAvailable = (gtk_check_version(3, 10, 0) == nullptr &&
-        nsWindow::GetCSDSupportLevel() != nsWindow::CSD_SUPPORT_NONE);
+    mCSDAvailable =
+        nsWindow::GetSystemCSDSupportLevel() != nsWindow::CSD_SUPPORT_NONE;
 
     mCSDCloseButton = false;
     mCSDMinimizeButton = false;
