@@ -454,6 +454,8 @@ private:
     nsIWidgetListener* GetListener();
     bool               IsComposited() const;
 
+    void               UpdateClientOffsetForCSDWindow();
+
     GtkWidget          *mShell;
     MozContainer       *mContainer;
     GdkWindow          *mGdkWindow;
