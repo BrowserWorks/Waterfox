@@ -130,7 +130,7 @@ OutFile "helper.exe"
 !endif
 ShowUnInstDetails nevershow
 
-!define URLUninstallSurvey ""
+!define URLUninstallSurvey "https://waterfox.typeform.com/to/qcwbvO"
 
 ################################################################################
 # Modern User Interface - MUI
