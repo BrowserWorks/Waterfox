@@ -10,13 +10,23 @@ WORKSPACE=$HOME/workspace
 SRCDIR=$WORKSPACE/build/src
 UPLOAD_DIR=$HOME/artifacts
 
+<<<<<<< local
 cd $WORKSPACE
 . $SRCDIR/taskcluster/scripts/misc/tooltool-download.sh
 export PATH=$PATH:$SRCDIR/rustc/bin
 cargo install --version 0.1.23 cargo-vendor
 cd $SRCDIR/gfx/wr/
+=======
+cd $GECKO_PATH
+export PATH=$PATH:$MOZ_FETCHES_DIR/rustc/bin:$HOME/.cargo/bin
+cd gfx/wr/
+>>>>>>> graft
 mkdir .cargo
+<<<<<<< local
 cargo vendor --relative-path --sync ./Cargo.lock > .cargo/config
+=======
+cargo vendor --sync ./Cargo.toml > .cargo/config
+>>>>>>> graft
 mkdir wrench-deps
 mv vendor .cargo wrench-deps/
 mkdir wrench-deps/cargo-apk
