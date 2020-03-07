@@ -1909,3 +1909,9 @@ panel[touchmode] .PanelUI-subView #appMenu-zoom-controls > .subviewbutton-iconic
 .restore-tabs-button:hover:active:not([disabled="true"]) {
   padding: 3px;
 }
+
+%ifdef CAN_DRAW_IN_TITLEBAR
+#titlebar-buttonbox-container {
+  -moz-box-align: start;
+}
+%endif

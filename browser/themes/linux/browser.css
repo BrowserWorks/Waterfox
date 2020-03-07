@@ -1189,6 +1189,7 @@ notification.pluginVulnerable > .notification-inner > .messageCloseButton:not(:h
    */
   #titlebar-buttonbox {
     z-index: 1;
+    -moz-box-align: center;
   }
 
   /* Render titlebar command buttons according to system config.
