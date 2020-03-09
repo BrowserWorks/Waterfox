@@ -1368,11 +1368,7 @@ pref("security.insecure_field_warning.contextual.enabled", true);
 // Show degraded UI for http pages; disabled for now
 pref("security.insecure_connection_icon.enabled", true);
 // Show degraded UI for http pages in private mode only for Nightly: Bug 1434626
-#if defined(NIGHTLY_BUILD)
 pref("security.insecure_connection_icon.pbmode.enabled", true);
-#else
-pref("security.insecure_connection_icon.pbmode.enabled", true);
-#endif
 
 // Show "Not Secure" text for http pages; disabled for now
 pref("security.insecure_connection_text.enabled", true);
@@ -1731,11 +1727,7 @@ pref("webchannel.allowObject.urlWhitelist", "");
 // Whether or not the browser should scan for unsubmitted
 // crash reports, and then show a notification for submitting
 // those reports.
-#ifdef NIGHTLY_BUILD
 pref("browser.crashReports.unsubmittedCheck.enabled", false, locked);
-#else
-pref("browser.crashReports.unsubmittedCheck.enabled", false, locked);
-#endif
 
 // chancesUntilSuppress is how many times we'll show the unsubmitted
 // crash report notification across different days and shutdown
@@ -1835,7 +1827,7 @@ pref("prio.publicKeyB", "26E6674E65425B823F1F1D5F96E3BB3EF9E406EC7FBA7DEF8B08A35
 
 // Coverage ping is disabled by default.
 pref("toolkit.coverage.enabled", false, locked);
-pref("toolkit.coverage.endpoint.base", "");
+pref("toolkit.coverage.endpoint.base", "", locked);
 
 // Discovery prefs
 pref("browser.discovery.enabled", false, locked);
