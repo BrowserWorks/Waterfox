@@ -20,7 +20,7 @@ pref("app.update.url.manual", "https://www.waterfox.net/releases/");
 // supplied in the "An update is available" page of the update wizard.
 pref("app.update.url.details", "https://www.waterfox.net/blog/");
 
-pref("app.releaseNotesURL", "https://www.waterfox.net/blog/waterfox-%DISPLAY_VERSION%-release");
+pref("app.releaseNotesURL", "https://www.waterfox.net/blog/waterfox-%DISPLAY_VERSION%-release/");
 
 // The number of days a binary is permitted to be old
 // without checking for an update.  This assumes that
