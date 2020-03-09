@@ -803,8 +803,8 @@ pref("gfx.color_management.rendering_intent", 0);
 pref("gfx.color_management.enablev4", false);
 
 pref("gfx.downloadable_fonts.enabled", true);
-pref("gfx.downloadable_fonts.fallback_delay", 3000);
-pref("gfx.downloadable_fonts.fallback_delay_short", 100);
+pref("gfx.downloadable_fonts.fallback_delay", 0);
+pref("gfx.downloadable_fonts.fallback_delay_short", 0);
 
 // disable downloadable font cache so that behavior is consistently
 // the uncached load behavior across pages (useful for testing reflow problems)
@@ -838,7 +838,7 @@ pref("gfx.missing_fonts.notify", false);
 
 // prefs controlling the font (name/cmap) loader that runs shortly after startup
 #ifdef XP_WIN
-pref("gfx.font_loader.delay", 120000);         // 2 minutes after startup
+pref("gfx.font_loader.delay", 0);         // 2 minutes after startup
 pref("gfx.font_loader.interval", 1000);        // every 1 second until complete
 #else
 pref("gfx.font_loader.delay", 8000);           // 8 secs after startup
@@ -4812,7 +4812,7 @@ pref("image.cache.size", 5242880);
 pref("image.cache.timeweight", 500);
 
 // Decode all images automatically on load, ignoring our normal heuristics.
-pref("image.decode-immediately.enabled", false);
+pref("image.decode-immediately.enabled", true);
 
 // Whether we attempt to downscale images during decoding.
 pref("image.downscale-during-decode.enabled", true);
