@@ -1,7 +1,6 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
-@namespace html "http://www.w3.org/1999/xhtml";
 
 #aboutDialog {
   width: 620px;
@@ -14,24 +13,17 @@
 #rightBox {
   background-image: url("chrome://branding/content/about-wordmark.svg");
   background-repeat: no-repeat;
-  background-position: right 10px top -10px;
   /* padding-top creates room for the wordmark */
   padding-top: 38px;
+  margin-top:20px;
 }
 
 #rightBox:-moz-locale-dir(rtl) {
-  background-position: top;
+  background-position: 100% 0;
 }
 
 #bottomBox {
   padding: 15px 10px 0;
-}
-
-#release {
-  font-weight: bold;
-  font-size: 125%;
-  margin-top: 10px;
-  margin-inline-start: 0;
 }
 
 #version {
@@ -77,13 +69,6 @@
   width: 16px;
   min-height: 16px;
   margin-inline-end: 3px;
-}
-
-html|img.update-throbber {
-  vertical-align: middle;
-}
-
-image.update-throbber {
   list-style-image: url("chrome://global/skin/icons/loading.png");
 }
 
