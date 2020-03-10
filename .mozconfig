@@ -40,7 +40,8 @@ export MOZ_PROFILING=
 export MOZ_INCLUDE_SOURCE_INFO=1
 
 if test `uname -s` = MINGW32_NT-6.2; then
-mk_add_options MOZ_MAKE_FLAGS=-j4
+X=$(wmic cpu get NumberOfLogicalProcessors /Format:List | cut -d'=' -f2 | xargs)
+mk_add_options MOZ_MAKE_FLAGS=-j${X%.*}
 else
 X=$(getconf NPROCESSORS_ONLN 2>/dev/null || getconf _NPROCESSORS_ONLN 2>/dev/null)
 mk_add_options MOZ_MAKE_FLAGS=-j${X%.*}
