@@ -130,7 +130,7 @@ OutFile "helper.exe"
 !endif
 ShowUnInstDetails nevershow
 
-!define URLUninstallSurvey "https://waterfox.typeform.com/to/qcwbvO"
+!define URLUninstallSurvey "https://www.waterfox.net/survey/"
 
 ################################################################################
 # Modern User Interface - MUI
@@ -705,7 +705,7 @@ Function un.onGUIEnd
     ${WinVerGetMinor} $1
     ${WinVerGetBuild} $2
     ${WinVerGetServicePackLevel} $3
-    StrCpy $R1 "${URLUninstallSurvey}$0.$1.$2.$3"
+    StrCpy $R1 "${URLUninstallSurvey}"
 
     ; We can't just open the URL normally because we are most likely running
     ; elevated without an unelevated process to redirect through, and we're
