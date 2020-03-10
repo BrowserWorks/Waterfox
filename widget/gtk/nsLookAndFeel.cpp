@@ -1084,13 +1084,6 @@ nsLookAndFeel::GetFontImpl(FontID aID, nsString& aFontName,
   return true;
 }
 
-const gchar* dark_theme_setting = "gtk-application-prefer-dark-theme";
-static bool SystemPrefersDarkVariant(GtkSettings* aSettings) {
-  gboolean darkThemeDefault;
-  g_object_get(aSettings, dark_theme_setting, &darkThemeDefault, nullptr);
-  return darkThemeDefault;
-}
-
 // Check color contrast according to
 // https://www.w3.org/TR/AERT/#color-contrast
 static bool HasGoodContrastVisibility(GdkRGBA& aColor1, GdkRGBA& aColor2) {
@@ -1151,7 +1144,10 @@ static void ConfigureContentGtkTheme() {
   }
 
   // Try to disable 'gtk-application-prefer-dark-theme' first...
-  if (SystemPrefersDarkVariant(settings)) {
+  const gchar* dark_theme_setting = "gtk-application-prefer-dark-theme";
+  gboolean darkThemeDefault;
+  g_object_get(settings, dark_theme_setting, &darkThemeDefault, nullptr);
+  if (darkThemeDefault) {
     g_object_set(settings, dark_theme_setting, FALSE, nullptr);
   }
 
@@ -1251,20 +1247,6 @@ nsLookAndFeel::EnsureInit()
       // We disable dark themes by default for web content
       // but allow user to overide it by prefs.
       ConfigureContentGtkTheme();
-    } else {
-      // To avoid triggering reload of theme settings unnecessarily, only set the
-      // setting when necessary.
-      GtkSettings* settings =
-          gtk_settings_get_for_screen(gdk_screen_get_default());
-      if (SystemPrefersDarkVariant(settings)) {
-        bool allowDarkTheme =
-            (PR_GetEnv("MOZ_ALLOW_GTK_DARK_THEME") != nullptr) ||
-            mozilla::Preferences::GetBool("widget.chrome.allow-gtk-dark-theme",
-                                          false);
-        if (!allowDarkTheme) {
-          g_object_set(settings, dark_theme_setting, FALSE, nullptr);
-        }
-      }
     }
 
     // Scrollbar colors
