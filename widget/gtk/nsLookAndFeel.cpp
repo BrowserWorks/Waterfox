@@ -34,6 +34,8 @@
 #include "prenv.h"
 #endif
 
+#include "nsCSSColorUtils.h"
+
 using mozilla::LookAndFeel;
 
 #define GDK_COLOR_TO_NS_RGB(c) \
