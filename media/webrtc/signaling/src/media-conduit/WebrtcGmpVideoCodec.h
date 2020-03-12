@@ -139,6 +139,8 @@ public:
   {
     // We want to use this for queuing, and the calling code recycles the
     // buffer on return from Decode()
+    MOZ_RELEASE_ASSERT(aInputImage._length <
+                       (std::numeric_limits<size_t>::max() >> 1));
     mImage._length = aInputImage._length;
     mImage._size = aInputImage._length +
                    webrtc::EncodedImage::GetBufferPaddingBytes(webrtc::kVideoCodecH264);
