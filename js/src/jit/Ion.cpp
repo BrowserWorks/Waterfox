@@ -2977,13 +2977,14 @@ InvalidateActivation(FreeOp* fop, const JitActivationIterator& activations, bool
           {
             MOZ_ASSERT(frame.isScripted());
             const char* type = "Unknown";
-            if (frame.isIonJS())
+            if (frame.isIonJS()) {
                 type = "Optimized";
-            else if (frame.isBaselineJS())
+            } else if (frame.isBaselineJS()) {
                 type = "Baseline";
-            else if (frame.isBailoutJS())
+            } else if (frame.isBailoutJS()) {
                 type = "Bailing";
-            JSScript* script = MaybeForwarded(frame.script());
+            }
+            JSScript* script = frame.maybeForwardedScript();
             JitSpew(JitSpew_IonInvalidate,
                     "#%zu %s JS frame @ %p, %s:%zu (fun: %p, script: %p, pc %p)",
                     frameno, type, frame.fp(), script->maybeForwardedFilename(),
@@ -3021,7 +3022,7 @@ InvalidateActivation(FreeOp* fop, const JitActivationIterator& activations, bool
         if (!calledFromLinkStub && frame.checkInvalidation())
             continue;
 
-        JSScript* script = MaybeForwarded(frame.script());
+        JSScript* script = frame.maybeForwardedScript();
         if (!script->hasIonScript()) {
           continue;
         }

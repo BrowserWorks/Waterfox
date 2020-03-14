@@ -112,6 +112,16 @@ JSJitFrameIter::script() const
     return script;
 }
 
+JSScript* JSJitFrameIter::maybeForwardedScript() const {
+  MOZ_ASSERT(isScripted());
+  if (isBaselineJS()) {
+    return MaybeForwardedScriptFromCalleeToken(baselineFrame()->calleeToken());
+  }
+  JSScript* script = MaybeForwardedScriptFromCalleeToken(calleeToken());
+  MOZ_ASSERT(script);
+  return script;
+}
+
 void
 JSJitFrameIter::baselineScriptAndPc(JSScript** scriptRes, jsbytecode** pcRes) const
 {
