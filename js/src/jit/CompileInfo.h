@@ -505,9 +505,9 @@ class CompileInfo
 
         // Function.arguments can be used to access all arguments in non-strict
         // scripts, so we can't optimize out any arguments.
-        if ((hasArguments() || !script()->strict()) &&
-            firstArgSlot() <= slot && slot - firstArgSlot() < nargs())
-        {
+        if ((mayReadFrameArgsDirectly_ || !script()->strict()) &&
+		         firstArgSlot() <= slot &&
+		         slot - firstArgSlot() < nargs()) {
             return true;
         }
 
