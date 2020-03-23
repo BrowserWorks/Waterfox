@@ -32,6 +32,8 @@ public:
     virtual char16_t GetPasswordCharacterImpl();
     virtual bool GetEchoPasswordImpl();
 
+    bool IsCSDAvailable() const { return mCSDAvailable; }
+
 protected:
 #if (MOZ_WIDGET_GTK == 2)
     struct _GtkStyle *mStyle;
@@ -83,6 +85,10 @@ protected:
     char16_t sInvisibleCharacter;
     float   sCaretRatio;
     bool    sMenuSupportsDrag;
+    bool    mCSDAvailable;
+    bool    mCSDMaximizeButton;
+    bool    mCSDMinimizeButton;
+    bool    mCSDCloseButton;
     bool    mInitialized;
 
     void EnsureInit();

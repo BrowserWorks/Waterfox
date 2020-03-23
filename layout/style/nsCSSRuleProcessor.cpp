@@ -1180,6 +1180,30 @@ nsCSSRuleProcessor::InitSystemMetrics()
     sSystemMetrics->AppendElement(nsGkAtoms::physical_home_button);
   }
 
+  rv = LookAndFeel::GetInt(LookAndFeel::eIntID_GTKCSDAvailable,
+                           &metricResult);
+  if (NS_SUCCEEDED(rv) && metricResult) {
+    sSystemMetrics->AppendElement(nsGkAtoms::gtk_csd_available);
+  }
+
+  rv = LookAndFeel::GetInt(LookAndFeel::eIntID_GTKCSDMinimizeButton,
+                           &metricResult);
+  if (NS_SUCCEEDED(rv) && metricResult) {
+    sSystemMetrics->AppendElement(nsGkAtoms::gtk_csd_minimize_button);
+  }
+
+  rv = LookAndFeel::GetInt(LookAndFeel::eIntID_GTKCSDMaximizeButton,
+                           &metricResult);
+  if (NS_SUCCEEDED(rv) && metricResult) {
+    sSystemMetrics->AppendElement(nsGkAtoms::gtk_csd_maximize_button);
+  }
+
+  rv = LookAndFeel::GetInt(LookAndFeel::eIntID_GTKCSDCloseButton,
+                           &metricResult);
+  if (NS_SUCCEEDED(rv) && metricResult) {
+    sSystemMetrics->AppendElement(nsGkAtoms::gtk_csd_close_button);
+  }
+
 #ifdef XP_WIN
   if (NS_SUCCEEDED(
         LookAndFeel::GetInt(LookAndFeel::eIntID_WindowsThemeIdentifier,

@@ -240,6 +240,9 @@ window:not([chromehidden~="toolbar"]) #nav-bar[nonemptyoverflow] > .overflow-but
 
 
 %ifdef CAN_DRAW_IN_TITLEBAR
+%ifdef MENUBAR_CAN_AUTOHIDE
+#toolbar-menubar:not([autohide=true]) ~ #TabsToolbar > .titlebar-placeholder,
+%endif
 #main-window:not([chromemargin]) > #titlebar,
 #main-window[inFullscreen] > #titlebar,
 #main-window[inFullscreen] .titlebar-placeholder,
@@ -290,12 +293,6 @@ toolbarpaletteitem {
 .titlebar-placeholder[type="caption-buttons"]:-moz-locale-dir(ltr),
 .titlebar-placeholder[type="fullscreen-button"]:-moz-locale-dir(rtl) {
   -moz-box-ordinal-group: 0;
-}
-
-%else
-/* On non-OSX, these should be start-aligned */
-#titlebar-buttonbox-container {
-  -moz-box-align: start;
 }
 %endif
 

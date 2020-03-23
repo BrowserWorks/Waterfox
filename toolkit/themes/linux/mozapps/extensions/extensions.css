@@ -42,3 +42,154 @@
   list-style-image: url("chrome://mozapps/skin/extensions/rating-won.png");
   padding: 0 1px;
 }
+
+#search-filter-local {
+  color: -moz-FieldText;
+}
+
+#header-search {
+  background-color: -moz-Field;
+  color: -moz-FieldText;
+  border-color: GrayText;
+}
+
+#addons-page xul|radio:hover:not([disabled="true"]), xul|checkbox:hover:not([disabled="true"]) {
+  color: -moz-buttonhovertext;
+}
+
+#addons-page textbox[focused] {
+  border-color: -moz-cellhighlight;
+}
+
+#addons-page radio:not([disabled="true"]):hover,
+#addons-page checkbox:not([disabled="true"]):hover {
+  color: inherit !important;
+}
+
+#addons-page {
+  background-color: -moz-Dialog;
+}
+
+#addons-page radio {
+  -moz-binding: url("chrome://global/skin/globalBindings.xml#radio-with-spacing");
+}
+
+#addons-page checkbox {
+  -moz-binding: url("chrome://global/content/bindings/checkbox.xml#checkbox-with-spacing");
+}
+
+button.addon-control, #addons-page menulist {
+  color: -moz-FieldText;
+  background-color: ThreeDFace;
+  border-color: GrayText;
+}
+
+button.addon-control:enabled:hover, button.addon-control:hover:not([disabled="true"]), #addons-page menulist:hover:not([disabled="true"]):not([open="true"]){
+  background-color: ThreeDFace;
+  border-color: -moz-cellhighlight;
+}
+
+#addons-page menuitem {
+  color: -moz-FieldText;
+}
+
+#addons-page menulist menupopup {
+  background-color: ThreeDFace;
+}
+
+#addons-page menuitem:hover:not([disabled="true"]){
+  background-color: -moz-cellhighlight;
+}
+
+#addons-page menulist:not([disabled="true"]):active:hover,
+#addons-page menulist[open="true"] {
+  background-color: -moz-cellhighlight;
+}
+
+#addons-page menulist menuitem[disabled="true"] {
+  color: GrayText;
+}
+
+radio#search-filter-local:hover:not([disabled="true"]){
+  color: -moz-FieldText !important;
+}
+
+.alert {
+  color: -moz-DialogText;
+  background-color: unset;
+}
+
+.view-header {
+  border-bottom: 1px solid ThreeDShadow;
+  background-color: ThreeDHighlight;
+}
+
+#header-utils-btn {
+  border-color: GrayText;
+  background-color: transparent;
+}
+
+#header-utils-btn:not([disabled="true"]):active:hover,
+#header-utils-btn[open="true"] {
+  background-color: -moz-cellhighlight;
+}
+
+.header-button:not([disabled="true"]):hover,
+#header-utils-btn:not([disabled="true"]):hover {
+  border-color: -moz-cellhighlight;
+}
+
+.sorter {
+  background-color: ThreeDFace;
+  color: ButtonText;
+}
+
+.sorter[checkState="1"],
+.sorter[checkState="2"],
+button.sorter:hover:not([disabled="true"]) {
+  background-color: ThreeDFace;
+  box-shadow: unset;
+  border: 1px solid -moz-cellhighlight;
+}
+
+button.sorter[checked="true"] {
+  background-color: -moz-cellhighlight;
+}
+
+.addon {
+  color: -moz-FieldText;
+}
+
+.addon[selected] {
+  background-color: -moz-cellhighlight;
+}
+
+#addon-list .addon[active="false"] > .content-container > .content-inner-container {
+  color: GrayText;
+}
+
+#addon-list .addon[active="false"][selected] > .content-container > .content-inner-container {
+  color: currentColor;
+}
+
+#search-filter-label {
+  color: -moz-FieldText;
+}
+
+.detail-view-container {
+  color: -moz-FieldText;
+}
+
+.detail-row,
+.detail-row-complex,
+setting {
+  text-shadow: unset;
+}
+
+.header-button:hover:not([disabled="true"]), #header-utils-btn:hover:not([disabled="true"]):not([open="true"]) {
+  background-color: transparent;
+}
+
+#header-utils-btn:hover:not([disabled="true"])[open="true"] {
+  background-color: -moz-cellhighlight;
+}

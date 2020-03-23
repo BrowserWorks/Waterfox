@@ -100,7 +100,7 @@ nsNativeThemeGTK::RefreshWidgetWindow(nsIFrame* aFrame)
   nsViewManager* vm = shell->GetViewManager();
   if (!vm)
     return;
- 
+
   vm->InvalidateAllViews();
 }
 
@@ -666,7 +666,7 @@ nsNativeThemeGTK::GetGtkWidgetAndState(uint8_t aWidgetType, nsIFrame* aFrame,
   case NS_THEME_SPLITTER:
     if (IsHorizontal(aFrame))
       aGtkWidgetType = MOZ_GTK_SPLITTER_VERTICAL;
-    else 
+    else
       aGtkWidgetType = MOZ_GTK_SPLITTER_HORIZONTAL;
     break;
   case NS_THEME_MENUBAR:
@@ -704,6 +704,24 @@ nsNativeThemeGTK::GetGtkWidgetAndState(uint8_t aWidgetType, nsIFrame* aFrame,
   case NS_THEME_GTK_INFO_BAR:
     aGtkWidgetType = MOZ_GTK_INFO_BAR;
     break;
+  case NS_THEME_WINDOW_TITLEBAR:
+    aGtkWidgetType = MOZ_GTK_HEADER_BAR;
+    break;
+  case NS_THEME_WINDOW_TITLEBAR_MAXIMIZED:
+    aGtkWidgetType = MOZ_GTK_HEADER_BAR_MAXIMIZED;
+    break;
+  case NS_THEME_WINDOW_BUTTON_CLOSE:
+    aGtkWidgetType = MOZ_GTK_HEADER_BAR_BUTTON_CLOSE;
+    break;
+  case NS_THEME_WINDOW_BUTTON_MINIMIZE:
+    aGtkWidgetType = MOZ_GTK_HEADER_BAR_BUTTON_MINIMIZE;
+    break;
+  case NS_THEME_WINDOW_BUTTON_MAXIMIZE:
+    aGtkWidgetType = MOZ_GTK_HEADER_BAR_BUTTON_MAXIMIZE;
+    break;
+  case NS_THEME_WINDOW_BUTTON_RESTORE:
+    aGtkWidgetType = MOZ_GTK_HEADER_BAR_BUTTON_MAXIMIZE_RESTORE;
+    break;
   default:
     return false;
   }
@@ -731,7 +749,7 @@ private:
 };
 
 nsresult
-ThemeRenderer::DrawWithGDK(GdkDrawable * drawable, gint offsetX, 
+ThemeRenderer::DrawWithGDK(GdkDrawable * drawable, gint offsetX,
         gint offsetY, GdkRectangle * clipRects, uint32_t numClipRects)
 {
   GdkRectangle gdk_rect = mGDKRect;
@@ -747,7 +765,7 @@ ThemeRenderer::DrawWithGDK(GdkDrawable * drawable, gint offsetX,
   surfaceRect.y = 0;
   gdk_drawable_get_size(drawable, &surfaceRect.width, &surfaceRect.height);
   gdk_rectangle_intersect(&gdk_clip, &surfaceRect, &gdk_clip);
-  
+
   NS_ASSERTION(numClipRects == 0, "We don't support clipping!!!");
   moz_gtk_widget_paint(mGTKWidgetType, drawable, &gdk_rect, &gdk_clip,
                        &mState, mFlags, mDirection);
@@ -1174,6 +1192,10 @@ nsNativeThemeGTK::DrawWidgetBackground(gfxContext* aContext,
                            widgetRect.width/scaleFactor,
                            widgetRect.height/scaleFactor};
 
+  // Save actual widget scale to GtkWidgetState as we don't provide
+  // nsFrame to gtk3drawing routines.
+  state.scale = scaleFactor;
+
   // translate everything so (0,0) is the top left of the drawingRect
   gfxPoint origin = rect.TopLeft() + drawingRect.TopLeft();
 
@@ -1207,7 +1229,7 @@ nsNativeThemeGTK::DrawWidgetBackground(gfxContext* aContext,
   GdkColormap* colormap = moz_gtk_widget_get_colormap();
 
   renderer.Draw(ctx, drawingRect.Size(), rendererFlags, colormap);
-#else 
+#else
   DrawThemeWithCairo(ctx, aContext->GetDrawTarget(),
                      state, gtkWidgetType, flags, direction, scaleFactor,
                      snapped, ToPoint(origin), drawingRect.Size(),
@@ -1384,6 +1406,10 @@ nsNativeThemeGTK::GetWidgetPadding(nsDeviceContext* aContext,
   switch (aWidgetType) {
     case NS_THEME_BUTTON_FOCUS:
     case NS_THEME_TOOLBARBUTTON:
+    case NS_THEME_WINDOW_BUTTON_CLOSE:
+    case NS_THEME_WINDOW_BUTTON_MINIMIZE:
+    case NS_THEME_WINDOW_BUTTON_MAXIMIZE:
+    case NS_THEME_WINDOW_BUTTON_RESTORE:
     case NS_THEME_DUALBUTTON:
     case NS_THEME_TAB_SCROLL_ARROW_BACK:
     case NS_THEME_TAB_SCROLL_ARROW_FORWARD:
@@ -1597,7 +1623,7 @@ nsNativeThemeGTK::GetMinimumWidgetSize(nsPresContext* aPresContext,
 
       moz_gtk_get_menu_separator_height(&separator_height);
       aResult->height = separator_height;
-    
+
       *aIsOverridable = false;
     }
     break;
@@ -1628,6 +1654,31 @@ nsNativeThemeGTK::GetMinimumWidgetSize(nsPresContext* aPresContext,
       *aIsOverridable = false;
     }
     break;
+  case NS_THEME_WINDOW_BUTTON_CLOSE:
+    {
+      const ToolbarButtonGTKMetrics* metrics =
+          GetToolbarButtonMetrics(MOZ_GTK_HEADER_BAR_BUTTON_CLOSE);
+      aResult->width = metrics->minSizeWithBorderMargin.width;
+      aResult->height = metrics->minSizeWithBorderMargin.height;
+      break;
+    }
+  case NS_THEME_WINDOW_BUTTON_MINIMIZE:
+    {
+      const ToolbarButtonGTKMetrics* metrics =
+          GetToolbarButtonMetrics(MOZ_GTK_HEADER_BAR_BUTTON_MINIMIZE);
+      aResult->width = metrics->minSizeWithBorderMargin.width;
+      aResult->height = metrics->minSizeWithBorderMargin.height;
+      break;
+    }
+  case NS_THEME_WINDOW_BUTTON_MAXIMIZE:
+  case NS_THEME_WINDOW_BUTTON_RESTORE:
+    {
+      const ToolbarButtonGTKMetrics* metrics =
+          GetToolbarButtonMetrics(MOZ_GTK_HEADER_BAR_BUTTON_MAXIMIZE);
+      aResult->width = metrics->minSizeWithBorderMargin.width;
+      aResult->height = metrics->minSizeWithBorderMargin.height;
+      break;
+    }
   case NS_THEME_CHECKBOX_CONTAINER:
   case NS_THEME_RADIO_CONTAINER:
   case NS_THEME_CHECKBOX_LABEL:
@@ -1664,9 +1715,9 @@ nsNativeThemeGTK::GetMinimumWidgetSize(nsPresContext* aPresContext,
   case NS_THEME_SEPARATOR:
     {
       gint separator_width;
-    
+
       moz_gtk_get_toolbar_separator_width(&separator_width);
-    
+
       aResult->width = separator_width;
     }
     break;
@@ -1705,7 +1756,7 @@ nsNativeThemeGTK::GetMinimumWidgetSize(nsPresContext* aPresContext,
 }
 
 NS_IMETHODIMP
-nsNativeThemeGTK::WidgetStateChanged(nsIFrame* aFrame, uint8_t aWidgetType, 
+nsNativeThemeGTK::WidgetStateChanged(nsIFrame* aFrame, uint8_t aWidgetType,
                                      nsIAtom* aAttribute, bool* aShouldRepaint,
                                      const nsAttrValue* aOldValue)
 {
@@ -1772,7 +1823,7 @@ nsNativeThemeGTK::WidgetStateChanged(nsIFrame* aFrame, uint8_t aWidgetType,
     *aShouldRepaint = true;
   }
   else {
-    // Check the attribute to see if it's relevant.  
+    // Check the attribute to see if it's relevant.
     // disabled, checked, dlgtype, default, etc.
     *aShouldRepaint = false;
     if (aAttribute == nsGkAtoms::disabled ||
@@ -1904,6 +1955,17 @@ nsNativeThemeGTK::ThemeSupportsWidget(nsPresContext* aPresContext,
 #endif
     return !IsWidgetStyled(aPresContext, aFrame, aWidgetType);
 
+  case NS_THEME_WINDOW_BUTTON_CLOSE:
+  case NS_THEME_WINDOW_BUTTON_MINIMIZE:
+  case NS_THEME_WINDOW_BUTTON_MAXIMIZE:
+  case NS_THEME_WINDOW_BUTTON_RESTORE:
+  case NS_THEME_WINDOW_TITLEBAR:
+  case NS_THEME_WINDOW_TITLEBAR_MAXIMIZED:
+    // GtkHeaderBar is available on GTK 3.10+, which is used for styling
+    // title bars and title buttons.
+    return gtk_check_version(3, 10, 0) == nullptr &&
+           !IsWidgetStyled(aPresContext, aFrame, aWidgetType);
+
   case NS_THEME_MENULIST_BUTTON:
     if (aFrame && aFrame->GetWritingMode().IsVertical()) {
       return false;
@@ -1942,10 +2004,10 @@ bool
 nsNativeThemeGTK::ThemeDrawsFocusForWidget(uint8_t aWidgetType)
 {
    if (aWidgetType == NS_THEME_MENULIST ||
-      aWidgetType == NS_THEME_BUTTON || 
+      aWidgetType == NS_THEME_BUTTON ||
       aWidgetType == NS_THEME_TREEHEADERCELL)
     return true;
-  
+
   return false;
 }
 

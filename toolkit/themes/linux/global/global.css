@@ -25,7 +25,7 @@ progressmeter[mode="undetermined"] {
   -moz-binding: url("chrome://global/content/bindings/progressmeter.xml#progressmeter-undetermined");
 }
 
-toolbar[type="menubar"]:not([autohide="true"]):not(:-moz-lwtheme):-moz-system-metric(menubar-drag) {
+toolbar[type="menubar"]:not([autohide="true"]):-moz-system-metric(menubar-drag) {
   -moz-binding: url("chrome://global/content/bindings/toolbar.xml#toolbar-drag");
 }
 
@@ -165,7 +165,7 @@ statusbarpanel:-moz-lwtheme {
   border-bottom-color: ThreeDHighlight;
   margin: 0 5px 5px;
 }
-  
+
 .outset {
   border: 1px solid ThreeDShadow;
   border-left-color: ThreeDHighlight;
@@ -181,7 +181,7 @@ separator[orient="vertical"] {
 
 separator.thin:not([orient="vertical"]) {
   height: 0.5em;
-}  
+}
 separator.thin[orient="vertical"] {
   width: 0.5em;
 }
@@ -204,7 +204,7 @@ separator.groove[orient="vertical"] {
 .small-margin {
   margin: 1px 2px;
 }
-    
+
 .plain {
   -moz-appearance: none;
   margin: 0 !important;

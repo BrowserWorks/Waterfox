@@ -54,3 +54,17 @@ checkbox:not([disabled="true"]):hover {
   text-shadow: none;
 }
 
+.checkbox-spacer-box {
+  -moz-appearance: checkbox;
+  -moz-box-align: center;
+  margin: 2px;
+  border-right: 2px solid transparent;
+}
+
+checkbox[disabled="true"] > .checkbox-spacer-box > .checkbox-check {
+  background-color: -moz-Dialog;
+}
+
+checkbox:hover:active > .checkbox-spacer-box > .checkbox-check {
+  background-color: -moz-Dialog;
+}
