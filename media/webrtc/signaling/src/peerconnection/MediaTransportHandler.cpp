@@ -876,7 +876,7 @@ RefPtr<MediaTransportHandler::StatsPromise>
 MediaTransportHandlerSTS::GetIceStats(
     const std::string& aTransportId, DOMHighResTimeStamp aNow,
     std::unique_ptr<dom::RTCStatsReportInternal>&& aReport) {
-  return InvokeAsync(
+  return mInitPromise->Then(
       mStsThread, __func__,
       [=, aReport = std::move(aReport),
        self = RefPtr<MediaTransportHandlerSTS>(this)]() mutable {
