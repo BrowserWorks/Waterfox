@@ -432,6 +432,12 @@ nsDocShell::~nsDocShell() {
     mSessionHistory->LegacySHistory()->ClearRootDocShell();
   }
 
+  if (mContentViewer) {
+    mContentViewer->Close(nullptr);
+    mContentViewer->Destroy();
+    mContentViewer = nullptr;
+  }
+
   if (--gDocShellCount == 0) {
     NS_IF_RELEASE(sURIFixup);
   }
