@@ -77,6 +77,18 @@ var Policies = {
     },
   },
 
+  AppAutoUpdate: {
+    onBeforeUIStartup(manager, param) {
+      // Logic feels a bit reversed here, but it's correct. If AppAutoUpdate is
+      // true, we disallow turning off auto updating, and visa versa.
+      if (param) {
+        manager.disallowFeature("app-auto-updates-off");
+      } else {
+        manager.disallowFeature("app-auto-updates-on");
+      }
+    },
+  },
+
   AppUpdateURL: {
     onBeforeAddons(manager, param) {
       setDefaultPref("app.update.url", param.href);
@@ -628,12 +640,23 @@ var Policies = {
 
   DNSOverHTTPS: {
     onBeforeAddons(manager, param) {
+      let locked = false;
+      if ("Locked" in param) {
+        locked = param.Locked;
+      }
       if ("Enabled" in param) {
         let mode = param.Enabled ? 2 : 5;
-        setDefaultPref("network.trr.mode", mode, param.Locked);
+        setDefaultPref("network.trr.mode", mode, locked);
       }
-      if (param.ProviderURL) {
-        setDefaultPref("network.trr.uri", param.ProviderURL.href, param.Locked);
+      if ("ProviderURL" in param) {
+        setDefaultPref("network.trr.uri", param.ProviderURL.href, locked);
+      }
+      if ("ExcludedDomains" in param) {
+        setDefaultPref(
+          "network.trr.excluded-domains",
+          param.ExcludedDomains.join(","),
+          locked
+        );
       }
     },
   },
@@ -1497,6 +1520,29 @@ var Policies = {
   SupportMenu: {
     onProfileAfterChange(manager, param) {
       manager.setSupportMenu(param);
+    },
+  },
+
+  UserMessaging: {
+    onBeforeAddons(manager, param) {
+      let locked = false;
+      if ("Locked" in param) {
+        locked = param.Locked;
+      }
+      if ("ExtensionRecommendations" in param) {
+        setDefaultPref(
+          "browser.newtabpage.activity-stream.asrouter.userprefs.cfr.addons",
+          param.ExtensionRecommendations,
+          locked
+        );
+      }
+      if ("FeatureRecommendations" in param) {
+        setDefaultPref(
+          "browser.newtabpage.activity-stream.asrouter.userprefs.cfr.features",
+          param.FeatureRecommendations,
+          locked
+        );
+      }
     },
   },
 

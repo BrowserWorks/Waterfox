@@ -636,7 +636,6 @@ public class CustomTabsActivity extends AppCompatActivity
     /* GeckoSession.ProgressDelegate */
     @Override
     public void onPageStart(GeckoSession session, String url) {
-        mCurrentUrl = url;
         mCanStop = true;
         updateActionBar();
         updateCanStop();

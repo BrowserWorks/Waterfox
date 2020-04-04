@@ -217,15 +217,20 @@ function initPage() {
       sd.textContent = getDescription();
     }
   }
-  if (showCaptivePortalUI) {
-    initPageCaptivePortal();
-    return;
-  }
+
   if (gIsCertError) {
-    initPageCertError();
-    updateContainerPosition();
+    if (showCaptivePortalUI) {
+      initPageCaptivePortal();
+    } else {
+      initPageCertError();
+      updateContainerPosition();
+    }
+
+    let event = new CustomEvent("AboutNetErrorLoad", { bubbles: true });
+    document.getElementById("advancedButton").dispatchEvent(event);
     return;
   }
+
   addAutofocus("#netErrorButtonContainer > .try-again");
 
   document.body.classList.add("neterror");
@@ -403,9 +408,6 @@ function initPageCertError() {
     true,
     true
   );
-
-  let event = new CustomEvent("AboutNetErrorLoad", { bubbles: true });
-  document.getElementById("advancedButton").dispatchEvent(event);
 }
 
 /* Only do autofocus if we're the toplevel frame; otherwise we

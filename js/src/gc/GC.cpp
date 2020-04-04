@@ -2301,6 +2301,8 @@ static void RelocateCell(Zone* zone, TenuredCell* src, AllocKind thingKind,
 
       // For copy-on-write objects that own their elements, fix up the
       // owner pointer to point to the relocated object.
+      // Copy-on-write objects that don't own their elements have their elements
+      // pointer fixed up by JSObject::fixupAfterMovingGC.
       if (srcNative->denseElementsAreCopyOnWrite()) {
         GCPtrNativeObject& owner =
             dstNative->getElementsHeader()->ownerObject();
@@ -2328,6 +2330,22 @@ static void RelocateCell(Zone* zone, TenuredCell* src, AllocKind thingKind,
 
   // Copy the mark bits.
   dst->copyMarkBitsFrom(src);
+
+  // Poison the source cell contents except for the forwarding flag and pointer
+  // which will be stored in the first word. We can't do this for native object
+  // with fixed elements because this would overwrite the element flags and
+  // these are needed when updating COW elements referred to by other objects.
+#ifdef DEBUG
+  JSObject* srcObj = IsObjectAllocKind(thingKind)
+                         ? static_cast<JSObject*>(static_cast<Cell*>(src))
+                         : nullptr;
+  if (!srcObj || !srcObj->isNative() ||
+      !srcObj->as<NativeObject>().hasFixedElements()) {
+    AlwaysPoison(reinterpret_cast<uint8_t*>(src) + sizeof(uintptr_t),
+                 JS_MOVED_TENURED_PATTERN, thingSize - sizeof(uintptr_t),
+                 MemCheckKind::MakeNoAccess);
+  }
+#endif
 
   // Mark source cell as forwarded and leave a pointer to the destination.
   RelocationOverlay* overlay = RelocationOverlay::fromCell(src);
@@ -3020,6 +3038,13 @@ void GCRuntime::releaseRelocatedArenasWithoutUnlocking(Arena* arenaList,
 
     // Mark arena as empty
     arena->setAsFullyUnused();
+
+#ifdef DEBUG
+    // The cell contents have been partially marked no access in RelocateCell,
+    // so we need to mark the region as undefined again so we can poison it.
+    SetMemCheckKind(reinterpret_cast<void*>(arena->thingsStart()),
+                    arena->getThingsSpan(), MemCheckKind::MakeUndefined);
+#endif
 
     AlwaysPoison(reinterpret_cast<void*>(arena->thingsStart()),
                  JS_MOVED_TENURED_PATTERN, arena->getThingsSpan(),
