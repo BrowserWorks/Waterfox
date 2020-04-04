@@ -493,6 +493,10 @@
 
 /* Tab separators */
 
+.titlebar-placeholder[type="post-tabs"] {
+   width: 40px;
+}
+
 .tabbrowser-tab::after,
 .tabbrowser-tab::before {
   margin-inline-start: -1px;

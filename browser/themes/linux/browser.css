@@ -934,8 +934,8 @@ html|span.ac-emphasize-text-url {
   color: -moz-menubartext;
 }
 
-#toolbar-menubar:not([autohide="true"]):not(:-moz-lwtheme):-moz-system-metric(menubar-drag),
-#TabsToolbar:not(:-moz-lwtheme):-moz-system-metric(menubar-drag) {
+#toolbar-menubar:not([autohide="true"]):-moz-system-metric(menubar-drag),
+#TabsToolbar:-moz-system-metric(menubar-drag) {
   -moz-binding: url("chrome://browser/content/customizableui/toolbar.xml#toolbar-drag");
 }
 
@@ -1156,4 +1156,78 @@ notification.pluginVulnerable > .notification-inner > .messageCloseButton:not(:h
 /* Prevent movement in the restore-tabs-button when it's clicked. */
 .restore-tabs-button:hover:active:not([disabled="true"]) {
   padding: 3px;
+}
+
+/* Hide the titlebar explicitly on versions of GTK+ where
+ * it's rendered by window manager. */
+@media (-moz-gtk-csd-available: 0) {
+  #titlebar {
+    display: none;
+  }
+}
+
+/* We draw to titlebar when Gkt+ CSD is available */
+@media (-moz-gtk-csd-available) {
+  :root[tabsintitlebar] > #titlebar:-moz-lwtheme {
+    visibility: hidden;
+  }
+  :root[tabsintitlebar] #titlebar-content:-moz-lwtheme {
+    visibility: visible;
+  }
+
+  :root[tabsintitlebar][sizemode="normal"] > #titlebar {
+    -moz-appearance: -moz-window-titlebar;
+  }
+  :root[tabsintitlebar][sizemode="maximized"] > #titlebar {
+    -moz-appearance: -moz-window-titlebar-maximized;
+  }
+
+  /* The button box must appear on top of the navigator-toolbox in order for
+   * click and hover mouse events to work properly for the button in the restored
+   * window state. Otherwise, elements in the navigator-toolbox, like the menubar,
+   * can swallow those events.
+   */
+  #titlebar-buttonbox {
+    z-index: 1;
+    -moz-box-align: center;
+  }
+
+  /* Render titlebar command buttons according to system config.
+   * Use full scale icons here as the Gtk+ does.
+   */
+  @media (-moz-gtk-csd-minimize-button) {
+    #titlebar-min {
+      -moz-appearance: -moz-window-button-minimize;
+    }
+  }
+  @media (-moz-gtk-csd-minimize-button: 0) {
+    #titlebar-min {
+      display: none;
+    }
+  }
+
+  @media (-moz-gtk-csd-maximize-button) {
+    #titlebar-max {
+      -moz-appearance: -moz-window-button-maximize;
+    }
+    :root[sizemode="maximized"] #titlebar-max {
+      -moz-appearance: -moz-window-button-restore;
+    }
+  }
+  @media (-moz-gtk-csd-maximize-button: 0) {
+    #titlebar-max {
+      display: none;
+    }
+  }
+
+  @media (-moz-gtk-csd-close-button) {
+    #titlebar-close {
+      -moz-appearance: -moz-window-button-close;
+    }
+  }
+  @media (-moz-gtk-csd-close-button: 0) {
+    #titlebar-close {
+      display: none;
+    }
+  }
 }

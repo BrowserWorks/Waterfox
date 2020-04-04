@@ -650,6 +650,14 @@
         </menupopup>
       </toolbarbutton>
 
+#ifdef XP_UNIX
+#ifdef CAN_DRAW_IN_TITLEBAR
+      <hbox class="titlebar-placeholder" type="post-tabs"
+            ordinal="1000"
+            skipintoolbarset="true"/>
+#endif
+#endif
+
 #if !defined(MOZ_WIDGET_GTK)
       <hbox class="private-browsing-indicator" skipintoolbarset="true"/>
 #endif

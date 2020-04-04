@@ -353,6 +353,10 @@ public:
 #endif
     virtual void GetCompositorWidgetInitData(mozilla::widget::CompositorWidgetInitData* aInitData) override;
 
+    virtual nsresult SetNonClientMargins(LayoutDeviceIntMargin& aMargins) override;
+    void SetDrawsInTitlebar(bool aState) override;
+    virtual void UpdateWindowDraggingRegion(const LayoutDeviceIntRegion& aRegion) override;
+
     // HiDPI scale conversion
     gint GdkScaleFactor();
 
@@ -369,6 +373,18 @@ public:
     LayoutDeviceIntRect GdkRectToDevicePixels(GdkRectangle rect);
 
     virtual bool WidgetTypeSupportsAcceleration() override;
+
+    typedef enum { CSD_SUPPORT_SYSTEM,    // CSD including shadows
+                   CSD_SUPPORT_CLIENT,    // CSD without shadows
+                   CSD_SUPPORT_NONE,      // WM does not support CSD at all
+                   CSD_SUPPORT_UNKNOWN
+    } CSDSupportLevel;
+    /**
+     * Get the support of Client Side Decoration by checking
+     * the XDG_CURRENT_DESKTOP environment variable.
+     */
+    static CSDSupportLevel GetSystemCSDSupportLevel();
+
 protected:
     virtual ~nsWindow();
 
@@ -418,6 +434,7 @@ private:
     nsWindow          *GetContainerWindow();
     void               SetUrgencyHint(GtkWidget *top_window, bool state);
     void               SetDefaultIcon(void);
+    void               SetWindowDecoration(nsBorderStyle aStyle);
     void               InitButtonEvent(mozilla::WidgetMouseEvent& aEvent,
                                        GdkEventButton* aGdkEvent);
     bool               DispatchCommandEvent(nsIAtom* aCommand);
@@ -436,6 +453,7 @@ private:
     nsIWidgetListener* GetListener();
     bool               IsComposited() const;
 
+    void               UpdateClientOffsetForCSDWindow();
 
     GtkWidget          *mShell;
     MozContainer       *mContainer;
@@ -470,6 +488,14 @@ private:
     // Upper bound on pending ConfigureNotify events to be dispatched to the
     // window. See bug 1225044.
     unsigned int mPendingConfigures;
+
+    // Window titlebar rendering mode, CSD_SUPPORT_NONE if it's disabled
+    // for this window.
+    CSDSupportLevel    mCSDSupportLevel;
+    // If true, draw our own window titlebar.
+    bool               mDrawInTitlebar;
+    // Draggable titlebar region maintained by UpdateWindowDraggingRegion
+    LayoutDeviceIntRegion mDraggableRegion;
 
 #ifdef ACCESSIBILITY
     RefPtr<mozilla::a11y::Accessible> mRootAccessible;
@@ -567,6 +593,8 @@ private:
     mozilla::UniquePtr<mozilla::CurrentX11TimeGetter> mCurrentTimeGetter;
 
     mozilla::UniquePtr<nsMenuBar> mMenuBar;
+
+    static CSDSupportLevel sCSDSupportLevel;
 };
 
 #endif /* __nsWindow_h__ */

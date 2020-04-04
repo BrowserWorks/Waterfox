@@ -21,6 +21,9 @@ enum : StyleFlags {
 GtkWidget*
 GetWidget(WidgetNodeType aNodeType);
 
+cairo_surface_t*
+GetWidgetIconSurface(GtkWidget* aWidgetIcon, int aScale);
+
 /*
  * Return a new style context based on aWidget, as a child of aParentStyle.
  * If aWidget still has a floating reference, then it is sunk and released.
@@ -33,14 +36,15 @@ CreateCSSNode(const char*      aName,
               GtkStyleContext* aParentStyle,
               GType            aType = G_TYPE_NONE);
 
-// Callers must call ReleaseStyleContext() on the returned context.
+/*
+ * Returns a pointer to a style context for the specified node and state.
+ * The context is owned by WidgetStyleCache.  Do not unref.
+ */
 GtkStyleContext*
-ClaimStyleContext(WidgetNodeType aNodeType,
-                  GtkTextDirection aDirection = GTK_TEXT_DIR_NONE,
-                  GtkStateFlags aStateFlags = GTK_STATE_FLAG_NORMAL,
-                  StyleFlags aFlags = NO_STYLE_FLAGS);
-void
-ReleaseStyleContext(GtkStyleContext* style);
+GetStyleContext(WidgetNodeType aNodeType,
+                GtkTextDirection aDirection = GTK_TEXT_DIR_NONE,
+                GtkStateFlags aStateFlags = GTK_STATE_FLAG_NORMAL,
+                StyleFlags aFlags = NO_STYLE_FLAGS);
 
 void
 ResetWidgetCache(void);
