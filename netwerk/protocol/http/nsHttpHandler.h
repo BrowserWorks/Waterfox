@@ -403,6 +403,7 @@ private:
     //
     // Useragent/prefs helper methods
     //
+    void     BuildAppVersion();
     void     BuildUserAgent();
     void     InitUserAgentComponents();
     void     PrefsChanged(nsIPrefBranch *prefs, const char *pref);
