@@ -2083,11 +2083,13 @@ var BlocklistXML = {
           return;
         }
         let doc = request.responseXML;
-        if (doc.documentElement.namespaceURI != XMLURI_BLOCKLIST) {
+        if (!doc || doc.documentElement.namespaceURI != XMLURI_BLOCKLIST) {
           LOG(
             "_loadFile: aborting due to incorrect XML Namespace.\n" +
               `Expected: ${XMLURI_BLOCKLIST}\n` +
-              `Received: ${doc.documentElement.namespaceURI}`
+              `Received: ${doc &&
+                doc.documentElement &&
+                doc.documentElement.namespaceURI}`
           );
           reject(
             new BlocklistError("Local blocklist file has the wrong namespace!")
