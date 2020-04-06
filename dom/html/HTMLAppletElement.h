@@ -16,8 +16,8 @@
 namespace mozilla {
 namespace dom {       
 
-class HTMLAppletElement final : public nsGenericHTMLElement
-                                    , public nsObjectLoadingContent
+class HTMLAppletElement final : public nsGenericHTMLElement,
+                                public nsObjectLoadingContent   
 {
 public:
   explicit HTMLAppletElement(already_AddRefed<mozilla::dom::NodeInfo>&& aNodeInfo,
@@ -25,10 +25,8 @@ public:
 
   // nsISupports
   NS_DECL_ISUPPORTS_INHERITED
-
-  virtual int32_t TabIndexDefault() override;
-
   NS_IMPL_FROMNODE_HTML_WITH_TAG(HTMLAppletElement, applet)
+  virtual int32_t TabIndexDefault() override;
 
 #ifdef XP_MACOSX
   // nsIDOMEventTarget

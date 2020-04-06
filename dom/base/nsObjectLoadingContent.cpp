@@ -105,6 +105,7 @@
 
 static NS_DEFINE_CID(kAppShellCID, NS_APPSHELL_CID);
 
+static const char *kPrefJavaMIME = "plugin.java.mime";
 static const char kPrefYoutubeRewrite[] = "plugins.rewrite_youtube_embeds";
 static const char kPrefBlockURIs[] = "browser.safebrowsing.blockedURIs.enabled";
 static const char kPrefFavorFallbackMode[] = "plugins.favorfallback.mode";
@@ -121,6 +122,11 @@ static LogModule* GetObjectLog() {
 
 #define LOG(args) MOZ_LOG(GetObjectLog(), mozilla::LogLevel::Debug, args)
 #define LOG_ENABLED() MOZ_LOG_TEST(GetObjectLog(), mozilla::LogLevel::Debug)
+
+static bool IsJavaMIME(const nsACString & aMIMEType)
+{
+  return nsPluginHost::GetSpecialType(aMIMEType) == nsPluginHost::eSpecialType_Java;
+}
 
 static bool IsFlashMIME(const nsACString& aMIMEType) {
   return nsPluginHost::GetSpecialType(aMIMEType) ==
@@ -813,7 +819,8 @@ void nsObjectLoadingContent::GetPluginParameters(
 }
 
 void nsObjectLoadingContent::GetNestedParams(
-    nsTArray<MozPluginParameter>& aParams) {
+  nsTArray<MozPluginParameter>& aParams,
+  bool aIgnoreCodebase) {
   nsCOMPtr<Element> ourElement =
       do_QueryInterface(static_cast<nsIObjectLoadingContent*>(this));
 
@@ -857,6 +864,11 @@ void nsObjectLoadingContent::GetNestedParams(
       param.mName.Trim(" \n\r\t\b", true, true, false);
       param.mValue.Trim(" \n\r\t\b", true, true, false);
 
+      // ignore codebase param if it was already added in the attributes array.
+      if (aIgnoreCodebase && param.mName.EqualsIgnoreCase("codebase")) {
+        continue;
+      }
+
       aParams.AppendElement(param);
     }
   }
@@ -880,6 +892,14 @@ nsresult nsObjectLoadingContent::BuildParametersArray() {
     mCachedAttributes.AppendElement(param);
   }
 
+  bool isJava = IsJavaMIME(mContentType);
+
+  nsAutoCString codebase;
+  if (isJava) {
+    nsresult rv = mBaseURI->GetSpec(codebase);
+    NS_ENSURE_SUCCESS(rv, rv);
+  }
+
   nsAutoCString wmodeOverride;
   Preferences::GetCString("plugins.force.wmode", wmodeOverride);
 
@@ -889,12 +909,23 @@ nsresult nsObjectLoadingContent::BuildParametersArray() {
       CopyASCIItoUTF16(wmodeOverride, mCachedAttributes[i].mValue);
       wmodeOverride.Truncate();
     }
+    else if (!codebase.IsEmpty() && mCachedAttributes[i].mName.EqualsIgnoreCase("codebase")) {
+      CopyASCIItoUTF16(codebase, mCachedAttributes[i].mValue);
+      codebase.Truncate();
+    }
   }
 
   if (!wmodeOverride.IsEmpty()) {
     MozPluginParameter param;
     param.mName = NS_LITERAL_STRING("wmode");
     CopyASCIItoUTF16(wmodeOverride, param.mValue);
+    mCachedAttributes.AppendElement(param);
+  }
+
+  if (!codebase.IsEmpty()) {
+    MozPluginParameter param;
+    param.mName = NS_LITERAL_STRING("codebase");
+    CopyASCIItoUTF16(codebase, param.mValue);
     mCachedAttributes.AppendElement(param);
   }
 
@@ -914,7 +945,7 @@ nsresult nsObjectLoadingContent::BuildParametersArray() {
     }
   }
 
-  GetNestedParams(mCachedParameters);
+  GetNestedParams(mCachedParameters, isJava);
 
   return NS_OK;
 }
@@ -1252,6 +1283,45 @@ EventStates nsObjectLoadingContent::ObjectState() const {
   return NS_EVENT_STATE_LOADING;
 }
 
+// Returns false if mBaseURI is not acceptable for java applets.
+bool nsObjectLoadingContent::CheckJavaCodebase()
+{
+  nsCOMPtr<nsIContent> thisContent =
+      do_QueryInterface(static_cast<nsIImageLoadingContent*>(this));
+  nsCOMPtr<nsIScriptSecurityManager> secMan =
+        nsContentUtils::GetSecurityManager();
+  nsCOMPtr<nsINetUtil> netutil = do_GetNetUtil();
+  NS_ASSERTION(thisContent && secMan && netutil, "expected interfaces");
+
+
+  // Note that mBaseURI is this tag's requested base URI, not the codebase of
+  // the document for security purposes
+  nsresult rv = secMan->CheckLoadURIWithPrincipal(thisContent->NodePrincipal(),
+        mBaseURI, 0);
+  if (NS_FAILED(rv)) {
+        LOG(("OBJLC [%p]: Java codebase check failed", this));
+        return false;
+  }
+
+  nsCOMPtr<nsIURI> principalBaseURI;
+  rv = thisContent->NodePrincipal()->GetURI(getter_AddRefs(principalBaseURI));
+  if (NS_FAILED(rv)) {
+        //NS_NOTREACHED("Failed to URI from node principal?"); //tma todo
+        return false;
+  }
+  // We currently allow java's codebase to be non-same-origin, with
+  // the exception of URIs that represent local files
+  if (NS_URIIsLocalFile(mBaseURI) &&
+      nsScriptSecurityManager::GetStrictFileOriginPolicy() &&
+      !NS_RelaxStrictFileOriginPolicy(mBaseURI, principalBaseURI, true)) {
+      LOG(("OBJLC [%p]: Java failed RelaxStrictFileOriginPolicy for file URI",
+          this));
+      return false;
+  }
+
+  return true;
+}
+
 void nsObjectLoadingContent::MaybeRewriteYoutubeEmbed(nsIURI* aURI,
                                                       nsIURI* aBaseURI,
                                                       nsIURI** aOutURI) {
@@ -1444,10 +1514,13 @@ bool nsObjectLoadingContent::CheckProcessPolicy(int16_t* aContentPolicy) {
 }
 
 nsObjectLoadingContent::ParameterUpdateFlags
-nsObjectLoadingContent::UpdateObjectParameters() {
+nsObjectLoadingContent::UpdateObjectParameters(bool aJavaURI /*false*/) {
   nsCOMPtr<Element> thisElement =
       do_QueryInterface(static_cast<nsIImageLoadingContent*>(this));
   MOZ_ASSERT(thisElement, "Must be an Element");
+
+  nsCOMPtr<nsIContent> thisContent = do_QueryInterface(static_cast<nsIImageLoadingContent*>(this));
+  NS_ASSERTION(thisContent, "Must be an instance of content");
 
   uint32_t caps = GetCapabilities();
   LOG(("OBJLC [%p]: Updating object parameters", this));
@@ -1458,6 +1531,7 @@ nsObjectLoadingContent::UpdateObjectParameters() {
   nsCOMPtr<nsIURI> newURI;
   nsCOMPtr<nsIURI> newBaseURI;
   ObjectType newType;
+  bool isJava = false;
   // Set if this state can't be used to load anything, forces eType_Null
   bool stateInvalid = false;
   // Indicates what parameters changed.
@@ -1477,14 +1551,20 @@ nsObjectLoadingContent::UpdateObjectParameters() {
   /// Initial MIME Type
   ///
 
-  if (caps & eFallbackIfClassIDPresent) {
-    nsAutoString classIDAttr;
-    thisElement->GetAttr(kNameSpaceID_None, nsGkAtoms::classid, classIDAttr);
-    // We don't support class ID plugin references, so we should always treat
-    // having class Ids as attributes as invalid, and fallback accordingly.
-    if (!classIDAttr.IsEmpty()) {
-      newMime.Truncate();
-      stateInvalid = true;
+  if (aJavaURI || thisContent->NodeInfo()->Equals(nsGkAtoms::applet)) {
+    Preferences::GetCString(kPrefJavaMIME, newMime);
+    NS_ASSERTION(IsJavaMIME(newMime),
+          "plugin.mime.java should be recognized as java");
+    isJava = true;
+  }
+  else{
+    nsAutoString rawTypeAttr;
+    //thisContent->GetAttr(kNameSpaceID_None, nsGkAtoms::type, rawTypeAttr);
+    thisElement->GetAttr(kNameSpaceID_None, nsGkAtoms::type, rawTypeAttr);
+    if (!rawTypeAttr.IsEmpty()) {
+        typeAttr = rawTypeAttr;
+        CopyUTF16toUTF8(rawTypeAttr, newMime);
+        isJava = IsJavaMIME(newMime);
     }
   }
 
@@ -1493,6 +1573,8 @@ nsObjectLoadingContent::UpdateObjectParameters() {
   ///
 
   nsAutoString codebaseStr;
+  bool hasCodebase = thisElement->HasAttr(kNameSpaceID_None, nsGkAtoms::codebase); //tma todo
+  
   nsCOMPtr<nsIURI> docBaseURI = thisElement->GetBaseURI();
   thisElement->GetAttr(kNameSpaceID_None, nsGkAtoms::codebase, codebaseStr);
 
@@ -1506,6 +1588,47 @@ nsObjectLoadingContent::UpdateObjectParameters() {
           ("OBJLC [%p]: Could not parse plugin's codebase as a URI, "
            "will use document baseURI instead",
            this));
+    }
+  }
+
+  // Java wants the codebase attribute even if it occurs in <param> tags
+  if (isJava) {
+    // Find all <param> tags that are nested beneath us, but not beneath another
+    // object/applet tag.
+    nsTArray<MozPluginParameter> params;
+    GetNestedParams(params, false);
+    for (uint32_t i = 0; i < params.Length(); i++) {
+      if (params[i].mName.EqualsIgnoreCase("codebase")) {
+        hasCodebase = true;
+        codebaseStr = params[i].mValue;
+      }
+    }
+  }
+
+  if (isJava && hasCodebase && codebaseStr.IsEmpty()) {
+    // Java treats codebase="" as "/"
+    codebaseStr.Assign('/');
+    // XXX(johns): This doesn't cover the case of "https:" which java would
+    //             interpret as "https:///" but we interpret as this document's
+    //             URI but with a changed scheme.
+  }
+  else if (isJava && !hasCodebase) {
+    // Java expects a directory as the codebase, or else it will construct
+    // relative URIs incorrectly :(
+    codebaseStr.Assign('.');
+  }
+
+  if (!codebaseStr.IsEmpty()) {
+    rv = nsContentUtils::NewURIWithDocumentCharset(getter_AddRefs(newBaseURI),
+          codebaseStr,
+          thisContent->OwnerDoc(),
+          docBaseURI);
+    if (NS_SUCCEEDED(rv)) {
+      NS_TryToSetImmutable(newBaseURI); 
+    }
+    else {
+     // Malformed URI
+     LOG(("OBJLC [%p]: Could not parse plugin's codebase as a URI, " "will use document baseURI instead", this));
     }
   }
 
@@ -1530,7 +1653,14 @@ nsObjectLoadingContent::UpdateObjectParameters() {
 
   nsAutoString uriStr;
   // Different elements keep this in various locations
-  if (thisElement->NodeInfo()->Equals(nsGkAtoms::object)) {
+  if (isJava) {
+    // Applet tags and embed/object with explicit java MIMEs have src/data
+    // attributes that are not meant to be parsed as URIs or opened by the
+    // browser -- act as if they are null. (Setting these attributes triggers a
+    // force-load, so tracking the old value to determine if they have changed
+    // is not necessary.)
+  }
+  else if (thisElement->NodeInfo()->Equals(nsGkAtoms::object)) {
     thisElement->GetAttr(kNameSpaceID_None, nsGkAtoms::data, uriStr);
   } else if (thisElement->NodeInfo()->Equals(nsGkAtoms::embed)) {
     thisElement->GetAttr(kNameSpaceID_None, nsGkAtoms::src, uriStr);
@@ -1563,6 +1693,17 @@ nsObjectLoadingContent::UpdateObjectParameters() {
       (caps & eAllowPluginSkipChannel) &&
       IsPluginEnabledByExtension(newURI, newMime)) {
     LOG(("OBJLC [%p]: Using extension as type hint (%s)", this, newMime.get()));
+  }
+
+  // For eAllowPluginSkipChannel tags, if we have a non-plugin type, but can get
+  // a plugin type from the extension, prefer that to falling back to a channel.
+  if (!IsPluginType(GetTypeOfContent(newMime, mSkipFakePlugins)) && newURI &&
+    (caps & eAllowPluginSkipChannel) &&
+    IsPluginEnabledByExtension(newURI, newMime)) {
+    LOG(("OBJLC [%p]: Using extension as type hint (%s)", this, newMime.get()));
+    if (!isJava && IsJavaMIME(newMime)) {
+      return UpdateObjectParameters(true);
+    }
   }
 
   ///
@@ -1761,6 +1902,13 @@ nsObjectLoadingContent::UpdateObjectParameters() {
   }
 
   if (!URIEquals(mBaseURI, newBaseURI)) {
+    if (isJava) {
+      // Java bases its class loading on the base URI, so we consider the state
+      // to have changed if this changes. If the object is using a relative URI,
+      // mURI will have changed below regardless
+      retval = (ParameterUpdateFlags)(retval | eParamStateChanged);
+    }
+
     LOG(("OBJLC [%p]: Object effective baseURI changed", this));
     mBaseURI = newBaseURI;
   }
@@ -1949,6 +2097,10 @@ nsresult nsObjectLoadingContent::LoadObject(bool aNotify, bool aForceLoad,
 
   if (mType != eType_Null) {
     bool allowLoad = true;
+
+    if (IsJavaMIME(mContentType)) {
+      allowLoad = CheckJavaCodebase();
+    }
     int16_t contentPolicy = nsIContentPolicy::ACCEPT;
     // If mChannelLoaded is set we presumably already passed load policy
     // If mType == eType_Loading then we call OpenChannel() which internally
@@ -2022,12 +2174,14 @@ nsresult nsObjectLoadingContent::LoadObject(bool aNotify, bool aForceLoad,
   // reason click-to-play instead. Items resolved as Image/Document
   // will not be checked for previews, as well as invalid plugins
   // (they will not have the mContentType set).
+  #if 0 //todo
   FallbackType clickToPlayReason;
   if (!mActivated && IsPluginType(mType) && !ShouldPlay(clickToPlayReason)) {
     LOG(("OBJLC [%p]: Marking plugin as click-to-play", this));
     mType = eType_Null;
     fallbackType = clickToPlayReason;
   }
+  #endif
 
   if (!mActivated && IsPluginType(mType)) {
     // Object passed ShouldPlay, so it should be considered
@@ -2097,7 +2251,7 @@ nsresult nsObjectLoadingContent::LoadObject(bool aNotify, bool aForceLoad,
         // We'll handle this below
         doSpawnPlugin = true;
       } else {
-        rv = AsyncStartPluginInstance();
+        rv = AsyncStartPluginInstance();        
       }
     } break;
     case eType_Document: {

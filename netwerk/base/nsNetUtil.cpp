@@ -2158,6 +2158,14 @@ already_AddRefed<nsIURI> NS_GetInnermostURI(nsIURI* aURI) {
   return uri.forget();
 }
 
+void NS_TryToSetImmutable(nsIURI *uri)
+{
+  nsCOMPtr<nsIMutable> mutableObj(do_QueryInterface(uri));
+  if (mutableObj) {
+    mutableObj->SetMutable(false);
+  }
+}
+
 nsresult NS_GetFinalChannelURI(nsIChannel* channel, nsIURI** uri) {
   *uri = nullptr;
 

@@ -733,6 +733,12 @@ nsresult NS_URIChainHasFlags(nsIURI* uri, uint32_t flags, bool* result);
 already_AddRefed<nsIURI> NS_GetInnermostURI(nsIURI* aURI);
 
 /**
+ * Helper function that tries to set the argument URI to be immutable
+ */
+void NS_TryToSetImmutable(nsIURI *uri);
+
+
+/**
  * Helper function for getting the host name of the innermost URI for a given
  * URI.  The return value could be the host name of the URI passed in if it's
  * not a nested URI.
