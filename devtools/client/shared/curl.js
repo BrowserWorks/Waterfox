@@ -381,7 +381,12 @@ const CurlUtils = {
    * Credit: Google DevTools
    */
   escapeStringWin: function (str) {
-    /* Replace quote by double quote (but not by \") because it is
+    /*
+       Replace dollar sign because of commands (e.g $(cmd.exe)) in
+       powershell when using double quotes.
+       Useful details http://www.rlmueller.net/PowerShellEscape.htm
+
+       Replace quote by double quote (but not by \") because it is
        recognized by both cmd.exe and MS Crt arguments parser.
 
        Replace % by "%" because it could be expanded to an environment
@@ -395,11 +400,17 @@ const CurlUtils = {
        Replace new line outside of quotes since cmd.exe doesn't let
        to do it inside.
     */
-    return "\"" + str.replace(/"/g, "\"\"")
-                     .replace(/%/g, "\"%\"")
-                     .replace(/\\/g, "\\\\")
-                     .replace(/[\r\n]+/g, "\"^$&\"") + "\"";
-  }
+    return (
+      '"' +
+      str
+        .replace(/\$/g, "`$")
+        .replace(/"/g, '""')
+        .replace(/%/g, '"%"')
+        .replace(/\\/g, "\\\\")
+        .replace(/[\r\n]{1,2}/g, '"^$&$&"') +
+      '"'
+    );
+  },
 };
 
 exports.CurlUtils = CurlUtils;
