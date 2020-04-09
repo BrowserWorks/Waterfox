@@ -375,7 +375,7 @@ class nsObjectLoadingContent : public nsImageLoadingContent,
    * @param aParameters     The array containing pairs of name/value strings
    *                        from nested <param> objects.
    */
-  void GetNestedParams(nsTArray<mozilla::dom::MozPluginParameter>& aParameters);
+  void GetNestedParams(nsTArray<mozilla::dom::MozPluginParameter>& aParameters, bool aIgnoreCodebase = false);
 
   MOZ_MUST_USE nsresult BuildParametersArray();
 
@@ -418,7 +418,7 @@ class nsObjectLoadingContent : public nsImageLoadingContent,
    *
    * @return Returns a bitmask of ParameterUpdateFlags values
    */
-  ParameterUpdateFlags UpdateObjectParameters();
+  ParameterUpdateFlags UpdateObjectParameters(bool aJavaURI = false);
 
   /**
    * Queue a CheckPluginStopEvent and track it in mPendingCheckPluginStopEvent
@@ -476,6 +476,11 @@ class nsObjectLoadingContent : public nsImageLoadingContent,
    * @param aIsPluginClickToPlay Whether this object instance is CTP.
    */
   bool PreferFallback(bool aIsPluginClickToPlay);
+
+  /*
+   * Helper to check if mBaseURI can be used by java as a codebase
+   */
+  bool CheckJavaCodebase();
 
   /**
    * Helper to check if our current URI passes policy
