@@ -162,6 +162,7 @@ static inline const MDefinition* GetObject(const MDefinition* ins) {
     case MDefinition::Opcode::SetArgumentsObjectArg:
     case MDefinition::Opcode::GetFrameArgument:
     case MDefinition::Opcode::SetFrameArgument:
+    case MDefinition::Opcode::CreateThis:
     case MDefinition::Opcode::CompareExchangeTypedArrayElement:
     case MDefinition::Opcode::AtomicExchangeTypedArrayElement:
     case MDefinition::Opcode::AtomicTypedArrayElementBinop:
