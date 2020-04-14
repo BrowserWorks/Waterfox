@@ -623,6 +623,20 @@ const POLICIES_TESTS = [
       "media.autoplay.default": 5,
     },
   },
+
+  // POLICY: EncryptedMediaExtensions
+
+  {
+    policies: {
+      EncryptedMediaExtensions: {
+        Enabled: false,
+        Locked: true,
+      },
+    },
+    lockedPrefs: {
+      "media.eme.enabled": false,
+    },
+  },
 ];
 
 add_task(async function test_policy_simple_prefs() {
