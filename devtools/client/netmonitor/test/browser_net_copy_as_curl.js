@@ -45,7 +45,7 @@ add_task(async function() {
 
   const POST_PAYLOAD = "Plaintext value as a payload";
   const POST_PARTIAL_RESULT = [
-    "--data " + quote(POST_PAYLOAD),
+    "--data-raw " + quote(POST_PAYLOAD),
     header("Content-Type: text/plain;charset=UTF-8"),
   ];
 

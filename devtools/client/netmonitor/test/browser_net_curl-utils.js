@@ -134,8 +134,8 @@ function testWriteEmptyPostDataTextParams(data) {
 function testDataArgumentOnGeneratedCommand(data) {
   const curlCommand = Curl.generateCommand(data);
   ok(
-    curlCommand.includes("--data"),
-    "Should return a curl command with --data"
+    curlCommand.includes("--data-raw"),
+    "Should return a curl command with --data-raw"
   );
 }
 
