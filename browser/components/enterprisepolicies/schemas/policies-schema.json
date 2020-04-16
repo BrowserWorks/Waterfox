@@ -663,6 +663,11 @@
         "Autoplay": {
           "type": "object",
           "properties": {
+            "Default": {
+              "type": "string",
+              "enum": ["allow-audio-video", "block-audio", "block-audio-video"]
+            },
+
             "Allow": {
               "type": "array",
               "strict": false,
@@ -677,6 +682,10 @@
               "items": {
                 "type": "origin"
               }
+            },
+
+            "Locked": {
+              "type": "boolean"
             }
           }
         },
