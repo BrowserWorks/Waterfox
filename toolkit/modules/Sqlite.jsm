@@ -675,6 +675,12 @@ ConnectionData.prototype = Object.freeze({
     return count;
   },
 
+  interrupt() {
+    this._log.info("Trying to interrupt.");
+    this.ensureOpen();
+    this._dbConn.interrupt();
+  },
+
   /**
    * Helper method to bind parameters of various kinds through
    * reflection.
@@ -801,22 +807,11 @@ ConnectionData.prototype = Object.freeze({
 
         switch (reason) {
           case Ci.mozIStorageStatementCallback.REASON_FINISHED:
+          case Ci.mozIStorageStatementCallback.REASON_CANCELED:
             // If there is an onRow handler, we always instead resolve to a
             // boolean indicating whether the onRow handler was called or not.
             let result = onRow ? handledRow : rows;
             deferred.resolve(result);
-            break;
-
-          case Ci.mozIStorageStatementCallback.REASON_CANCELED:
-            // It is not an error if the user explicitly requested cancel via
-            // the onRow handler.
-            if (userCancelled) {
-              let result = onRow ? handledRow : rows;
-              deferred.resolve(result);
-            } else {
-              deferred.reject(new Error("Statement was cancelled."));
-            }
-
             break;
 
           case Ci.mozIStorageStatementCallback.REASON_ERROR:
@@ -1456,6 +1451,15 @@ OpenedConnection.prototype = Object.freeze({
    */
   discardCachedStatements() {
     return this._connectionData.discardCachedStatements();
+  },
+
+  /**
+   * Interrupts pending database operations returning at the first opportunity.
+   * Statement execution will throw an NS_ERROR_ABORT failure.
+   * Can only be used on read-only connections.
+   */
+  interrupt() {
+    this._connectionData.interrupt();
   },
 });
 
