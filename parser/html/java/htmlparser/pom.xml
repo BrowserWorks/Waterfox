@@ -1,0 +1,240 @@
+<!--
+ * Copyright (c) 2007-2012 Mozilla Foundation
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a 
+ * copy of this software and associated documentation files (the "Software"), 
+ * to deal in the Software without restriction, including without limitation 
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense, 
+ * and/or sell copies of the Software, and to permit persons to whom the 
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in 
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL 
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING 
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ * DEALINGS IN THE SOFTWARE.
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>nu.validator.htmlparser</groupId>
+  <artifactId>htmlparser</artifactId>
+  <packaging>bundle</packaging>
+  <version>1.4</version>
+  <name>htmlparser</name>
+  <url>http://about.validator.nu/htmlparser/</url>
+  <description>The Validator.nu HTML Parser is an implementation of the HTML5 parsing algorithm in Java for applications. The parser is designed to work as a drop-in replacement for the XML parser in applications that already support XHTML 1.x content with an XML parser and use SAX, DOM or XOM to interface with the parser.</description>
+  <!--
+    Usage notes for this POM:
+
+    To build without signing, run:
+    mvn clean source:jar javadoc:jar repository:bundle-create
+    (enter 0 <return> when prompted)
+
+    To build and sign, run:
+    mvn clean source:jar javadoc:jar package gpg:sign repository:bundle-create
+    (enter 0 <return> when prompted)
+
+    This POM file is used for creating the bundle for distribution via the
+    Maven Central Repository. It is not used as part of the normal development
+    process of the parser and the maintainer of the parser (Henri Sivonen) 
+    isn't experienced in POM tweaking. If you need this POM to do something
+    that it currently does not do or do something better, you need to write
+    the changes you need yourself and contribute a patch via
+    http://bugzilla.validator.nu/
+  -->
+  <developers>
+    <developer>
+      <id>hsivonen</id>
+      <name>Henri Sivonen</name>
+      <email>hsivonen@iki.fi</email>
+      <url>http://hsivonen.iki.fi/</url>
+    </developer>
+  </developers>
+  <licenses>
+    <license>
+      <name>The MIT License</name>
+      <url>http://www.opensource.org/licenses/mit-license.php</url>
+      <distribution>repo</distribution>
+    </license>
+    <license>
+      <name>The (New) BSD License</name>
+      <url>http://www.opensource.org/licenses/bsd-license.php</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+  <scm>
+    <connection>scm:hg:http://hg.mozilla.org/projects/htmlparser/</connection>
+    <url>http://hg.mozilla.org/projects/htmlparser/</url>
+  </scm>
+  <build>
+    <sourceDirectory>${project.build.directory}/src</sourceDirectory>
+    <testSourceDirectory>${basedir}/test-src</testSourceDirectory>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <source>1.5</source>
+          <target>1.5</target>
+        </configuration>
+      </plugin>
+      <plugin>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <version>1.7</version>
+        <dependencies>
+          <dependency>
+            <groupId>com.sun</groupId>
+            <artifactId>tools</artifactId>
+            <version>1.5.0</version>
+            <scope>system</scope>
+            <systemPath>${java.home}/../lib/tools.jar</systemPath>
+          </dependency>
+        </dependencies>
+        <executions>
+          <execution>
+            <id>intitialize-sources</id>
+            <phase>initialize</phase>
+            <goals>
+              <goal>run</goal>
+            </goals>
+            <configuration>
+              <target>
+                <delete dir="${project.build.sourceDirectory}"/>
+                <mkdir dir="${project.build.sourceDirectory}"/>
+                <copy todir="${project.build.sourceDirectory}">
+                  <fileset dir="${basedir}/src"/>
+                </copy>
+              </target>
+            </configuration>
+          </execution>
+          <execution>
+            <id>tokenizer-hotspot-workaround</id>
+            <phase>process-sources</phase>
+            <goals>
+              <goal>run</goal>
+            </goals>
+            <configuration>
+              <target>
+                <property name="translator.sources" value="${basedir}/translator-src"/>
+                <property name="translator.classes" value="${project.build.directory}/translator-classes"/>
+                <mkdir dir="${translator.classes}"/>
+                <javac srcdir="${translator.sources}" includes="nu/validator/htmlparser/generator/ApplyHotSpotWorkaround.java" destdir="${translator.classes}" includeantruntime="false"/>
+                <java classname="nu.validator.htmlparser.generator.ApplyHotSpotWorkaround">
+                  <classpath>
+                    <pathelement location="${translator.classes}"/>
+                  </classpath>
+                  <arg value="${project.build.sourceDirectory}/nu/validator/htmlparser/impl/Tokenizer.java"/>
+                  <arg value="${project.build.sourceDirectory}/nu/validator/htmlparser/impl/HotSpotWorkaround.txt"/>
+                </java>
+              </target>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <skip>true</skip>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.felix</groupId>
+        <artifactId>maven-bundle-plugin</artifactId>
+        <version>2.3.7</version>
+        <extensions>true</extensions>
+        <configuration>
+          <archive>
+            <addMavenDescriptor>false</addMavenDescriptor>
+          </archive>
+          <instructions>
+            <Bundle-Name>${project.name}</Bundle-Name>
+            <Bundle-SymbolicName>nu.validator.htmlparser</Bundle-SymbolicName>
+            <Bundle-Version>${project.version}</Bundle-Version>
+            <Bundle-RequiredExecutionEnvironment>J2SE-1.5</Bundle-RequiredExecutionEnvironment>
+            <_removeheaders>Built-By,Bnd-LastModified</_removeheaders>
+          </instructions>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>rpm-maven-plugin</artifactId>
+        <configuration>
+          <release>1</release>
+          <copyright>The MIT License</copyright>
+          <group>Development/Java</group>
+          <workarea>/var/tmp/${project.build.finalName}</workarea>
+          <defineStatements>
+            <defineStatement>_javadir ${rpm.java.dir}</defineStatement>
+            <defineStatement>_javadocdir ${rpm.javadoc.dir}</defineStatement>
+          </defineStatements>
+          <mappings>
+            <mapping>
+              <directory>${rpm.java.dir}</directory>
+              <filemode>644</filemode>
+              <username>root</username>
+              <groupname>root</groupname>
+              <sources>
+                <source>
+                  <location>${project.build.directory}/${project.build.finalName}.jar</location>
+                </source>
+              </sources>
+            </mapping>
+            <mapping>
+              <directory>${rpm.javadoc.dir}/${project.build.finalName}</directory>
+              <filemode>644</filemode>
+              <username>root</username>
+              <groupname>root</groupname>
+              <sources>
+                <source>
+                  <location>${project.build.directory}/apidocs</location>
+                </source>
+              </sources>
+            </mapping>
+          </mappings>
+          <install>%__ln_s ${project.build.finalName}.jar %{buildroot}%{_javadir}/${project.name}.jar</install>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+  <dependencies>
+    <dependency>
+      <groupId>com.ibm.icu</groupId>
+      <artifactId>icu4j</artifactId>
+      <version>4.0.1</version>
+      <scope>compile</scope>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>xom</groupId>
+      <artifactId>xom</artifactId>
+      <version>1.1</version>
+      <scope>compile</scope>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>net.sourceforge.jchardet</groupId>
+      <artifactId>jchardet</artifactId>
+      <version>1.0</version>
+      <scope>compile</scope>
+      <optional>true</optional>
+    </dependency>
+    <dependency>
+      <groupId>com.sdicons.jsontools</groupId>
+      <artifactId>jsontools-core</artifactId>
+      <version>1.4</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+  <properties>
+    <rpm.java.dir>/usr/share/java</rpm.java.dir>
+    <rpm.javadoc.dir>/usr/share/javadoc</rpm.javadoc.dir>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
+</project>

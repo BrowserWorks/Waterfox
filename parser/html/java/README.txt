@@ -1,7 +1,6 @@
 If this is your first time building the HTML5 parser, you need to execute the
-following commands (from this directory) to bootstrap the translation:
+following commands (from this directory) to accomplish the translation:
 
-  make sync             # fetch remote source files and licenses
   make translate        # perform the Java-to-C++ translation from the remote
                         # sources
   make named_characters # Generate tables for named character tokenization
@@ -13,42 +12,32 @@ repository by retyping 'make translate' in this directory.
 
 The makefile supports the following targets:
 
-sync_htmlparser:
-  Retrieves the HTML parser and Java to C++ translator sources from Mozilla's
-  htmlparser repository.
-sync_javaparser:
-  Retrieves the javaparser sources from GitHub.
-sync:
-  Runs both sync_javaparser and sync_htmlparser.
 javaparser:
   Builds the javaparser library retrieved earlier by sync_javaparser.
 translator:
   Runs the javaparser target and then builds the Java to C++ translator from
-  sources retrieved earlier by sync_htmlparser.
+  sources.
 libs:
   The default target. Alias for translator
 translate:
+  Runs the translator target and then translates the HTML parser sources and
+  copys the parser impl java sources to ../javasrc.
+translate-javasrc:
   Runs the translator target and then translates the HTML parser sources
-  retrieved by sync_htmlparser copying the Java sources to ../javasrc.
-translate_from_snapshot:
-  Runs the translator target and then translates the HTML parser sources
-  stored in ../javasrc.
-named_characters:
+  stored in ../javasrc. (Deprecated)
+named-characters:
   Generates data tables for named character tokenization.
-clean_javaparser:
+clean-javaparser:
   Removes the build products of the javaparser target.
-clean_htmlparser:
+clean-htmlparser:
   Removes the build products of the translator target.
 clean:
   Runs both clean_javaparser and clean_htmlparser.
 
 ## How to add an attribute
 
-# starting from the root of a mozilla-central checkout
-cd parser/html/java/
-make sync
-# now you have a clone of https://hg.mozilla.org/projects/htmlparser/ in parser/html/java/htmlparser/
-cd htmlparser/src/
+# starting from the root of a Waterfox checkout
+cd parser/html/java/htmlparser/src/
 $EDITOR nu/validator/htmlparser/impl/AttributeName.java
 # Search for the word "uncomment" and uncomment stuff according to the comments that talk about uncommenting
 # Duplicate the declaration a normal attribute (nothings special in SVG mode, etc.). Let's use "alt", since it's the first one.
@@ -68,11 +57,8 @@ cd ../../..
 ## How to add an element
 
 # First, add an entry to parser/htmlparser/nsHTMLTagList.h or dom/svg/SVGTagList.h!
-# Then, starting from the root of a mozilla-central checkout
-cd parser/html/java/
-make sync
-# now you have a clone of https://hg.mozilla.org/projects/htmlparser/ in parser/html/java/htmlparser/
-cd htmlparser/src/
+# Then, starting from the root of a Waterfox checkout
+cd parser/html/java/htmlparser/src/
 $EDITOR nu/validator/htmlparser/impl/ElementName.java
 # Search for the word "uncomment" and uncomment stuff according to the comments that talk about uncommenting
 # Duplicate the declaration a normal element. Let's use "bdo", since it's the first normal one.

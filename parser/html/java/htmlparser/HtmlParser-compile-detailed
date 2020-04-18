@@ -1,0 +1,3 @@
+#!/bin/sh
+APPDIR=`dirname $0`;
+java -XstartOnFirstThread -Xmx256M -cp "$APPDIR/src:$APPDIR/gwt-src:$APPDIR/super:/Developer/gwt-mac-1.5.1/gwt-user.jar:/Developer/gwt-mac-1.5.1/gwt-dev-mac.jar" com.google.gwt.dev.GWTCompiler -style DETAILED -out "$APPDIR/www" "$@" nu.validator.htmlparser.HtmlParser;

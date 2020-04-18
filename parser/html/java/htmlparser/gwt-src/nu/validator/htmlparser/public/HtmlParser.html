@@ -1,0 +1,225 @@
+<!DOCTYPE HTML>
+<html>
+ <head>
+  <title>Live DOM Viewer</title>
+   <script type="text/javascript" language="javascript" src="nu.validator.htmlparser.HtmlParser.nocache.js"></script>
+  <style>
+   h1 { margin: 0; }
+   h2 { font-size: small; margin: 1em 0 0; }
+   p, ul, pre { margin: 0; }
+   p { border: inset thin; }
+   textarea { width: 100%; -width: 99%; height: 8em; border: 0; }
+   iframe { width: 100%; height: 12em; border: 0; }
+/* iframe.large { height: 24em; } */
+   pre { border: inset thin; padding: 0.5em; color: gray; }
+   pre samp { color: black; }
+   #dom { border: inset thin; padding: 0.5em 0.5em 0.5em 1em; color: black; min-height: 5em; font-family: monospace; background: white; }
+   #dom ul { padding: 0 0 0 1em; margin: 0; }
+   #dom li { padding: 0; margin: 0; list-style: none; position: relative; }
+   #dom li li { list-style: disc; }
+   #dom .t1 code { color: purple; font-weight: bold; }
+   #dom .t2 { font-style: normal; font-family: monospace; }
+   #dom .t2 .name { color: black; font-weight: bold; }
+   #dom .t2 .value { color: blue; font-weight: normal; }
+   #dom .t3 code, #dom .t4 code, #dom .t5 code { color: gray; }
+   #dom .t7 code, #dom .t8 code { color: green; }
+   #dom span { font-style: italic; font-family: serif; }
+   #dom .t10 code { color: teal; }
+   #dom .misparented, #dom .misparented code { color: red; font-weight: bold; }
+   #dom.hidden, .hidden { visibility: hidden; margin: 0.5em 0; padding: 0; height: 0; min-height: 0; }
+   pre#log { color: black; font: small monospace; }
+   script + p { border: none; font-size: smaller; margin: 0.8em 0.3em; }
+  </style>
+  <style title="Tree View">
+   #dom li li { list-style: none; }
+   #dom li:first-child::before { position: absolute; top: 0; height: 0.6em; left: -0.75em; width: 0.5em; border-style: none none solid solid; content: ''; border-width: 0.1em; }
+   #dom li:not(:last-child)::after { position: absolute; top: 0; bottom: -0.6em; left: -0.75em; width: 0.5em; border-style: none none solid solid; content: ''; border-width: 0.1em; }
+  </style>
+  <script>
+   if (navigator.userAgent.match('Gecko/(\\d+)') && RegExp.$1 == '20060217' && RegExp.$1 != '00000000') {
+     var style = document.getElementsByTagName('style')[1];
+     style.parentNode.removeChild(style);
+   }
+  </script>
+ </head>
+ <body onload="init()">
+  <h1>Live DOM Viewer</h1>
+  <h2>Markup to test (<a href="data:," id="permalink" rel="bookmark">permalink</a>, <a href="javascript:up()">upload</a>, <a href="javascript:down()">download</a>, <a href="#" onclick="toggleVisibility(this); return false">hide</a>): <span id="updown-status"></span></h2>
+  <p><textarea oninput="updateInput(event)" onkeydown="updateInput(event)">&lt;!DOCTYPE html>
+...</textarea></p>
+  <h2><a href="data:," id="domview">DOM view</a> (<a href="#" onclick="toggleVisibility(this); return false;">hide</a>, <a href="#" onclick="updateDOM()">refresh</a>):</h2>
+  <ul id="dom"></ul>
+  <h2><a href="data:," id="link">Rendered view</a>: (<a href="#" onclick="toggleVisibility(this); return false;">hide</a><!--, <a href="#" onclick="grow(this)">grow</a>-->):</h2>
+  <p><iframe src="blank.html"></iframe></p> <!-- data:, -->
+  <h2>innerHTML view: (<a href="#" onclick="toggleVisibility(this); return false;">show</a>, <a href="#" onclick="updateDOM()">refresh</a>):</h2>
+  <pre class="hidden">&lt;!DOCTYPE HTML>&lt;html><samp></samp>&lt;/html></pre>
+  <h2>Log: (<a href="#" onclick="toggleVisibility(this); return false;">hide</a>):</h2>
+  <pre id="log">Script not loaded.</pre>
+  <script>
+   var iframe = document.getElementsByTagName('iframe')[0];
+   var textarea = document.getElementsByTagName('textarea')[0];
+   var pre = document.getElementsByTagName('samp')[0];
+   var dom = document.getElementsByTagName('ul')[0];
+   var log = document.getElementById('log');
+   var updownStatus = document.getElementById('updown-status');
+   var delayedUpdater = 0;
+   var lastString = '';
+   var logBuffer = '';
+   var logBuffering = false;
+   function updateInput(event) {
+     if (delayedUpdater) {
+       clearTimeout(delayedUpdater);
+       delayedUpdater = 0;
+     }
+     delayedUpdater = setTimeout(update, 100);
+   }
+   function afterParse() {
+       lastString = textarea.value;
+       setTimeout(updateDOM, 100);
+       updown('');
+   }
+   function update() {
+     if (lastString != textarea.value) {
+       logBuffering = true;
+       document.getElementById('link').href = 'data:text/html;charset=utf-8,' + encodeURIComponent(textarea.value);
+       iframe.contentWindow.onerror = function (a, b, c) {
+         record('error: ' + a + ' on line ' + c);
+       }
+       iframe.contentWindow.w = function (s) {
+         record('log: ' + s);
+       }
+       window.parseHtmlDocument(textarea.value, iframe.contentWindow.document, afterParse, null);
+     }
+   }
+   function updateDOM() {
+     while (pre.firstChild) pre.removeChild(pre.firstChild);
+     pre.appendChild(document.createTextNode(iframe.contentWindow.document.documentElement.innerHTML));
+     printDOM(dom, iframe.contentWindow.document);
+     document.getElementById('domview').href = 'data:text/plain;charset=utf-8,<ul class="domTree">' + encodeURIComponent(dom.innerHTML + '</ul>');
+     document.getElementById('permalink').href = '?' + encodeURIComponent(textarea.value);
+     record('rendering mode: ' + iframe.contentWindow.document.compatMode);
+     if (iframe.contentWindow.document.title)
+       record('document.title: ' + iframe.contentWindow.document.title);
+     else
+       record('document has no title');
+     while (log.firstChild != log.lastChild)
+       log.removeChild(log.lastChild);
+     log.firstChild.data = logBuffer;
+     logBuffering = false;
+     logBuffer = '';
+   }
+   function printDOM(ul, node) {
+     while (ul.firstChild) ul.removeChild(ul.firstChild);
+     for (var i = 0; i < node.childNodes.length; i += 1) {
+       var li = document.createElement('li');
+       li.className = 't' + node.childNodes[i].nodeType;
+       if (node.childNodes[i].nodeType == 10) {
+         li.appendChild(document.createTextNode('DOCTYPE: '));
+       }
+       var code = document.createElement('code');
+       code.appendChild(document.createTextNode(node.childNodes[i].nodeName));
+       li.appendChild(code);
+       if (node.childNodes[i].nodeValue) {
+                 var span = document.createElement('span');
+         span.appendChild(document.createTextNode(node.childNodes[i].nodeValue));
+         li.appendChild(document.createTextNode(': '));
+         li.appendChild(span);
+       }
+       if (node.childNodes[i].attributes)
+         for (var j = 0; j < node.childNodes[i].attributes.length; j += 1) {
+           if (node.childNodes[i].attributes[j].specified) {
+             var attName = document.createElement('code');
+             attName.appendChild(document.createTextNode(node.childNodes[i].attributes[j].nodeName));
+             attName.className = 'attribute name';
+             var attValue = document.createElement('code');
+             attValue.appendChild(document.createTextNode(node.childNodes[i].attributes[j].nodeValue));
+             attValue.className = 'attribute value';
+             var att = document.createElement('span');
+             att.className = 't2';
+             att.appendChild(attName);
+             att.appendChild(document.createTextNode('="'));
+             att.appendChild(attValue);
+             att.appendChild(document.createTextNode('"'));
+             li.appendChild(document.createTextNode(' '));
+             li.appendChild(att);
+           }
+         }
+       if (node.childNodes[i].parentNode == node) {
+         if (node.childNodes[i].childNodes.length) {
+           var ul2 = document.createElement('ul');
+           li.appendChild(ul2);
+           printDOM(ul2, node.childNodes[i]);
+         }
+       } else {
+         li.className += ' misparented';
+       }
+       ul.appendChild(li);
+     }
+   }
+   function toggleVisibility(link) {
+     var n = link.parentNode.nextSibling;
+     if (n.nodeType == 3 /* text node */) n = n.nextSibling; // we should always do this but in IE, text nodes vanish
+     n.className = (n.className == "hidden") ? '' : 'hidden';
+     link.firstChild.data = n.className == "hidden" ? "show" : "hide";
+   }
+/*
+   function grow(link) {
+     var n = link.parentNode.nextSibling;
+     if (n.nodeType == 3 /-* text node *-/) n = n.nextSibling; // we should always do this but in IE, text nodes vanish
+     n.className = (n.className == "large") ? '' : 'large';
+     link.firstChild.data = n.className == "grow" ? "shrink" : "grow";
+   }
+*/
+   function down() {
+     updown('downloading...');
+     var request = window.XMLHttpRequest ? new XMLHttpRequest() : new ActiveXObject("Microsoft.XMLHTTP");
+     request.onreadystatechange = function () {
+       updown('downloading... ' + request.readyState + '/4');
+       if (request.readyState == 4) {
+         textarea.value = request.responseText;
+         update();
+         updown('downloaded');
+       }
+     };
+     request.open('GET', 'clipboard.cgi', true);
+     request.send(null);
+   }
+   function up() {
+     updown('uploading...');
+     var request = window.XMLHttpRequest ? new XMLHttpRequest() : new ActiveXObject("Microsoft.XMLHTTP");
+     request.onreadystatechange = function () {
+       updown('uploading... ' + request.readyState + '/4');
+       if (request.readyState == 4) {
+         updown('uploaded');
+       }
+     };
+     request.open('POST', 'clipboard.cgi', true);
+     request.setRequestHeader('Content-Type', 'text/plain');
+     request.send(textarea.value);
+   }
+   function init() {
+     var uri = location.search;
+     if (uri)
+       textarea.value = decodeURIComponent(uri.substring(1, uri.length));
+     update();
+   }
+   function record(s) {
+     if (logBuffering)
+       logBuffer += s + '\r\n';
+     else
+       log.appendChild(document.createTextNode(s + '\r\n'));
+   }
+   function updown(s) {
+     while (updownStatus.firstChild) updownStatus.removeChild(updownStatus.firstChild);
+     updownStatus.appendChild(document.createTextNode(s));
+   }
+  </script>
+  <p>This script puts a function <code>w(<var>s</var>)</code> into the
+  global scope of the test page, where <var>s</vaR> is a string to
+  output to the log. Also, five files are accessible in the current
+  directory for test purposes: <code>image</code> (a GIF image),
+  <code>flash</code> (a Flash file), <code>script</code> (a JS file),
+  <code>style</code> (a CSS file), and <code>document</code> (an HTML
+  file).</p>
+ </body>
+</html>

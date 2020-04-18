@@ -130,7 +130,9 @@ nsHtml5Tokenizer::isViewingXmlSource()
   return viewingXmlSource;
 }
 
-void nsHtml5Tokenizer::setState(int32_t specialTokenizerState) {
+void
+nsHtml5Tokenizer::setState(int32_t specialTokenizerState)
+{
   this->stateSave = specialTokenizerState;
   this->endTagExpectation = nullptr;
   this->endTagExpectationAsArray = nullptr;
@@ -2415,7 +2417,6 @@ nsHtml5Tokenizer::stateLoop(int32_t state, char16_t c, int32_t pos, char16_t* bu
             }
           }
         }
-
       }
       case SCRIPT_DATA: {
         for (; ; ) {

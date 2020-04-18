@@ -105,24 +105,24 @@ public:
   inline bool isInterned()
   {
     return !(flags & nsHtml5ElementName::NOT_INTERNED);
-    }
+  }
 
-    inline static int32_t levelOrderBinarySearch(jArray<int32_t, int32_t> data,
-                                                 int32_t key)
-    {
-      int32_t n = data.length;
-      int32_t i = 0;
-      while (i < n) {
-        int32_t val = data[i];
-        if (val < key) {
-          i = 2 * i + 2;
-        } else if (val > key) {
-          i = 2 * i + 1;
-        } else {
-          return i;
-        }
+  inline static int32_t levelOrderBinarySearch(jArray<int32_t, int32_t> data,
+                                               int32_t key)
+  {
+    int32_t n = data.length;
+    int32_t i = 0;
+    while (i < n) {
+      int32_t val = data[i];
+      if (val < key) {
+        i = 2 * i + 2;
+      } else if (val > key) {
+        i = 2 * i + 1;
+      } else {
+        return i;
       }
-      return -1;
+    }
+    return -1;
     }
 
     inline static nsHtml5ElementName* elementNameByBuffer(
