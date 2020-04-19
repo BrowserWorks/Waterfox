@@ -65,7 +65,7 @@ using mozilla::AutoJSContext;
     }                                                             \
     ShadowRoot* shadow = ShadowRoot::FromNode(node);              \
     if (shadow) {                                                 \
-      node = shadow->GetPoolHost();                               \
+      node = shadow->GetHost();                                   \
     } else {                                                      \
       node = node->GetParentNode();                               \
     }                                                             \
@@ -93,7 +93,7 @@ using mozilla::AutoJSContext;
     }                                                             \
     ShadowRoot* shadow = ShadowRoot::FromNode(node);              \
     if (shadow) {                                                 \
-      node = shadow->GetPoolHost();                               \
+      node = shadow->GetHost();                                   \
     } else {                                                      \
       node = node->GetParentNode();                               \
     }                                                             \

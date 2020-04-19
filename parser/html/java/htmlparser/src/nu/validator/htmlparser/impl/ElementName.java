@@ -45,8 +45,8 @@ import nu.validator.htmlparser.annotation.Unsigned;
 import nu.validator.htmlparser.common.Interner;
 
 public final class ElementName
-        // uncomment when regenerating self
-//        implements Comparable<ElementName>
+// uncomment when regenerating self
+// implements Comparable<ElementName>
 {
 
     /**
@@ -265,394 +265,394 @@ public final class ElementName
 
     // START CODE ONLY USED FOR GENERATING CODE uncomment and run to regenerate
 
-//    private static final Pattern HTML_TAG_DEF = Pattern.compile(
-//            "^HTML_TAG\\(([^,]+),\\s*([^,]+),\\s*[^,]+\\).*$");
+    //  private static final Pattern HTML_TAG_DEF = Pattern.compile(
+    //          "^HTML_TAG\\(([^,]+),\\s*([^,]+),\\s*[^,]+\\).*$");
 
-//    private static final Pattern HTML_HTMLELEMENT_TAG_DEF = Pattern.compile(
-//            "^HTML_HTMLELEMENT_TAG\\(([^\\)]+)\\).*$");
+    //  private static final Pattern HTML_HTMLELEMENT_TAG_DEF = Pattern.compile(
+    //          "^HTML_HTMLELEMENT_TAG\\(([^\\)]+)\\).*$");
 
-//    private static final Pattern SVG_TAG_DEF = Pattern.compile(
-//            "^SVG_(?:FROM_PARSER_)?TAG\\(([^,]+),\\s*([^\\)]+)\\).*$");
+    //  private static final Pattern SVG_TAG_DEF = Pattern.compile(
+    //          "^SVG_(?:FROM_PARSER_)?TAG\\(([^,]+),\\s*([^\\)]+)\\).*$");
 
-//    private static final Map<String, String> htmlMap = new HashMap<String, String>();
+    //  private static final Map<String, String> htmlMap = new HashMap<String, String>();
 
-//    private static final Map<String, String> svgMap = new HashMap<String, String>();
+    //  private static final Map<String, String> svgMap = new HashMap<String, String>();
 
-//    private static void ingestHtmlTags(File htmlList) throws IOException {
-//        // This doesn't need to be efficient, so let's make it easy to write.
-//        BufferedReader htmlReader = new BufferedReader(
-//                new InputStreamReader(new FileInputStream(htmlList), "utf-8"));
-//        try {
-//            String line;
-//            while ((line = htmlReader.readLine()) != null) {
-//                if (!line.startsWith("HTML_")) {
-//                    continue;
-//                }
-//                if (line.startsWith("HTML_OTHER")) {
-//                    continue;
-//                }
-//                Matcher m = HTML_TAG_DEF.matcher(line);
-//                if (m.matches()) {
-//                    String iface = m.group(2);
-//                    if ("Unknown".equals(iface)) {
-//                        continue;
-//                    }
-//                    htmlMap.put(m.group(1), "NS_NewHTML" + iface + "Element");
-//                } else {
-//                    m = HTML_HTMLELEMENT_TAG_DEF.matcher(line);
-//                    if (!m.matches()) {
-//                        throw new RuntimeException(
-//                                "Malformed HTML element definition: " + line);
-//                    }
-//                    htmlMap.put(m.group(1), "NS_NewHTMLElement");
-//                }
-//            }
-//        } finally {
-//            htmlReader.close();
-//        }
-//    }
+    //  private static void ingestHtmlTags(File htmlList) throws IOException {
+    //      // This doesn't need to be efficient, so let's make it easy to write.
+    //      BufferedReader htmlReader = new BufferedReader(
+    //              new InputStreamReader(new FileInputStream(htmlList), "utf-8"));
+    //      try {
+    //          String line;
+    //          while ((line = htmlReader.readLine()) != null) {
+    //              if (!line.startsWith("HTML_")) {
+    //                  continue;
+    //              }
+    //              if (line.startsWith("HTML_OTHER")) {
+    //                  continue;
+    //              }
+    //              Matcher m = HTML_TAG_DEF.matcher(line);
+    //              if (m.matches()) {
+    //                  String iface = m.group(2);
+    //                  if ("Unknown".equals(iface)) {
+    //                      continue;
+    //                  }
+    //                  htmlMap.put(m.group(1), "NS_NewHTML" + iface + "Element");
+    //              } else {
+    //                  m = HTML_HTMLELEMENT_TAG_DEF.matcher(line);
+    //                  if (!m.matches()) {
+    //                      throw new RuntimeException(
+    //                              "Malformed HTML element definition: " + line);
+    //                  }
+    //                  htmlMap.put(m.group(1), "NS_NewHTMLElement");
+    //              }
+    //          }
+    //      } finally {
+    //          htmlReader.close();
+    //      }
+    //  }
 
-//    private static void ingestSvgTags(File svgList) throws IOException {
-//        // This doesn't need to be efficient, so let's make it easy to write.
-//        BufferedReader svgReader = new BufferedReader(
-//                new InputStreamReader(new FileInputStream(svgList), "utf-8"));
-//        try {
-//            String line;
-//            while ((line = svgReader.readLine()) != null) {
-//                if (!line.startsWith("SVG_")) {
-//                    continue;
-//                }
-//                Matcher m = SVG_TAG_DEF.matcher(line);
-//                if (!m.matches()) {
-//                    throw new RuntimeException(
-//                            "Malformed SVG element definition: " + line);
-//                }
-//                String name = m.group(1);
-//                if ("svgSwitch".equals(name)) {
-//                    name = "switch";
-//                }
-//                svgMap.put(name, "NS_NewSVG" + m.group(2) + "Element");
-//            }
-//        } finally {
-//            svgReader.close();
-//        }
-//    }
+    //  private static void ingestSvgTags(File svgList) throws IOException {
+    //      // This doesn't need to be efficient, so let's make it easy to write.
+    //      BufferedReader svgReader = new BufferedReader(
+    //              new InputStreamReader(new FileInputStream(svgList), "utf-8"));
+    //      try {
+    //          String line;
+    //          while ((line = svgReader.readLine()) != null) {
+    //              if (!line.startsWith("SVG_")) {
+    //                  continue;
+    //              }
+    //              Matcher m = SVG_TAG_DEF.matcher(line);
+    //              if (!m.matches()) {
+    //                  throw new RuntimeException(
+    //                          "Malformed SVG element definition: " + line);
+    //              }
+    //              String name = m.group(1);
+    //              if ("svgSwitch".equals(name)) {
+    //                  name = "switch";
+    //              }
+    //              svgMap.put(name, "NS_NewSVG" + m.group(2) + "Element");
+    //          }
+    //      } finally {
+    //          svgReader.close();
+    //      }
+    //  }
 
-//    private static String htmlCreator(String name) {
-//        String creator = htmlMap.remove(name);
-//        if (creator != null) {
-//            return creator;
-//        }
-//        return "NS_NewHTMLUnknownElement";
-//    }
+    //  private static String htmlCreator(String name) {
+    //      String creator = htmlMap.remove(name);
+    //      if (creator != null) {
+    //          return creator;
+    //      }
+    //      return "NS_NewHTMLUnknownElement";
+    //  }
 
-//    private static String svgCreator(String name) {
-//        String creator = svgMap.remove(name);
-//        if (creator != null) {
-//            return creator;
-//        }
-//        return "NS_NewSVGUnknownElement";
-//    }
+    //  private static String svgCreator(String name) {
+    //      String creator = svgMap.remove(name);
+    //      if (creator != null) {
+    //          return creator;
+    //      }
+    //      return "NS_NewSVGUnknownElement";
+    //  }
 
-//    /**
-//     * @see java.lang.Object#toString()
-//     */
-//    @Override public String toString() {
-//        return "(\"" + name + "\", \"" + camelCaseName + "\", \n// CPP"
-//                + "ONLY: " + htmlCreator(name) + ",\n//CPP" + "ONLY: "
-//                + svgCreator(camelCaseName) + ", \n" + decomposedFlags() + ")";
-//    }
+    //  /**
+    //   * @see java.lang.Object#toString()
+    //   */
+    //  @Override public String toString() {
+    //      return "(\"" + name + "\", \"" + camelCaseName + "\", \n// CPP"
+    //              + "ONLY: " + htmlCreator(name) + ",\n// CPP" + "ONLY: "
+    //              + svgCreator(camelCaseName) + ", \n" + decomposedFlags() + ")";
+    //  }
 
-//    private String decomposedFlags() {
-//        StringBuilder buf = new StringBuilder("TreeBuilder.");
-//        buf.append(treeBuilderGroupToName());
-//        if ((flags & SPECIAL) != 0) {
-//            buf.append(" | SPECIAL");
-//        }
-//        if ((flags & FOSTER_PARENTING) != 0) {
-//            buf.append(" | FOSTER_PARENTING");
-//        }
-//        if ((flags & SCOPING) != 0) {
-//            buf.append(" | SCOPING");
-//        }
-//        if ((flags & SCOPING_AS_MATHML) != 0) {
-//            buf.append(" | SCOPING_AS_MATHML");
-//        }
-//        if ((flags & SCOPING_AS_SVG) != 0) {
-//            buf.append(" | SCOPING_AS_SVG");
-//        }
-//        if ((flags & OPTIONAL_END_TAG) != 0) {
-//            buf.append(" | OPTIONAL_END_TAG");
-//        }
-//        return buf.toString();
-//    }
+    //  private String decomposedFlags() {
+    //      StringBuilder buf = new StringBuilder("TreeBuilder.");
+    //      buf.append(treeBuilderGroupToName());
+    //      if ((flags & SPECIAL) != 0) {
+    //          buf.append(" | SPECIAL");
+    //      }
+    //      if ((flags & FOSTER_PARENTING) != 0) {
+    //          buf.append(" | FOSTER_PARENTING");
+    //      }
+    //      if ((flags & SCOPING) != 0) {
+    //          buf.append(" | SCOPING");
+    //      }
+    //      if ((flags & SCOPING_AS_MATHML) != 0) {
+    //          buf.append(" | SCOPING_AS_MATHML");
+    //      }
+    //      if ((flags & SCOPING_AS_SVG) != 0) {
+    //          buf.append(" | SCOPING_AS_SVG");
+    //      }
+    //      if ((flags & OPTIONAL_END_TAG) != 0) {
+    //          buf.append(" | OPTIONAL_END_TAG");
+    //      }
+    //      return buf.toString();
+    //  }
 
-//    private String constName() {
-//        char[] buf = new char[name.length()];
-//        for (int i = 0; i < name.length(); i++) {
-//            char c = name.charAt(i);
-//            if (c == '-') {
-//                if (!"annotation-xml".equals(name)) {
-//                    throw new RuntimeException(
-//                            "Non-annotation-xml element name with hyphen: "
-//                                    + name);
-//                }
-//                buf[i] = '_';
-//            } else if (c >= '0' && c <= '9') {
-//                buf[i] = c;
-//            } else {
-//                buf[i] = (char) (c - 0x20);
-//            }
-//        }
-//        return new String(buf);
-//    }
+    //  private String constName() {
+    //      char[] buf = new char[name.length()];
+    //      for (int i = 0; i < name.length(); i++) {
+    //          char c = name.charAt(i);
+    //          if (c == '-') {
+    //              if (!"annotation-xml".equals(name)) {
+    //                  throw new RuntimeException(
+    //                          "Non-annotation-xml element name with hyphen: "
+    //                                  + name);
+    //              }
+    //              buf[i] = '_';
+    //          } else if (c >= '0' && c <= '9') {
+    //              buf[i] = c;
+    //          } else {
+    //              buf[i] = (char) (c - 0x20);
+    //          }
+    //      }
+    //      return new String(buf);
+    //  }
 
-//    private int hash() {
-//        return bufToHash(name.toCharArray(), name.length());
-//    }
+    //  private int hash() {
+    //      return bufToHash(name.toCharArray(), name.length());
+    //  }
 
-//    public int compareTo(ElementName other) {
-//        int thisHash = this.hash();
-//        int otherHash = other.hash();
-//        if (thisHash < otherHash) {
-//            return -1;
-//        } else if (thisHash == otherHash) {
-//            return 0;
-//        } else {
-//            return 1;
-//        }
-//    }
+    //  public int compareTo(ElementName other) {
+    //      int thisHash = this.hash();
+    //      int otherHash = other.hash();
+    //      if (thisHash < otherHash) {
+    //          return -1;
+    //      } else if (thisHash == otherHash) {
+    //          return 0;
+    //      } else {
+    //          return 1;
+    //      }
+    //  }
 
-//    private String treeBuilderGroupToName() {
-//        switch (getGroup()) {
-//            case TreeBuilder.OTHER:
-//                return "OTHER";
-//            case TreeBuilder.A:
-//                return "A";
-//            case TreeBuilder.BASE:
-//                return "BASE";
-//            case TreeBuilder.BODY:
-//                return "BODY";
-//            case TreeBuilder.BR:
-//                return "BR";
-//            case TreeBuilder.BUTTON:
-//                return "BUTTON";
-//            case TreeBuilder.CAPTION:
-//                return "CAPTION";
-//            case TreeBuilder.COL:
-//                return "COL";
-//            case TreeBuilder.COLGROUP:
-//                return "COLGROUP";
-//            case TreeBuilder.FONT:
-//                return "FONT";
-//            case TreeBuilder.FORM:
-//                return "FORM";
-//            case TreeBuilder.FRAME:
-//                return "FRAME";
-//            case TreeBuilder.FRAMESET:
-//                return "FRAMESET";
-//            case TreeBuilder.IMAGE:
-//                return "IMAGE";
-//            case TreeBuilder.INPUT:
-//                return "INPUT";
-//            case TreeBuilder.LI:
-//                return "LI";
-//            case TreeBuilder.LINK_OR_BASEFONT_OR_BGSOUND:
-//                return "LINK_OR_BASEFONT_OR_BGSOUND";
-//            case TreeBuilder.MATH:
-//                return "MATH";
-//            case TreeBuilder.META:
-//                return "META";
-//            case TreeBuilder.SVG:
-//                return "SVG";
-//            case TreeBuilder.HEAD:
-//                return "HEAD";
-//            case TreeBuilder.HR:
-//                return "HR";
-//            case TreeBuilder.HTML:
-//                return "HTML";
-//            case TreeBuilder.KEYGEN:
-//                return "KEYGEN";
-//            case TreeBuilder.NOBR:
-//                return "NOBR";
-//            case TreeBuilder.NOFRAMES:
-//                return "NOFRAMES";
-//            case TreeBuilder.NOSCRIPT:
-//                return "NOSCRIPT";
-//            case TreeBuilder.OPTGROUP:
-//                return "OPTGROUP";
-//            case TreeBuilder.OPTION:
-//                return "OPTION";
-//            case TreeBuilder.P:
-//                return "P";
-//            case TreeBuilder.PLAINTEXT:
-//                return "PLAINTEXT";
-//            case TreeBuilder.SCRIPT:
-//                return "SCRIPT";
-//            case TreeBuilder.SELECT:
-//                return "SELECT";
-//            case TreeBuilder.STYLE:
-//                return "STYLE";
-//            case TreeBuilder.TABLE:
-//                return "TABLE";
-//            case TreeBuilder.TEXTAREA:
-//                return "TEXTAREA";
-//            case TreeBuilder.TITLE:
-//                return "TITLE";
-//            case TreeBuilder.TEMPLATE:
-//                return "TEMPLATE";
-//            case TreeBuilder.TR:
-//                return "TR";
-//            case TreeBuilder.XMP:
-//                return "XMP";
-//            case TreeBuilder.TBODY_OR_THEAD_OR_TFOOT:
-//                return "TBODY_OR_THEAD_OR_TFOOT";
-//            case TreeBuilder.TD_OR_TH:
-//                return "TD_OR_TH";
-//            case TreeBuilder.DD_OR_DT:
-//                return "DD_OR_DT";
-//            case TreeBuilder.H1_OR_H2_OR_H3_OR_H4_OR_H5_OR_H6:
-//                return "H1_OR_H2_OR_H3_OR_H4_OR_H5_OR_H6";
-//            case TreeBuilder.OBJECT:
-//                return "OBJECT";
-//            case TreeBuilder.OUTPUT:
-//                return "OUTPUT";
-//            case TreeBuilder.MARQUEE_OR_APPLET:
-//                return "MARQUEE_OR_APPLET";
-//            case TreeBuilder.PRE_OR_LISTING:
-//                return "PRE_OR_LISTING";
-//            case TreeBuilder.B_OR_BIG_OR_CODE_OR_EM_OR_I_OR_S_OR_SMALL_OR_STRIKE_OR_STRONG_OR_TT_OR_U:
-//                return "B_OR_BIG_OR_CODE_OR_EM_OR_I_OR_S_OR_SMALL_OR_STRIKE_OR_STRONG_OR_TT_OR_U";
-//            case TreeBuilder.UL_OR_OL_OR_DL:
-//                return "UL_OR_OL_OR_DL";
-//            case TreeBuilder.IFRAME:
-//                return "IFRAME";
-//            case TreeBuilder.NOEMBED:
-//                return "NOEMBED";
-//            case TreeBuilder.EMBED:
-//                return "EMBED";
-//            case TreeBuilder.IMG:
-//                return "IMG";
-//            case TreeBuilder.AREA_OR_WBR:
-//                return "AREA_OR_WBR";
-//            case TreeBuilder.DIV_OR_BLOCKQUOTE_OR_CENTER_OR_MENU:
-//                return "DIV_OR_BLOCKQUOTE_OR_CENTER_OR_MENU";
-//            case TreeBuilder.FIELDSET:
-//                return "FIELDSET";
-//            case TreeBuilder.ADDRESS_OR_ARTICLE_OR_ASIDE_OR_DETAILS_OR_DIALOG_OR_DIR_OR_FIGCAPTION_OR_FIGURE_OR_FOOTER_OR_HEADER_OR_HGROUP_OR_MAIN_OR_NAV_OR_SECTION_OR_SUMMARY:
-//                return "ADDRESS_OR_ARTICLE_OR_ASIDE_OR_DETAILS_OR_DIALOG_OR_DIR_OR_FIGCAPTION_OR_FIGURE_OR_FOOTER_OR_HEADER_OR_HGROUP_OR_MAIN_OR_NAV_OR_SECTION_OR_SUMMARY";
-//            case TreeBuilder.RUBY_OR_SPAN_OR_SUB_OR_SUP_OR_VAR:
-//                return "RUBY_OR_SPAN_OR_SUB_OR_SUP_OR_VAR";
-//            case TreeBuilder.RB_OR_RTC:
-//                return "RB_OR_RTC";
-//            case TreeBuilder.RT_OR_RP:
-//                return "RT_OR_RP";
-//            case TreeBuilder.PARAM_OR_SOURCE_OR_TRACK:
-//                return "PARAM_OR_SOURCE_OR_TRACK";
-//            case TreeBuilder.MGLYPH_OR_MALIGNMARK:
-//                return "MGLYPH_OR_MALIGNMARK";
-//            case TreeBuilder.MI_MO_MN_MS_MTEXT:
-//                return "MI_MO_MN_MS_MTEXT";
-//            case TreeBuilder.ANNOTATION_XML:
-//                return "ANNOTATION_XML";
-//            case TreeBuilder.FOREIGNOBJECT_OR_DESC:
-//                return "FOREIGNOBJECT_OR_DESC";
-//            case TreeBuilder.MENUITEM:
-//                return "MENUITEM";
-//        }
-//        return null;
-//    }
+    //  private String treeBuilderGroupToName() {
+    //      switch (getGroup()) {
+    //          case TreeBuilder.OTHER:
+    //              return "OTHER";
+    //          case TreeBuilder.A:
+    //              return "A";
+    //          case TreeBuilder.BASE:
+    //              return "BASE";
+    //          case TreeBuilder.BODY:
+    //              return "BODY";
+    //          case TreeBuilder.BR:
+    //              return "BR";
+    //          case TreeBuilder.BUTTON:
+    //              return "BUTTON";
+    //          case TreeBuilder.CAPTION:
+    //              return "CAPTION";
+    //          case TreeBuilder.COL:
+    //              return "COL";
+    //          case TreeBuilder.COLGROUP:
+    //              return "COLGROUP";
+    //          case TreeBuilder.FONT:
+    //              return "FONT";
+    //          case TreeBuilder.FORM:
+    //              return "FORM";
+    //          case TreeBuilder.FRAME:
+    //              return "FRAME";
+    //          case TreeBuilder.FRAMESET:
+    //              return "FRAMESET";
+    //          case TreeBuilder.IMAGE:
+    //              return "IMAGE";
+    //          case TreeBuilder.INPUT:
+    //              return "INPUT";
+    //          case TreeBuilder.LI:
+    //              return "LI";
+    //          case TreeBuilder.LINK_OR_BASEFONT_OR_BGSOUND:
+    //              return "LINK_OR_BASEFONT_OR_BGSOUND";
+    //          case TreeBuilder.MATH:
+    //              return "MATH";
+    //          case TreeBuilder.META:
+    //              return "META";
+    //          case TreeBuilder.SVG:
+    //              return "SVG";
+    //          case TreeBuilder.HEAD:
+    //              return "HEAD";
+    //          case TreeBuilder.HR:
+    //              return "HR";
+    //          case TreeBuilder.HTML:
+    //              return "HTML";
+    //          case TreeBuilder.KEYGEN:
+    //              return "KEYGEN";
+    //          case TreeBuilder.NOBR:
+    //              return "NOBR";
+    //          case TreeBuilder.NOFRAMES:
+    //              return "NOFRAMES";
+    //          case TreeBuilder.NOSCRIPT:
+    //              return "NOSCRIPT";
+    //          case TreeBuilder.OPTGROUP:
+    //              return "OPTGROUP";
+    //          case TreeBuilder.OPTION:
+    //              return "OPTION";
+    //          case TreeBuilder.P:
+    //              return "P";
+    //          case TreeBuilder.PLAINTEXT:
+    //              return "PLAINTEXT";
+    //          case TreeBuilder.SCRIPT:
+    //              return "SCRIPT";
+    //          case TreeBuilder.SELECT:
+    //              return "SELECT";
+    //          case TreeBuilder.STYLE:
+    //              return "STYLE";
+    //          case TreeBuilder.TABLE:
+    //              return "TABLE";
+    //          case TreeBuilder.TEXTAREA:
+    //              return "TEXTAREA";
+    //          case TreeBuilder.TITLE:
+    //              return "TITLE";
+    //          case TreeBuilder.TEMPLATE:
+    //              return "TEMPLATE";
+    //          case TreeBuilder.TR:
+    //              return "TR";
+    //          case TreeBuilder.XMP:
+    //              return "XMP";
+    //          case TreeBuilder.TBODY_OR_THEAD_OR_TFOOT:
+    //              return "TBODY_OR_THEAD_OR_TFOOT";
+    //          case TreeBuilder.TD_OR_TH:
+    //              return "TD_OR_TH";
+    //          case TreeBuilder.DD_OR_DT:
+    //              return "DD_OR_DT";
+    //          case TreeBuilder.H1_OR_H2_OR_H3_OR_H4_OR_H5_OR_H6:
+    //              return "H1_OR_H2_OR_H3_OR_H4_OR_H5_OR_H6";
+    //          case TreeBuilder.OBJECT:
+    //              return "OBJECT";
+    //          case TreeBuilder.OUTPUT:
+    //              return "OUTPUT";
+    //          case TreeBuilder.MARQUEE_OR_APPLET:
+    //              return "MARQUEE_OR_APPLET";
+    //          case TreeBuilder.PRE_OR_LISTING:
+    //              return "PRE_OR_LISTING";
+    //          case TreeBuilder.B_OR_BIG_OR_CODE_OR_EM_OR_I_OR_S_OR_SMALL_OR_STRIKE_OR_STRONG_OR_TT_OR_U:
+    //              return "B_OR_BIG_OR_CODE_OR_EM_OR_I_OR_S_OR_SMALL_OR_STRIKE_OR_STRONG_OR_TT_OR_U";
+    //          case TreeBuilder.UL_OR_OL_OR_DL:
+    //              return "UL_OR_OL_OR_DL";
+    //          case TreeBuilder.IFRAME:
+    //              return "IFRAME";
+    //          case TreeBuilder.NOEMBED:
+    //              return "NOEMBED";
+    //          case TreeBuilder.EMBED:
+    //              return "EMBED";
+    //          case TreeBuilder.IMG:
+    //              return "IMG";
+    //          case TreeBuilder.AREA_OR_WBR:
+    //              return "AREA_OR_WBR";
+    //          case TreeBuilder.DIV_OR_BLOCKQUOTE_OR_CENTER_OR_MENU:
+    //              return "DIV_OR_BLOCKQUOTE_OR_CENTER_OR_MENU";
+    //          case TreeBuilder.FIELDSET:
+    //              return "FIELDSET";
+    //          case TreeBuilder.ADDRESS_OR_ARTICLE_OR_ASIDE_OR_DETAILS_OR_DIALOG_OR_DIR_OR_FIGCAPTION_OR_FIGURE_OR_FOOTER_OR_HEADER_OR_HGROUP_OR_MAIN_OR_NAV_OR_SECTION_OR_SUMMARY:
+    //              return "ADDRESS_OR_ARTICLE_OR_ASIDE_OR_DETAILS_OR_DIALOG_OR_DIR_OR_FIGCAPTION_OR_FIGURE_OR_FOOTER_OR_HEADER_OR_HGROUP_OR_MAIN_OR_NAV_OR_SECTION_OR_SUMMARY";
+    //          case TreeBuilder.RUBY_OR_SPAN_OR_SUB_OR_SUP_OR_VAR:
+    //              return "RUBY_OR_SPAN_OR_SUB_OR_SUP_OR_VAR";
+    //          case TreeBuilder.RB_OR_RTC:
+    //              return "RB_OR_RTC";
+    //          case TreeBuilder.RT_OR_RP:
+    //              return "RT_OR_RP";
+    //          case TreeBuilder.PARAM_OR_SOURCE_OR_TRACK:
+    //              return "PARAM_OR_SOURCE_OR_TRACK";
+    //          case TreeBuilder.MGLYPH_OR_MALIGNMARK:
+    //              return "MGLYPH_OR_MALIGNMARK";
+    //          case TreeBuilder.MI_MO_MN_MS_MTEXT:
+    //              return "MI_MO_MN_MS_MTEXT";
+    //          case TreeBuilder.ANNOTATION_XML:
+    //              return "ANNOTATION_XML";
+    //          case TreeBuilder.FOREIGNOBJECT_OR_DESC:
+    //              return "FOREIGNOBJECT_OR_DESC";
+    //          case TreeBuilder.MENUITEM:
+    //              return "MENUITEM";
+    //      }
+    //      return null;
+    //  }
 
-//    private static void fillLevelOrderArray(List<ElementName> sorted, int depth,
-//            int rootIdx, ElementName[] levelOrder) {
-//        if (rootIdx >= levelOrder.length) {
-//            return;
-//        }
+    //  private static void fillLevelOrderArray(List<ElementName> sorted, int depth,
+    //          int rootIdx, ElementName[] levelOrder) {
+    //      if (rootIdx >= levelOrder.length) {
+    //          return;
+    //      }
 
-//        if (depth > 0) {
-//            fillLevelOrderArray(sorted, depth - 1, rootIdx * 2 + 1, levelOrder);
-//        }
+    //      if (depth > 0) {
+    //          fillLevelOrderArray(sorted, depth - 1, rootIdx * 2 + 1, levelOrder);
+    //      }
 
-//        if (!sorted.isEmpty()) {
-//            levelOrder[rootIdx] = sorted.remove(0);
-//        }
+    //      if (!sorted.isEmpty()) {
+    //          levelOrder[rootIdx] = sorted.remove(0);
+    //      }
 
-//        if (depth > 0) {
-//            fillLevelOrderArray(sorted, depth - 1, rootIdx * 2 + 2, levelOrder);
-//        }
-//    }
+    //      if (depth > 0) {
+    //          fillLevelOrderArray(sorted, depth - 1, rootIdx * 2 + 2, levelOrder);
+    //      }
+    //  }
 
-//    /**
-//     * Regenerate self
-//     *
-//     * The args should be the paths to m-c files
-//     * parser/htmlparser/nsHTMLTagList.h and dom/svg/SVGTagList.h.
-//     */
-//    public static void main(String[] args) {
-//        File htmlList = new File(args[0]);
-//        File svgList = new File(args[1]);
-//        try {
-//            ingestHtmlTags(htmlList);
-//        } catch (IOException e) {
-//            throw new RuntimeException(e);
-//        }
-//        try {
-//            ingestSvgTags(svgList);
-//        } catch (IOException e) {
-//            throw new RuntimeException(e);
-//        }
+    //  /**
+    //   * Regenerate self
+    //   *
+    //   * The args should be the paths to m-c files
+    //   * parser/htmlparser/nsHTMLTagList.h and dom/svg/SVGTagList.h.
+    //   */
+    //  public static void main(String[] args) {
+    //      File htmlList = new File(args[0]);
+    //      File svgList = new File(args[1]);
+    //      try {
+    //          ingestHtmlTags(htmlList);
+    //      } catch (IOException e) {
+    //          throw new RuntimeException(e);
+    //      }
+    //      try {
+    //          ingestSvgTags(svgList);
+    //      } catch (IOException e) {
+    //          throw new RuntimeException(e);
+    //      }
 
-//        Arrays.sort(ELEMENT_NAMES);
-//        for (int i = 0; i < ELEMENT_NAMES.length; i++) {
-//            int hash = ELEMENT_NAMES[i].hash();
-//            if (hash < 0) {
-//                System.err.println("Negative hash: " + ELEMENT_NAMES[i].name);
-//                return;
-//            }
-//            for (int j = i + 1; j < ELEMENT_NAMES.length; j++) {
-//                if (hash == ELEMENT_NAMES[j].hash()) {
-//                    System.err.println(
-//                            "Hash collision: " + ELEMENT_NAMES[i].name + ", "
-//                                    + ELEMENT_NAMES[j].name);
-//                    return;
-//                }
-//            }
-//        }
-//        for (int i = 0; i < ELEMENT_NAMES.length; i++) {
-//            ElementName el = ELEMENT_NAMES[i];
-//            System.out.println(
-//                    "public static final ElementName " + el.constName()
-//                            + " = new ElementName" + el.toString() + ";");
-//        }
+    //      Arrays.sort(ELEMENT_NAMES);
+    //      for (int i = 0; i < ELEMENT_NAMES.length; i++) {
+    //          int hash = ELEMENT_NAMES[i].hash();
+    //          if (hash < 0) {
+    //              System.err.println("Negative hash: " + ELEMENT_NAMES[i].name);
+    //              return;
+    //          }
+    //          for (int j = i + 1; j < ELEMENT_NAMES.length; j++) {
+    //              if (hash == ELEMENT_NAMES[j].hash()) {
+    //                  System.err.println(
+    //                          "Hash collision: " + ELEMENT_NAMES[i].name + ", "
+    //                                  + ELEMENT_NAMES[j].name);
+    //                  return;
+    //              }
+    //          }
+    //      }
+    //      for (int i = 0; i < ELEMENT_NAMES.length; i++) {
+    //          ElementName el = ELEMENT_NAMES[i];
+    //          System.out.println(
+    //                  "public static final ElementName " + el.constName()
+    //                          + " = new ElementName" + el.toString() + ";");
+    //      }
 
-//        LinkedList<ElementName> sortedNames = new LinkedList<ElementName>();
-//        Collections.addAll(sortedNames, ELEMENT_NAMES);
-//        ElementName[] levelOrder = new ElementName[ELEMENT_NAMES.length];
-//        int bstDepth = (int) Math.ceil(
-//                Math.log(ELEMENT_NAMES.length) / Math.log(2));
-//        fillLevelOrderArray(sortedNames, bstDepth, 0, levelOrder);
+    //      LinkedList<ElementName> sortedNames = new LinkedList<ElementName>();
+    //      Collections.addAll(sortedNames, ELEMENT_NAMES);
+    //      ElementName[] levelOrder = new ElementName[ELEMENT_NAMES.length];
+    //      int bstDepth = (int) Math.ceil(
+    //              Math.log(ELEMENT_NAMES.length) / Math.log(2));
+    //      fillLevelOrderArray(sortedNames, bstDepth, 0, levelOrder);
 
-//        System.out.println(
-//                "private final static @NoLength ElementName[] ELEMENT_NAMES = {");
-//        for (int i = 0; i < levelOrder.length; i++) {
-//            ElementName el = levelOrder[i];
-//            System.out.println(el.constName() + ",");
-//        }
-//        System.out.println("};");
-//        System.out.println("private final static int[] ELEMENT_HASHES = {");
-//        for (int i = 0; i < levelOrder.length; i++) {
-//            ElementName el = levelOrder[i];
-//            System.out.println(Integer.toString(el.hash()) + ",");
-//        }
-//        System.out.println("};");
+    //      System.out.println(
+    //              "private final static @NoLength ElementName[] ELEMENT_NAMES = {");
+    //      for (int i = 0; i < levelOrder.length; i++) {
+    //          ElementName el = levelOrder[i];
+    //          System.out.println(el.constName() + ",");
+    //      }
+    //      System.out.println("};");
+    //      System.out.println("private final static int[] ELEMENT_HASHES = {");
+    //      for (int i = 0; i < levelOrder.length; i++) {
+    //          ElementName el = levelOrder[i];
+    //          System.out.println(Integer.toString(el.hash()) + ",");
+    //      }
+    //      System.out.println("};");
 
-//        for (Entry<String, String> entry : htmlMap.entrySet()) {
-//            System.err.println("Missing HTML element: " + entry.getKey());
-//        }
-//        for (Entry<String, String> entry : svgMap.entrySet()) {
-//            System.err.println("Missing SVG element: " + entry.getKey());
-//        }
-//    }
+    //      for (Entry<String, String> entry : htmlMap.entrySet()) {
+    //          System.err.println("Missing HTML element: " + entry.getKey());
+    //      }
+    //      for (Entry<String, String> entry : svgMap.entrySet()) {
+    //          System.err.println("Missing SVG element: " + entry.getKey());
+    //      }
+    //  }
 
     // START GENERATED CODE
     public static final ElementName BIG = new ElementName(
@@ -1884,12 +1884,6 @@ public final class ElementName
                       // CPPONLY: NS_NewHTMLUnknownElement,
                       // CPPONLY: NS_NewSVGFEDropShadowElement,
                       TreeBuilder.OTHER);
-    public static final ElementName SHADOW =
-      new ElementName("shadow",
-                      "shadow",
-                      // CPPONLY: NS_NewHTMLShadowElement,
-                      // CPPONLY: NS_NewSVGUnknownElement,
-                      TreeBuilder.OTHER);
     public static final ElementName VIEW =
       new ElementName("view",
                       "view",
@@ -1944,18 +1938,18 @@ public final class ElementName
     private final static @NoLength ElementName[] ELEMENT_NAMES = {
       MN,
       ELLIPSE,
-      FRAMESET,
+      FIELDSET,
       H2,
       MGLYPH,
-      NOBR,
-      RADIALGRADIENT,
+      METER,
+      RECT,
       RTC,
       EMBED,
       STRIKE,
       OL,
       OPTGROUP,
-      PROGRESS,
-      MTEXT,
+      NOFRAMES,
+      LINEARGRADIENT,
       VIEW,
       IMG,
       WBR,
@@ -1967,11 +1961,11 @@ public final class ElementName
       EM,
       TSPAN,
       FEFUNCR,
-      DEFS,
-      CONTENT,
-      FEDISTANTLIGHT,
-      OUTPUT,
-      TEXT,
+      CANVAS,
+      BASEFONT,
+      FEPOINTLIGHT,
+      OBJECT,
+      TFOOT,
       FEMORPHOLOGY,
       DEL,
       NAV,
@@ -1993,16 +1987,16 @@ public final class ElementName
       COLGROUP,
       ABBR,
       FEGAUSSIANBLUR,
-      ADDRESS,
-      MS,
-      APPLET,
-      FOREIGNOBJECT,
-      FESPOTLIGHT,
-      INPUT,
-      RT,
-      TT,
-      SCRIPT,
-      FEDROPSHADOW,
+      TR,
+      DETAILS,
+      DT,
+      DATALIST,
+      FEOFFSET,
+      FONT,
+      NOSCRIPT,
+      PLAINTEXT,
+      SELECT,
+      MENU,
       FECONVOLVEMATRIX,
       SUMMARY,
       BDO,
@@ -2045,26 +2039,26 @@ public final class ElementName
       CENTER,
       FILTER,
       MARKER,
-      TR,
-      CANVAS,
-      DETAILS,
-      NOFRAMES,
-      DT,
-      BASEFONT,
-      DATALIST,
-      FIELDSET,
-      FEOFFSET,
-      FEPOINTLIGHT,
-      FONT,
-      LINEARGRADIENT,
-      NOSCRIPT,
-      OBJECT,
-      PLAINTEXT,
-      RECT,
-      SELECT,
-      TFOOT,
-      MENU,
-      SHADOW,
+      NOBR,
+      ADDRESS,
+      DEFS,
+      MS,
+      PROGRESS,
+      APPLET,
+      CONTENT,
+      FOREIGNOBJECT,
+      FRAMESET,
+      FESPOTLIGHT,
+      FEDISTANTLIGHT,
+      INPUT,
+      MTEXT,
+      RT,
+      OUTPUT,
+      TT,
+      RADIALGRADIENT,
+      SCRIPT,
+      TEXT,
+      FEDROPSHADOW,
       FECOLORMATRIX,
       BODY,
       RUBY,
@@ -2148,30 +2142,29 @@ public final class ElementName
       FECOMPONENTTRANSFER,
       FOOTER,
       HEADER,
-      METER,
     };
     private final static int[] ELEMENT_HASHES = {
-      1902641154, 1749395095, 2001349720, 893386754,  1803876550, 1971938532,
-      2007781534, 59821379,   1732381397, 1756600614, 1870135298, 1939219752,
-      1990037800, 2005324101, 2060065124, 55104723,   62450211,   1686489160,
+      1902641154, 1749395095, 2001349704, 893386754,  1803876550, 1971465813,
+      2007601444, 59821379,   1732381397, 1756600614, 1870135298, 1939219752,
+      1988763672, 2004635806, 2060065124, 55104723,   62450211,   1686489160,
       1747048757, 1749932347, 1782357526, 1818755074, 1881669634, 1907959605,
-      1967760215, 1983533124, 1999917383, 2001392798, 2006329158, 2008994116,
+      1967760215, 1982935782, 1999397992, 2001392796, 2006028454, 2008851557,
       2085266636, 52485715,   57733651,   60354131,   67633153,   960495618,
       1703936002, 1736200310, 1747838298, 1749723735, 1753362711, 1757157700,
       1786534215, 1805647874, 1854245076, 1874102998, 1898223949, 1906087319,
-      1932928296, 1965115924, 1968053806, 1982173479, 1986527234, 1998724870,
-      2001309869, 2001392795, 2003183333, 2005925890, 2006974466, 2008340774,
-      2051837468, 2068523856, 2092255447, 51438659,   52488851,   56151587,
+      1932928296, 1965115924, 1968053806, 1973420034, 1983633431, 1998585858,
+      2000525512, 2001349736, 2001495140, 2005719336, 2006896969, 2008125638,
+      2021937364, 2068523856, 2092255447, 51438659,   52488851,   56151587,
       59244545,   60347747,   61925907,   63438849,   69730305,   926941186,
       1681770564, 1689922072, 1730150402, 1733076167, 1738539010, 1747306711,
       1748225318, 1749673195, 1749813541, 1751386406, 1755148615, 1757137429,
       1763839627, 1783388497, 1797585096, 1803929861, 1807599880, 1854228692,
       1864368130, 1873281026, 1881498736, 1887579800, 1899272519, 1904412884,
       1907435316, 1919418370, 1935549734, 1941221172, 1966223078, 1967795910,
-      1971461414, 1973420034, 1982935782, 1983633431, 1988763672, 1998585858,
-      1999397992, 2000525512, 2001349704, 2001349736, 2001392796, 2001495140,
-      2004635806, 2005719336, 2006028454, 2006896969, 2007601444, 2008125638,
-      2008851557, 2021937364, 2058653206, 2068523853, 2083120164, 2091479332,
+      1971461414, 1971938532, 1982173479, 1983533124, 1986527234, 1990037800,
+      1998724870, 1999917383, 2001309869, 2001349720, 2001392795, 2001392798,
+      2003183333, 2005324101, 2005925890, 2006329158, 2006974466, 2007781534,
+      2008340774, 2008994116, 2051837468, 2068523853, 2083120164, 2091479332,
       2092557349, 51434643,   51961587,   52486755,   52490899,   55110883,
       57206291,   58773795,   59768833,   60345171,   60352339,   61395251,
       62390273,   62973651,   67108865,   68681729,   876609538,  910163970,
@@ -2185,6 +2178,6 @@ public final class ElementName
       1881613047, 1884120164, 1889085973, 1898753862, 1900845386, 1903302038,
       1905563974, 1906135367, 1907661127, 1914900309, 1925844629, 1934172497,
       1938817026, 1941178676, 1963982850, 1965334268, 1967128578, 1967788867,
-      1967795958, 1968836118, 1971465813,
+      1967795958, 1968836118,
     };
 }

@@ -146,7 +146,7 @@ public:
       }
       return elementName;
     }
-    }
+  }
 
   private:
     inline static uint32_t bufToHash(char16_t* buf, int32_t length)
@@ -401,7 +401,6 @@ public:
     static nsHtml5ElementName* ELT_TEXT;
     static nsHtml5ElementName* ELT_MENU;
     static nsHtml5ElementName* ELT_FEDROPSHADOW;
-    static nsHtml5ElementName* ELT_SHADOW;
     static nsHtml5ElementName* ELT_VIEW;
     static nsHtml5ElementName* ELT_FECOLORMATRIX;
     static nsHtml5ElementName* ELT_FECONVOLVEMATRIX;

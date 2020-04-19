@@ -178,7 +178,6 @@ static const HTMLElement gHTMLElements[] = {
   ELEM(script,      (kSpecial|kHeadContent),     false)
   ELEM(section,     kBlock,                      false)
   ELEM(select,      kFormControl,                false)
-  ELEM(shadow,      kFlowEntity,                 false)
   ELEM(small,       kFontStyle,                  false)
   ELEM(source,      kSpecial,                    true)
   ELEM(span,        kSpecial,                    false)
