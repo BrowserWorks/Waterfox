@@ -1511,8 +1511,10 @@ RestyleManager::ProcessRestyledFrames(nsStyleChangeList& aChangeList)
       // We could also have problems with triggering of CSS transitions
       // on elements whose frames are reconstructed, since we depend on
       // the reconstruction happening synchronously.
-      frameConstructor->RecreateFramesForContent(content, false,
-        nsCSSFrameConstructor::REMOVE_FOR_RECONSTRUCTION, nullptr);
+      frameConstructor->RecreateFramesForContent(
+        content,
+        nsCSSFrameConstructor::InsertionKind::Sync,
+        nsCSSFrameConstructor::REMOVE_FOR_RECONSTRUCTION);
     } else {
       NS_ASSERTION(frame, "This shouldn't happen");
 
