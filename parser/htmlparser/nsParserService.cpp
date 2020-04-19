@@ -67,7 +67,7 @@ nsParserService::HTMLConvertUnicodeToEntity(int32_t aUnicode,
 NS_IMETHODIMP
 nsParserService::IsContainer(int32_t aId, bool& aIsContainer) const
 {
-  aIsContainer = nsHTMLElement::IsContainer((eHTMLTags)aId);
+  aIsContainer = nsHTMLElement::IsContainer((nsHTMLTag)aId);
 
   return NS_OK;
 }
@@ -75,7 +75,7 @@ nsParserService::IsContainer(int32_t aId, bool& aIsContainer) const
 NS_IMETHODIMP
 nsParserService::IsBlock(int32_t aId, bool& aIsBlock) const
 {
-  aIsBlock = nsHTMLElement::IsBlock((eHTMLTags)aId);
+  aIsBlock = nsHTMLElement::IsBlock((nsHTMLTag)aId);
 
   return NS_OK;
 }
