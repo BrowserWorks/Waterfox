@@ -255,6 +255,8 @@ partial interface Element {
   NodeList getDestinationInsertionPoints();
   [Func="nsDocument::IsWebComponentsEnabled"]
   readonly attribute ShadowRoot? shadowRoot;
+  [Pref="dom.webcomponents.enabled"]
+  readonly attribute HTMLSlotElement? assignedSlot;
 };
 
 Element implements ChildNode;
