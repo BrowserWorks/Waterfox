@@ -119,7 +119,7 @@ interface Element : Node {
    * called. If retargetToElement is true, then all events are targetted at
    * this element. If false, events can also fire at descendants of this
    * element.
-   * 
+   *
    */
   void setCapture(optional boolean retargetToElement = false);
 
@@ -191,7 +191,7 @@ partial interface Element {
            attribute long scrollLeft;  // scroll on setting
   readonly attribute long scrollWidth;
   readonly attribute long scrollHeight;
-  
+
   void scroll(unrestricted double x, unrestricted double y);
   void scroll(optional ScrollToOptions options);
   void scrollTo(unrestricted double x, unrestricted double y);
@@ -247,16 +247,28 @@ partial interface Element {
   NodeList  querySelectorAll(DOMString selectors);
 };
 
-// http://w3c.github.io/webcomponents/spec/shadow/#extensions-to-element-interface
+// https://dom.spec.whatwg.org/#dictdef-shadowrootinit
+dictionary ShadowRootInit {
+  required ShadowRootMode mode;
+};
+
+// https://dom.spec.whatwg.org/#element
 partial interface Element {
-  [Throws,Func="nsDocument::IsWebComponentsEnabled"]
-  ShadowRoot createShadowRoot();
-  [Func="nsDocument::IsWebComponentsEnabled"]
-  NodeList getDestinationInsertionPoints();
+  // Shadow DOM v1
+  [Throws, Pref="nsDocument::IsWebComponentsEnabled"]
+  ShadowRoot attachShadow(ShadowRootInit shadowRootInitDict);
   [Func="nsDocument::IsWebComponentsEnabled"]
   readonly attribute ShadowRoot? shadowRoot;
   [Pref="dom.webcomponents.enabled"]
   readonly attribute HTMLSlotElement? assignedSlot;
+  [CEReactions, Unscopable, SetterThrows, Pref="nsDocument::IsWebComponentsEnabled"]
+           attribute DOMString slot;
+
+  // [deprecated] Shadow DOM v0
+  [Throws, Pref="nsDocument::IsWebComponentsEnabled"]
+  ShadowRoot createShadowRoot();
+  [Pref="nsDocument::IsWebComponentsEnabled"]
+  NodeList getDestinationInsertionPoints();
 };
 
 Element implements ChildNode;
