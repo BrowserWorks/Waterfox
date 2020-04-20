@@ -3064,6 +3064,11 @@ public:
     --mThrowOnDynamicMarkupInsertionCounter;
   }
 
+  bool IsWebComponentsEnabled() const
+  {
+    return mIsWebComponentsEnabled;
+  }
+
 protected:
   bool GetUseCounter(mozilla::UseCounter aUseCounter)
   {
@@ -3401,6 +3406,9 @@ protected:
   // True if unsafe HTML fragments should be allowed in chrome-privileged
   // documents.
   bool mAllowUnsafeHTML : 1;
+
+  // True if dom.webcomponents.enabled pref is set when document is created.
+  bool mIsWebComponentsEnabled : 1;
 
   // Whether <style scoped> support is enabled in this document.
   enum { eScopedStyle_Unknown, eScopedStyle_Disabled, eScopedStyle_Enabled };

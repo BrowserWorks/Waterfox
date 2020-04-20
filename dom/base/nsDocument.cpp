@@ -1390,6 +1390,10 @@ nsIDocument::nsIDocument()
   for (auto& cnt : mIncCounters) {
     cnt = 0;
   }
+
+  // Set this when document is created and value stays the same for the lifetime
+  // of the document.
+  mIsWebComponentsEnabled = nsContentUtils::IsWebComponentsEnabled();
 }
 
 nsDocument::nsDocument(const char* aContentType)
@@ -6064,6 +6068,12 @@ nsDocument::IsWebComponentsEnabled(JSContext* aCx, JSObject* aObject)
   }
 
   return true;
+}
+
+bool
+nsDocument::IsWebComponentsEnabled(const nsINode* aNode)
+{
+  return aNode->OwnerDoc()->IsWebComponentsEnabled();
 }
 
 bool
