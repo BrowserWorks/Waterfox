@@ -263,8 +263,7 @@ ShadowRoot::DistributionChanged()
     return;
   }
 
-  // FIXME(emilio): Rename this to DestroyFramesForAndRestyle?
-  shell->DestroyFramesFor(host);
+  shell->DestroyFramesForAndRestyle(host);
 }
 
 const HTMLContentElement*
@@ -511,7 +510,7 @@ ShadowRoot::AttributeChanged(nsIDocument* aDocument,
     return;
   }
 
-  shell->DestroyFramesFor(aElement);
+  shell->DestroyFramesForAndRestyle(aElement);
 }
 
 bool
