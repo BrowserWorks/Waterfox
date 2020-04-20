@@ -403,6 +403,12 @@ public:
    */
   virtual bool IsNodeOfType(uint32_t aFlags) const = 0;
 
+  bool
+  IsSlotable() const
+  {
+    return IsElement() || IsNodeOfType(eTEXT);
+  }
+
   virtual JSObject* WrapObject(JSContext *aCx, JS::Handle<JSObject*> aGivenProto) override;
 
   /**
