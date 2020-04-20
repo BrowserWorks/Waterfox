@@ -222,3 +222,4 @@ load xhr_html_nullresponse.html
 load 1383478.html
 pref(clipboard.autocopy,true) load 1385272-1.html
 pref(dom.webcomponents.customelements.enabled,true) load 1413815.html
+pref(dom.webcomponents.enabled,true) load 1419799.html
