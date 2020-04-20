@@ -419,8 +419,6 @@ var interfaceNamesInGlobalScope =
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "HTMLCollection",
 // IMPORTANT: Do not change this list without review from a DOM peer!
-    {name: "HTMLContentElement", stylo: false},
-// IMPORTANT: Do not change this list without review from a DOM peer!
     "HTMLDataElement",
 // IMPORTANT: Do not change this list without review from a DOM peer!
     "HTMLDataListElement",

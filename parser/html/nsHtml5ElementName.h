@@ -374,7 +374,6 @@ public:
     static nsHtml5ElementName* ELT_DT;
     static nsHtml5ElementName* ELT_APPLET;
     static nsHtml5ElementName* ELT_BASEFONT;
-    static nsHtml5ElementName* ELT_CONTENT;
     static nsHtml5ElementName* ELT_DATALIST;
     static nsHtml5ElementName* ELT_FOREIGNOBJECT;
     static nsHtml5ElementName* ELT_FIELDSET;

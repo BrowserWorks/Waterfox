@@ -50,7 +50,6 @@
 #include "mozilla/dom/HTMLInputElement.h"
 #include "mozilla/dom/HTMLMediaElement.h"
 #include "mozilla/dom/HTMLTemplateElement.h"
-#include "mozilla/dom/HTMLContentElement.h"
 #include "mozilla/dom/IPCBlobUtils.h"
 #include "mozilla/dom/Promise.h"
 #include "mozilla/dom/ScriptSettings.h"
@@ -7567,9 +7566,8 @@ nsContentUtils::IsContentInsertionPoint(nsIContent* aContent)
   }
 
   // Check if the content is a web components content insertion point.
-  HTMLContentElement* contentElement =
-    HTMLContentElement::FromContent(aContent);
-  return contentElement && contentElement->IsInsertionPoint();
+  // XXX handle <slot>?
+  return false;
 }
 
 // static
@@ -7584,14 +7582,6 @@ nsContentUtils::HasDistributedChildren(nsIContent* aContent)
     // Children of a shadow root host are distributed
     // to content insertion points in the shadow root.
     return true;
-  }
-
-  HTMLContentElement* contentEl = HTMLContentElement::FromContent(aContent);
-  if (contentEl && contentEl->IsInsertionPoint()) {
-    // Children of a content insertion point are distributed to the
-    // content insertion point if the content insertion point does
-    // not match any nodes (fallback content).
-    return contentEl->MatchedNodes().IsEmpty();
   }
 
   return false;
