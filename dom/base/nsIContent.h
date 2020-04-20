@@ -1008,6 +1008,12 @@ protected:
    */
   nsIAtom* DoGetID() const;
 
+  /**
+   * Returns the assigned slot, if it exists, or the direct parent, if it's a
+   * fallback content of a slot.
+   */
+  nsINode* GetFlattenedTreeParentForMaybeAssignedNode() const;
+
   // Returns base URI without considering xml:base.
   inline nsIURI* GetBaseURIWithoutXMLBase() const;
 

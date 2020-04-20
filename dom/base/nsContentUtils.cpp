@@ -49,6 +49,7 @@
 #include "mozilla/dom/FileBlobImpl.h"
 #include "mozilla/dom/HTMLInputElement.h"
 #include "mozilla/dom/HTMLMediaElement.h"
+#include "mozilla/dom/HTMLSlotElement.h"
 #include "mozilla/dom/HTMLTemplateElement.h"
 #include "mozilla/dom/IPCBlobUtils.h"
 #include "mozilla/dom/Promise.h"
@@ -7582,6 +7583,13 @@ nsContentUtils::HasDistributedChildren(nsIContent* aContent)
     // Children of a shadow root host are distributed
     // to content insertion points in the shadow root.
     return true;
+  }
+
+  HTMLSlotElement* slotEl = HTMLSlotElement::FromContent(aContent);
+  if (slotEl && slotEl->GetContainingShadow()) {
+    // Children of a slot are rendered if the slot does not have any assigned
+    // nodes (fallback content).
+    return slotEl->AssignedNodes().IsEmpty();
   }
 
   return false;
