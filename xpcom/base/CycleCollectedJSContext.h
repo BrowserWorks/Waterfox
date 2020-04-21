@@ -70,12 +70,12 @@ struct CycleCollectorResults
 class MicroTaskRunnable
 {
 public:
-  MicroTaskRunnable() {}
+  MicroTaskRunnable() = default;
   NS_INLINE_DECL_REFCOUNTING(MicroTaskRunnable)
   virtual void Run(AutoSlowOperation& aAso) = 0;
   virtual bool Suppressed() { return false; }
 protected:
-  virtual ~MicroTaskRunnable() {}
+  virtual ~MicroTaskRunnable() = default;
 };
 
 class CycleCollectedJSContext
@@ -163,7 +163,7 @@ public:
   // nsThread entrypoints
   virtual void BeforeProcessTask(bool aMightBlock);
   virtual void AfterProcessTask(uint32_t aRecursionDepth);
-  uint32_t RecursionDepth();
+  uint32_t RecursionDepth() const;
 
   // Run in stable state (call through nsContentUtils)
   void RunInStableState(already_AddRefed<nsIRunnable>&& aRunnable);
@@ -190,12 +190,12 @@ public:
     }
   }
 
-  bool IsInMicroTask()
+  bool IsInMicroTask() const
   {
     return mMicroTaskLevel != 0;
   }
 
-  uint32_t MicroTaskLevel()
+  uint32_t MicroTaskLevel() const
   {
     return mMicroTaskLevel;
   }
@@ -209,7 +209,7 @@ public:
 
   void PerformDebuggerMicroTaskCheckpoint();
 
-  bool IsInStableOrMetaStableState()
+  bool IsInStableOrMetaStableState() const
   {
     return mDoingStableStates;
   }
