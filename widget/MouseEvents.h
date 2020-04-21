@@ -121,9 +121,6 @@ public:
     MOZ_CRASH("WidgetMouseEventBase must not be most-subclass");
   }
 
-  /// The possible related target
-  nsCOMPtr<nsISupports> relatedTarget;
-
   enum buttonType
   {
     eNoButton     = -1,
@@ -174,7 +171,6 @@ public:
   {
     AssignInputEventData(aEvent, aCopyTargets);
 
-    relatedTarget = aCopyTargets ? aEvent.relatedTarget : nullptr;
     button = aEvent.button;
     buttons = aEvent.buttons;
     pressure = aEvent.pressure;

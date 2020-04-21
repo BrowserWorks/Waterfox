@@ -930,7 +930,7 @@ nsIContent::GetEventTargetParent(EventChainPreVisitor& aVisitor)
       ((this == aVisitor.mEvent->mOriginalTarget &&
         !ChromeOnlyAccess()) || isAnonForEvents || GetShadowRoot())) {
      nsCOMPtr<nsIContent> relatedTarget =
-       do_QueryInterface(aVisitor.mEvent->AsMouseEvent()->relatedTarget);
+       do_QueryInterface(aVisitor.mEvent->AsMouseEvent()->mRelatedTarget);
     if (relatedTarget &&
         relatedTarget->OwnerDoc() == OwnerDoc()) {
 
