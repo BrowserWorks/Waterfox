@@ -457,7 +457,6 @@ MediaDecoder::MediaDecoder(MediaDecoderInit& aInit)
   mWatchManager.Watch(mIsAudioDataAudible,
                       &MediaDecoder::NotifyAudibleStateChanged);
 
-  MediaShutdownManager::InitStatics();
   mVideoDecodingOberver->RegisterEvent();
 }
 
