@@ -576,7 +576,7 @@ ShadowRoot::ContentAppended(nsIDocument* aDocument,
   for (nsIContent* content = aFirstNewContent;
        content;
        content = content->GetNextSibling()) {
-    ContentInserted(aDocument, aContainer, aFirstNewContent, aNewIndexInContainer);
+    ContentInserted(aDocument, aContainer, content, aNewIndexInContainer);
   }
 }
 
