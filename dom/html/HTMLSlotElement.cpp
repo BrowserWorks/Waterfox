@@ -168,6 +168,17 @@ HTMLSlotElement::AssignedNodes(const AssignedNodesOptions& aOptions,
   aNodes = mAssignedNodes;
 }
 
+void HTMLSlotElement::AssignedElements(const AssignedNodesOptions& aOptions,
+                                       nsTArray<RefPtr<Element>>& aElements) {
+  AutoTArray<RefPtr<nsINode>, 128> assignedNodes;
+  AssignedNodes(aOptions, assignedNodes);
+  for (const RefPtr<nsINode>& assignedNode : assignedNodes) {
+    if (assignedNode->IsElement()) {
+      aElements.AppendElement(assignedNode->AsElement());
+    }
+  }
+}
+
 const nsTArray<RefPtr<nsINode>>&
 HTMLSlotElement::AssignedNodes() const
 {
