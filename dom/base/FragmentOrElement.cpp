@@ -918,6 +918,7 @@ nsIContent::GetEventTargetParent(EventChainPreVisitor& aVisitor)
   // Don't propagate mouseover and mouseout events when mouse is moving
   // inside chrome access only content.
   bool isAnonForEvents = IsRootOfChromeAccessOnlySubtree();
+  aVisitor.mRootOfClosedTree = isAnonForEvents;
   if ((aVisitor.mEvent->mMessage == eMouseOver ||
        aVisitor.mEvent->mMessage == eMouseOut ||
        aVisitor.mEvent->mMessage == ePointerOver ||
@@ -939,7 +940,7 @@ nsIContent::GetEventTargetParent(EventChainPreVisitor& aVisitor)
         nsIContent* adjustedTarget =
           Event::GetShadowRelatedTarget(this, relatedTarget);
         if (this == adjustedTarget) {
-          aVisitor.mParentTarget = nullptr;
+          aVisitor.SetParentTarget(nullptr, false);
           aVisitor.mCanHandle = false;
           return NS_OK;
         }
@@ -996,7 +997,7 @@ nsIContent::GetEventTargetParent(EventChainPreVisitor& aVisitor)
                         originalTarget->FindFirstNonChromeOnlyAccessContent())
                        ? "" : "Wrong event propagation!?!\n");
 #endif
-              aVisitor.mParentTarget = nullptr;
+              aVisitor.SetParentTarget(nullptr, false);
               // Event should not propagate to non-anon content.
               aVisitor.mCanHandle = isAnonForEvents;
               return NS_OK;
@@ -1048,11 +1049,17 @@ nsIContent::GetEventTargetParent(EventChainPreVisitor& aVisitor)
   if (!aVisitor.mEvent->mFlags.mComposedInNativeAnonymousContent &&
       IsRootOfNativeAnonymousSubtree() && OwnerDoc() &&
       OwnerDoc()->GetWindow()) {
-    aVisitor.mParentTarget = OwnerDoc()->GetWindow()->GetParentTarget();
+    aVisitor.SetParentTarget(OwnerDoc()->GetWindow()->GetParentTarget(), true);
   } else if (parent) {
-    aVisitor.mParentTarget = parent;
+    aVisitor.SetParentTarget(parent, false);
+    if (slot) {
+      ShadowRoot* root = slot->GetContainingShadow();
+      if (root && root->IsClosed()) {
+        aVisitor.mParentIsSlotInClosedTree = true;
+      }
+    }
   } else {
-    aVisitor.mParentTarget = GetComposedDoc();
+    aVisitor.SetParentTarget(GetComposedDoc(), false);
   }
   return NS_OK;
 }

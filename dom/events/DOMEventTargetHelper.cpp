@@ -334,7 +334,7 @@ nsresult
 DOMEventTargetHelper::GetEventTargetParent(EventChainPreVisitor& aVisitor)
 {
   aVisitor.mCanHandle = true;
-  aVisitor.mParentTarget = nullptr;
+  aVisitor.SetParentTarget(nullptr, false);
   return NS_OK;
 }
 
