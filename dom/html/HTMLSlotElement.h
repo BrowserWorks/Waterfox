@@ -63,6 +63,9 @@ public:
   void RemoveAssignedNode(nsINode* aNode);
   void ClearAssignedNodes();
 
+  void EnqueueSlotChangeEvent() const;
+  void FireSlotChangeEvent();
+
 protected:
   virtual ~HTMLSlotElement();
   virtual JSObject*
