@@ -120,9 +120,6 @@ protected:
   virtual JSObject* WrapNode(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;
   void OnChannelRedirect(nsIChannel* aChannel, nsIChannel* aNewChannel,
                          uint32_t aFlags);
-  // Open a new channel to the HTMLTrackElement's src attribute and call
-  // mListener's LoadResource().
-  void LoadResource();
 
   friend class TextTrackCue;
   friend class WebVTTListener;
@@ -136,6 +133,9 @@ protected:
 
 private:
   void DispatchLoadResource();
+  // Open a new channel to the HTMLTrackElement's src attribute and call
+  // mListener's LoadResource().
+  void LoadResource(RefPtr<WebVTTListener>&& aWebVTTListener);
   bool mLoadResourceDispatched;
 
   RefPtr<WindowDestroyObserver> mWindowDestroyObserver;
