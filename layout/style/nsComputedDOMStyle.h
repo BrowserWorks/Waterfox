@@ -27,6 +27,7 @@
 
 namespace mozilla {
 namespace dom {
+class DocGroup;
 class Element;
 } // namespace dom
 struct ComputedGridTrackInfo;
@@ -88,6 +89,11 @@ public:
   nsINode* GetParentObject() override
   {
     return mElement;
+  }
+
+  virtual mozilla::dom::DocGroup* GetDocGroup() const override
+  {
+    return mElement ? mElement->GetDocGroup() : nullptr;
   }
 
   static already_AddRefed<nsStyleContext>

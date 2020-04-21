@@ -21,6 +21,7 @@
 // this one for it, for ParentDict. Hopefully it won't begin to rely on it in more fundamental ways.
 namespace mozilla {
 namespace dom {
+class DocGroup;
 class TestExternalInterface;
 class Promise;
 } // namespace dom
@@ -110,8 +111,9 @@ class TestInterface : public nsISupports,
 public:
   NS_DECL_ISUPPORTS
 
-  // We need a GetParentObject to make binding codegen happy
+  // We need a GetParentObject and GetDocGroup to make binding codegen happy
   virtual nsISupports* GetParentObject();
+  DocGroup* GetDocGroup() const;
 
   // And now our actual WebIDL API
   // Constructors
@@ -1469,8 +1471,9 @@ class TestCEReactionsInterface : public nsISupports,
 public:
   NS_DECL_ISUPPORTS
 
-  // We need a GetParentObject to make binding codegen happy
+  // We need a GetParentObject and GetDocGroup to make binding codegen happy
   virtual nsISupports* GetParentObject();
+  DocGroup* GetDocGroup() const;
 
   int32_t Item(uint32_t);
   uint32_t Length() const;

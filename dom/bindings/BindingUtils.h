@@ -3362,12 +3362,6 @@ bool
 GetDesiredProto(JSContext* aCx, const JS::CallArgs& aCallArgs,
                 JS::MutableHandle<JSObject*> aDesiredProto);
 
-// Get the CustomElementReactionsStack for the docgroup of the global
-// of the underlying object of aObj.  This can be null if aObj can't
-// be CheckUnwrapped, or if the global of the result has no docgroup
-// (e.g. because it's not a Window global).
-CustomElementReactionsStack*
-GetCustomElementReactionsStack(JS::Handle<JSObject*> aObj);
 // This function is expected to be called from the constructor function for an
 // HTML element interface; the global/callargs need to be whatever was passed to
 // that constructor function.

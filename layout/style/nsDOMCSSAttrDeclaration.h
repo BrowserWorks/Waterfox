@@ -36,6 +36,7 @@ public:
   NS_IMETHOD GetParentRule(nsIDOMCSSRule **aParent) override;
 
   virtual nsINode* GetParentObject() override;
+  virtual DocGroup* GetDocGroup() const override;
 
   NS_IMETHOD SetPropertyValue(const nsCSSPropertyID aPropID,
                               const nsAString& aValue) override;

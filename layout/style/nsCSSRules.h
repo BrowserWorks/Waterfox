@@ -43,6 +43,7 @@ namespace mozilla {
 class ErrorResult;
 
 namespace dom {
+class DocGroup;
 class MediaList;
 }
 
@@ -230,6 +231,7 @@ public:
                                                          nsICSSDeclaration)
 
   virtual nsINode* GetParentObject() override;
+  virtual mozilla::dom::DocGroup* GetDocGroup() const override;
 
 protected:
   virtual ~nsCSSKeyframeStyleDeclaration();
@@ -353,6 +355,7 @@ public:
                                                          nsICSSDeclaration)
 
   virtual nsINode *GetParentObject() override;
+  virtual mozilla::dom::DocGroup* GetDocGroup() const override;
 
 protected:
   virtual ~nsCSSPageStyleDeclaration();

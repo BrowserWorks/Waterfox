@@ -270,6 +270,12 @@ HTMLOptionsCollection::GetParentObject()
   return mSelect;
 }
 
+DocGroup*
+HTMLOptionsCollection::GetDocGroup() const
+{
+  return mSelect ? mSelect->GetDocGroup() : nullptr;
+}
+
 NS_IMETHODIMP
 HTMLOptionsCollection::NamedItem(const nsAString& aName,
                                  nsIDOMNode** aReturn)
