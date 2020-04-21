@@ -707,7 +707,7 @@ nsContentUtils::Init()
                                "dom.webcomponents.enabled", false);
 
   Preferences::AddBoolVarCache(&sIsCustomElementsEnabled,
-                               "dom.webcomponents.customelements.enabled", false);
+                               "dom.webcomponents.enabled", false);
 
   Preferences::AddIntVarCache(&sPrivacyMaxInnerWidth,
                               "privacy.window.maxInnerWidth",
