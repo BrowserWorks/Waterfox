@@ -2409,6 +2409,29 @@ WarnIfSandboxIneffective(nsIDocShell* aDocShell,
   }
 }
 
+bool
+nsDocument::IsWebComponentsEnabled(JSContext* aCx, JSObject* aObject)
+{
+  if (!nsContentUtils::IsWebComponentsEnabled()) {
+    return false;
+  }
+
+  JS::Rooted<JSObject*> obj(aCx, aObject);
+
+  JSAutoCompartment ac(aCx, obj);
+  JS::Rooted<JSObject*> global(aCx, JS_GetGlobalForObject(aCx, obj));
+  nsCOMPtr<nsPIDOMWindowInner> window =
+    do_QueryInterface(nsJSUtils::GetStaticScriptGlobal(global));
+
+  nsIDocument* doc = window ? window->GetExtantDoc() : nullptr;
+  if (doc && doc->IsStyledByServo()) {
+    NS_WARNING("stylo: Web Components not supported yet");
+    return false;
+  }
+
+  return true;
+}
+
 nsresult
 nsDocument::StartDocumentLoad(const char* aCommand, nsIChannel* aChannel,
                               nsILoadGroup* aLoadGroup,
@@ -5957,51 +5980,6 @@ nsIDocument::AllowUnsafeHTML() const
           mAllowUnsafeHTML);
 }
 
-bool
-nsDocument::IsWebComponentsEnabled(JSContext* aCx, JSObject* aObject)
-{
-  if (!nsContentUtils::IsWebComponentsEnabled()) {
-    return false;
-  }
-
-  JS::Rooted<JSObject*> obj(aCx, aObject);
-
-  JSAutoCompartment ac(aCx, obj);
-  JS::Rooted<JSObject*> global(aCx, JS_GetGlobalForObject(aCx, obj));
-  nsCOMPtr<nsPIDOMWindowInner> window =
-    do_QueryInterface(nsJSUtils::GetStaticScriptGlobal(global));
-
-  nsIDocument* doc = window ? window->GetExtantDoc() : nullptr;
-  if (doc && doc->IsStyledByServo()) {
-    NS_WARNING("stylo: Web Components not supported yet");
-    return false;
-  }
-
-  return true;
-}
-
-bool
-nsDocument::IsWebComponentsEnabled(const nsINode* aNode)
-{
-  return aNode->OwnerDoc()->IsWebComponentsEnabled();
-}
-
-bool
-nsDocument::IsWebComponentsEnabled(dom::NodeInfo* aNodeInfo)
-{
-  if (!nsContentUtils::IsWebComponentsEnabled()) {
-    return false;
-  }
-
-  nsIDocument* doc = aNodeInfo->GetDocument();
-  if (doc->IsStyledByServo()) {
-    NS_WARNING("stylo: Web Components not supported yet");
-    return false;
-  }
-
-  return true;
-}
-
 void
 nsDocument::ScheduleSVGForPresAttrEvaluation(nsSVGElement* aSVG)
 {
@@ -6022,6 +6000,12 @@ nsDocument::ResolveScheduledSVGPresAttrs()
     svg->UpdateContentDeclarationBlock(StyleBackendType::Servo);
   }
   mLazySVGPresElements.Clear();
+}
+
+bool
+nsDocument::IsWebComponentsEnabled(const nsINode* aNode)
+{
+  return aNode->OwnerDoc()->IsWebComponentsEnabled();
 }
 
 NS_IMETHODIMP

@@ -630,6 +630,11 @@ public:
   virtual void UnscheduleSVGForPresAttrEvaluation(nsSVGElement* aSVG) override;
   virtual void ResolveScheduledSVGPresAttrs() override;
 
+  // Check whether web components are enabled for the global of aObject.
+  static bool IsWebComponentsEnabled(JSContext* aCx, JSObject* aObject);
+  // Check whether web components are enabled for the document this node belongs
+  // to.
+  static bool IsWebComponentsEnabled(const nsINode* aNode);
 private:
   void AddOnDemandBuiltInUASheet(mozilla::StyleSheet* aSheet);
   void SendToConsole(nsCOMArray<nsISecurityConsoleMessage>& aMessages);
@@ -1140,19 +1145,11 @@ protected:
   // Do not use this value directly. Call the |IsThirdParty()| method, which
   // caches its result here.
   mozilla::Maybe<bool> mIsThirdParty;
+
 private:
   void UpdatePossiblyStaleDocumentState();
 
 public:
-  // Check whether web components are enabled for the global of aObject.
-  static bool IsWebComponentsEnabled(JSContext* aCx, JSObject* aObject);
-  // Check whether web components are enabled for the document this node belongs
-  // to.
-  static bool IsWebComponentsEnabled(const nsINode* aNode);
-  // Check whether web components are enabled for the global of the document
-  // this nodeinfo comes from.
-  static bool IsWebComponentsEnabled(mozilla::dom::NodeInfo* aNodeInfo);
-
   RefPtr<mozilla::EventListenerManager> mListenerManager;
   RefPtr<nsDOMStyleSheetSetList> mStyleSheetSetList;
   RefPtr<mozilla::dom::ScriptLoader> mScriptLoader;
