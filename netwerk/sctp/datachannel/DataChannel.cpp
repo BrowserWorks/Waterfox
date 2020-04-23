@@ -358,6 +358,12 @@ DataChannelConnection::Init(unsigned short aPort, uint16_t aNumStreams, bool aUs
       usrsctp_sysctl_set_sctp_blackhole(2);
       // ECN is currently not supported by the Firefox code
       usrsctp_sysctl_set_sctp_ecn_enable(0);
+      // Disabling authentication and dynamic address reconfiguration as neither
+      // of them are used for data channel and only result in additional code
+      // paths being used.
+      usrsctp_sysctl_set_sctp_asconf_enable(0);
+      usrsctp_sysctl_set_sctp_auth_enable(0);
+
       sctp_initialized = true;
 
       RefPtr<DataChannelShutdown> shutdown = new DataChannelShutdown();
