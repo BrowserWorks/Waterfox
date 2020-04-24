@@ -75,6 +75,7 @@ let gUndoData = null;
 XPCOMUtils.defineLazyGetter(this, "gAvailableMigratorKeys", function() {
   if (AppConstants.platform == "win") {
     return [
+      "lfirefox",
       "firefox",
       "edge",
       "ie",
@@ -89,6 +90,7 @@ XPCOMUtils.defineLazyGetter(this, "gAvailableMigratorKeys", function() {
   }
   if (AppConstants.platform == "macosx") {
     return [
+      "lfirefox",
       "firefox",
       "safari",
       "chrome",
@@ -99,7 +101,7 @@ XPCOMUtils.defineLazyGetter(this, "gAvailableMigratorKeys", function() {
     ];
   }
   if (AppConstants.XP_UNIX) {
-    return ["firefox", "chrome", "chrome-beta", "chrome-dev", "chromium"];
+    return ["lfirefox", "firefox", "chrome", "chrome-beta", "chrome-dev", "chromium"];
   }
   return [];
 });
@@ -652,6 +654,9 @@ var MigrationUtils = Object.freeze({
         return "sourceNameFirefox";
       case "360se":
         return "sourceName360se";
+      case "lfirefox":
+        return "sourceNameLfirefox";
+
     }
     return null;
   },
@@ -1330,6 +1335,7 @@ var MigrationUtils = Object.freeze({
     "360se": 9,
     "chromium-edge": 10,
     "chromium-edge-beta": 10,
+"lfirefox": 11,
   },
   getSourceIdForTelemetry(sourceName) {
     return this._sourceNameToIdMapping[sourceName] || 0;
