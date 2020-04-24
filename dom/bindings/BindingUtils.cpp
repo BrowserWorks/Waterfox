@@ -54,6 +54,7 @@
 #include "mozilla/dom/HTMLEmbedElement.h"
 #include "mozilla/dom/HTMLElementBinding.h"
 #include "mozilla/dom/HTMLEmbedElementBinding.h"
+#include "mozilla/dom/HTMLAppletElementBinding.h"
 #include "mozilla/dom/MaybeCrossOriginObject.h"
 #include "mozilla/dom/ReportingUtils.h"
 #include "mozilla/dom/XULElementBinding.h"
@@ -2274,8 +2275,13 @@ void UpdateReflectorGlobal(JSContext* aCx, JS::Handle<JSObject*> aObjArg,
   nsresult rv = UNWRAP_OBJECT(HTMLObjectElement, &maybeObjLC, htmlobject);
   if (NS_FAILED(rv)) {
     rv = UNWRAP_OBJECT(HTMLEmbedElement, &maybeObjLC, htmlobject);
+
     if (NS_FAILED(rv)) {
-      htmlobject = nullptr;
+      //rv = UNWRAP_OBJECT(HTMLAppletElement, &maybeObjLC, htmlobject);
+
+      if (NS_FAILED(rv)) {
+        htmlobject = nullptr;
+      }
     }
   }
   if (htmlobject) {

@@ -946,10 +946,10 @@ void nsHtml5ElementName::initializeStatics() {
       nsGkAtoms::dt, nsGkAtoms::dt, NS_NewHTMLElement, NS_NewSVGUnknownElement,
       nsHtml5TreeBuilder::DD_OR_DT | SPECIAL | OPTIONAL_END_TAG);
   ELT_APPLET = new nsHtml5ElementName(
-      nsGkAtoms::applet, nsGkAtoms::applet, NS_NewHTMLUnknownElement,
+      nsGkAtoms::applet, nsGkAtoms::applet, NS_NewHTMLAppletElement,  
       NS_NewSVGUnknownElement,
       nsHtml5TreeBuilder::MARQUEE_OR_APPLET | SPECIAL | SCOPING);
-  ELT_BASEFONT = new nsHtml5ElementName(
+  ELT_BASEFONT = new nsHtml5ElementName(         
       nsGkAtoms::basefont, nsGkAtoms::basefont, NS_NewHTMLElement,
       NS_NewSVGUnknownElement,
       nsHtml5TreeBuilder::LINK_OR_BASEFONT_OR_BGSOUND | SPECIAL);

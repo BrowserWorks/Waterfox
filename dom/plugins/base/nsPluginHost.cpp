@@ -2292,8 +2292,8 @@ nsresult nsPluginHost::SetPluginsInContent(
           "",  // aFullPath
           tag.version().get(), nsTArray<nsCString>(tag.mimeTypes()),
           nsTArray<nsCString>(tag.mimeDescriptions()),
-          nsTArray<nsCString>(tag.extensions()), tag.isFlashPlugin(),
-          tag.isJavaPlugin(), tag.supportsAsyncRender(), tag.lastModifiedTime(),
+          nsTArray<nsCString>(tag.extensions()), tag.isJavaPlugin(),
+          tag.isFlashPlugin(), tag.supportsAsyncRender(), tag.lastModifiedTime(),
           tag.isFromExtension(), tag.sandboxLevel(), tag.blocklistState());
       AddPluginTag(pluginTag);
     }
@@ -3701,10 +3701,11 @@ bool nsPluginHost::CanUsePluginForMIMEType(const nsACString& aMIMEType) {
   // We only support flash as a plugin, so if the mime types don't match for
   // those, exit before we start loading plugins.
   //
-  // XXX: Remove test/java cases when bug 1351885 lands.
+  // XXX: Remove test/java cases when bug 1351885 lands.    
   if (nsPluginHost::GetSpecialType(aMIMEType) ==
           nsPluginHost::eSpecialType_Flash ||
       MimeTypeIsAllowedForFakePlugin(NS_ConvertUTF8toUTF16(aMIMEType)) ||
+      aMIMEType.LowerCaseEqualsLiteral("application/x-java-vm") ||
       aMIMEType.LowerCaseEqualsLiteral("application/x-test") ||
       aMIMEType.LowerCaseEqualsLiteral("application/x-second-test") ||
       aMIMEType.LowerCaseEqualsLiteral("application/x-third-test") ||
