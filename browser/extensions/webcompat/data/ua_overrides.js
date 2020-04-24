@@ -7,8 +7,8 @@
 /* globals browser, module, require */
 
 // This is a hack for the tests.
-if (typeof getMatchPatternsForGoogleURL === "undefined") {
-  var getMatchPatternsForGoogleURL = require("../lib/google");
+if (typeof InterventionHelpers === "undefined") {
+  var InterventionHelpers = require("../lib/intervention_helpers");
 }
 
 /**
@@ -36,32 +36,6 @@ const AVAILABLE_UA_OVERRIDES = [
   },
   {
     /*
-     * Bug 1564594 - Create UA override for Enhanced Search on Firefox Android
-     *
-     * Enables the Chrome Google Search experience for Fennec users.
-     */
-    id: "bug1564594",
-    platform: "android",
-    domain: "Enhanced Search",
-    bug: "1567945",
-    config: {
-      matches: [
-        ...getMatchPatternsForGoogleURL("images.google"),
-        ...getMatchPatternsForGoogleURL("maps.google"),
-        ...getMatchPatternsForGoogleURL("news.google"),
-        ...getMatchPatternsForGoogleURL("www.google"),
-      ],
-      blocks: [...getMatchPatternsForGoogleURL("www.google", "serviceworker")],
-      permanentPref: "enable_enhanced_search",
-      telemetryKey: "enhancedSearch",
-      experiment: ["enhanced-search", "enhanced-search-control"],
-      uaTransformer: originalUA => {
-        return UAHelpers.getDeviceAppropriateChromeUA();
-      },
-    },
-  },
-  {
-    /*
      * Bug 1563839 - rolb.santanderbank.com - Build UA override
      * WebCompat issue #33462 - https://webcompat.com/issues/33462
      *
@@ -81,28 +55,6 @@ const AVAILABLE_UA_OVERRIDES = [
       ],
       uaTransformer: originalUA => {
         return originalUA.replace("Gecko", "like Gecko");
-      },
-    },
-  },
-  {
-    /*
-     * Bug 1577179 - UA override for supportforms.embarcadero.com
-     * WebCompat issue #34682 - https://webcompat.com/issues/34682
-     *
-     * supportforms.embarcadero.com has a constant onchange event on a product selector
-     * which makes it unusable. Spoofing as Chrome allows to stop event from firing
-     */
-    id: "bug1577179",
-    platform: "all",
-    domain: "supportforms.embarcadero.com",
-    bug: "1577179",
-    config: {
-      matches: ["*://supportforms.embarcadero.com/*"],
-      uaTransformer: originalUA => {
-        return (
-          UAHelpers.getPrefix(originalUA) +
-          " AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.132 Safari/537.36"
-        );
       },
     },
   },
@@ -241,7 +193,7 @@ const AVAILABLE_UA_OVERRIDES = [
         "*://zhidao.baidu.com/*",
       ],
       uaTransformer: originalUA => {
-        return originalUA + " AppleWebKit/537.36 (KHTML, like Gecko)";
+        return UAHelpers.getDeviceAppropriateChromeUA();
       },
     },
   },
@@ -450,28 +402,6 @@ const AVAILABLE_UA_OVERRIDES = [
   },
   {
     /*
-     * Bug 1577240 - UA override for heb.com on Firefox for Android
-     * WebCompat issue #33613 - https://webcompat.com/issues/33613
-     *
-     * heb.com shows desktop site on Firefox for Android for some pages based on
-     * UA detection. Spoofing as Chrome allows to get mobile site.
-     */
-    id: "bug1577240",
-    platform: "android",
-    domain: "heb.com",
-    bug: "1577240",
-    config: {
-      matches: ["*://*.heb.com/*"],
-      uaTransformer: originalUA => {
-        return (
-          UAHelpers.getPrefix(originalUA) +
-          " AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.111 Mobile Safari/537.36"
-        );
-      },
-    },
-  },
-  {
-    /*
      * Bug 1577250 - UA override for homebook.pl on Firefox for Android
      * WebCompat issue #24044 - https://webcompat.com/issues/24044
      *
@@ -593,22 +523,119 @@ const AVAILABLE_UA_OVERRIDES = [
   },
   {
     /*
-     * Bug 1442050 - UA overrides for my.nintendo.com
-     * Webcompat issue #12887 - https://webcompat.com/issues/12887
+     * Bug 1621065 - UA overrides for bracketchallenge.ncaa.com
+     * Webcompat issue #49886 - https://webcompat.com/issues/49886
      *
-     * Nintendo ships a broken version of their mobile interface to mobile
-     * browsers that are not Chrome or Safari. In our tests, appending the
-     * "AppleWebKit" identifier to the UA string results in a version that
-     * works very well.
+     * The NCAA bracket challenge website mistakenly classifies
+     * any non-Chrome browser on Android as "is_old_android". As a result,
+     * a modal is shown telling them they have security flaws. We have
+     * attempted to reach out for a fix (and clarification).
      */
-    id: "bug1442050",
+    id: "bug1621065",
     platform: "android",
-    domain: "nintendo.com",
-    bug: "1442050",
+    domain: "bracketchallenge.ncaa.com",
+    bug: "1621065",
     config: {
-      matches: ["*://my.nintendo.com/*"],
+      matches: ["*://bracketchallenge.ncaa.com/*"],
       uaTransformer: originalUA => {
-        return originalUA + " AppleWebKit";
+        return originalUA + " Chrome";
+      },
+    },
+  },
+  {
+    /*
+     * Bug 1622063 - UA override for wp1-ext.usps.gov
+     * Webcompat issue #29867 - https://webcompat.com/issues/29867
+     *
+     * The Job Search site for USPS does not work for Firefox Mobile
+     * browsers (a 500 is returned).
+     */
+    id: "bug1622063",
+    platform: "android",
+    domain: "wp1-ext.usps.gov",
+    bug: "1622063",
+    config: {
+      matches: ["*://wp1-ext.usps.gov/*"],
+      uaTransformer: originalUA => {
+        return UAHelpers.getDeviceAppropriateChromeUA();
+      },
+    },
+  },
+  {
+    /*
+     * Bug 1622081 - UA override for m2.bmo.com
+     * Webcompat issue #45019 - https://webcompat.com/issues/45019
+     *
+     * Unless the UA string contains "Chrome", m2.bmo.com will
+     * display a modal saying the browser is out-of-date.
+     */
+    id: "bug1622081",
+    platform: "android",
+    domain: "m2.bmo.com",
+    bug: "1622081",
+    config: {
+      matches: ["*://m2.bmo.com/*"],
+      uaTransformer: originalUA => {
+        return originalUA + " Chrome";
+      },
+    },
+  },
+  {
+    /*
+     * Bug 1628462 - UA override for app.pixton.com
+     * Webcompat issue #43438 - https://webcompat.com/issues/43438
+     *
+     * app.pixton.com is showing unsupported message for both Firefox
+     * desktop and mobile. Spoofing as Chrome allows to access the site
+     */
+    id: "bug1628462",
+    platform: "all",
+    domain: "app.pixton.com",
+    bug: "1628462",
+    config: {
+      matches: ["https://*.pixton.com/*"],
+      uaTransformer: () => {
+        return UAHelpers.getDeviceAppropriateChromeUA();
+      },
+    },
+  },
+  {
+    /*
+     * Bug 1628455 - UA override for autotrader.ca
+     * Webcompat issue #50961 - https://webcompat.com/issues/50961
+     *
+     * autotrader.ca is showing desktop site for Firefox on Android
+     * based on server side UA detection. Spoofing as Chrome allows to
+     * get mobile experience
+     */
+    id: "bug1628455",
+    platform: "android",
+    domain: "autotrader.ca",
+    bug: "1628455",
+    config: {
+      matches: ["https://*.autotrader.ca/*"],
+      uaTransformer: () => {
+        return UAHelpers.getDeviceAppropriateChromeUA();
+      },
+    },
+  },
+  {
+    /*
+     * Bug 1630280 - UA override for dominos.ch
+     * Webcompat issue #48273 - https://webcompat.com/issues/48273
+     *
+     * dominos.ch is suggesting downloading their native app and showing
+     * an overlay that can't be removed in Firefox for Android. Spoofing
+     * as Chrome allows to continue to the site
+     */
+    id: "bug1630280",
+    platform: "android",
+    domain: "dominos.ch",
+    bug: "1630280",
+    config: {
+      matches: ["https://*.dominos.ch/*"],
+      uaTransformer: () => {
+        return UAHelpers.getDeviceAppropriateChromeUA();
       },
     },
   },

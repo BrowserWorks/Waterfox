@@ -92,6 +92,10 @@ class PostMessageRunnable final : public CancelableRunnable {
   nsresult DispatchMessage() const {
     NS_ASSERT_OWNINGTHREAD(Runnable);
 
+    if (NS_FAILED(mPort->CheckCurrentGlobalCorrectness())) {
+      return NS_OK;
+    }
+
     nsCOMPtr<nsIGlobalObject> globalObject = mPort->GetParentObject();
 
     AutoJSAPI jsapi;

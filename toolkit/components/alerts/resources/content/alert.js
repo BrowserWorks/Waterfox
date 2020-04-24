@@ -21,6 +21,7 @@ var gReplacedWindow = null;
 var gAlertListener = null;
 var gAlertTextClickable = false;
 var gAlertCookie = "";
+var gIsActive = false;
 var gIsReplaced = false;
 var gRequireInteraction = false;
 
@@ -224,6 +225,8 @@ function onAlertLoad() {
   alertSettings.addEventListener("focus", onAlertSettingsFocus);
   alertSettings.addEventListener("click", onAlertSettingsClick);
 
+  gIsActive = true;
+
   let ev = new CustomEvent("AlertActive", { bubbles: true, cancelable: true });
   document.documentElement.dispatchEvent(ev);
 
@@ -238,6 +241,9 @@ function moveWindowToReplace(aReplacedAlert) {
   // Move windows that come after the replaced alert if the height is different.
   if (heightDelta != 0) {
     for (let alertWindow of Services.wm.getEnumerator("alert:alert")) {
+      if (!alertWindow.gIsActive) {
+        continue;
+      }
       // boolean to determine if the alert window is after the replaced alert.
       let alertIsAfter =
         gOrigin & NS_ALERT_TOP
@@ -274,7 +280,7 @@ function moveWindowToEnd() {
 
   // Position the window at the end of all alerts.
   for (let alertWindow of Services.wm.getEnumerator("alert:alert")) {
-    if (alertWindow != window) {
+    if (alertWindow != window && alertWindow.gIsActive) {
       if (gOrigin & NS_ALERT_TOP) {
         y = Math.max(
           y,
@@ -301,7 +307,7 @@ function onAlertBeforeUnload() {
     // Move other alert windows to fill the gap left by closing alert.
     let heightDelta = window.outerHeight + WINDOW_MARGIN - WINDOW_SHADOW_SPREAD;
     for (let alertWindow of Services.wm.getEnumerator("alert:alert")) {
-      if (alertWindow != window) {
+      if (alertWindow != window && alertWindow.gIsActive) {
         if (gOrigin & NS_ALERT_TOP) {
           if (alertWindow.screenY > window.screenY) {
             alertWindow.moveTo(
