@@ -178,6 +178,30 @@ ChangeUI IDD_VERIFY "${NSISDIR}\Contrib\UIs\default.exe"
 ################################################################################
 # Helper Functions
 
+Function un.ReadFileLine
+Exch $0 ;file
+Exch
+Exch $1 ;line number
+Push $2
+Push $3
+ 
+  FileOpen $2 $0 r
+ StrCpy $3 0
+ 
+Loop:
+ IntOp $3 $3 + 1
+  ClearErrors
+  FileRead $2 $0
+  IfErrors +2
+ StrCmp $3 $1 0 loop
+  FileClose $2
+ 
+Pop $3
+Pop $2
+Pop $1
+Exch $0
+FunctionEnd
+
 Function un.Survey
   ; We can't actually call ExecInExplorer here because it's going to have to
   ; make some marshalled COM calls and those are not allowed from within a
@@ -697,15 +721,16 @@ FunctionEnd
 
 Function un.onGUIEnd
   ${un.OnEndCommon}
+  
+  Push 3 ; Line number to read from
+  Push "$INSTDIR\distribution\distribution.ini" ; Text file to read
+   Call un.ReadFileLine
+  Pop $5 ; Output string (read from file.txt)
 
   ${If} $ShouldOpenSurvey == "1"
     ; Though these values are sometimes incorrect due to bug 444664 it happens
     ; so rarely it isn't worth working around it by reading the registry values.
-    ${WinVerGetMajor} $0
-    ${WinVerGetMinor} $1
-    ${WinVerGetBuild} $2
-    ${WinVerGetServicePackLevel} $3
-    StrCpy $R1 "${URLUninstallSurvey}"
+    StrCpy $R1 "${URLUninstallSurvey}$5"
 
     ; We can't just open the URL normally because we are most likely running
     ; elevated without an unelevated process to redirect through, and we're

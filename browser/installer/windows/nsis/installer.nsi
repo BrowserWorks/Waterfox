@@ -84,6 +84,8 @@ Var LaunchedNewApp
 !include defines.nsi
 !include common.nsh
 !include locales.nsi
+!include replaceInFile.nsh
+!include StrRep.nsh
 
 VIAddVersionKey "FileDescription" "${BrandShortName} Installer"
 VIAddVersionKey "OriginalFilename" "setup.exe"
@@ -322,6 +324,15 @@ Section "-Application" APP_IDX
   ${CopyFilesFromDir} "$EXEDIR\core" "$INSTDIR" \
                       "$(ERROR_CREATE_DIRECTORY_PREFIX)" \
                       "$(ERROR_CREATE_DIRECTORY_SUFFIX)"
+					  
+  ${GetParameters} $5
+  ${GetOptions} $5 "/WFID=" $6
+  !insertmacro _ReplaceInFile "$INSTDIR\distribution\distribution.ini" "VAL1" "$6"
+  !insertmacro _ReplaceInFile "$INSTDIR\distribution\searchplugins\common\bing.xml" "VAL1" "$6"
+					  
+  ${GetParameters} $7
+  ${GetOptions} $7 "/PARTNERID=" $9
+  !insertmacro _ReplaceInFile "$INSTDIR\distribution\distribution.ini" "VAL2" "$9"
 
   ; Register DLLs
   ; XXXrstrong - AccessibleMarshal.dll can be used by multiple applications but
@@ -792,7 +803,7 @@ Section "-InstallEndCleanup"
   ; When we're using the GUI, .onGUIEnd sends the ping, but of course that isn't
   ; invoked when we're running silently.
   ${If} ${Silent}
-    Call SendPing
+    Call LaunchApp
   ${EndIf}
 SectionEnd
 

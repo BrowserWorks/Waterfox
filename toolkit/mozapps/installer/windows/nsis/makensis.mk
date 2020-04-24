@@ -23,7 +23,9 @@ TOOLKIT_NSIS_FILES = \
 	locale-rtl.nlf \
 	locales.nsi \
 	overrides.nsh \
+	replaceInFile.nsh \
 	setup.ico \
+	StrRep.nsh \
 	$(NULL)
 
 CUSTOM_NSIS_PLUGINS = \
