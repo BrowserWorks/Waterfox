@@ -1502,7 +1502,7 @@ already_AddRefed<nsIDocument>
 nsHTMLDocument::Open(JSContext* cx,
                      const nsAString& aType,
                      const nsAString& aReplace,
-                     ErrorResult& rv)
+                     ErrorResult& aError)
 {
   // Implements the "When called with two arguments (or fewer)" steps here:
   // https://html.spec.whatwg.org/multipage/webappapis.html#opening-the-input-stream
@@ -1511,7 +1511,7 @@ nsHTMLDocument::Open(JSContext* cx,
                "XOW should have caught this!");
   if (!IsHTMLDocument() || mDisableDocWrite) {
     // No calling document.open() on XHTML
-    rv.Throw(NS_ERROR_DOM_INVALID_STATE_ERR);
+    aError.Throw(NS_ERROR_DOM_INVALID_STATE_ERR);
     return nullptr;
   }
 
@@ -1586,7 +1586,7 @@ nsHTMLDocument::Open(JSContext* cx,
     // change the principals of a document for security reasons we'll have to
     // refuse to go ahead with this call.
 
-    rv.Throw(NS_ERROR_DOM_SECURITY_ERR);
+    aError.Throw(NS_ERROR_DOM_SECURITY_ERR);
     return nullptr;
   }
 
@@ -1616,7 +1616,7 @@ nsHTMLDocument::Open(JSContext* cx,
            thisURI ? thisURI->GetSpecOrDefault().get() : "");
 #endif
 
-    rv.Throw(NS_ERROR_DOM_SECURITY_ERR);
+    aError.Throw(NS_ERROR_DOM_SECURITY_ERR);
     return nullptr;
   }
 
@@ -1664,34 +1664,34 @@ nsHTMLDocument::Open(JSContext* cx,
   // So we reset the document and then reinitialize it.
   nsCOMPtr<nsIChannel> channel;
   nsCOMPtr<nsILoadGroup> group = do_QueryReferent(mDocumentLoadGroup);
-  rv = NS_NewChannel(getter_AddRefs(channel),
-                     uri,
-                     callerDoc,
-                     nsILoadInfo::SEC_FORCE_INHERIT_PRINCIPAL,
-                     nsIContentPolicy::TYPE_OTHER,
-                     group);
+  aError = NS_NewChannel(getter_AddRefs(channel),
+                         uri,
+                         callerDoc,
+                         nsILoadInfo::SEC_FORCE_INHERIT_PRINCIPAL,
+                         nsIContentPolicy::TYPE_OTHER,
+                         group);
 
-  if (rv.Failed()) {
+  if (aError.Failed()) {
     return nullptr;
   }
 
   if (callerChannel) {
     nsLoadFlags callerLoadFlags;
-    rv = callerChannel->GetLoadFlags(&callerLoadFlags);
-    if (rv.Failed()) {
+    aError = callerChannel->GetLoadFlags(&callerLoadFlags);
+    if (aError.Failed()) {
       return nullptr;
     }
 
     nsLoadFlags loadFlags;
-    rv = channel->GetLoadFlags(&loadFlags);
-    if (rv.Failed()) {
+    aError = channel->GetLoadFlags(&loadFlags);
+    if (aError.Failed()) {
       return nullptr;
     }
 
     loadFlags |= callerLoadFlags & nsIRequest::INHIBIT_PERSISTENT_CACHING;
 
-    rv = channel->SetLoadFlags(loadFlags);
-    if (rv.Failed()) {
+    aError = channel->SetLoadFlags(loadFlags);
+    if (aError.Failed()) {
       return nullptr;
     }
 
@@ -1730,9 +1730,9 @@ nsHTMLDocument::Open(JSContext* cx,
 #endif
 
     // Per spec, we pass false here so that a new Window is created.
-    rv = window->SetNewDocument(this, nullptr,
-                                /* aForceReuseInnerWindow */ false);
-    if (rv.Failed()) {
+    aError = window->SetNewDocument(this, nullptr,
+                                    /* aForceReuseInnerWindow */ false);
+    if (aError.Failed()) {
       return nullptr;
     }
 
@@ -1753,8 +1753,8 @@ nsHTMLDocument::Open(JSContext* cx,
     JS::Rooted<JSObject*> wrapper(cx, GetWrapper());
     if (oldScope && newScope != oldScope && wrapper) {
       JSAutoCompartment ac(cx, wrapper);
-      mozilla::dom::ReparentWrapper(cx, wrapper, rv);
-      if (rv.Failed()) {
+      mozilla::dom::ReparentWrapper(cx, wrapper, aError);
+      if (aError.Failed()) {
         return nullptr;
       }
 
@@ -1764,8 +1764,8 @@ nsHTMLDocument::Open(JSContext* cx,
         JS::Rooted<JSObject*> contentsOwnerWrapper(cx,
           mTemplateContentsOwner->GetWrapper());
         if (contentsOwnerWrapper) {
-          mozilla::dom::ReparentWrapper(cx, contentsOwnerWrapper, rv);
-          if (rv.Failed()) {
+          mozilla::dom::ReparentWrapper(cx, contentsOwnerWrapper, aError);
+          if (aError.Failed()) {
             return nullptr;
           }
         }
