@@ -1582,7 +1582,7 @@ ReparentWrappersInSubtree(nsIContent* aRoot)
   for (nsIContent* cur = aRoot; cur; cur = cur->GetNextNode(aRoot)) {
     if ((reflector = cur->GetWrapper())) {
       JSAutoCompartment ac(cx, reflector);
-      ReparentWrapper(cx, reflector);
+      ReparentWrapper(cx, reflector, rv);
       rv.WouldReportJSException();
       if (rv.Failed()) {
         // We _could_ consider BlastSubtreeToPieces here, but it's not really

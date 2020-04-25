@@ -1516,7 +1516,7 @@ nsHTMLDocument::Open(JSContext* cx,
   }
 
   if (ShouldThrowOnDynamicMarkupInsertion()) {
-    rv.Throw(NS_ERROR_DOM_INVALID_STATE_ERR);
+    aError.Throw(NS_ERROR_DOM_INVALID_STATE_ERR);
     return nullptr;
   }
 
