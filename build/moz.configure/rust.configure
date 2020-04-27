@@ -86,6 +86,9 @@ cargo = unwrap_rustup(cargo, 'cargo')
 set_config('CARGO', cargo)
 set_config('RUSTC', rustc)
 
+@imports('platform')
+def is_windows():
+    return platform.system() == 'Windows';
 
 @depends_if(rustc)
 @checking('rustc version', lambda info: info.version)
@@ -218,7 +221,7 @@ def rust_supported_targets(rustc):
     return namespace(per_os=per_os, per_raw_os=per_raw_os)
 
 
-if host.kernel != 'WINNT':
+if False == is_windows():
     @template
     def rust_triple_alias(host_or_target):
         """Template defining the alias used for rustc's --target flag.
