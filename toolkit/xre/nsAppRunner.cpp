@@ -2019,7 +2019,7 @@ static nsresult SelectProfile(nsToolkitProfileService* aProfileSvc,
     // For a fresh install, we would like to let users decide
     // to do profile migration on their own later after using.
     gDoProfileReset = false;
-    gDoMigration = false;
+    gDoMigration = true;
   }
 
   if (gDoProfileReset && !*aProfile) {
