@@ -31,7 +31,7 @@
 <!ENTITY importFromFirefox.accesskey    "X">
 <!ENTITY importFrom360se.label          "360 Secure Browser">
 <!ENTITY importFrom360se.accesskey      "3">
-<!ENTITY importFromLfirefox.label       "Local Firefox">
+<!ENTITY importFromLfirefox.label       "Mozilla Firefox">
 <!ENTITY importFromLfirefox.accesskey   "L">
 
 <!ENTITY noMigrationSources.label       "No programs that contain bookmarks, history or password data could be found.">
