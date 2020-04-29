@@ -5,6 +5,8 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "mozilla/EMEUtils.h"
+
+#include "jsfriendapi.h"
 #include "mozilla/dom/UnionTypes.h"
 
 namespace mozilla {
@@ -19,10 +21,11 @@ LogModule* GetEMEVerboseLog() {
   return log;
 }
 
-ArrayData
-GetArrayBufferViewOrArrayBufferData(const dom::ArrayBufferViewOrArrayBuffer& aBufferOrView)
-{
-  MOZ_ASSERT(aBufferOrView.IsArrayBuffer() || aBufferOrView.IsArrayBufferView());
+ArrayData GetArrayBufferViewOrArrayBufferData(
+    const dom::ArrayBufferViewOrArrayBuffer& aBufferOrView) {
+  MOZ_ASSERT(aBufferOrView.IsArrayBuffer() ||
+             aBufferOrView.IsArrayBufferView());
+  JS::AutoCheckCannotGC nogc;
   if (aBufferOrView.IsArrayBuffer()) {
     const dom::ArrayBuffer& buffer = aBufferOrView.GetAsArrayBuffer();
     buffer.ComputeLengthAndData();
@@ -35,10 +38,10 @@ GetArrayBufferViewOrArrayBufferData(const dom::ArrayBufferViewOrArrayBuffer& aBu
   return ArrayData(nullptr, 0);
 }
 
-void
-CopyArrayBufferViewOrArrayBufferData(const dom::ArrayBufferViewOrArrayBuffer& aBufferOrView,
-                                     nsTArray<uint8_t>& aOutData)
-{
+void CopyArrayBufferViewOrArrayBufferData(
+    const dom::ArrayBufferViewOrArrayBuffer& aBufferOrView,
+    nsTArray<uint8_t>& aOutData) {
+  JS::AutoCheckCannotGC nogc;
   ArrayData data = GetArrayBufferViewOrArrayBufferData(aBufferOrView);
   aOutData.Clear();
   if (!data.IsValid()) {
@@ -47,21 +50,23 @@ CopyArrayBufferViewOrArrayBufferData(const dom::ArrayBufferViewOrArrayBuffer& aB
   aOutData.AppendElements(data.mData, data.mLength);
 }
 
-bool
-IsClearkeyKeySystem(const nsAString& aKeySystem)
-{
+void CopyArrayBufferViewOrArrayBufferData(const dom::ArrayBuffer& aBuffer,
+                                          nsTArray<uint8_t>& aOutData) {
+  JS::AutoCheckCannotGC nogc;
+  aBuffer.ComputeLengthAndData();
+  aOutData.Clear();
+  aOutData.AppendElements(aBuffer.Data(), aBuffer.Length());
+}
+
+bool IsClearkeyKeySystem(const nsAString& aKeySystem) {
   return !CompareUTF8toUTF16(kEMEKeySystemClearkey, aKeySystem);
 }
 
-bool
-IsWidevineKeySystem(const nsAString& aKeySystem)
-{
+bool IsWidevineKeySystem(const nsAString& aKeySystem) {
   return !CompareUTF8toUTF16(kEMEKeySystemWidevine, aKeySystem);
 }
 
-nsString
-KeySystemToGMPName(const nsAString& aKeySystem)
-{
+nsString KeySystemToGMPName(const nsAString& aKeySystem) {
   if (IsClearkeyKeySystem(aKeySystem)) {
     return NS_LITERAL_STRING("gmp-clearkey");
   }

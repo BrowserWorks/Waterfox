@@ -87,10 +87,10 @@ MediaEncryptedEvent::Constructor(const GlobalObject& aGlobal,
   e->mInitDataType = aEventInitDict.mInitDataType;
   if (!aEventInitDict.mInitData.IsNull()) {
     const auto& a = aEventInitDict.mInitData.Value();
-    a.ComputeLengthAndData();
-    e->mInitData = ArrayBuffer::Create(aGlobal.Context(),
-                                       a.Length(),
-                                       a.Data());
+    nsTArray<uint8_t> initData;
+    CopyArrayBufferViewOrArrayBufferData(a, initData);
+    e->mInitData = ArrayBuffer::Create(aGlobal.Context(), initData.Length(),
+                                       initData.Elements());
     if (!e->mInitData) {
       aRv.Throw(NS_ERROR_OUT_OF_MEMORY);
       return nullptr;
