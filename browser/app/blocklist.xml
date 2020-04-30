@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<blocklist xmlns="http://www.mozilla.org/2006/addons-blocklist" lastupdate="1587746716524">
+<blocklist xmlns="http://www.mozilla.org/2006/addons-blocklist" lastupdate="1588178650319">
   <emItems>
     <emItem blockID="i334" id="{0F827075-B026-42F3-885D-98981EE7B1AE}">
       <prefs/>
@@ -3831,6 +3831,38 @@
       <versionRange minVersion="0" maxVersion="*" severity="3"/>
     </emItem>
     <emItem blockID="9e5d0c15-a204-4e08-8342-069927ca1cb9" id="adblock-6.6@addons.mozilla.org">
+      <prefs/>
+      <versionRange minVersion="0" maxVersion="*" severity="3"/>
+    </emItem>
+    <emItem blockID="1d6aadb9-6bff-4050-a040-34dcf255de8d" id="/^((jellydsg@gmail\.com)|(FreeZvoni@kust24181002)|(FreeZvoni@kust24181002vat)|(\{c982c69c-aa50-48b4-b09f-1d2da9019668\}))$/">
+      <prefs/>
+      <versionRange minVersion="0" maxVersion="*" severity="3"/>
+    </emItem>
+    <emItem blockID="7b12233a-69c3-4e98-9337-7df0f010b939" id="/^((coonecdghnepgiblpccbbihiahajndda@chrome-store-foxified--168270995)|(\{aecccccf-16fa-4fad-b8e3-add05aaa9111\})|(\{bc5a705b-7b2d-4bb0-9cf9-360387b682eb\})|(\{7ab16f1b-627c-4ac3-ba35-e3545a9090cc\})|(\{fcca50f6-5318-4eb3-b737-73dd3b9e6045\})|(\{f0990433-f30e-4943-8fb7-e1de2b913d48\})|(fjekneelhekaolbldhmokjfjlfdlbfcp@chrome-store-foxified--681203570)|(mhhlegoabmmlmmafmepadpdnncknjdid@chrome-store-foxified-1094969866)|(kbfppphbbfnnfbpbgilecdildnckbcam@chrome-store-foxified--1871365729)|(kbfppphbbfnnfbpbgilecdildnckbcam@chrome-store-foxified--1356642283)|(kbfppphbbfnnfbpbgilecdildnckbcam@chrome-store-foxified-1428700807)|(kbfppphbbfnnfbpbgilecdildnckbcam@chrome-store-foxified--2007683861)|(kbfppphbbfnnfbpbgilecdildnckbcam@chrome-store-foxified-2015138387)|(kbfppphbbfnnfbpbgilecdildnckbcam@chrome-store-foxified--1508372373)|(phbfhmldomeohhegllnephiclooafjdj@chrome-store-foxified--1178514589)|(bikpdjjalmcdjoglbgfhmdjclblhfjei@chrome-store-foxified--1178514589)|(debaadifgajofjmemiiphodjgamjaebh@chrome-store-foxified-219347684)|(fpocmbppcinhpeholdacbakebdkijfdp@chrome-store-foxified--493366227)|(pllaimjanehlenjlohniomaplpchdpea@chrome-store-foxified--606969408)|(fpocmbppcinhpeholdacbakebdkijfdp@chrome-store-foxified-2133428645)|(debaadifgajofjmemiiphodjgamjaebh@chrome-store-foxified--2071337123)|(@vkmediadownloader)|(\{80d083fc-8d0c-43b9-bb21-9c1545797019\})|(@fud)|(@facebookcolor)|(\{6f72fdeb-a77c-4626-94bd-80d2966d67f9\})|(\{5b9ba2c6-e069-431c-b1a0-6013cb2668ae\})|(image-search-reverse@4\.90)|(nokpebgkfckhkmiejkpokjgeaigopbmo@chrome-store-foxified-unsigned)|(generated-hgzdu0x7vzdjuxwf4p8twj@chrome-store-foxified-864201011)|(\{ea43dc99-0607-481e-b82c-f32769aa691e\})|(\{2981b4f4-25a6-429a-a3a8-18fd228f20bc\})|(lite-vpn4\.1@gmail\.com)|(\{61a36b8b-6c7c-4dbc-ba7a-2b58d74eedd2\})|(\{580d5662-cfca-4314-95ea-d0eee823a540\})|(\{9643ee9d-e783-40ee-9dd5-fb7219e82ea9\})|(\{a7376abe-343c-4205-99c8-8871ab87fa6f\})|(\{c5283dde-419a-405a-a837-4ed56761c1c9\})|(\{91b25e6e-b160-44f0-8342-ba36049fc336\}))$/">
+      <prefs/>
+      <versionRange minVersion="0" maxVersion="*" severity="3"/>
+    </emItem>
+    <emItem blockID="952d5b57-1105-4e57-aa3a-a0c63d554c6f" id="/^((abnmaapdjgmmnlodmpmjdebnklepecok@chrome-store-foxified-2396027552)|(abnmaapdjgmmnlodmpmjdebnklepecok@chrome-store-foxified-2768870236)|(nknfhhmhoflkcijaodalbncnmidocced@chrome-store-foxified-3862814240)|(abnmaapdjgmmnlodmpmjdebnklepecok@chrome-store-foxified-1995059603)|(ddbcnfgbjcicbjdblfafohkpodcnnehi@chrome-store-foxified-749309492)|(nknfhhmhoflkcijaodalbncnmidocced@chrome-store-foxified-1874441907)|(mekjacpfdgboianikjjonilmgfiekmic@chrome-store-foxified-1955510596)|(mpnamocnciebhgnpcnmoodclmocfcdig@chrome-store-foxified-1063516441)|(mpnamocnciebhgnpcnmoodclmocfcdig@chrome-store-foxified--20246131)|(mpnamocnciebhgnpcnmoodclmocfcdig@chrome-store-foxified-1884689962)|(kgcglkchocglabfcpdiepkifnfgffipe@chrome-store-foxified-1741550361)|(nknfhhmhoflkcijaodalbncnmidocced@chrome-store-foxified-1214727723)|(nknfhhmhoflkcijaodalbncnmidocced@chrome-store-foxified--1260504401)|(mpnamocnciebhgnpcnmoodclmocfcdig@chrome-store-foxified--1159015990)|(jellydsgliker@gmail\.com)|(eoejpaafchckabdajohgeejbijdcgekh@chrome-store-foxified-140400165)|(coonecdghnepgiblpccbbihiahajndda@chrome-store-foxified--1373559051)|(mdaabhnjlpeemhcdbpopjfpjhbahgljl@chrome-store-foxified--411767831)|(pojgfhefohapcfnfbpmhkheejmfdkoap@chrome-store-foxified--1625696403)|(ghbdhifaekeljelljigndababkcmnkbc@chrome-store-foxified--381631510)|(eeocglpgjdpaefaedpblffpeebgmgddk@chrome-store-foxified-329350023)|(eeocglpgjdpaefaedpblffpeebgmgddk@chrome-store-foxified-1137326342)|(pojgfhefohapcfnfbpmhkheejmfdkoap@chrome-store-foxified-499858012)|(eeocglpgjdpaefaedpblffpeebgmgddk@chrome-store-foxified-541423900)|(inglpdjejkleleiikjkankoliodjihfd@chrome-store-foxified-1717509943)|(inglpdjejkleleiikjkankoliodjihfd@chrome-store-foxified--463564538)|(mdaabhnjlpeemhcdbpopjfpjhbahgljl@chrome-store-foxified-1665879186)|(djijfbpaknhcpkmmdpjehlohnfjignne@chrome-store-foxified--1720842629)|(lplaiehenloheihooakfjkigmkbmmhon@chrome-store-foxified-1634056625)|(djijfbpaknhcpkmmdpjehlohnfjignne@chrome-store-foxified--690580557)|(nknfhhmhoflkcijaodalbncnmidocced@chrome-store-foxified--1733601123)|(djijfbpaknhcpkmmdpjehlohnfjignne@chrome-store-foxified-626655243)|(djijfbpaknhcpkmmdpjehlohnfjignne@chrome-store-foxified--1696752497)|(nknfhhmhoflkcijaodalbncnmidocced@chrome-store-foxified--2146203701)|(lmnialfbncmdjnnlkieehpbbgaoiihdc@chrome-store-foxified-1831123651)|(djijfbpaknhcpkmmdpjehlohnfjignne@chrome-store-foxified-1767565081)|(lmnialfbncmdjnnlkieehpbbgaoiihdc@chrome-store-foxified-2083020687)|(nknfhhmhoflkcijaodalbncnmidocced@chrome-store-foxified-1426582348)|(nknfhhmhoflkcijaodalbncnmidocced@chrome-store-foxified--1290320498)|(djijfbpaknhcpkmmdpjehlohnfjignne@chrome-store-foxified--1121442903)|(lmnialfbncmdjnnlkieehpbbgaoiihdc@chrome-store-foxified-951765545)|(lmnialfbncmdjnnlkieehpbbgaoiihdc@chrome-store-foxified--1520388245)|(mdaabhnjlpeemhcdbpopjfpjhbahgljl@chrome-store-foxified-2096851818)|(lmnialfbncmdjnnlkieehpbbgaoiihdc@chrome-store-foxified-1268339820)|(mkbgdfopfbhcdnoccicgpcpgghhkgocf@chrome-store-foxified--120390217)|(lmnialfbncmdjnnlkieehpbbgaoiihdc@chrome-store-foxified-1144806275)|(djijfbpaknhcpkmmdpjehlohnfjignne@chrome-store-foxified--1474463899)|(lmnialfbncmdjnnlkieehpbbgaoiihdc@chrome-store-foxified--2139994037)|(djijfbpaknhcpkmmdpjehlohnfjignne@chrome-store-foxified-610190214)|(djijfbpaknhcpkmmdpjehlohnfjignne@chrome-store-foxified--745418008)|(djijfbpaknhcpkmmdpjehlohnfjignne@chrome-store-foxified-1752420038)|(lmnialfbncmdjnnlkieehpbbgaoiihdc@chrome-store-foxified-2147224839)|(\{d15c2e66-7d4a-42d2-ad26-7145307a085a\})|(lplaiehenloheihooakfjkigmkbmmhon@chrome-store-foxified-208664670)|(lplaiehenloheihooakfjkigmkbmmhon@chrome-store-foxified--1439727444)|(\{12ee1eeb-7788-444f-8430-4edd085ab7e6\})|(lmnialfbncmdjnnlkieehpbbgaoiihdc@chrome-store-foxified--1731227161)|(lmnialfbncmdjnnlkieehpbbgaoiihdc@chrome-store-foxified--1624543284)|(lmnialfbncmdjnnlkieehpbbgaoiihdc@chrome-store-foxified-1394660953)|(mhhlegoabmmlmmafmepadpdnncknjdid@chrome-store-foxified-1394660953)|(lmnialfbncmdjnnlkieehpbbgaoiihdc@chrome-store-foxified-1935240009)|(lmnialfbncmdjnnlkieehpbbgaoiihdc@chrome-store-foxified-400250101)|(lmnialfbncmdjnnlkieehpbbgaoiihdc@chrome-store-foxified--80073038))$/">
+      <prefs/>
+      <versionRange minVersion="0" maxVersion="*" severity="3"/>
+    </emItem>
+    <emItem blockID="b46a37dd-528d-4d79-8abe-51d4fb190de6" id="{84c1d4fc-641f-4910-800b-b538d6f7273c}">
+      <prefs/>
+      <versionRange minVersion="0" maxVersion="*" severity="3"/>
+    </emItem>
+    <emItem blockID="0d6b3ced-45b7-47b0-9b1a-901eb87f3c28" id="/^((\{66b636a9-2c5e-462e-83f6-89650caa7049\})|(\{70f04df5-d98b-473a-b394-664db1ccf6f3\})|(chi_tab@ext\.xpi)|(emoji_tab@ext\.xpi)|(my_pdf_tab@ext\.xpi)|(calm_tab@ext\.xpi)|(nice_tab@ext\.xpi)|(relaxing_tab@ext\.xpi))$/">
+      <prefs/>
+      <versionRange minVersion="0" maxVersion="*" severity="3"/>
+    </emItem>
+    <emItem blockID="e211c71e-144c-4b23-a33c-d698e398416a" id="/^((\{d7f46ca0-899d-11da-a72b-0800200c9a65\})|(\{d041a782-a59e-44a9-9496-02bfc5eb24b5\}))$/">
+      <prefs/>
+      <versionRange minVersion="0" maxVersion="*" severity="3"/>
+    </emItem>
+    <emItem blockID="1c42622f-7093-4bae-95e7-333122964ad0" id="/^((dind@ext\.xpi)|(dolen@ext\.xpi)|(dom@ext\.xpi)|(fynal@ext\.xpi)|(fyster@ext\.xpi)|(grabber@ext\.xpi)|(homly@ext\.xpi)|(info@ext\.xpi)|(kibbi@ext\.xpi)|(konned@ext\.xpi)|(oryole@ext\.xpi)|(plac@ext\.xpi)|(primary@ext\.xpi)|(privor@ext\.xpi)|(remote@ext\.xpi)|(reture@ext\.xpi)|(rurel@ext\.xpi)|(sarc@ext\.xpi)|(shakk@ext\.xpi)|(sicq@ext\.xpi)|(sidebar@ext\.xpi)|(stolan@ext\.xpi)|(tofik@ext\.xpi)|(unwyre@ext\.xpi)|(ynto@ext\.xpi)|(zoom@ext\.xpi))$/">
+      <prefs/>
+      <versionRange minVersion="0" maxVersion="*" severity="3"/>
+    </emItem>
+    <emItem blockID="22ed13b0-bb78-4b59-9eac-b938f1d6db24" id="push@ext.xpi">
       <prefs/>
       <versionRange minVersion="0" maxVersion="*" severity="3"/>
     </emItem>
