@@ -48,8 +48,7 @@ bool AddSidToDacl(const Sid& sid, ACL* old_dacl, ACCESS_MODE access_mode,
   new_access.Trustee.pMultipleTrustee = NULL;
   new_access.Trustee.MultipleTrusteeOperation = NO_MULTIPLE_TRUSTEE;
   new_access.Trustee.TrusteeForm = TRUSTEE_IS_SID;
-  new_access.Trustee.ptstrName = reinterpret_cast<LPWSTR>(
-                                    const_cast<SID*>(sid.GetPSID()));
+  new_access.Trustee.ptstrName = reinterpret_cast<LPWSTR>(sid.GetPSID());
 
   if (ERROR_SUCCESS != ::SetEntriesInAcl(1, &new_access, old_dacl, new_dacl))
     return false;
@@ -129,7 +128,7 @@ bool AddKnownSidToObject(HANDLE object, SE_OBJECT_TYPE object_type,
                                          &old_dacl, NULL, &descriptor))
     return false;
 
-  if (!AddSidToDacl(sid.GetPSID(), old_dacl, access_mode, access, &new_dacl)) {
+  if (!AddSidToDacl(sid, old_dacl, access_mode, access, &new_dacl)) {
     ::LocalFree(descriptor);
     return false;
   }
