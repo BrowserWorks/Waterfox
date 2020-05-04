@@ -752,7 +752,12 @@ static bool DoChannelsMatchForCopyTexImage(const webgl::FormatInfo* srcFormat,
 static bool EnsureImageDataInitializedForUpload(
     WebGLTexture* tex, TexImageTarget target, GLint level, GLint xOffset,
     GLint yOffset, GLint zOffset, uint32_t width, uint32_t height,
-    uint32_t depth, webgl::ImageInfo* imageInfo) {
+    uint32_t depth, webgl::ImageInfo* imageInfo,
+    bool* const out_expectsInit = nullptr) {
+  if (out_expectsInit) {
+    *out_expectsInit = false;
+  }
+
   if (!imageInfo->mHasData) {
     const bool isFullUpload =
         (!xOffset && !yOffset && !zOffset && width == imageInfo->mWidth &&
@@ -766,6 +771,10 @@ static bool EnsureImageDataInitializedForUpload(
       if (!tex->EnsureImageDataInitialized(target, level)) {
         MOZ_ASSERT(false, "Unexpected failure to init image data.");
         return false;
+      }
+    } else {
+      if (out_expectsInit) {
+        *out_expectsInit = true;
       }
     }
   }
@@ -1920,7 +1929,7 @@ bool WebGLTexture::ValidateCopyTexImageForFeedback(uint32_t level,
   return true;
 }
 
-static bool DoCopyTexOrSubImage(WebGLContext* webgl, bool isSubImage,
+static bool DoCopyTexOrSubImage(WebGLContext* webgl, bool isSubImage, bool needsInit,
                                 WebGLTexture* const tex, const TexImageTarget target,
                                 GLint level, GLint xWithinSrc, GLint yWithinSrc,
                                 uint32_t srcTotalWidth, uint32_t srcTotalHeight,
@@ -1952,37 +1961,51 @@ static bool DoCopyTexOrSubImage(WebGLContext* webgl, bool isSubImage,
   nsCString errorText;
   do {
     const auto& idealUnpack = dstUsage->idealUnpack;
-    if (!isSubImage) {
-      UniqueBuffer buffer;
+    const auto& pi = idealUnpack->ToPacking();
 
-      if (uint32_t(rwWidth) != dstWidth || uint32_t(rwHeight) != dstHeight) {
-        const auto& pi = idealUnpack->ToPacking();
-        CheckedInt<size_t> byteCount = BytesPerPixel(pi);
-        byteCount *= dstWidth;
-        byteCount *= dstHeight;
+    UniqueBuffer zeros;
+    const bool fullOverwrite = (uint32_t(rwWidth) == dstWidth && uint32_t(rwHeight) == dstHeight);
+    if (needsInit && !fullOverwrite) {
+      CheckedInt<size_t> byteCount = BytesPerPixel(pi);
+      byteCount *= dstWidth;
+      byteCount *= dstHeight;
 
-        if (byteCount.isValid()) {
-          buffer = calloc(1u, byteCount.value());
-        }
-
-        if (!buffer.get()) {
-          webgl->ErrorOutOfMemory("Ran out of memory allocating zeros.");
-          return false;
-        }
+      if (byteCount.isValid()) {
+        zeros = calloc(1u, byteCount.value());
       }
 
+      if (!zeros.get()) {
+        webgl->ErrorOutOfMemory("Ran out of memory allocating zeros.");
+        return false;
+      }
+    }
+
+    if (!isSubImage || zeros) {
       const ScopedUnpackReset unpackReset(webgl);
       gl->fPixelStorei(LOCAL_GL_UNPACK_ALIGNMENT, 1);
-      error = DoTexImage(gl, target, level, idealUnpack, dstWidth, dstHeight, 1,
-                         buffer.get());
-      if (error) {
-        errorText = nsPrintfCString(
-            "DoTexImage(0x%04x, %i, {0x%04x, 0x%04x, 0x%04x}, %u,%u,1) -> "
-            "0x%04x",
-            target.get(), level, idealUnpack->internalFormat,
-            idealUnpack->unpackFormat, idealUnpack->unpackType, dstWidth,
-            dstHeight, error);
-        break;
+      if (!isSubImage) {
+        error = DoTexImage(gl, target, level, idealUnpack, dstWidth, dstHeight, 1, nullptr);
+        if (error) {
+          errorText = nsPrintfCString(
+              "DoTexImage(0x%04x, %i, {0x%04x, 0x%04x, 0x%04x}, %u,%u,1) -> "
+              "0x%04x",
+              target.get(), level, idealUnpack->internalFormat,
+              idealUnpack->unpackFormat, idealUnpack->unpackType, dstWidth,
+              dstHeight, error);
+          break;
+        }
+      }
+      if (zeros) {
+        error = DoTexSubImage(gl, target, level, xOffset, yOffset, zOffset,
+                              dstWidth, dstHeight, 1, pi, zeros.get());
+        if (error) {
+          errorText = nsPrintfCString(
+              "DoTexSubImage(0x%04x, %i, %i,%i,%i, %u,%u,1, {0x%04x, 0x%04x}) -> "
+              "0x%04x",
+              target.get(), level, xOffset, yOffset, zOffset, dstWidth,
+              dstHeight, idealUnpack->unpackFormat, idealUnpack->unpackType, error);
+          break;
+        }
       }
     }
 
@@ -2083,7 +2106,8 @@ void WebGLTexture::CopyTexImage2D(TexImageTarget target, GLint level,
   // Do the thing!
 
   const bool isSubImage = false;
-  if (!DoCopyTexOrSubImage(mContext, isSubImage, this, target, level, x, y,
+  const bool expectsInit = true;
+  if (!DoCopyTexOrSubImage(mContext, isSubImage, expectsInit, this, target, level, x, y,
                            srcTotalWidth, srcTotalHeight, srcUsage, 0, 0, 0,
                            width, height, dstUsage)) {
     return;
@@ -2155,14 +2179,15 @@ void WebGLTexture::CopyTexSubImage(TexImageTarget target, GLint level,
   ////////////////////////////////////
   // Do the thing!
 
+  bool expectsInit = true;
   if (!EnsureImageDataInitializedForUpload(this, target, level, xOffset,
                                            yOffset, zOffset, width, height,
-                                           depth, imageInfo)) {
+                                           depth, imageInfo, &expectsInit)) {
     return;
   }
 
   const bool isSubImage = true;
-  if (!DoCopyTexOrSubImage(mContext, isSubImage, this, target, level, x, y,
+  if (!DoCopyTexOrSubImage(mContext, isSubImage, expectsInit, this, target, level, x, y,
                            srcTotalWidth, srcTotalHeight, srcUsage, xOffset,
                            yOffset, zOffset, width, height, dstUsage)) {
     return;

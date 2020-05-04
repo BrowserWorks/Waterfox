@@ -11,6 +11,8 @@
 
 policy-3rdparty = Set policies that WebExtensions can access via chrome.storage.managed.
 
+policy-AppAutoUpdate = Enable or disable automatic application update.
+
 policy-AppUpdateURL = Set custom app update URL.
 
 policy-Authentication = Configure integrated authentication for websites that support it.
@@ -30,6 +32,8 @@ policy-CaptivePortal = Enable or disable captive portal support.
 policy-CertificatesDescription = Add certificates or use built-in certificates.
 
 policy-Cookies = Allow or deny websites to set cookies.
+
+policy-DisabledCiphers = Disable ciphers.
 
 policy-DefaultDownloadDirectory = Set the default download directory.
 
@@ -155,6 +159,8 @@ policy-SSLVersionMax = Set the maximum SSL version.
 policy-SSLVersionMin = Set the minimum SSL version.
 
 policy-SupportMenu = Add a custom support menu item to the help menu.
+
+policy-UserMessaging = Don’t show certain messages to the user.
 
 # “format” refers to the format used for the value of this policy.
 policy-WebsiteFilter = Block websites from being visited. See documentation for more details on the format.

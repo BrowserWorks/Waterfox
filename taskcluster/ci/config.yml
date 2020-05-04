@@ -155,9 +155,6 @@ release-promotion:
             product: devedition
             target-tasks-method: promote_desktop
             partial-updates: true
-        promote_fennec_beta:
-            product: fennec
-            target-tasks-method: promote_fennec_beta
         promote_fennec_release:
             product: fennec
             target-tasks-method: promote_fennec_release

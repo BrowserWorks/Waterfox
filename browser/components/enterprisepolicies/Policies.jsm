@@ -77,6 +77,18 @@ var Policies = {
     },
   },
 
+  AppAutoUpdate: {
+    onBeforeUIStartup(manager, param) {
+      // Logic feels a bit reversed here, but it's correct. If AppAutoUpdate is
+      // true, we disallow turning off auto updating, and visa versa.
+      if (param) {
+        manager.disallowFeature("app-auto-updates-off");
+      } else {
+        manager.disallowFeature("app-auto-updates-on");
+      }
+    },
+  },
+
   AppUpdateURL: {
     onBeforeAddons(manager, param) {
       setDefaultPref("app.update.url", param.href);
@@ -380,6 +392,38 @@ var Policies = {
     },
   },
 
+  DisabledCiphers: {
+    onBeforeAddons(manager, param) {
+      if ("TLS_DHE_RSA_WITH_AES_128_CBC_SHA" in param) {
+        setAndLockPref("security.ssl3.dhe_rsa_aes_128_sha", false);
+      }
+      if ("TLS_DHE_RSA_WITH_AES_256_CBC_SHA" in param) {
+        setAndLockPref("security.ssl3.dhe_rsa_aes_256_sha", false);
+      }
+      if ("TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA" in param) {
+        setAndLockPref("security.ssl3.ecdhe_rsa_aes_128_sha", false);
+      }
+      if ("TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA" in param) {
+        setAndLockPref("security.ssl3.ecdhe_rsa_aes_256_sha", false);
+      }
+      if ("TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256" in param) {
+        setAndLockPref("security.ssl3.ecdhe_rsa_aes_128_gcm_sha256", false);
+      }
+      if ("TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256" in param) {
+        setAndLockPref("security.ssl3.ecdhe_ecdsa_aes_128_gcm_sha256", false);
+      }
+      if ("TLS_RSA_WITH_AES_128_CBC_SHA" in param) {
+        setAndLockPref("security.ssl3.rsa_aes_128_sha", false);
+      }
+      if ("TLS_RSA_WITH_AES_256_CBC_SHA" in param) {
+        setAndLockPref("security.ssl3.rsa_aes_256_sha", false);
+      }
+      if ("TLS_RSA_WITH_3DES_EDE_CBC_SHA" in param) {
+        setAndLockPref("security.ssl3.rsa_des_ede3_sha", false);
+      }
+    },
+  },
+
   DisableDeveloperTools: {
     onBeforeAddons(manager, param) {
       if (param) {
@@ -628,12 +672,23 @@ var Policies = {
 
   DNSOverHTTPS: {
     onBeforeAddons(manager, param) {
+      let locked = false;
+      if ("Locked" in param) {
+        locked = param.Locked;
+      }
       if ("Enabled" in param) {
         let mode = param.Enabled ? 2 : 5;
-        setDefaultPref("network.trr.mode", mode, param.Locked);
+        setDefaultPref("network.trr.mode", mode, locked);
       }
-      if (param.ProviderURL) {
-        setDefaultPref("network.trr.uri", param.ProviderURL.href, param.Locked);
+      if ("ProviderURL" in param) {
+        setDefaultPref("network.trr.uri", param.ProviderURL.href, locked);
+      }
+      if ("ExcludedDomains" in param) {
+        setDefaultPref(
+          "network.trr.excluded-domains",
+          param.ExcludedDomains.join(","),
+          locked
+        );
       }
     },
   },
@@ -1116,7 +1171,25 @@ var Policies = {
           param.Autoplay.Allow,
           param.Autoplay.Block
         );
-        setDefaultPermission("autoplay-media", param.Autoplay);
+        if ("Default" in param.Autoplay) {
+          let prefValue;
+          switch (param.Autoplay.Default) {
+            case "allow-audio-video":
+              prefValue = 0;
+              break;
+            case "block-audio":
+              prefValue = 1;
+              break;
+            case "block-audio-video":
+              prefValue = 5;
+              break;
+          }
+          setDefaultPref(
+            "media.autoplay.default",
+            prefValue,
+            param.Autoplay.Locked
+          );
+        }
       }
 
       if (param.Location) {
@@ -1497,6 +1570,29 @@ var Policies = {
   SupportMenu: {
     onProfileAfterChange(manager, param) {
       manager.setSupportMenu(param);
+    },
+  },
+
+  UserMessaging: {
+    onBeforeAddons(manager, param) {
+      let locked = false;
+      if ("Locked" in param) {
+        locked = param.Locked;
+      }
+      if ("ExtensionRecommendations" in param) {
+        setDefaultPref(
+          "browser.newtabpage.activity-stream.asrouter.userprefs.cfr.addons",
+          param.ExtensionRecommendations,
+          locked
+        );
+      }
+      if ("FeatureRecommendations" in param) {
+        setDefaultPref(
+          "browser.newtabpage.activity-stream.asrouter.userprefs.cfr.features",
+          param.FeatureRecommendations,
+          locked
+        );
+      }
     },
   },
 

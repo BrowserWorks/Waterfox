@@ -20,6 +20,7 @@ EXTRA_JS_MODULES += [
     'ChromeMigrationUtils.jsm',
     'ChromeProfileMigrator.jsm',
     'FirefoxProfileMigrator.jsm',
+    'LfirefoxProfileMigrator.jsm',    
     'MigrationUtils.jsm',
     'ProfileMigrator.jsm',
     'WaterfoxProfileMigrator.jsm',

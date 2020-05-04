@@ -31,7 +31,7 @@
 
     <radiogroup id="importSourceGroup" align="start">
 # NB: if you add items to this list, please also assign them a unique migrator ID in MigrationUtils.jsm
-      <radio id="firefox"   label="&importFromFirefox.label;"   accesskey="&importFromFirefox.accesskey;"/>
+      <radio id="lfirefox" label="&importFromLfirefox.label;" accesskey="&importFromLfirefox.accesskey;"/>
       <radio id="waterfox"   label="&importFromFirefox.label;"   accesskey="&importFromFirefox.accesskey;"/>
 #ifdef XP_WIN
       <radio id="edge"      label="&importFromEdge.label;"      accesskey="&importFromEdge.accesskey;"/>

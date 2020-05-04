@@ -22,7 +22,10 @@ class BaseCompileChecks(unittest.TestCase):
     def get_mock_compiler(self, expected_test_content=None, expected_flags=None):
         expected_flags = expected_flags or []
         def mock_compiler(stdin, args):
-            args, test_file = args[:-1], args[-1]
+            test_file = [a for a in args if not a.startswith('-')]
+            self.assertEqual(len(test_file), 1)
+            test_file = test_file[0]
+            args = [a for a in args if a.startswith('-')]
             self.assertIn('-c', args)
             for flag in expected_flags:
                 self.assertIn(flag, args)

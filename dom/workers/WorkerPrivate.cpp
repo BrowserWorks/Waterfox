@@ -3310,9 +3310,21 @@ WorkerPrivate::ProcessAllControlRunnablesLocked() {
 void WorkerPrivate::ClearMainEventQueue(WorkerRanOrNot aRanOrNot) {
   AssertIsOnWorkerThread();
 
-  MOZ_ASSERT(mSyncLoopStack.IsEmpty());
+  MOZ_ASSERT((mPostSyncLoopOperations & ePendingEventQueueClearing)
+                 ? (mSyncLoopStack.Length() == 1)
+                 : mSyncLoopStack.IsEmpty());
   MOZ_ASSERT(!mCancelAllPendingRunnables);
+
   mCancelAllPendingRunnables = true;
+  WorkerGlobalScope* globalScope = GlobalScope();
+  if (globalScope) {
+    // It's appropriate to disconnect event targets at the point that it's no
+    // longer possible for new tasks to be dispatched at the global, and this is
+    // that point.
+    globalScope->DisconnectEventTargetObjects();
+
+    globalScope->WorkerPrivateSaysForbidScript();
+  }
 
   if (WorkerNeverRan == aRanOrNot) {
     for (uint32_t count = mPreStartRunnables.Length(), index = 0; index < count;
@@ -3327,6 +3339,9 @@ void WorkerPrivate::ClearMainEventQueue(WorkerRanOrNot aRanOrNot) {
     NS_ProcessPendingEvents(currentThread);
   }
 
+  if (globalScope) {
+    globalScope->WorkerPrivateSaysAllowScript();
+  }
   MOZ_ASSERT(mCancelAllPendingRunnables);
   mCancelAllPendingRunnables = false;
 }
@@ -3690,22 +3705,12 @@ bool WorkerPrivate::DestroySyncLoop(uint32_t aLoopIndex) {
 
   bool result = loopInfo->mResult;
 
-  {
-    // Modifications must be protected by mMutex in DEBUG builds, see comment
-    // about mSyncLoopStack in WorkerPrivate.h.
-#ifdef DEBUG
-    MutexAutoLock lock(mMutex);
-#endif
-
-    // This will delete |loopInfo|!
-    mSyncLoopStack.RemoveElementAt(aLoopIndex);
-  }
-
   auto queue =
       static_cast<ThreadEventQueue<EventQueue>*>(mThread->EventQueue());
   queue->PopEventQueue(nestedEventTarget);
 
-  if (mSyncLoopStack.IsEmpty()) {
+  // Are we making a 1 -> 0 transition here?
+  if (mSyncLoopStack.Length() == 1) {
     if ((mPostSyncLoopOperations & ePendingEventQueueClearing)) {
       ClearMainEventQueue(WorkerRan);
     }
@@ -3715,6 +3720,17 @@ bool WorkerPrivate::DestroySyncLoop(uint32_t aLoopIndex) {
     }
 
     mPostSyncLoopOperations = 0;
+  }
+
+  {
+    // Modifications must be protected by mMutex in DEBUG builds, see comment
+    // about mSyncLoopStack in WorkerPrivate.h.
+#ifdef DEBUG
+    MutexAutoLock lock(mMutex);
+#endif
+
+    // This will delete |loopInfo|!
+    mSyncLoopStack.RemoveElementAt(aLoopIndex);
   }
 
   return result;

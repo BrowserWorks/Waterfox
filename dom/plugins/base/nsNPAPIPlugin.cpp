@@ -11,6 +11,7 @@
 
 #include "pratom.h"
 #include "prenv.h"
+#include "prclist.h"
 
 #include "jsfriendapi.h"
 
@@ -60,6 +61,9 @@
 #if (MOZ_WIDGET_GTK)
 #  include <gdk/gdk.h>
 #  include <gdk/gdkx.h>
+#if (MOZ_WIDGET_GTK == 2)
+#include "gtk2xtbin.h"
+#endif
 #endif
 
 #include "nsJSUtils.h"
@@ -146,7 +150,7 @@ static NPNetscapeFuncs sBrowserFuncs = {
     _pushpopupsenabledstate,
     _poppopupsenabledstate,
     _enumerate,
-    nullptr,  // pluginthreadasynccall, not used
+    _pluginthreadasynccall,
     _construct,
     _getvalueforurl,
     _setvalueforurl,
@@ -162,6 +166,9 @@ static NPNetscapeFuncs sBrowserFuncs = {
     _finalizeasyncsurface,
     _setcurrentasyncsurface};
 
+static Mutex *sPluginThreadAsyncCallLock = nullptr;
+static PRCList sPendingAsyncCalls = PR_INIT_STATIC_CLIST(&sPendingAsyncCalls);
+
 // POST/GET stream type
 enum eNPPStreamTypeInternal {
   eNPPStreamTypeInternal_Get,
@@ -175,6 +182,22 @@ void NS_NotifyBeginPluginCall(NSPluginCallReentry aReentryState) {
 void NS_NotifyPluginCall(NSPluginCallReentry aReentryState) {
   nsNPAPIPluginInstance::EndPluginCall(aReentryState);
 }
+
+static void CheckClassInitialized()
+{
+    static bool initialized = false;
+
+    if (initialized)
+      return;
+
+    if (!sPluginThreadAsyncCallLock)
+      sPluginThreadAsyncCallLock = new Mutex("nsNPAPIPlugin.sPluginThreadAsyncCallLock");
+
+    initialized = true;
+
+    NPN_PLUGIN_LOG(PLUGIN_LOG_NORMAL, ("NPN callbacks initialized\n"));
+}
+
 
 nsNPAPIPlugin::nsNPAPIPlugin() {
   memset((void*)&mPluginFuncs, 0, sizeof(mPluginFuncs));
@@ -220,6 +243,8 @@ nsresult nsNPAPIPlugin::CreatePlugin(nsPluginTag* aPluginTag,
   if (!aPluginTag) {
     return NS_ERROR_FAILURE;
   }
+
+  CheckClassInitialized();
 
   RefPtr<nsNPAPIPlugin> plugin = new nsNPAPIPlugin();
 
@@ -389,6 +414,34 @@ namespace {
 
 static char* gNPPException;
 
+class nsPluginThreadRunnable : public Runnable,
+    public PRCList
+{
+public:
+    nsPluginThreadRunnable(NPP instance, PluginThreadCallback func,
+        void *userData);
+    ~nsPluginThreadRunnable() override;
+
+    NS_IMETHOD Run() override;
+
+    bool IsForInstance(NPP instance){
+      return (mInstance == instance);
+    }
+
+    void Invalidate(){
+      mFunc = nullptr;
+    }
+
+    bool IsValid(){
+      return (mFunc != nullptr);
+    }
+
+private:
+    NPP mInstance;
+    PluginThreadCallback mFunc;
+    void *mUserData;
+};
+
 static Document* GetDocumentFromNPP(NPP npp) {
   NS_ENSURE_TRUE(npp, nullptr);
 
@@ -457,6 +510,116 @@ void PopException() {
     free(gNPPException);
 
     gNPPException = nullptr;
+  }
+}
+
+nsPluginThreadRunnable::nsPluginThreadRunnable(NPP instance,
+    PluginThreadCallback func,
+    void *userData)
+    : Runnable("nsPluginThreadRunnable"),
+    mInstance(instance),
+    mFunc(func),
+    mUserData(userData)
+{
+  if (!sPluginThreadAsyncCallLock) {
+    // Failed to create lock, not much we can do here then...
+    mFunc = nullptr;
+
+    return;
+  }
+
+  PR_INIT_CLIST(this);
+
+  {
+    MutexAutoLock lock(*sPluginThreadAsyncCallLock);
+
+    nsNPAPIPluginInstance *inst = (nsNPAPIPluginInstance *)instance->ndata;
+    if (!inst || !inst->IsRunning()) {
+      // The plugin was stopped, ignore this async call.
+      mFunc = nullptr;
+
+      return;
+    }
+
+    PR_APPEND_LINK(this, &sPendingAsyncCalls);
+  }
+}
+
+nsPluginThreadRunnable::~nsPluginThreadRunnable()
+{
+  if (!sPluginThreadAsyncCallLock) {
+    return;
+  }
+
+  {
+    MutexAutoLock lock(*sPluginThreadAsyncCallLock);
+
+    PR_REMOVE_LINK(this);
+  }
+}
+
+NS_IMETHODIMP nsPluginThreadRunnable::Run()
+{
+  if (mFunc) {
+    PluginDestructionGuard guard(mInstance);
+
+    NS_TRY_SAFE_CALL_VOID(mFunc(mUserData), nullptr,
+    NS_PLUGIN_CALL_SAFE_TO_REENTER_GECKO);
+  }
+
+  return NS_OK;
+}
+
+void
+OnPluginDestroy(NPP instance)
+{
+  if (!sPluginThreadAsyncCallLock) {
+    return;
+  }
+
+  {
+    MutexAutoLock lock(*sPluginThreadAsyncCallLock);
+
+    if (PR_CLIST_IS_EMPTY(&sPendingAsyncCalls)) {
+      return;
+    }
+
+    nsPluginThreadRunnable *r = (nsPluginThreadRunnable *)PR_LIST_HEAD(&sPendingAsyncCalls);
+
+    do {
+      if (r->IsForInstance(instance)) {
+              r->Invalidate();
+      }
+
+      r = (nsPluginThreadRunnable *)PR_NEXT_LINK(r);
+    } while (r != &sPendingAsyncCalls);
+  }
+}
+
+void
+OnShutdown()
+{
+  NS_ASSERTION(PR_CLIST_IS_EMPTY(&sPendingAsyncCalls),
+        "Pending async plugin call list not cleaned up!");
+
+  if (sPluginThreadAsyncCallLock) {
+      delete sPluginThreadAsyncCallLock;
+
+    sPluginThreadAsyncCallLock = nullptr;
+  }
+}
+
+AsyncCallbackAutoLock::AsyncCallbackAutoLock()
+{
+  if (sPluginThreadAsyncCallLock) {
+    sPluginThreadAsyncCallLock->Lock();
+  }
+}
+
+AsyncCallbackAutoLock::~AsyncCallbackAutoLock()
+{
+  if (sPluginThreadAsyncCallLock) {
+    sPluginThreadAsyncCallLock->Unlock();
   }
 }
 
@@ -1361,6 +1524,20 @@ NPError _getvalue(NPP npp, NPNVariable variable, void* result) {
           return NPERR_NO_ERROR;
         }
       }
+#if (MOZ_WIDGET_GTK == 2)
+    // adobe nppdf calls XtGetApplicationNameAndClass(display,
+    // &instance, &class) we have to init Xt toolkit before get
+    // XtDisplay just call gtk_xtbin_new(w,0) once
+    static GtkWidget *gtkXtBinHolder = 0;
+    if (!gtkXtBinHolder) {
+      gtkXtBinHolder = gtk_xtbin_new(gdk_get_default_root_window(), 0);
+      // it crashes on destroy, let it leak
+      // gtk_widget_destroy(gtkXtBinHolder);
+  }
+    (*(Display **)result) = GTK_XTBIN(gtkXtBinHolder)->xtdisplay;
+    return NPERR_NO_ERROR;
+#endif
+
 #  endif
       return NPERR_GENERIC_ERROR;
     }
@@ -1704,8 +1881,49 @@ NPError _setvalue(NPP npp, NPPVariable variable, void* result) {
   }
 }
 
-NPError _requestread(NPStream* pstream, NPByteRange* rangeList) {
-  return NPERR_STREAM_NOT_SEEKABLE;
+NPError
+_requestread(NPStream *pstream, NPByteRange *rangeList)
+{
+    if (!NS_IsMainThread()) {
+      NPN_PLUGIN_LOG(PLUGIN_LOG_ALWAYS, ("NPN_requestread called from the wrong thread\n"));
+      return NPERR_INVALID_PARAM;
+    }
+    NPN_PLUGIN_LOG(PLUGIN_LOG_NORMAL, ("NPN_RequestRead: stream=%p\n",
+        (void*)pstream));
+
+#ifdef PLUGIN_LOGGING
+    for (NPByteRange * range = rangeList; range != nullptr; range = range->next)
+      MOZ_LOG(nsPluginLogging::gNPNLog, PLUGIN_LOG_NOISY,
+      ("%i-%i", range->offset, range->offset + range->length - 1));
+
+    MOZ_LOG(nsPluginLogging::gNPNLog, PLUGIN_LOG_NOISY, ("\n\n"));
+    PR_LogFlush();
+#endif
+
+    if (!pstream || !rangeList || !pstream->ndata)
+      return NPERR_INVALID_PARAM;
+    #if 0   //tma todo
+    nsNPAPIStreamWrapper* streamWrapper = static_cast<nsNPAPIStreamWrapper*>(pstream->ndata);
+    nsNPAPIPluginStreamListener* streamlistener = streamWrapper->GetStreamListener();
+    if (!streamlistener) {
+      return NPERR_GENERIC_ERROR;
+    }
+
+    int32_t streamtype = NP_NORMAL;
+
+    streamlistener->GetStreamType(&streamtype);
+
+    if (streamtype != NP_SEEK)
+      return NPERR_STREAM_NOT_SEEKABLE;
+
+    if (!streamlistener->mStreamListenerPeer)
+      return NPERR_GENERIC_ERROR;
+
+    nsresult rv = streamlistener->mStreamListenerPeer->RequestRead((NPByteRange *)rangeList);
+    if (NS_FAILED(rv))
+      return NPERR_GENERIC_ERROR;
+    #endif
+    return NPERR_NO_ERROR;
 }
 
 // Deprecated, only stubbed out
@@ -1779,6 +1997,22 @@ void _poppopupsenabledstate(NPP npp) {
   if (!inst) return;
 
   inst->PopPopupsEnabledState();
+}
+
+void _pluginthreadasynccall(NPP instance, PluginThreadCallback func, void *userData)
+{
+    if (NS_IsMainThread()) {
+      NPN_PLUGIN_LOG(PLUGIN_LOG_NOISY, ("NPN_pluginthreadasynccall called from the main thread\n"));
+    }
+    else {
+      NPN_PLUGIN_LOG(PLUGIN_LOG_NOISY, ("NPN_pluginthreadasynccall called from a non main thread\n"));
+    }
+    RefPtr<nsPluginThreadRunnable> evt =
+      new nsPluginThreadRunnable(instance, func, userData);
+
+    if (evt && evt->IsValid()) {
+      NS_DispatchToMainThread(evt);
+    }
 }
 
 NPError _getvalueforurl(NPP instance, NPNURLVariable variable, const char* url,

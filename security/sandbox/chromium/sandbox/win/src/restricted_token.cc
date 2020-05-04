@@ -92,8 +92,7 @@ DWORD RestrictedToken::GetRestrictedToken(
 
     for (unsigned int i = 0; i < sids_for_deny_only_.size() ; ++i) {
       deny_only_array[i].Attributes = SE_GROUP_USE_FOR_DENY_ONLY;
-      deny_only_array[i].Sid =
-          const_cast<SID*>(sids_for_deny_only_[i].GetPSID());
+      deny_only_array[i].Sid = sids_for_deny_only_[i].GetPSID();
     }
   }
 
@@ -103,8 +102,7 @@ DWORD RestrictedToken::GetRestrictedToken(
 
     for (unsigned int i = 0; i < restrict_size; ++i) {
       sids_to_restrict_array[i].Attributes = 0;
-      sids_to_restrict_array[i].Sid =
-          const_cast<SID*>(sids_to_restrict_[i].GetPSID());
+      sids_to_restrict_array[i].Sid = sids_to_restrict_[i].GetPSID();
     }
   }
 
@@ -166,6 +164,14 @@ DWORD RestrictedToken::GetRestrictedToken(
     // Modify the default dacl on the token to contain Restricted.
     if (!AddSidToDefaultDacl(new_token.Get(), WinRestrictedCodeSid,
                              GRANT_ACCESS, GENERIC_ALL)) {
+      return ::GetLastError();
+    }
+  }
+
+  for (const auto& default_dacl_sid : sids_for_default_dacl_) {
+    if (!AddSidToDefaultDacl(new_token.Get(), std::get<0>(default_dacl_sid),
+                             std::get<1>(default_dacl_sid),
+                             std::get<2>(default_dacl_sid))) {
       return ::GetLastError();
     }
   }
@@ -242,7 +248,7 @@ DWORD RestrictedToken::AddAllSidsForDenyOnly(std::vector<Sid> *exceptions) {
       bool should_ignore = false;
       if (exceptions) {
         for (unsigned int j = 0; j < exceptions->size(); ++j) {
-          if (::EqualSid(const_cast<SID*>((*exceptions)[j].GetPSID()),
+          if (::EqualSid((*exceptions)[j].GetPSID(),
                           token_groups->Groups[i].Sid)) {
             should_ignore = true;
             break;
@@ -433,6 +439,17 @@ DWORD RestrictedToken::SetIntegrityLevel(IntegrityLevel integrity_level) {
 
 void RestrictedToken::SetLockdownDefaultDacl() {
   lockdown_default_dacl_ = true;
+}
+
+DWORD RestrictedToken::AddDefaultDaclSid(const Sid& sid,
+                                         ACCESS_MODE access_mode,
+                                         ACCESS_MASK access) {
+  DCHECK(init_);
+  if (!init_)
+    return ERROR_NO_TOKEN;
+
+  sids_for_default_dacl_.push_back(std::make_tuple(sid, access_mode, access));
+  return ERROR_SUCCESS;
 }
 
 }  // namespace sandbox

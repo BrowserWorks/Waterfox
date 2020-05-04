@@ -18,6 +18,7 @@ import android.content.pm.ResolveInfo;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.support.v4.app.NotificationCompat;
+import android.support.v4.content.FileProvider;
 import android.support.v4.util.SimpleArrayMap;
 import android.util.Log;
 
@@ -547,11 +548,20 @@ public final class NotificationHelper implements BundleEventListener {
             return null;
         }
 
-        final Uri uri = Uri.fromFile(new File(filePathDecode + fileName));
-        final Intent intent = new Intent();
-        intent.setAction(Intent.ACTION_VIEW);
-        intent.setDataAndType(uri, URLConnection.guessContentTypeFromName(uri.toString()));
+        final Intent intent = new Intent(Intent.ACTION_VIEW);
 
+        Uri uri;
+        if (AppConstants.Versions.feature24Plus) {
+            uri = FileProvider.getUriForFile(
+                    mContext,
+                    AppConstants.MOZ_FILE_PROVIDER_AUTHORITY,
+                    new File(filePathDecode + fileName)
+            );
+            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        } else {
+            uri = Uri.fromFile(new File(filePathDecode + fileName));
+        }
+        intent.setDataAndType(uri, URLConnection.guessContentTypeFromName(uri.toString()));
         // if no one can handle this intent, let the user decide.
         final PackageManager manager = mContext.getPackageManager();
         final List<ResolveInfo> infos = manager.queryIntentActivities(intent, 0);

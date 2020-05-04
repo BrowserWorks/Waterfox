@@ -53,6 +53,7 @@ EXPORTS.mozilla += [
 EXPORTS.mozilla.dom += [
     'HTMLAllCollection.h',
     'HTMLAnchorElement.h',
+    'HTMLAppletElement.h',
     'HTMLAreaElement.h',
     'HTMLAudioElement.h',
     'HTMLBodyElement.h',
@@ -133,6 +134,7 @@ EXPORTS.mozilla.dom += [
 UNIFIED_SOURCES += [
     'HTMLAllCollection.cpp',
     'HTMLAnchorElement.cpp',
+    'HTMLAppletElement.cpp',
     'HTMLAreaElement.cpp',
     'HTMLAudioElement.cpp',
     'HTMLBodyElement.cpp',

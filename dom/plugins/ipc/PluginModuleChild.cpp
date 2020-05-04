@@ -1356,13 +1356,16 @@ void _poppopupsenabledstate(NPP aNPP) {
 NPError _getvalueforurl(NPP npp, NPNURLVariable variable, const char* url,
                         char** value, uint32_t* len) {
   PLUGIN_LOG_DEBUG_FUNCTION;
+  #if 0
   AssertPluginThread();
+  #endif
 
   if (!url) return NPERR_INVALID_URL;
 
   if (!npp || !value || !len) return NPERR_INVALID_PARAM;
 
   if (variable == NPNURLVProxy) {
+    return NPERR_GENERIC_ERROR; //todo - verify a case where something meaningful is returned to determine if needed
     nsCString v;
     NPError result;
     InstCast(npp)->CallNPN_GetValueForURL(variable, nsCString(url), &v,

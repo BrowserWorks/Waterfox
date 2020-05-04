@@ -164,6 +164,10 @@ void _pushpopupsenabledstate(NPP npp, NPBool enabled);
 
 void _poppopupsenabledstate(NPP npp);
 
+typedef void(*PluginThreadCallback)(void *);
+
+void _pluginthreadasynccall(NPP instance, PluginThreadCallback func, void *userData);
+
 NPError _getvalueforurl(NPP instance, NPNURLVariable variable, const char* url,
                         char** value, uint32_t* len);
 
@@ -243,6 +247,16 @@ void _setcurrentasyncsurface(NPP instance, NPAsyncSurface* surface,
 const char* PeekException();
 
 void PopException();
+
+/**
+ * within a lexical scope, locks and unlocks the mutex used to
+ * serialize modifications to plugin async callback state.
+ */
+struct MOZ_STACK_CLASS AsyncCallbackAutoLock
+{
+    AsyncCallbackAutoLock();
+    ~AsyncCallbackAutoLock();
+};
 
 class NPPStack {
  public:

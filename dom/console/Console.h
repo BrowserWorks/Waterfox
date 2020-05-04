@@ -32,6 +32,7 @@ class ConsoleInstanceDumpCallback;
 class ConsoleRunnable;
 class ConsoleCallDataRunnable;
 class ConsoleProfileRunnable;
+class MainThreadConsoleData;
 
 class Console final : public nsIObserver, public nsSupportsWeakReference {
  public:
@@ -222,16 +223,13 @@ class Console final : public nsIObserver, public nsSupportsWeakReference {
                             MethodName aMethodName,
                             const nsAString& aMethodString);
 
-  // This method must receive aCx and aArguments in the same JS::Compartment.
-  void ProcessCallData(JSContext* aCx, ConsoleCallData* aData,
-                       const Sequence<JS::Value>& aArguments);
+  MainThreadConsoleData* GetOrCreateMainThreadData();
 
-  void StoreCallData(ConsoleCallData* aData);
+  // Returns true on success; otherwise false.
+  bool StoreCallData(JSContext* aCx, ConsoleCallData* aCallData,
+                     const Sequence<JS::Value>& aArguments);
 
   void UnstoreCallData(ConsoleCallData* aData);
-
-  // Read in Console.cpp how this method is used.
-  void ReleaseCallData(ConsoleCallData* aCallData);
 
   // aCx and aArguments must be in the same JS compartment.
   MOZ_CAN_RUN_SCRIPT
@@ -239,8 +237,8 @@ class Console final : public nsIObserver, public nsSupportsWeakReference {
                      ConsoleCallData* aData);
 
   // PopulateConsoleNotificationInTheTargetScope receives aCx and aArguments in
-  // the same JS compartment and populates the ConsoleEvent object (aValue) in
-  // the aTargetScope.
+  // the same JS compartment and populates the ConsoleEvent object
+  // (aEventValue) in the aTargetScope.
   // aTargetScope can be:
   // - the system-principal scope when we want to dispatch the ConsoleEvent to
   //   nsIConsoleAPIStorage (See the comment in Console.cpp about the use of
@@ -249,45 +247,11 @@ class Console final : public nsIObserver, public nsSupportsWeakReference {
   //   handler about a new ConsoleEvent.
   // - It can be the global from the JSContext when RetrieveConsoleEvents is
   //   called.
-  bool PopulateConsoleNotificationInTheTargetScope(
+  static bool PopulateConsoleNotificationInTheTargetScope(
       JSContext* aCx, const Sequence<JS::Value>& aArguments,
-      JS::Handle<JSObject*> aTargetScope, JS::MutableHandle<JS::Value> aValue,
-      ConsoleCallData* aData);
-
-  // If the first JS::Value of the array is a string, this method uses it to
-  // format a string. The supported sequences are:
-  //   %s    - string
-  //   %d,%i - integer
-  //   %f    - double
-  //   %o,%O - a JS object.
-  //   %c    - style string.
-  // The output is an array where any object is a separated item, the rest is
-  // unified in a format string.
-  // Example if the input is:
-  //   "string: %s, integer: %d, object: %o, double: %d", 's', 1, window, 0.9
-  // The output will be:
-  //   [ "string: s, integer: 1, object: ", window, ", double: 0.9" ]
-  //
-  // The aStyles array is populated with the style strings that the function
-  // finds based the format string. The index of the styles matches the indexes
-  // of elements that need the custom styling from aSequence. For elements with
-  // no custom styling the array is padded with null elements.
-  bool ProcessArguments(JSContext* aCx, const Sequence<JS::Value>& aData,
-                        Sequence<JS::Value>& aSequence,
-                        Sequence<nsString>& aStyles) const;
-
-  void MakeFormatString(nsCString& aFormat, int32_t aInteger, int32_t aMantissa,
-                        char aCh) const;
-
-  // Stringify and Concat all the JS::Value in a single string using ' ' as
-  // separator. The new group name will be stored in mGroupStack array.
-  void ComposeAndStoreGroupName(JSContext* aCx,
-                                const Sequence<JS::Value>& aData,
-                                nsAString& aName);
-
-  // Remove the last group name and return that name. It returns false if
-  // mGroupStack is empty.
-  bool UnstoreGroupName(nsAString& aName);
+      JS::Handle<JSObject*> aTargetScope,
+      JS::MutableHandle<JS::Value> aEventValue, ConsoleCallData* aData,
+      nsTArray<nsString>* aGroupStack);
 
   enum TimerStatus {
     eTimerUnknown,
@@ -298,8 +262,8 @@ class Console final : public nsIObserver, public nsSupportsWeakReference {
     eTimerMaxReached,
   };
 
-  JS::Value CreateTimerError(JSContext* aCx, const nsAString& aTimerLabel,
-                             TimerStatus aStatus) const;
+  static JS::Value CreateTimerError(JSContext* aCx, const nsAString& aLabel,
+                                    TimerStatus aStatus);
 
   // StartTimer is called on the owning thread and populates aTimerLabel and
   // aTimerValue.
@@ -322,8 +286,9 @@ class Console final : public nsIObserver, public nsSupportsWeakReference {
   // * aCx - this is the context that will root the returned value.
   // * aTimerLabel - this label must be what StartTimer received as aTimerLabel.
   // * aTimerStatus - the return value of StartTimer.
-  JS::Value CreateStartTimerValue(JSContext* aCx, const nsAString& aTimerLabel,
-                                  TimerStatus aTimerStatus) const;
+  static JS::Value CreateStartTimerValue(JSContext* aCx,
+                                         const nsAString& aTimerLabel,
+                                         TimerStatus aTimerStatus);
 
   // LogTimer follows the same pattern as StartTimer: it runs on the
   // owning thread and populates aTimerLabel and aTimerDuration, used by
@@ -347,10 +312,10 @@ class Console final : public nsIObserver, public nsSupportsWeakReference {
   // * aTimerLabel - this label must be what LogTimer received as aTimerLabel.
   // * aTimerDuration - this is what LogTimer received as aTimerDuration
   // * aTimerStatus - the return value of LogTimer.
-  JS::Value CreateLogOrEndTimerValue(JSContext* aCx,
-                                     const nsAString& aTimerLabel,
-                                     double aTimerDuration,
-                                     TimerStatus aTimerStatus) const;
+  static JS::Value CreateLogOrEndTimerValue(JSContext* aCx,
+                                            const nsAString& aLabel,
+                                            double aDuration,
+                                            TimerStatus aStatus);
 
   // The method populates a Sequence from an array of JS::Value.
   bool ArgumentsToValueList(const Sequence<JS::Value>& aData,
@@ -382,20 +347,7 @@ class Console final : public nsIObserver, public nsSupportsWeakReference {
   uint32_t ResetCounter(JSContext* aCx, const Sequence<JS::Value>& aData,
                         nsAString& aCountLabel);
 
-  // This method generates a ConsoleCounter dictionary as JS::Value. If
-  // aCountValue is == MAX_PAGE_COUNTERS it generates a ConsoleCounterError
-  // instead. See IncreaseCounter.
-  // * aCx - this is the context that will root the returned value.
-  // * aCountLabel - this label must be what IncreaseCounter received as
-  //                 aTimerLabel.
-  // * aCountValue - the return value of IncreaseCounter.
-  JS::Value CreateCounterOrResetCounterValue(JSContext* aCx,
-                                             const nsAString& aCountLabel,
-                                             uint32_t aCountValue) const;
-
-  bool ShouldIncludeStackTrace(MethodName aMethodName) const;
-
-  JSObject* GetOrCreateSandbox(JSContext* aCx, nsIPrincipal* aPrincipal);
+  static bool ShouldIncludeStackTrace(MethodName aMethodName);
 
   void AssertIsOnOwningThread() const;
 
@@ -427,32 +379,43 @@ class Console final : public nsIObserver, public nsSupportsWeakReference {
 
   uint32_t InternalLogLevelToInteger(MethodName aName) const;
 
+  class ArgumentData {
+   public:
+    bool Initialize(JSContext* aCx, const Sequence<JS::Value>& aArguments);
+    void Trace(const TraceCallbacks& aCallbacks, void* aClosure);
+    bool PopulateArgumentsSequence(Sequence<JS::Value>& aSequence) const;
+    JSObject* Global() const { return mGlobal; }
+
+   private:
+    void AssertIsOnOwningThread() const {
+      NS_ASSERT_OWNINGTHREAD(ArgumentData);
+    }
+
+    NS_DECL_OWNINGTHREAD;
+    JS::Heap<JSObject*> mGlobal;
+    nsTArray<JS::Heap<JS::Value>> mArguments;
+  };
+
   // Owning/CC thread only
   nsCOMPtr<nsIGlobalObject> mGlobal;
-  // These nsCOMPtr are touched on main thread only.
-  nsCOMPtr<nsIConsoleAPIStorage> mStorage;
-  RefPtr<JSObjectHolder> mSandbox;
 
   // Touched on the owner thread.
   nsDataHashtable<nsStringHashKey, DOMHighResTimeStamp> mTimerRegistry;
   nsDataHashtable<nsStringHashKey, uint32_t> mCounterRegistry;
 
   nsTArray<RefPtr<ConsoleCallData>> mCallDataStorage;
-
-  // This array is used in a particular corner-case where:
-  // 1. we are in a worker thread
-  // 2. we have more than STORAGE_MAX_EVENTS
-  // 3. but the main-thread ConsoleCallDataRunnable of the first one is still
-  // running (this means that something very bad is happening on the
-  // main-thread).
-  // When this happens we want to keep the ConsoleCallData alive for traceing
-  // its JSValues also if 'officially' this ConsoleCallData must be removed from
-  // the storage.
-  nsTArray<RefPtr<ConsoleCallData>> mCallDataStoragePending;
+  // These are references to the arguments we received in each call
+  // from the DOM bindings.
+  // Vector<T> supports non-memmovable types such as ArgumentData
+  // (without any need to jump through hoops like
+  // MOZ_DECLARE_RELOCATE_USING_MOVE_CONSTRUCTOR_FOR_TEMPLATE for nsTArray).
+  Vector<ArgumentData> mArgumentStorage;
 
   RefPtr<AnyCallback> mConsoleEventNotifier;
 
-  // This is the stack for groupping.
+  RefPtr<MainThreadConsoleData> mMainThreadData;
+  // This is the stack for grouping relating to Console-thread events, when
+  // the Console thread is not the main thread.
   nsTArray<nsString> mGroupStack;
 
   uint64_t mOuterID;
@@ -481,6 +444,7 @@ class Console final : public nsIObserver, public nsSupportsWeakReference {
   friend class ConsoleRunnable;
   friend class ConsoleWorkerRunnable;
   friend class ConsoleWorkletRunnable;
+  friend class MainThreadConsoleData;
 };
 
 }  // namespace dom

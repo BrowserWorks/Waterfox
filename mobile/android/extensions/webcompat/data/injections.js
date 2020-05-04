@@ -7,8 +7,8 @@
 /* globals module, require */
 
 // This is a hack for the tests.
-if (typeof getMatchPatternsForGoogleURL === "undefined") {
-  var getMatchPatternsForGoogleURL = require("../lib/google");
+if (typeof InterventionHelpers === "undefined") {
+  var InterventionHelpers = require("../lib/intervention_helpers");
 }
 
 /**
@@ -112,56 +112,37 @@ const AVAILABLE_INJECTIONS = [
     },
   },
   {
-    id: "bug1577245",
+    id: "bug1623375",
     platform: "android",
     domain: "Salesforce communities",
-    bug: "1577245",
+    bug: "1623375",
     contentScripts: {
-      matches: [
-        "https://faq.usps.com/*",
-        "https://help.duo.com/*",
-        "https://my211.force.com/*",
-        "https://support.paypay.ne.jp/*",
-        "https://usps.force.com/*",
-        "https://help.twitch.tv/*",
-        "https://support.sonos.com/*",
-        "https://us.community.sony.com/*",
-        "https://help.shopee.ph/*",
-        "https://exclusions.ustr.gov/*",
-        "https://help.doordash.com/*",
-      ],
+      matches: [].concat(
+        [
+          "https://faq.usps.com/*",
+          "https://help.duo.com/*",
+          "https://my211.force.com/*",
+          "https://support.paypay.ne.jp/*",
+          "https://usps.force.com/*",
+          "https://help.twitch.tv/*",
+          "https://support.sonos.com/*",
+          "https://us.community.sony.com/*",
+          "https://help.shopee.ph/*",
+          "https://exclusions.ustr.gov/*",
+          "https://help.doordash.com/*",
+          "https://community.snowflake.com/*",
+          "https://tivoidp.tivo.com/*",
+        ],
+        InterventionHelpers.matchPatternsForTLDs(
+          "*://support.ancestry.",
+          "/*",
+          ["ca", "co.uk", "com", "com.au", "de", "fr", "it", "mx", "se"]
+        )
+      ),
       js: [
         {
           file:
-            "injections/js/bug1577245-salesforce-communities-hide-unsupported.js",
-        },
-      ],
-    },
-  },
-  {
-    id: "bug1526977",
-    platform: "desktop",
-    domain: "sreedharscce.in",
-    bug: "1526977",
-    contentScripts: {
-      matches: ["*://*.sreedharscce.in/authenticate"],
-      css: [
-        {
-          file: "injections/css/bug1526977-sreedharscce.in-login-fix.css",
-        },
-      ],
-    },
-  },
-  {
-    id: "bug1518781",
-    platform: "desktop",
-    domain: "twitch.tv",
-    bug: "1518781",
-    contentScripts: {
-      matches: ["*://*.twitch.tv/*"],
-      css: [
-        {
-          file: "injections/css/bug1518781-twitch.tv-webkit-scrollbar.css",
+            "injections/js/bug1623375-salesforce-communities-hide-unsupported.js",
         },
       ],
     },
@@ -184,7 +165,6 @@ const AVAILABLE_INJECTIONS = [
     bug: "1577870",
     data: {
       urls: [
-        "https://*.linkedin.com/tscp-serving/dtag*",
         "https://ads-us.rd.linksynergy.com/as.php*",
         "https://www.office.com/logout?sid*",
       ],
@@ -194,21 +174,6 @@ const AVAILABLE_INJECTIONS = [
       },
     },
     customFunc: "noSniffFix",
-  },
-  {
-    id: "bug1432935-discord",
-    platform: "desktop",
-    domain: "discordapp.com",
-    bug: "1432935",
-    contentScripts: {
-      matches: ["*://discordapp.com/*"],
-      css: [
-        {
-          file:
-            "injections/css/bug1432935-discordapp.com-webkit-scorllbar-white-line.css",
-        },
-      ],
-    },
   },
   {
     id: "bug1561371",
@@ -298,20 +263,6 @@ const AVAILABLE_INJECTIONS = [
     },
   },
   {
-    id: "bug1574973",
-    platform: "android",
-    domain: "patch.com",
-    bug: "1574973",
-    contentScripts: {
-      matches: ["*://patch.com/*"],
-      css: [
-        {
-          file: "injections/css/bug1574973-patch.com-dropdown-menu-fix.css",
-        },
-      ],
-    },
-  },
-  {
     id: "bug1575000",
     platform: "all",
     domain: "apply.lloydsbank.co.uk",
@@ -322,35 +273,6 @@ const AVAILABLE_INJECTIONS = [
         {
           file:
             "injections/css/bug1575000-apply.lloydsbank.co.uk-radio-buttons-fix.css",
-        },
-      ],
-    },
-  },
-  {
-    id: "bug1575011",
-    platform: "android",
-    domain: "holiday-weather.com",
-    bug: "1575011",
-    contentScripts: {
-      matches: ["*://*.holiday-weather.com/*"],
-      css: [
-        {
-          file:
-            "injections/css/bug1575011-holiday-weather.com-scrolling-fix.css",
-        },
-      ],
-    },
-  },
-  {
-    id: "bug1575017",
-    platform: "desktop",
-    domain: "dunkindonuts.com",
-    bug: "1575017",
-    contentScripts: {
-      matches: ["*://*.dunkindonuts.com/en/sign-in*"],
-      css: [
-        {
-          file: "injections/css/bug1575017-dunkindonuts.com-flex-basis.css",
         },
       ],
     },
@@ -389,7 +311,10 @@ const AVAILABLE_INJECTIONS = [
     domain: "maps.google.com",
     bug: "1605611",
     contentScripts: {
-      matches: getMatchPatternsForGoogleURL("www.google", "maps*"),
+      matches: InterventionHelpers.matchPatternsForGoogle(
+        "*://www.google.",
+        "/maps*"
+      ),
       css: [
         {
           file: "injections/css/bug1605611-maps.google.com-directions-time.css",
@@ -446,7 +371,7 @@ const AVAILABLE_INJECTIONS = [
   },
   {
     id: "bug1610344",
-    platform: "android",
+    platform: "all",
     domain: "directv.com.co",
     bug: "1610344",
     contentScripts: {
@@ -455,6 +380,61 @@ const AVAILABLE_INJECTIONS = [
         {
           file:
             "injections/css/bug1610344-directv.com.co-hide-unsupported-message.css",
+        },
+      ],
+    },
+  },
+  {
+    id: "bug1622062",
+    platform: "android",
+    domain: "$.detectSwipe fix",
+    bug: "1622062",
+    data: {
+      urls: ["https://eu.stemwijzer.nl/public/js/votematch.vendors.js"],
+      types: ["script"],
+    },
+    customFunc: "detectSwipeFix",
+  },
+  {
+    id: "bug1625224",
+    platform: "all",
+    domain: "sixt-neuwagen.de",
+    bug: "1625224",
+    contentScripts: {
+      matches: ["*://*.sixt-neuwagen.de/*"],
+      js: [
+        {
+          file:
+            "injections/js/bug1625224-sixt-neuwagen.de-window-netscape-shim.js",
+        },
+      ],
+    },
+  },
+  {
+    id: "bug1631960",
+    platform: "all",
+    domain: "websube.ckbogazici.com.tr",
+    bug: "1631960",
+    contentScripts: {
+      matches: ["https://websube.ckbogazici.com.tr/*"],
+      css: [
+        {
+          file:
+            "injections/css/bug1631960-websube.ckbogazici.com.tr-table-row-fix.css",
+        },
+      ],
+    },
+  },
+  {
+    id: "bug1632019",
+    platform: "all",
+    domain: "everyman.co",
+    bug: "1632019",
+    contentScripts: {
+      matches: ["https://everyman.co/*"],
+      css: [
+        {
+          file: "injections/css/bug1632019-everyman.co-gallery-width-fix.css",
         },
       ],
     },

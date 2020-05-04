@@ -74,13 +74,13 @@ let gUndoData = null;
 
 XPCOMUtils.defineLazyGetter(this, "gAvailableMigratorKeys", function() {
   if (AppConstants.platform == "win") {
-    return ["firefox", "edge", "ie", "chrome", "chromium", "360se", "canary"];
+    return ["lfirefox","firefox", "edge", "ie", "chrome", "chromium", "360se", "canary"];
   }
   if (AppConstants.platform == "macosx") {
-    return ["waterfox", "firefox", "safari", "chrome", "chromium", "canary"];
+    return ["lfirefox","waterfox", "firefox", "safari", "chrome", "chromium", "canary"];
   }
   if (AppConstants.XP_UNIX) {
-    return ["waterfox", "firefox", "chrome", "chrome-beta", "chrome-dev", "chromium"];
+    return ["lfirefox","waterfox", "firefox", "chrome", "chrome-beta", "chrome-dev", "chromium"];
   }
   return [];
 });
@@ -637,6 +637,9 @@ var MigrationUtils = Object.freeze({
         return "sourceNameFirefox";
       case "360se":
         return "sourceName360se";
+      case "lfirefox":
+        return "sourceNameLfirefox";
+
     }
     return null;
   },
@@ -787,7 +790,8 @@ var MigrationUtils = Object.freeze({
    *                               chrome (mac/windows/linux),
    *                               chromium (mac/windows/linux),
    *                               360se (windows),
-   *                               firefox.
+   *                               firefox,
+   *                               lfirefox.
    *
    * If null is returned,  either no data can be imported
    * for the given migrator, or aMigratorKey is invalid  (e.g. ie on mac,
@@ -1309,6 +1313,7 @@ var MigrationUtils = Object.freeze({
     canary: 7,
     safari: 8,
     "360se": 9,
+    "lfirefox": 10,
   },
   getSourceIdForTelemetry(sourceName) {
     return this._sourceNameToIdMapping[sourceName] || 0;

@@ -502,6 +502,11 @@ void SandboxBroker::SetSecurityLevelForContentProcess(int32_t aSandboxLevel,
       sandbox::SBOX_ALL_OK == result,
       "SetDelayedIntegrityLevel should never fail, what happened?");
 
+  if (aSandboxLevel > 5) {
+    mPolicy->SetLockdownDefaultDacl();
+    mPolicy->AddRestrictingRandomSid();
+  }
+
   sandbox::MitigationFlags mitigations =
       sandbox::MITIGATION_BOTTOM_UP_ASLR | sandbox::MITIGATION_HEAP_TERMINATE |
       sandbox::MITIGATION_SEHOP | sandbox::MITIGATION_DEP_NO_ATL_THUNK |
@@ -690,6 +695,9 @@ void SandboxBroker::SetSecurityLevelForGPUProcess(int32_t aSandboxLevel) {
       sandbox::SBOX_ALL_OK == result,
       "SetDelayedIntegrityLevel should never fail, what happened?");
 
+  mPolicy->SetLockdownDefaultDacl();
+  mPolicy->AddRestrictingRandomSid();
+
   sandbox::MitigationFlags mitigations =
       sandbox::MITIGATION_BOTTOM_UP_ASLR | sandbox::MITIGATION_HEAP_TERMINATE |
       sandbox::MITIGATION_SEHOP | sandbox::MITIGATION_DEP_NO_ATL_THUNK |
@@ -778,6 +786,9 @@ bool SandboxBroker::SetSecurityLevelForRDDProcess() {
   SANDBOX_ENSURE_SUCCESS(result,
                          "SetDelayedIntegrityLevel should never fail with "
                          "these arguments, what happened?");
+
+  mPolicy->SetLockdownDefaultDacl();
+  mPolicy->AddRestrictingRandomSid();
 
   sandbox::MitigationFlags mitigations =
       sandbox::MITIGATION_BOTTOM_UP_ASLR | sandbox::MITIGATION_HEAP_TERMINATE |
@@ -890,6 +901,9 @@ bool SandboxBroker::SetSecurityLevelForPluginProcess(int32_t aSandboxLevel) {
   result = mPolicy->SetDelayedIntegrityLevel(delayedIntegrityLevel);
   SANDBOX_ENSURE_SUCCESS(
       result, "SetDelayedIntegrityLevel should never fail, what happened?");
+
+  mPolicy->SetLockdownDefaultDacl();
+  mPolicy->AddRestrictingRandomSid();
 
   sandbox::MitigationFlags mitigations =
       sandbox::MITIGATION_BOTTOM_UP_ASLR | sandbox::MITIGATION_HEAP_TERMINATE |
@@ -1043,6 +1057,9 @@ bool SandboxBroker::SetSecurityLevelForGMPlugin(SandboxLevel aLevel) {
   SANDBOX_ENSURE_SUCCESS(result,
                          "SetIntegrityLevel should never fail with these "
                          "arguments, what happened?");
+
+  mPolicy->SetLockdownDefaultDacl();
+  mPolicy->AddRestrictingRandomSid();
 
   sandbox::MitigationFlags mitigations =
       sandbox::MITIGATION_BOTTOM_UP_ASLR | sandbox::MITIGATION_HEAP_TERMINATE |
