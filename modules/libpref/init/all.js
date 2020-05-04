@@ -1413,6 +1413,9 @@ sticky_pref("privacy.resistFingerprinting.block_mozAddonManager", false);
 // If you do set it, to work around some broken website, please file a bug with
 // information so we can understand why it is needed.
 pref("privacy.resistFingerprinting.autoDeclineNoUserInputCanvasPrompts", true);
+// In the event the end user wants to use RFP but wishes to fully enable the canvas
+// or delegate it's protection an extension, this option allows for it.
+pref("privacy.resistFingerprinting.delegateCanvasProtection", false);
 // The log level for browser console messages logged in RFPHelper.jsm
 // Change to 'All' and restart to see the messages
 pref("privacy.resistFingerprinting.jsmloglevel", "Warn");
