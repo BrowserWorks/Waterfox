@@ -2569,6 +2569,12 @@ VARCACHE_PREF(
 )
 
 VARCACHE_PREF(
+  "privacy.resistFingerprinting.delegateCanvasProtection",
+   privacy_resistFingerprinting_delegateCanvasProtection,
+  RelaxedAtomicBool, false
+)
+
+VARCACHE_PREF(
   "privacy.storagePrincipal.enabledForTrackers",
    privacy_storagePrincipal_enabledForTrackers,
   RelaxedAtomicBool, false
