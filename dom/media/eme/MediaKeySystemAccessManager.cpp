@@ -105,8 +105,11 @@ void MediaKeySystemAccessManager::Request(
     // EME disabled by user, send notification to chrome so UI can inform user.
     // Clearkey is allowed even when EME is disabled because we want the pref
     // "media.eme.enabled" only taking effect on proprietary DRMs.
-    MediaKeySystemAccess::NotifyObservers(mWindow, aKeySystem,
-                                          MediaKeySystemStatus::Api_disabled);
+    // We don't show the notification if the pref is locked.
+    if (!Preferences::IsLocked("media.eme.enabled")) {
+      MediaKeySystemAccess::NotifyObservers(mWindow, aKeySystem,
+                                            MediaKeySystemStatus::Api_disabled);
+    }
     aPromise->MaybeReject(NS_ERROR_DOM_NOT_SUPPORTED_ERR,
                           NS_LITERAL_CSTRING("EME has been preffed off"));
     diagnostics.StoreMediaKeySystemAccess(mWindow->GetExtantDoc(), aKeySystem,
