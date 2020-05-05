@@ -252,6 +252,12 @@ public:
     MOZ_DIAGNOSTIC_ASSERT(!sFactory->mManagerList.IsEmpty());
 
     {
+      // Note that we are synchronously calling abort code here.  If any
+      // of the shutdown code synchronously decides to delete the Factory
+      // we need to delay that delete until the end of this method.
+      AutoRestore<bool> restore(sFactory->mInSyncAbortOrShutdown);
+      sFactory->mInSyncAbortOrShutdown = true;
+
       ManagerList::ForwardIterator iter(sFactory->mManagerList);
       while (iter.HasMore()) {
         RefPtr<Manager> manager = iter.GetNext();
@@ -261,6 +267,8 @@ public:
         }
       }
     }
+
+    MaybeDestroyInstance();
   }
 
   static void
@@ -278,8 +286,8 @@ public:
       // Note that we are synchronously calling shutdown code here.  If any
       // of the shutdown code synchronously decides to delete the Factory
       // we need to delay that delete until the end of this method.
-      AutoRestore<bool> restore(sFactory->mInSyncShutdown);
-      sFactory->mInSyncShutdown = true;
+      AutoRestore<bool> restore(sFactory->mInSyncAbortOrShutdown);
+      sFactory->mInSyncAbortOrShutdown = true;
 
       ManagerList::ForwardIterator iter(sFactory->mManagerList);
       while (iter.HasMore()) {
@@ -298,10 +306,8 @@ public:
     return !sFactory;
   }
 
-private:
-  Factory()
-    : mInSyncShutdown(false)
-  {
+ private:
+  Factory() : mInSyncAbortOrShutdown(false) {
     MOZ_COUNT_CTOR(cache::Manager::Factory);
   }
 
@@ -309,7 +315,7 @@ private:
   {
     MOZ_COUNT_DTOR(cache::Manager::Factory);
     MOZ_DIAGNOSTIC_ASSERT(mManagerList.IsEmpty());
-    MOZ_DIAGNOSTIC_ASSERT(!mInSyncShutdown);
+    MOZ_DIAGNOSTIC_ASSERT(!mInSyncAbortOrShutdown);
   }
 
   static nsresult
@@ -352,9 +358,9 @@ private:
 
     // If the factory is is still in use then we cannot delete yet.  This
     // could be due to managers still existing or because we are in the
-    // middle of shutting down.  We need to be careful not to delete ourself
-    // synchronously during shutdown.
-    if (!sFactory->mManagerList.IsEmpty() || sFactory->mInSyncShutdown) {
+    // middle of aborting or shutting down.  We need to be careful not to delete
+    // ourself synchronously during shutdown.
+    if (!sFactory->mManagerList.IsEmpty() || sFactory->mInSyncAbortOrShutdown) {
       return;
     }
 
@@ -379,10 +385,10 @@ private:
   typedef nsTObserverArray<Manager*> ManagerList;
   ManagerList mManagerList;
 
-  // This flag is set when we are looping through the list and calling
-  // Shutdown() on each Manager.  We need to be careful not to synchronously
+  // This flag is set when we are looping through the list and calling Abort()
+  // or Shutdown() on each Manager.  We need to be careful not to synchronously
   // trigger the deletion of the factory while still executing this loop.
-  bool mInSyncShutdown;
+  bool mInSyncAbortOrShutdown;
 };
 
 // static
