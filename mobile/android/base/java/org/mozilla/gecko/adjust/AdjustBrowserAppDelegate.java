@@ -13,18 +13,18 @@ import org.mozilla.gecko.util.IntentUtils;
 
 public class AdjustBrowserAppDelegate extends BrowserAppDelegate {
     private final AdjustHelperInterface adjustHelper;
-    private final AttributionHelperListener attributionHelperListener;
+    private final AttributionHelperListener[] attributionHelperListeners;
 
-    public AdjustBrowserAppDelegate(AttributionHelperListener attributionHelperListener) {
+    public AdjustBrowserAppDelegate(AttributionHelperListener... attributionHelperListeners) {
         this.adjustHelper = AdjustConstants.getAdjustHelper();
-        this.attributionHelperListener = attributionHelperListener;
+        this.attributionHelperListeners = attributionHelperListeners;
     }
 
     @Override
     public void onCreate(BrowserApp browserApp, Bundle savedInstanceState) {
         adjustHelper.onCreate(browserApp,
                 AdjustConstants.MOZ_INSTALL_TRACKING_ADJUST_SDK_APP_TOKEN,
-                attributionHelperListener);
+                attributionHelperListeners);
 
         final boolean isInAutomation = IntentUtils.getIsInAutomationFromEnvironment(
                 new SafeIntent(browserApp.getIntent()));
