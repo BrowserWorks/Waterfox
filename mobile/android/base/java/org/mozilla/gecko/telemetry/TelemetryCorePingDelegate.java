@@ -9,10 +9,13 @@ package org.mozilla.gecko.telemetry;
 import android.accessibilityservice.AccessibilityServiceInfo;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.WorkerThread;
 import android.util.Log;
 import android.view.accessibility.AccessibilityManager;
+
+import com.adjust.sdk.AdjustAttribution;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -273,7 +276,7 @@ public class TelemetryCorePingDelegate extends BrowserAppDelegateWithReference
     }
 
     @Override
-    public void onCampaignIdChanged(String campaignId) {
-        CampaignIdMeasurements.updateCampaignIdPref(getBrowserApp(), campaignId);
+    public void onAttributionChanged(@NonNull final AdjustAttribution attribution) {
+        CampaignIdMeasurements.updateCampaignIdPref(getBrowserApp(), attribution.campaign);
     }
 }
