@@ -2,6 +2,7 @@
 
 # macOS Specific Options
 if test `uname -s` = Darwin; then
+ac_add_options --enable-ccache=sccache
 ac_add_options --enable-optimize="-O2 -march=core2 -mtune=core2 -w"
 ac_add_options --enable-macos-target=10.9
 ac_add_options --with-macos-sdk=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.13.sdk
@@ -9,6 +10,7 @@ mk_add_options AUTOCONF=/usr/local/Cellar/autoconf213/2.13/bin/autoconf213
 # Windows 10 Specific Options
 ac_add_options --disable-xcode-checks
 elif test `uname -s` = MINGW32_NT-6.2; then
+ac_add_options --enable-ccache=sccache
 ac_add_options --disable-maintenance-service
 ac_add_options --enable-optimize="-O2 -Qvec -w -clang:-arch:SSE3"
 ac_add_options --target=x86_64-pc-mingw32
@@ -28,13 +30,12 @@ else
 export CC=clang
 export CXX=clang++
 fi
-
 if test -f "$HOME/.mozbuild/nasm/nasm"; then
 export NASM=$HOME/.mozbuild/nasm/nasm
 fi
-
 ac_add_options --enable-optimize="-O2 -march=nocona -mtune=nocona -w"
 ac_add_options --target=x86_64-pc-linux-gnu
+
 #ppc64le specific options
 elif test `uname -m` = ppc64le; then
 export CC=gcc
@@ -67,10 +68,6 @@ ac_add_options --disable-tests
 ac_add_options --disable-verify-mar
 
 ac_add_options --enable-application=browser
-#Breaks builders on Linux
-if test `uname -m` != Linux; then
-ac_add_options --enable-ccache=sccache
-fi
 #ac_add_options --enable-lto
 # Stick to the same channel as Dev Edition would be
 ac_add_options --enable-update-channel=aurora
