@@ -340,7 +340,7 @@ workers:
             implementation: generic-worker
             os: linux-bitbar
             worker-type: 'gecko-{alias}'
-        t-linux(-large|-xlarge):
+        t-linux(-large|-xlarge|-metal):
             provisioner: 'gecko-t'
             implementation: docker-worker
             os: linux
