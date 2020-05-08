@@ -75,7 +75,7 @@ public class TelemetryJSONFilePingStore extends TelemetryPingStore {
     @VisibleForTesting static final String KEY_URL_PATH = "u";
 
     private final File storeDir;
-    private final FilenameFilter filenameFilter;
+    private final FilenameFilter uuidFilenameFilter;
     private final FileLastModifiedComparator fileLastModifiedComparator = new FileLastModifiedComparator();
 
     @WorkerThread // Writes to disk
@@ -89,7 +89,7 @@ public class TelemetryJSONFilePingStore extends TelemetryPingStore {
 
         this.storeDir = storeDir;
         this.storeDir.mkdirs();
-        filenameFilter = getFilenameFilter();
+        uuidFilenameFilter = new FilenameRegexFilter(UUIDUtil.UUID_PATTERN);
 
         if (!this.storeDir.canRead() || !this.storeDir.canWrite() || !this.storeDir.canExecute()) {
             throw new IllegalStateException("Cannot read, write, or execute store dir: " +
@@ -125,7 +125,7 @@ public class TelemetryJSONFilePingStore extends TelemetryPingStore {
 
     @Override
     public void maybePrunePings() {
-        final File[] files = storeDir.listFiles(filenameFilter);
+        final File[] files = storeDir.listFiles(uuidFilenameFilter);
         if (files == null) {
             return;
         }
@@ -157,7 +157,7 @@ public class TelemetryJSONFilePingStore extends TelemetryPingStore {
 
     @Override
     public ArrayList<TelemetryPing> getAllPings() {
-        final File[] fileArray = storeDir.listFiles(filenameFilter);
+        final File[] fileArray = storeDir.listFiles(uuidFilenameFilter);
         if (fileArray == null) {
             // Intentionally don't log all info for the store directory to prevent leaking the path.
             Log.w(LOGTAG, "listFiles unexpectedly returned null - unable to retrieve pings. Debug: exists? " +
@@ -195,7 +195,7 @@ public class TelemetryJSONFilePingStore extends TelemetryPingStore {
 
     @Override
     public int getCount() {
-        final File[] fileArray = storeDir.listFiles(filenameFilter);
+        final File[] fileArray = storeDir.listFiles(uuidFilenameFilter);
         if (fileArray == null) {
             Log.w(LOGTAG, "listFiles unexpectedly returned null - unable to retrieve pings. Assuming 0. " +
                     "Debug: exists? " + storeDir.exists() + "; directory? " + storeDir.isDirectory());
@@ -207,7 +207,7 @@ public class TelemetryJSONFilePingStore extends TelemetryPingStore {
     @Override
     public Set<String> getStoredIDs() {
         final Set<String> ids = new HashSet<>();
-        final File[] fileArray = storeDir.listFiles(filenameFilter);
+        final File[] fileArray = storeDir.listFiles(uuidFilenameFilter);
         if (fileArray == null) {
             return ids;
         }
@@ -313,10 +313,6 @@ public class TelemetryJSONFilePingStore extends TelemetryPingStore {
         } finally {
             inputStream.close(); // redundant: closed when the stream is closed, but let's be safe.
         }
-    }
-
-    protected FilenameFilter getFilenameFilter() {
-        return new FilenameRegexFilter(UUIDUtil.UUID_PATTERN);
     }
 
     public static final Parcelable.Creator<TelemetryJSONFilePingStore> CREATOR = new Parcelable.Creator<TelemetryJSONFilePingStore>() {
