@@ -125,6 +125,7 @@ const POLICIES_TESTS = [
           SPNEGO: false,
           NTLM: false,
         },
+        PrivateBrowsing: true,
       },
     },
     lockedPrefs: {
@@ -135,6 +136,7 @@ const POLICIES_TESTS = [
       "network.negotiate-auth.allow-non-fqdn": true,
       "network.automatic-ntlm-auth.allow-proxies": false,
       "network.negotiate-auth.allow-proxies": false,
+      "network.auth.private-browsing-sso": true,
     },
   },
 
@@ -149,6 +151,7 @@ const POLICIES_TESTS = [
           SPNEGO: true,
           NTLM: true,
         },
+        PrivateBrowsing: true,
         Locked: false,
       },
     },
@@ -158,6 +161,7 @@ const POLICIES_TESTS = [
       "network.automatic-ntlm-auth.trusted-uris": "a.com, b.com",
       "network.automatic-ntlm-auth.allow-non-fqdn": true,
       "network.negotiate-auth.allow-non-fqdn": true,
+      "network.auth.private-browsing-sso": true,
     },
   },
 

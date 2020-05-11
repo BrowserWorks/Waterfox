@@ -155,6 +155,13 @@ var Policies = {
           );
         }
       }
+      if ("PrivateBrowsing" in param) {
+        setDefaultPref(
+          "network.auth.private-browsing-sso",
+          param.PrivateBrowsing,
+          locked
+        );
+      }
     },
   },
 
