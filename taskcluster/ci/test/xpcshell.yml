@@ -66,6 +66,7 @@ xpcshell:
         by-test-platform:
             android-em-4.*\/debug: 7200
             default: 5400
+            android-em-7.*: 5400
     allow-software-gl-layers: false
     tier:
         by-test-platform:
