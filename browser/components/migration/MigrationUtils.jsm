@@ -75,6 +75,7 @@ let gUndoData = null;
 XPCOMUtils.defineLazyGetter(this, "gAvailableMigratorKeys", function() {
   if (AppConstants.platform == "win") {
     return [
+      "waterfoxclassic",
       "lfirefox",
       "firefox",
       "edge",
@@ -90,6 +91,7 @@ XPCOMUtils.defineLazyGetter(this, "gAvailableMigratorKeys", function() {
   }
   if (AppConstants.platform == "macosx") {
     return [
+      "waterfoxclassic",
       "lfirefox",
       "firefox",
       "safari",
@@ -101,7 +103,7 @@ XPCOMUtils.defineLazyGetter(this, "gAvailableMigratorKeys", function() {
     ];
   }
   if (AppConstants.XP_UNIX) {
-    return ["lfirefox", "firefox", "chrome", "chrome-beta", "chrome-dev", "chromium"];
+    return ["waterfoxclassic", "lfirefox", "firefox", "chrome", "chrome-beta", "chrome-dev", "chromium"];
   }
   return [];
 });
@@ -656,6 +658,8 @@ var MigrationUtils = Object.freeze({
         return "sourceName360se";
       case "lfirefox":
         return "sourceNameLfirefox";
+      case "waterfoxclassic":
+        return "sourceNameWaterfoxClassic";        
 
     }
     return null;
