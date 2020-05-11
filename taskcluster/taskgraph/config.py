@@ -57,7 +57,7 @@ graph_config_schema = Schema({
         # Prefix to add to scopes controlling scriptworkers
         Required('scope-prefix'): basestring,
         # Mapping of scriptworker types to scopes they accept
-        Required('worker-types'): {basestring: [basestring]}
+        Required('worker-types'): {basestring: [basestring]},
     },
     Required('task-priority'): optionally_keyed_by('project', Any(
         'highest',
@@ -84,7 +84,7 @@ graph_config_schema = Schema({
                 Required('provisioner'): optionally_keyed_by('level', text_type),
                 Required('implementation'): text_type,
                 Required('os'): text_type,
-                Required('worker-type'): optionally_keyed_by('level', text_type),
+                Required('worker-type'): optionally_keyed_by('level', 'release-level', text_type),
             }
         },
     },
