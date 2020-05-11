@@ -161,6 +161,7 @@ var MigrationWizard = {
 
     // Figure out what source apps are are available to import from:
     var group = document.getElementById("importSourceGroup");
+    debugger;
     for (var i = 0; i < group.childNodes.length; ++i) {
       var migratorKey = group.childNodes[i].id;
       if (migratorKey != "nothing") {

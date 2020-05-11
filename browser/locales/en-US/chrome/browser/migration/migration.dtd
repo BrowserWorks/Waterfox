@@ -33,6 +33,8 @@
 <!ENTITY importFrom360se.accesskey      "3">
 <!ENTITY importFromLfirefox.label       "Mozilla Firefox">
 <!ENTITY importFromLfirefox.accesskey   "L">
+<!ENTITY importFromWaterfoxClassic.label "Waterfox Classic">
+<!ENTITY importFromWaterfoxClassic.accesskey   "W">
 
 <!ENTITY noMigrationSources.label       "No programs that contain bookmarks, history or password data could be found.">
 
