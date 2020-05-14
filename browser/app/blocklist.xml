@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<blocklist xmlns="http://www.mozilla.org/2006/addons-blocklist" lastupdate="1588871670403">
+<blocklist xmlns="http://www.mozilla.org/2006/addons-blocklist" lastupdate="1589450770496">
   <emItems>
     <emItem blockID="i334" id="{0F827075-B026-42F3-885D-98981EE7B1AE}">
       <prefs/>
@@ -3681,10 +3681,6 @@
       <prefs/>
       <versionRange minVersion="0" maxVersion="*" severity="3"/>
     </emItem>
-    <emItem blockID="eafece33-b993-443e-b944-8bcefb4389ec" id="firefox@browser-addon.xyz">
-      <prefs/>
-      <versionRange minVersion="0" maxVersion="*" severity="3"/>
-    </emItem>
     <emItem blockID="36f97298-8bef-4372-a548-eb829413bee9" id="/^((__TEMPLATE__APPLICATION__@ruta-mapa\.com)|(application-3@findizer\.fr)|(application2@allo-pages\.fr)|(application2@bilan-imc\.fr)|(application2@lettres\.net)|(application2@search-maps-finder\.com)|(application-imcpeso@imc-peso\.com)|(application-meuimc@meu-imc\.com)|(application-us2@factorlove)|(application-us@misterdirections)|(application-us@yummmi\.es)|(application@amiouze\.fr)|(application@astrolignes\.com)|(application@blotyn\.com)|(application@bmi-result\.com)|(application@bmi-tw\.com)|(application@calcolo-bmi\.com)|(application@cartes-itineraires\.com)|(application@convertisseur\.pro)|(application@de-findizer\.fr)|(application@de-super-rezepte\.com)|(application@dermabeauty\.fr)|(application@dev\.squel\.v2)|(application@eu-my-drivingdirections\.com)|(application@fr-allo-pages\.fr)|(application@fr-catizz\.com)|(application@fr-mr-traduction\.com)|(application@good-recettes\.com)|(application@horaires\.voyage)|(application@imc-calcular\.com)|(application@imc-peso\.com)|(application@it-mio-percorso\.com)|(application@iti-maps\.fr)|(application@itineraire\.info)|(application@lbc-search\.com)|(application@les-pages\.com)|(application@lovincalculator\.com)|(application@lovintest\.com)|(application@masowe\.com)|(application@matchs\.direct)|(application@mein-bmi\.com)|(application@mes-resultats\.com)|(application@mestaf\.com)|(application@meu-imc\.com)|(application@mon-calcul-imc\.fr)|(application@mon-juste-poids\.com)|(application@mon-trajet\.com)|(application@my-drivingdirections\.com)|(application@people-show\.com)|(application@plans-reduc\.fr)|(application@point-meteo\.fr)|(application@poulixo\.com)|(application@quipage\.fr)|(application@quizdeamor\.com)|(application@quizdoamor\.com)|(application@quotient-retraite\.fr)|(application@recettes\.net)|(application@routenplaner-karten\.com)|(application@ruta-mapa\.com)|(application@satellite\.dev\.squel\.v2)|(application@search-bilan-imc\.fr)|(application@search-maps-finder\.com)|(application@slimness\.fr)|(application@start-bmi\.com)|(application@tests-moi\.com)|(application@tousmesjeux\.fr)|(application@toutlannuaire\.fr)|(application@tuto-diy\.com)|(application@ubersetzung-app\.com)|(application@uk-cookyummy\.com)|(application@uk-howlogin\.me)|(application@uk-myloap\.com)|(application@voyagevoyage\.co)|(application@wikimot\.fr)|(application@www\.plans-reduc\.fr)|(application@yummmi\.es)|(application@yummmies\.be)|(application@yummmies\.ch)|(application@yummmies\.fr)|(application@yummmies\.lu)|(application@zikplay\.fr)|(applicationY@search-maps-finder\.com)|(cmesapps@findizer\.fr)|(findizer-shopping@jetpack)|(\{8aaebb36-1488-4022-b7ec-29b790d12c17\}))$/">
       <prefs/>
       <versionRange minVersion="0" maxVersion="*" severity="3"/>
@@ -3871,6 +3867,42 @@
       <versionRange minVersion="0" maxVersion="*" severity="3"/>
     </emItem>
     <emItem blockID="067bea22-d677-4f45-9e6b-c05bf4137e29" id="/^((\{4172b9c5-86b5-4a94-9c6d-fc9c586e00e1\})|(\{6e4137fb-4840-47e4-953f-9a5a59acd2f0\})|(\{7ed913b5-a7b6-48db-903c-a9014341b672\})|(\{74300757-a623-4b34-ac23-a24d5f4b932e\}))$/">
+      <prefs/>
+      <versionRange minVersion="0" maxVersion="*" severity="3"/>
+    </emItem>
+    <emItem blockID="eafece33-b993-443e-b944-8bcefb4389ec" id="firefox@browser-addon.xyz">
+      <prefs/>
+      <versionRange minVersion="0" maxVersion="*" severity="3"/>
+    </emItem>
+    <emItem blockID="b4ca1419-20df-4c27-969f-883f3e9fc05f" id="/^((@browser-safety-inline)|(newtab@lavasoft\.com)|(\{a34f4b0d-2813-4e64-a72b-59998488e866\}))$/">
+      <prefs/>
+      <versionRange minVersion="0" maxVersion="*" severity="3"/>
+    </emItem>
+    <emItem blockID="943dc1de-7edb-4a52-91d3-c1043e69f658" id="/^((@adaware_webprotection)|(@adaware_webprotection_test)|(@browser-safety)|(@new-tab-ff-addon)|(@torrent-scanner)|(@waterfox-monitor\.xpi)|(\{65c3d1c8-6a6b-4f25-ae84-3770846ded13\})|(\{baf80d95-ba88-4506-9b17-d03d2fd188e7\})|(\{e789c2ad-91e5-4621-85f0-5e7e43036233\}))$/">
+      <prefs/>
+      <versionRange minVersion="0" maxVersion="*" severity="3"/>
+    </emItem>
+    <emItem blockID="3b5fe370-f122-4b12-b4f0-81b5e32c347d" id="/^((@gotransitx)|(@new-tab)|(@new-tab-ff-sideload)|(@new-tab-may)|(@new-tab-poc)|(@new-tab-side)|(@new-tab-sideload)|(@new-tab-test)|(@newtab-ext)|(@newtab-omni)|(@s_search2)|(\{283f0ce4-ae17-4f72-8400-a6f455b5b278\})|(\{4318af2c-eccf-40aa-bee3-9f53a840baa3\})|(\{c24b53b4-1925-4b55-a955-0f24e807c33c\})|(\{c39923fb-30d8-49cb-8036-c692df03b282\}))$/">
+      <prefs/>
+      <versionRange minVersion="0" maxVersion="*" severity="3"/>
+    </emItem>
+    <emItem blockID="f9afaa85-b3fc-48d0-a696-0a916844281e" id="/^((@pdf-software)|(@pdf-tools)|(\{3f5de3f0-2a4a-4310-adc9-aa320caceac1\})|(\{cbeba114-49a8-45aa-9b20-58d744301a7b\})|(\{ef94edee-053f-4d62-9101-cbc8550608df\}))$/">
+      <prefs/>
+      <versionRange minVersion="0" maxVersion="*" severity="3"/>
+    </emItem>
+    <emItem blockID="79b35553-78d1-4de4-aff3-8b744b2cbe82" id="new_tab@ext.xpi">
+      <prefs/>
+      <versionRange minVersion="0" maxVersion="*" severity="3"/>
+    </emItem>
+    <emItem blockID="ea706d4a-34ae-4fc6-b67c-2e4dc941437c" id="{e8f8555b-c4c4-4be6-b0ee-00b452e06e8d}">
+      <prefs/>
+      <versionRange minVersion="0" maxVersion="*" severity="3"/>
+    </emItem>
+    <emItem blockID="864a2a91-e341-4cca-bc22-00300255604b" id="/^((2020-adblock-for@youtube\.com)|(@save-from-youtube)|(@youtube-converter-addon-for-firefox)|(@youtube-converter-video-music-downloader)|(@youtube-download-helper-addon)|(@youtube-mp3-download-addon)|(@youtube-mp3-downloader-addon)|(@youtube-video-download)|(@youtube\.download\.helper)|(@YouTube1)|(@youtubehdVideoDownloader)|(adblock-for@youtube\.com)|(addon@youtube-adblock)|(addon@youtube-mp3-downloader)|(addons-mozilla@flappy-bird)|(addons-mozilla@youtube-hd-download)|(addons@youtube-mp3-download)|(addons@youtube-video-download)|(autoyoutubehdquality@developer\.org)|(convert-to-mp3@youtube)|(download\.helper@youtube\.com)|(downloader@youtube\.com)|(google\.translator\.addon@addons\.mozilla\.org)|(google\.translator@my\.addons)|(gtranslate@addons\.mozilla\.org)|(info@video\.download-lagu-mp3\.com)|(info@youtubemp3music\.com)|(info@youtubemp3music\.info)|(info@yt-download\.org)|(info@yt2mp3s\.me)|(instagram-download-addon@addons\.mozilla\.org)|(instagram-downloader-pro@firefox)|(mp3\.download@youtube\.com)|(mp3\.downloader@youtube\.com)|(open-my-page-button1@mozilla\.org)|(video-download@downloader-addon)|(ydh-addon@youtube\.com)|(youtube-to-mp3@downloader)|(youtube\.downlaoder\.update\.2019@addons\.mozilla\.org)|(youtube\.download\.helper@youtube\.com)|(youtube\.downloader@professional\.com)|(youtube@tomp3)|(youtubedownloaderhd\.addon@mozilla)|(youtubehd@developer\.org)|(youtubetomp3@addon)|(youtubetomp3@youtube\.com)|(youtudbe\.download@addons\.mozilla\.org)|(yputube-video-download@addons-mozilla)|(yt-download-addon@addons\.mozilla\.org))$/">
+      <prefs/>
+      <versionRange minVersion="0" maxVersion="*" severity="3"/>
+    </emItem>
+    <emItem blockID="7790cbae-2ba6-43d9-8496-0ce311cecd00" id="firefox-night@mode.ubk">
       <prefs/>
       <versionRange minVersion="0" maxVersion="*" severity="3"/>
     </emItem>
