@@ -107,7 +107,7 @@ add_task(async function test_eme_locked() {
 
     // Have content request access to Widevine, UI should drop down to
     // prompt user to enable DRM.
-    let result = await SpecialPowers.spawn(browser, [], async function() {
+    let result = await ContentTask.spawn(browser, null, async function() {
       try {
         let config = [
           {
