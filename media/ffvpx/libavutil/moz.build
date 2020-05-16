@@ -21,7 +21,6 @@ SOURCES += [
     'cpu.c',
     'crc.c',
     'dict.c',
-    'dummy_funcs.c',
     'error.c',
     'eval.c',
     'fifo.c',
@@ -50,6 +49,11 @@ SOURCES += [
     'timecode.c',
     'utils.c',
 ]
+# Dummy functions are required for windows NoOpt/PGO builds.
+if CONFIG['_MSC_VER']:
+    SOURCES += [
+        'dummy_funcs.c'
+    ]
 
 SYMBOLS_FILE =  'avutil.symbols'
 NoVisibilityFlags()
