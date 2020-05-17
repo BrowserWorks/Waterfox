@@ -43,5 +43,6 @@
   "gizmodo.com": "Mozilla/5.0 (@OS_SLICE@ rv:68.0) Gecko/20100101 Firefox/68.0",
   "zoho.com": "Mozilla/5.0 (@OS_SLICE@ rv:60.0) Gecko/20100101 Firefox/60.0",
   "att.tv": "Mozilla/5.0 (@OS_SLICE@) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.132 Safari/537.36",
-  "primevideo.com": "Mozilla/5.0 (@OS_SLICE@ rv:60.0) Gecko/20100101 Firefox/60.0"
+  "primevideo.com": "Mozilla/5.0 (@OS_SLICE@ rv:60.0) Gecko/20100101 Firefox/60.0",
+  "meet.google.com": "Mozilla/5.0 (@OS_SLICE@ rv:60.0) Gecko/20100101 Firefox/60.0"
 }
