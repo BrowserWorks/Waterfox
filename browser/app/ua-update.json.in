@@ -45,5 +45,6 @@
   "att.tv": "Mozilla/5.0 (@OS_SLICE@) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.132 Safari/537.36",
   "primevideo.com": "Mozilla/5.0 (@OS_SLICE@ rv:60.0) Gecko/20100101 Firefox/60.0",
   "meet.google.com": "Mozilla/5.0 (@OS_SLICE@ rv:60.0) Gecko/20100101 Firefox/60.0",
-  "lexiacore5.com": "Mozilla/5.0 (@OS_SLICE@ rv:60.0) Gecko/20100101 Firefox/60.0"
+  "lexiacore5.com": "Mozilla/5.0 (@OS_SLICE@ rv:60.0) Gecko/20100101 Firefox/60.0",
+  "steamcommunity.com": "Mozilla/5.0 (@OS_SLICE@) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.132 Safari/537.36"
 }
