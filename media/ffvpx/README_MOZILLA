@@ -31,7 +31,11 @@ $ grep -E ".*_(INDEV|OUTDEV|DECODER|ENCODER|DEMUXER|MUXER|PARSER|FILTER|HWACCEL|
 $ grep -E ".*_(INDEV|OUTDEV|DECODER|ENCODER|DEMUXER|MUXER|PARSER|FILTER|HWACCEL|PROTOCOL|ENCODERS|DECODERS|HWACCELS|INDEVS|OUTDEVS|FILTERS|DEMUXERS|MUXERS|PROTOCOLS|BSF) 0" config.asm > ~/Work/Mozilla/mozilla-central/media/ffvpx/defaults_disabled.asm
 
 All new decoders/muxers/encoders/... should be added in the list of dummy functions found in libavcodec/dummy_funcs.c
-otherwise linkage will fail on Windows. On other platforms they are optimised out and aren't necessary.
+otherwise linkage will fail on Windows. On other platforms they aren't necessary.
+(They may be optimised out, or may break the build when linking, e.g. with
+-fno-common, which is enabled for GCC 10
+<https://gcc.gnu.org/gcc-10/porting_to.html#common>. This is why the dummy
+functions are disabled except for Windows builds.)
 The GNU comm utility is a useful tool to compare and extract only the changes.
 
 To update the source tree, perform a diff on the files listed in FILES.
