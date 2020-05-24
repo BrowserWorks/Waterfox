@@ -12,9 +12,6 @@ const IS_ANDROID = AppConstants.platform == "android";
 const { RemoteSettings } = ChromeUtils.import(
   "resource://services-settings/remote-settings.js"
 );
-const { RemoteSettingsWorker } = ChromeUtils.import(
-  "resource://services-settings/RemoteSettingsWorker.jsm"
-);
 const { Utils } = ChromeUtils.import("resource://services-settings/Utils.jsm");
 const { UptakeTelemetry } = ChromeUtils.import(
   "resource://services-common/uptake-telemetry.js"
@@ -133,21 +130,13 @@ add_task(async function test_sync_event_is_sent_even_if_up_to_date() {
     // Skip test: we don't ship remote settings dumps on Android (see package-manifest).
     return;
   }
-  // First, determine what is the dump timestamp.
-  await RemoteSettingsWorker.importJSONDump(
-    clientWithDump.bucketName,
-    clientWithDump.collectionName
-  );
-  const kintoCol = await clientWithDump.openCollection();
-  const uptodateTimestamp = await kintoCol.db.getLastModified();
-  await clear_state();
-
-  // Now, simulate that server data wasn't changed since dump was released.
   const startHistogram = getUptakeTelemetrySnapshot(clientWithDump.identifier);
   let received;
   clientWithDump.on("sync", ({ data }) => (received = data));
+  // Use a timestamp inferior to latest record in dump.
+  const timestamp = 1000000000000; // Sun Sep 09 2001
 
-  await clientWithDump.maybeSync(uptodateTimestamp);
+  await clientWithDump.maybeSync(timestamp);
 
   ok(received.current.length > 0, "Dump records are listed as created");
   equal(received.current.length, received.created.length);
@@ -168,7 +157,7 @@ add_task(async function test_records_can_have_local_fields() {
     accepted: true,
   });
 
-  await c.maybeSync(3000); // Does not fail.
+  await c.maybeSync(2000); // Does not fail.
 });
 add_task(clear_state);
 
