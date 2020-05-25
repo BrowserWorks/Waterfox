@@ -41,7 +41,7 @@ TEST_HARNESS_FILES.gtest += [
 
 UNIFIED_SOURCES += ['TestMP4.cpp',]
 TEST_HARNESS_FILES.gtest += [
-    '../../../test/street.mp4',
+    '../../test/street.mp4',
 ]
 LOCAL_INCLUDES += [
     '../../mp4',

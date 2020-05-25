@@ -27,6 +27,7 @@ class EventChainPreVisitor;
 struct URLExtraData;
 namespace dom {
 class ShadowRoot;
+class HTMLSlotElement;
 } // namespace dom
 namespace widget {
 struct IMEState;
@@ -712,18 +713,27 @@ public:
   virtual mozilla::dom::ShadowRoot *GetContainingShadow() const = 0;
 
   /**
-   * Gets an array of destination insertion points where this content
-   * is distributed by web component distribution algorithms.
-   * The array is created if it does not already exist.
+   * Gets the assigned slot associated with this content.
+   *
+   * @return The assigned slot element or null.
    */
-  virtual nsTArray<nsIContent*> &DestInsertionPoints() = 0;
+  virtual mozilla::dom::HTMLSlotElement* GetAssignedSlot() const = 0;
 
   /**
-   * Same as DestInsertionPoints except that this method will return
-   * null if the array of destination insertion points does not already
-   * exist.
+   * Sets the assigned slot associated with this content.
+   *
+   * @param aSlot The assigned slot.
    */
-  virtual nsTArray<nsIContent*> *GetExistingDestInsertionPoints() const = 0;
+  virtual void SetAssignedSlot(mozilla::dom::HTMLSlotElement* aSlot) = 0;
+
+  /**
+   * Gets the assigned slot associated with this content based on parent's
+   * shadow root mode. Returns null if parent's shadow root is "closed".
+   * https://dom.spec.whatwg.org/#dom-slotable-assignedslot
+   *
+   * @return The assigned slot element or null.
+   */
+  mozilla::dom::HTMLSlotElement* GetAssignedSlotByMode() const;
 
   /**
    * Gets the insertion parent element of the XBL binding.
@@ -983,6 +993,12 @@ protected:
    * called if HasID() is true.
    */
   nsIAtom* DoGetID() const;
+
+  /**
+   * Returns the assigned slot, if it exists, or the direct parent, if it's a
+   * fallback content of a slot.
+   */
+  nsINode* GetFlattenedTreeParentForMaybeAssignedNode() const;
 
   // Returns base URI without considering xml:base.
   inline nsIURI* GetBaseURIWithoutXMLBase() const;

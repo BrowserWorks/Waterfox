@@ -3750,7 +3750,7 @@ nsGlobalWindow::GetEventTargetParent(EventChainPreVisitor& aVisitor)
     }
   }
 
-  aVisitor.mParentTarget = GetParentTarget();
+  aVisitor.SetParentTarget(GetParentTarget(), true);
 
   // Handle 'active' event.
   if (!mIdleObservers.IsEmpty() &&

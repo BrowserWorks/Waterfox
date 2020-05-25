@@ -14,6 +14,7 @@
 
 #include "nsContentSink.h"
 #include "nsCOMPtr.h"
+#include "nsHTMLTags.h"
 #include "nsReadableUtils.h"
 #include "nsUnicharUtils.h"
 #include "nsIHTMLContentSink.h"
@@ -29,6 +30,7 @@
 #include "mozilla/Logging.h"
 #include "nsNodeUtils.h"
 #include "nsIContent.h"
+#include "mozilla/dom/CustomElementRegistry.h"
 #include "mozilla/dom/Element.h"
 #include "mozilla/Preferences.h"
 
@@ -57,8 +59,6 @@
 #include "nsTextFragment.h"
 #include "nsIScriptGlobalObject.h"
 #include "nsNameSpaceManager.h"
-
-#include "nsIParserService.h"
 
 #include "nsIStyleSheetLinkingElement.h"
 #include "nsITimer.h"
@@ -259,10 +259,6 @@ NS_NewHTMLElement(Element** aResult, already_AddRefed<mozilla::dom::NodeInfo>&& 
 
   RefPtr<mozilla::dom::NodeInfo> nodeInfo = aNodeInfo;
 
-  nsIParserService* parserService = nsContentUtils::GetParserService();
-  if (!parserService)
-    return NS_ERROR_OUT_OF_MEMORY;
-
   nsIAtom *name = nodeInfo->NameAtom();
   RefPtr<nsIAtom> tagAtom = nodeInfo->NameAtom();
   RefPtr<nsIAtom> typeAtom = aIs ? NS_Atomize(*aIs) : tagAtom;
@@ -270,7 +266,7 @@ NS_NewHTMLElement(Element** aResult, already_AddRefed<mozilla::dom::NodeInfo>&& 
   NS_ASSERTION(nodeInfo->NamespaceEquals(kNameSpaceID_XHTML),
                "Trying to HTML elements that don't have the XHTML namespace");
 
-  int32_t tag = parserService->HTMLCaseSensitiveAtomTagToId(name);
+  int32_t tag = nsHTMLTags::CaseSensitiveAtomTagToId(name);
 
   bool isCustomElementName = (tag == eHTMLTag_userdefined &&
                               nsContentUtils::IsCustomElementName(name));

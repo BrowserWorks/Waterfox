@@ -26,6 +26,12 @@
 class nsIDocument;
 class nsIDOMText;
 
+namespace mozilla {
+namespace dom {
+class HTMLSlotElement;
+} // namespace dom
+} // namespace mozilla
+
 #define DATA_NODE_FLAG_BIT(n_) NODE_FLAG_BIT(NODE_TYPE_SPECIFIC_BITS_OFFSET + (n_))
 
 // Data node specific flags
@@ -154,9 +160,9 @@ public:
   virtual void SetXBLBinding(nsXBLBinding* aBinding,
                              nsBindingManager* aOldBindingManager = nullptr) override;
   virtual mozilla::dom::ShadowRoot *GetContainingShadow() const override;
-  virtual nsTArray<nsIContent*> &DestInsertionPoints() override;
-  virtual nsTArray<nsIContent*> *GetExistingDestInsertionPoints() const override;
   virtual void SetShadowRoot(mozilla::dom::ShadowRoot* aShadowRoot) override;
+  virtual mozilla::dom::HTMLSlotElement* GetAssignedSlot() const override;
+  virtual void SetAssignedSlot(mozilla::dom::HTMLSlotElement* aSlot) override;
   virtual nsIContent *GetXBLInsertionParent() const override;
   virtual void SetXBLInsertionParent(nsIContent* aContent) override;
   virtual bool IsNodeOfType(uint32_t aFlags) const override;
@@ -262,9 +268,9 @@ protected:
     RefPtr<mozilla::dom::ShadowRoot> mContainingShadow;
 
     /**
-     * @see nsIContent::GetDestInsertionPoints
+     * @see nsIContent::GetAssignedSlot
      */
-    nsTArray<nsIContent*> mDestInsertionPoints;
+    RefPtr<mozilla::dom::HTMLSlotElement> mAssignedSlot;
   };
 
   // Override from nsINode

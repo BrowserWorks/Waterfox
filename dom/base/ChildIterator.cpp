@@ -6,61 +6,27 @@
 
 #include "ChildIterator.h"
 #include "nsContentUtils.h"
+#include "mozilla/dom/HTMLSlotElement.h"
 #include "mozilla/dom/XBLChildrenElement.h"
-#include "mozilla/dom/HTMLContentElement.h"
-#include "mozilla/dom/HTMLShadowElement.h"
 #include "mozilla/dom/ShadowRoot.h"
 #include "nsIAnonymousContentCreator.h"
 #include "nsIFrame.h"
 #include "nsCSSAnonBoxes.h"
+#include "nsDocument.h"
 
 namespace mozilla {
 namespace dom {
 
-class MatchedNodes {
-public:
-  explicit MatchedNodes(HTMLContentElement* aInsertionPoint)
-    : mIsContentElement(true), mContentElement(aInsertionPoint) {}
-
-  explicit MatchedNodes(XBLChildrenElement* aInsertionPoint)
-    : mIsContentElement(false), mChildrenElement(aInsertionPoint) {}
-
-  uint32_t Length() const
-  {
-    return mIsContentElement ? mContentElement->MatchedNodes().Length()
-                             : mChildrenElement->InsertedChildrenLength();
-  }
-
-  nsIContent* operator[](int32_t aIndex) const
-  {
-    return mIsContentElement ? mContentElement->MatchedNodes()[aIndex]
-                             : mChildrenElement->InsertedChild(aIndex);
-  }
-
-  bool IsEmpty() const
-  {
-    return mIsContentElement ? mContentElement->MatchedNodes().IsEmpty()
-                             : !mChildrenElement->HasInsertedChildren();
-  }
-protected:
-  bool mIsContentElement;
-  union {
-    HTMLContentElement* mContentElement;
-    XBLChildrenElement* mChildrenElement;
-  };
-};
-
-static inline MatchedNodes
-GetMatchedNodesForPoint(nsIContent* aContent)
+ExplicitChildIterator::ExplicitChildIterator(const nsIContent* aParent,
+                                             bool aStartAtBeginning)
+  : mParent(aParent),
+    mChild(nullptr),
+    mDefaultChild(nullptr),
+    mIsFirst(aStartAtBeginning),
+    mIndexInInserted(0)
 {
-  if (aContent->NodeInfo()->Equals(nsGkAtoms::children, kNameSpaceID_XBL)) {
-    // XBL case
-    return MatchedNodes(static_cast<XBLChildrenElement*>(aContent));
-  }
-
-  // Web components case
-  MOZ_ASSERT(aContent->IsHTMLElement(nsGkAtoms::content));
-  return MatchedNodes(HTMLContentElement::FromContent(aContent));
+  mParentAsSlot = nsDocument::IsWebComponentsEnabled(mParent) ?
+    HTMLSlotElement::FromContent(mParent) : nullptr;
 }
 
 nsIContent*
@@ -69,30 +35,29 @@ ExplicitChildIterator::GetNextChild()
   // If we're already in the inserted-children array, look there first
   if (mIndexInInserted) {
     MOZ_ASSERT(mChild);
-    MOZ_ASSERT(nsContentUtils::IsContentInsertionPoint(mChild));
     MOZ_ASSERT(!mDefaultChild);
 
-    MatchedNodes assignedChildren = GetMatchedNodesForPoint(mChild);
-    if (mIndexInInserted < assignedChildren.Length()) {
-      return assignedChildren[mIndexInInserted++];
-    }
-    mIndexInInserted = 0;
-    mChild = mChild->GetNextSibling();
-  } else if (mShadowIterator) {
-    // If we're inside of a <shadow> element, look through the
-    // explicit children of the projected ShadowRoot via
-    // the mShadowIterator.
-    nsIContent* nextChild = mShadowIterator->GetNextChild();
-    if (nextChild) {
-      return nextChild;
+    if (mParentAsSlot) {
+      const nsTArray<RefPtr<nsINode>>& assignedNodes =
+        mParentAsSlot->AssignedNodes();
+
+      mChild = (mIndexInInserted < assignedNodes.Length()) ?
+        assignedNodes[mIndexInInserted++]->AsContent() : nullptr;
+      return mChild;
     }
 
-    mShadowIterator = nullptr;
+    MOZ_ASSERT(mChild->IsActiveChildrenElement());
+    auto* childrenElement =
+      static_cast<XBLChildrenElement*>(mChild);
+    if (mIndexInInserted < childrenElement->InsertedChildrenLength()) {
+      return childrenElement->InsertedChild(mIndexInInserted++);
+    }
+    mIndexInInserted = 0;
     mChild = mChild->GetNextSibling();
   } else if (mDefaultChild) {
     // If we're already in default content, check if there are more nodes there
     MOZ_ASSERT(mChild);
-    MOZ_ASSERT(nsContentUtils::IsContentInsertionPoint(mChild));
+    MOZ_ASSERT(mChild->IsActiveChildrenElement());
 
     mDefaultChild = mDefaultChild->GetNextSibling();
     if (mDefaultChild) {
@@ -101,6 +66,19 @@ ExplicitChildIterator::GetNextChild()
 
     mChild = mChild->GetNextSibling();
   } else if (mIsFirst) {  // at the beginning of the child list
+    // For slot parent, iterate over assigned nodes if not empty, otherwise
+    // fall through and iterate over direct children (fallback content).
+    if (mParentAsSlot) {
+      const nsTArray<RefPtr<nsINode>>& assignedNodes =
+        mParentAsSlot->AssignedNodes();
+      if (!assignedNodes.IsEmpty()) {
+        mIndexInInserted = 1;
+        mChild = assignedNodes[0]->AsContent();
+        mIsFirst = false;
+        return mChild;
+      }
+    }
+
     mChild = mParent->GetFirstChild();
     mIsFirst = false;
   } else if (mChild) { // in the middle of the child list
@@ -110,31 +88,16 @@ ExplicitChildIterator::GetNextChild()
   // Iterate until we find a non-insertion point, or an insertion point with
   // content.
   while (mChild) {
-    // If the current child being iterated is a shadow insertion point then
-    // the iterator needs to go into the projected ShadowRoot.
-    if (ShadowRoot::IsShadowInsertionPoint(mChild)) {
-      // Look for the next child in the projected ShadowRoot for the <shadow>
-      // element.
-      HTMLShadowElement* shadowElem = HTMLShadowElement::FromContent(mChild);
-      ShadowRoot* projectedShadow = shadowElem->GetOlderShadowRoot();
-      if (projectedShadow) {
-        mShadowIterator = new ExplicitChildIterator(projectedShadow);
-        nsIContent* nextChild = mShadowIterator->GetNextChild();
-        if (nextChild) {
-          return nextChild;
-        }
-        mShadowIterator = nullptr;
-      }
-      mChild = mChild->GetNextSibling();
-    } else if (nsContentUtils::IsContentInsertionPoint(mChild)) {
+    if (mChild->IsActiveChildrenElement()) {
       // If the current child being iterated is a content insertion point
       // then the iterator needs to return the nodes distributed into
       // the content insertion point.
-      MatchedNodes assignedChildren = GetMatchedNodesForPoint(mChild);
-      if (!assignedChildren.IsEmpty()) {
+      auto* childrenElement =
+        static_cast<XBLChildrenElement*>(mChild);
+      if (childrenElement->HasInsertedChildren()) {
         // Iterate through elements projected on insertion point.
         mIndexInInserted = 1;
-        return assignedChildren[0];
+        return childrenElement->InsertedChild(0);
       }
 
       // Insertion points inside fallback/default content
@@ -192,19 +155,17 @@ FlattenedChildIterator::Init(bool aIgnoreXBL)
 }
 
 bool
-ExplicitChildIterator::Seek(nsIContent* aChildToFind)
+ExplicitChildIterator::Seek(const nsIContent* aChildToFind)
 {
   if (aChildToFind->GetParent() == mParent &&
       !aChildToFind->IsRootOfAnonymousSubtree()) {
     // Fast path: just point ourselves to aChildToFind, which is a
     // normal DOM child of ours.
-    MOZ_ASSERT(!ShadowRoot::IsShadowInsertionPoint(aChildToFind));
-    MOZ_ASSERT(!nsContentUtils::IsContentInsertionPoint(aChildToFind));
-    mChild = aChildToFind;
+    mChild = const_cast<nsIContent*>(aChildToFind);
     mIndexInInserted = 0;
-    mShadowIterator = nullptr;
     mDefaultChild = nullptr;
     mIsFirst = false;
+    MOZ_ASSERT(!mChild->IsActiveChildrenElement());
     return true;
   }
 
@@ -220,12 +181,18 @@ ExplicitChildIterator::Get() const
 {
   MOZ_ASSERT(!mIsFirst);
 
-  if (mIndexInInserted) {
-    MatchedNodes assignedChildren = GetMatchedNodesForPoint(mChild);
-    return assignedChildren[mIndexInInserted - 1];
-  } else if (mShadowIterator)  {
-    return mShadowIterator->Get();
+  // When mParentAsSlot is set, mChild is always set to the current child. It
+  // does not matter whether mChild is an assigned node or a fallback content.
+  if (mParentAsSlot) {
+    return mChild;
   }
+
+  if (mIndexInInserted) {
+    MOZ_ASSERT(mChild->IsActiveChildrenElement());
+    auto* childrenElement = static_cast<XBLChildrenElement*>(mChild);
+    return childrenElement->InsertedChild(mIndexInInserted - 1);
+  }
+
   return mDefaultChild ? mDefaultChild : mChild;
 }
 
@@ -234,19 +201,27 @@ ExplicitChildIterator::GetPreviousChild()
 {
   // If we're already in the inserted-children array, look there first
   if (mIndexInInserted) {
+
+    if (mParentAsSlot) {
+      const nsTArray<RefPtr<nsINode>>& assignedNodes =
+        mParentAsSlot->AssignedNodes();
+
+      mChild = (--mIndexInInserted) ?
+        assignedNodes[mIndexInInserted - 1]->AsContent() : nullptr;
+
+      if (!mChild) {
+        mIsFirst = true;
+      }
+      return mChild;
+    }
+
     // NB: mIndexInInserted points one past the last returned child so we need
     // to look *two* indices back in order to return the previous child.
-    MatchedNodes assignedChildren = GetMatchedNodesForPoint(mChild);
+    MOZ_ASSERT(mChild->IsActiveChildrenElement());
+    auto* childrenElement = static_cast<XBLChildrenElement*>(mChild);
     if (--mIndexInInserted) {
-      return assignedChildren[mIndexInInserted - 1];
+      return childrenElement->InsertedChild(mIndexInInserted - 1);
     }
-    mChild = mChild->GetPreviousSibling();
-  } else if (mShadowIterator) {
-    nsIContent* previousChild = mShadowIterator->GetPreviousChild();
-    if (previousChild) {
-      return previousChild;
-    }
-    mShadowIterator = nullptr;
     mChild = mChild->GetPreviousSibling();
   } else if (mDefaultChild) {
     // If we're already in default content, check if there are more nodes there
@@ -261,35 +236,32 @@ ExplicitChildIterator::GetPreviousChild()
   } else if (mChild) { // in the middle of the child list
     mChild = mChild->GetPreviousSibling();
   } else { // at the end of the child list
+    // For slot parent, iterate over assigned nodes if not empty, otherwise
+    // fall through and iterate over direct children (fallback content).
+    if (mParentAsSlot) {
+      const nsTArray<RefPtr<nsINode>>& assignedNodes =
+        mParentAsSlot->AssignedNodes();
+      if (!assignedNodes.IsEmpty()) {
+        mIndexInInserted = assignedNodes.Length();
+        mChild = assignedNodes[mIndexInInserted - 1]->AsContent();
+        return mChild;
+      }
+    }
+
     mChild = mParent->GetLastChild();
   }
 
   // Iterate until we find a non-insertion point, or an insertion point with
   // content.
   while (mChild) {
-    if (ShadowRoot::IsShadowInsertionPoint(mChild)) {
-      // If the current child being iterated is a shadow insertion point then
-      // the iterator needs to go into the projected ShadowRoot.
-      HTMLShadowElement* shadowElem = HTMLShadowElement::FromContent(mChild);
-      ShadowRoot* projectedShadow = shadowElem->GetOlderShadowRoot();
-      if (projectedShadow) {
-        // Create a ExplicitChildIterator that begins iterating from the end.
-        mShadowIterator = new ExplicitChildIterator(projectedShadow, false);
-        nsIContent* previousChild = mShadowIterator->GetPreviousChild();
-        if (previousChild) {
-          return previousChild;
-        }
-        mShadowIterator = nullptr;
-      }
-      mChild = mChild->GetPreviousSibling();
-    } else if (nsContentUtils::IsContentInsertionPoint(mChild)) {
+    if (mChild->IsActiveChildrenElement()) {
       // If the current child being iterated is a content insertion point
       // then the iterator needs to return the nodes distributed into
       // the content insertion point.
-      MatchedNodes assignedChildren = GetMatchedNodesForPoint(mChild);
-      if (!assignedChildren.IsEmpty()) {
-        mIndexInInserted = assignedChildren.Length();
-        return assignedChildren[mIndexInInserted - 1];
+      auto* childrenElement = static_cast<XBLChildrenElement*>(mChild);
+      if (childrenElement->HasInsertedChildren()) {
+        mIndexInInserted = childrenElement->InsertedChildrenLength();
+        return childrenElement->InsertedChild(mIndexInInserted - 1);
       }
 
       mDefaultChild = mChild->GetLastChild();
@@ -341,7 +313,7 @@ AllChildrenIterator::Get() const
 
 
 bool
-AllChildrenIterator::Seek(nsIContent* aChildToFind)
+AllChildrenIterator::Seek(const nsIContent* aChildToFind)
 {
   if (mPhase == eAtBegin || mPhase == eAtBeforeKid) {
     mPhase = eAtExplicitKids;

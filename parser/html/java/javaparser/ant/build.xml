@@ -1,0 +1,86 @@
+<project name="JavaParserBuilder" default="all">
+
+	<!-- current version -->
+	<property name="version" value="1.0.6" />
+
+	<!-- package build properties -->
+	<property name="source.dir" location="../" />
+	<property name="temp.dir" value="${user.home}/Desktop/" />
+	<property name="file.name" value="javaparser-${version}" />
+
+	<property name="src.file.name" value="${file.name}-src.zip" />
+	<property name="bin.jar.name" value="${file.name}.jar" />
+	<property name="bin.file.name" value="${file.name}.zip" />
+
+	<property name="src.temp.file" value="${temp.dir}/${src.file.name}" />
+	<property name="bin.temp.file" value="${temp.dir}/${bin.file.name}" />
+	<property name="bin.temp.jar" value="${temp.dir}/${bin.jar.name}" />
+
+
+	<!-- googlecode properties -->
+	<taskdef classname="net.bluecow.googlecode.ant.GoogleCodeUploadTask" classpath="ant-googlecode-0.0.1.jar" name="gcupload" />
+	<property name="googlecode.user" value="jgesser" />
+	<!-- the file must have a property named "googlecode.password" -->
+	<property file="../../JavaParser-ant/pass.txt" />
+	<property name="googlecode.project" value="javaparser" />
+	<property name="googlecode.file.summary.src" value="Java1.5 parser and AST release ${version} (source)" />
+	<property name="googlecode.file.summary.bin" value="Java1.5 parser and AST release ${version} (binary)" />
+	<property name="googlecode.file.labels.src" value="Featured, Type-Source, OpSys-All" />
+	<property name="googlecode.file.labels.bin" value="Featured, Type-Archive, OpSys-All" />
+
+	<target name="build-src">
+		<zip destfile="${src.temp.file}" level="9">
+			<fileset dir="${source.dir}">
+				<exclude name=".*" />
+				<exclude name="bin/**" />
+				<exclude name="ant/**" />
+				<exclude name="test/ignore/**" />
+			</fileset>
+		</zip>
+	</target>
+
+	<target name="build-bin">
+		<jar destfile="${bin.temp.jar}">
+			<fileset dir="${source.dir}/bin">
+				<exclude name="TestRunner*.class" />
+				<exclude name="**/test/**/*" />
+			</fileset>
+		</jar>
+
+		<zip destfile="${bin.temp.file}" level="9">
+			<fileset dir="${source.dir}">
+				<include name="COPYING" />
+				<include name="COPYING.LESSER" />
+				<include name="readme.txt" />
+			</fileset>
+			<fileset file="${bin.temp.jar}" />
+		</zip>
+	</target>
+
+	<target name="upload-src">
+		<gcupload username="${googlecode.user}" password="${googlecode.password}" projectname="${googlecode.project}" filename="${src.temp.file}" targetfilename="${src.file.name}" summary="${googlecode.file.summary.src}" labels="${googlecode.file.labels.src}" />
+	</target>
+
+	<target name="upload-bin">
+		<gcupload username="${googlecode.user}" password="${googlecode.password}" projectname="${googlecode.project}" filename="${bin.temp.file}" targetfilename="${bin.file.name}" summary="${googlecode.file.summary.bin}" labels="${googlecode.file.labels.bin}" />
+	</target>
+
+	<target name="clean">
+		<delete file="${src.temp.file}" failonerror="true" />
+		<delete file="${bin.temp.file}" failonerror="true" />
+		<delete file="${bin.temp.jar}" failonerror="true" />
+	</target>
+
+	<target name="all" description="default">
+		<antcall target="clean" />
+
+		<antcall target="build-src" />
+		<antcall target="build-bin" />
+
+		<antcall target="upload-src" />
+		<antcall target="upload-bin" />
+
+		<antcall target="clean" />
+	</target>
+
+</project>

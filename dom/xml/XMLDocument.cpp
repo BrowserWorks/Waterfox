@@ -157,6 +157,10 @@ NS_NewDOMDocument(nsIDOMDocument** aInstancePtrResult,
     nsCOMPtr<nsINode> doctypeAsNode = do_QueryInterface(aDoctype);
     ErrorResult result;
     d->AppendChild(*doctypeAsNode, result);
+    // Need to WouldReportJSException() if our callee can throw a JS
+    // exception (which it can) and we're neither propagating the
+    // error out nor unconditionally suppressing it.
+    result.WouldReportJSException();
     if (NS_WARN_IF(result.Failed())) {
       return result.StealNSResult();
     }
@@ -174,6 +178,10 @@ NS_NewDOMDocument(nsIDOMDocument** aInstancePtrResult,
     }
 
     d->AppendChild(*root, result);
+    // Need to WouldReportJSException() if our callee can throw a JS
+    // exception (which it can) and we're neither propagating the
+    // error out nor unconditionally suppressing it.
+    result.WouldReportJSException();
     if (NS_WARN_IF(result.Failed())) {
       return result.StealNSResult();
     }

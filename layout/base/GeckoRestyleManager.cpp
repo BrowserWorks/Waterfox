@@ -222,8 +222,10 @@ GeckoRestyleManager::RestyleElement(Element*               aElement,
   }
 
   if (aMinHint & nsChangeHint_ReconstructFrame) {
-    FrameConstructor()->RecreateFramesForContent(aElement, false,
-      nsCSSFrameConstructor::REMOVE_FOR_RECONSTRUCTION, nullptr);
+    FrameConstructor()->RecreateFramesForContent(
+      aElement,
+      nsCSSFrameConstructor::InsertionKind::Sync,
+      nsCSSFrameConstructor::REMOVE_FOR_RECONSTRUCTION);
   } else if (aPrimaryFrame) {
     ComputeAndProcessStyleChange(aPrimaryFrame, aMinHint, aRestyleTracker,
                                  aRestyleHint, aRestyleHintData);
@@ -3231,7 +3233,7 @@ ElementRestyler::RestyleUndisplayedNodes(nsRestyleHint      aChildRestyleHint,
     // not have a frame and would not otherwise be pushed as an ancestor.
     nsIContent* parent = undisplayed->mContent->GetParent();
     TreeMatchContext::AutoAncestorPusher insertionPointPusher(&mTreeMatchContext);
-    if (parent && nsContentUtils::IsContentInsertionPoint(parent)) {
+    if (parent && parent->IsActiveChildrenElement()) {
       insertionPointPusher.PushAncestorAndStyleScope(parent);
     }
 
@@ -3457,7 +3459,7 @@ ElementRestyler::RestyleContentChildren(nsIFrame* aParent,
         // nsPageFrame that does not have a content.
         nsIContent* parent = child->GetContent() ? child->GetContent()->GetParent() : nullptr;
         TreeMatchContext::AutoAncestorPusher insertionPointPusher(&mTreeMatchContext);
-        if (parent && nsContentUtils::IsContentInsertionPoint(parent)) {
+        if (parent && parent->IsActiveChildrenElement()) {
           insertionPointPusher.PushAncestorAndStyleScope(parent);
         }
 

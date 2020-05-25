@@ -99,8 +99,8 @@ private:
   // aChild is the child being inserted for inserts, and the first
   // child being appended for appends.
   bool MaybeConstructLazily(Operation aOperation,
-                              nsIContent* aContainer,
-                              nsIContent* aChild);
+                            nsIContent* aContainer,
+                            nsIContent* aChild);
 
   // Issues a single ContentInserted for each child of aContainer in the range
   // [aStartChild, aEndChild).
@@ -156,8 +156,8 @@ private:
 
   // Returns true if parent was recreated due to frameset child, false otherwise.
   bool MaybeRecreateForFrameset(nsIFrame* aParentFrame,
-                                  nsIContent* aStartChild,
-                                  nsIContent* aEndChild);
+                                nsIContent* aStartChild,
+                                nsIContent* aEndChild);
 
   /**
    * For each child in the aStartChild/aEndChild range, calls
@@ -300,6 +300,10 @@ private:
                             TreeMatchContext* aProvidedTreeMatchContext);
 
 public:
+  // FIXME(emilio): How important is it to keep the frame tree state around for
+  // REMOVE_DESTROY_FRAMES?
+  //
+  // Seems like otherwise we could just remove it.
   enum RemoveFlags {
     REMOVE_CONTENT, REMOVE_FOR_RECONSTRUCTION, REMOVE_DESTROY_FRAMES };
   /**
@@ -318,12 +322,11 @@ public:
    * only when aFlags == REMOVE_DESTROY_FRAMES, otherwise it will only be
    * captured if we reconstructed frames for an ancestor.
    */
-  void ContentRemoved(nsIContent*  aContainer,
-                      nsIContent*  aChild,
-                      nsIContent*  aOldNextSibling,
-                      RemoveFlags  aFlags,
-                      bool*        aDidReconstruct,
-                      nsIContent** aDestroyedFramesFor = nullptr);
+  void ContentRemoved(nsIContent* aContainer,
+                      nsIContent* aChild,
+                      nsIContent* aOldNextSibling,
+                      RemoveFlags aFlags,
+                      bool*       aDidReconstruct);
 
   void CharacterDataChanged(nsIContent* aContent,
                             CharacterDataChangeInfo* aInfo);
@@ -355,14 +358,10 @@ public:
 
   /**
    * Destroy the frames for aContent.  Note that this may destroy frames
-   * for an ancestor instead - aDestroyedFramesFor contains the content node
-   * where frames were actually destroyed (which should be used in the
-   * ContentInserted call to recreate frames).  The frame tree state
-   * is captured before the frames are destroyed and can be retrieved using
-   * GetLastCapturedLayoutHistoryState().
+   * for an ancestor instead - aDidReconstruct contains whether a reconstruct
+   * was posted for any ancestor.
    */
-  void DestroyFramesFor(nsIContent*  aContent,
-                        nsIContent** aDestroyedFramesFor);
+  void DestroyFramesFor(nsIContent* aContent, bool* aDidReconstruct);
 
   // Request to create a continuing frame.  This method never returns null.
   nsIFrame* CreateContinuingFrame(nsPresContext*    aPresContext,
@@ -396,15 +395,6 @@ public:
   // Get the frame that is the parent of the root element.
   nsContainerFrame* GetDocElementContainingBlock()
     { return mDocElementContainingBlock; }
-
-  /**
-   * Return the layout history state that was captured in the last
-   * ContentRemoved / RecreateFramesForContent call.
-   */
-  nsILayoutHistoryState* GetLastCapturedLayoutHistoryState()
-  {
-    return mTempFrameTreeState;
-  }
 
 private:
   struct FrameConstructionItem;
@@ -1786,33 +1776,36 @@ private:
   nsStyleContext* MaybeRecreateFramesForElement(Element* aElement);
 
   /**
+   * Whether insertion should be done synchronously or asynchronously.
+   *
+   * Generally, insertion is synchronous if we're reconstructing something from
+   * frame construction/reconstruction, and async if we're removing stuff, like
+   * from ContentRemoved.
+   */
+  enum class InsertionKind
+  {
+    Sync,
+    Async,
+  };
+
+  /**
    * Recreate frames for aContent.
    * @param aContent the content to recreate frames for
-   * @param aAsyncInsert if true then a restyle event will be posted to handle
-   *   the required ContentInserted call instead of doing it immediately.
    * @param aFlags normally you want to pass REMOVE_FOR_RECONSTRUCTION here
-   * @param aDestroyedFramesFor if non-null, it will contain the content that
-   *   was actually reframed - it may be different than aContent.
    */
-  void
-  RecreateFramesForContent(nsIContent*  aContent,
-                           bool         aAsyncInsert,
-                           RemoveFlags  aFlags,
-                           nsIContent** aDestroyedFramesFor);
+  void RecreateFramesForContent(nsIContent*   aContent,
+                                InsertionKind aInsertionKind,
+                                RemoveFlags   aFlags);
 
   // If removal of aFrame from the frame tree requires reconstruction of some
   // containing block (either of aFrame or of its parent) due to {ib} splits or
   // table pseudo-frames, recreate the relevant frame subtree.  The return value
-  // indicates whether this happened.  If this method returns true, *aResult is
-  // the return value of ReframeContainingBlock or RecreateFramesForContent.  If
-  // this method returns false, the value of *aResult is not affected.  aFrame
-  // and aResult must not be null.  aFrame must be the result of a
+  // indicates whether this happened.  aFrame must be the result of a
   // GetPrimaryFrame() call on a content node (which means its parent is also
-  // not null).   If this method returns true, aDestroyedFramesFor contains the
-  // content that was reframed.
-  bool MaybeRecreateContainerForFrameRemoval(nsIFrame*    aFrame,
-                                             RemoveFlags  aFlags,
-                                             nsIContent** aDestroyedFramesFor);
+  // not null).
+  bool MaybeRecreateContainerForFrameRemoval(nsIFrame*     aFrame,
+                                             InsertionKind aInsertionKind,
+                                             RemoveFlags   aFlags);
 
   nsIFrame* CreateContinuingOuterTableFrame(nsIPresShell*     aPresShell,
                                             nsPresContext*    aPresContext,
@@ -1936,9 +1929,9 @@ private:
                              bool                     aIsAppend,
                              nsIFrame*                aPrevSibling);
 
-  void ReframeContainingBlock(nsIFrame*    aFrame,
-                              RemoveFlags  aFlags,
-                              nsIContent** aReframeContent);
+  void ReframeContainingBlock(nsIFrame*     aFrame,
+                              InsertionKind aInsertionKind,
+                              RemoveFlags   aFlags);
 
   //----------------------------------------
 
@@ -2036,71 +2029,53 @@ private:
                              nsContainerFrame*        aBlockFrame,
                              nsFrameItems&            aFrameItems);
 
-  void InsertFirstLineFrames(nsFrameConstructorState& aState,
-                             nsIContent*              aContent,
-                             nsIFrame*                aBlockFrame,
-                             nsContainerFrame**       aParentFrame,
-                             nsIFrame*                aPrevSibling,
-                             nsFrameItems&            aFrameItems);
+  // The direction in which we should look for siblings.
+  enum class SiblingDirection
+  {
+    Forward,
+    Backward,
+  };
 
   /**
-   * Find the right frame to use for aContent when looking for sibling
-   * frames for aTargetContent.  If aPrevSibling is true, this
-   * will look for last continuations, etc, as necessary.  This calls
-   * IsValidSibling as needed; if that returns false it returns null.
+   * Find the frame for the content immediately next to the one aIter points to,
+   * in the direction SiblingDirection indicates, following continuations if
+   * necessary.
    *
-   * @param aContent the content to search for frames
-   * @param aTargetContent the content we're finding a sibling frame for
-   * @param aTargetContentDisplay the CSS display enum for aTargetContent if
-   *          already known, UNSET_DISPLAY otherwise. It will be filled in
-   *          if needed.
-   * @param aParentFrame the nearest ancestor frame, used internally for
-   *          finding ::after / ::before frames
-   * @param aPrevSibling true if we're searching in reverse DOM order
-   */
-  nsIFrame* FindFrameForContentSibling(nsIContent* aContent,
-                                       nsIContent* aTargetContent,
-                                       mozilla::StyleDisplay& aTargetContentDisplay,
-                                       nsContainerFrame* aParentFrame,
-                                       bool aPrevSibling);
-
-  /**
-   * Find the frame for the content immediately preceding the one aIter
-   * points to, following continuations if necessary.  aIter is passed by
-   * value on purpose, so as not to modify the caller's iterator.
+   * aIter is passed by const reference on purpose, so as not to modify the
+   * caller's iterator.
    *
    * @param aIter should be positioned such that aIter.GetPreviousChild()
    *          is the first content to search for frames
-   * @param aTargetContent the content we're finding a sibling frame for
-   * @param aTargetContentDisplay the CSS display enum for aTargetContent if
-   *          already known, UNSET_DISPLAY otherwise. It will be filled in
-   *          if needed.
-   * @param aParentFrame the nearest ancestor frame, used inernally for
-   *          finding ::after / ::before frames
+   * @param aTargetContentDisplay the CSS display enum for the content aIter
+   *          points to if already known, UNSET_DISPLAY otherwise. It will be
+   *          filled in if needed.
    */
-  nsIFrame* FindPreviousSibling(mozilla::dom::FlattenedChildIterator aIter,
-                                nsIContent* aTargetContent,
-                                mozilla::StyleDisplay& aTargetContentDisplay,
-                                nsContainerFrame* aParentFrame);
+  template<SiblingDirection>
+  nsIFrame* FindSibling(const mozilla::dom::FlattenedChildIterator& aIter,
+                        mozilla::StyleDisplay& aTargetContentDisplay);
 
-  /**
-   * Find the frame for the content node immediately following the one aIter
-   * points to, following continuations if necessary.  aIter is passed by value
-   * on purpose, so as not to modify the caller's iterator.
-   *
-   * @param aIter should be positioned such that aIter.GetNextChild()
-   *          is the first content to search for frames
-   * @param aTargetContent the content we're finding a sibling frame for
-   * @param aTargetContentDisplay the CSS display enum for aTargetContent if
-   *          already known, UNSET_DISPLAY otherwise. It will be filled in
-   *          if needed.
-   * @param aParentFrame the nearest ancestor frame, used inernally for
-   *          finding ::after / ::before frames
-   */
-  nsIFrame* FindNextSibling(mozilla::dom::FlattenedChildIterator aIter,
-                            nsIContent* aTargetContent,
-                            mozilla::StyleDisplay& aTargetContentDisplay,
-                            nsContainerFrame* aParentFrame);
+  // Helper for the implementation of FindSibling.
+  template<SiblingDirection>
+  nsIFrame* FindSiblingInternal(
+    mozilla::dom::FlattenedChildIterator,
+    nsIContent* aTargetContent,
+    mozilla::StyleDisplay& aTargetContentDisplay);
+
+  // An alias of FindSibling<SiblingDirection::Forward>.
+  nsIFrame* FindNextSibling(const mozilla::dom::FlattenedChildIterator& aIter,
+                            mozilla::StyleDisplay& aTargetContentDisplay);
+  // An alias of FindSibling<SiblingDirection::Backwards>.
+  nsIFrame* FindPreviousSibling(const mozilla::dom::FlattenedChildIterator& aIter,
+                                mozilla::StyleDisplay& aTargetContentDisplay);
+
+  // Given a potential first-continuation sibling frame for aTargetContent,
+  // verify that it is an actual valid sibling for it, and return the
+  // appropriate continuation the new frame for aTargetContent should be
+  // inserted next to.
+  nsIFrame* AdjustSiblingFrame(nsIFrame* aSibling,
+                               nsIContent* aTargetContent,
+                               mozilla::StyleDisplay& aTargetContentDisplay,
+                               SiblingDirection aDirection);
 
   // Find the right previous sibling for an insertion.  This also updates the
   // parent frame to point to the correct continuation of the parent frame to

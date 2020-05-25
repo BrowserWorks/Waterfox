@@ -361,6 +361,11 @@ nsHtml5TreeOperation::SetHTMLElementAttributes(dom::Element* aElement,
 {
   int32_t len = aAttributes->getLength();
   for (int32_t i = 0; i < len; i++) {
+    nsHtml5String val = aAttributes->getValueNoBoundsCheck(i);
+    nsIAtom* klass = val.MaybeAsAtom();
+    if (klass) {
+      aElement->SetSingleClassFromParser(klass);
+    } else {
       // prefix doesn't need regetting. it is always null or a static atom
       // local name is never null
       RefPtr<nsIAtom> localName =
@@ -369,7 +374,7 @@ nsHtml5TreeOperation::SetHTMLElementAttributes(dom::Element* aElement,
       int32_t nsuri = aAttributes->getURINoBoundsCheck(i);
 
       nsString value; // Not Auto, because using it to hold nsStringBuffer*
-      aAttributes->getValueNoBoundsCheck(i).ToString(value);
+      val.ToString(value);
       if (nsGkAtoms::a == aName && nsGkAtoms::name == localName) {
         // This is an HTML5-incompliant Geckoism.
         // Remove when fixing bug 582361
@@ -388,6 +393,7 @@ nsHtml5TreeOperation::SetHTMLElementAttributes(dom::Element* aElement,
                           false);
       }
     }
+  }
 }
 
 nsIContent*
@@ -589,16 +595,22 @@ nsHtml5TreeOperation::CreateSVGElement(
 
   int32_t len = aAttributes->getLength();
   for (int32_t i = 0; i < len; i++) {
-    // prefix doesn't need regetting. it is always null or a static atom
-    // local name is never null
-    nsCOMPtr<nsIAtom> localName =
-      Reget(aAttributes->getLocalNameNoBoundsCheck(i));
-    nsCOMPtr<nsIAtom> prefix = aAttributes->getPrefixNoBoundsCheck(i);
-    int32_t nsuri = aAttributes->getURINoBoundsCheck(i);
+    nsHtml5String val = aAttributes->getValueNoBoundsCheck(i);
+    nsIAtom* klass = val.MaybeAsAtom();
+    if (klass) {
+      newContent->SetSingleClassFromParser(klass);
+    } else {
+      // prefix doesn't need regetting. it is always null or a static atom
+      // local name is never null
+      nsCOMPtr<nsIAtom> localName =
+        Reget(aAttributes->getLocalNameNoBoundsCheck(i));
+      nsCOMPtr<nsIAtom> prefix = aAttributes->getPrefixNoBoundsCheck(i);
+      int32_t nsuri = aAttributes->getURINoBoundsCheck(i);
 
-    nsString value; // Not Auto, because using it to hold nsStringBuffer*
-    aAttributes->getValueNoBoundsCheck(i).ToString(value);
-    newContent->SetAttr(nsuri, localName, prefix, value, false);
+      nsString value; // Not Auto, because using it to hold nsStringBuffer*
+      val.ToString(value);
+      newContent->SetAttr(nsuri, localName, prefix, value, false);
+    }
   }
   return newContent;
 }
@@ -637,16 +649,22 @@ nsHtml5TreeOperation::CreateMathMLElement(nsIAtom* aName,
 
   int32_t len = aAttributes->getLength();
   for (int32_t i = 0; i < len; i++) {
-    // prefix doesn't need regetting. it is always null or a static atom
-    // local name is never null
-    nsCOMPtr<nsIAtom> localName =
-      Reget(aAttributes->getLocalNameNoBoundsCheck(i));
-    nsCOMPtr<nsIAtom> prefix = aAttributes->getPrefixNoBoundsCheck(i);
-    int32_t nsuri = aAttributes->getURINoBoundsCheck(i);
+    nsHtml5String val = aAttributes->getValueNoBoundsCheck(i);
+    nsIAtom* klass = val.MaybeAsAtom();
+    if (klass) {
+      newContent->SetSingleClassFromParser(klass);
+    } else {
+      // prefix doesn't need regetting. it is always null or a static atom
+      // local name is never null
+      nsCOMPtr<nsIAtom> localName =
+        Reget(aAttributes->getLocalNameNoBoundsCheck(i));
+      nsCOMPtr<nsIAtom> prefix = aAttributes->getPrefixNoBoundsCheck(i);
+      int32_t nsuri = aAttributes->getURINoBoundsCheck(i);
 
-    nsString value; // Not Auto, because using it to hold nsStringBuffer*
-    aAttributes->getValueNoBoundsCheck(i).ToString(value);
-    newContent->SetAttr(nsuri, localName, prefix, value, false);
+      nsString value; // Not Auto, because using it to hold nsStringBuffer*
+      val.ToString(value);
+      newContent->SetAttr(nsuri, localName, prefix, value, false);
+    }
   }
   return newContent;
 }

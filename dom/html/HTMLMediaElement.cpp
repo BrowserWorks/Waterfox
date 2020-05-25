@@ -51,6 +51,7 @@
 #include "MediaError.h"
 #include "MediaPrefs.h"
 #include "MediaResource.h"
+#include "MediaShutdownManager.h"
 
 #include "nsICategoryManager.h"
 #include "nsIContentPolicy.h"
@@ -3873,6 +3874,12 @@ HTMLMediaElement::HTMLMediaElement(already_AddRefed<mozilla::dom::NodeInfo>& aNo
   // to run until mReadyState reaches at least HAVE_METADATA by some other means.
   mWatchManager.Watch(mReadyState, &HTMLMediaElement::UpdateReadyStateInternal);
 
+  // We initialize the MediaShutdownManager as the HTMLMediaElement is always
+  // constructed on the main thread, and not during stable state.
+  // (MediaShutdownManager make use of nsIAsyncShutdownClient which is written
+  // in JS)
+  MediaShutdownManager::InitStatics();
+
   mShutdownObserver->Subscribe(this);
 }
 
@@ -5383,7 +5390,7 @@ void HTMLMediaElement::FirstFrameLoaded()
   }
 
   ChangeDelayLoadStatus(false);
-  
+
   // FIXME: This is a workaround for DoneCreatingElement() not being called
   // at the appropriate time when cloning elements, to preserve the "muted"
   // status. See bug 1424871.

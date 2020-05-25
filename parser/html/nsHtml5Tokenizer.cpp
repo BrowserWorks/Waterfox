@@ -130,7 +130,9 @@ nsHtml5Tokenizer::isViewingXmlSource()
   return viewingXmlSource;
 }
 
-void nsHtml5Tokenizer::setState(int32_t specialTokenizerState) {
+void
+nsHtml5Tokenizer::setState(int32_t specialTokenizerState)
+{
   this->stateSave = specialTokenizerState;
   this->endTagExpectation = nullptr;
   this->endTagExpectationAsArray = nullptr;
@@ -224,8 +226,13 @@ nsHtml5Tokenizer::emitOrAppendCharRefBuf(int32_t returnState)
 nsHtml5String
 nsHtml5Tokenizer::strBufToString()
 {
-  nsHtml5String str =
-    nsHtml5Portability::newStringFromBuffer(strBuf, 0, strBufLen, tokenHandler);
+  nsHtml5String str = nsHtml5Portability::newStringFromBuffer(
+    strBuf,
+    0,
+    strBufLen,
+    tokenHandler,
+    !newAttributesEachTime &&
+      attributeName == nsHtml5AttributeName::ATTR_CLASS);
   clearStrBufAfterUse();
   return str;
 }
@@ -2415,7 +2422,6 @@ nsHtml5Tokenizer::stateLoop(int32_t state, char16_t c, int32_t pos, char16_t* bu
             }
           }
         }
-
       }
       case SCRIPT_DATA: {
         for (; ; ) {

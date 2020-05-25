@@ -21,9 +21,9 @@
 #include "nsContentCreatorFunctions.h"
 #include "nsContentUtils.h"
 #include "nsGlobalWindow.h"
+#include "nsHTMLTags.h"
 #include "nsIDocShell.h"
 #include "nsIDOMGlobalPropertyInitializer.h"
-#include "nsIParserService.h"
 #include "nsIPermissionManager.h"
 #include "nsIPrincipal.h"
 #include "nsIXPConnect.h"
@@ -2182,17 +2182,20 @@ DictionaryBase::AppendJSONToString(const char16_t* aJSONData,
   return true;
 }
 
-nsresult
-ReparentWrapper(JSContext* aCx, JS::Handle<JSObject*> aObjArg)
+void
+ReparentWrapper(JSContext* aCx, JS::Handle<JSObject*> aObjArg, ErrorResult& aError)
 {
   js::AssertSameCompartment(aCx, aObjArg);
+
+  aError.MightThrowJSException();
 
   // Check if we're anywhere near the stack limit before we reach the
   // transplanting code, since it has no good way to handle errors. This uses
   // the untrusted script limit, which is not strictly necessary since no
   // actual script should run.
   if (!js::CheckRecursionLimitConservative(aCx)) {
-    return NS_ERROR_FAILURE;
+    aError.StealExceptionFromJSContext(aCx);
+    return;
   }
 
   JS::Rooted<JSObject*> aObj(aCx, aObjArg);
@@ -2213,12 +2216,12 @@ ReparentWrapper(JSContext* aCx, JS::Handle<JSObject*> aObjArg)
   JSCompartment* newCompartment = js::GetObjectCompartment(newParent);
   if (oldCompartment == newCompartment) {
     MOZ_ASSERT(oldParent == newParent);
-    return NS_OK;
+    return;
   }
 
   nsISupports* native = UnwrapDOMObjectToISupports(aObj);
   if (!native) {
-    return NS_OK;
+    return;
   }
 
   bool isProxy = js::IsProxy(aObj);
@@ -2234,12 +2237,14 @@ ReparentWrapper(JSContext* aCx, JS::Handle<JSObject*> aObjArg)
 
   JS::Handle<JSObject*> proto = (domClass->mGetProto)(aCx);
   if (!proto) {
-    return NS_ERROR_FAILURE;
+    aError.StealExceptionFromJSContext(aCx);
+    return;
   }
 
   JS::Rooted<JSObject*> newobj(aCx, JS_CloneObject(aCx, aObj, proto));
   if (!newobj) {
-    return NS_ERROR_FAILURE;
+    aError.StealExceptionFromJSContext(aCx);
+    return;
   }
 
   JS::Rooted<JSObject*> propertyHolder(aCx);
@@ -2247,11 +2252,13 @@ ReparentWrapper(JSContext* aCx, JS::Handle<JSObject*> aObjArg)
   if (copyFrom) {
     propertyHolder = JS_NewObjectWithGivenProto(aCx, nullptr, nullptr);
     if (!propertyHolder) {
-      return NS_ERROR_OUT_OF_MEMORY;
+      aError.StealExceptionFromJSContext(aCx);
+      return;
     }
 
     if (!JS_CopyPropertiesFrom(aCx, propertyHolder, copyFrom)) {
-      return NS_ERROR_FAILURE;
+      aError.StealExceptionFromJSContext(aCx);
+      return;
     }
   } else {
     propertyHolder = nullptr;
@@ -2267,7 +2274,8 @@ ReparentWrapper(JSContext* aCx, JS::Handle<JSObject*> aObjArg)
   // if expandos are present then the wrapper will already have been preserved
   // for this native.
   if (!xpc::XrayUtils::CloneExpandoChain(aCx, newobj, aObj)) {
-    return NS_ERROR_FAILURE;
+    aError.StealExceptionFromJSContext(aCx);
+    return;
   }
 
   // We've set up |newobj|, so we make it own the native by setting its reserved
@@ -2322,9 +2330,6 @@ ReparentWrapper(JSContext* aCx, JS::Handle<JSObject*> aObjArg)
   if (htmlobject) {
     htmlobject->SetupProtoChain(aCx, aObj);
   }
-
-  // Now we can just return the wrapper
-  return NS_OK;
 }
 
 GlobalObject::GlobalObject(JSContext* aCx, JSObject* aObject)
@@ -3543,28 +3548,6 @@ GetDesiredProto(JSContext* aCx, const JS::CallArgs& aCallArgs,
   return true;
 }
 
-CustomElementReactionsStack*
-GetCustomElementReactionsStack(JS::Handle<JSObject*> aObj)
-{
-  // This might not be the right object, if there are wrappers. Unwrap if we can.
-  JSObject* obj = js::CheckedUnwrap(aObj);
-  if (!obj) {
-    return nullptr;
-  }
-
-  nsGlobalWindow* window = xpc::WindowGlobalOrNull(obj);
-  if (!window) {
-    return nullptr;
-  }
-
-  DocGroup* docGroup = window->AsInner()->GetDocGroup();
-  if (!docGroup) {
-    return nullptr;
-  }
-
-  return docGroup->CustomElementReactionsStack();
-}
-
 // https://html.spec.whatwg.org/multipage/dom.html#htmlconstructor
 already_AddRefed<nsGenericHTMLElement>
 CreateHTMLElement(const GlobalObject& aGlobal, const JS::CallArgs& aCallArgs,
@@ -3630,13 +3613,7 @@ CreateHTMLElement(const GlobalObject& aGlobal, const JS::CallArgs& aCallArgs,
     // Step 5.
     // If the definition is for a customized built-in element, the localName
     // should be defined in the specification.
-    nsIParserService* parserService = nsContentUtils::GetParserService();
-    if (!parserService) {
-      aRv.Throw(NS_ERROR_UNEXPECTED);
-      return nullptr;
-    }
-
-    tag = parserService->HTMLCaseSensitiveAtomTagToId(definition->mLocalName);
+    tag = nsHTMLTags::CaseSensitiveAtomTagToId(definition->mLocalName);
     if (tag == eHTMLTag_userdefined) {
       aRv.ThrowTypeError<MSG_ILLEGAL_CONSTRUCTOR>();
       return nullptr;

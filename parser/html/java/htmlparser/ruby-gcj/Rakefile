@@ -1,0 +1,77 @@
+deps    = ENV['deps'] || '../../dependencies'
+icu4j   = "#{deps}/icu4j-4_0.jar"
+chardet = "#{deps}/mozilla/intl/chardet/java/dist/lib/chardet.jar"
+libgcj  = Dir['/usr/share/java/libgcj*.jar'].grep(/gcj[-\d.]*jar$/).sort.last
+
+task :default => %w(headers libs Makefile validator.so)
+
+# headers
+
+hdb = 'nu/validator/htmlparser/dom/HtmlDocumentBuilder'
+task :headers => %W(headers/DomUtils.h headers/#{hdb}.h)
+
+file 'headers/DomUtils.h' => 'DomUtils.java' do |t|
+  mkdir_p %w(classes headers), :verbose => false
+  sh "javac -d classes #{t.prerequisites.first}"
+  sh "gcjh -force -o #{t.name} -cp #{libgcj}:classes DomUtils"
+end
+
+file "headers/#{hdb}.h" => "../src/#{hdb}.java" do |t|
+  mkdir_p %w(classes headers), :verbose => false
+  sh "javac -cp #{icu4j}:#{chardet} -d classes -sourcepath ../src " +
+    t.prerequisites.first
+  sh "gcjh -force -cp classes -o #{t.name} -cp #{libgcj}:classes " + 
+    hdb.gsub('/','.')
+end
+
+# libs
+
+task :libs => %w(htmlparser chardet icu).map {|name| "lib/libnu-#{name}.so"}
+
+htmlparser = Dir['../src/**/*.java'].reject {|name| name.include? '/xom/'}
+file 'lib/libnu-htmlparser.so' => htmlparser + ['DomUtils.java'] do |t|
+  mkdir_p 'lib', :verbose => false
+  sh "gcj -shared --classpath=#{icu4j}:#{chardet} -fPIC " +
+    "-o #{t.name} #{t.prerequisites.join(' ')}"
+end
+
+file 'lib/libnu-chardet.so' => chardet do |t|
+  mkdir_p 'lib', :verbose => false
+  sh "gcj -shared -fPIC -o #{t.name} #{t.prerequisites.join(' ')}"
+end
+
+file 'lib/libnu-icu.so' => icu4j do |t|
+  mkdir_p 'lib', :verbose => false
+  sh "gcj -shared -fPIC -o #{t.name} #{t.prerequisites.join(' ')}"
+end
+
+# module
+
+file 'Makefile' do
+  sh "ruby extconf.rb --with-gcj=#{libgcj}"
+end
+
+file 'validator.so' => %w(Makefile validator.cpp headers/DomUtils.h) do
+  system 'make'
+end
+
+file 'nu/validator.so' do
+  mkdir_p 'nu', :verbose => false
+  system 'ln -s -t nu ../validator.so'
+end
+
+# tasks
+
+task :test => [:default, 'nu/validator.so'] do
+  ENV['LD_LIBRARY_PATH']='lib'
+  sh 'ruby test/fonts.rb test/google.html'
+end
+
+task :clean do
+  rm_rf %W(classes lib nu mkmf.log headers/DomUtils.h headers/#{hdb}.h) + 
+    Dir['*.o'] + Dir['*.so']
+end
+
+task :clobber => :clean do
+  rm_rf %w(headers Makefile)
+end

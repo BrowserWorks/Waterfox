@@ -57,6 +57,7 @@ private:
 
   RefPtr<HTMLTrackElement> mElement;
   nsCOMPtr<nsIWebVTTParserWrapper> mParserWrapper;
+  nsresult mParserWrapperError;
 };
 
 } // namespace dom

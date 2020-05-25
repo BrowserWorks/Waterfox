@@ -124,6 +124,7 @@
 #include "mozilla/CORSMode.h"
 
 #include "mozilla/dom/ShadowRoot.h"
+#include "mozilla/dom/HTMLSlotElement.h"
 #include "mozilla/dom/HTMLTemplateElement.h"
 #include "mozilla/dom/SVGUseElement.h"
 
@@ -151,6 +152,54 @@ nsIContent::FindFirstNonChromeOnlyAccessContent() const
     }
   }
   return nullptr;
+}
+
+// https://dom.spec.whatwg.org/#dom-slotable-assignedslot
+HTMLSlotElement*
+nsIContent::GetAssignedSlotByMode() const
+{
+  /**
+   * Get slotable's assigned slot for the result of
+   * find a slot with open flag UNSET [1].
+   *
+   * [1] https://dom.spec.whatwg.org/#assign-a-slot
+   */
+  HTMLSlotElement* slot = GetAssignedSlot();
+  if (!slot) {
+    return nullptr;
+  }
+
+  MOZ_ASSERT(GetParent());
+  MOZ_ASSERT(GetParent()->GetShadowRoot());
+
+  /**
+   * Additional check for open flag SET:
+   *   If slotable’s parent’s shadow root's mode is not "open",
+   *   then return null.
+   */
+  if (GetParent()->GetShadowRoot()->IsClosed()) {
+    return nullptr;
+  }
+
+  return slot;
+}
+
+nsINode*
+nsIContent::GetFlattenedTreeParentForMaybeAssignedNode() const
+{
+  if (HTMLSlotElement* assignedSlot = GetAssignedSlot()) {
+    return assignedSlot;
+  }
+
+  HTMLSlotElement* parentSlot = HTMLSlotElement::FromContent(GetParent());
+  if (!parentSlot) {
+    return nullptr;
+  }
+
+  // If this is not an unassigned node, then it must be a fallback content.
+  MOZ_ASSERT(parentSlot->AssignedNodes().IsEmpty());
+
+  return parentSlot;
 }
 
 nsINode*
@@ -211,16 +260,11 @@ nsIContent::GetFlattenedTreeParentNodeInternal(FlattenedParentType aType) const
 
   if (parent && nsContentUtils::HasDistributedChildren(parent) &&
       nsContentUtils::IsInSameAnonymousTree(parent, this)) {
-    // This node is distributed to insertion points, thus we
-    // need to consult the destination insertion points list to
-    // figure out where this node was inserted in the flattened tree.
-    // It may be the case that |parent| distributes its children
-    // but the child does not match any insertion points, thus
-    // the flattened tree parent is nullptr.
-    nsTArray<nsIContent*>* destInsertionPoints = GetExistingDestInsertionPoints();
-    parent = destInsertionPoints && !destInsertionPoints->IsEmpty() ?
-      destInsertionPoints->LastElement()->GetParent() : nullptr;
-  } else if (HasFlag(NODE_MAY_BE_IN_BINDING_MNGR)) {
+    return GetFlattenedTreeParentForMaybeAssignedNode();
+  }
+
+  if (HasFlag(NODE_MAY_BE_IN_BINDING_MNGR) ||
+      parent->HasFlag(NODE_MAY_BE_IN_BINDING_MNGR)) {
     nsIContent* insertionParent = GetXBLInsertionParent();
     if (insertionParent) {
       parent = insertionParent;
@@ -718,6 +762,9 @@ FragmentOrElement::nsDOMSlots::Traverse(nsCycleCollectionTraversalCallback &cb)
   NS_CYCLE_COLLECTION_NOTE_EDGE_NAME(cb, "mExtendedSlots->mContainingShadow");
   cb.NoteXPCOMChild(NS_ISUPPORTS_CAST(nsIContent*, mExtendedSlots->mContainingShadow));
 
+  NS_CYCLE_COLLECTION_NOTE_EDGE_NAME(cb, "mExtendedSlots->mAssignedSlot");
+  cb.NoteXPCOMChild(NS_ISUPPORTS_CAST(nsIContent*, mExtendedSlots->mAssignedSlot.get()));
+
   NS_CYCLE_COLLECTION_NOTE_EDGE_NAME(cb, "mExtendedSlots->mXBLBinding");
   cb.NoteNativeChild(mExtendedSlots->mXBLBinding,
                      NS_CYCLE_COLLECTION_PARTICIPANT(nsXBLBinding));
@@ -761,6 +808,7 @@ FragmentOrElement::nsDOMSlots::Unlink()
   mExtendedSlots->mLabelsList = nullptr;
   mExtendedSlots->mShadowRoot = nullptr;
   mExtendedSlots->mContainingShadow = nullptr;
+  mExtendedSlots->mAssignedSlot = nullptr;
   MOZ_ASSERT(!(mExtendedSlots->mXBLBinding));
   mExtendedSlots->mXBLInsertionParent = nullptr;
   if (mExtendedSlots->mCustomElementData) {
@@ -870,6 +918,7 @@ nsIContent::GetEventTargetParent(EventChainPreVisitor& aVisitor)
   // Don't propagate mouseover and mouseout events when mouse is moving
   // inside chrome access only content.
   bool isAnonForEvents = IsRootOfChromeAccessOnlySubtree();
+  aVisitor.mRootOfClosedTree = isAnonForEvents;
   if ((aVisitor.mEvent->mMessage == eMouseOver ||
        aVisitor.mEvent->mMessage == eMouseOut ||
        aVisitor.mEvent->mMessage == ePointerOver ||
@@ -881,7 +930,7 @@ nsIContent::GetEventTargetParent(EventChainPreVisitor& aVisitor)
       ((this == aVisitor.mEvent->mOriginalTarget &&
         !ChromeOnlyAccess()) || isAnonForEvents || GetShadowRoot())) {
      nsCOMPtr<nsIContent> relatedTarget =
-       do_QueryInterface(aVisitor.mEvent->AsMouseEvent()->relatedTarget);
+       do_QueryInterface(aVisitor.mEvent->AsMouseEvent()->mRelatedTarget);
     if (relatedTarget &&
         relatedTarget->OwnerDoc() == OwnerDoc()) {
 
@@ -891,7 +940,7 @@ nsIContent::GetEventTargetParent(EventChainPreVisitor& aVisitor)
         nsIContent* adjustedTarget =
           Event::GetShadowRelatedTarget(this, relatedTarget);
         if (this == adjustedTarget) {
-          aVisitor.mParentTarget = nullptr;
+          aVisitor.SetParentTarget(nullptr, false);
           aVisitor.mCanHandle = false;
           return NS_OK;
         }
@@ -948,7 +997,7 @@ nsIContent::GetEventTargetParent(EventChainPreVisitor& aVisitor)
                         originalTarget->FindFirstNonChromeOnlyAccessContent())
                        ? "" : "Wrong event propagation!?!\n");
 #endif
-              aVisitor.mParentTarget = nullptr;
+              aVisitor.SetParentTarget(nullptr, false);
               // Event should not propagate to non-anon content.
               aVisitor.mCanHandle = isAnonForEvents;
               return NS_OK;
@@ -959,58 +1008,10 @@ nsIContent::GetEventTargetParent(EventChainPreVisitor& aVisitor)
     }
   }
 
-  nsIContent* parent = GetParent();
-
-  // Web components have a special event chain that need to account
-  // for destination insertion points where nodes have been distributed.
-  nsTArray<nsIContent*>* destPoints = GetExistingDestInsertionPoints();
-  if (destPoints && !destPoints->IsEmpty()) {
-    // Push destination insertion points to aVisitor.mDestInsertionPoints
-    // excluding shadow insertion points.
-    bool didPushNonShadowInsertionPoint = false;
-    for (uint32_t i = 0; i < destPoints->Length(); i++) {
-      nsIContent* point = destPoints->ElementAt(i);
-      if (!ShadowRoot::IsShadowInsertionPoint(point)) {
-        aVisitor.mDestInsertionPoints.AppendElement(point);
-        didPushNonShadowInsertionPoint = true;
-      }
-    }
-
-    // Next node in the event path is the final destination
-    // (non-shadow) insertion point that was pushed.
-    if (didPushNonShadowInsertionPoint) {
-      parent = aVisitor.mDestInsertionPoints.LastElement();
-      aVisitor.mDestInsertionPoints.SetLength(
-        aVisitor.mDestInsertionPoints.Length() - 1);
-    }
-  }
-
-  ShadowRoot* thisShadowRoot = ShadowRoot::FromNode(this);
-  if (thisShadowRoot) {
-    if (!aVisitor.mEvent->mFlags.mComposed) {
-      // If we do stop propagation, we still want to propagate
-      // the event to chrome (nsPIDOMWindow::GetParentTarget()).
-      // The load event is special in that we don't ever propagate it
-      // to chrome.
-      nsCOMPtr<nsPIDOMWindowOuter> win = OwnerDoc()->GetWindow();
-      EventTarget* parentTarget = win && aVisitor.mEvent->mMessage != eLoad
-        ? win->GetParentTarget() : nullptr;
-
-      aVisitor.mParentTarget = parentTarget;
-      return NS_OK;
-    }
-
-    if (!aVisitor.mDestInsertionPoints.IsEmpty()) {
-      parent = aVisitor.mDestInsertionPoints.LastElement();
-      aVisitor.mDestInsertionPoints.SetLength(
-        aVisitor.mDestInsertionPoints.Length() - 1);
-    } else {
-      // The pool host for the youngest shadow root is shadow DOM host,
-      // for older shadow roots, it is the shadow insertion point
-      // where the shadow root is projected, nullptr if none exists.
-      parent = thisShadowRoot->GetPoolHost();
-    }
-  }
+  // Event parent is the assigned slot, if node is assigned, or node's parent
+  // otherwise.
+  HTMLSlotElement* slot = GetAssignedSlot();
+  nsIContent* parent = slot ? slot : GetParent();
 
   // Event may need to be retargeted if this is the root of a native
   // anonymous content subtree or event is dispatched somewhere inside XBL.
@@ -1048,11 +1049,17 @@ nsIContent::GetEventTargetParent(EventChainPreVisitor& aVisitor)
   if (!aVisitor.mEvent->mFlags.mComposedInNativeAnonymousContent &&
       IsRootOfNativeAnonymousSubtree() && OwnerDoc() &&
       OwnerDoc()->GetWindow()) {
-    aVisitor.mParentTarget = OwnerDoc()->GetWindow()->GetParentTarget();
+    aVisitor.SetParentTarget(OwnerDoc()->GetWindow()->GetParentTarget(), true);
   } else if (parent) {
-    aVisitor.mParentTarget = parent;
+    aVisitor.SetParentTarget(parent, false);
+    if (slot) {
+      ShadowRoot* root = slot->GetContainingShadow();
+      if (root && root->IsClosed()) {
+        aVisitor.mParentIsSlotInClosedTree = true;
+      }
+    }
   } else {
-    aVisitor.mParentTarget = GetComposedDoc();
+    aVisitor.SetParentTarget(GetComposedDoc(), false);
   }
   return NS_OK;
 }
@@ -1229,21 +1236,18 @@ FragmentOrElement::SetShadowRoot(ShadowRoot* aShadowRoot)
   slots->mShadowRoot = aShadowRoot;
 }
 
-nsTArray<nsIContent*>&
-FragmentOrElement::DestInsertionPoints()
-{
-  nsExtendedDOMSlots* slots = ExtendedDOMSlots();
-  return slots->mDestInsertionPoints;
-}
-
-nsTArray<nsIContent*>*
-FragmentOrElement::GetExistingDestInsertionPoints() const
+HTMLSlotElement*
+FragmentOrElement::GetAssignedSlot() const
 {
   nsExtendedDOMSlots* slots = GetExistingExtendedDOMSlots();
-  if (slots) {
-    return &slots->mDestInsertionPoints;
-  }
-  return nullptr;
+  return slots ? slots->mAssignedSlot.get() : nullptr;
+}
+
+void
+FragmentOrElement::SetAssignedSlot(HTMLSlotElement* aSlot)
+{
+  nsExtendedDOMSlots* slots = ExtendedDOMSlots();
+  slots->mAssignedSlot = aSlot;
 }
 
 void
@@ -2548,8 +2552,7 @@ FragmentOrElement::SetIsElementInStyleScopeFlagOnShadowTree(bool aInStyleScope)
   NS_ASSERTION(IsElement(), "calling SetIsElementInStyleScopeFlagOnShadowTree "
                             "on a non-Element is useless");
   ShadowRoot* shadowRoot = GetShadowRoot();
-  while (shadowRoot) {
+  if (shadowRoot) {
     shadowRoot->SetIsElementInStyleScopeFlagOnSubtree(aInStyleScope);
-    shadowRoot = shadowRoot->GetOlderShadowRoot();
   }
 }

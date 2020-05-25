@@ -1,627 +1,211 @@
-/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim: set ts=2 sw=2 et tw=78: */
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-
-#include "nsIAtom.h"
 #include "nsElementTable.h"
 
-/***************************************************************************** 
-  Now it's time to list all the html elements all with their capabilities...
-******************************************************************************/
-
-// The Element Table (sung to the tune of Modern Major General)
-
-const nsHTMLElement gHTMLElements[] = {
-  {
-    /*tag*/         eHTMLTag_unknown,
-    /*parent,leaf*/ kNone, true
-  },
-  {
-    /*tag*/         eHTMLTag_a,
-    /*parent,leaf*/ kSpecial, false
-  },
-  {
-    /*tag*/         eHTMLTag_abbr,
-    /*parent,leaf*/ kPhrase, false
-  },
-  {
-    /*tag*/         eHTMLTag_acronym,
-    /*parent,leaf*/ kPhrase, false
-  },
-  {
-    /*tag*/         eHTMLTag_address,
-    /*parent,leaf*/ kBlock, false
-  },
-  {
-    /*tag*/         eHTMLTag_applet,
-    /*parent,leaf*/ kSpecial, false
-  },
-  {
-    /*tag*/         eHTMLTag_area,
-    /*parent,leaf*/ kNone, true
-  },
-  {
-    /*tag*/         eHTMLTag_article,
-    /*parent,leaf*/ kBlock, false
-  },
-  {
-    /*tag*/         eHTMLTag_aside,
-    /*parent,leaf*/ kBlock, false
-  },
-  {
-    /*tag*/         eHTMLTag_audio,
-    /*parent,leaf*/ kSpecial, false
-  },
-  {
-    /*tag*/         eHTMLTag_b,
-    /*parent,leaf*/ kFontStyle, false
-  },
-  {
-    /*tag*/         eHTMLTag_base,
-    /*parent,leaf*/ kHeadContent, true
-  },
-  {
-    /*tag*/         eHTMLTag_basefont,
-    /*parent,leaf*/ kSpecial, true
-  },
-  {
-    /*tag*/         eHTMLTag_bdo,
-    /*parent,leaf*/ kSpecial, false
-  },
-  {
-    /*tag*/         eHTMLTag_bgsound,
-    /*parent,leaf*/ (kFlowEntity|kHeadMisc), true
-  },
-  {
-    /*tag*/         eHTMLTag_big,
-    /*parent,leaf*/ kFontStyle, false
-  },
-  {
-    /*tag*/         eHTMLTag_blockquote,
-    /*parent,leaf*/ kBlock, false
-  },
-  {
-    /*tag*/         eHTMLTag_body,
-    /*parent,leaf*/ kHTMLContent, false
-  },
-  {
-    /*tag*/         eHTMLTag_br,
-    /*parent,leaf*/ kSpecial, true
-  },
-  {
-    /*tag*/         eHTMLTag_button,
-    /*parent,leaf*/ kFormControl, false
-  },
-  {
-    /*tag*/         eHTMLTag_canvas,
-    /*parent,leaf*/ kSpecial, false
-  },
-  {
-    /*tag*/         eHTMLTag_caption,
-    /*parent,leaf*/ kNone, false
-  },
-  {
-    /*tag*/         eHTMLTag_center,
-    /*parent,leaf*/ kBlock, false
-  },
-  {
-    /*tag*/         eHTMLTag_cite,
-    /*parent,leaf*/ kPhrase, false
-  },
-  {
-    /*tag*/         eHTMLTag_code,
-    /*parent,leaf*/ kPhrase, false
-  },
-  {
-    /*tag*/         eHTMLTag_col,
-    /*parent,leaf*/ kNone, true
-  },
-  {
-    /*tag*/         eHTMLTag_colgroup,
-    /*parent,leaf*/ kNone, false
-  },
-  {
-    /*tag*/         eHTMLTag_content,
-    /*parent,leaf*/ kNone, false
-  },
-  {
-    /*tag*/         eHTMLTag_data,
-    /*parent,leaf*/ kPhrase, false
-  },
-  {
-    /*tag*/         eHTMLTag_datalist,
-    /*parent,leaf*/ kSpecial, false
-  },
-  {
-    /*tag*/         eHTMLTag_dd,
-    /*parent,leaf*/ kInlineEntity, false
-  },
-  {
-    /*tag*/         eHTMLTag_del,
-    /*parent,leaf*/ kFlowEntity, false
-  },
-  {
-    /*tag*/         eHTMLTag_details,
-    /*parent,leaf*/ kBlock, false
-  },
-  {
-    /*tag*/         eHTMLTag_dfn,
-    /*parent,leaf*/ kPhrase, false
-  },
-  {
-    /*tag*/         eHTMLTag_dialog,
-    /*parent,leaf*/ kBlock, false
-  },
-  {
-    /*tag*/         eHTMLTag_dir,
-    /*parent,leaf*/ kList, false
-  },
-  {
-    /*tag*/         eHTMLTag_div,
-    /*parent,leaf*/ kBlock, false
-  },
-  {
-    /*tag*/         eHTMLTag_dl,
-    /*parent,leaf*/ kBlock, false
-  },
-  {
-    /*tag*/         eHTMLTag_dt,
-    /*parent,leaf*/ kInlineEntity, false
-  },
-  {
-    /*tag*/         eHTMLTag_em,
-    /*parent,leaf*/ kPhrase, false
-  },
-  {
-    /*tag*/         eHTMLTag_embed,
-    /*parent,leaf*/ kSpecial, true
-  },
-  {
-    /*tag*/         eHTMLTag_fieldset,
-    /*parent,leaf*/ kBlock, false
-  },
-  {
-    /*tag*/         eHTMLTag_figcaption,
-    /*parent,leaf*/ kPhrase, false
-  },
-  {
-    /*tag*/         eHTMLTag_figure,
-    /*parent,leaf*/ kBlock, false
-  },
-  {
-    /*tag*/         eHTMLTag_font,
-    /*parent,leaf*/ kFontStyle, false
-  },
-  {
-    /*tag*/         eHTMLTag_footer,
-    /*parent,leaf*/ kBlock, false
-  },
-  {
-    /*tag*/         eHTMLTag_form,
-    /*parent,leaf*/ kBlock, false
-  },
-  {
-    /*tag*/         eHTMLTag_frame,
-    /*parent,leaf*/ kNone, true
-  },
-  {
-    /*tag*/         eHTMLTag_frameset,
-    /*parent,leaf*/ kHTMLContent, false
-  },
-  {
-    /*tag*/         eHTMLTag_h1,
-    /*parent,leaf*/ kHeading, false
-  },
-  {
-    /*tag*/         eHTMLTag_h2,
-    /*parent,leaf*/ kHeading, false
-  },
-  {
-    /*tag*/         eHTMLTag_h3,
-    /*parent,leaf*/ kHeading, false
-  },
-  {
-    /*tag*/         eHTMLTag_h4,
-    /*parent,leaf*/ kHeading, false
-  },
-  {
-    /*tag*/         eHTMLTag_h5,
-    /*parent,leaf*/ kHeading, false
-  },
-  {
-    /*tag*/         eHTMLTag_h6,
-    /*parent,leaf*/ kHeading, false
-  },
-  {
-    /*tag*/         eHTMLTag_head,
-    /*parent,leaf*/ kHTMLContent, false
-  },
-  {
-    /*tag*/         eHTMLTag_header,
-    /*parent,leaf*/ kBlock, false
-  },
-  {
-    /*tag*/         eHTMLTag_hgroup,
-    /*parent,leaf*/ kBlock, false
-  },
-  {
-    /*tag*/         eHTMLTag_hr,
-    /*parent,leaf*/ kBlock, true
-  },
-  {
-    /*tag*/         eHTMLTag_html,
-    /*parent,leaf*/ kNone, false
-  },
-  {
-    /*tag*/         eHTMLTag_i,
-    /*parent,leaf*/ kFontStyle, false
-  },
-  {
-    /*tag*/         eHTMLTag_iframe,
-    /*parent,leaf*/ kSpecial, false
-  },
-  {
-    /*tag*/         eHTMLTag_image,
-    /*parent,leaf*/ kSpecial, true
-  },
-  {
-    /*tag*/         eHTMLTag_img,
-    /*parent,leaf*/ kSpecial, true
-  },
-  {
-    /*tag*/         eHTMLTag_input,
-    /*parent,leaf*/ kFormControl, true
-  },
-  {
-    /*tag*/         eHTMLTag_ins,
-    /*parent,leaf*/ kFlowEntity, false
-  },
-  {
-    /*tag*/         eHTMLTag_kbd,
-    /*parent,leaf*/ kPhrase, false
-  },
-  {
-    /*tag*/         eHTMLTag_keygen,
-    /*parent,leaf*/ kFlowEntity, true
-  },
-  {
-    /*tag*/         eHTMLTag_label,
-    /*parent,leaf*/ kFormControl, false
-  },
-  {
-    /*tag*/         eHTMLTag_legend,
-    /*parent,leaf*/ kNone, false
-  },
-  {
-    /*tag*/         eHTMLTag_li,
-    /*parent,leaf*/ kBlockEntity, false
-  },
-  {
-    /*tag*/         eHTMLTag_link,
-    /*parent,leaf*/ kAllTags - kHeadContent, true
-  },
-  {
-    /*tag*/         eHTMLTag_listing,
-    /*parent,leaf*/ kPreformatted, false
-  },
-  {
-    /*tag*/         eHTMLTag_main,
-    /*parent,leaf*/ kBlock, false
-  },
-  {
-    /*tag*/         eHTMLTag_map,
-    /*parent,leaf*/ kSpecial, false
-  },
-  {
-    /*tag*/         eHTMLTag_mark,
-    /*parent,leaf*/ kSpecial, false
-  },
-  {
-    /*tag*/         eHTMLTag_marquee,
-    /*parent,leaf*/ kSpecial, false
-  },
-  {
-    /*tag*/         eHTMLTag_menu,
-    /*parent,leaf*/ kList, false
-  },
-  {
-    /*tag*/         eHTMLTag_menuitem,
-    /*parent,leaf*/ kFlowEntity, false
-  },
-  {
-    /*tag*/         eHTMLTag_meta,
-    /*parent,leaf*/ kHeadContent, true
-  },
-  {
-    /*tag*/         eHTMLTag_meter,
-    /*parent,leaf*/ kFormControl, false
-  },
-  {
-    /*tag*/         eHTMLTag_multicol,
-    /*parent,leaf*/ kBlock, false
-  },
-  {
-    /*tag*/         eHTMLTag_nav,
-    /*parent,leaf*/ kBlock, false
-  },
-  {
-    /*tag*/         eHTMLTag_nobr,
-    /*parent,leaf*/ kExtensions, false
-  },
-  {
-    /*tag*/         eHTMLTag_noembed,
-    /*parent,leaf*/ kFlowEntity, false
-  },
-  {
-    /*tag*/         eHTMLTag_noframes,
-    /*parent,leaf*/ kFlowEntity, false
-  },
-  {
-    /*tag*/         eHTMLTag_noscript,
-    /*parent,leaf*/ kFlowEntity|kHeadMisc, false
-  },
-  {
-    /*tag*/         eHTMLTag_object,
-    /*parent,leaf*/ kSpecial, false
-  },
-  {
-    /*tag*/         eHTMLTag_ol,
-    /*parent,leaf*/ kList, false
-  },
-  {
-    /*tag*/         eHTMLTag_optgroup,
-    /*parent,leaf*/ kNone, false
-  },
-  {
-    /*tag*/         eHTMLTag_option,
-    /*parent,leaf*/ kNone, false
-  },
-  {
-    /*tag*/         eHTMLTag_output,
-    /*parent,leaf*/ kSpecial, false
-  },
-  {
-    /*tag*/         eHTMLTag_p,
-    /*parent,leaf*/ kBlock, false
-  },
-  {
-    /*tag*/         eHTMLTag_param,
-    /*parent,leaf*/ kSpecial, true
-  },
-  {
-    /*tag*/         eHTMLTag_picture,
-    /*parent,leaf*/ kSpecial, false
-  },
-  {
-    /*tag*/         eHTMLTag_plaintext,
-    /*parent,leaf*/ kExtensions, false
-  },
-  {
-    /*tag*/         eHTMLTag_pre,
-    /*parent,leaf*/ kBlock|kPreformatted, false
-  },
-  {
-    /*tag*/         eHTMLTag_progress,
-    /*parent,leaf*/ kFormControl, false
-  },
-  {
-    /*tag*/         eHTMLTag_q,
-    /*parent,leaf*/ kSpecial, false
-  },
-  {
-    /*tag*/         eHTMLTag_rb,
-    /*parent,leaf*/ kPhrase, false
-  },
-  {
-    /*tag*/         eHTMLTag_rp,
-    /*parent,leaf*/ kPhrase, false
-  },
-  {
-    /*tag*/         eHTMLTag_rt,
-    /*parent,leaf*/ kPhrase, false
-  },
-  {
-    /*tag*/         eHTMLTag_rtc,
-    /*parent,leaf*/ kPhrase, false
-  },
-  {
-    /*tag*/         eHTMLTag_ruby,
-    /*parent,leaf*/ kPhrase, false
-  },
-  {
-    /*tag*/         eHTMLTag_s,
-    /*parent,leaf*/ kFontStyle, false
-  },
-  {
-    /*tag*/         eHTMLTag_samp,
-    /*parent,leaf*/ kPhrase, false
-  },
-  {
-    /*tag*/         eHTMLTag_script,
-    /*parent,leaf*/ (kSpecial|kHeadContent), false
-  },
-  {
-    /*tag*/         eHTMLTag_section,
-    /*parent,leaf*/ kBlock, false
-  },
-  {
-    /*tag*/         eHTMLTag_select,
-    /*parent,leaf*/ kFormControl, false
-  },
-  {
-    /*tag*/         eHTMLTag_shadow,
-    /*parent,leaf*/ kFlowEntity, false
-  },
-  {
-    /*tag*/         eHTMLTag_small,
-    /*parent,leaf*/ kFontStyle, false
-  },
-  {
-    /*tag*/         eHTMLTag_source,
-    /*parent,leaf*/ kSpecial, true
-  },
-  {
-    /*tag*/         eHTMLTag_span,
-    /*parent,leaf*/ kSpecial, false
-  },
-  {
-    /*tag*/         eHTMLTag_strike,
-    /*parent,leaf*/ kFontStyle, false
-  },
-  {
-    /*tag*/         eHTMLTag_strong,
-    /*parent,leaf*/ kPhrase, false
-  },
-  {
-    /*tag*/         eHTMLTag_style,
-    /*parent,leaf*/ kAllTags - kHeadContent, false
-  },
-  {
-    /*tag*/         eHTMLTag_sub,
-    /*parent,leaf*/ kSpecial, false
-  },
-  {
-    /*tag*/         eHTMLTag_summary,
-    /*parent,leaf*/ kBlock, false
-  },
-  {
-    /*tag*/         eHTMLTag_sup,
-    /*parent,leaf*/ kSpecial, false
-  },
-  {
-    /*tag*/         eHTMLTag_table,
-    /*parent,leaf*/ kBlock, false
-  },
-  {
-    /*tag*/         eHTMLTag_tbody,
-    /*parent,leaf*/ kNone, false
-  },
-  {
-    /*tag*/         eHTMLTag_td,
-    /*parent,leaf*/ kNone, false
-  },
-  {
-    /*tag*/         eHTMLTag_textarea,
-    /*parent,leaf*/ kFormControl, false
-  },
-  {
-    /*tag*/         eHTMLTag_tfoot,
-    /*parent,leaf*/ kNone, false
-  },
-  {
-    /*tag*/         eHTMLTag_th,
-    /*parent,leaf*/ kNone, false
-  },
-  {
-    /*tag*/         eHTMLTag_thead,
-    /*parent,leaf*/ kNone, false
-  },
-  {
-    /*tag*/         eHTMLTag_template,
-    /*parent,leaf*/ kNone, false
-  },
-  {
-    /*tag*/         eHTMLTag_time,
-    /*parent,leaf*/ kPhrase, false
-  },
-  {
-    /*tag*/         eHTMLTag_title,
-    /*parent,leaf*/ kHeadContent, false
-  },
-  {
-    /*tag*/         eHTMLTag_tr,
-    /*parent,leaf*/ kNone, false
-  },
-  {
-    /*tag*/         eHTMLTag_track,
-    /*parent,leaf*/ kSpecial, true
-  },
-  {
-    /*tag*/         eHTMLTag_tt,
-    /*parent,leaf*/ kFontStyle, false
-  },
-  {
-    /*tag*/         eHTMLTag_u,
-    /*parent,leaf*/ kFontStyle, false
-  },
-  {
-    /*tag*/         eHTMLTag_ul,
-    /*parent,leaf*/ kList, false
-  },
-  {
-    /*tag*/         eHTMLTag_var,
-    /*parent,leaf*/ kPhrase, false
-  },
-  {
-    /*tag*/         eHTMLTag_video,
-    /*parent,leaf*/ kSpecial, false
-  },
-  {
-    /*tag*/         eHTMLTag_wbr,
-    /*parent,leaf*/ kExtensions, true
-  },
-  {
-    /*tag*/         eHTMLTag_xmp,
-    /*parent,leaf*/ kInlineEntity|kPreformatted, false
-  },
-  {
-    /*tag*/         eHTMLTag_text,
-    /*parent,leaf*/ kFlowEntity, true
-  },
-  {
-    /*tag*/         eHTMLTag_whitespace,
-    /*parent,leaf*/ kFlowEntity|kHeadMisc, true
-  },
-  {
-    /*tag*/         eHTMLTag_newline,
-    /*parent,leaf*/ kFlowEntity|kHeadMisc, true
-  },
-  {
-    /*tag*/         eHTMLTag_comment,
-    /*parent,leaf*/ kFlowEntity|kHeadMisc, false
-  },
-  {
-    /*tag*/         eHTMLTag_entity,
-    /*parent,leaf*/ kFlowEntity, false
-  },
-  {
-    /*tag*/         eHTMLTag_doctypeDecl,
-    /*parent,leaf*/ kFlowEntity, false
-  },
-  {
-    /*tag*/         eHTMLTag_markupDecl,
-    /*parent,leaf*/ kFlowEntity, false
-  },
-  {
-    /*tag*/         eHTMLTag_instruction,
-    /*parent,leaf*/ kFlowEntity, false
-  },
-  {
-    /*tag*/         eHTMLTag_userdefined,
-    /*parent,leaf*/ (kFlowEntity|kHeadMisc), false
-  },
+struct HTMLElement
+{
+#ifdef DEBUG
+  nsHTMLTag mTagID;
+#endif
+  bool mIsBlock;
+  bool mIsContainer;
 };
 
-/*********************************************************************************************/
+#ifdef DEBUG
+#define ELEM(tag, block, container) { eHTMLTag_##tag, block, container },
+#else
+#define ELEM(tag, block, container) { block, container },
+#endif
 
-bool nsHTMLElement::IsContainer(eHTMLTags aChild)
+#define ____ false    // This makes the table easier to read.
+
+// Note that the mIsBlock field disagrees with
+// https://developer.mozilla.org/en-US/docs/Web/HTML/Block-level_elements for
+// the following elements: center, details, dialog, dir, dt, figcaption,
+// listing, menu, multicol, noscript, output, summary, tfoot, video.
+//
+// mrbkap thinks that the field values were pulled from the old HTML4 DTD and
+// then got modified in mostly random ways to make the old parser's behavior
+// compatible with the web. So it might make sense to change the mIsBlock
+// values for the abovementioned tags at some point.
+//
+static const HTMLElement gHTMLElements[] = {
+  ELEM(unknown,     ____, ____)
+  ELEM(a,           ____, true)
+  ELEM(abbr,        ____, true)
+  ELEM(acronym,     ____, true)
+  ELEM(address,     true, true)
+  ELEM(applet,      ____, true)
+  ELEM(area,        ____, ____)
+  ELEM(article,     true, true)
+  ELEM(aside,       true, true)
+  ELEM(audio,       ____, true)
+  ELEM(b,           ____, true)
+  ELEM(base,        ____, ____)
+  ELEM(basefont,    ____, ____)
+  ELEM(bdo,         ____, true)
+  ELEM(bgsound,     ____, ____)
+  ELEM(big,         ____, true)
+  ELEM(blockquote,  true, true)
+  ELEM(body,        ____, true)
+  ELEM(br,          ____, ____)
+  ELEM(button,      ____, true)
+  ELEM(canvas,      ____, true)
+  ELEM(caption,     ____, true)
+  ELEM(center,      true, true)
+  ELEM(cite,        ____, true)
+  ELEM(code,        ____, true)
+  ELEM(col,         ____, ____)
+  ELEM(colgroup,    ____, true)
+  ELEM(data,        ____, true)
+  ELEM(datalist,    ____, true)
+  ELEM(dd,          ____, true)
+  ELEM(del,         ____, true)
+  ELEM(details,     true, true)
+  ELEM(dfn,         ____, true)
+  ELEM(dialog,      true, true)
+  ELEM(dir,         true, true)
+  ELEM(div,         true, true)
+  ELEM(dl,          true, true)
+  ELEM(dt,          ____, true)
+  ELEM(em,          ____, true)
+  ELEM(embed,       ____, ____)
+  ELEM(fieldset,    true, true)
+  ELEM(figcaption,  ____, true)
+  ELEM(figure,      true, true)
+  ELEM(font,        ____, true)
+  ELEM(footer,      true, true)
+  ELEM(form,        true, true)
+  ELEM(frame,       ____, ____)
+  ELEM(frameset,    ____, true)
+  ELEM(h1,          true, true)
+  ELEM(h2,          true, true)
+  ELEM(h3,          true, true)
+  ELEM(h4,          true, true)
+  ELEM(h5,          true, true)
+  ELEM(h6,          true, true)
+  ELEM(head,        ____, true)
+  ELEM(header,      true, true)
+  ELEM(hgroup,      true, true)
+  ELEM(hr,          true, ____)
+  ELEM(html,        ____, true)
+  ELEM(i,           ____, true)
+  ELEM(iframe,      ____, true)
+  ELEM(image,       ____, ____)
+  ELEM(img,         ____, ____)
+  ELEM(input,       ____, ____)
+  ELEM(ins,         ____, true)
+  ELEM(kbd,         ____, true)
+  ELEM(keygen,      ____, ____)
+  ELEM(label,       ____, true)
+  ELEM(legend,      ____, true)
+  ELEM(li,          true, true)
+  ELEM(link,        ____, ____)
+  ELEM(listing,     true, true)
+  ELEM(main,        true, true)
+  ELEM(map,         ____, true)
+  ELEM(mark,        ____, true)
+  ELEM(marquee,     ____, true)
+  ELEM(menu,        true, true)
+  ELEM(menuitem,    ____, true)
+  ELEM(meta,        ____, ____)
+  ELEM(meter,       ____, true)
+  ELEM(multicol,    true, true)
+  ELEM(nav,         true, true)
+  ELEM(nobr,        ____, true)
+  ELEM(noembed,     ____, true)
+  ELEM(noframes,    ____, true)
+  ELEM(noscript,    ____, true)
+  ELEM(object,      ____, true)
+  ELEM(ol,          true, true)
+  ELEM(optgroup,    ____, true)
+  ELEM(option,      ____, true)
+  ELEM(output,      ____, true)
+  ELEM(p,           true, true)
+  ELEM(param,       ____, ____)
+  ELEM(picture,     ____, true)
+  ELEM(plaintext,   ____, true)
+  ELEM(pre,         true, true)
+  ELEM(progress,    ____, true)
+  ELEM(q,           ____, true)
+  ELEM(rb,          ____, true)
+  ELEM(rp,          ____, true)
+  ELEM(rt,          ____, true)
+  ELEM(rtc,         ____, true)
+  ELEM(ruby,        ____, true)
+  ELEM(s,           ____, true)
+  ELEM(samp,        ____, true)
+  ELEM(script,      ____, true)
+  ELEM(section,     true, true)
+  ELEM(select,      ____, true)
+  ELEM(small,       ____, true)
+  ELEM(slot,        ____, true)
+  ELEM(source,      ____, ____)
+  ELEM(span,        ____, true)
+  ELEM(strike,      ____, true)
+  ELEM(strong,      ____, true)
+  ELEM(style,       ____, true)
+  ELEM(sub,         ____, true)
+  ELEM(summary,     true, true)
+  ELEM(sup,         ____, true)
+  ELEM(table,       true, true)
+  ELEM(tbody,       ____, true)
+  ELEM(td,          ____, true)
+  ELEM(textarea,    ____, true)
+  ELEM(tfoot,       ____, true)
+  ELEM(th,          ____, true)
+  ELEM(thead,       ____, true)
+  ELEM(template,    ____, true)
+  ELEM(time,        ____, true)
+  ELEM(title,       ____, true)
+  ELEM(tr,          ____, true)
+  ELEM(track,       ____, ____)
+  ELEM(tt,          ____, true)
+  ELEM(u,           ____, true)
+  ELEM(ul,          true, true)
+  ELEM(var,         ____, true)
+  ELEM(video,       ____, true)
+  ELEM(wbr,         ____, ____)
+  ELEM(xmp,         ____, true)
+  ELEM(text,        ____, ____)
+  ELEM(whitespace,  ____, ____)
+  ELEM(newline,     ____, ____)
+  ELEM(comment,     ____, true)
+  ELEM(entity,      ____, true)
+  ELEM(doctypeDecl, ____, true)
+  ELEM(markupDecl,  ____, true)
+  ELEM(instruction, ____, true)
+  ELEM(userdefined, ____, true)
+};
+
+#undef ELEM
+#undef ____
+
+bool
+nsHTMLElement::IsContainer(nsHTMLTag aId)
 {
-  return !gHTMLElements[aChild].mLeaf;
+  return gHTMLElements[aId].mIsContainer;
 }
 
-bool nsHTMLElement::IsMemberOf(int32_t aSet) const
+bool
+nsHTMLElement::IsBlock(nsHTMLTag aId)
 {
-  return TestBits(aSet,mParentBits);
+  return gHTMLElements[aId].mIsBlock;
 }
 
 #ifdef DEBUG
-void CheckElementTable()
+void
+CheckElementTable()
 {
-  for (eHTMLTags t = eHTMLTag_unknown; t <= eHTMLTag_userdefined; t = eHTMLTags(t + 1)) {
-    NS_ASSERTION(gHTMLElements[t].mTagID == t, "gHTMLElements entries does match tag list.");
+  for (nsHTMLTag t = eHTMLTag_unknown;
+       t <= eHTMLTag_userdefined;
+       t = nsHTMLTag(t + 1)) {
+    MOZ_ASSERT(gHTMLElements[t].mTagID == t,
+               "gHTMLElements entries does match tag list.");
   }
 }
 #endif

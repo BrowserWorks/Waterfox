@@ -18,4 +18,9 @@ interface Text : CharacterData {
   readonly attribute DOMString wholeText;
 };
 
+partial interface Text {
+  [BinaryName="assignedSlotByMode", Func="nsTextNode::IsWebComponentsEnabled"]
+  readonly attribute HTMLSlotElement? assignedSlot;
+};
+
 Text implements GeometryUtils;

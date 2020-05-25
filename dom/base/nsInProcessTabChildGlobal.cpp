@@ -276,7 +276,7 @@ nsInProcessTabChildGlobal::GetEventTargetParent(EventChainPreVisitor& aVisitor)
 #endif
 
   if (mPreventEventsEscaping) {
-    aVisitor.mParentTarget = nullptr;
+    aVisitor.SetParentTarget(nullptr, false);
     return NS_OK;
   }
 
@@ -284,11 +284,13 @@ nsInProcessTabChildGlobal::GetEventTargetParent(EventChainPreVisitor& aVisitor)
       (!mOwner || !nsContentUtils::IsInChromeDocshell(mOwner->OwnerDoc()))) {
     if (mOwner) {
       if (nsPIDOMWindowInner* innerWindow = mOwner->OwnerDoc()->GetInnerWindow()) {
-        aVisitor.mParentTarget = innerWindow->GetParentTarget();
+        // 'this' is already a "chrome handler", so we consider window's
+        // parent target to be part of that same part of the event path.
+        aVisitor.SetParentTarget(innerWindow->GetParentTarget(), false);
       }
     }
   } else {
-    aVisitor.mParentTarget = mOwner;
+    aVisitor.SetParentTarget(mOwner, false);
   }
 
   return NS_OK;
