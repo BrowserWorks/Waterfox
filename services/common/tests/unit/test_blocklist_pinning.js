@@ -178,9 +178,6 @@ add_task(async function test_something() {
   Services.prefs.clearUserPref("services.settings.server");
   await PinningPreloadClient.maybeSync(4000);
 
-  // Try again with a lastModified value at some point in the past
-  await PinningPreloadClient.maybeSync(3000);
-
   // Check that the HSTS preload added to the collection works...
   ok(
     sss.isSecureURI(

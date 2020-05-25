@@ -399,7 +399,7 @@ class RemoteSettingsClient extends EventEmitter {
       try {
         // If the data is up to date, there's no need to sync. We still need
         // to record the fact that a check happened.
-        if (expectedTimestamp <= collectionLastModified) {
+        if (expectedTimestamp == collectionLastModified) {
           reportStatus = UptakeTelemetry.STATUS.UP_TO_DATE;
           // Since the data is up-to-date, if we didn't load any dump then we're done here.
           if (importedFromDump.length == 0) {
@@ -413,7 +413,9 @@ class RemoteSettingsClient extends EventEmitter {
             deleted: [],
           };
         } else {
-          // Fetch changes from server, and make sure we overwrite local data.
+          // Local data is either outdated or tampered.
+          // In both cases we will fetch changes from server,
+          // and make sure we overwrite local data.
           const strategy = Kinto.syncStrategy.SERVER_WINS;
           syncResult = await kintoCollection.sync({
             remote: gServerURL,
