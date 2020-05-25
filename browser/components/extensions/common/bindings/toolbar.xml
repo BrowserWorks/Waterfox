@@ -395,11 +395,7 @@
   </binding>
 
   <binding id="toolbar-menubar-autohide"
-#ifdef MOZ_SUITE
-           extends="chrome://communicator/content/bindings/toolbar.xml#toolbar">
-#else
            extends="chrome://browser/content/toolbar.xml#toolbar">
-#endif
     <implementation>
       <constructor>
         this._setInactive();
@@ -547,11 +543,7 @@
   </binding>
 
   <binding id="toolbarpaletteitem-palette"
-#ifdef MOZ_SUITE
-           extends="chrome://communicator/content/bindings/toolbar.xml#toolbarpaletteitem">
-#else
            extends="chrome://browser/content/toolbar.xml#toolbarpaletteitem">
-#endif
     <content>
       <xul:hbox class="toolbarpaletteitem-box" xbl:inherits="type,place">
         <children/>
@@ -561,11 +553,7 @@
   </binding>
 
   <binding id="toolbarpaletteitem-palette-wrapping-label"
-#ifdef MOZ_SUITE
-           extends="chrome://communicator/content/bindings/toolbar.xml#toolbarpaletteitem">
-#else
            extends="chrome://browser/content/toolbar.xml#toolbarpaletteitem">
-#endif
     <content>
       <xul:hbox class="toolbarpaletteitem-box" xbl:inherits="type,place">
         <children/>
