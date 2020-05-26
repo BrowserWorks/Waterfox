@@ -5831,7 +5831,7 @@ nsCSSFrameConstructor::SetAsUndisplayedContent(nsFrameConstructorState& aState,
   NS_ASSERTION(!aIsGeneratedContent, "Should have had pseudo type");
 
   if (aState.mCreatingExtraFrames) {
-    MOZ_ASSERT(GetUndisplayedContent(aContent),
+    MOZ_ASSERT(GetDisplayNoneStyleFor(aContent),
                "should have called RegisterDisplayNoneStyleFor earlier");
     return;
   }
@@ -7145,7 +7145,7 @@ nsCSSFrameConstructor::MaybeConstructLazily(Operation aOperation,
       noPrimaryFrame = needsFrameBitSet = false;
     }
     if (!noPrimaryFrame && !content->GetPrimaryFrame()) {
-      nsStyleContext* sc = GetUndisplayedContent(content);
+      nsStyleContext* sc = GetDisplayNoneStyleFor(content);
       noPrimaryFrame = !GetDisplayContentsStyleFor(content) &&
         (sc && !sc->IsInDisplayNoneSubtree());
     }
@@ -7307,7 +7307,7 @@ nsCSSFrameConstructor::IssueSingleInsertNofications(nsIContent* aContainer,
   for (nsIContent* child = aStartChild;
        child != aEndChild;
        child = child->GetNextSibling()) {
-    if ((child->GetPrimaryFrame() || GetUndisplayedContent(child) ||
+    if ((child->GetPrimaryFrame() || GetDisplayNoneStyleFor(child) ||
          GetDisplayContentsStyleFor(child))
 #ifdef MOZ_XUL
         //  Except listboxes suck, so do NOT skip anything here if
@@ -9491,7 +9491,7 @@ DefinitelyEqualURIsAndPrincipal(mozilla::css::URLValue* aURI1,
 nsStyleContext*
 nsCSSFrameConstructor::MaybeRecreateFramesForElement(Element* aElement)
 {
-  RefPtr<nsStyleContext> oldContext = GetUndisplayedContent(aElement);
+  RefPtr<nsStyleContext> oldContext = GetDisplayNoneStyleFor(aElement);
   StyleDisplay oldDisplay = StyleDisplay::None;
   if (!oldContext) {
     oldContext = GetDisplayContentsStyleFor(aElement);
