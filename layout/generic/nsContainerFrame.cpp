@@ -1870,6 +1870,10 @@ nsContainerFrame::RenumberFrameAndDescendants(int32_t* aOrdinal,
             nsIFrame *f = bullet;
             do {
               nsIFrame *parent = f->GetParent();
+              if (!parent) {
+                // We may have an orphan situation in some corner cases.
+                break;
+              }
               parent->ChildIsDirty(f);
               f = parent;
             } while (f != listItem);
