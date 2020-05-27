@@ -135,16 +135,12 @@ public class StreamRecyclerAdapter extends RecyclerView.Adapter<StreamViewHolder
     }
 
     private boolean isFirefoxPromoBannerAvailable(@NonNull SharedPreferences preferences) {
+        final boolean isDismissedByUser = preferences.getBoolean(ActivityStreamPanel.PREF_USER_DISMISSED_PROMO_BANNER,
+                context.getResources().getBoolean(R.bool.pref_activitystream_user_dismissed_promo_banner_default));
+        final boolean isDeviceAndroidVersionSupported = AppConstants.Versions.feature21Plus;
+        final boolean isAppChannelSupported = "org.mozilla.firefox".equals(AppConstants.ANDROID_PACKAGE_NAME);
 
-        // Banner temporarily disabled. See #1623471
-        return false;
-
-//        final boolean isDismissedByUser = preferences.getBoolean(ActivityStreamPanel.PREF_USER_DISMISSED_PROMO_BANNER,
-//                context.getResources().getBoolean(R.bool.pref_activitystream_user_dismissed_promo_banner_default));
-//        final boolean isDeviceAndroidVersionSupported = AppConstants.Versions.feature21Plus;
-//        final boolean isAppChannelSupported = "org.mozilla.firefox".equals(AppConstants.ANDROID_PACKAGE_NAME);
-//
-//        return !isDismissedByUser && isDeviceAndroidVersionSupported && isAppChannelSupported;
+        return !isDismissedByUser && isDeviceAndroidVersionSupported && isAppChannelSupported;
     }
 
     void setOnUrlOpenListeners(HomePager.OnUrlOpenListener onUrlOpenListener, HomePager.OnUrlOpenInBackgroundListener onUrlOpenInBackgroundListener) {
