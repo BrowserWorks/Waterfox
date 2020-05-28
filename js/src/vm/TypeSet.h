@@ -404,6 +404,10 @@ class TypeSet {
   static JS::UniqueChars TypeString(const Type type);
   static JS::UniqueChars ObjectGroupString(const ObjectGroup* group);
 
+  // Returns the Type corresponding to a primitive MIRType. The argument must
+  // not be a magic value we can't represent directly.
+  static inline Type PrimitiveType(jit::MIRType type);
+
  public:
   void print(FILE* fp = stderr);
 
