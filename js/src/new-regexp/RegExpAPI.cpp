@@ -34,6 +34,7 @@ using namespace mozilla;
 
 using frontend::TokenStream;
 
+using v8::internal::DisallowHeapAllocation;
 using v8::internal::FlatStringReader;
 using v8::internal::HandleScope;
 using v8::internal::InputOutputData;
@@ -241,7 +242,9 @@ static bool CheckPatternSyntaxImpl(JSContext* cx, FlatStringReader* pattern,
   Zone zone(allocScope.alloc());
 
   HandleScope handleScope(cx->isolate);
-  return RegExpParser::ParseRegExp(cx->isolate, &zone, pattern, flags, result);
+  DisallowHeapAllocation no_gc;
+  return RegExpParser::VerifyRegExpSyntax(cx->isolate, &zone, pattern, flags,
+                                          result, no_gc);
 }
 
 bool CheckPatternSyntax(JSContext* cx, TokenStream& ts,
