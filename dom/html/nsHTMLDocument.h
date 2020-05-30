@@ -155,7 +155,7 @@ public:
 
   virtual void RemovedFromDocShell() override;
 
-  using mozilla::dom::StyleScope::GetElementById;
+  using mozilla::dom::DocumentOrShadowRoot::GetElementById;
 
   virtual void DocAddSizeOfExcludingThis(nsWindowSizes* aWindowSizes) const override;
   // DocAddSizeOfIncludingThis is inherited from nsIDocument.
