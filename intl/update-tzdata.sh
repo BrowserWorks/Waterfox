@@ -165,5 +165,5 @@ if [ $dry = false ]; then
   fi
 
   echo "INFO: Successfully updated tzdata!"
-  echo "INFO: Please run js/src/builtin/intl/make_intl_data.py to update additional time zone files for SpiderMonkey."
+  echo "INFO: Please run js/src/builtin/make_intl_data.py to update additional time zone files for SpiderMonkey."
 fi
