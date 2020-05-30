@@ -108,7 +108,6 @@ class GLBlitHelper final
     mutable std::map<DrawBlitProg::Key, const DrawBlitProg*> mDrawBlitProgs;
 
     GLuint mQuadVAO;
-    GLuint mQuadVBO;
     nsCString mDrawBlitProg_VersionLine;
     const GLuint mDrawBlitProg_VertShader;
 
