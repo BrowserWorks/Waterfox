@@ -1044,11 +1044,15 @@ JS_ResolveStandardClass(JSContext* cx, HandleObject obj, HandleId id, bool* reso
 
     /* Check whether we're resolving 'undefined', and define it if so. */
     JSAtom* idAtom = JSID_TO_ATOM(id);
-    JSAtom* undefinedAtom = cx->names().undefined;
-    if (idAtom == undefinedAtom) {
+    if (idAtom == cx->names().undefined) {
         *resolved = true;
         return DefineProperty(cx, global, id, UndefinedHandleValue, nullptr, nullptr,
                               JSPROP_PERMANENT | JSPROP_READONLY | JSPROP_RESOLVING);
+    }
+
+    // Resolve a "globalThis" self-referential property if necessary.
+    if (idAtom == cx->names().globalThis) {
+        return GlobalObject::maybeResolveGlobalThis(cx, global, resolved);
     }
 
     /* Try for class constructors/prototypes named by well-known atoms. */
@@ -1103,6 +1107,7 @@ JS_MayResolveStandardClass(const JSAtomState& names, jsid id, JSObject* maybeObj
     // better, we need a JSContext here; it's fine as it is.)
 
     return atom == names.undefined ||
+           atom == names.globalThis ||
            LookupStdName(names, atom, standard_class_names) ||
            LookupStdName(names, atom, builtin_property_names);
 }
