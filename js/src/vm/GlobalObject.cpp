@@ -306,6 +306,32 @@ GlobalObject::initBuiltinConstructor(JSContext* cx, Handle<GlobalObject*> global
     return true;
 }
 
+// Resolve a "globalThis" self-referential property if necessary,
+// per a stage-3 proposal. https://github.com/tc39/ecma262/pull/702
+//
+// We could also do this in |FinishObjectClassInit| to trim the global
+// resolve hook.  Unfortunately, |ToWindowProxyIfWindow| doesn't work then:
+// the browser's |nsGlobalWindow::SetNewDocument| invokes Object init
+// *before* it sets the global's WindowProxy using |js::SetWindowProxy|.
+//
+// Refactoring global object creation code to support this approach is a
+// challenge for another day.
+/* static */ bool
+GlobalObject::maybeResolveGlobalThis(JSContext* cx, Handle<GlobalObject*> global, bool* resolved)
+{
+    if (global->getSlot(GLOBAL_THIS_RESOLVED).isUndefined()) {
+        RootedValue v(cx, ObjectValue(*ToWindowProxyIfWindow(global)));
+        if (!DefineProperty(cx, global, cx->names().globalThis, v, nullptr, nullptr, JSPROP_RESOLVING)) {
+            return false;
+        }
+
+        *resolved = true;
+        global->setSlot(GLOBAL_THIS_RESOLVED, BooleanValue(true));
+    }
+
+    return true;
+}
+
 GlobalObject*
 GlobalObject::createInternal(JSContext* cx, const Class* clasp)
 {
@@ -409,6 +435,12 @@ GlobalObject::initStandardClasses(JSContext* cx, Handle<GlobalObject*> global)
     if (!DefineProperty(cx, global, cx->names().undefined, UndefinedHandleValue,
                         nullptr, nullptr, JSPROP_PERMANENT | JSPROP_READONLY | JSPROP_RESOLVING))
     {
+        return false;
+    }
+
+    // Resolve a "globalThis" self-referential property if necessary.
+    bool resolved;
+    if (!GlobalObject::maybeResolveGlobalThis(cx, global, &resolved)) {
         return false;
     }
 
