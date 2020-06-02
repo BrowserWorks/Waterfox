@@ -4,6 +4,7 @@ const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 const { BlocklistClients } = ChromeUtils.import(
   "resource://services-common/blocklist-clients.js"
 );
+XPCOMUtils.defineLazyGlobalGetters(this, ["fetch"]);
 
 const BinaryInputStream = CC(
   "@mozilla.org/binaryinputstream;1",
@@ -64,8 +65,12 @@ add_task(async function test_something() {
     handleResponse
   );
 
-  // Test an empty db populates from JSON dump.
-  await OneCRLBlocklistClient.maybeSync(42);
+  // First, determine what is the dump timestamp.
+  const dumpRecords = await (await fetch(
+    `resource://app/defaults/settings/security-state/onecrl.json`
+  )).json();
+  const uptodateTimestamp = dumpRecords.data[0].last_modified;
+  await OneCRLBlocklistClient.maybeSync(uptodateTimestamp);
 
   // Open the collection, verify it's been populated:
   const list = await OneCRLBlocklistClient.get();
@@ -76,8 +81,8 @@ add_task(async function test_something() {
   // No sync will be intented if maybeSync() is up-to-date.
   Services.prefs.clearUserPref("services.settings.server");
   Services.prefs.setIntPref("services.settings.security.onecrl.checked", 0);
-  // Use any last_modified older than highest shipped in JSON dump.
-  await OneCRLBlocklistClient.maybeSync(123456);
+  // Use up-to-date timestamp.
+  await OneCRLBlocklistClient.maybeSync(uptodateTimestamp);
 
   // Restore server pref.
   Services.prefs.setCharPref("services.settings.server", dummyServerURL);
@@ -110,9 +115,6 @@ add_task(async function test_something() {
   // Clear the kinto base pref so any connections will cause a test failure
   Services.prefs.clearUserPref("services.settings.server");
   await OneCRLBlocklistClient.maybeSync(4000);
-
-  // Try again with a lastModified value at some point in the past
-  await OneCRLBlocklistClient.maybeSync(3000);
 
   // Check that a sync completes even when there's bad data in the
   // collection. This will throw on fail, so just calling maybeSync is an

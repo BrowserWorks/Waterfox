@@ -23,5 +23,4 @@
 <!--
         Feature temporarily disabled. See #1623471
     <bool name="pref_activitystream_user_dismissed_promo_banner_default">false</bool>
--->
 </resources>

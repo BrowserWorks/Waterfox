@@ -1531,6 +1531,72 @@ def gen_invoke_rustc(version, rustup_wrapper=False):
                     'thumbv8m.main-none-eabi',
                     'thumbv8m.main-none-eabihf',
                 ]
+            # Additional targets from 1.34
+            if Version(version) >= '1.34.0':
+                rust_targets += [
+                    'nvptx64-nvidia-cuda',
+                    'powerpc64-unknown-freebsd',
+                    'riscv64gc-unknown-none-elf',
+                    'riscv64imac-unknown-none-elf',
+                ]
+            # Additional targets from 1.35
+            if Version(version) >= '1.35.0':
+                rust_targets += [
+                    'armv6-unknown-freebsd',
+                    'armv7-unknown-freebsd',
+                    'mipsisa32r6-unknown-linux-gnu',
+                    'mipsisa32r6el-unknown-linux-gnu',
+                    'mipsisa64r6-unknown-linux-gnuabi64',
+                    'mipsisa64r6el-unknown-linux-gnuabi64',
+                    'wasm32-unknown-wasi',
+                ]
+            # Additional targets from 1.36
+            if Version(version) >= '1.36.0':
+                rust_targets += [
+                    'wasm32-wasi',
+                ]
+                rust_targets.remove('wasm32-unknown-wasi')
+                rust_targets.remove('x86_64-unknown-bitrig')
+            # Additional targets from 1.37
+            if Version(version) >= '1.37.0':
+                rust_targets += [
+                    'x86_64-pc-solaris',
+                ]
+            # Additional targets from 1.38
+            if Version(version) >= '1.38.0':
+                rust_targets += [
+                    'aarch64-unknown-redox',
+                    'aarch64-wrs-vxworks',
+                    'armv7-unknown-linux-gnueabi',
+                    'armv7-unknown-linux-musleabi',
+                    'armv7-wrs-vxworks',
+                    'hexagon-unknown-linux-musl',
+                    'i586-wrs-vxworks',
+                    'i686-uwp-windows-gnu',
+                    'i686-wrs-vxworks',
+                    'powerpc-wrs-vxworks',
+                    'powerpc-wrs-vxworks-spe',
+                    'powerpc64-wrs-vxworks',
+                    'riscv32i-unknown-none-elf',
+                    'x86_64-uwp-windows-gnu',
+                    'x86_64-wrs-vxworks',
+                ]
+            # Additional targets from 1.38
+            if Version(version) >= '1.39.0':
+                rust_targets += [
+                    'aarch64-uwp-windows-msvc',
+                    'armv7-wrs-vxworks-eabihf',
+                    'i686-unknown-uefi',
+                    'i686-uwp-windows-msvc',
+                    'mips64-unknown-linux-muslabi64',
+                    'mips64el-unknown-linux-muslabi64',
+                    'sparc64-unknown-openbsd',
+                    'x86_64-linux-kernel',
+                    'x86_64-uwp-windows-msvc',
+                ]
+                rust_targets.remove('armv7-wrs-vxworks')
+                rust_targets.remove('i586-wrs-vxworks')
+
             return 0, '\n'.join(sorted(rust_targets)), ''
         if (len(args) == 6 and args[:2] == ('--crate-type', 'staticlib') and
             args[2].startswith('--target=') and args[3] == '-o'):
@@ -1542,7 +1608,7 @@ def gen_invoke_rustc(version, rustup_wrapper=False):
 
 
 class RustTest(BaseConfigureTest):
-    def get_rust_target(self, target, compiler_type='gcc', version='1.33.0',
+    def get_rust_target(self, target, compiler_type='gcc', version='1.39.0',
                         arm_target=None):
         environ = {
             'PATH': os.pathsep.join(
@@ -1567,7 +1633,8 @@ class RustTest(BaseConfigureTest):
         # Same for the arm_target checks.
         dep = sandbox._depends[sandbox['arm_target']]
         getattr(sandbox, '__value_for_depends')[(dep,)] = \
-            arm_target or ReadOnlyNamespace(arm_arch=7, thumb2=False, fpu='vfpv2')
+            arm_target or ReadOnlyNamespace(arm_arch=7, thumb2=False,
+                                            fpu='vfpv2', float_abi='softfp')
         return sandbox._value_for(sandbox['rust_target_triple'])
 
     def test_rust_target(self):
@@ -1583,7 +1650,6 @@ class RustTest(BaseConfigureTest):
             'i686-unknown-openbsd',
             'x86_64-unknown-openbsd',
             'aarch64-unknown-linux-gnu',
-            'armv7-unknown-linux-gnueabihf',
             'sparc64-unknown-linux-gnu',
             'i686-unknown-linux-gnu',
             'i686-apple-darwin',
@@ -1608,6 +1674,7 @@ class RustTest(BaseConfigureTest):
             ('armv7-unknown-linux-androideabi', 'armv7-linux-androideabi'),
             ('i386-unknown-linux-android', 'i686-linux-android'),
             ('i686-unknown-linux-android', 'i686-linux-android'),
+            ('i686-pc-linux-gnu', 'i686-unknown-linux-gnu'),
             ('x86_64-unknown-linux-android', 'x86_64-linux-android'),
             ('x86_64-pc-linux-gnu', 'x86_64-unknown-linux-gnu'),
             ('sparcv9-sun-solaris2', 'sparcv9-sun-solaris'),
@@ -1623,6 +1690,9 @@ class RustTest(BaseConfigureTest):
             ('x86_64-pc-mingw32', 'gcc', 'x86_64-pc-windows-gnu'),
             ('i686-pc-mingw32', 'clang', 'i686-pc-windows-gnu'),
             ('x86_64-pc-mingw32', 'clang', 'x86_64-pc-windows-gnu'),
+            ('i686-w64-mingw32', 'clang', 'i686-pc-windows-gnu'),
+            ('x86_64-w64-mingw32', 'clang', 'x86_64-pc-windows-gnu'),
+            ('aarch64-windows-mingw32', 'clang-cl', 'aarch64-pc-windows-msvc'),
         ):
             self.assertEqual(self.get_rust_target(autoconf, building_with_gcc), rust)
 
@@ -1630,52 +1700,70 @@ class RustTest(BaseConfigureTest):
         self.assertEqual(
             self.get_rust_target('arm-unknown-linux-androideabi',
                                  arm_target=ReadOnlyNamespace(
-                                     arm_arch=7, fpu='neon', thumb2=True)),
+                                     arm_arch=7, fpu='neon', thumb2=True, float_abi='softfp')),
             'thumbv7neon-linux-androideabi')
 
         self.assertEqual(
             self.get_rust_target('arm-unknown-linux-androideabi',
                                  version='1.32.0',
                                  arm_target=ReadOnlyNamespace(
-                                     arm_arch=7, fpu='neon', thumb2=True)),
+                                     arm_arch=7, fpu='neon', thumb2=True, float_abi='softfp')),
             'armv7-linux-androideabi')
 
         self.assertEqual(
             self.get_rust_target('arm-unknown-linux-androideabi',
                                  arm_target=ReadOnlyNamespace(
-                                     arm_arch=7, fpu='neon', thumb2=False)),
+                                     arm_arch=7, fpu='neon', thumb2=False, float_abi='softfp')),
             'armv7-linux-androideabi')
 
         self.assertEqual(
             self.get_rust_target('arm-unknown-linux-androideabi',
                                  arm_target=ReadOnlyNamespace(
-                                     arm_arch=7, fpu='vfpv2', thumb2=True)),
+                                     arm_arch=7, fpu='vfpv2', thumb2=True, float_abi='softfp')),
             'armv7-linux-androideabi')
 
         self.assertEqual(
             self.get_rust_target('armv7-unknown-linux-gnueabihf',
                                  arm_target=ReadOnlyNamespace(
-                                     arm_arch=7, fpu='neon', thumb2=True)),
+                                     arm_arch=7, fpu='neon', thumb2=True, float_abi='hard')),
             'thumbv7neon-unknown-linux-gnueabihf')
 
         self.assertEqual(
             self.get_rust_target('armv7-unknown-linux-gnueabihf',
                                  version='1.32.0',
                                  arm_target=ReadOnlyNamespace(
-                                     arm_arch=7, fpu='neon', thumb2=True)),
+                                     arm_arch=7, fpu='neon', thumb2=True, float_abi='hard')),
             'armv7-unknown-linux-gnueabihf')
 
         self.assertEqual(
             self.get_rust_target('armv7-unknown-linux-gnueabihf',
                                  arm_target=ReadOnlyNamespace(
-                                     arm_arch=7, fpu='neon', thumb2=False)),
+                                     arm_arch=7, fpu='neon', thumb2=False, float_abi='hard')),
             'armv7-unknown-linux-gnueabihf')
 
         self.assertEqual(
             self.get_rust_target('armv7-unknown-linux-gnueabihf',
                                  arm_target=ReadOnlyNamespace(
-                                     arm_arch=7, fpu='vfpv2', thumb2=True)),
+                                     arm_arch=7, fpu='vfpv2', thumb2=True, float_abi='hard')),
             'armv7-unknown-linux-gnueabihf')
+
+        self.assertEqual(
+            self.get_rust_target('arm-unknown-freebsd13.0-gnueabihf',
+                                 arm_target=ReadOnlyNamespace(
+                                     arm_arch=7, fpu='vfpv2', thumb2=True, float_abi='hard')),
+            'armv7-unknown-freebsd')
+
+        self.assertEqual(
+            self.get_rust_target('arm-unknown-freebsd13.0-gnueabihf',
+                                 arm_target=ReadOnlyNamespace(
+                                     arm_arch=6, fpu=None, thumb2=False, float_abi='hard')),
+            'armv6-unknown-freebsd')
+
+        self.assertEqual(
+            self.get_rust_target('arm-unknown-linux-gnueabi',
+                                 arm_target=ReadOnlyNamespace(
+                                     arm_arch=4, fpu=None, thumb2=False, float_abi='softfp')),
+            'armv4t-unknown-linux-gnueabi')
 
 
 if __name__ == '__main__':

@@ -72,6 +72,9 @@
         },
         "Locked": {
           "type": "boolean"
+        },
+        "PrivateBrowsing": {
+          "type": "boolean"
         }
       }
     },
@@ -380,6 +383,18 @@
           "items": {
             "type": "origin"
           }
+        }
+      }
+    },
+
+    "EncryptedMediaExtensions": {
+      "type": "object",
+      "properties": {
+        "Enabled": {
+          "type": "boolean"
+        },
+        "Locked": {
+          "type": "boolean"
         }
       }
     },

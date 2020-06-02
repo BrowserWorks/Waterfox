@@ -28,6 +28,7 @@ bugzilla-components:
               path: /builds/worker/artifacts
               name: public
         max-run-time: 2700
+    run-on-projects: ['mozilla-central']
     when:
         files-changed:
             - '**'

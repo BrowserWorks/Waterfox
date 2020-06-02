@@ -21,9 +21,9 @@ import org.mozilla.gecko.AppConstants;
 public class AdjustHelper implements AdjustHelperInterface, OnAttributionChangedListener {
 
     private static final String LOGTAG = AdjustHelper.class.getSimpleName();
-    private AttributionHelperListener attributionListener;
+    private AttributionHelperListener[] attributionListeners;
 
-    public void onCreate(final Context context, final String maybeAppToken, final AttributionHelperListener listener) {
+    public void onCreate(final Context context, final String maybeAppToken, final AttributionHelperListener... listeners) {
         final String environment;
         final LogLevel logLevel;
         if (AppConstants.MOZILLA_OFFICIAL) {
@@ -37,7 +37,7 @@ public class AdjustHelper implements AdjustHelperInterface, OnAttributionChanged
             // We've got install tracking turned on -- we better have a token!
             throw new IllegalArgumentException("maybeAppToken must not be null");
         }
-        attributionListener = listener;
+        attributionListeners = listeners;
         AdjustConfig config = new AdjustConfig(context, maybeAppToken, environment);
         config.setLogLevel(logLevel);
         config.setOnAttributionChangedListener(this);
@@ -62,14 +62,16 @@ public class AdjustHelper implements AdjustHelperInterface, OnAttributionChanged
 
     @Override
     public void onAttributionChanged(AdjustAttribution attribution) {
-        if (attributionListener == null) {
+        if (attributionListeners == null) {
             throw new IllegalStateException("Expected non-null attribution listener.");
         }
 
         if (attribution == null) {
-            Log.e(LOGTAG, "Adjust attribution is null; skipping campaign id retrieval.");
+            Log.e(LOGTAG, "Adjust attribution is null. Skipping informing listeners about this.");
             return;
         }
-        attributionListener.onCampaignIdChanged(attribution.campaign);
+        for (AttributionHelperListener listener: attributionListeners) {
+            listener.onAttributionChanged(attribution);
+        }
     }
 }

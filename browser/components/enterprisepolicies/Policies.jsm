@@ -155,6 +155,13 @@ var Policies = {
           );
         }
       }
+      if ("PrivateBrowsing" in param) {
+        setDefaultPref(
+          "network.auth.private-browsing-sso",
+          param.PrivateBrowsing,
+          locked
+        );
+      }
     },
   },
 
@@ -743,6 +750,18 @@ var Policies = {
       }
       if ("Exceptions" in param) {
         addAllowDenyPermissions("trackingprotection", param.Exceptions);
+      }
+    },
+  },
+
+  EncryptedMediaExtensions: {
+    onBeforeAddons(manager, param) {
+      let locked = false;
+      if ("Locked" in param) {
+        locked = param.Locked;
+      }
+      if ("Enabled" in param) {
+        setDefaultPref("media.eme.enabled", param.Enabled, locked);
       }
     },
   },

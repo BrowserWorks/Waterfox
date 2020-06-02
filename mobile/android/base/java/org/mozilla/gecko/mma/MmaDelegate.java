@@ -15,6 +15,7 @@ import android.support.annotation.NonNull;
 import org.mozilla.gecko.AppConstants;
 import org.mozilla.gecko.BrowserApp;
 import org.mozilla.gecko.Experiments;
+import org.mozilla.gecko.GeckoAppShell;
 import org.mozilla.gecko.GeckoSharedPrefs;
 import org.mozilla.gecko.MmaConstants;
 import org.mozilla.gecko.PrefsHelper;
@@ -255,14 +256,22 @@ public class MmaDelegate {
     }
 
     public static void track(String event) {
-        if (applicationContext != null && isMmaAllowed(applicationContext)) {
+        // Using application context here allows this method to be called even before init().
+        // If "isMmaAllowed" we will pass the event to Leanplum which will:
+        // - send the event right away if it is started
+        // - queue the event to be sent immediately after being started
+        if (isMmaAllowed(GeckoAppShell.getApplicationContext())) {
             mmaHelper.event(event);
         }
     }
 
 
     public static void track(String event, long value) {
-        if (applicationContext != null && isMmaAllowed(applicationContext)) {
+        // Using application context here allows this method to be called even before init().
+        // If "isMmaAllowed" we will pass the event to Leanplum which will:
+        // - send the event right away if it is started
+        // - queue the event to be sent immediately after being started
+        if (isMmaAllowed(GeckoAppShell.getApplicationContext())) {
             mmaHelper.event(event, value);
         }
     }

@@ -1209,7 +1209,7 @@ def set_worker_type(config, tests):
             else:
                 test['worker-type'] = 't-bitbar-gw-perf-p2'
         elif test_platform.startswith('android-em-7.0-x86'):
-            test['worker-type'] = 'terraform-packet/gecko-t-linux'
+            test['worker-type'] = 't-linux-metal'
         elif test_platform.startswith('linux') or test_platform.startswith('android'):
             if test.get('suite', '') in ['talos', 'raptor'] and \
                  not test['build-platform'].startswith('linux64-ccov'):

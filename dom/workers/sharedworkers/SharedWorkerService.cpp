@@ -7,6 +7,7 @@
 #include "SharedWorkerService.h"
 #include "mozilla/dom/RemoteWorkerTypes.h"
 #include "mozilla/ipc/BackgroundParent.h"
+#include "mozilla/ClearOnShutdown.h"
 #include "mozilla/StaticMutex.h"
 #include "mozilla/SystemGroup.h"
 #include "nsProxyRelease.h"
@@ -21,9 +22,7 @@ namespace {
 
 StaticMutex sSharedWorkerMutex;
 
-// Raw pointer because SharedWorkerParent keeps this object alive, indirectly
-// via SharedWorkerManagerHolder.
-SharedWorkerService* MOZ_NON_OWNING_REF sSharedWorkerService;
+StaticRefPtr<SharedWorkerService> sSharedWorkerService;
 
 nsresult PopulateContentSecurityPolicy(
     nsIContentSecurityPolicy* aCSP,
@@ -163,12 +162,21 @@ already_AddRefed<SharedWorkerService> SharedWorkerService::GetOrCreate() {
 
   StaticMutexAutoLock lock(sSharedWorkerMutex);
 
-  if (sSharedWorkerService) {
-    RefPtr<SharedWorkerService> instance = sSharedWorkerService;
-    return instance.forget();
+  if (!sSharedWorkerService) {
+    sSharedWorkerService = new SharedWorkerService();
+    // ClearOnShutdown can only be called on main thread
+    nsresult rv = SystemGroup::Dispatch(
+        TaskCategory::Other,
+        NS_NewRunnableFunction("RegisterSharedWorkerServiceClearOnShutdown",
+                               []() {
+                                 StaticMutexAutoLock lock(sSharedWorkerMutex);
+                                 MOZ_ASSERT(sSharedWorkerService);
+                                 ClearOnShutdown(&sSharedWorkerService);
+                               }));
+    Unused << NS_WARN_IF(NS_FAILED(rv));
   }
 
-  RefPtr<SharedWorkerService> instance = new SharedWorkerService();
+  RefPtr<SharedWorkerService> instance = sSharedWorkerService;
   return instance.forget();
 }
 
@@ -178,20 +186,6 @@ SharedWorkerService* SharedWorkerService::Get() {
 
   MOZ_ASSERT(sSharedWorkerService);
   return sSharedWorkerService;
-}
-
-SharedWorkerService::SharedWorkerService() {
-  AssertIsOnBackgroundThread();
-
-  MOZ_ASSERT(!sSharedWorkerService);
-  sSharedWorkerService = this;
-}
-
-SharedWorkerService::~SharedWorkerService() {
-  StaticMutexAutoLock lock(sSharedWorkerMutex);
-
-  MOZ_ASSERT(sSharedWorkerService == this);
-  sSharedWorkerService = nullptr;
 }
 
 void SharedWorkerService::GetOrCreateWorkerManager(
