@@ -208,9 +208,6 @@ typedef long ssize_t;
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/types.h>
-#if !defined(MOZ_MEMORY_SOLARIS) && !defined(MOZ_MEMORY_ANDROID)
-#include <sys/sysctl.h>
-#endif
 #include <sys/uio.h>
 
 #include <errno.h>
