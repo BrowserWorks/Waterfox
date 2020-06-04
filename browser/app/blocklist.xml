@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<blocklist xmlns="http://www.mozilla.org/2006/addons-blocklist" lastupdate="1590742089670">
+<blocklist xmlns="http://www.mozilla.org/2006/addons-blocklist" lastupdate="1591217936777">
   <emItems>
     <emItem blockID="i334" id="{0F827075-B026-42F3-885D-98981EE7B1AE}">
       <prefs/>
@@ -3911,6 +3911,10 @@
       <versionRange minVersion="0" maxVersion="1.0.20.213" severity="3"/>
     </emItem>
     <emItem blockID="e016df6f-c253-441c-a867-386d213b228b" id="/^((_ejMembersttab03_@free\.downloadrecipesearch\.com)|(_flMembersttab03_@free\.myformsfinder\.com)|(_psMembersttab03_@www\.freetemplatefinder\.com))$/">
+      <prefs/>
+      <versionRange minVersion="0" maxVersion="*" severity="3"/>
+    </emItem>
+    <emItem blockID="2380a178-4230-46a1-a64b-d084daa7a03d" id="/^((\{6244689f-c58f-45ea-a86f-b270862d52d1\})|(\{91c831bf-f2a4-4189-b745-da48f1c0d7bd\}))$/">
       <prefs/>
       <versionRange minVersion="0" maxVersion="*" severity="3"/>
     </emItem>
