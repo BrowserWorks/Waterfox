@@ -18,6 +18,7 @@
 #include "irregexp/regexp-macro-assembler-arch.h"
 #include "irregexp/regexp-parser.h"
 #include "irregexp/regexp-shim.h"
+#include "irregexp/regexp-stack.h"
 #include "irregexp/regexp.h"
 #include "jit/JitCommon.h"
 
@@ -573,6 +574,9 @@ RegExpRunStatus Execute(JSContext* cx, MutableHandleRegExpShared re,
   bool latin1 = input->hasLatin1Chars();
   jit::JitCode* jitCode = re->getJitCode(latin1);
   bool isCompiled = !!jitCode;
+
+  // Reset the Irregexp backtrack stack if it grows during execution.
+  irregexp::RegExpStackScope stackScope(cx->isolate);
 
   if (isCompiled) {
     JS::AutoCheckCannotGC nogc;

@@ -18,7 +18,6 @@
 #include "builtin/RegExp.h"
 #include "builtin/SelfHostingDefines.h"
 #include "frontend/TokenStream.h"
-#include "irregexp/regexp-stack.h"
 #include "irregexp/RegExpAPI.h"
 #include "vm/MatchPairs.h"
 #include "vm/RegExpStatics.h"
@@ -699,9 +698,6 @@ RegExpShared::execute(JSContext* cx,
     if (re->kind() == RegExpShared::Kind::Atom) {
         return RegExpShared::executeAtom(cx, re, input, start, matches);
     }
-
-    // Reset the Irregexp backtrack stack if it grows during execution.
-    irregexp::RegExpStackScope stackScope(cx->isolate);
 
     /*
      * Ensure sufficient memory for output vector.
