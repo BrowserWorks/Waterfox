@@ -7019,6 +7019,9 @@ nsWindow::GetSystemCSDSupportLevel() {
         // GNOME Flashback (fallback)
         if (strstr(currentDesktop, "GNOME-Flashback:GNOME") != nullptr) {
             sCSDSupportLevel = CSD_SUPPORT_CLIENT;
+        // Pop Linux Bug 1629198
+        } else if (strstr(currentDesktop, "pop:GNOME") != nullptr) {
+            sCSDSupportLevel = CSD_SUPPORT_CLIENT;
         // gnome-shell
         } else if (strstr(currentDesktop, "GNOME") != nullptr) {
             sCSDSupportLevel = CSD_SUPPORT_SYSTEM;
