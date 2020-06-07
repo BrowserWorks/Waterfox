@@ -1533,15 +1533,15 @@ JSContext::updateJITEnabled()
     jitIsBroken = IsJITBrokenHere();
 }
 
-size_t
-JSContext::sizeOfExcludingThis(mozilla::MallocSizeOf mallocSizeOf) const
-{
-    /*
-     * There are other JSContext members that could be measured; the following
-     * ones have been found by DMD to be worth measuring.  More stuff may be
-     * added later.
-     */
-    return cycleDetectorVector().sizeOfExcludingThis(mallocSizeOf);
+size_t JSContext::sizeOfExcludingThis(
+    mozilla::MallocSizeOf mallocSizeOf) const {
+  /*
+   * There are other JSContext members that could be measured; the following
+   * ones have been found by DMD to be worth measuring.  More stuff may be
+   * added later.
+   */
+  return cycleDetectorVector().sizeOfExcludingThis(mallocSizeOf) +
+         irregexp::IsolateSizeOfIncludingThis(isolate, mallocSizeOf);
 }
 
 void
