@@ -138,6 +138,18 @@ bool IsImageExtractionAllowed(Document* aDocument, JSContext* aCx,
 
   // At this point, permission is unknown
   // (nsIPermissionManager::UNKNOWN_ACTION).
+  
+  // Check if the user has explicitly disabled all
+  // or delegated all other checks and fingerprinting resistence
+  // to an extension (or nothing) such as canvasblocker
+  bool isDelegateCanvasProtection =
+      StaticPrefs::
+          privacy_resistFingerprinting_delegateCanvasProtection() &&
+      !EventStateManager::IsHandlingUserInput();
+
+  if (isDelegateCanvasProtection) {
+    return true;
+  }
 
   // Check if the request is in response to user input
   bool isAutoBlockCanvas =
