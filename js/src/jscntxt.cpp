@@ -1398,7 +1398,9 @@ JSContext::~JSContext()
         DestroyTraceLogger(traceLogger);
 #endif
 
-    irregexp::DestroyIsolate(isolate.ref());
+    if (isolate) {
+      irregexp::DestroyIsolate(isolate.ref());
+    }
 
     MOZ_ASSERT(TlsContext.get() == this);
     TlsContext.set(nullptr);
