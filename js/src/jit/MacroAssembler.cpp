@@ -179,6 +179,9 @@ void MacroAssembler::guardTypeSet(const Source& address, const TypeSet* types,
   bind(&matched);
 }
 
+namespace js {
+namespace jit {
+
 template <>
 void MacroAssembler::guardTypeSet(const TypedOrValueRegister& reg,
                                   const TypeSet* types, BarrierKind kind,
@@ -242,6 +245,9 @@ void MacroAssembler::guardTypeSet(const TypedOrValueRegister& reg,
   Register obj = reg.typedReg().gpr();
   guardObjectType(obj, types, objScratch, spectreRegToZero, miss);
 }
+
+} // namespace jit
+} // namespace js
 
 #ifdef DEBUG
 // guardTypeSetMightBeIncomplete is only used in DEBUG builds. If this ever
