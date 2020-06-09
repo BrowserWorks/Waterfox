@@ -358,7 +358,7 @@ static bool HostInObfuscationWhitelist(nsIURI* docURI) {
   docURI->GetAsciiHost(hostName);  // normalize UTF8 to ASCII equivalent
   nsCString domainWhiteList;
   nsresult nr = Preferences::GetCString(
-      "media.peerconnection.ice.obfuscate_host_addresses.whitelist",
+      "media.peerconnection.ice.obfuscate_host_addresses.blocklist",
       domainWhiteList);
 
   if (NS_FAILED(nr)) {
