@@ -8118,6 +8118,12 @@
   value: true
   mirror: always
 
+# Whether we always print silently (without a print dialog).
+- name: print.always_print_silent
+  type: RelaxedAtomicBool
+  value: false
+  mirror: always
+
 #---------------------------------------------------------------------------
 # Prefs starting with "privacy."
 #---------------------------------------------------------------------------
