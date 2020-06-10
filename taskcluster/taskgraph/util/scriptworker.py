@@ -429,6 +429,7 @@ def get_release_config(config):
 
     partial_updates = os.environ.get("PARTIAL_UPDATES", "")
     if partial_updates != "" and config.kind in ('release-bouncer-sub',
+                                                 'release-bouncer-sub-nazgul',
                                                  'release-bouncer-check',
                                                  'release-update-verify-config',
                                                  'release-secondary-update-verify-config',
