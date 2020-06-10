@@ -566,26 +566,9 @@ nsresult GfxInfo::GetFeatureStatusImpl(
     }
 
     if (aFeature == FEATURE_WEBRENDER) {
-      bool isUnblocked = false;
-#ifdef NIGHTLY_BUILD
-      // On nightly enable all Adreno GPUs
-      const nsCString& gpu = mGLStrings->Renderer();
-      isUnblocked |= gpu.Find("Adreno (TM) 5", /*ignoreCase*/ true) >= 0 ||
-                     gpu.Find("Adreno (TM) 6", /*ignoreCase*/ true) >= 0;
-#else
-      // Only allow pixel 2/3 devices on beta/release builds
-      NS_LossyConvertUTF16toASCII model(mModel);
-      isUnblocked |= model.Find("Pixel 2", /*ignoreCase*/ true) >=
-                         0 ||  // Find substring to include all Pixel 2 models
-                     model.Find("Pixel 3", /*ignoreCase*/ true) >=
-                         0;  // Find substring to include all Pixel 3 models
-#endif
-      if (!isUnblocked) {
-        *aStatus = nsIGfxInfo::FEATURE_BLOCKED_DEVICE;
-        aFailureId = "FEATURE_FAILURE_WEBRENDER_BLOCKED_DEVICE";
-      } else {
-        *aStatus = nsIGfxInfo::FEATURE_ALLOW_QUALIFIED;
-      }
+      // No WebRender on ESR.
+      *aStatus = nsIGfxInfo::FEATURE_BLOCKED_DEVICE;
+      aFailureId = "FEATURE_FAILURE_WEBRENDER_BLOCKED_DEVICE";
       return NS_OK;
     }
   }
