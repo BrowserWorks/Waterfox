@@ -2190,8 +2190,8 @@ function addChromeURLBlocker() {
 
 function pemToBase64(pem) {
   return pem
-    .replace(/-----BEGIN CERTIFICATE-----/, "")
-    .replace(/-----END CERTIFICATE-----/, "")
+    .replace(/(.*)-----BEGIN CERTIFICATE-----/, "")
+    .replace(/-----END CERTIFICATE-----(.*)/, "")
     .replace(/[\r\n]/g, "");
 }
 
