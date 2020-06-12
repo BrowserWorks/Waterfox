@@ -794,7 +794,14 @@ nsresult nsWindowWatcher::OpenWindowInternal(
         !nsContentUtils::IsSystemOrExpandedPrincipal(subjectPrincipal)) {
       openWindowInfo->mOriginAttributes =
           subjectPrincipal->OriginAttributesRef();
+    } else if (parentBC) {
+      openWindowInfo->mOriginAttributes = parentBC->OriginAttributesRef();
     }
+
+    MOZ_DIAGNOSTIC_ASSERT(
+        !parentBC || openWindowInfo->mOriginAttributes.EqualsIgnoringFPD(
+                         parentBC->OriginAttributesRef()),
+        "subject principal origin attributes doesn't match opener");
   }
 
   uint32_t activeDocsSandboxFlags = 0;
