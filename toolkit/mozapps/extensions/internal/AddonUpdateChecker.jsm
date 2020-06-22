@@ -280,7 +280,8 @@ function UpdateParser(aId, aUrl, aObserver) {
 
   let requireBuiltIn = Services.prefs.getBoolPref(
     PREF_UPDATE_REQUIREBUILTINCERTS,
-    !AppConstants.MOZ_REQUIRE_SIGNING
+    !AppConstants.MOZ_REQUIRE_SIGNING &&
+      !AppConstants.MOZ_APP_VERSION_DISPLAY.endsWith("esr")
   );
 
   logger.debug("Requesting " + aUrl);
@@ -320,7 +321,8 @@ UpdateParser.prototype = {
 
     let requireBuiltIn = Services.prefs.getBoolPref(
       PREF_UPDATE_REQUIREBUILTINCERTS,
-      !AppConstants.MOZ_REQUIRE_SIGNING
+      !AppConstants.MOZ_REQUIRE_SIGNING &&
+        !AppConstants.MOZ_APP_VERSION_DISPLAY.endsWith("esr")
     );
 
     try {
