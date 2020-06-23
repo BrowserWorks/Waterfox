@@ -7960,7 +7960,7 @@ bool BytecodeEmitter::emitCalleeAndThisForOptionalChain(
     //              [stack] UNDEFINED UNDEFINED
     //              [stack] # otherwise
     //              [stack] CALLEE THIS
-    return true;
+    return false;
   }
   return true;
 }
@@ -7981,7 +7981,7 @@ bool BytecodeEmitter::emitOptionalChain(UnaryNode* optionalChain,
     //              [stack] UNDEFINED
     //              [stack] # otherwise
     //              [stack] VAL
-    return true;
+    return false;
   }
 
   return true;
