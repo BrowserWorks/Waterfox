@@ -4470,6 +4470,11 @@ void LIRGenerator::visitWasmCall(MWasmCall* ins) {
     lir = lowerWasmCall<LWasmCallVoid>(ins, needsBoundsCheck);
   } else {
     lir = lowerWasmCall<LWasmCall>(ins, needsBoundsCheck);
+#ifdef JS_CODEGEN_X64
+    if (JitOptions.spectreIndexMasking && ins->type() == MIRType::Int32) {
+      ((LWasmCall*)lir)->setMaskInt32Return();
+    }
+#endif
   }
   if (!lir) {
     return;

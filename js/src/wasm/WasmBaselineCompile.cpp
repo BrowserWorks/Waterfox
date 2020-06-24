@@ -4774,6 +4774,11 @@ class BaseCompiler final : public BaseCompilerInterface {
     RegI32 r = RegI32(ReturnReg);
     MOZ_ASSERT(isAvailableI32(r));
     needI32(r);
+#if defined(JS_CODEGEN_X64)
+    if (JitOptions.spectreIndexMasking) {
+      masm.movl(r, r);
+    }
+#endif
     return r;
   }
 

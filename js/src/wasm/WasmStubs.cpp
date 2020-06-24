@@ -1140,6 +1140,11 @@ void wasm::GenerateDirectCallFromJit(MacroAssembler& masm, const FuncExport& fe,
       break;
     case wasm::ExprType::I32:
       // The return value is in ReturnReg, which is what Ion expects.
+#if defined(JS_CODEGEN_X64)
+      if (JitOptions.spectreIndexMasking) {
+        masm.movl(ReturnReg, ReturnReg);
+      }
+#endif
       GenPrintIsize(DebugChannel::Function, masm, ReturnReg);
       break;
     case wasm::ExprType::F32:
