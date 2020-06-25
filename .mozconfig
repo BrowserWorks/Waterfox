@@ -10,7 +10,6 @@ mk_add_options AUTOCONF=/usr/local/Cellar/autoconf213/2.13/bin/autoconf213
 # Windows 10 Specific Options
 ac_add_options --disable-xcode-checks
 elif test `uname -s` = MINGW32_NT-6.2; then
-ac_add_options --enable-ccache=sccache
 ac_add_options --disable-maintenance-service
 ac_add_options --enable-optimize="-O2 -Qvec -w -clang:-arch:SSE3"
 ac_add_options --target=x86_64-pc-mingw32
