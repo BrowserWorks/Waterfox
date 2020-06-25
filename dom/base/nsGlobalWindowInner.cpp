@@ -4735,6 +4735,9 @@ nsGlobalWindowInner::ShowSlowScriptDialog(JSContext* aCx,
   }
   mHasHadSlowScript = true;
 
+  // Override the cursor to something that we're sure the user can see.
+  SetCursor(NS_LITERAL_CSTRING("auto"), IgnoreErrors());
+
   if (XRE_IsContentProcess() && ProcessHangMonitor::Get()) {
     ProcessHangMonitor::SlowScriptAction action;
     RefPtr<ProcessHangMonitor> monitor = ProcessHangMonitor::Get();
