@@ -511,16 +511,6 @@ public final class IntentHelper implements BundleEventListener {
             return;
         }
 
-        if (FileUtils.isContentUri(uri)) {
-            final String contentUri = resolveContentUri(getContext(), intent.getData());
-            if (!TextUtils.isEmpty(contentUri)) {
-                errorResponse.putString("uri", contentUri);
-                errorResponse.putBoolean("isFallback", true);
-            }
-            callback.sendError(errorResponse);
-            return;
-        }
-
         // For this flow, we follow Chrome's lead:
         //   https://developer.chrome.com/multidevice/android/intents
         final String fallbackUrl = intent.getStringExtra(EXTRA_BROWSER_FALLBACK_URL);
