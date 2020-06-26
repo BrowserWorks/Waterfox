@@ -330,11 +330,10 @@ class OSXBootstrapper(BaseBootstrapper):
             'autoconf@2.13',
             'git',
             'gnu-tar',
-            'llvm',
+            'llvm@9',
             'mercurial',
             'node',
             'python',
-            'python@2',
             'terminal-notifier',
             'watchman',
         ]
