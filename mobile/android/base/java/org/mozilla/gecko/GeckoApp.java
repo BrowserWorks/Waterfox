@@ -1463,7 +1463,8 @@ public abstract class GeckoApp extends GeckoActivity
             return;
         }
 
-        Tabs.getInstance().loadUrlWithIntentExtras(url, intent, flags);
+        Tabs.getInstance().loadUrlWithIntentExtras(getApplicationContext(), url,
+                                                   intent, flags);
     }
 
     protected SearchWidgetProvider.InputType getWidgetInputType(final Intent intent) {
@@ -1879,7 +1880,8 @@ public abstract class GeckoApp extends GeckoActivity
                     if (isFirstTab) {
                         flags |= Tabs.LOADURL_FIRST_AFTER_ACTIVITY_UNHIDDEN;
                     }
-                    Tabs.getInstance().loadUrlWithIntentExtras(url, intent, flags);
+                    Tabs.getInstance().loadUrlWithIntentExtras(getApplicationContext(), url,
+                                                               intent, flags);
                 }
             });
         } else if (Intent.ACTION_ASSIST.equals(action)) {
