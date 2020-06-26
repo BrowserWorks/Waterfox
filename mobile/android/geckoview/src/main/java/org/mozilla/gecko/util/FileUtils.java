@@ -300,14 +300,10 @@ public class FileUtils {
     }
 
     public static String resolveContentUri(final Context context, final Uri uri) {
-        String path = getOriginalFilePathFromUri(context, uri);
-        if (TextUtils.isEmpty(path)) {
-            // We cannot always successfully guess the original path of the file behind the
-            // content:// URI, so we need a fallback. This will break local subresources and
-            // relative links, but unfortunately there's nothing else we can do
-            // (see https://issuetracker.google.com/issues/77406791).
-            path = getTempFilePathFromContentUri(context, uri);
-        }
+        // This will break local subresources and relative links, but
+        // unfortunately there's nothing else we can do (see
+        // https://issuetracker.google.com/issues/77406791).
+        final String path = getTempFilePathFromContentUri(context, uri);
         return !TextUtils.isEmpty(path) ? String.format(FILE_ABSOLUTE_URI, path) : path;
     }
 
