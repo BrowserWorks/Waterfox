@@ -5,6 +5,6 @@
 
 <paths xmlns:android="http://schemas.android.com/apk/res/android">
     <root-path
-        name="root"
-        path="." />
+        name="storage"
+        path="/storage/" />
 </paths>
