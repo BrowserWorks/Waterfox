@@ -82,18 +82,6 @@ jobs:
           - mozilla-central
       when: []  # never (hook only)
 
-    - name: ship-geckoview
-      job:
-          type: decision-task
-          treeherder-symbol: ship_geckoview_beta
-          target-tasks-method: ship_geckoview_beta
-          include-push-tasks: true
-          android-release-type: beta
-      run-on-projects:
-          - mozilla-beta
-      when: []    # never (hook only)
-
-
     - name: searchfox-index
       job:
           type: decision-task
