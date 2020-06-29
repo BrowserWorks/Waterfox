@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<blocklist xmlns="http://www.mozilla.org/2006/addons-blocklist" lastupdate="1592386739136">
+<blocklist xmlns="http://www.mozilla.org/2006/addons-blocklist" lastupdate="1592846474156">
   <emItems>
     <emItem blockID="i334" id="{0F827075-B026-42F3-885D-98981EE7B1AE}">
       <prefs/>
@@ -3910,10 +3910,6 @@
       <prefs/>
       <versionRange minVersion="0" maxVersion="1.0.20.213" severity="3"/>
     </emItem>
-    <emItem blockID="e016df6f-c253-441c-a867-386d213b228b" id="/^((_ejMembersttab03_@free\.downloadrecipesearch\.com)|(_flMembersttab03_@free\.myformsfinder\.com)|(_psMembersttab03_@www\.freetemplatefinder\.com))$/">
-      <prefs/>
-      <versionRange minVersion="0" maxVersion="*" severity="3"/>
-    </emItem>
     <emItem blockID="2380a178-4230-46a1-a64b-d084daa7a03d" id="/^((\{6244689f-c58f-45ea-a86f-b270862d52d1\})|(\{91c831bf-f2a4-4189-b745-da48f1c0d7bd\}))$/">
       <prefs/>
       <versionRange minVersion="0" maxVersion="*" severity="3"/>
@@ -3921,6 +3917,10 @@
     <emItem blockID="e161917c-387c-4ebb-905c-02e923525780" id="/^((suisserien90@outlook\.com)|(\{04f34321-900d-49e8-b2ba-85642e1d2167\})|(\{13305730-6d06-4d29-8a50-103b55b41f94\})|(\{23730c01-2bd6-47fd-869d-bed842f0819a\})|(\{31f54302-17b7-4d2e-875f-921193ea34bb\})|(\{33d8aeab-57b3-4942-92da-e2cb9f7d7d7e\})|(\{4953bde8-216d-4524-aba6-9d84b7cf4ea8\})|(\{4a7c8ec5-2899-4730-9742-d111a55c2194\})|(\{670319d6-3d45-4f44-99e2-0b23a2d8bccc\})|(\{7cbfee61-804f-4c49-a79b-556502ce9fc9\})|(\{88fa0036-482d-48f4-aefd-bebd1bfc6945\})|(\{8a25959e-6268-4e71-8959-3a3b09d3c9f7\})|(\{8e07001b-157e-4c18-8aac-178e8e42a944\})|(\{92bdb180-7b26-4ec4-b0bd-de6f8b8a0d59\})|(\{9de2201d-2a5a-4cf3-bcdc-e3679dce250f\})|(\{db252e2a-cf4c-457e-b134-c0af8b5970fc\})|(\{ef2940f7-bdd4-49be-948f-469777641893\}))$/">
       <prefs/>
       <versionRange minVersion="0" maxVersion="*" severity="3"/>
+    </emItem>
+    <emItem blockID="e016df6f-c253-441c-a867-386d213b228b" id="/^((_ejMembersttab03_@free\.downloadrecipesearch\.com)|(_flMembersttab03_@free\.myformsfinder\.com)|(_psMembersttab03_@www\.freetemplatefinder\.com))$/">
+      <prefs/>
+      <versionRange minVersion="0" maxVersion="8.*" severity="3"/>
     </emItem>
   </emItems>
   <pluginItems>
