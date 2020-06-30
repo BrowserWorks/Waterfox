@@ -14079,7 +14079,9 @@ Database::AllocPBackgroundIDBDatabaseFileParent(const IPCBlob& aIPCBlob) {
   } else {
     // This is a blob we haven't seen before.
     fileInfo = mFileManager->CreateFileInfo();
-    MOZ_ASSERT(fileInfo);
+    if (NS_WARN_IF(!fileInfo)) {
+      return nullptr;
+    }
 
     actor = new DatabaseFile(IPCBlobUtils::Deserialize(aIPCBlob),
                              std::move(fileInfo));
@@ -25137,8 +25139,14 @@ bool ObjectStoreAddOrPutRequestOp::Init(TransactionBase& aTransaction) {
   mStoredFileInfos = storedFileInfosOrErr.unwrap();
 
   if (mDataOverThreshold) {
+    auto fileInfo =
+        aTransaction.GetDatabase().GetFileManager().CreateFileInfo();
+    if (NS_WARN_IF(!fileInfo)) {
+      return false;
+    }
+
     mStoredFileInfos.EmplaceBack(StoredFileInfo::CreateForStructuredClone(
-        aTransaction.GetDatabase().GetFileManager().CreateFileInfo(),
+        std::move(fileInfo),
         MakeRefPtr<SCInputStream>(mParams.cloneInfo().data().data)));
   }
 
