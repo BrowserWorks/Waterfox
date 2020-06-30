@@ -159,6 +159,33 @@ inline bool TypeSet::IsUntrackedValue(const Value& val) {
                            val.whyMagic() == JS_UNINITIALIZED_LEXICAL);
 }
 
+// static
+inline TypeSet::Type TypeSet::PrimitiveType(jit::MIRType type) {
+  switch (type) {
+    case jit::MIRType::Undefined:
+      return UndefinedType();
+    case jit::MIRType::Null:
+      return NullType();
+    case jit::MIRType::Boolean:
+      return BooleanType();
+    case jit::MIRType::Int32:
+      return Int32Type();
+    case jit::MIRType::Float32:
+    case jit::MIRType::Double:
+      return DoubleType();
+    case jit::MIRType::String:
+      return StringType();
+    case jit::MIRType::Symbol:
+      return SymbolType();
+    case jit::MIRType::BigInt:
+      return BigIntType();
+    case jit::MIRType::MagicOptimizedArguments:
+      return MagicArgType();
+    default:
+      MOZ_CRASH("Unexpected MIR type");
+  }
+}
+
 inline TypeSet::Type TypeSet::GetMaybeUntrackedValueType(const Value& val) {
   return IsUntrackedValue(val) ? UnknownType() : GetValueType(val);
 }

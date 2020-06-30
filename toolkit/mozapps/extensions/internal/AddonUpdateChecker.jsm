@@ -48,6 +48,11 @@ ChromeUtils.defineModuleGetter(
   "ServiceRequest",
   "resource://gre/modules/ServiceRequest.jsm"
 );
+ChromeUtils.defineModuleGetter(
+  this,
+  "AppConstants",
+  "resource://gre/modules/AppConstants.jsm"
+);
 
 const { Log } = ChromeUtils.import("resource://gre/modules/Log.jsm");
 const LOGGER_ID = "addons.update-checker";
@@ -275,7 +280,8 @@ function UpdateParser(aId, aUrl, aObserver) {
 
   let requireBuiltIn = Services.prefs.getBoolPref(
     PREF_UPDATE_REQUIREBUILTINCERTS,
-    true
+    !AppConstants.MOZ_REQUIRE_SIGNING &&
+      !AppConstants.MOZ_APP_VERSION_DISPLAY.endsWith("esr")
   );
 
   logger.debug("Requesting " + aUrl);
@@ -315,7 +321,8 @@ UpdateParser.prototype = {
 
     let requireBuiltIn = Services.prefs.getBoolPref(
       PREF_UPDATE_REQUIREBUILTINCERTS,
-      true
+      !AppConstants.MOZ_REQUIRE_SIGNING &&
+        !AppConstants.MOZ_APP_VERSION_DISPLAY.endsWith("esr")
     );
 
     try {
