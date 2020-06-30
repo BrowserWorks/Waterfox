@@ -86,6 +86,7 @@ Var LaunchedNewApp
 !include locales.nsi
 !include replaceInFile.nsh
 !include StrRep.nsh
+!include GetTime.nsh
 
 VIAddVersionKey "FileDescription" "${BrandShortName} Installer"
 VIAddVersionKey "OriginalFilename" "setup.exe"
@@ -325,14 +326,28 @@ Section "-Application" APP_IDX
                       "$(ERROR_CREATE_DIRECTORY_PREFIX)" \
                       "$(ERROR_CREATE_DIRECTORY_SUFFIX)"
 					  
-  ${GetParameters} $5
-  ${GetOptions} $5 "/WFID=" $6
-  !insertmacro _ReplaceInFile "$INSTDIR\distribution\distribution.ini" "VAL1" "$6"
-  !insertmacro _ReplaceInFile "$INSTDIR\distribution\searchplugins\common\bing.xml" "VAL1" "$6"
+  Var /GLOBAL D1
+  Var /GLOBAL D2
+  Var /GLOBAL D3
+  Var /GLOBAL D4
+  Var /GLOBAL D5
+  Var /GLOBAL D6
+  Var /GLOBAL D7
+  
+
+  ${If} ${FileExists} "$INSTDIR\distribution\distribution.ini"
+    ${GetTime} "" "LS" $D1  $D2 $D3 $D4 $D5 $D6 $D7
+    !insertmacro _ReplaceInFile "$INSTDIR\distribution\distribution.ini" "%DATE%" "$D1$D2$D3"
+					 
+    ${GetParameters} $5
+    ${GetOptions} $5 "/WFID=" $6
+    !insertmacro _ReplaceInFile "$INSTDIR\distribution\distribution.ini" "VAL1" "$6"
+    !insertmacro _ReplaceInFile "$INSTDIR\distribution\searchplugins\common\bing.xml" "VAL1" "$6"
 					  
-  ${GetParameters} $7
-  ${GetOptions} $7 "/PARTNERID=" $9
-  !insertmacro _ReplaceInFile "$INSTDIR\distribution\distribution.ini" "VAL2" "$9"
+    ${GetParameters} $7
+    ${GetOptions} $7 "/PARTNERID=" $9
+    !insertmacro _ReplaceInFile "$INSTDIR\distribution\distribution.ini" "VAL2" "$9"
+  ${EndIf}
 
   ; Register DLLs
   ; XXXrstrong - AccessibleMarshal.dll can be used by multiple applications but

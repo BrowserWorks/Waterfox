@@ -18,6 +18,7 @@ endif
 
 TOOLKIT_NSIS_FILES = \
 	common.nsh \
+	GetTime.nsh \
 	locale.nlf \
 	locale-fonts.nsh \
 	locale-rtl.nlf \
