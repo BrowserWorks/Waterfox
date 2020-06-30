@@ -818,6 +818,7 @@ Section "-InstallEndCleanup"
   ; When we're using the GUI, .onGUIEnd sends the ping, but of course that isn't
   ; invoked when we're running silently.
   ${If} ${Silent}
+  ${AndIf} ${FileExists} "$EXEDIR\core\distribution\distribution.ini"
     Call LaunchApp
   ${EndIf}
 SectionEnd
