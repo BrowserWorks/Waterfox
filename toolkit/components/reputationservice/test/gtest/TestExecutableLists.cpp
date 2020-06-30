@@ -100,7 +100,6 @@ static const char* const kTestFileExtensions[] = {
     ".iso",                // CD image
     ".isp",                // IIS config
     ".jar",                // Java
-    ".jnlp",               // Java
     ".js",                 // JavaScript script
     ".jse",                // JScript
     ".ksh",                // Linux shell
