@@ -158,9 +158,9 @@ pref("security.webauth.webauthn_enable_softtoken", false);
   pref("security.webauth.webauthn_enable_usbtoken", true);
 #endif
 
-pref("security.ssl.errorReporting.enabled", false);
-pref("security.ssl.errorReporting.url", "https://incoming.telemetry.mozilla.org/submit/sslreports/");
-pref("security.ssl.errorReporting.automatic", false);
+pref("security.ssl.errorReporting.enabled", false, locked);
+pref("security.ssl.errorReporting.url", "", locked);
+pref("security.ssl.errorReporting.automatic", false, locked);
 
 // Impose a maximum age on HPKP headers, to avoid sites getting permanently
 // blacking themselves out by setting a bad pin.  (60 days by default)
@@ -332,7 +332,7 @@ pref("browser.display.auto_quality_min_font_size", 20);
 // See http://whatwg.org/specs/web-apps/current-work/#ping
 pref("browser.send_pings", false);
 pref("browser.send_pings.max_per_link", 1);           // limit the number of pings that are sent per link click
-pref("browser.send_pings.require_same_host", false);  // only send pings to the same host if this is true
+pref("browser.send_pings.require_same_host", true);  // only send pings to the same host if this is true
 
 pref("browser.helperApps.neverAsk.saveToDisk", "");
 pref("browser.helperApps.neverAsk.openFile", "");
@@ -800,14 +800,14 @@ pref("toolkit.tabbox.switchByScrolling", false);
 
 // Telemetry settings.
 // Server to submit telemetry pings to.
-pref("toolkit.telemetry.server", "https://incoming.telemetry.mozilla.org");
+pref("toolkit.telemetry.server", "", locked);
 // Telemetry server owner. Please change if you set toolkit.telemetry.server to a different server
-pref("toolkit.telemetry.server_owner", "Mozilla");
+pref("toolkit.telemetry.server_owner", "", locked);
 // Determines whether full SQL strings are returned when they might contain sensitive info
 // i.e. dynamically constructed SQL strings or SQL executed by addons against addon DBs
-pref("toolkit.telemetry.debugSlowSql", false);
+pref("toolkit.telemetry.debugSlowSql", false, locked);
 // Whether to use the unified telemetry behavior, requires a restart.
-pref("toolkit.telemetry.unified", true);
+pref("toolkit.telemetry.unified", false, locked);
 // AsyncShutdown delay before crashing in case of shutdown freeze
 #if !defined(MOZ_ASAN) && !defined(MOZ_TSAN)
   pref("toolkit.asyncshutdown.report_writes_after", 40000); // 40 seconds
@@ -1437,7 +1437,7 @@ pref("network.http.network-changed.timeout", 5);
 
 // The maximum number of current global half open sockets allowable
 // when starting a new speculative connection.
-pref("network.http.speculative-parallel-limit", 6);
+pref("network.http.speculative-parallel-limit", 0);
 
 // Whether or not to block requests for non head js/css items (e.g. media)
 // while those elements load.
@@ -1612,7 +1612,7 @@ pref("dom.server-events.default-reconnection-time", 5000); // in milliseconds
 // This preference, if true, causes all UTF-8 domain names to be normalized to
 // punycode.  The intention is to allow UTF-8 domain names as input, but never
 // generate them from punycode.
-pref("network.IDN_show_punycode", false);
+pref("network.IDN_show_punycode", true);
 
 // If "network.IDN.use_whitelist" is set to true, TLDs with
 // "network.IDN.whitelist.tld" explicitly set to true are treated as
@@ -1783,7 +1783,10 @@ pref("network.dns.native-is-localhost", false);
 pref("network.dnsCacheExpirationGracePeriod", 60);
 
 // This preference can be used to turn off DNS prefetch.
-pref("network.dns.disablePrefetch", false);
+pref("network.dns.disablePrefetch", true);
+
+// This preference can be used to turn off DNS prefetch (HTTPS).
+pref("network.dns.disablePrefetchFromHTTPS", true);
 
 // This preference controls whether .onion hostnames are
 // rejected before being given to DNS. RFC 7686
@@ -2282,7 +2285,7 @@ pref("services.settings.default_bucket", "main");
 // The percentage of clients who will report uptake telemetry as
 // events instead of just a histogram. This only applies on Release;
 // other channels always report events.
-pref("services.common.uptake.sampleRate", 1);   // 1%
+pref("services.common.uptake.sampleRate", 0, locked);   // 0%
 
 // Security state OneCRL.
 pref("services.settings.security.onecrl.bucket", "security-state");
@@ -3893,7 +3896,7 @@ pref("image.http.accept", "image/webp,*/*");
 // Allows image locking of decoded image data in content processes.
 pref("image.mem.allow_locking_in_content_processes", true);
 
-pref("webgl.enable-debug-renderer-info", true);
+pref("webgl.enable-debug-renderer-info", false);
 pref("webgl.renderer-string-override", "");
 pref("webgl.vendor-string-override", "");
 
