@@ -71,7 +71,7 @@ pref("extensions.webextensions.background-delayed-startup", true);
 
 // Require signed add-ons by default
 pref("extensions.langpacks.signatures.required", true);
-pref("xpinstall.signatures.required", true);
+pref("xpinstall.signatures.required", false);
 pref("xpinstall.signatures.devInfoURL", "https://wiki.mozilla.org/Addons/Extension_Signing");
 
 // Enable extensionStorage storage actor by default
@@ -182,13 +182,13 @@ pref("lightweightThemes.getMoreURL", "https://addons.mozilla.org/%LOCALE%/firefo
 #endif
 
 // UI tour experience.
-pref("browser.uitour.enabled", true);
+pref("browser.uitour.enabled", false, locked);
 pref("browser.uitour.loglevel", "Error");
-pref("browser.uitour.requireSecure", true);
-pref("browser.uitour.themeOrigin", "https://addons.mozilla.org/%LOCALE%/firefox/themes/");
-pref("browser.uitour.url", "https://www.mozilla.org/%LOCALE%/firefox/%VERSION%/tour/");
+pref("browser.uitour.requireSecure", true, locked);
+pref("browser.uitour.themeOrigin", "", locked);
+pref("browser.uitour.url", "", locked);
 // How long to show a Hearbeat survey (two hours, in seconds)
-pref("browser.uitour.surveyDuration", 7200);
+pref("browser.uitour.surveyDuration", 0, locked);
 
 pref("keyword.enabled", true);
 
@@ -270,7 +270,7 @@ pref("browser.urlbar.ctrlCanonizesURLs", true);
 pref("browser.urlbar.autoFill", true);
 
 // Whether to warm up network connections for autofill or search results.
-pref("browser.urlbar.speculativeConnect.enabled", true);
+pref("browser.urlbar.speculativeConnect.enabled", false);
 
 // Whether bookmarklets should be filtered out of Address Bar matches.
 // This is enabled for security reasons, when true it is still possible to
@@ -305,7 +305,7 @@ pref("browser.urlbar.suggest.topsites",             true);
 pref("browser.urlbar.maxCharsForSearchSuggestions", 100);
 
 pref("browser.urlbar.formatting.enabled", true);
-pref("browser.urlbar.trimURLs", true);
+pref("browser.urlbar.trimURLs", false);
 
 // If changed to true, copying the entire URL from the location bar will put the
 // human readable (percent-decoded) URL on the clipboard.
@@ -338,7 +338,7 @@ pref("browser.urlbar.update1.searchTips", true);
 // focused in design update 2.
 pref("browser.urlbar.update2.expandTextOnFocus", false);
 
-pref("browser.urlbar.eventTelemetry.enabled", false);
+pref("browser.urlbar.eventTelemetry.enabled", false, locked);
 
 // Controls when to DNS resolve single word search strings, after they were
 // searched for. If the string is resolved as a valid host, show a
@@ -371,7 +371,7 @@ pref("browser.download.panel.shown", false);
 
 // This controls whether the button is automatically shown/hidden depending
 // on whether there are downloads to show.
-pref("browser.download.autohideButton", true);
+pref("browser.download.autohideButton", false);
 
 #ifndef XP_MACOSX
   pref("browser.helperApps.deleteTempFileOnExit", true);
@@ -963,15 +963,15 @@ pref("browser.zoom.siteSpecific", true);
 pref("browser.zoom.updateBackgroundTabs", true);
 
 // The breakpad report server to link to in about:crashes
-pref("breakpad.reportURL", "https://crash-stats.mozilla.org/report/index/");
+pref("breakpad.reportURL", "", locked);
 
 // URL for "Learn More" for DataCollection
 pref("toolkit.datacollection.infoURL",
-     "https://www.mozilla.org/legal/privacy/firefox.html");
+     "", locked);
 
 // URL for "Learn More" for Crash Reporter
 pref("toolkit.crashreporter.infoURL",
-     "https://www.mozilla.org/legal/privacy/firefox.html#crash-reporter");
+     "", locked);
 
 // base URL for web-based support pages
 pref("app.support.baseURL", "https://support.mozilla.org/1/firefox/%VERSION%/%OS%/%LOCALE%/");
@@ -986,7 +986,7 @@ pref("app.support.baseURL", "https://support.mozilla.org/1/firefox/%VERSION%/%OS
 // Name of alternate about: page for certificate errors (when undefined, defaults to about:neterror)
 pref("security.alternate_certificate_error_page", "certerror");
 
-pref("security.certerrors.recordEventTelemetry", true);
+pref("security.certerrors.recordEventTelemetry", false, locked);
 pref("security.certerrors.permanentOverride", true);
 pref("security.certerrors.mitm.priming.enabled", true);
 pref("security.certerrors.mitm.priming.endpoint", "https://mitmdetection.services.mozilla.com/");
@@ -1178,14 +1178,14 @@ pref("services.sync.prefs.sync.app.shield.optoutstudies.enabled", true);
 // uncompromised Sync-connected devices.
 pref("services.sync.prefs.sync.browser.contentblocking.category", true);
 pref("services.sync.prefs.sync.browser.contentblocking.features.strict", true);
-pref("services.sync.prefs.sync.browser.crashReports.unsubmittedCheck.autoSubmit2", true);
+pref("services.sync.prefs.sync.browser.crashReports.unsubmittedCheck.autoSubmit2", false, locked);
 pref("services.sync.prefs.sync.browser.ctrlTab.recentlyUsedOrder", true);
 pref("services.sync.prefs.sync.browser.discovery.enabled", true);
 pref("services.sync.prefs.sync.browser.download.useDownloadDir", true);
 pref("services.sync.prefs.sync.browser.formfill.enable", true);
 pref("services.sync.prefs.sync.browser.link.open_newwindow", true);
 pref("services.sync.prefs.sync.browser.newtabpage.activity-stream.showSearch", true);
-pref("services.sync.prefs.sync.browser.newtabpage.activity-stream.showSponsored", true);
+pref("services.sync.prefs.sync.browser.newtabpage.activity-stream.showSponsored", false, locked);
 pref("services.sync.prefs.sync.browser.newtabpage.activity-stream.feeds.topsites", true);
 pref("services.sync.prefs.sync.browser.newtabpage.activity-stream.topSitesRows", true);
 pref("services.sync.prefs.sync.browser.newtabpage.activity-stream.feeds.snippets", true);
@@ -1195,7 +1195,7 @@ pref("services.sync.prefs.sync.browser.newtabpage.activity-stream.feeds.section.
 pref("services.sync.prefs.sync.browser.newtabpage.activity-stream.section.highlights.includeVisited", true);
 pref("services.sync.prefs.sync.browser.newtabpage.activity-stream.section.highlights.includeBookmarks", true);
 pref("services.sync.prefs.sync.browser.newtabpage.activity-stream.section.highlights.includeDownloads", true);
-pref("services.sync.prefs.sync.browser.newtabpage.activity-stream.section.highlights.includePocket", true);
+pref("services.sync.prefs.sync.browser.newtabpage.activity-stream.section.highlights.includePocket", false, locked);
 pref("services.sync.prefs.sync.browser.newtabpage.activity-stream.section.highlights.rows", true);
 pref("services.sync.prefs.sync.browser.newtabpage.enabled", true);
 pref("services.sync.prefs.sync.browser.newtabpage.pinned", true);
@@ -1402,7 +1402,7 @@ pref("security.insecure_connection_icon.enabled", true);
 pref("security.insecure_connection_icon.pbmode.enabled", true);
 
 // For secure connections, show gray instead of green lock icon
-pref("security.secure_connection_icon_color_gray", true);
+pref("security.secure_connection_icon_color_gray", false);
 
 // Show "Not Secure" text for http pages; disabled for now
 pref("security.insecure_connection_text.enabled", false);
@@ -1470,7 +1470,7 @@ pref("identity.sendtabpromo.url", "https://support.mozilla.org/1/firefox/%VERSIO
 // URLs for promo links to mobile browsers. Note that consumers are expected to
 // append a value for utm_campaign.
 pref("identity.mobilepromo.android", "https://www.mozilla.org/firefox/android/?utm_source=firefox-browser&utm_medium=firefox-browser&utm_campaign=");
-pref("identity.mobilepromo.ios", "https://www.mozilla.org/firefox/ios/?utm_source=firefox-browser&utm_medium=firefox-browser&utm_campaign=");
+pref("identity.mobilepromo.ios", "", locked);
 
 // Migrate any existing Firefox Account data from the default profile to the
 // Developer Edition profile.
@@ -1538,25 +1538,25 @@ pref("browser.translation.engine", "Google");
 
 // Telemetry settings.
 // Determines if Telemetry pings can be archived locally.
-pref("toolkit.telemetry.archive.enabled", true);
+pref("toolkit.telemetry.archive.enabled", false, locked);
 // Enables sending the shutdown ping when Firefox shuts down.
-pref("toolkit.telemetry.shutdownPingSender.enabled", true);
+pref("toolkit.telemetry.shutdownPingSender.enabled", false, locked);
 // Enables sending the shutdown ping using the pingsender from the first session.
-pref("toolkit.telemetry.shutdownPingSender.enabledFirstSession", false);
+pref("toolkit.telemetry.shutdownPingSender.enabledFirstSession", false, locked);
 // Enables sending a duplicate of the first shutdown ping from the first session.
-pref("toolkit.telemetry.firstShutdownPing.enabled", true);
+pref("toolkit.telemetry.firstShutdownPing.enabled", false, locked);
 // Enables sending the 'new-profile' ping on new profiles.
-pref("toolkit.telemetry.newProfilePing.enabled", true);
+pref("toolkit.telemetry.newProfilePing.enabled", false, locked);
 // Enables sending 'update' pings on Firefox updates.
-pref("toolkit.telemetry.updatePing.enabled", true);
+pref("toolkit.telemetry.updatePing.enabled", false, locked);
 // Enables sending 'bhr' pings when the browser hangs.
-pref("toolkit.telemetry.bhrPing.enabled", true);
+pref("toolkit.telemetry.bhrPing.enabled", false, locked);
 // Whether to enable Ecosystem Telemetry, requires a restart.
-pref("toolkit.telemetry.ecosystemtelemetry.enabled", false);
+pref("toolkit.telemetry.ecosystemtelemetry.enabled", false, locked);
 
 // Ping Centre Telemetry settings.
-pref("browser.ping-centre.telemetry", true);
-pref("browser.ping-centre.log", false);
+pref("browser.ping-centre.telemetry", false, locked);
+pref("browser.ping-centre.log", false, locked);
 
 // Enable GMP support in the addon manager.
 pref("media.gmp-provider.enabled", true);
@@ -1662,13 +1662,9 @@ pref("browser.contentblocking.cfr-milestone.milestones", "[1000, 5000, 10000, 25
 // Always enable newtab segregation using containers
 pref("privacy.usercontext.about_newtab_segregation.enabled", true);
 // Enable Contextual Identity Containers
-#ifdef NIGHTLY_BUILD
   pref("privacy.userContext.enabled", true);
   pref("privacy.userContext.ui.enabled", true);
-#else
-  pref("privacy.userContext.enabled", false);
-  pref("privacy.userContext.ui.enabled", false);
-#endif
+
 pref("privacy.userContext.extension", "");
 // allows user to open container menu on a left click instead of a new
 // tab in the default container
@@ -1706,11 +1702,11 @@ pref("browser.tabs.remote.warmup.maxTabs", 3);
 pref("browser.tabs.remote.warmup.unloadDelayMs", 2000);
 
 // For the about:tabcrashed page
-pref("browser.tabs.crashReporting.sendReport", true);
-pref("browser.tabs.crashReporting.includeURL", false);
-pref("browser.tabs.crashReporting.requestEmail", false);
-pref("browser.tabs.crashReporting.emailMe", false);
-pref("browser.tabs.crashReporting.email", "");
+pref("browser.tabs.crashReporting.sendReport", false, locked);
+pref("browser.tabs.crashReporting.includeURL", false, locked);
+pref("browser.tabs.crashReporting.requestEmail", false, locked);
+pref("browser.tabs.crashReporting.emailMe", false, locked);
+pref("browser.tabs.crashReporting.email", "", locked);
 
 // If true, unprivileged extensions may use experimental APIs on
 // nightly and developer edition.
@@ -1730,10 +1726,10 @@ pref("reader.errors.includeURLs", true);
 
 pref("view_source.tab", true);
 
-pref("dom.serviceWorkers.enabled", true);
+pref("dom.serviceWorkers.enabled", false);
 
 // Enable Push API.
-pref("dom.push.enabled", true);
+pref("dom.push.enabled", false);
 
 // These are the thumbnail width/height set in about:newtab.
 // If you change this, ENSURE IT IS THE SAME SIZE SET
@@ -1754,10 +1750,10 @@ pref("dom.ipc.processPrelaunch.enabled", true);
 pref("browser.migrate.chrome.history.limit", 2000);
 pref("browser.migrate.chrome.history.maxAgeInDays", 180);
 
-pref("extensions.pocket.api", "api.getpocket.com");
-pref("extensions.pocket.enabled", true);
-pref("extensions.pocket.oAuthConsumerKey", "40249-e88c401e1b1f2242d9e441c4");
-pref("extensions.pocket.site", "getpocket.com");
+pref("extensions.pocket.api", "", locked);
+pref("extensions.pocket.enabled", false, locked);
+pref("extensions.pocket.oAuthConsumerKey", "", locked);
+pref("extensions.pocket.site", "", locked);
 
 // Can be removed once Bug 1618058 is resolved.
 pref("signon.generation.confidenceThreshold", "0.75");
@@ -1794,18 +1790,14 @@ pref("webchannel.allowObject.urlWhitelist", "https://content.cdn.mozilla.net htt
 // Whether or not the browser should scan for unsubmitted
 // crash reports, and then show a notification for submitting
 // those reports.
-#ifdef NIGHTLY_BUILD
-  pref("browser.crashReports.unsubmittedCheck.enabled", true);
-#else
-  pref("browser.crashReports.unsubmittedCheck.enabled", false);
-#endif
+  pref("browser.crashReports.unsubmittedCheck.enabled", false, locked);
 
 // chancesUntilSuppress is how many times we'll show the unsubmitted
 // crash report notification across different days and shutdown
 // without a user choice before we suppress the notification for
 // some number of days.
 pref("browser.crashReports.unsubmittedCheck.chancesUntilSuppress", 4);
-pref("browser.crashReports.unsubmittedCheck.autoSubmit2", false);
+pref("browser.crashReports.unsubmittedCheck.autoSubmit2", false, locked);
 
 // Preferences for the form autofill system extension
 // The truthy values of "extensions.formautofill.available" are "on" and "detect",
@@ -1871,20 +1863,16 @@ pref("browser.chrome.errorReporter.infoURL",
      "https://support.mozilla.org/1/firefox/%VERSION%/%OS%/%LOCALE%/nightly-error-collection");
 
 // Normandy client preferences
-pref("app.normandy.api_url", "https://normandy.cdn.mozilla.net/api/v1");
-pref("app.normandy.dev_mode", false);
-pref("app.normandy.enabled", true);
-pref("app.normandy.first_run", true);
-pref("app.normandy.logging.level", 50); // Warn
-pref("app.normandy.run_interval_seconds", 21600); // 6 hours
-pref("app.normandy.shieldLearnMoreUrl", "https://support.mozilla.org/1/firefox/%VERSION%/%OS%/%LOCALE%/shield");
-pref("app.normandy.last_seen_buildid", "");
-pref("app.normandy.onsync_skew_sec", 600);
-#ifdef MOZ_DATA_REPORTING
-  pref("app.shield.optoutstudies.enabled", true);
-#else
-  pref("app.shield.optoutstudies.enabled", false);
-#endif
+pref("app.normandy.api_url", "", locked);
+pref("app.normandy.dev_mode", false, locked);
+pref("app.normandy.enabled", false, locked);
+pref("app.normandy.first_run", false, locked);
+pref("app.normandy.logging.level", 0, locked); // Warn
+pref("app.normandy.run_interval_seconds", 0, locked); // 6 hours
+pref("app.normandy.shieldLearnMoreUrl", "", locked);
+pref("app.normandy.last_seen_buildid", "", locked);
+pref("app.normandy.onsync_skew_sec", 0, locked);
+  pref("app.shield.optoutstudies.enabled", false, locked);
 
 // Web apps support
 pref("browser.ssb.enabled", false);
@@ -1910,13 +1898,13 @@ pref("fission.frontend.simulate-events", false);
 pref("fission.frontend.simulate-messages", false);
 
 // Coverage ping is disabled by default.
-pref("toolkit.coverage.enabled", false);
-pref("toolkit.coverage.endpoint.base", "https://coverage.mozilla.org");
+pref("toolkit.coverage.enabled", false, locked);
+pref("toolkit.coverage.endpoint.base", "", locked);
 
 // Discovery prefs
-pref("browser.discovery.enabled", true);
-pref("browser.discovery.containers.enabled", true);
-pref("browser.discovery.sites", "addons.mozilla.org");
+pref("browser.discovery.enabled", false, locked);
+pref("browser.discovery.containers.enabled", false, locked);
+pref("browser.discovery.sites", "", locked);
 
 pref("browser.engagement.recent_visited_origins.expiry", 86400); // 24 * 60 * 60 (24 hours in seconds)
 
@@ -2388,5 +2376,5 @@ pref("first-startup.timeout", 30000);
 // The agent still runs as scheduled if this pref is disabled,
 // but it exits immediately before taking any action.
 #ifdef XP_WIN
-  pref("default-browser-agent.enabled", true);
+  pref("default-browser-agent.enabled", false, locked);
 #endif
