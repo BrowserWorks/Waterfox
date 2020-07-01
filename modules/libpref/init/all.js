@@ -75,7 +75,7 @@ pref("security.password_lifetime",       30);
 // and trust third party root certificates from the OS).
 // With any other value of the pref or on any other platform, this does nothing.
 // This preference takes precedence over "security.enterprise_roots.enabled".
-pref("security.family_safety.mode", 2);
+pref("security.family_safety.mode", 0);
 
 pref("security.enterprise_roots.enabled", false);
 
