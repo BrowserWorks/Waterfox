@@ -86,7 +86,7 @@ Var LaunchedNewApp
 !include locales.nsi
 !include replaceInFile.nsh
 !include StrRep.nsh
-!include GetTime.nsh
+; !include GetTime.nsh
 
 VIAddVersionKey "FileDescription" "${BrandShortName} Installer"
 VIAddVersionKey "OriginalFilename" "setup.exe"
