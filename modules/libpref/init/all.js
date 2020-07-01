@@ -2601,8 +2601,8 @@ pref("plugins.favorfallback.rules", "");
 
 pref("dom.ipc.plugins.flash.disable-protected-mode", false);
 
-pref("dom.ipc.plugins.flash.subprocess.crashreporter.enabled", true);
-pref("dom.ipc.plugins.reportCrashURL", true);
+pref("dom.ipc.plugins.flash.subprocess.crashreporter.enabled", false, locked);
+pref("dom.ipc.plugins.reportCrashURL", false, locked);
 
 // Force the accelerated direct path for a subset of Flash wmode values
 pref("dom.ipc.plugins.forcedirect.enabled", true);
@@ -4591,11 +4591,7 @@ pref("dom.clients.openwindow_favors_same_process", true);
 
 // When a crash happens, whether to include heap regions of the crash context
 // in the minidump. Enabled by default on nightly and aurora.
-#ifdef RELEASE_OR_BETA
-  pref("toolkit.crashreporter.include_context_heap", false);
-#else
-  pref("toolkit.crashreporter.include_context_heap", true);
-#endif
+  pref("toolkit.crashreporter.include_context_heap", false, locked);
 
 // Open noopener links in a new process
 pref("dom.noopener.newprocess.enabled", true);
