@@ -25,6 +25,7 @@
 #include "mozilla/UniquePtr.h"
 #include "mozilla/UseCounter.h"
 #include "mozilla/dom/ClientSource.h"
+#include "mozilla/dom/FlippedOnce.h"
 #include "mozilla/dom/RemoteWorkerChild.h"
 #include "mozilla/dom/Worker.h"
 #include "mozilla/dom/WorkerCommon.h"
@@ -1248,6 +1249,7 @@ class WorkerPrivate : public RelativeTimeline {
     bool mIdleGCTimerRunning;
     bool mOnLine;
     bool mJSThreadExecutionGranted;
+    FlippedOnce<false> mDeletionScheduled;
   };
   ThreadBound<WorkerThreadAccessible> mWorkerThreadAccessible;
 
