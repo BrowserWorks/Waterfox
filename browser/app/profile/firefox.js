@@ -50,7 +50,7 @@ pref("extensions.getAddons.discovery.api_url", "", locked);
 pref("extensions.htmlaboutaddons.discover.enabled", false, locked);
 
 // The URL for the privacy policy related to recommended extensions.
-pref("extensions.recommendations.privacyPolicyUrl", "https://www.mozilla.org/privacy/firefox/?utm_source=firefox-browser&utm_medium=firefox-browser&utm_content=privacy-policy-link#addons");
+pref("extensions.recommendations.privacyPolicyUrl", "", locked);
 // The URL for Firefox Color, recommended on the theme page in about:addons.
 pref("extensions.recommendations.themeRecommendationUrl", "https://color.firefox.com/?utm_source=firefox-browser&utm_medium=firefox-browser&utm_content=theme-footer-link");
 
@@ -1203,7 +1203,7 @@ pref("services.sync.prefs.sync.browser.newtabpage.activity-stream.feeds.snippets
 pref("browser.newtabpage.activity-stream.feeds.snippets", false, locked);
 pref("services.sync.prefs.sync.browser.newtabpage.activity-stream.feeds.section.topstories", false, locked);
 pref("browser.newtabpage.activity-stream.feeds.section.topstories", false, locked);
-pref("services.sync.prefs.sync.browser.newtabpage.activity-stream.section.topstories.rows", true);
+pref("services.sync.prefs.sync.browser.newtabpage.activity-stream.section.topstories.rows", false, locked);
 pref("services.sync.prefs.sync.browser.newtabpage.activity-stream.feeds.section.highlights", true);
 pref("services.sync.prefs.sync.browser.newtabpage.activity-stream.section.highlights.includeVisited", true);
 pref("services.sync.prefs.sync.browser.newtabpage.activity-stream.section.highlights.includeBookmarks", true);
@@ -1791,11 +1791,8 @@ pref("app.normandy.enabled", false, locked);
 pref("app.normandy.first_run", false, locked);
 pref("app.normandy.logging.level", 50); // Warn
 pref("app.normandy.shieldLearnMoreUrl", "", locked);
-#ifdef MOZ_DATA_REPORTING
 pref("app.shield.optoutstudies.enabled", false, locked);
-#else
-pref("app.shield.optoutstudies.enabled", false, locked);
-#endif
+
 
 // Multi-lingual preferences
 #ifdef RELEASE_OR_BETA
