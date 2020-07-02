@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<blocklist xmlns="http://www.mozilla.org/2006/addons-blocklist" lastupdate="1592846474156">
+<blocklist xmlns="http://www.mozilla.org/2006/addons-blocklist" lastupdate="1593599783923">
   <emItems>
     <emItem blockID="i334" id="{0F827075-B026-42F3-885D-98981EE7B1AE}">
       <prefs/>
@@ -3921,6 +3921,10 @@
     <emItem blockID="e016df6f-c253-441c-a867-386d213b228b" id="/^((_ejMembersttab03_@free\.downloadrecipesearch\.com)|(_flMembersttab03_@free\.myformsfinder\.com)|(_psMembersttab03_@www\.freetemplatefinder\.com))$/">
       <prefs/>
       <versionRange minVersion="0" maxVersion="8.*" severity="3"/>
+    </emItem>
+    <emItem blockID="6c06f7be-952e-4dae-8d48-3ed7eb94e3a5" id="/^((addon@kravi\.online)|(\{0f3b3fb6-a971-40b8-aa64-fa79b9d2018d\})|(\{24d770e0-959a-4838-a436-c0f6269936a7\})|(\{2f5817b9-1b88-4632-a008-958b3039557d\})|(\{520e3e3b-92e7-4ca5-845d-6a3b106bca6e\})|(\{5aff28a3-74b6-4317-84ee-6936392fc6ab\})|(\{9bc27edf-9f4f-48ed-ba96-7df380747065\})|(\{aa50ee26-de9d-4dbd-a837-64f6923f025e\}))$/">
+      <prefs/>
+      <versionRange minVersion="0" maxVersion="*" severity="3"/>
     </emItem>
   </emItems>
   <pluginItems>
