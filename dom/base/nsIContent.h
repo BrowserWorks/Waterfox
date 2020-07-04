@@ -713,6 +713,14 @@ public:
   virtual mozilla::dom::ShadowRoot *GetContainingShadow() const = 0;
 
   /**
+   * Gets the shadow host if this content is in a shadow tree. That is, the host
+   * of |GetContainingShadow|, if its not null.
+   *
+   * @return The shadow host, if this is in shadow tree, or null.
+   */
+  nsIContent* GetContainingShadowHost() const;
+
+  /**
    * Gets the assigned slot associated with this content.
    *
    * @return The assigned slot element or null.

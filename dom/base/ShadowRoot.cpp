@@ -460,6 +460,12 @@ ShadowRoot::DistributeAllNodes()
   DistributionChanged();
 }
 
+Element*
+ShadowRoot::GetActiveElement()
+{
+  return GetRetargetedFocusedElement();
+}
+
 void
 ShadowRoot::GetInnerHTML(nsAString& aInnerHTML)
 {
