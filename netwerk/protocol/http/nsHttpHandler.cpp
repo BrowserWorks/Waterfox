@@ -119,7 +119,7 @@
 
 #define ACCEPT_HEADER_NAVIGATION \
   "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"
-#define ACCEPT_HEADER_IMAGE "image/png,image/svg+xml,image/*;q=0.8,*/*;q=0.5"
+#define ACCEPT_HEADER_IMAGE "image/webp,*/*"
 #define ACCEPT_HEADER_STYLE "text/css,*/*;q=0.1"
 #define ACCEPT_HEADER_ALL "*/*"
 
@@ -235,6 +235,7 @@ nsHttpHandler::nsHttpHandler()
       mPhishyUserPassLength(1),
       mQoSBits(0x00),
       mEnforceAssocReq(false),
+      mImageAcceptHeader(ACCEPT_HEADER_IMAGE),
       mLastUniqueID(NowInSeconds()),
       mSessionStartTime(0),
       mLegacyAppName("Mozilla"),
@@ -447,6 +448,7 @@ static const char* gCallbackPrefs[] = {
     TCP_FAST_OPEN_STALLS_LIMIT,
     TCP_FAST_OPEN_STALLS_IDLE,
     TCP_FAST_OPEN_STALLS_TIMEOUT,
+    "image.http.accept",
     nullptr,
 };
 
@@ -648,7 +650,7 @@ nsresult nsHttpHandler::AddStandardRequestHeaders(
     accept.Assign(ACCEPT_HEADER_NAVIGATION);
   } else if (aContentPolicyType == nsIContentPolicy::TYPE_IMAGE ||
              aContentPolicyType == nsIContentPolicy::TYPE_IMAGESET) {
-    accept.Assign(ACCEPT_HEADER_IMAGE);
+    accept.Assign(mImageAcceptHeader);
   } else if (aContentPolicyType == nsIContentPolicy::TYPE_STYLESHEET) {
     accept.Assign(ACCEPT_HEADER_STYLE);
   } else {
@@ -1929,6 +1931,13 @@ void nsHttpHandler::PrefsChanged(const char* pref) {
     rv = Preferences::GetBool(HTTP_PREF("spdy.bug1556491"), &cVar);
     if (NS_SUCCEEDED(rv)) {
       mBug1556491 = cVar;
+    }
+  }
+
+  if (PREF_CHANGED("image.http.accept")) {
+    rv = Preferences::GetCString("image.http.accept", mImageAcceptHeader);
+    if (NS_FAILED(rv)) {
+      mImageAcceptHeader.Assign(ACCEPT_HEADER_IMAGE);
     }
   }
 
