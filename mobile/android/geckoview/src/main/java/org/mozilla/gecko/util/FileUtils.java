@@ -38,7 +38,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.mozilla.gecko.annotation.RobocopTarget;
 
-import static org.mozilla.gecko.util.ContentUriUtils.getOriginalFilePathFromUri;
 import static org.mozilla.gecko.util.ContentUriUtils.getTempFilePathFromContentUri;
 
 public class FileUtils {
