@@ -521,6 +521,9 @@ static const nsExtraMimeTypeEntry extraMimeEntries[] = {
 #ifdef MOZ_WIDGET_ANDROID
     {"application/vnd.android.package-archive", "apk", "Android Package"},
 #endif
+
+    // Note: if you add new image types, please also update the list in
+    // contentAreaUtils.js to match.
     {IMAGE_ART, "art", "ART Image"},
     {IMAGE_BMP, "bmp", "BMP Image"},
     {IMAGE_GIF, "gif", "GIF Image"},
@@ -532,6 +535,7 @@ static const nsExtraMimeTypeEntry extraMimeEntries[] = {
     {IMAGE_XBM, "xbm", "XBM Image"},
     {IMAGE_SVG_XML, "svg", "Scalable Vector Graphics"},
     {IMAGE_WEBP, "webp", "WebP Image"},
+
     {MESSAGE_RFC822, "eml", "RFC-822 data"},
     {TEXT_PLAIN, "txt,text", "Text File"},
     {APPLICATION_JSON, "json", "JavaScript Object Notation"},
