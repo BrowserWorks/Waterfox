@@ -259,6 +259,7 @@ var gViewSourceUtils = {
             null,
             null,
             file,
+            Ci.nsIContentPolicy.TYPE_SAVEAS_DOWNLOAD,
             data.isPrivate
           );
 

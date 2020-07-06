@@ -30,6 +30,7 @@
 #include "nsIDocShell.h"
 #include "nsIContent.h"
 #include "nsIContentInlines.h"
+#include "nsIContentPolicy.h"
 #include "nsIImageLoadingContent.h"
 #include "nsITextControlElement.h"
 #include "nsUnicharUtils.h"
@@ -128,7 +129,8 @@ NS_IMPL_ISUPPORTS(nsContentAreaDragDropDataProvider, nsIFlavorDataProvider)
 // into the file system
 nsresult nsContentAreaDragDropDataProvider::SaveURIToFile(
     nsIURI* inSourceURI, nsIPrincipal* inTriggeringPrincipal,
-    nsIFile* inDestFile, bool isPrivate) {
+    nsIFile* inDestFile, nsContentPolicyType inContentPolicyType,
+    bool isPrivate) {
   nsCOMPtr<nsIURL> sourceURL = do_QueryInterface(inSourceURI);
   if (!sourceURL) {
     return NS_ERROR_NO_INTERFACE;
@@ -149,7 +151,7 @@ nsresult nsContentAreaDragDropDataProvider::SaveURIToFile(
   // referrer policy can be anything since the referrer is nullptr
   return persist->SavePrivacyAwareURI(inSourceURI, inTriggeringPrincipal, 0,
                                       nullptr, mozilla::net::RP_Unset, nullptr,
-                                      nullptr, inDestFile, isPrivate);
+                                      nullptr, inDestFile, inContentPolicyType, isPrivate);
 }
 
 /*
@@ -314,7 +316,10 @@ nsContentAreaDragDropDataProvider::GetFlavorData(nsITransferable* aTransferable,
     bool isPrivate = aTransferable->GetIsPrivateData();
 
     nsCOMPtr<nsIPrincipal> principal = aTransferable->GetRequestingPrincipal();
-    rv = SaveURIToFile(sourceURI, principal, file, isPrivate);
+    nsContentPolicyType contentPolicyType =
+        aTransferable->GetContentPolicyType();
+    rv =
+        SaveURIToFile(sourceURI, principal, file, contentPolicyType, isPrivate);
     // send back an nsIFile
     if (NS_SUCCEEDED(rv)) {
       CallQueryInterface(file, aData);

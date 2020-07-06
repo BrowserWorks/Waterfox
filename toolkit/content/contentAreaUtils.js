@@ -469,6 +469,7 @@ function internalSave(
   var saveMode = GetSaveModeForContentType(aContentType, aDocument);
 
   var file, sourceURI, saveAsType;
+  let contentPolicyType = Ci.nsIContentPolicy.TYPE_SAVEAS_DOWNLOAD;
   // Find the URI object for aURL and the FileName/Extension to use when saving.
   // FileName/Extension will be ignored if aChosenData supplied.
   if (aChosenData) {
@@ -493,6 +494,9 @@ function internalSave(
     );
     sourceURI = fileInfo.uri;
 
+    if (aContentType && aContentType.startsWith("image/")) {
+      contentPolicyType = Ci.nsIContentPolicy.TYPE_IMAGE;
+    }
     var fpParams = {
       fpTitleKey: aFilePickerTitleKey,
       fileInfo,
@@ -561,6 +565,7 @@ function internalSave(
       sourceCacheKey: aCacheKey,
       sourcePostData: nonCPOWDocument ? getPostData(aDocument) : null,
       bypassCache: aShouldBypassCache,
+      contentPolicyType,
       isPrivate,
     };
 
@@ -589,6 +594,9 @@ function internalSave(
  *        must be null if no POST data should be sent.
  * @param persistArgs.targetFile
  *        The nsIFile of the file to create
+ * @param persistArgs.contentPolicyType
+ *        The type of content we're saving. Will be used to determine what
+ *        content is accepted, enforce sniffing restrictions, etc.
  * @param persistArgs.targetContentType
  *        Required and used only when persistArgs.sourceDocument is present,
  *        determines the final content type of the saved file, or null to use
@@ -676,6 +684,7 @@ function internalPersist(persistArgs) {
       persistArgs.sourcePostData,
       null,
       targetFileURL,
+      persistArgs.contentPolicyType || Ci.nsIContentPolicy.TYPE_SAVEAS_DOWNLOAD,
       persistArgs.isPrivate
     );
   }

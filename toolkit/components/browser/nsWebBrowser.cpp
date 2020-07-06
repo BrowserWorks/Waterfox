@@ -740,11 +740,11 @@ NS_IMETHODIMP
 nsWebBrowser::SaveURI(nsIURI* aURI, nsIPrincipal* aPrincipal,
                       uint32_t aCacheKey, nsIURI* aReferrer,
                       uint32_t aReferrerPolicy, nsIInputStream* aPostData,
-                      const char* aExtraHeaders, nsISupports* aFile,
+                      const char* aExtraHeaders, nsISupports* aFile, nsContentPolicyType aContentPolicyType,
                       nsILoadContext* aPrivacyContext) {
   return SavePrivacyAwareURI(
       aURI, aPrincipal, aCacheKey, aReferrer, aReferrerPolicy, aPostData,
-      aExtraHeaders, aFile,
+      aExtraHeaders, aFile, aContentPolicyType,
       aPrivacyContext && aPrivacyContext->UsePrivateBrowsing());
 }
 
@@ -754,6 +754,7 @@ nsWebBrowser::SavePrivacyAwareURI(nsIURI* aURI, nsIPrincipal* aPrincipal,
                                   uint32_t aReferrerPolicy,
                                   nsIInputStream* aPostData,
                                   const char* aExtraHeaders, nsISupports* aFile,
+                                  nsContentPolicyType aContentPolicyType,
                                   bool aIsPrivate) {
   if (mPersist) {
     uint32_t currentState;
@@ -786,7 +787,7 @@ nsWebBrowser::SavePrivacyAwareURI(nsIURI* aURI, nsIPrincipal* aPrincipal,
 
   rv = mPersist->SavePrivacyAwareURI(uri, aPrincipal, aCacheKey, aReferrer,
                                      aReferrerPolicy, aPostData, aExtraHeaders,
-                                     aFile, aIsPrivate);
+                                     aFile, aContentPolicyType, aIsPrivate);
   if (NS_FAILED(rv)) {
     mPersist = nullptr;
   }
