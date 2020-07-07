@@ -16206,7 +16206,9 @@ nsICookieJarSettings* Document::CookieJarSettings() {
                       inProcessParent->CookieJarSettings())
                       ->GetFirstPartyDomain(),
                   inProcessParent->CookieJarSettings()
-                      ->GetIsFirstPartyIsolated())
+                      ->GetIsFirstPartyIsolated(),
+                  inProcessParent->CookieJarSettings()
+                      ->GetIsOnContentBlockingAllowList())
             : net::CookieJarSettings::Create();
 
     if (auto* wgc = GetWindowGlobalChild()) {
