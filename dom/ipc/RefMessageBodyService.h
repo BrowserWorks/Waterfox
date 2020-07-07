@@ -10,7 +10,6 @@
 #include "mozilla/ErrorResult.h"
 #include "mozilla/dom/StructuredCloneHolder.h"
 #include "mozilla/Maybe.h"
-#include "mozilla/Mutex.h"
 #include "mozilla/StaticMutex.h"
 #include "nsRefPtrHashtable.h"
 
@@ -55,28 +54,20 @@ class RefMessageBody final {
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(RefMessageBody)
 
   RefMessageBody(const nsID& aPortID,
-                 UniquePtr<ipc::StructuredCloneData>&& aCloneData);
+                 UniquePtr<ipc::StructuredCloneData>&& aCloneData)
+      : mPortID(aPortID),
+        mCloneData(std::move(aCloneData)),
+        mMaxCount(Nothing()),
+        mCount(0) {}
 
   const nsID& PortID() const { return mPortID; }
 
-  void Read(JSContext* aCx, JS::MutableHandle<JS::Value> aValue,
-            const JS::CloneDataPolicy& aCloneDataPolicy, ErrorResult& aRv);
-
-  // This method can be called only if the RefMessageBody is not supposed to be
-  // ref-counted (see mMaxCount).
-  bool TakeTransferredPortsAsSequence(
-      Sequence<OwningNonNull<mozilla::dom::MessagePort>>& aPorts);
+  ipc::StructuredCloneData* CloneData() { return mCloneData.get(); }
 
  private:
   ~RefMessageBody() = default;
 
   const nsID mPortID;
-
-  // In case the RefMessageBody is shared and refcounted (see mCount/mMaxCount),
-  // we must enforce that the reading does not happen simultaneously on
-  // different threads.
-  Mutex mMutex;
-
   UniquePtr<ipc::StructuredCloneData> mCloneData;
 
   // When mCount reaches mMaxCount, this object is released by the service.

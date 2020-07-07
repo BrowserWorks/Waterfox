@@ -109,7 +109,7 @@ void SharedMessageBody::Read(JSContext* aCx,
     return;
   }
 
-  mRefData->Read(aCx, aValue, cloneDataPolicy, aRv);
+  mRefData->CloneData()->Read(aCx, aValue, cloneDataPolicy, aRv);
 }
 
 bool SharedMessageBody::TakeTransferredPortsAsSequence(
@@ -119,7 +119,7 @@ bool SharedMessageBody::TakeTransferredPortsAsSequence(
   }
 
   MOZ_ASSERT(mRefData);
-  return mRefData->TakeTransferredPortsAsSequence(aPorts);
+  return mRefData->CloneData()->TakeTransferredPortsAsSequence(aPorts);
 }
 
 /* static */
