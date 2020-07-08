@@ -287,6 +287,12 @@ function waitForConnectionStateChange(pc, wantedStates) {
   });
 }
 
+async function waitForIceGatheringState(pc, wantedStates) {
+  while (!wantedStates.includes(pc.iceGatheringState)) {
+    await waitUntilEvent(pc, 'icegatheringstatechange');
+  }
+}
+
 // Resolves when RTP packets have been received.
 function listenForSSRCs(t, receiver) {
   return new Promise((resolve) => {
