@@ -1363,7 +1363,7 @@ nsContextMenu.prototype = {
         false, // don't skip prompt for where to save
         documentURIObject, // referrer
         null, // document
-        null, // content type
+        "image/jpeg", // content type - keep in sync with ContextMenuChild!
         null, // content disposition
         isPrivate,
         this.principal
@@ -1695,7 +1695,7 @@ nsContextMenu.prototype = {
           false,
           referrerURI,
           null,
-          null,
+          "image/png", // _canvasToBlobURL uses image/png by default.
           null,
           isPrivate,
           document.nodePrincipal /* system, because blob: */

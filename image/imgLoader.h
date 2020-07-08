@@ -374,8 +374,6 @@ class imgLoader final : public imgILoader,
                                     nsLoadFlags aLoadFlags,
                                     imgRequestProxy** _retval);
 
-  void ReadAcceptHeaderPref();
-
   nsresult EvictEntries(imgCacheTable& aCacheToClear);
   nsresult EvictEntries(imgCacheQueue& aQueueToClear);
 
@@ -409,8 +407,6 @@ class imgLoader final : public imgILoader,
   static double sCacheTimeWeight;
   static uint32_t sCacheMaxSize;
   static imgMemoryReporter* sMemReporter;
-
-  nsCString mAcceptHeader;
 
   mozilla::UniquePtr<imgCacheExpirationTracker> mCacheTracker;
   bool mRespectPrivacy;

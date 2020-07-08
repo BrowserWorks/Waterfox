@@ -469,6 +469,7 @@ function internalSave(
   var saveMode = GetSaveModeForContentType(aContentType, aDocument);
 
   var file, sourceURI, saveAsType;
+  let contentPolicyType = Ci.nsIContentPolicy.TYPE_SAVEAS_DOWNLOAD;
   // Find the URI object for aURL and the FileName/Extension to use when saving.
   // FileName/Extension will be ignored if aChosenData supplied.
   if (aChosenData) {
@@ -493,6 +494,9 @@ function internalSave(
     );
     sourceURI = fileInfo.uri;
 
+    if (aContentType && aContentType.startsWith("image/")) {
+      contentPolicyType = Ci.nsIContentPolicy.TYPE_IMAGE;
+    }
     var fpParams = {
       fpTitleKey: aFilePickerTitleKey,
       fileInfo,
@@ -561,6 +565,7 @@ function internalSave(
       sourceCacheKey: aCacheKey,
       sourcePostData: nonCPOWDocument ? getPostData(aDocument) : null,
       bypassCache: aShouldBypassCache,
+      contentPolicyType,
       isPrivate,
     };
 
@@ -589,6 +594,9 @@ function internalSave(
  *        must be null if no POST data should be sent.
  * @param persistArgs.targetFile
  *        The nsIFile of the file to create
+ * @param persistArgs.contentPolicyType
+ *        The type of content we're saving. Will be used to determine what
+ *        content is accepted, enforce sniffing restrictions, etc.
  * @param persistArgs.targetContentType
  *        Required and used only when persistArgs.sourceDocument is present,
  *        determines the final content type of the saved file, or null to use
@@ -676,6 +684,7 @@ function internalPersist(persistArgs) {
       persistArgs.sourcePostData,
       null,
       targetFileURL,
+      persistArgs.contentPolicyType || Ci.nsIContentPolicy.TYPE_SAVEAS_DOWNLOAD,
       persistArgs.isPrivate
     );
   }
@@ -1287,6 +1296,28 @@ function validateFileName(aFileName) {
   return processed;
 }
 
+// This is the set of image extensions supported by extraMimeEntries in
+// nsExternalHelperAppService.
+const kImageExtensions = new Set([
+  "art",
+  "bmp",
+  "gif",
+  "ico",
+  "cur",
+  "jpeg",
+  "jpg",
+  "jfif",
+  "pjpeg",
+  "pjp",
+  "png",
+  "apng",
+  "tiff",
+  "tif",
+  "xbm",
+  "svg",
+  "webp",
+]);
+
 function getNormalizedLeafName(aFile, aDefaultExtension) {
   if (!aDefaultExtension) {
     return aFile;
@@ -1300,9 +1331,19 @@ function getNormalizedLeafName(aFile, aDefaultExtension) {
   // Remove leading dots
   aFile = aFile.replace(/^\.+/, "");
 
-  // Fix up the file name we're saving to to include the default extension
+  // Include the default extension in the file name to which we're saving.
   var i = aFile.lastIndexOf(".");
-  if (aFile.substr(i + 1) != aDefaultExtension) {
+  let previousExtension = aFile.substr(i + 1);
+  if (previousExtension != aDefaultExtension) {
+    // Suffixing the extension is the safe bet - it preserves the previous
+    // extension in case that's meaningful (e.g. various text files served
+    // with text/plain will end up as `foo.cpp.txt`, in the worst case).
+    // However, for images, the extension derived from the URL should be
+    // replaced if the content type indicates a different filetype - this makes
+    // sure that we treat e.g. feature-tested webp/avif images correctly.
+    if (kImageExtensions.has(previousExtension)) {
+      return aFile.substr(0, i + 1) + aDefaultExtension;
+    }
     return aFile + "." + aDefaultExtension;
   }
 

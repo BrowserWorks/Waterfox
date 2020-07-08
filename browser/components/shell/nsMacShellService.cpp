@@ -155,7 +155,7 @@ nsMacShellService::SetDesktopBackground(Element* aElement, int32_t aPosition,
 
   return wbp->SaveURI(imageURI, aElement->NodePrincipal(), 0, docURI,
                       aElement->OwnerDoc()->GetReferrerPolicy(), nullptr,
-                      nullptr, mBackgroundFile, loadContext);
+                      nullptr, mBackgroundFile, nsIContentPolicy::TYPE_IMAGE, loadContext);
 }
 
 NS_IMETHODIMP
