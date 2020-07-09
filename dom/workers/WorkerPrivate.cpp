@@ -1373,7 +1373,7 @@ void WorkerPrivate::StoreCSPOnClient() {
   MOZ_ACCESS_THREAD_BOUND(mWorkerThreadAccessible, data);
   MOZ_ASSERT(data->mScope);
   if (mLoadInfo.mCSPInfo) {
-    data->mScope->GetClientSource()->SetCspInfo(*mLoadInfo.mCSPInfo);
+    data->mScope->MutableClientSourceRef().SetCspInfo(*mLoadInfo.mCSPInfo);
   }
 }
 
@@ -3221,10 +3221,7 @@ void WorkerPrivate::ExecutionReady() {
     }
   }
 
-  MOZ_ASSERT(data->mScope);
-  auto& clientSource = data->mScope->GetClientSource();
-  MOZ_DIAGNOSTIC_ASSERT(clientSource);
-  clientSource->WorkerExecutionReady(this);
+  data->mScope->MutableClientSourceRef().WorkerExecutionReady(this);
 }
 
 void WorkerPrivate::InitializeGCTimers() {
@@ -3586,14 +3583,13 @@ void WorkerPrivate::ClearDebuggerEventQueue() {
 
 bool WorkerPrivate::FreezeInternal() {
   MOZ_ACCESS_THREAD_BOUND(mWorkerThreadAccessible, data);
-  MOZ_ASSERT(data->mScope);
   NS_ASSERTION(!data->mFrozen, "Already frozen!");
 
   AutoYieldJSThreadExecution yield;
 
-  auto& clientSource = data->mScope->GetClientSource();
-  if (clientSource) {
-    clientSource->Freeze();
+  // The worker can freeze even if it failed to run (and doesn't have a global).
+  if (data->mScope) {
+    data->mScope->MutableClientSourceRef().Freeze();
   }
 
   data->mFrozen = true;
@@ -3607,7 +3603,6 @@ bool WorkerPrivate::FreezeInternal() {
 
 bool WorkerPrivate::ThawInternal() {
   MOZ_ACCESS_THREAD_BOUND(mWorkerThreadAccessible, data);
-  MOZ_ASSERT(data->mScope);
   NS_ASSERTION(data->mFrozen, "Not yet frozen!");
 
   for (uint32_t index = 0; index < data->mChildWorkers.Length(); index++) {
@@ -3616,9 +3611,9 @@ bool WorkerPrivate::ThawInternal() {
 
   data->mFrozen = false;
 
-  auto& clientSource = data->mScope->GetClientSource();
-  if (clientSource) {
-    clientSource->Thaw();
+  // The worker can thaw even if it failed to run (and doesn't have a global).
+  if (data->mScope) {
+    data->mScope->MutableClientSourceRef().Thaw();
   }
 
   return true;
