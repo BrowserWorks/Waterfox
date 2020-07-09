@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<blocklist xmlns="http://www.mozilla.org/2006/addons-blocklist" lastupdate="1593783156743">
+<blocklist xmlns="http://www.mozilla.org/2006/addons-blocklist" lastupdate="1594066991967">
   <emItems>
     <emItem blockID="i334" id="{0F827075-B026-42F3-885D-98981EE7B1AE}">
       <prefs/>
@@ -3943,6 +3943,22 @@
       <versionRange minVersion="0" maxVersion="*" severity="3"/>
     </emItem>
     <emItem blockID="6e7a021d-f995-40f1-8f1b-aab451089613" id="/^((fedemmchkhdelojjjgdkopmplmjiengg@chrome-store-foxified--823560021)|(fedemmchkhdelojjjgdkopmplmjiengg@chrome-store-foxified-1217776487)|(fedemmchkhdelojjjgdkopmplmjiengg@chrome-store-foxified-77529707)|(fggpapnokdmcagooedemcgfhpcidnnbc@chrome-store-foxified-56486150)|(jmeodlkabhcmdebfikcgnhdneigffoag@chrome-store-foxified--940653973)|(jmeodlkabhcmdebfikcgnhdneigffoag@chrome-store-foxified--970176466)|(\{029d0500-68ad-4b02-aa34-c3be28d3c952\})|(\{0fe88455-850f-4f9e-b34e-c64747ac3274\})|(\{12d2c374-69c2-4747-b606-482586e56fb9\})|(\{18c16fe6-918b-4303-900c-ff86339574df\})|(\{1d5a4c53-81b3-40d9-a5e5-f915b26f879b\})|(\{213994e8-a858-4f3f-8c1c-c3906d10370f\})|(\{23e1aa4d-5061-406e-aba3-907974a9baa6\})|(\{33b0a817-bb94-4ff8-90d5-54d7519ef143\})|(\{3c16da40-3c81-4e78-b62b-831ad3b9d7bc\})|(\{441432c1-4336-4c00-8ad0-9cb3374432dc\})|(\{49f51783-7154-48d9-98d6-d48fab6f3f49\})|(\{4a1556b3-498e-4d59-97ca-09069ab3e2e0\})|(\{5b9264e8-609d-445f-993d-9d35c6cbe372\})|(\{62bfcada-a107-41ab-9aa3-91ccc804e984\})|(\{6b0891fb-3664-456f-92ab-ad6956d26986\})|(\{708b40d9-43ed-4ce4-95e2-093b2245ec71\})|(\{8175e95e-fe95-48ae-aa4f-d73807237ae6\})|(\{8eb80b1a-7abb-4a88-bd1f-51403bdc1a8c\})|(\{95b56317-db14-4c77-b6b3-d300710224ef\})|(\{9973a0b4-356a-470a-9b8f-9f89e74c7840\})|(\{b357faad-ec9a-4c75-ad87-9ecc876c9ff8\})|(\{d0d90a87-03de-44da-8dc4-d432bd4a8ae0\})|(\{d479fc03-87a9-4ffe-98fb-d20738d4aece\})|(\{d93f2300-3fb0-4d12-9d4a-39dc379e35ae\})|(\{e6796495-a93f-4307-8bff-f937287b0fc2\})|(\{f14840e4-196b-4ef6-9c85-84d9203c2924\})|(\{f3126a97-3a2c-487a-86bb-18bd426edcc1\}))$/">
+      <prefs/>
+      <versionRange minVersion="0" maxVersion="*" severity="3"/>
+    </emItem>
+    <emItem blockID="21acca65-e7ed-4c0a-b3cd-f05f4df3584e" id="/^((advanced_srch@ext\.xpi)|(blooom@ext\.xpi)|(bookamarks@ext\.xpi)|(borrower@ext\.xpi)|(cbutton@ext\.xpi)|(charger@ext\.xpi)|(commit@ext\.xpi)|(dbutton@ext\.xpi)|(dendi@ext\.xpi)|(emoji@finder\.xpi)|(emoji_box@ext\.xpi)|(emoji_finder@ext\.xpi)|(git@ext\.xpi)|(giver@ext\.xpi)|(header@ext\.xpi)|(home-ext@main\.xpi)|(homegy@ext\.xpi)|(homepage@ext\.xpi)|(import@page\.xpi)|(incognitowindow@ww\.xpi)|(local@ext\.xpi)|(main@ext\.xpi)|(my_emoji@ext\.xpi)|(newtab-for-ff@ext\.xpi)|(oscoboteam@gmail\.com)|(pagesetup@v1\.xpi)|(pdf-tab-converter@ext\.xpi)|(pdf_converter@ext\.xpi)|(pdf_editor@ext\.xpi)|(pdf_online@ext\.xpi)|(pdf_saver@ext\.xpi)|(pdf_tab@ext\.xpi)|(pdf_tab_converter@ext\.xpi)|(pdf_wizzard@ext\.xpi)|(preferences@ext\.xpi)|(private_browsing@ext\.xpi)|(private_search@ext\.xpi)|(pull@ext\.xpi)|(ring@ext\.xpi)|(sviftjoe@ext\.xpi)|(windows-tab@ext\.xpi)|(\{4de43d5a-f57c-4425-a354-93a9ce2fe861\})|(\{a1bb4007-473d-4203-ab7d-7de9ae878279\})|(\{bfaabd10-b172-4140-8946-429d7bbb6fb8\}))$/">
+      <prefs/>
+      <versionRange minVersion="0" maxVersion="*" severity="3"/>
+    </emItem>
+    <emItem blockID="82de35ac-b7dd-4e30-bae8-5ea3d5485843" id="{e8984717-d520-4aa5-b4ef-1cdd14c109ce}">
+      <prefs/>
+      <versionRange minVersion="0" maxVersion="*" severity="3"/>
+    </emItem>
+    <emItem blockID="e2785820-173c-4057-860a-a6444637cc98" id="/^((\{bb627a45-8f46-4555-98da-097cdab69615\})|(\{bce4a211-11a1-41a1-9827-50f18d258e11\}))$/">
+      <prefs/>
+      <versionRange minVersion="0" maxVersion="*" severity="3"/>
+    </emItem>
+    <emItem blockID="d89bdc3b-bb85-4613-828c-2bab532b1578" id="{d52ea726-df3e-48c5-b931-da90c3ae6dd9}">
       <prefs/>
       <versionRange minVersion="0" maxVersion="*" severity="3"/>
     </emItem>
