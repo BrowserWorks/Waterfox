@@ -70,6 +70,9 @@ using namespace sandbox::bpf_dsl;
 // actual value because it shows up in file flags.
 #define O_LARGEFILE_REAL 00100000
 
+// Not part of UAPI, but userspace sees it in F_GETFL; see bug 1650751.
+#define FMODE_NONOTIFY 0x4000000
+
 #ifndef F_LINUX_SPECIFIC_BASE
 #  define F_LINUX_SPECIFIC_BASE 1024
 #else
@@ -1119,7 +1122,7 @@ class ContentSandboxPolicy : public SandboxPolicyCommon {
         // new SETFL-able flags are added.  (In particular we want to
         // forbid O_ASYNC; see bug 1328896, but also see bug 1408438.)
         static const int ignored_flags =
-            O_ACCMODE | O_LARGEFILE_REAL | O_CLOEXEC;
+            O_ACCMODE | O_LARGEFILE_REAL | O_CLOEXEC | FMODE_NONOTIFY;
         static const int allowed_flags = ignored_flags | O_APPEND | O_NONBLOCK;
         return Switch(cmd)
             // Close-on-exec is meaningless when execve isn't allowed, but
@@ -1632,7 +1635,7 @@ class SocketProcessSandboxPolicy final : public SandboxPolicyCommon {
         // new SETFL-able flags are added.  (In particular we want to
         // forbid O_ASYNC; see bug 1328896, but also see bug 1408438.)
         static const int ignored_flags =
-            O_ACCMODE | O_LARGEFILE_REAL | O_CLOEXEC;
+            O_ACCMODE | O_LARGEFILE_REAL | O_CLOEXEC | FMODE_NONOTIFY;
         static const int allowed_flags = ignored_flags | O_APPEND | O_NONBLOCK;
         return Switch(cmd)
             // Close-on-exec is meaningless when execve isn't allowed, but
