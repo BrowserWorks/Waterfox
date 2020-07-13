@@ -220,6 +220,8 @@ class FilePickerResultHandler implements ActivityResultHandler {
         public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
             if (cursor.moveToFirst()) {
                 String fileName = cursor.getString(0);
+                // Sanitize
+                fileName = new File(fileName).getName();
 
                 final Context context = GeckoAppShell.getApplicationContext();
                 final ContentResolver cr = context.getContentResolver();
