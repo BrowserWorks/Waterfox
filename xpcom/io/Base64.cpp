@@ -107,6 +107,9 @@ nsresult EncodeInputStream_Encoder(nsIInputStream* aStream, void* aClosure,
   // We consume the whole data always.
   *aWriteCount = aCount;
 
+  // We consume the whole data always.
+  *aWriteCount = aCount;
+
   // If we have any data left from last time, encode it now.
   uint32_t countRemaining = aCount;
   const unsigned char* src = (const unsigned char*)aFromSegment;
