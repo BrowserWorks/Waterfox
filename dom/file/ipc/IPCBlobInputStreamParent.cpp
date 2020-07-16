@@ -26,7 +26,15 @@ IPCBlobInputStreamParent::Create(nsIInputStream* aInputStream, uint64_t aSize,
     return nullptr;
   }
 
-  IPCBlobInputStreamStorage::Get()->AddStream(aInputStream, id, aChildID);
+  auto storageOrErr = IPCBlobInputStreamStorage::Get();
+
+  if (NS_WARN_IF(storageOrErr.isErr())) {
+    *aRv = storageOrErr.unwrapErr();
+    return nullptr;
+  }
+
+  auto storage = storageOrErr.unwrap();
+  storage->AddStream(aInputStream, id, aChildID);
 
   return new IPCBlobInputStreamParent(id, aSize, aManager);
 }
@@ -38,9 +46,14 @@ IPCBlobInputStreamParent::Create(const nsID& aID, uint64_t aSize,
   IPCBlobInputStreamParent* actor =
     new IPCBlobInputStreamParent(aID, aSize, aManager);
 
-  actor->mCallback = IPCBlobInputStreamStorage::Get()->TakeCallback(aID);
+  auto storage = IPCBlobInputStreamStorage::Get().unwrapOr(nullptr);
 
-  return actor;
+  if (storage) {
+    actor->mCallback = storage->TakeCallback(aID);
+    return actor;
+  }
+
+  return nullptr;
 }
 
 IPCBlobInputStreamParent::IPCBlobInputStreamParent(const nsID& aID,
@@ -74,7 +87,7 @@ IPCBlobInputStreamParent::ActorDestroy(IProtocol::ActorDestroyReason aReason)
   RefPtr<IPCBlobInputStreamParentCallback> callback;
   mCallback.swap(callback);
 
-  RefPtr<IPCBlobInputStreamStorage> storage = IPCBlobInputStreamStorage::Get();
+  auto storage = IPCBlobInputStreamStorage::Get().unwrapOr(nullptr);
 
   if (mMigrating) {
     if (callback && storage) {
@@ -109,7 +122,11 @@ IPCBlobInputStreamParent::RecvStreamNeeded()
   MOZ_ASSERT(mContentManager || mPBackgroundManager);
 
   nsCOMPtr<nsIInputStream> stream;
-  IPCBlobInputStreamStorage::Get()->GetStream(mID, getter_AddRefs(stream));
+  auto storage = IPCBlobInputStreamStorage::Get().unwrapOr(nullptr);
+  if (storage) {
+    storage->GetStream(mID, getter_AddRefs(stream));
+  }
+
   if (!stream) {
     if (!SendStreamReady(void_t())) {
       return IPC_FAIL(this, "SendStreamReady failed");
@@ -157,11 +174,14 @@ IPCBlobInputStreamParent::Recv__delete__()
   return IPC_OK();
 }
 
-bool
-IPCBlobInputStreamParent::HasValidStream() const
-{
+bool IPCBlobInputStreamParent::HasValidStream() const {
+  auto storage = IPCBlobInputStreamStorage::Get().unwrapOr(nullptr);
+  if (!storage) {
+    return false;
+  }
+
   nsCOMPtr<nsIInputStream> stream;
-  IPCBlobInputStreamStorage::Get()->GetStream(mID, getter_AddRefs(stream));
+  storage->GetStream(mID, getter_AddRefs(stream));
   return !!stream;
 }
 

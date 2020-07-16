@@ -29,8 +29,7 @@ public:
   static void
   Initialize();
 
-  static IPCBlobInputStreamStorage*
-  Get();
+  static Result<RefPtr<IPCBlobInputStreamStorage>, nsresult> Get();
 
   void
   AddStream(nsIInputStream* aInputStream, const nsID& aID, uint64_t aChildID);

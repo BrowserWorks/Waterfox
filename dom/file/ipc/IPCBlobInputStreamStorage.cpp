@@ -36,9 +36,15 @@ IPCBlobInputStreamStorage::IPCBlobInputStreamStorage() {}
 IPCBlobInputStreamStorage::~IPCBlobInputStreamStorage() {}
 
 /* static */
-IPCBlobInputStreamStorage* IPCBlobInputStreamStorage::Get() {
+Result<RefPtr<IPCBlobInputStreamStorage>, nsresult>
+IPCBlobInputStreamStorage::Get() {
   mozilla::StaticMutexAutoLock lock(gMutex);
-  return gStorage;
+  if (gStorage) {
+    RefPtr<IPCBlobInputStreamStorage> storage = gStorage;
+    return storage;
+  }
+
+  return Err(NS_ERROR_NOT_INITIALIZED);
 }
 
 /* static */

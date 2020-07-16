@@ -69,8 +69,11 @@ InputStreamHelper::DeserializeInputStream(const InputStreamParams& aParams,
   // IPCBlobInputStreams are not deserializable on the parent side.
   if (aParams.type() == InputStreamParams::TIPCBlobInputStreamParams) {
     MOZ_ASSERT(XRE_IsParentProcess());
-    IPCBlobInputStreamStorage::Get()->GetStream(aParams.get_IPCBlobInputStreamParams().id(),
-                                                getter_AddRefs(stream));
+    auto storage = IPCBlobInputStreamStorage::Get().unwrapOr(nullptr);
+    MOZ_ASSERT(storage);
+    nsCOMPtr<nsIInputStream> stream;
+    storage->GetStream(aParams.get_IPCBlobInputStreamParams().id(),
+                       getter_AddRefs(stream));
     return stream.forget();
   }
 
