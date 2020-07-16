@@ -3333,11 +3333,7 @@ pref("dom.ipc.plugins.hangUIMinDisplaySecs", 0);
 
 // Whether or not to collect a paired minidump when force-killing a
 // content process.
-#ifdef RELEASE_OR_BETA
-pref("dom.ipc.tabs.createKillHardCrashReports", false);
-#else
-pref("dom.ipc.tabs.createKillHardCrashReports", true);
-#endif
+pref("dom.ipc.tabs.createKillHardCrashReports", false, locked);
 
 pref("dom.ipc.plugins.flash.disable-protected-mode", false);
 
@@ -6036,11 +6032,7 @@ pref("toolkit.aboutPerformance.showInternals", true);
 
 // When a crash happens, whether to include heap regions of the crash context
 // in the minidump. Enabled by default on nightly and aurora.
-#ifdef RELEASE_OR_BETA
-pref("toolkit.crashreporter.include_context_heap", false);
-#else
-pref("toolkit.crashreporter.include_context_heap", true);
-#endif
+pref("toolkit.crashreporter.include_context_heap", false, locked);
 
 // Open noopener links in a new process
 pref("dom.noopener.newprocess.enabled", true);
