@@ -270,13 +270,13 @@ already_AddRefed<nsIInputStream> InputStreamHelper::DeserializeInputStream(
   // IPCBlobInputStreams are not deserializable on the parent side.
   if (aParams.type() == InputStreamParams::TIPCBlobInputStreamParams) {
     MOZ_ASSERT(XRE_IsParentProcess());
-
+    auto storage = IPCBlobInputStreamStorage::Get().unwrapOr(nullptr);
+    MOZ_ASSERT(storage);
     nsCOMPtr<nsIInputStream> stream;
-    IPCBlobInputStreamStorage::Get()->GetStream(
-        aParams.get_IPCBlobInputStreamParams().id(),
-        aParams.get_IPCBlobInputStreamParams().start(),
-        aParams.get_IPCBlobInputStreamParams().length(),
-        getter_AddRefs(stream));
+    storage->GetStream(aParams.get_IPCBlobInputStreamParams().id(),
+                       aParams.get_IPCBlobInputStreamParams().start(),
+                       aParams.get_IPCBlobInputStreamParams().length(),
+                       getter_AddRefs(stream));
     return stream.forget();
   }
 
