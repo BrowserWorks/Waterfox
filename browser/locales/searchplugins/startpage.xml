@@ -7,6 +7,6 @@
 	<Url type="application/x-suggestions+json" method="GET" template="https://startpage.com/do/search?query={searchTerms}"/>
 	<Url type="text/html" method="POST" template="https://startpage.com/do/search">
 		<Param name="c" value="web"/>
-		<Param name="q" value="{searchTerms}"/>
+		<Param name="q" value="{searchTerms}&segment=startpage.waterfox.1"/>
 	</Url>
 </SearchPlugin>
