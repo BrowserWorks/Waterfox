@@ -19,8 +19,8 @@
     "search_provider": {
       "name": "Startpage",
       "search_url": "https://www.startpage.com/do/dsearch",
-      "search_form": "https://www.startpage.com/do/dsearch?query={searchTerms}",
-      "search_url_get_params": "query={searchTerms}",
+      "search_form": "https://www.startpage.com/do/dsearch?query={searchTerms}&segment=startpage.waterfox.1",
+      "search_url_get_params": "query={searchTerms}&segment=startpage.waterfox.1",
       "params": [
       ],
       "suggest_url": "https://www.startpage.com/cgi-bin/csuggest",
