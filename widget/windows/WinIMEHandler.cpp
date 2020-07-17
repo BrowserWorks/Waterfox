@@ -1011,6 +1011,32 @@ bool IMEHandler::IsInTabletMode() {
   return isInTabletMode;
 }
 
+static bool ReadEnableDesktopModeAutoInvoke(uint32_t aRoot,
+                                            nsIWindowsRegKey* aRegKey,
+                                            uint32_t& aValue) {
+  nsresult rv;
+  rv = aRegKey->Open(aRoot,
+                     NS_LITERAL_STRING("SOFTWARE\\Microsoft\\TabletTip\\1.7"),
+                     nsIWindowsRegKey::ACCESS_QUERY_VALUE);
+  if (NS_FAILED(rv)) {
+    Preferences::SetString(kOskDebugReason,
+                           L"AIOSKIDM: failed opening regkey.");
+    return false;
+  }
+  // EnableDesktopModeAutoInvoke is an opt-in option from the Windows
+  // Settings to "Automatically show the touch keyboard in windowed apps
+  // when there's no keyboard attached to your device." If the user has
+  // opted-in to this behavior, the tablet-mode requirement is skipped.
+  rv = aRegKey->ReadIntValue(NS_LITERAL_STRING("EnableDesktopModeAutoInvoke"),
+                             &aValue);
+  if (NS_FAILED(rv)) {
+    Preferences::SetString(kOskDebugReason,
+                           L"AIOSKIDM: failed reading value of regkey.");
+    return false;
+  }
+  return true;
+}
+
 // static
 bool IMEHandler::AutoInvokeOnScreenKeyboardInDesktopMode() {
   nsresult rv;
@@ -1022,24 +1048,12 @@ bool IMEHandler::AutoInvokeOnScreenKeyboardInDesktopMode() {
                            L"nsIWindowsRegKey not available");
     return false;
   }
-  rv = regKey->Open(nsIWindowsRegKey::ROOT_KEY_CURRENT_USER,
-                    NS_LITERAL_STRING("SOFTWARE\\Microsoft\\TabletTip\\1.7"),
-                    nsIWindowsRegKey::ACCESS_QUERY_VALUE);
-  if (NS_FAILED(rv)) {
-    Preferences::SetString(kOskDebugReason,
-                           L"AIOSKIDM: failed opening regkey.");
-    return false;
-  }
-  // EnableDesktopModeAutoInvoke is an opt-in option from the Windows
-  // Settings to "Automatically show the touch keyboard in windowed apps
-  // when there's no keyboard attached to your device." If the user has
-  // opted-in to this behavior, the tablet-mode requirement is skipped.
+
   uint32_t value;
-  rv = regKey->ReadIntValue(NS_LITERAL_STRING("EnableDesktopModeAutoInvoke"),
-                            &value);
-  if (NS_FAILED(rv)) {
-    Preferences::SetString(kOskDebugReason,
-                           L"AIOSKIDM: failed reading value of regkey.");
+  if (!ReadEnableDesktopModeAutoInvoke(nsIWindowsRegKey::ROOT_KEY_CURRENT_USER,
+                                       regKey, value) &&
+      !ReadEnableDesktopModeAutoInvoke(nsIWindowsRegKey::ROOT_KEY_LOCAL_MACHINE,
+                                       regKey, value)) {
     return false;
   }
   if (!!value) {
