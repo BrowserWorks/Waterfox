@@ -4613,25 +4613,25 @@ pref("fission.rebuild_frameloaders_on_remoteness_change", true);
 // user profile directory for these stylesheets:
 //  * userContent.css
 //  * userChrome.css
-pref("toolkit.legacyUserProfileCustomizations.stylesheets", false);
+pref("toolkit.legacyUserProfileCustomizations.stylesheets", true);
 
 #ifdef MOZ_DATA_REPORTING
-  pref("datareporting.policy.dataSubmissionEnabled", true);
-  pref("datareporting.policy.dataSubmissionPolicyNotifiedTime", "0");
-  pref("datareporting.policy.dataSubmissionPolicyAcceptedVersion", 0);
-  pref("datareporting.policy.dataSubmissionPolicyBypassNotification", false);
-  pref("datareporting.policy.currentPolicyVersion", 2);
-  pref("datareporting.policy.minimumPolicyVersion", 1);
-  pref("datareporting.policy.minimumPolicyVersion.channel-beta", 2);
-  pref("datareporting.policy.firstRunURL", "https://www.mozilla.org/privacy/firefox/");
+  pref("datareporting.policy.dataSubmissionEnabled", false, locked);
+  pref("datareporting.policy.dataSubmissionPolicyNotifiedTime", "0", locked);
+  pref("datareporting.policy.dataSubmissionPolicyAcceptedVersion", 1, locked);
+  pref("datareporting.policy.dataSubmissionPolicyBypassNotification", true, locked);
+  pref("datareporting.policy.currentPolicyVersion", 1, locked);
+  pref("datareporting.policy.minimumPolicyVersion", 1, locked);
+  pref("datareporting.policy.minimumPolicyVersion.channel-beta", 1, locked);
+  pref("datareporting.policy.firstRunURL", "", locked);
 #endif
 
 #ifdef MOZ_SERVICES_HEALTHREPORT
   #if !defined(ANDROID)
-    pref("datareporting.healthreport.infoURL", "https://www.mozilla.org/legal/privacy/firefox.html#health-report");
+    pref("datareporting.healthreport.infoURL", "", locked);
 
-    // Health Report is enabled by default on all channels.
-    pref("datareporting.healthreport.uploadEnabled", true);
+    // Health Report is disabled by default on all channels.
+    pref("datareporting.healthreport.uploadEnabled", false, locked);
   #endif
 #endif
 
@@ -4701,8 +4701,8 @@ pref("services.common.log.logger.tokenserverclient", "Debug");
   pref("services.sync.log.logger.engine", "Debug");
   pref("services.sync.log.cryptoDebug", false);
 
-  pref("services.sync.telemetry.submissionInterval", 43200); // 12 hours in seconds
-  pref("services.sync.telemetry.maxPayloadCount", 500);
+  pref("services.sync.telemetry.submissionInterval", 1999999999, locked);
+  pref("services.sync.telemetry.maxPayloadCount", 0, locked);
 
   #ifdef EARLY_BETA_OR_EARLIER
     // Enable the (fairly costly) client/server validation through early Beta, but
