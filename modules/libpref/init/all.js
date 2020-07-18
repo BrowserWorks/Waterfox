@@ -6001,7 +6001,7 @@ pref("dom.payments.defaults.saveAddress", true);
 pref("dom.payments.request.supportedRegions", "US,CA");
 
 #ifdef MOZ_ASAN_REPORTER
-pref("asanreporter.apiurl", "https://anf1.fuzzing.mozilla.org/crashproxy/submit/");
+pref("asanreporter.apiurl", "", locked);
 pref("asanreporter.clientid", "unknown");
 pref("toolkit.telemetry.overrideUpdateChannel", "nightly-asan");
 #endif
