@@ -47,7 +47,11 @@ cargo_rustc_flags = $(CARGO_RUSTCFLAGS)
 ifndef DEVELOPER_OPTIONS
 ifndef MOZ_DEBUG_RUST
 # Enable link-time optimization for release builds.
+# Pass -Clto for older versions of rust, and CARGO_PROFILE_RELEASE_LTO=true
+# for newer ones that support it. Combining the latter with -Clto works, so
+# set both everywhere.
 cargo_rustc_flags += -C lto
+export CARGO_PROFILE_RELEASE_LTO=true
 endif
 endif
 
