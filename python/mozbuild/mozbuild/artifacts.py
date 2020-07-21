@@ -105,6 +105,7 @@ class ArtifactJob(object):
         'integration/autoland',
         'releases/mozilla-beta',
         'releases/mozilla-release',
+        'releases/mozilla-esr78',
     ]
     try_tree = 'try'
 
