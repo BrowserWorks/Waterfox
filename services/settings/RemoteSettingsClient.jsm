@@ -344,9 +344,35 @@ class RemoteSettingsClient extends EventEmitter {
     } = options;
     let { verifySignature = false } = options;
 
-    let hasLocalData;
+    let data;
     try {
-      hasLocalData = await Utils.hasLocalData(this);
+      let hasLocalData = await Utils.hasLocalData(this);
+
+      if (syncIfEmpty && !hasLocalData) {
+        try {
+          // .get() was called before we had the chance to synchronize the local database.
+          // We'll try to avoid returning an empty list.
+          const importedFromDump = gLoadDump
+            ? await this._importJSONDump()
+            : -1;
+          if (importedFromDump < 0) {
+            // There is no JSON dump to load, force a synchronization from the server.
+            console.debug(
+              `${this.identifier} Local DB is empty, pull data from server`
+            );
+            await this.sync({ loadDump: false });
+          }
+          // Either from trusted dump, or already done during sync.
+          verifySignature = false;
+        } catch (e) {
+          // Report but return an empty list since there will be no data anyway.
+          Cu.reportError(e);
+          return [];
+        }
+      }
+
+      // Read from the local DB.
+      data = await this.db.list({ filters, order });
     } catch (e) {
       // If the local DB cannot be read (for unknown reasons, Bug 1649393)
       // We fallback to the packaged data, and filter/sort in memory.
@@ -376,29 +402,6 @@ class RemoteSettingsClient extends EventEmitter {
       return this._filterEntries(data);
     }
 
-    if (syncIfEmpty && !hasLocalData) {
-      try {
-        // .get() was called before we had the chance to synchronize the local database.
-        // We'll try to avoid returning an empty list.
-        const importedFromDump = gLoadDump ? await this._importJSONDump() : -1;
-        if (importedFromDump < 0) {
-          // There is no JSON dump to load, force a synchronization from the server.
-          console.debug(
-            `${this.identifier} Local DB is empty, pull data from server`
-          );
-          await this.sync({ loadDump: false });
-        }
-        // Either from trusted dump, or already done during sync.
-        verifySignature = false;
-      } catch (e) {
-        // Report but return an empty list since there will be no data anyway.
-        Cu.reportError(e);
-        return [];
-      }
-    }
-
-    // Read from the local DB.
-    const data = await this.db.list({ filters, order });
     console.debug(
       `${this.identifier} ${data.length} records before filtering.`
     );
