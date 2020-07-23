@@ -95,10 +95,10 @@ AccessibleWrap::Shutdown()
 {
   if (mID != kNoID) {
     auto doc = static_cast<DocAccessibleWrap*>(mDoc.get());
-    MOZ_ASSERT(doc);
+    // Accessibles can be shut down twice in some cases. When this happens,
+    // doc will be null.
     if (doc) {
       doc->RemoveID(mID);
-      mID = kNoID;
     }
   }
 
