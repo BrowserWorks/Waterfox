@@ -779,8 +779,8 @@ var CustomizableUIInternal = {
       // If we have pending build area nodes, register all of them
       if (gPendingBuildAreas.has(aName)) {
         let pendingNodes = gPendingBuildAreas.get(aName);
-        for (let pendingNode of pendingNodes) {
-          this.registerToolbarNode(pendingNode);
+        for (let [pendingNode, existingChildren] of pendingNodes) {
+          this.registerToolbarNode(pendingNode, existingChildren);
         }
         gPendingBuildAreas.delete(aName);
       }
@@ -833,7 +833,7 @@ var CustomizableUIInternal = {
     }
   },
 
-  registerToolbarNode(aToolbar) {
+  registerToolbarNode(aToolbar, aExistingChildren) {
     let area = aToolbar.id;
     if (gBuildAreas.has(area) && gBuildAreas.get(area).has(aToolbar)) {
       return;
@@ -843,9 +843,10 @@ var CustomizableUIInternal = {
     // If this area is not registered, try to do it automatically:
     if (!areaProperties) {
       if (!gPendingBuildAreas.has(area)) {
-        gPendingBuildAreas.set(area, []);
+        gPendingBuildAreas.set(area, new Map());
       }
-      gPendingBuildAreas.get(area).push(aToolbar);
+      let pendingNodes = gPendingBuildAreas.get(area);
+      pendingNodes.set(aToolbar, aExistingChildren);
       return;
     }
 
@@ -860,13 +861,10 @@ var CustomizableUIInternal = {
         placements = gPlacements.get(area);
       }
 
-      // For toolbars that need it, mark as dirty.
-      let defaultPlacements = areaProperties.get("defaultPlacements");
-      if (
-        !this._builtinToolbars.has(area) ||
-        placements.length != defaultPlacements.length ||
-        !placements.every((id, i) => id == defaultPlacements[i])
-      ) {
+      // Check that the current children and the current placements match. If
+      // not, mark it as dirty:
+      if (aExistingChildren.length != placements.length ||
+          aExistingChildren.every((id, i) => id == placements[i])) {
         gDirtyAreaCache.add(area);
       }
 
@@ -886,13 +884,6 @@ var CustomizableUIInternal = {
       // in the saved state.
       if (gDirtyAreaCache.has(area)) {
         this.buildArea(area, placements, aToolbar);
-      } else {
-        // We must have a builtin toolbar that's in the default state. We need
-        // to only make sure that all the special nodes are correct.
-        let specials = placements.filter(p => this.isSpecialWidget(p));
-        if (specials.length) {
-          this.updateSpecialsForBuiltinToolbar(aToolbar, specials);
-        }
       }
       this.notifyListeners(
         "onAreaNodeRegistered",
@@ -1357,11 +1348,15 @@ var CustomizableUIInternal = {
       this.notifyListeners("onWidgetInstanceRemoved", widget.id, document);
     }
 
-    for (let [, pendingNodes] of gPendingBuildAreas) {
-      for (let i = pendingNodes.length - 1; i >= 0; i--) {
-        if (pendingNodes[i].ownerDocument == document) {
-          pendingNodes.splice(i, 1);
+    for (let [, areaMap] of gPendingBuildAreas) {
+      let toDelete = [];
+      for (let [areaNode ] of areaMap) {
+        if (areaNode.ownerDocument == document) {
+          toDelete.push(areaNode);
         }
+      }
+      for (let areaNode of toDelete) {
+        areaMap.delete(areaNode);
       }
     }
 
@@ -3592,18 +3587,21 @@ var CustomizableUI = {
     CustomizableUIInternal.registerArea(aName, aProperties);
   },
   /**
-   * Register a concrete node for a registered area. This method needs to be called
-   * with any toolbar in the main browser window that has its "customizable" attribute
-   * set to true.
+   * Register a concrete node for a registered area. This method is automatically
+   * called from any toolbar in the main browser window that has its
+   * "customizable" attribute set to true. There should normally be no need to
+   * call it yourself.
    *
    * Note that ideally, you should register your toolbar using registerArea
-   * before calling this. If you don't, the node will be saved for processing when
-   * you call registerArea. Note that CustomizableUI won't restore state in the area,
+   * before any of the toolbars have their XBL bindings constructed (which
+   * will happen when they're added to the DOM and are not hidden). If you
+   * don't, the node will be saved for processing when you call
+   * registerArea. Note that CustomizableUI won't restore state in the area,
    * allow the user to customize it in customize mode, or otherwise deal
    * with it, until the area has been registered.
    */
-  registerToolbarNode(aToolbar) {
-    CustomizableUIInternal.registerToolbarNode(aToolbar);
+   registerToolbarNode(aToolbar, aExistingChildren) {
+    CustomizableUIInternal.registerToolbarNode(aToolbar, aExistingChildren);
   },
   /**
    * Register the menu panel node. This method should not be called by anyone
