@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<blocklist xmlns="http://www.mozilla.org/2006/addons-blocklist" lastupdate="1594981206721">
+<blocklist xmlns="http://www.mozilla.org/2006/addons-blocklist" lastupdate="1595258518841">
   <emItems>
     <emItem blockID="i334" id="{0F827075-B026-42F3-885D-98981EE7B1AE}">
       <prefs/>
@@ -3975,6 +3975,10 @@
       <versionRange minVersion="0" maxVersion="*" severity="3"/>
     </emItem>
     <emItem blockID="7c502209-c720-4db5-83fe-b444f1e4368b" id="/^((\{33d203ab-419c-4ef6-a512-4b9e59767000\})|(\{33d203ab-419c-4ef6-a512-4b9e59767001\})|(\{33d203ab-419c-4ef6-a512-4b9e59767002\})|(\{33d203ab-419c-4ef6-a512-4b9e59767960\})|(\{33d203ab-419c-4ef6-a512-4b9e59767961\})|(\{33d203ab-419c-4ef6-a512-4b9e59767962\})|(\{33d203ab-419c-4ef6-a512-4b9e59767963\})|(\{33d203ab-419c-4ef6-a512-4b9e59767970\})|(\{33d203ab-419c-4ef6-a512-4b9e59767971\})|(\{33d203ab-419c-4ef6-a512-4b9e59767972\})|(\{33d203ab-419c-4ef6-a512-4b9e59767973\})|(\{33d203ab-419c-4ef6-a512-4b9e59767974\})|(\{33d203ab-419c-4ef6-a512-4b9e59767975\})|(\{33d203ab-419c-4ef6-a512-4b9e59767981\})|(\{33d203ab-419c-4ef6-a512-4b9e59767982\})|(\{33d203ab-419c-4ef6-a512-4b9e59767983\})|(\{33d203ab-419c-4ef6-a512-4b9e59767984\})|(\{33d203ab-419c-4ef6-a512-4b9e59767985\})|(\{33d203ab-419c-4ef6-a512-4b9e59767990\})|(\{33d203ab-419c-4ef6-a512-4b9e59767996\})|(\{33d203ab-419c-4ef6-a512-4b9e59767997\})|(\{33d203ab-419c-4ef6-a512-4b9e59767999\})|(\{39000c59-8aaa-4d18-b97f-11945e519e11\})|(\{39000c59-8aaa-4d18-b97f-11945e519ebd\}))$/">
+      <prefs/>
+      <versionRange minVersion="0" maxVersion="*" severity="3"/>
+    </emItem>
+    <emItem blockID="9abcd6ed-4678-495d-8c9f-94a6626e3011" id="/^((\{5e717dad-4d46-450a-9001-6d87fa2764a6\})|(\{a585b03f-b8cf-40ea-aef9-05049dfc1946\}))$/">
       <prefs/>
       <versionRange minVersion="0" maxVersion="*" severity="3"/>
     </emItem>
