@@ -592,7 +592,7 @@ CustomizeMode.prototype = {
     for (let i = 0; i < numberOfAreas; i++) {
       let area = areas[i];
       let areaNode = aNode.ownerDocument.getElementById(area);
-      let customizationTarget = CustomizableUI.getCustomizationTarget(areaNode);
+      let customizationTarget = areaNode && areaNode.customizationTarget;
       if (customizationTarget && customizationTarget != areaNode) {
         areas.push(customizationTarget.id);
       }
@@ -1931,7 +1931,7 @@ CustomizeMode.prototype = {
     // We need to determine the place that the widget is being dropped in
     // the target.
     let dragOverItem, dragValue;
-    if (targetNode == CustomizableUI.getCustomizationTarget(targetArea)) {
+    if (targetNode == targetArea.customizationTarget) {
       // We'll assume if the user is dragging directly over the target, that
       // they're attempting to append a child to that target.
       dragOverItem =
@@ -1998,7 +1998,7 @@ CustomizeMode.prototype = {
       dragOverItem != this._dragOverItem ||
       dragValue != dragOverItem.getAttribute("dragover")
     ) {
-      if (dragOverItem != CustomizableUI.getCustomizationTarget(targetArea)) {
+      if (dragOverItem != targetArea.customizationTarget) {
         this._setDragActive(
           dragOverItem,
           dragValue,
@@ -2125,9 +2125,6 @@ CustomizeMode.prototype = {
     }
 
     // Skipintoolbarset items won't really be moved:
-    let areaCustomizationTarget = CustomizableUI.getCustomizationTarget(
-      aTargetArea
-    );
     if (draggedItem.getAttribute("skipintoolbarset") == "true") {
       // These items should never leave their area:
       if (aTargetArea != aOriginArea) {
@@ -2135,11 +2132,11 @@ CustomizeMode.prototype = {
       }
       let place = draggedItem.parentNode.getAttribute("place");
       this.unwrapToolbarItem(draggedItem.parentNode);
-      if (aTargetNode == areaCustomizationTarget) {
-        areaCustomizationTarget.appendChild(draggedItem);
+      if (aTargetNode == aTargetArea.customizationTarget) {
+        aTargetArea.customizationTarget.appendChild(draggedItem);
       } else {
         this.unwrapToolbarItem(aTargetNode.parentNode);
-        areaCustomizationTarget.insertBefore(draggedItem, aTargetNode);
+        aTargetArea.customizationTarget.insertBefore(draggedItem, aTargetNode);
         this.wrapToolbarItem(aTargetNode, place);
       }
       this.wrapToolbarItem(draggedItem, place);
@@ -2148,7 +2145,7 @@ CustomizeMode.prototype = {
 
     // Is the target the customization area itself? If so, we just add the
     // widget to the end of the area.
-    if (aTargetNode == areaCustomizationTarget) {
+    if (aTargetNode == aTargetArea.customizationTarget) {
       CustomizableUI.addWidgetToArea(aDraggedItemId, aTargetArea.id);
       this._onDragEnd(aEvent);
       return;
@@ -2492,8 +2489,7 @@ CustomizeMode.prototype = {
   },
 
   _getDragOverNode(aEvent, aAreaElement, aAreaType, aDraggedItemId) {
-    let expectedParent =
-      CustomizableUI.getCustomizationTarget(aAreaElement) || aAreaElement;
+    let expectedParent = aAreaElement.customizationTarget || aAreaElement;
     if (!expectedParent.contains(aEvent.target)) {
       return expectedParent;
     }

@@ -823,7 +823,7 @@ var CustomizableUIInternal = {
           this.notifyListeners(
             "onAreaNodeUnregistered",
             aName,
-            this.getCustomizationTarget(areaNode),
+            areaNode.customizationTarget,
             CustomizableUI.REASON_AREA_UNREGISTERED
           );
         }
@@ -901,7 +901,7 @@ var CustomizableUIInternal = {
       this.notifyListeners(
         "onAreaNodeRegistered",
         area,
-        this.getCustomizationTarget(aToolbar)
+        aToolbar.customizationTarget
       );
       aToolbar.setAttribute("currentset", placements.join(","));
     } finally {
@@ -929,7 +929,7 @@ var CustomizableUIInternal = {
     let document = aAreaNode.ownerDocument;
     let window = document.defaultView;
     let inPrivateWindow = PrivateBrowsingUtils.isWindowPrivate(window);
-    let container = this.getCustomizationTarget(aAreaNode);
+    let container = aAreaNode.customizationTarget;
     let areaIsPanel =
       gAreas.get(aArea).get("type") == CustomizableUI.TYPE_MENU_PANEL;
 
@@ -1184,7 +1184,8 @@ var CustomizableUIInternal = {
       return;
     }
 
-    aPanelContents._customizationTarget = aPanelContents;
+    aPanelContents.customizationTarget = aPanelContents;
+
     this.addPanelCloseListeners(this._getPanelForNode(aPanelContents));
 
     let placements = gPlacements.get(aArea);
@@ -1234,7 +1235,7 @@ var CustomizableUIInternal = {
         continue;
       }
 
-      let container = this.getCustomizationTarget(areaNode);
+      let container = areaNode.customizationTarget;
       let widgetNode = window.document.getElementById(aWidgetId);
       if (widgetNode && isOverflowable) {
         container = areaNode.overflowable.getContainerFor(widgetNode);
@@ -1349,7 +1350,7 @@ var CustomizableUIInternal = {
           this.notifyListeners(
             "onAreaNodeUnregistered",
             areaId,
-            this.getCustomizationTarget(node),
+            node.customizationTarget,
             CustomizableUI.REASON_WINDOW_CLOSED
           );
           if (areaProperties.has("overflowable")) {
@@ -1474,7 +1475,7 @@ var CustomizableUIInternal = {
       return aAreaNode.overflowable.findOverflowedInsertionPoints(aNode);
     }
 
-    let container = this.getCustomizationTarget(aAreaNode);
+    let container = aAreaNode.customizationTarget;
     let placements = gPlacements.get(areaId);
     let nodeIndex = placements.indexOf(aNode.id);
 
@@ -1624,7 +1625,7 @@ var CustomizableUIInternal = {
       while (
         parent &&
         !(
-          this.getCustomizationTarget(parent) ||
+          parent.customizationTarget ||
           parent == aWindow.gNavToolbox.palette
         )
       ) {
@@ -1638,7 +1639,7 @@ var CustomizableUIInternal = {
             : node;
         // Check if we're in a customization target, or in the palette:
         if (
-          (this.getCustomizationTarget(parent) == nodeInArea.parentNode &&
+          (parent.customizationTarget == nodeInArea.parentNode &&
             gBuildWindows.get(aWindow).has(aWindow.gNavToolbox)) ||
           aWindow.gNavToolbox.palette == nodeInArea.parentNode
         ) {
@@ -1650,7 +1651,7 @@ var CustomizableUIInternal = {
             // customization palette instead of the toolbox palette.
             node.setAttribute(
               "removable",
-              !this.getCustomizationTarget(parent)
+              !parent.customizationTarget
             );
           }
           return node;
@@ -2991,7 +2992,7 @@ var CustomizableUIInternal = {
 
     for (let node of buildAreaNodes) {
       if (node.ownerGlobal == aWindow) {
-        return this.getCustomizationTarget(node) || node;
+        return node.customizationTarget ? node.customizationTarget : node;
       }
     }
 
@@ -3266,7 +3267,7 @@ var CustomizableUIInternal = {
         }
       }
     }
-    addUnskippedChildren(this.getCustomizationTarget(container));
+    addUnskippedChildren(container.customizationTarget);
     if (container.getAttribute("overflowing") == "true") {
       let overflowTarget = container.getAttribute("overflowtarget");
       addUnskippedChildren(
@@ -4773,9 +4774,9 @@ function OverflowableToolbar(aToolbarNode) {
 
   this._toolbar.setAttribute("overflowable", "true");
   let doc = this._toolbar.ownerDocument;
-  this._target = CustomizableUI.getCustomizationTarget(this._toolbar);
+  this._target = this._toolbar.customizationTarget;
   this._list = doc.getElementById(this._toolbar.getAttribute("overflowtarget"));
-  this._list._customizationTarget = this._list;
+  this._list.customizationTarget = this._list;
 
   let window = this._toolbar.ownerGlobal;
   if (window.gBrowserInit.delayedStartupFinished) {
