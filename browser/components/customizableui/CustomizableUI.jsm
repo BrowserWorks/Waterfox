@@ -3730,7 +3730,11 @@ var CustomizableUI = {
   /**
    * Ensure a XUL-based widget created in a window after areas were
    * initialized moves to its correct position.
-   * Always prefer this over moving items in the DOM yourself.
+   * This is roughly equivalent to manually looking up the position and using
+   * insertItem in the old API, but a lot less work for consumers.
+   * Always prefer this over using toolbar.insertItem (which might no-op
+   * because it delegates to addWidgetToArea) or, worse, moving items in the
+   * DOM yourself.
    *
    * @param aWidgetId the ID of the widget that was just created
    * @param aWindow the window in which you want to ensure it was added.
