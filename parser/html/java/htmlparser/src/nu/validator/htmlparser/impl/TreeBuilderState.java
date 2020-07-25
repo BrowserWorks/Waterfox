@@ -67,13 +67,6 @@ public interface TreeBuilderState<T> {
     public T getHeadPointer();
     
     /**
-     * Returns the deepTreeSurrogateParent.
-     * 
-     * @return the deepTreeSurrogateParent
-     */
-    public T getDeepTreeSurrogateParent();
-
-    /**
      * Returns the mode.
      * 
      * @return the mode
