@@ -67,6 +67,8 @@
 #endif
 
 #ifdef XP_WIN
+// For min.
+#include <algorithm>
 #include <windows.h>
 #endif
 
@@ -881,7 +883,10 @@ XPCJSContext::Initialize(XPCJSContext* aPrimaryContext)
 #elif defined(XP_WIN)
     // 1MB is the default stack size on Windows. We use the /STACK linker flag
     // to request a larger stack, so we determine the stack size at runtime.
-    const size_t kStackQuota = GetWindowsStackSize();
+    // But 8MB is more than the Web can handle (bug 1537609), so clamp
+    // to something remotely reasonable.
+    const size_t kStackQuota =
+      std::min(GetWindowsStackSize(), size_t(2 * 1024 * 1024));
     const size_t kTrustedScriptBuffer = (sizeof(size_t) == 8) ? 180 * 1024   //win64
                                                               : 120 * 1024;  //win32
     // The following two configurations are linux-only. Given the numbers above,
