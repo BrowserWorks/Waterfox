@@ -145,6 +145,8 @@
 
     void EnableViewSource(nsHtml5Highlighter* aHighlighter);
 
+    void errDeepTree();
+
     void errStrayStartTag(nsIAtom* aName);
 
     void errStrayEndTag(nsIAtom* aName);

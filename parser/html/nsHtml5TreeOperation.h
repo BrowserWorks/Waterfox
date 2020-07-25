@@ -59,6 +59,7 @@ enum eHtml5TreeOperation
   eTreeOpSetScriptLineNumberAndFreeze,
   eTreeOpSvgLoad,
   eTreeOpMaybeComplainAboutCharset,
+  eTreeOpMaybeComplainAboutDeepTree,
   eTreeOpAddClass,
   eTreeOpAddViewSourceHref,
   eTreeOpAddViewSourceBase,
@@ -468,6 +469,13 @@ class nsHtml5TreeOperation final {
       mTwo.integer = aError;
       mThree.integer = aLineNumber;
     }
+
+  inline void InitDeepTree(int32_t aLineNumber) {
+    MOZ_ASSERT(mOpCode == eTreeOpUninitialized,
+               "Op code must be uninitialized when initializing.");
+    mOpCode = eTreeOpMaybeComplainAboutDeepTree;
+    mOne.integer = aLineNumber;
+  }
 
     inline void Init(eHtml5TreeOperation aOpCode, const nsAString& aString)
     {
