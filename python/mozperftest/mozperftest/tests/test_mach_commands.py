@@ -53,7 +53,7 @@ def _get_command(klass=Perftest):
 
 
 @mock.patch("mozperftest.MachEnvironment", new=_TestMachEnvironment)
-@mock.patch("mozperftest.mach_commands.MachCommandBase._activate_virtualenv")
+@mock.patch("mozperftest.mach_commands.MachCommandBase.activate_virtualenv")
 def test_command(mocked_func):
     with _get_command() as test, silence(test):
         test.run_perftest(tests=[EXAMPLE_TESTS_DIR], flavor="script")
@@ -61,7 +61,7 @@ def test_command(mocked_func):
 
 
 @mock.patch("mozperftest.MachEnvironment", new=_TestMachEnvironment)
-@mock.patch("mozperftest.mach_commands.MachCommandBase._activate_virtualenv")
+@mock.patch("mozperftest.mach_commands.MachCommandBase.activate_virtualenv")
 @mock.patch("tryselect.push.push_to_try")
 def test_push_command(push_to_try, venv):
     with _get_command() as test, silence(test):
@@ -76,14 +76,14 @@ def test_push_command(push_to_try, venv):
 
 
 @mock.patch("mozperftest.MachEnvironment", new=_TestMachEnvironment)
-@mock.patch("mozperftest.mach_commands.MachCommandBase._activate_virtualenv")
+@mock.patch("mozperftest.mach_commands.MachCommandBase.activate_virtualenv")
 def test_doc_flavor(mocked_func):
     with _get_command() as test, silence(test):
         test.run_perftest(tests=[EXAMPLE_TESTS_DIR], flavor="doc")
 
 
 @mock.patch("mozperftest.MachEnvironment", new=_TestMachEnvironment)
-@mock.patch("mozperftest.mach_commands.MachCommandBase._activate_virtualenv")
+@mock.patch("mozperftest.mach_commands.MachCommandBase.activate_virtualenv")
 @mock.patch("mozperftest.mach_commands.PerftestTests._run_python_script")
 def test_test_runner(*mocked):
     # simulating on try to run the paths parser
@@ -98,7 +98,7 @@ def test_test_runner(*mocked):
 
 
 @mock.patch("mozperftest.MachEnvironment", new=_TestMachEnvironment)
-@mock.patch("mozperftest.mach_commands.MachCommandBase._activate_virtualenv")
+@mock.patch("mozperftest.mach_commands.MachCommandBase.activate_virtualenv")
 def test_run_python_script(*mocked):
     with _get_command(PerftestTests) as test, silence(test) as captured:
         test._run_python_script("lib2to3", *["--help"])
@@ -109,7 +109,7 @@ def test_run_python_script(*mocked):
 
 
 @mock.patch("mozperftest.MachEnvironment", new=_TestMachEnvironment)
-@mock.patch("mozperftest.mach_commands.MachCommandBase._activate_virtualenv")
+@mock.patch("mozperftest.mach_commands.MachCommandBase.activate_virtualenv")
 def test_run_python_script_failed(*mocked):
     with _get_command(PerftestTests) as test, silence(test) as captured:
         test._run_python_script("nothing")
