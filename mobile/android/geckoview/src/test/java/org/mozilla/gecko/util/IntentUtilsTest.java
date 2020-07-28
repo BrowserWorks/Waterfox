@@ -13,7 +13,9 @@ import org.json.JSONException;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mozilla.gecko.GeckoAppShell;
 import org.robolectric.RobolectricTestRunner;
+import org.robolectric.RuntimeEnvironment;
 
 import java.util.Arrays;
 import java.util.List;
@@ -37,12 +39,14 @@ public class IntentUtilsTest {
 
     @Test
     public void safeIntentUri() {
+        GeckoAppShell.setApplicationContext(RuntimeEnvironment.application);
         final String uri = "intent:https://mozilla.org#Intent;end;";
         assertTrue(IntentUtils.isUriSafeForScheme(uri));
     }
 
     @Test
     public void unsafeIntentUri() {
+        GeckoAppShell.setApplicationContext(RuntimeEnvironment.application);
         final String uri = "intent:file:///storage/emulated/0/Download#Intent;end";
         assertFalse(IntentUtils.isUriSafeForScheme(uri));
     }

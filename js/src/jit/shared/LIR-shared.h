@@ -6800,11 +6800,18 @@ class LWasmCallBase : public LVariadicInstruction<Defs, 0> {
 };
 
 class LWasmCall : public LWasmCallBase<1> {
+  bool maskInt32Return_;
+
  public:
   LIR_HEADER(WasmCall);
 
   LWasmCall(uint32_t numOperands, bool needsBoundsCheck)
-      : LWasmCallBase(classOpcode, numOperands, needsBoundsCheck) {}
+    : LWasmCallBase(classOpcode, numOperands, needsBoundsCheck),
+      maskInt32Return_(false)
+    {}
+
+  void setMaskInt32Return() { maskInt32Return_ = true; }
+  bool maskInt32Return() const { return maskInt32Return_; }
 };
 
 class LWasmCallVoid : public LWasmCallBase<0> {

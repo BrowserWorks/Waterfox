@@ -28,6 +28,7 @@ import android.support.annotation.Nullable;
 import android.text.TextUtils;
 
 import java.io.File;
+import java.util.UUID;
 
 /**
  * Based on https://github.com/iPaulPro/aFileChooser/blob/48d65e6649d4201407702b0390326ec9d5c9d17c/aFileChooser/src/com/ipaulpro/afilechooser/utils/FileUtils.java
@@ -125,7 +126,7 @@ public class ContentUriUtils {
     public static @Nullable String getTempFilePathFromContentUri(final Context context,
                                                                  final Uri contentUri) {
         //copy file and send new file path
-        final String fileName = FileUtils.getFileNameFromContentUri(context, contentUri);
+        final String fileName = UUID.randomUUID().toString();
         final File folder = new File(context.getCacheDir(), FileUtils.CONTENT_TEMP_DIRECTORY);
         boolean success = true;
         if (!folder.exists()) {

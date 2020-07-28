@@ -7447,7 +7447,16 @@ void CodeGenerator::emitWasmCallBase(LWasmCallBase<Defs>* lir) {
   }
 }
 
-void CodeGenerator::visitWasmCall(LWasmCall* ins) { emitWasmCallBase(ins); }
+void CodeGenerator::visitWasmCall(LWasmCall* ins) {
+  emitWasmCallBase(ins);
+  if (ins->maskInt32Return()) {
+#ifdef JS_CODEGEN_X64
+    masm.movl(ReturnReg, ReturnReg);
+#else
+    MOZ_CRASH("Unexpected");
+#endif
+  }
+}
 
 void CodeGenerator::visitWasmCallVoid(LWasmCallVoid* ins) {
   emitWasmCallBase(ins);

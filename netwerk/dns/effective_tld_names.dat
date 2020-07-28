@@ -456,6 +456,7 @@ aju.br
 am.br
 anani.br
 aparecida.br
+app.br
 arq.br
 art.br
 ato.br
@@ -463,6 +464,7 @@ b.br
 barueri.br
 belem.br
 bhz.br
+bib.br
 bio.br
 blog.br
 bmd.br
@@ -477,14 +479,19 @@ cnt.br
 com.br
 contagem.br
 coop.br
+coz.br
 cri.br
 cuiaba.br
 curitiba.br
 def.br
+des.br
+det.br
+dev.br
 ecn.br
 eco.br
 edu.br
 emp.br
+enf.br
 eng.br
 esp.br
 etc.br
@@ -500,6 +507,7 @@ fot.br
 foz.br
 fst.br
 g12.br
+geo.br
 ggf.br
 goiania.br
 gov.br
@@ -543,6 +551,7 @@ jor.br
 jus.br
 leg.br
 lel.br
+log.br
 londrina.br
 macapa.br
 maceio.br
@@ -575,6 +584,7 @@ qsl.br
 radio.br
 rec.br
 recife.br
+rep.br
 ribeirao.br
 rio.br
 riobranco.br
@@ -585,6 +595,7 @@ santamaria.br
 santoandre.br
 saobernardo.br
 saogonca.br
+seg.br
 sjc.br
 slg.br
 slz.br
@@ -592,6 +603,7 @@ sorocaba.br
 srv.br
 taxi.br
 tc.br
+tec.br
 teo.br
 the.br
 tmp.br
@@ -7091,7 +7103,7 @@ org.zw
 
 // newGTLDs
 
-// List of new gTLDs imported from https://www.icann.org/resources/registries/gtlds/v2/gtlds.json on 2020-06-27T16:53:37Z
+// List of new gTLDs imported from https://www.icann.org/resources/registries/gtlds/v2/gtlds.json on 2020-07-18T17:05:44Z
 // This list is auto-generated, don't edit it manually.
 // aaa : 2015-02-26 American Automobile Association, Inc.
 aaa
@@ -9910,9 +9922,6 @@ swiss
 // sydney : 2014-09-18 State of New South Wales, Department of Premier and Cabinet
 sydney
 
-// symantec : 2014-12-04 Symantec Corporation
-symantec
-
 // systems : 2013-11-07 Binky Moon, LLC
 systems
 
@@ -12104,12 +12113,23 @@ iserv.dev
 iobb.net
 
 //Jelastic, Inc. : https://jelastic.com/
-// Submitetd by Ihor Kolodyuk <ik@jelastic.com>
+// Submited by Ihor Kolodyuk <ik@jelastic.com>
+jele.cloud
+jele.club
+dopaas.com
 hidora.com
+jcloud.ik-server.com
 demo.jelastic.com
 j.scaleforce.com.cy
+jele.host
 mircloud.host
+jele.io
+cloudjiffy.net
 jls-sto1.elastx.net
+jelastic.saveincloud.net
+jelastic.regruhosting.ru
+jele.site
+jelastic.team
 j.layershift.co.uk
 
 // Jino : https://www.jino.ru
@@ -12296,6 +12316,10 @@ co.pl
 azurewebsites.net
 azure-mobile.net
 cloudapp.net
+
+// minion.systems : http://minion.systems
+// Submitted by Robert Böttinger <r@minion.systems>
+csx.cc
 
 // Mozilla Corporation : https://mozilla.com
 // Submitted by Ben Francis <bfrancis@mozilla.com>
@@ -12563,6 +12587,10 @@ cloudycluster.net
 // Submitted by Eddie Jones <eddie@onefoldmedia.com>
 nid.io
 
+// Open Social : https://www.getopensocial.com/
+// Submitted by Alexander Varwijk <security@getopensocial.com>
+opensocial.site
+
 // OpenCraft GmbH : http://opencraft.com/
 // Submitted by Sven Marnach <sven@opencraft.com>
 opencraft.hosting
@@ -12635,7 +12663,10 @@ on-web.fr
 
 // Platform.sh : https://platform.sh
 // Submitted by Nikola Kotur <nikola@platform.sh>
-*.platform.sh
+bc.platform.sh
+ent.platform.sh
+eu.platform.sh
+us.platform.sh
 *.platformsh.site
 
 // Platter: https://platter.dev
@@ -13149,6 +13180,10 @@ wedeploy.sh
 // Submitted by Jung Jin <jungseok.jin@wdc.com>
 remotewd.com
 
+// WIARD Enterprises : https://wiardweb.com
+// Submitted by Kidd Hustle <kiddhustle@wiardweb.com>
+pages.wiardweb.com
+
 // Wikimedia Labs : https://wikitech.wikimedia.org
 // Submitted by Arturo Borrero Gonzalez <aborrero@wikimedia.org>
 wmflabs.org
@@ -13167,6 +13202,10 @@ community-pro.de
 diskussionsbereich.de
 community-pro.net
 meinforum.net
+
+// www.com.vc : http://www.com.vc
+// Submitted by Li Hui <lihui@sinopub.com>
+cn.vu
 
 // XenonCloud GbR: https://xenoncloud.net
 // Submitted by Julian Uphoff <publicsuffixlist@xenoncloud.net>
@@ -13231,5 +13270,9 @@ enterprisecloud.nu
 // Mintere : https://mintere.com/
 // Submitted by Ben Aubin <security@mintere.com>
 mintere.site
+
+// WP Engine : https://wpengine.com/
+// Submitted by Michael Smith <michael.smith@wpengine.com>
+wpenginepowered.com
 
 // ===END PRIVATE DOMAINS===

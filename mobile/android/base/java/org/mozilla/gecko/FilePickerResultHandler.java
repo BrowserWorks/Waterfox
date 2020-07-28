@@ -24,6 +24,7 @@ import android.os.Environment;
 import android.os.Process;
 import android.provider.MediaStore;
 import android.provider.OpenableColumns;
+import android.support.annotation.Nullable;
 import android.support.v4.app.LoaderManager.LoaderCallbacks;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
@@ -100,6 +101,12 @@ class FilePickerResultHandler implements ActivityResultHandler {
         // Some file pickers may return a file uri
         if ("file".equals(uri.getScheme())) {
             String path = uri.getPath();
+
+            // Don't allow files under internal storage to be uploaded.
+            if (isPathFromInternalStorage(path)) {
+                path = null;
+            }
+
             sendResult(path == null ? "" : path);
             return;
         }
@@ -163,7 +170,12 @@ class FilePickerResultHandler implements ActivityResultHandler {
                     return;
                 }
 
-                sendResult(res);
+                // Don't allow files under internal storage to be uploaded.
+                if (isPathFromInternalStorage(res)) {
+                    sendResult("");
+                } else {
+                    sendResult(res);
+                }
             } else {
                 tryFileLoaderCallback();
             }
@@ -208,6 +220,8 @@ class FilePickerResultHandler implements ActivityResultHandler {
         public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
             if (cursor.moveToFirst()) {
                 String fileName = cursor.getString(0);
+                // Sanitize
+                fileName = new File(fileName).getName();
 
                 final Context context = GeckoAppShell.getApplicationContext();
                 final ContentResolver cr = context.getContentResolver();
@@ -290,5 +304,30 @@ class FilePickerResultHandler implements ActivityResultHandler {
         }
     }
 
+    private boolean isPathFromInternalStorage(@Nullable final String path) {
+        if (TextUtils.isEmpty(path)) {
+            return false;
+        }
+
+        final String dataDirPath = GeckoAppShell.getApplicationContext().getApplicationInfo().dataDir;
+
+        // Remove redundant names and characters, resolve symlinks.
+        // eg: "///./data/./user/0///" is resolved to "/data/data"
+        String fileCanonicalPath;
+        String dataDirCanonicalPath;
+        try {
+            fileCanonicalPath = new File(path).getCanonicalPath();
+            dataDirCanonicalPath = new File(dataDirPath).getCanonicalPath();
+        } catch (IOException e) {
+            e.printStackTrace();
+            // Let's assume the worst.
+            return true;
+        }
+
+        if (fileCanonicalPath.startsWith(dataDirCanonicalPath)) {
+            return true;
+        }
+        return false;
+    }
 }
 

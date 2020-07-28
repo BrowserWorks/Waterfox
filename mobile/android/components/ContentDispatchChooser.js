@@ -53,6 +53,18 @@ ContentDispatchChooser.prototype = {
       /* it's OK to not have a window */
     }
 
+    // Let's make sure we're not accidentally loading a content:// url
+    if (aURI.schemeIs("content")) {
+      if (window) {
+        window.docShell.displayLoadError(
+          Cr.NS_ERROR_UNKNOWN_PROTOCOL,
+          aURI,
+          null
+        );
+      }
+      return;
+    }
+
     if (!aURI.schemeIs("content")) {
       // The current list is based purely on the scheme. Redo the query using the url to get more
       // specific results.

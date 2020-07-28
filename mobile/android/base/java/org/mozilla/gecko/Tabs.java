@@ -26,6 +26,7 @@ import org.mozilla.gecko.preferences.GeckoPreferences;
 import org.mozilla.gecko.reader.ReaderModeUtils;
 import org.mozilla.gecko.util.BundleEventListener;
 import org.mozilla.gecko.util.EventCallback;
+import org.mozilla.gecko.util.FileUtils;
 import org.mozilla.gecko.util.GeckoBundle;
 import org.mozilla.gecko.util.JavaUtil;
 import org.mozilla.gecko.util.ThreadUtils;
@@ -987,7 +988,8 @@ public class Tabs implements BundleEventListener {
         return loadUrl(url, null, null, INVALID_TAB_ID, null, flags);
     }
 
-    public Tab loadUrlWithIntentExtras(final String url, final SafeIntent intent, final int flags) {
+    public Tab loadUrlWithIntentExtras(final Context context, final String url,
+                                       final SafeIntent intent, final int flags) {
         // We can't directly create a listener to tell when the user taps on the "What's new"
         // notification, so we use this intent handling as a signal that they tapped the notification.
         if (intent.getBooleanExtra(WhatsNewReceiver.EXTRA_WHATSNEW_NOTIFICATION, false)) {
@@ -995,9 +997,16 @@ public class Tabs implements BundleEventListener {
                     WhatsNewReceiver.EXTRA_WHATSNEW_NOTIFICATION);
         }
 
+        // Translate "content:" urls here so that users can open files from
+        // other apps
+        String path = url;
+        if (FileUtils.isContentUri(intent.getData())) {
+          path = FileUtils.resolveContentUri(context, intent.getData());
+        }
+
         // Note: we don't get the URL from the intent so the calling
         // method has the opportunity to change the URL if applicable.
-        return loadUrl(url, null, null, INVALID_TAB_ID, intent, flags);
+        return loadUrl(path, null, null, INVALID_TAB_ID, intent, flags);
     }
 
     public Tab loadUrl(final String url, final String searchEngine, final int parentId, final int flags) {
