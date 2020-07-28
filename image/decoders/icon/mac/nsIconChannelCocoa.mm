@@ -306,7 +306,7 @@ nsresult nsIconChannel::MakeInputStream(nsIInputStream** _retval, bool aNonBlock
   [NSGraphicsContext setCurrentContext:[NSGraphicsContext graphicsContextWithGraphicsPort:ctx
                                                                                   flipped:NO]];
 
-  [iconImage drawInRect:NSMakeRect(0, 0, width, height)];
+  [iconImage drawInRect:NSMakeRect(0, 0, width, height) fromRect:NSZeroRect operation:NSCompositeSourceOver fraction:1.0];
 
   [NSGraphicsContext setCurrentContext:oldContext];
 
