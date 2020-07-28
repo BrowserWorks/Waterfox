@@ -32,6 +32,6 @@ interface ShadowRoot : DocumentFragment
   [CEReactions, SetterThrows, TreatNullAs=EmptyString]
   attribute DOMString innerHTML;
   attribute boolean applyAuthorStyles;
-  readonly attribute StyleSheetList styleSheets;
 };
 
+ShadowRoot implements DocumentOrShadowRoot;
