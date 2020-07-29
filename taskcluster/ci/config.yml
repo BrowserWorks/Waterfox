@@ -155,9 +155,6 @@ release-promotion:
             product: devedition
             target-tasks-method: promote_desktop
             partial-updates: true
-        promote_fennec_release:
-            product: fennec
-            target-tasks-method: promote_fennec_release
         promote_firefox:
             product: firefox
             target-tasks-method: promote_desktop
@@ -190,17 +187,6 @@ release-promotion:
             target-tasks-method: ship_desktop
             version-bump: true
             partial-updates: true
-        ship_fennec_beta:
-            product: fennec
-            target-tasks-method: ship_fennec_beta
-            version-bump: true
-        ship_fennec_release:
-            product: fennec
-            target-tasks-method: ship_fennec_release
-        ship_fennec_release_rc:
-            product: fennec
-            is-rc: true
-            target-tasks-method: ship_fennec_release
         ship_firefox:
             product: firefox
             target-tasks-method: ship_desktop
