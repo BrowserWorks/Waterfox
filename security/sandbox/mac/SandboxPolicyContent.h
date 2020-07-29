@@ -187,6 +187,11 @@ static const char SandboxPolicyContent[] = R"SANDBOX_LITERAL(
   (if (= macosVersion 1009)
      (allow mach-lookup (global-name "com.apple.xpcd")))
 
+  (if (>= macosVersion 1100)
+    (allow mach-lookup
+      ; bug 1655655
+      (global-name "com.apple.trustd.agent")))
+
   (allow iokit-open
      (iokit-user-client-class "IOHIDParamUserClient"))
 
