@@ -11,6 +11,18 @@ ChromeUtils.defineModuleGetter(
   "resource://gre/modules/AppConstants.jsm"
 );
 
+ChromeUtils.defineModuleGetter(
+  this,
+  "DEFAULT_SITES",
+  "resource://activity-stream/lib/DefaultSites.jsm"
+);
+
+ChromeUtils.defineModuleGetter(
+  this,
+  "Region",
+  "resource://gre/modules/Region.jsm"
+);
+
 // NB: Eagerly load modules that will be loaded/constructed/initialized in the
 // common case to avoid the overhead of wrapping and detecting lazy loading.
 const { actionCreators: ac, actionTypes: at } = ChromeUtils.import(
@@ -97,46 +109,6 @@ ChromeUtils.defineModuleGetter(
   "resource://activity-stream/lib/DiscoveryStreamFeed.jsm"
 );
 
-const DEFAULT_SITES = new Map([
-  // This first item is the global list fallback for any unexpected geos
-  [
-    "",
-    "https://www.waterfox.net/",
-  ],
-  [
-    "US",
-    "https://www.waterfox.net/",
-  ],
-  [
-    "CA",
-    "https://www.waterfox.net/",
-  ],
-  [
-    "DE",
-    "https://www.waterfox.net/",
-  ],
-  [
-    "PL",
-    "https://www.waterfox.net/",
-  ],
-  [
-    "RU",
-    "https://www.waterfox.net/",
-  ],
-  [
-    "GB",
-    "https://www.waterfox.net/",
-  ],
-  [
-    "FR",
-    "https://www.waterfox.net/",
-  ],
-  [
-    "CN",
-    "https://www.waterfox.net/",
-  ],
-]);
-const GEO_PREF = "browser.search.region";
 const REGION_STORIES_CONFIG =
   "browser.newtabpage.activity-stream.discoverystream.region-stories-config";
 const REGION_SPOCS_CONFIG =
