@@ -26,7 +26,6 @@ export LDFLAGS="-Wl,-syslibroot,$CROSS_SYSROOT -Wl,-dead_strip"
 export LLVMCONFIG=/usr/local/bin/llvm-config
 export MKFSHFS=mkfs.hfs
 export TOOLCHAIN_PREFIX=$CROSS_CCTOOLS_PATH/bin/x86_64-apple-darwin15-
-export CXXFLAGS="-stdlib=libc++"
 
 mk_add_options "export LD_LIBRARY_PATH=/usr/local/lib/"
 mk_add_options "export REAL_DSYMUTIL=$CROSS_CCTOOLS_PATH/bin/dsymutil"
@@ -39,7 +38,7 @@ ac_add_options --disable-signmar
 ac_add_options --disable-tests
 ac_add_options --disable-verify-mar
 
-ac_add_options --enable-optimize="-mmacosx-version-min=10.7 -O3 -march=core2 -mtune=core2 -w"
+ac_add_options --enable-optimize="-mmacosx-version-min=10.7 -O3 -march=core2 -mtune=core2 -stdlib=libc++ -w"
 ac_add_options --enable-release
 
 ac_add_options --target=x86_64-apple-darwin
@@ -48,6 +47,8 @@ ac_add_options --enable-update-channel=aurora
 ac_add_options --enable-rust-simd
 ac_add_options --enable-macos-target=10.7
 ac_add_options --enable-updater
+ac_add_options --enable-lto
+ac_add_options "MOZ_ALLOW_LEGACY_EXTENSIONS=1"
 
 ac_add_options --with-app-name=waterfox
 ac_add_options --with-app-basename=Waterfox
