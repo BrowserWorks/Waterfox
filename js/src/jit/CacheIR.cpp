@@ -2429,9 +2429,9 @@ SetPropIRGenerator::tryAttachStub()
                 return true;
             if (tryAttachTypedObjectProperty(obj, objId, id, rhsValId))
                 return true;
-            if (tryAttachSetArrayLength(obj, objId, id, rhsValId))
-                return true;
             if (IsPropertySetOp(JSOp(*pc_))) {
+                if (tryAttachSetArrayLength(obj, objId, id, rhsValId))
+                    return true;
                 if (tryAttachSetter(obj, objId, id, rhsValId))
                     return true;
                 if (tryAttachWindowProxy(obj, objId, id, rhsValId))
@@ -2481,22 +2481,33 @@ EmitStoreSlotAndReturn(CacheIRWriter& writer, ObjOperandId objId, NativeObject* 
 }
 
 static Shape*
-LookupShapeForSetSlot(NativeObject* obj, jsid id)
+LookupShapeForSetSlot(JSOp op, NativeObject* obj, jsid id)
 {
     Shape* shape = obj->lookupPure(id);
-    if (shape && shape->hasSlot() && shape->hasDefaultSetter() && shape->writable())
-        return shape;
-    return nullptr;
+    if (!shape || !shape->hasSlot() || !shape->hasDefaultSetter() || !shape->writable())
+        return nullptr;
+
+    // If this is an op like JSOP_INITELEM / [[DefineOwnProperty]], the
+    // property's attributes may have to be changed too, so make sure it's a
+    // simple data property.
+    if (IsPropertyInitOp(op) && (!shape->configurable() ||
+                                 !shape->enumerable() ||
+                                 !shape->hasDefaultGetter()))
+    {
+        return nullptr;
+    }
+
+    return shape;
 }
 
 static bool
-CanAttachNativeSetSlot(JSContext* cx, HandleObject obj, HandleId id,
+CanAttachNativeSetSlot(JSContext* cx, JSOp op, HandleObject obj, HandleId id,
                        bool* isTemporarilyUnoptimizable, MutableHandleShape propShape)
 {
     if (!obj->isNative())
         return false;
 
-    propShape.set(LookupShapeForSetSlot(&obj->as<NativeObject>(), id));
+    propShape.set(LookupShapeForSetSlot(op, &obj->as<NativeObject>(), id));
     if (!propShape)
         return false;
 
@@ -2524,7 +2535,7 @@ SetPropIRGenerator::tryAttachNativeSetSlot(HandleObject obj, ObjOperandId objId,
                                            ValOperandId rhsId)
 {
     RootedShape propShape(cx_);
-    if (!CanAttachNativeSetSlot(cx_, obj, id, isTemporarilyUnoptimizable_, &propShape))
+    if (!CanAttachNativeSetSlot(cx_, JSOp(*pc_), obj, id, isTemporarilyUnoptimizable_, &propShape))
         return false;
 
     if (mode_ == ICState::Mode::Megamorphic && cacheKind_ == CacheKind::SetProp) {
@@ -2736,6 +2747,9 @@ bool
 SetPropIRGenerator::tryAttachSetArrayLength(HandleObject obj, ObjOperandId objId, HandleId id,
                                             ValOperandId rhsId)
 {
+    // Don't attach an array length stub for ops like JSOP_INITELEM.
+    MOZ_ASSERT(IsPropertySetOp(JSOp(*pc_)));
+
     if (!obj->is<ArrayObject>() ||
         !JSID_IS_ATOM(id, cx_->names().length) ||
         !obj->as<ArrayObject>().lengthIsWritable())
@@ -3054,7 +3068,9 @@ SetPropIRGenerator::tryAttachDOMProxyExpando(HandleObject obj, ObjOperandId objI
     }
 
     RootedShape propShape(cx_);
-    if (CanAttachNativeSetSlot(cx_, expandoObj, id, isTemporarilyUnoptimizable_, &propShape)) {
+    if (CanAttachNativeSetSlot(cx_, JSOp(*pc_), expandoObj, id, isTemporarilyUnoptimizable_,
+                               &propShape))
+    {
         maybeEmitIdGuard(id);
         ObjOperandId expandoObjId =
             guardDOMProxyExpandoObjectAndShape(obj, objId, expandoVal, expandoObj);
@@ -3175,8 +3191,11 @@ SetPropIRGenerator::tryAttachWindowProxy(HandleObject obj, ObjOperandId objId, H
     Handle<GlobalObject*> windowObj = cx_->global();
 
     RootedShape propShape(cx_);
-    if (!CanAttachNativeSetSlot(cx_, windowObj, id, isTemporarilyUnoptimizable_, &propShape))
+    if (!CanAttachNativeSetSlot(cx_, JSOp(*pc_), windowObj, id, isTemporarilyUnoptimizable_,
+                                &propShape))
+    {
         return false;
+    }
 
     maybeEmitIdGuard(id);
 
