@@ -267,8 +267,7 @@ TimeoutManager::IsInvalidFiringId(uint32_t aFiringId) const
   return !mFiringIdStack.Contains(aFiringId);
 }
 
-// The number of nested timeouts before we start clamping. HTML5 says 1, WebKit
-// uses 5.
+// The number of nested timeouts before we start clamping. HTML says 5.
 #define DOM_CLAMP_TIMEOUT_NESTING_LEVEL 5u
 
 TimeDuration
