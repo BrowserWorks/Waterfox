@@ -208,7 +208,7 @@
 	<key>LSFileQuarantineEnabled</key>
 	<true/>
 	<key>LSMinimumSystemVersion</key>
-	<string>10.5.0</string>
+	<string>10.7.0</string>
   <key>NSSupportsAutomaticGraphicsSwitching</key>
   <true/>
   <key>NSPrincipalClass</key>
