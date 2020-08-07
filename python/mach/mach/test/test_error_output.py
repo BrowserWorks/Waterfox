@@ -5,6 +5,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+from buildconfig import topsrcdir
 from mach.main import (
     COMMAND_ERROR,
     MODULE_ERROR
@@ -14,10 +15,16 @@ from mach.test.common import TestBase
 from mozunit import main
 
 
+def _populate_context(context, key=None):
+    if key == 'topdir':
+        return topsrcdir
+
+
 class TestErrorOutput(TestBase):
 
     def _run_mach(self, args):
-        return TestBase._run_mach(self, args, 'throw.py')
+        return TestBase._run_mach(
+            self, args, 'throw.py', context_handler=_populate_context)
 
     def test_command_error(self):
         result, stdout, stderr = self._run_mach(['throw', '--message',

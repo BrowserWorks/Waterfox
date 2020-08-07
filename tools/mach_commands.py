@@ -17,7 +17,7 @@ from mozbuild.base import MachCommandBase, MozbuildObject
 
 
 @CommandProvider
-class BustedProvider(object):
+class BustedProvider(MachCommandBase):
     @Command('busted', category='misc',
              description='Query known bugs in our tooling, and file new ones.')
     def busted_default(self):
@@ -48,7 +48,7 @@ class BustedProvider(object):
 
 
 @CommandProvider
-class UUIDProvider(object):
+class UUIDProvider(MachCommandBase):
     @Command('uuid', category='misc',
              description='Generate a uuid.')
     @CommandArgument('--format', '-f', choices=['idl', 'cpp', 'c++'],
@@ -188,7 +188,7 @@ appropriate highlighter.
 
 
 @CommandProvider
-class PastebinProvider(object):
+class PastebinProvider(MachCommandBase):
     @Command('pastebin', category='misc',
              description=MACH_PASTEBIN_DESCRIPTION)
     @CommandArgument('--list-highlighters', action='store_true',
