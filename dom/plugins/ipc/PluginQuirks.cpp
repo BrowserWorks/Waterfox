@@ -37,7 +37,6 @@ int GetQuirksFromMimeTypeAndFilename(const nsCString& aMimeType,
 #ifdef XP_MACOSX
     // Whitelist Flash to support offline renderer.
     if (specialType == nsPluginHost::eSpecialType_Flash) {
-        quirks |= QUIRK_FLASH_AVOID_CGMODE_CRASHES;
         quirks |= QUIRK_ALLOW_OFFLINE_RENDERER;
     }
 #endif

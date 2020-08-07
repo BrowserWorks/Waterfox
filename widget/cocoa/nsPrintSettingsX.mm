@@ -337,13 +337,8 @@ nsPrintSettingsX::SetToFileName(const char16_t *aToFileName)
   NSMutableDictionary* printInfoDict = [mPrintInfo dictionary];
   nsString filename = nsDependentString(aToFileName);
 
-  NSString *pathOrURL = nsCocoaUtils::ToNSString(filename);
-  NSURL* jobSavingURL;
-  if ([pathOrURL hasPrefix: @"file://"]) {
-    jobSavingURL = [NSURL URLWithString: pathOrURL];
-  } else {
-    jobSavingURL = [NSURL fileURLWithPath: pathOrURL];
-  }
+  NSURL* jobSavingURL =
+      [NSURL fileURLWithPath: nsCocoaUtils::ToNSString(filename)];
   if (jobSavingURL) {
     [printInfoDict setObject: NSPrintSaveJob forKey: NSPrintJobDisposition];
     [printInfoDict setObject: jobSavingURL forKey: NSPrintJobSavingURL];
