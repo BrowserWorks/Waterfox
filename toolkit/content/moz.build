@@ -6,10 +6,16 @@
 
 TEST_DIRS += ['tests']
 
-for var in ('target', 'MOZ_CONFIGURE_OPTIONS', 'CC', 'CC_VERSION', 'CXX'):
+for var in ('target', 'MOZ_CONFIGURE_OPTIONS', 'CC', 'CC_VERSION', 'CXX',
+            'RUSTC', 'RUSTC_VERSION'):
     DEFINES[var] = CONFIG[var]
 
 DEFINES['CFLAGS'] = CONFIG['OS_CFLAGS']
+
+rustflags = CONFIG['RUSTFLAGS']
+if not rustflags:
+    rustflags = []
+DEFINES['RUSTFLAGS'] = ' '.join(rustflags)
 
 if CONFIG['OS_TARGET'] == 'Android':
     DEFINES['ANDROID_PACKAGE_NAME'] = CONFIG['ANDROID_PACKAGE_NAME']
