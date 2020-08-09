@@ -8,7 +8,6 @@
 #define mozilla_dom_quota_QuotaManagerService_h
 
 #include "mozilla/dom/ipc/IdType.h"
-#include "mozilla/dom/battery/Types.h"
 #include "mozilla/Observer.h"
 #include "nsAutoPtr.h"
 #include "nsIObserver.h"
@@ -24,10 +23,6 @@ class PBackgroundChild;
 
 } // namespace ipc
 
-namespace hal {
-class BatteryInformation;
-}
-
 namespace dom {
 namespace quota {
 
@@ -37,7 +32,6 @@ class QuotaManager;
 class QuotaManagerService final
   : public nsIQuotaManagerService
   , public nsIObserver
-  , public BatteryObserver
 {
   typedef mozilla::ipc::PBackgroundChild PBackgroundChild;
 
@@ -111,10 +105,6 @@ private:
   NS_DECL_ISUPPORTS
   NS_DECL_NSIQUOTAMANAGERSERVICE
   NS_DECL_NSIOBSERVER
-
-  // BatteryObserver override
-  void
-  Notify(const hal::BatteryInformation& aBatteryInfo) override;
 };
 
 } // namespace quota

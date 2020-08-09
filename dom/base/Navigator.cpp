@@ -32,7 +32,6 @@
 #include "nsUnicharUtils.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/Telemetry.h"
-#include "BatteryManager.h"
 #include "mozilla/dom/CredentialsContainer.h"
 #include "mozilla/dom/GamepadServiceTest.h"
 #include "mozilla/dom/PowerManager.h"
@@ -199,8 +198,6 @@ NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN(Navigator)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mPermissions)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mGeolocation)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mNotification)
-  NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mBatteryManager)
-  NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mBatteryPromise)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mPowerManager)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mConnection)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mStorageManager)
@@ -246,13 +243,6 @@ Navigator::Invalidate()
     mNotification->Shutdown();
     mNotification = nullptr;
   }
-
-  if (mBatteryManager) {
-    mBatteryManager->Shutdown();
-    mBatteryManager = nullptr;
-  }
-
-  mBatteryPromise = nullptr;
 
   if (mPowerManager) {
     mPowerManager->Shutdown();
@@ -1345,39 +1335,6 @@ Navigator::GetMozNotification(ErrorResult& aRv)
 
   mNotification = new DesktopNotificationCenter(mWindow);
   return mNotification;
-}
-
-//*****************************************************************************
-//    Navigator::nsINavigatorBattery
-//*****************************************************************************
-
-Promise*
-Navigator::GetBattery(ErrorResult& aRv)
-{
-  if (mBatteryPromise) {
-    return mBatteryPromise;
-  }
-
-  if (!mWindow || !mWindow->GetDocShell()) {
-    aRv.Throw(NS_ERROR_UNEXPECTED);
-    return nullptr;
-  }
-
-  nsCOMPtr<nsIGlobalObject> go = do_QueryInterface(mWindow);
-  RefPtr<Promise> batteryPromise = Promise::Create(go, aRv);
-  if (NS_WARN_IF(aRv.Failed())) {
-    return nullptr;
-  }
-  mBatteryPromise = batteryPromise;
-
-  if (!mBatteryManager) {
-    mBatteryManager = new battery::BatteryManager(mWindow);
-    mBatteryManager->Init();
-  }
-
-  mBatteryPromise->MaybeResolve(mBatteryManager);
-
-  return mBatteryPromise;
 }
 
 PowerManager*

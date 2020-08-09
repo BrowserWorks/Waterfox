@@ -7,7 +7,6 @@
  * http://www.whatwg.org/specs/web-apps/current-work/#the-navigator-object
  * http://www.w3.org/TR/tracking-dnt/
  * http://www.w3.org/TR/geolocation-API/#geolocation_interface
- * http://www.w3.org/TR/battery-status/#navigatorbattery-interface
  * http://www.w3.org/TR/vibration/#vibration-interface
  * http://www.w3.org/2012/sysapps/runtime/#extension-to-the-navigator-interface-1
  * https://dvcs.w3.org/hg/gamepad/raw-file/default/gamepad.html#navigator-interface-extension
@@ -125,13 +124,6 @@ interface NavigatorGeolocation {
   readonly attribute Geolocation geolocation;
 };
 Navigator implements NavigatorGeolocation;
-
-// http://www.w3.org/TR/battery-status/#navigatorbattery-interface
-partial interface Navigator {
-  // ChromeOnly to prevent web content from fingerprinting users' batteries.
-  [Throws, ChromeOnly, Pref="dom.battery.enabled"]
-  Promise<BatteryManager> getBattery();
-};
 
 // http://www.w3.org/TR/vibration/#vibration-interface
 partial interface Navigator {

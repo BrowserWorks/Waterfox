@@ -31,9 +31,6 @@ with Files("Autocomplete*"):
 with Files("BaseKeyframeTypes.webidl"):
     BUG_COMPONENT = ("Core", "DOM: Animation")
 
-with Files("BatteryManager.webidl"):
-    BUG_COMPONENT = ("Core", "DOM: Device Interfaces")
-
 with Files("BiquadFilterNode.webidl"):
     BUG_COMPONENT = ("Core", "Web Audio")
 
@@ -414,7 +411,6 @@ WEBIDL_FILES = [
     'BaseAudioContext.webidl',
     'BaseKeyframeTypes.webidl',
     'BasicCardPayment.webidl',
-    'BatteryManager.webidl',
     'BeforeUnloadEvent.webidl',
     'BiquadFilterNode.webidl',
     'Blob.webidl',

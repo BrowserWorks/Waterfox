@@ -451,34 +451,6 @@ QuotaManagerService::PerformIdleMaintenance()
   MOZ_ASSERT(XRE_IsParentProcess());
   MOZ_ASSERT(NS_IsMainThread());
 
-  // If we're running on battery power then skip all idle maintenance since we
-  // would otherwise be doing lots of disk I/O.
-  BatteryInformation batteryInfo;
-
-#ifdef MOZ_WIDGET_ANDROID
-  // Android XPCShell doesn't load the AndroidBridge that is needed to make
-  // GetCurrentBatteryInformation work...
-  if (!QuotaManager::IsRunningXPCShellTests())
-#endif
-  {
-    // In order to give the correct battery level, hal must have registered
-    // battery observers.
-    RegisterBatteryObserver(this);
-    GetCurrentBatteryInformation(&batteryInfo);
-    UnregisterBatteryObserver(this);
-  }
-
-  // If we're running XPCShell because we always want to be able to test this
-  // code so pretend that we're always charging.
-  if (QuotaManager::IsRunningXPCShellTests()) {
-    batteryInfo.level() = 100;
-    batteryInfo.charging() = true;
-  }
-
-  if (NS_WARN_IF(!batteryInfo.charging())) {
-    return;
-  }
-
   if (QuotaManager::IsRunningXPCShellTests()) {
     // We don't want user activity to impact this code if we're running tests.
     Unused << Observe(nullptr, OBSERVER_TOPIC_IDLE, nullptr);
@@ -867,13 +839,6 @@ QuotaManagerService::Observe(nsISupports* aSubject,
 
   MOZ_ASSERT_UNREACHABLE("Should never get here!");
   return NS_OK;
-}
-
-void
-QuotaManagerService::Notify(const hal::BatteryInformation& aBatteryInfo)
-{
-  // This notification is received when battery data changes. We don't need to
-  // deal with this notification.
 }
 
 NS_IMETHODIMP

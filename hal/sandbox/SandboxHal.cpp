@@ -12,7 +12,6 @@
 #include "mozilla/hal_sandbox/PHalParent.h"
 #include "mozilla/dom/TabParent.h"
 #include "mozilla/dom/TabChild.h"
-#include "mozilla/dom/battery/Types.h"
 #include "mozilla/dom/network/Types.h"
 #include "mozilla/dom/ScreenOrientation.h"
 #include "mozilla/fallback/FallbackScreenConfiguration.h"
@@ -67,24 +66,6 @@ CancelVibrate(const WindowIdentifier &id)
   WindowIdentifier newID(id);
   newID.AppendProcessID();
   Hal()->SendCancelVibrate(newID.AsArray(), TabChild::GetFrom(newID.GetWindow()));
-}
-
-void
-EnableBatteryNotifications()
-{
-  Hal()->SendEnableBatteryNotifications();
-}
-
-void
-DisableBatteryNotifications()
-{
-  Hal()->SendDisableBatteryNotifications();
-}
-
-void
-GetCurrentBatteryInformation(BatteryInformation* aBatteryInfo)
-{
-  Hal()->SendGetCurrentBatteryInformation(aBatteryInfo);
 }
 
 void
@@ -423,7 +404,6 @@ bool SystemServiceIsRunning(const char* aSvcName)
 }
 
 class HalParent : public PHalParent
-                , public BatteryObserver
                 , public NetworkObserver
                 , public ISensorObserver
                 , public WakeLockObserver
@@ -438,7 +418,6 @@ public:
   {
     // NB: you *must* unconditionally unregister your observer here,
     // if it *may* be registered below.
-    hal::UnregisterBatteryObserver(this);
     hal::UnregisterNetworkObserver(this);
     hal::UnregisterScreenConfigurationObserver(this);
     for (auto sensor : MakeEnumeratedRange(NUM_SENSOR_TYPE)) {
@@ -481,30 +460,6 @@ public:
     WindowIdentifier newID(id, nullptr);
     hal::CancelVibrate(newID);
     return IPC_OK();
-  }
-
-  virtual mozilla::ipc::IPCResult
-  RecvEnableBatteryNotifications() override {
-    // We give all content battery-status permission.
-    hal::RegisterBatteryObserver(this);
-    return IPC_OK();
-  }
-
-  virtual mozilla::ipc::IPCResult
-  RecvDisableBatteryNotifications() override {
-    hal::UnregisterBatteryObserver(this);
-    return IPC_OK();
-  }
-
-  virtual mozilla::ipc::IPCResult
-  RecvGetCurrentBatteryInformation(BatteryInformation* aBatteryInfo) override {
-    // We give all content battery-status permission.
-    hal::GetCurrentBatteryInformation(aBatteryInfo);
-    return IPC_OK();
-  }
-
-  void Notify(const BatteryInformation& aBatteryInfo) override {
-    Unused << SendNotifyBatteryChange(aBatteryInfo);
   }
 
   virtual mozilla::ipc::IPCResult
@@ -800,12 +755,6 @@ public:
   ActorDestroy(ActorDestroyReason aWhy) override
   {
     sHalChildDestroyed = true;
-  }
-
-  virtual mozilla::ipc::IPCResult
-  RecvNotifyBatteryChange(const BatteryInformation& aBatteryInfo) override {
-    hal::NotifyBatteryChange(aBatteryInfo);
-    return IPC_OK();
   }
 
   virtual mozilla::ipc::IPCResult
