@@ -548,7 +548,7 @@ GeckoChildProcessHost::PerformAsyncLaunch(std::vector<std::string> aExtraOpts, b
   const char* origNSPRLogName = PR_GetEnv("NSPR_LOG_FILE");
   const char* origMozLogName = PR_GetEnv("MOZ_LOG_FILE");
   if (!origNSPRLogName && !origMozLogName) {
-    return PerformAsyncLaunchInternal(aExtraOpts);
+    return PerformAsyncLaunchInternal(aExtraOpts, arch);
   }
 
   // - Note: this code is not called re-entrantly, nor are restoreOrig*LogName
