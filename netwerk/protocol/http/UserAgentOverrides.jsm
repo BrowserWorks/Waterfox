@@ -4,6 +4,10 @@
 
 "use strict";
 
+#ifdef XP_WIN
+#define UA_SPARE_PLATFORM
+#endif
+
 this.EXPORTED_SYMBOLS = [ "UserAgentOverrides" ];
 
 const Ci = Components.interfaces;
@@ -14,6 +18,14 @@ Components.utils.import("resource://gre/modules/Services.jsm");
 Components.utils.import("resource://gre/modules/UserAgentUpdates.jsm");
 
 const PREF_OVERRIDES_ENABLED = "general.useragent.site_specific_overrides";
+const OSCPU = Cc["@mozilla.org/network/protocol;1?name=http"]
+                .getService(Ci.nsIHttpProtocolHandler)
+                .oscpu;
+#ifndef UA_SPARE_PLATFORM
+const PLATFORM = Cc["@mozilla.org/network/protocol;1?name=http"]
+                   .getService(Ci.nsIHttpProtocolHandler)
+                   .platform;
+#endif
 const MAX_OVERRIDE_FOR_HOST_CACHE_SIZE = 250;
 
 // lazy load nsHttpHandler to improve startup performance.
@@ -32,11 +44,19 @@ var gOverrideFunctions = [
   function (aHttpChannel) { return UserAgentOverrides.getOverrideForURI(aHttpChannel.URI); }
 ];
 var gBuiltUAs = new Map;
+var gOSSlice;
 
 this.UserAgentOverrides = {
   init: function uao_init() {
     if (gInitialized)
       return;
+
+    gOSSlice = OSCPU + ";";
+#ifndef UA_SPARE_PLATFORM
+    if (PLATFORM != "") {
+      gOSSlice = PLATFORM + "; " + gOSSlice;
+    }
+#endif
 
     gPrefBranch = Services.prefs.getBranch("general.useragent.override.");
     gPrefBranch.addObserver("", buildOverrides);
@@ -44,9 +64,9 @@ this.UserAgentOverrides = {
     Services.prefs.addObserver(PREF_OVERRIDES_ENABLED, buildOverrides);
 
     try {
-      Services.obs.addObserver(HTTP_on_useragent_request, "http-on-useragent-request");
+      Services.obs.addObserver(HTTP_on_modify_request, "http-on-modify-request");
     } catch (x) {
-      // The http-on-useragent-request notification is disallowed in content processes.
+      // The http-on-modify-request notification is disallowed in content processes.
     }
 
     try {
@@ -123,7 +143,7 @@ this.UserAgentOverrides = {
 
     Services.prefs.removeObserver(PREF_OVERRIDES_ENABLED, buildOverrides);
 
-    Services.obs.removeObserver(HTTP_on_useragent_request, "http-on-useragent-request");
+    Services.obs.removeObserver(HTTP_on_modify_request, "http-on-modify-request");
   }
 };
 
@@ -137,7 +157,7 @@ function getUserAgentFromOverride(override)
   if (search && replace) {
     userAgent = DEFAULT_UA.replace(new RegExp(search, "g"), replace);
   } else {
-    userAgent = override;
+    userAgent = override.replace(/%OS_SLICE%/g, gOSSlice);
   }
   gBuiltUAs.set(override, userAgent);
   return userAgent;
@@ -163,7 +183,7 @@ function buildOverrides() {
   }
 }
 
-function HTTP_on_useragent_request(aSubject, aTopic, aData) {
+function HTTP_on_modify_request(aSubject, aTopic, aData) {
   let channel = aSubject.QueryInterface(Ci.nsIHttpChannel);
 
   for (let callback of gOverrideFunctions) {
