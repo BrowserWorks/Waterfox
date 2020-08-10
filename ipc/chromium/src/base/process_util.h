@@ -63,8 +63,6 @@ struct IoCounters {
 #include "base/file_descriptor_shuffle.h"
 #endif
 
-#include "mozilla/UniquePtr.h"
-
 #if defined(OS_MACOSX)
 struct kinfo_proc;
 #endif
