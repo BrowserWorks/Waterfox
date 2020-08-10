@@ -481,14 +481,6 @@ NativeObject::setSlotWithType(JSContext* cx, Shape* shape,
     AddTypePropertyId(cx, this, shape->propid(), value);
 }
 
-inline void
-NativeObject::updateShapeAfterMovingGC()
-{
-    Shape* shape = shape_;
-    if (IsForwarded(shape))
-        shape_.unsafeSet(Forwarded(shape));
-}
-
 inline bool
 NativeObject::isInWholeCellBuffer() const
 {
