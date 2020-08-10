@@ -512,8 +512,6 @@ private:
 
     void MaybeWarnAboutAppCache();
 
-    void SetLoadGroupUserAgentOverride();
-
     void SetDoNotTrack();
 
     already_AddRefed<nsChannelClassifier> GetOrCreateChannelClassifier();

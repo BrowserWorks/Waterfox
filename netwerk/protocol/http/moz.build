@@ -111,10 +111,9 @@ IPDL_SOURCES += [
     'PHttpChannel.ipdl',
 ]
 
-EXTRA_JS_MODULES += [
-    'UserAgentOverrides.jsm',
-    'UserAgentUpdates.jsm',
-]
+EXTRA_JS_MODULES += ['UserAgentUpdates.jsm']
+
+EXTRA_PP_JS_MODULES += ['UserAgentOverrides.jsm']
 
 include('/ipc/chromium/chromium-config.mozbuild')
 
