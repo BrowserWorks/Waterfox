@@ -23,6 +23,9 @@ LOCAL_INCLUDES += [
 ]
 
 if CONFIG['CC_TYPE'] == 'clang':
-    CXXFLAGS += ['-Wno-error=shadow']
+    CXXFLAGS += [
+        '-Wno-error=shadow',
+        '-fno-lto',
+    ]
 
 include('/ipc/chromium/chromium-config.mozbuild')
