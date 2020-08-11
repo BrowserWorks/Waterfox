@@ -1585,6 +1585,8 @@ nsTableFrame::DisplayGenericTablePart(nsDisplayListBuilder* aBuilder,
     }
   }
 
+  aFrame->DisplayOutline(aBuilder, aLists);
+
   aTraversal(aBuilder, aFrame, aDirtyRect, aLists);
 
   if (aFrame->IsVisibleForPainting(aBuilder)) {
@@ -1605,8 +1607,6 @@ nsTableFrame::DisplayGenericTablePart(nsDisplayListBuilder* aBuilder,
       }
     }
   }
-
-  aFrame->DisplayOutline(aBuilder, aLists);
 }
 
 // table paint code is concerned primarily with borders and bg color
