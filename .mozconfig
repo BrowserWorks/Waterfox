@@ -3,6 +3,7 @@
 # macOS Specific Options
 if test `uname -s` = Darwin; then
 ac_add_options --enable-ccache
+ac_add_options --enable-lto
 ac_add_options --enable-optimize="-mmacosx-version-min=10.10 -O3 -march=core2 -mtune=core2 -w"
 ac_add_options --enable-macos-target=10.10
 ac_add_options --with-macos-sdk=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.13.sdk
@@ -11,6 +12,7 @@ mk_add_options AUTOCONF=/usr/local/Cellar/autoconf213/2.13/bin/autoconf213
 ac_add_options --disable-xcode-checks
 elif test `uname -s` = MINGW32_NT-6.2; then
 ac_add_options --disable-maintenance-service
+ac_add_options --enable-lto
 ac_add_options --enable-optimize="-O2 -Qvec -w -clang:-arch:SSE3"
 ac_add_options --target=x86_64-pc-mingw32
 ac_add_options --with-libclang-path="C:\Program Files\LLVM\bin"
@@ -67,7 +69,6 @@ ac_add_options --disable-tests
 ac_add_options --disable-verify-mar
 
 ac_add_options --enable-application=browser
-ac_add_options --enable-lto
 # Stick to the same channel as Dev Edition would be
 ac_add_options --enable-update-channel=aurora
 ac_add_options --enable-rust-simd
