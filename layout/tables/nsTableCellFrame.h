@@ -238,6 +238,8 @@ public:
 
   bool ShouldPaintBordersAndBackgrounds() const;
 
+  bool ShouldPaintBackground(nsDisplayListBuilder* aBuilder);
+
 protected:
   nsTableCellFrame(nsStyleContext* aContext, nsTableFrame* aTableFrame,
                    ClassID aID);
