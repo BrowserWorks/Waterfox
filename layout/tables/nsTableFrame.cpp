@@ -369,9 +369,8 @@ nsTableFrame::AttributeChangedFor(nsIFrame*       aFrame,
       nsTableCellMap* cellMap = GetCellMap();
       if (cellMap) {
         // for now just remove the cell from the map and reinsert it
-        int32_t rowIndex, colIndex;
-        cellFrame->GetRowIndex(rowIndex);
-        cellFrame->GetColIndex(colIndex);
+        uint32_t rowIndex = cellFrame->RowIndex();
+        uint32_t colIndex = cellFrame->ColIndex();
         RemoveCell(cellFrame, rowIndex);
         AutoTArray<nsTableCellFrame*, 1> cells;
         cells.AppendElement(cellFrame);
@@ -448,9 +447,7 @@ nsTableFrame::GetEffectiveRowSpan(int32_t                 aRowIndex,
   nsTableCellMap* cellMap = GetCellMap();
   NS_PRECONDITION (nullptr != cellMap, "bad call, cellMap not yet allocated.");
 
-  int32_t colIndex;
-  aCell.GetColIndex(colIndex);
-  return cellMap->GetEffectiveRowSpan(aRowIndex, colIndex);
+  return cellMap->GetEffectiveRowSpan(aRowIndex, aCell.ColIndex());
 }
 
 int32_t
@@ -459,9 +456,8 @@ nsTableFrame::GetEffectiveRowSpan(const nsTableCellFrame& aCell,
 {
   nsTableCellMap* tableCellMap = GetCellMap(); if (!tableCellMap) ABORT1(1);
 
-  int32_t colIndex, rowIndex;
-  aCell.GetColIndex(colIndex);
-  aCell.GetRowIndex(rowIndex);
+  uint32_t colIndex = aCell.ColIndex();
+  uint32_t rowIndex = aCell.RowIndex();
 
   if (aCellMap)
     return aCellMap->GetRowSpan(rowIndex, colIndex, true);
@@ -475,9 +471,8 @@ nsTableFrame::GetEffectiveColSpan(const nsTableCellFrame& aCell,
 {
   nsTableCellMap* tableCellMap = GetCellMap(); if (!tableCellMap) ABORT1(1);
 
-  int32_t colIndex, rowIndex;
-  aCell.GetColIndex(colIndex);
-  aCell.GetRowIndex(rowIndex);
+  uint32_t colIndex = aCell.ColIndex();
+  uint32_t rowIndex = aCell.RowIndex();
 
   if (aCellMap)
     return aCellMap->GetEffectiveColSpan(*tableCellMap, rowIndex, colIndex);
@@ -1417,7 +1412,7 @@ PaintRowGroupBackgroundByColIdx(nsTableRowGroupFrame* aRowGroup,
                                 nsIFrame* aFrame,
                                 nsDisplayListBuilder* aBuilder,
                                 const nsDisplayListSet& aLists,
-                                const nsTArray<int32_t>& aColIdx,
+                                const nsTArray<uint32_t>& aColIdx,
                                 const nsPoint& aOffset)
 {
   MOZ_DIAGNOSTIC_ASSERT(!aColIdx.IsEmpty(),
@@ -1429,8 +1424,7 @@ PaintRowGroupBackgroundByColIdx(nsTableRowGroupFrame* aRowGroup,
       continue;
     }
     for (nsTableCellFrame* cell = row->GetFirstCell(); cell; cell = cell->GetNextCell()) {
-      int32_t curColIdx;
-      cell->GetColIndex(curColIdx);
+      uint32_t curColIdx = cell->ColIndex();
       if (!aColIdx.Contains(curColIdx)) {
         if (curColIdx > aColIdx.LastElement()) {
           // We can just stop looking at this row.
@@ -1570,10 +1564,10 @@ nsTableFrame::DisplayGenericTablePart(nsDisplayListBuilder* aBuilder,
     // Compute background rect by iterating all cell frame.
     nsTableColGroupFrame* colGroup = static_cast<nsTableColGroupFrame*>(aFrame);
     // Collecting column index.
-    AutoTArray<int32_t, 1> colIdx;
+    AutoTArray<uint32_t, 1> colIdx;
     for (nsTableColFrame* col = colGroup->GetFirstColumn(); col; col = col->GetNextCol()) {
       MOZ_ASSERT(colIdx.IsEmpty() ||
-                 col->GetColIndex() > colIdx.LastElement());
+                 static_cast<uint32_t>(col->GetColIndex()) > colIdx.LastElement());
       colIdx.AppendElement(col->GetColIndex());
     }
 
@@ -1590,7 +1584,7 @@ nsTableFrame::DisplayGenericTablePart(nsDisplayListBuilder* aBuilder,
   } else if (aFrame->IsTableColFrame()) {
     // Compute background rect by iterating all cell frame.
     nsTableColFrame* col = static_cast<nsTableColFrame*>(aFrame);
-    AutoTArray<int32_t, 1> colIdx;
+    AutoTArray<uint32_t, 1> colIdx;
     colIdx.AppendElement(col->GetColIndex());
 
     nsTableFrame* table = col->GetTableFrame();
@@ -4247,9 +4241,8 @@ nsTableFrame::DumpRowGroup(nsIFrame* aKidFrame)
       for (nsIFrame* childFrame : cFrame->PrincipalChildList()) {
         nsTableCellFrame *cellFrame = do_QueryFrame(childFrame);
         if (cellFrame) {
-          int32_t colIndex;
-          cellFrame->GetColIndex(colIndex);
-          printf("cell(%d)=%p ", colIndex, static_cast<void*>(childFrame));
+          uint32_t colIndex = cellFrame->ColIndex();
+          printf("cell(%u)=%p ", colIndex, static_cast<void*>(childFrame));
         }
       }
       printf("\n");
