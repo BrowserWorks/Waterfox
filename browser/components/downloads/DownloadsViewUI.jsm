@@ -242,7 +242,7 @@ this.DownloadsViewUI.DownloadElementShell.prototype = {
         stateLabel = s.stateFailed;
       }
 
-      let referrer = this.download.source.referrer || this.download.source.url;
+      let referrer = this.download.source.url;
       let [displayHost /* ,fullHost */] = DownloadUtils.getURIHost(referrer);
 
       let date = new Date(this.download.endTime);
