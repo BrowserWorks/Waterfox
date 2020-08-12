@@ -2421,9 +2421,15 @@ nsIFrame::BuildDisplayListForStackingContext(nsDisplayListBuilder* aBuilder,
     aBuilder->AddToWillChangeBudget(this, GetSize());
   }
 
-  bool extend3DContext = Extend3DContext(disp, effectSet);
+  const bool isTransformed = IsTransformed(disp, effectSet);
+  const bool hasPerspective = isTransformed && HasPerspective(effectSet);
+  const bool extend3DContext = Extend3DContext(disp, effectSet);
+  const bool combines3DTransformWithAncestors =
+    (extend3DContext || isTransformed) && Combines3DTransformWithAncestors(disp);
+  const bool childrenHavePerspective = ChildrenHavePerspective(disp);
+
   Maybe<nsDisplayListBuilder::AutoPreserves3DContext> autoPreserves3DContext;
-  if (extend3DContext && !Combines3DTransformWithAncestors(disp)) {
+  if (extend3DContext && !combines3DTransformWithAncestors) {
     // Start a new preserves3d context to keep informations on
     // nsDisplayListBuilder.
     autoPreserves3DContext.emplace(aBuilder);
@@ -2437,9 +2443,6 @@ nsIFrame::BuildDisplayListForStackingContext(nsDisplayListBuilder* aBuilder,
   // the chain.
   nsRect dirtyRect = aBuilder->GetDirtyRect();
 
-  bool inTransform = aBuilder->IsInTransform();
-  bool isTransformed = IsTransformed(disp, effectSet);
-  bool hasPerspective = HasPerspective(effectSet);
   // reset blend mode so we can keep track if this stacking context needs have
   // a nsDisplayBlendContainer. Set the blend mode back when the routine exits
   // so we keep track if the parent stacking context needs a container too.
@@ -2448,6 +2451,7 @@ nsIFrame::BuildDisplayListForStackingContext(nsDisplayListBuilder* aBuilder,
 
   nsRect dirtyRectOutsideTransform = dirtyRect;
   bool allowAsyncAnimation = false;
+  bool inTransform = aBuilder->IsInTransform();
   if (isTransformed) {
     const nsRect overflow = GetVisualOverflowRectRelativeToSelf();
     nsDisplayTransform::PrerenderDecision decision =
@@ -2467,7 +2471,7 @@ nsIFrame::BuildDisplayListForStackingContext(nsDisplayListBuilder* aBuilder,
 
       // If we're in preserve-3d then grab the dirty rect that was given to the root
       // and transform using the combined transform.
-      if (Combines3DTransformWithAncestors(disp)) {
+      if (combines3DTransformWithAncestors) {
         dirtyRect = aBuilder->GetPreserves3DRects();
       }
 
@@ -2579,7 +2583,7 @@ nsIFrame::BuildDisplayListForStackingContext(nsDisplayListBuilder* aBuilder,
     nsDisplayListBuilder::AutoInTransformSetter
       inTransformSetter(aBuilder, inTransform);
     nsDisplayListBuilder::AutoSaveRestorePerspectiveIndex
-      perspectiveIndex(aBuilder, this);
+      perspectiveIndex(aBuilder, childrenHavePerspective);
 
     CheckForApzAwareEventHandlers(aBuilder, this);
 
