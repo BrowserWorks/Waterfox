@@ -78,7 +78,6 @@ public:
   virtual nsMargin GetUsedPadding() const override;
 
   virtual void BuildDisplayList(nsDisplayListBuilder*   aBuilder,
-                                const nsRect&           aDirtyRect,
                                 const nsDisplayListSet& aLists) override;
 
   // Implemented in nsTableCellFrame.h, because it needs to know about the

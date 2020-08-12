@@ -698,7 +698,6 @@ void nsDisplayBullet::Paint(nsDisplayListBuilder* aBuilder,
 
 void
 nsBulletFrame::BuildDisplayList(nsDisplayListBuilder*   aBuilder,
-                                const nsRect&           aDirtyRect,
                                 const nsDisplayListSet& aLists)
 {
   if (!IsVisibleForPainting(aBuilder))
