@@ -263,7 +263,7 @@ CSS_PROP_ALIAS(-webkit-animation-timing-function,
 CSS_PROP_ALIAS(-webkit-appearance,
                _moz_appearance,
                WebkitAppearance,
-               WEBKIT_PREFIX_PREF)
+               "layout.css.webkit-appearance.enabled")
 
 CSS_PROP_ALIAS(-webkit-filter,
                filter,
