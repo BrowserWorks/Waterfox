@@ -57,6 +57,10 @@ AbortSignal::Abort()
 {
   MOZ_ASSERT(!mAborted);
   mAborted = true;
+    
+  // We might be deleted as a result of aborting a follower, so ensure we live
+  // until all followers have been aborted.
+  RefPtr<AbortSignalImpl> pinThis = this;
 
   // Let's inform the followers.
   for (uint32_t i = 0; i < mFollowers.Length(); ++i) {
