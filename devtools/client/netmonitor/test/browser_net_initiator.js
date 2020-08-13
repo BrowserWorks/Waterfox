@@ -135,7 +135,10 @@ const EXPECTED_REQUESTS = [
 add_task(async function() {
   // Async stacks aren't on by default in all builds
   await SpecialPowers.pushPrefEnv({
-    set: [["javascript.options.asyncstack", true]],
+    set: [
+      ["dom.image-lazy-loading.enabled", true],
+      ["javascript.options.asyncstack", true],
+    ],
   });
 
   // the initNetMonitor function clears the network request list after the
