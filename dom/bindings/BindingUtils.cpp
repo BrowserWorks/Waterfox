@@ -2603,6 +2603,12 @@ ConstructJSImplementation(const char* aContractId,
   {
     AutoNoJSAPI nojsapi;
 
+    nsCOMPtr<nsPIDOMWindowInner> window = do_QueryInterface(aGlobal);
+    if (!window->IsCurrentInnerWindow()) {
+      aRv.Throw(NS_ERROR_FAILURE);
+      return;
+    }
+
     // Get the XPCOM component containing the JS implementation.
     nsresult rv;
     nsCOMPtr<nsISupports> implISupports = do_CreateInstance(aContractId, &rv);
@@ -2616,8 +2622,7 @@ ConstructJSImplementation(const char* aContractId,
     // Initialize the object, if it implements nsIDOMGlobalPropertyInitializer
     // and our global is a window.
     nsCOMPtr<nsIDOMGlobalPropertyInitializer> gpi =
-      do_QueryInterface(implISupports);
-    nsCOMPtr<nsPIDOMWindowInner> window = do_QueryInterface(aGlobal);
+        do_QueryInterface(implISupports);
     if (gpi) {
       JS::Rooted<JS::Value> initReturn(RootingCx());
       rv = gpi->Init(window, &initReturn);
