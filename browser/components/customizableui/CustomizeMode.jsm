@@ -494,14 +494,6 @@ CustomizeMode.prototype = {
 
       await this._unwrapToolbarItems();
 
-      if (this._changed) {
-        // XXXmconley: At first, it seems strange to also persist the old way with
-        //             currentset - but this might actually be useful for switching
-        //             to old builds. We might want to keep this around for a little
-        //             bit.
-        this.persistCurrentSets();
-      }
-
       // And drop all area references.
       this.areas.clear();
 
@@ -592,7 +584,7 @@ CustomizeMode.prototype = {
     for (let i = 0; i < numberOfAreas; i++) {
       let area = areas[i];
       let areaNode = aNode.ownerDocument.getElementById(area);
-      let customizationTarget = areaNode && areaNode.customizationTarget;
+      let customizationTarget = CustomizableUI.getCustomizationTarget(areaNode);
       if (customizationTarget && customizationTarget != areaNode) {
         areas.push(customizationTarget.id);
       }
@@ -1191,19 +1183,6 @@ CustomizeMode.prototype = {
     })().catch(log.error);
   },
 
-  persistCurrentSets(aSetBeforePersisting) {
-    let document = this.document;
-    let toolbars = document.querySelectorAll("toolbar[customizable='true'][currentset]");
-    for (let toolbar of toolbars) {
-      if (aSetBeforePersisting) {
-        let set = toolbar.currentSet;
-        toolbar.setAttribute("currentset", set);
-      }
-      // Persist the currentset attribute directly on hardcoded toolbars.
-      Services.xulStore.persist(toolbar, "currentset");
-    }
-  },
-
   reset() {
     this.resetting = true;
     // Disable the reset button temporarily while resetting:
@@ -1217,8 +1196,6 @@ CustomizeMode.prototype = {
 
       await this._wrapToolbarItems();
       this.populatePalette();
-
-      this.persistCurrentSets(true);
 
       this._updateResetButton();
       this._updateUndoResetButton();
@@ -1242,8 +1219,6 @@ CustomizeMode.prototype = {
 
       await this._wrapToolbarItems();
       this.populatePalette();
-
-      this.persistCurrentSets(true);
 
       this._updateResetButton();
       this._updateUndoResetButton();
@@ -1931,7 +1906,7 @@ CustomizeMode.prototype = {
     // We need to determine the place that the widget is being dropped in
     // the target.
     let dragOverItem, dragValue;
-    if (targetNode == targetArea.customizationTarget) {
+    if (targetNode == CustomizableUI.getCustomizationTarget(targetArea)) {
       // We'll assume if the user is dragging directly over the target, that
       // they're attempting to append a child to that target.
       dragOverItem =
@@ -1998,7 +1973,7 @@ CustomizeMode.prototype = {
       dragOverItem != this._dragOverItem ||
       dragValue != dragOverItem.getAttribute("dragover")
     ) {
-      if (dragOverItem != targetArea.customizationTarget) {
+      if (dragOverItem != CustomizableUI.getCustomizationTarget(targetArea)) {
         this._setDragActive(
           dragOverItem,
           dragValue,
@@ -2125,6 +2100,9 @@ CustomizeMode.prototype = {
     }
 
     // Skipintoolbarset items won't really be moved:
+    let areaCustomizationTarget = CustomizableUI.getCustomizationTarget(
+      aTargetArea
+    );
     if (draggedItem.getAttribute("skipintoolbarset") == "true") {
       // These items should never leave their area:
       if (aTargetArea != aOriginArea) {
@@ -2132,11 +2110,11 @@ CustomizeMode.prototype = {
       }
       let place = draggedItem.parentNode.getAttribute("place");
       this.unwrapToolbarItem(draggedItem.parentNode);
-      if (aTargetNode == aTargetArea.customizationTarget) {
-        aTargetArea.customizationTarget.appendChild(draggedItem);
+      if (aTargetNode == areaCustomizationTarget) {
+        areaCustomizationTarget.appendChild(draggedItem);
       } else {
         this.unwrapToolbarItem(aTargetNode.parentNode);
-        aTargetArea.customizationTarget.insertBefore(draggedItem, aTargetNode);
+        areaCustomizationTarget.insertBefore(draggedItem, aTargetNode);
         this.wrapToolbarItem(aTargetNode, place);
       }
       this.wrapToolbarItem(draggedItem, place);
@@ -2145,7 +2123,7 @@ CustomizeMode.prototype = {
 
     // Is the target the customization area itself? If so, we just add the
     // widget to the end of the area.
-    if (aTargetNode == aTargetArea.customizationTarget) {
+    if (aTargetNode == areaCustomizationTarget) {
       CustomizableUI.addWidgetToArea(aDraggedItemId, aTargetArea.id);
       this._onDragEnd(aEvent);
       return;
@@ -2489,7 +2467,8 @@ CustomizeMode.prototype = {
   },
 
   _getDragOverNode(aEvent, aAreaElement, aAreaType, aDraggedItemId) {
-    let expectedParent = aAreaElement.customizationTarget || aAreaElement;
+    let expectedParent =
+      CustomizableUI.getCustomizationTarget(aAreaElement) || aAreaElement;
     if (!expectedParent.contains(aEvent.target)) {
       return expectedParent;
     }

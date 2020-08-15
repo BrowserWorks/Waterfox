@@ -195,10 +195,6 @@ toolbar {
   -moz-binding: url("chrome://browser/content/toolbar.xml#toolbar");
 }
 
-toolbar[customizable="true"] {
-  -moz-binding: url("chrome://browser/content/customizableui/toolbar.xml#toolbar");
-}
-
 toolbox {
   -moz-binding: url("chrome://browser/content/toolbar.xml#toolbox");
   -moz-box-orient: vertical;

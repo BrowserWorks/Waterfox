@@ -1761,6 +1761,14 @@ var gBrowserInit = {
 
     BrowserWindowTracker.track(window);
 
+    gNavToolbox.palette = document.getElementById("BrowserToolbarPalette");
+    gNavToolbox.palette.remove();
+    let areas = CustomizableUI.areas;
+    areas.splice(areas.indexOf(CustomizableUI.AREA_FIXED_OVERFLOW_PANEL), 1);
+    for (let area of areas) {
+      let node = document.getElementById(area);
+      CustomizableUI.registerToolbarNode(node);
+    }
     BrowserSearch.initPlaceHolder();
 
     // Hack to ensure that the various initial pages favicon is loaded
