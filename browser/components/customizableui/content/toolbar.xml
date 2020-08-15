@@ -13,25 +13,6 @@
       <constructor><![CDATA[
           let scope = {};
           ChromeUtils.import("resource:///modules/CustomizableUI.jsm", scope);
-
-          if (document.readyState == "complete") {
-            this._init();
-          } else {
-            // Need to wait until XUL overlays are loaded. See bug 554279.
-            let self = this;
-            document.addEventListener("readystatechange", function onReadyStateChange() {
-              if (document.readyState != "complete")
-                return;
-              document.removeEventListener("readystatechange", onReadyStateChange);
-              self._init();
-            });
-          }
-      ]]></constructor>
-
-      <method name="_init">
-        <body><![CDATA[
-          let scope = {};
-          ChromeUtils.import("resource:///modules/CustomizableUI.jsm", scope);
           let CustomizableUI = scope.CustomizableUI;
 
           // Searching for the toolbox palette in the toolbar binding because
@@ -53,8 +34,7 @@
                               .filter(node => node.getAttribute("skipintoolbarset") != "true" && node.id)
                               .map(node => node.id);
           CustomizableUI.registerToolbarNode(this, children);
-      ]]></body>
-      </method>
+      ]]></constructor>
 
       <method name="insertItem">
         <parameter name="aId"/>
