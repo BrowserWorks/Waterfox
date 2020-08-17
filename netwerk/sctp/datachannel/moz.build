@@ -22,12 +22,14 @@ FINAL_LIBRARY = 'xul'
 LOCAL_INCLUDES += [
     '/media/mtransport',
     '/media/webrtc',
+    '/media/webrtc/trunk/webrtc',
     '/netwerk/sctp/src',
 ]
 
 DEFINES['SCTP_DEBUG'] = 1
 
 if CONFIG['OS_TARGET'] == 'WINNT':
+    DEFINES["WEBRTC_WIN"] = True
     DEFINES['__Userspace_os_Windows'] = 1
 else:
     DEFINES['__Userspace_os_%s' % CONFIG['OS_TARGET']] = 1

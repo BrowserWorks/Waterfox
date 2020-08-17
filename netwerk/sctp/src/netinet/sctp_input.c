@@ -64,6 +64,10 @@ __FBSDID("$FreeBSD: head/sys/netinet/sctp_input.c 325864 2017-11-15 22:13:10Z tu
 #define APPLE_FILE_NO 2
 #endif
 
+#ifndef UINT32_MAX
+#define UINT32_MAX 0xffffffffU  /* 4294967295U */
+#endif
+
 
 static void
 sctp_stop_all_cookie_timers(struct sctp_tcb *stcb)

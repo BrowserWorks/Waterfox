@@ -136,7 +136,7 @@
             ],
             "libs": [
                 "winmm.lib",
-                "Strmiids.lib",
+                "strmiids.lib",
                 "d3d11.lib",
                 "dxgi.lib"
             ],
@@ -5625,7 +5625,7 @@
             ],
             "libs": [
                 "winmm.lib",
-                "Strmiids.lib"
+                "strmiids.lib"
             ],
             "sources": [
                 "//media/engine/adm_helpers.cc",
@@ -5854,7 +5854,7 @@
             ],
             "libs": [
                 "winmm.lib",
-                "Strmiids.lib"
+                "strmiids.lib"
             ],
             "sources": [],
             "type": "source_set"
@@ -11868,7 +11868,7 @@
                 "c:/src/firefox/obj-i686-pc-mingw32/media/webrtc/trunk/webrtc/gn-output/gen/"
             ],
             "libs": [
-                "Strmiids.lib",
+                "strmiids.lib",
                 "winmm.lib"
             ],
             "sources": [

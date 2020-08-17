@@ -37,6 +37,10 @@
 __FBSDID("$FreeBSD: head/sys/netinet/sctp_os.h 235828 2012-05-23 11:26:28Z tuexen $");
 #endif
 
+#if __MINGW32__
+#include <minmax.h>
+#endif
+
 #ifndef _NETINET_SCTP_OS_H_
 #define _NETINET_SCTP_OS_H_
 

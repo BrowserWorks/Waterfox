@@ -222,7 +222,9 @@ typedef char* caddr_t;
 #define bzero(buf, len) memset(buf, 0, len)
 #define bcopy(srcKey, dstKey, len) memcpy(dstKey, srcKey, len)
 #if _MSC_VER < 1900
+#ifndef __MINGW32__
 #define snprintf(data, size, format, ...) _snprintf_s(data, size, _TRUNCATE, format, __VA_ARGS__)
+#endif
 #endif
 #define inline __inline
 #define __inline__ __inline

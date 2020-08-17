@@ -1,72 +1,57 @@
+/* src/config.h.  Generated from config.h.in by configure.  */
 /* src/config.h.in.  Generated from configure.ac by autoheader.  */
-
-/* Sometimes we accidentally #include this config.h instead of the one
-   in .. -- this is particularly true for msys/mingw, which uses the
-   unix config.h but also runs code in the windows directory.
-   */
-#ifdef __MINGW32__
-//#include "../config.h"
-//#define GOOGLE_GFLAGS_WINDOWS_CONFIG_H_
-#endif
-
-#ifndef GOOGLE_GFLAGS_WINDOWS_CONFIG_H_
-#define GOOGLE_GFLAGS_WINDOWS_CONFIG_H_
 
 /* Always the empty-string on non-windows systems. On windows, should be
    "__declspec(dllexport)". This way, when we compile the dll, we export our
    functions/classes. It's safe to define this here because config.h is only
    used internally, to compile the DLL, and every DLL source file #includes
    "config.h" before anything else. */
-#ifndef GFLAGS_DLL_DECL
-# define GFLAGS_IS_A_DLL  1   /* not set if you're statically linking */
-# define GFLAGS_DLL_DECL  __declspec(dllexport)
-# define GFLAGS_DLL_DECL_FOR_UNITTESTS  __declspec(dllimport)
-#endif
+#define GFLAGS_DLL_DECL /**/
 
 /* Namespace for Google classes */
-#define GOOGLE_NAMESPACE  ::google
+#define GOOGLE_NAMESPACE ::google
 
 /* Define to 1 if you have the <dlfcn.h> header file. */
-#undef HAVE_DLFCN_H
+#define HAVE_DLFCN_H 1
 
 /* Define to 1 if you have the <fnmatch.h> header file. */
-#undef HAVE_FNMATCH_H
+#define HAVE_FNMATCH_H 0
 
 /* Define to 1 if you have the <inttypes.h> header file. */
-#undef HAVE_INTTYPES_H
+#define HAVE_INTTYPES_H 1
 
 /* Define to 1 if you have the <memory.h> header file. */
-#undef HAVE_MEMORY_H
+#define HAVE_MEMORY_H 1
 
 /* define if the compiler implements namespaces */
-#define HAVE_NAMESPACES  1
+#define HAVE_NAMESPACES 1
 
 /* Define if you have POSIX threads libraries and header files. */
-#undef HAVE_PTHREAD
+#define HAVE_PTHREAD 0
 
 /* Define to 1 if you have the `putenv' function. */
-#define HAVE_PUTENV  1
+#define HAVE_PUTENV 1
 
 /* Define to 1 if you have the `setenv' function. */
-#undef HAVE_SETENV
+#define HAVE_SETENV 1
 
 /* Define to 1 if you have the <stdint.h> header file. */
-#undef HAVE_STDINT_H
+#define HAVE_STDINT_H 1
 
 /* Define to 1 if you have the <stdlib.h> header file. */
 #define HAVE_STDLIB_H 1
 
 /* Define to 1 if you have the <strings.h> header file. */
-#undef HAVE_STRINGS_H
+#define HAVE_STRINGS_H 1
 
 /* Define to 1 if you have the <string.h> header file. */
 #define HAVE_STRING_H 1
 
 /* Define to 1 if you have the `strtoll' function. */
-#define HAVE_STRTOLL  1
+#define HAVE_STRTOLL 1
 
 /* Define to 1 if you have the `strtoq' function. */
-#define HAVE_STRTOQ  1
+#define HAVE_STRTOQ 1
 
 /* Define to 1 if you have the <sys/stat.h> header file. */
 #define HAVE_SYS_STAT_H 1
@@ -75,65 +60,51 @@
 #define HAVE_SYS_TYPES_H 1
 
 /* Define to 1 if you have the <unistd.h> header file. */
-#undef HAVE_UNISTD_H
+#define HAVE_UNISTD_H 1
 
 /* define if your compiler has __attribute__ */
-#undef HAVE___ATTRIBUTE__
+#define HAVE___ATTRIBUTE__ 1
 
 /* Define to the sub-directory in which libtool stores uninstalled libraries.
    */
-#undef LT_OBJDIR
+#define LT_OBJDIR ".libs/"
 
 /* Name of package */
-#undef PACKAGE
+#define PACKAGE "gflags"
 
 /* Define to the address where bug reports for this package should be sent. */
-#undef PACKAGE_BUGREPORT
+#define PACKAGE_BUGREPORT "opensource@google.com"
 
 /* Define to the full name of this package. */
-#undef PACKAGE_NAME
+#define PACKAGE_NAME "gflags"
 
 /* Define to the full name and version of this package. */
-#undef PACKAGE_STRING
+#define PACKAGE_STRING "gflags 1.5"
 
 /* Define to the one symbol short name of this package. */
-#undef PACKAGE_TARNAME
+#define PACKAGE_TARNAME "gflags"
 
 /* Define to the home page for this package. */
-#undef PACKAGE_URL
+#define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#undef PACKAGE_VERSION
+#define PACKAGE_VERSION "1.5"
 
 /* Define to necessary symbol if this constant uses a non-standard name on
    your system. */
-#undef PTHREAD_CREATE_JOINABLE
+/* #undef PTHREAD_CREATE_JOINABLE */
 
 /* Define to 1 if you have the ANSI C header files. */
-#define STDC_HEADERS  1
+#define STDC_HEADERS 1
 
 /* the namespace where STL code like vector<> is defined */
-#define STL_NAMESPACE  std
+#define STL_NAMESPACE std
 
 /* Version number of package */
-#undef VERSION
+#define VERSION "1.5"
 
 /* Stops putting the code inside the Google namespace */
-#define _END_GOOGLE_NAMESPACE_  }
+#define _END_GOOGLE_NAMESPACE_ }
 
 /* Puts following code inside the Google namespace */
-#define _START_GOOGLE_NAMESPACE_  namespace google {
-
-// ---------------------------------------------------------------------
-// Extra stuff not found in config.h.in
-
-// This must be defined before the windows.h is included.  It's needed
-// for mutex.h, to give access to the TryLock method.
-#ifndef _WIN32_WINNT
-# define _WIN32_WINNT 0x0400
-#endif
-
-// TODO(csilvers): include windows/port.h in every relevant source file instead?
-#include "windows/port.h"
-
-#endif  /* GOOGLE_GFLAGS_WINDOWS_CONFIG_H_ */
+#define _START_GOOGLE_NAMESPACE_ namespace google {

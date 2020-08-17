@@ -14,6 +14,16 @@ SOURCES += [
     'MediaModule.cpp',
 ]
 
+if CONFIG['MOZ_WEBRTC']:
+    if CONFIG['OS_TARGET'] == 'WINNT':
+        DEFINES["WEBRTC_WIN"] = True
+
+        LOCAL_INCLUDES += [        
+            '/media/webrtc/trunk/webrtc',    
+        ]
+
+
+
 LOCAL_INCLUDES += [
     '/ipc/chromium/src',
     '/media/mtransport',

@@ -16,6 +16,12 @@ if CONFIG['OS_ARCH'] == 'WINNT':
         'dbghelp',
     ]
 
+    LOCAL_INCLUDES += [
+        '/media/webrtc/trunk/webrtc',
+    ]
+
+
+    DEFINES["WEBRTC_WIN"] = True
     DEFINES['UNICODE'] = True
     DEFINES['_UNICODE'] = True
     DEFINES['_CRT_RAND_S'] = True

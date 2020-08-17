@@ -24,6 +24,14 @@
 #include "rtc_base/logging.h"
 #include "rtc_base/timeutils.h"
 
+/*
+#define INITGUID
+#include <guiddef.h>
+DEFINE_GUID(GUID_WICPixelFormat32bppRGBA, 0xf5c7ad2d, 0x6a8d, 0x43dd, 0xa7, 0xa8, 0xa2, 0x99, 0x35, 0x26, 0x1a, 0xe9);
+*/
+
+
+
 namespace webrtc {
 
 namespace {
@@ -331,6 +339,7 @@ bool ScreenCapturerWinMagnifier::InitializeMagnifier() {
 
 void ScreenCapturerWinMagnifier::OnCaptured(void* data,
                                             const MAGIMAGEHEADER& header) {
+  #if 0                                                
   DesktopFrame* current_frame = queue_.current_frame();
 
   // Verify the format.
@@ -348,7 +357,7 @@ void ScreenCapturerWinMagnifier::OnCaptured(void* data,
         << "stride = " << header.stride << ", "
         << "bpp = " << captured_bytes_per_pixel << ", "
         << "pixel format RGBA ? "
-        << (header.format == GUID_WICPixelFormat32bppRGBA) << ".";
+        << (header.format == GUID_WICPixelFormat32bppRGBA) << ".";    
     return;
   }
 
@@ -359,6 +368,7 @@ void ScreenCapturerWinMagnifier::OnCaptured(void* data,
       DesktopRect::MakeXYWH(0, 0, header.width, header.height));
 
   magnifier_capture_succeeded_ = true;
+  #endif
 }
 
 void ScreenCapturerWinMagnifier::CreateCurrentFrameIfNecessary(

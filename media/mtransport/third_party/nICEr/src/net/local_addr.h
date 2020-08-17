@@ -49,9 +49,14 @@ typedef struct nr_interface_ {
   int estimated_speed; /* Speed in kbps */
 } nr_interface;
 
+typedef struct nr_innrr_interface_ {
+  int type;
+  int estimated_speed; /* Speed in kbps */
+} nrr_interface;
+
 typedef struct nr_local_addr_ {
   nr_transport_addr addr;
-  nr_interface interface;
+  nr_interface Interface;
 } nr_local_addr;
 
 int nr_local_addr_copy(nr_local_addr *to, nr_local_addr *from);

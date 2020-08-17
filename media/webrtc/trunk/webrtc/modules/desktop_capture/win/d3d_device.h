@@ -13,8 +13,8 @@
 
 #include <comdef.h>
 #include <wrl/client.h>
-#include <D3D11.h>
-#include <DXGI.h>
+#include <d3d11.h>
+#include <dxgi.h>
 
 #include <vector>
 

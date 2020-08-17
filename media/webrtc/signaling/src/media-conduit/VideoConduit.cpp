@@ -50,8 +50,8 @@
 #include "MediaDataCodec.h"
 
 // for ntohs
-#ifdef _MSC_VER
-#  include "Winsock2.h"
+#if (_MSC_VER || __MINGW32__)
+#  include "winsock2.h"
 #else
 #  include <netinet/in.h>
 #endif

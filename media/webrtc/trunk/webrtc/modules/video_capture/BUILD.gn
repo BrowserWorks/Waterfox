@@ -158,7 +158,7 @@ if (!build_with_chromium) {
         "windows/video_capture_factory_windows.cc",
       ]
 
-      libs = [ "Strmiids.lib" ]
+      libs = [ "strmiids.lib" ]
 
     }
     if (is_ios || is_mac) {

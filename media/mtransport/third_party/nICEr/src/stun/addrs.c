@@ -217,18 +217,18 @@ stun_get_win32_addrs(nr_local_addr addrs[], int maxaddrs, int *count)
 
           strlcpy(addrs[n].addr.ifname, hex_hashed_ifname, sizeof(addrs[n].addr.ifname));
           if (tmpAddress->IfType == IF_TYPE_ETHERNET_CSMACD) {
-            addrs[n].interface.type = NR_INTERFACE_TYPE_WIRED;
+            addrs[n].Interface.type = NR_INTERFACE_TYPE_WIRED;
           } else if (tmpAddress->IfType == IF_TYPE_IEEE80211) {
             /* Note: this only works for >= Win Vista */
-            addrs[n].interface.type = NR_INTERFACE_TYPE_WIFI;
+            addrs[n].Interface.type = NR_INTERFACE_TYPE_WIFI;
           } else {
-            addrs[n].interface.type = NR_INTERFACE_TYPE_UNKNOWN;
+            addrs[n].Interface.type = NR_INTERFACE_TYPE_UNKNOWN;
           }
 #if (_WIN32_WINNT >= 0x0600)
           /* Note: only >= Vista provide link speed information */
-          addrs[n].interface.estimated_speed = tmpAddress->TransmitLinkSpeed / 1000;
+          addrs[n].Interface.estimated_speed = tmpAddress->TransmitLinkSpeed / 1000;
 #else
-          addrs[n].interface.estimated_speed = 0;
+          addrs[n].Interface.estimated_speed = 0;
 #endif
           if (++n >= maxaddrs)
             goto done;
@@ -377,7 +377,7 @@ nr_stun_remove_duplicate_addrs(nr_local_addr addrs[], int remove_loopback, int r
 
     for (i = 0; i < *count; ++i) {
         if (nr_transport_addr_is_teredo(&addrs[i].addr)) {
-            addrs[i].interface.type |= NR_INTERFACE_TYPE_TEREDO;
+            addrs[i].Interface.type |= NR_INTERFACE_TYPE_TEREDO;
         }
         else if (addrs[i].addr.ip_version == NR_IPV6 &&
                  !nr_transport_addr_is_mac_based(&addrs[i].addr)) {

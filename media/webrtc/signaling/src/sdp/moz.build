@@ -4,7 +4,9 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 if CONFIG['OS_TARGET'] == 'WINNT':
+    DEFINES['WEBRTC_MOZILLA_BUILD'] = True
     DEFINES['SIP_OS_WINDOWS'] = True
+    
     SOURCES += [
         'sipcc/sdp_services_win32.c',
     ]
