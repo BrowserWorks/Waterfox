@@ -3,6 +3,7 @@
 # Filenames that should be ignored wherever they appear
 *~
 *.orig
+*.rej
 *.pyc
 *.pyo
 TAGS
