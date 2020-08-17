@@ -265,7 +265,7 @@ nsPluginHost::nsPluginHost()
     : mPluginsLoaded(false),
       mOverrideInternalTypes(false),
       mPluginsDisabled(false),
-      mFlashOnly(true),
+      mFlashOnly(false),
       mDoReloadOnceFindingFinished(false),
       mAddedFinderShutdownBlocker(false),
       mPluginEpoch(0) {
@@ -709,7 +709,7 @@ nsresult nsPluginHost::InstantiatePluginInstance(
     return rv;
   }
 
-  if (tagType != nsPluginTagType_Embed && tagType != nsPluginTagType_Object) {
+  if (tagType != nsPluginTagType_Embed && tagType != nsPluginTagType_Applet && tagType != nsPluginTagType_Object) {
     instanceOwner->Destroy();
     return NS_ERROR_FAILURE;
   }
@@ -1729,6 +1729,21 @@ nsPluginHost::SpecialType nsPluginHost::GetSpecialType(
     return eSpecialType_Flash;
   }
 
+  // Java registers variants of its MIME with parameters, e.g.
+    // application/x-java-vm;version=1.3
+  const nsACString &noParam = Substring(aMIMEType, 0, aMIMEType.FindChar(';'));
+
+  // The java mime pref may well not be one of these,
+  // e.g. application/x-java-test used in the test suite
+  //nsAutoCString javaMIME;
+  //Preferences::GetCString(kPrefJavaMIME, javaMIME);
+  if (/*(!javaMIME.IsEmpty() && noParam.LowerCaseEqualsASCII(javaMIME.get())) ||*/
+    noParam.LowerCaseEqualsASCII("application/x-java-vm") ||
+    noParam.LowerCaseEqualsASCII("application/x-java-applet") ||
+    noParam.LowerCaseEqualsASCII("application/x-java-bean")) {
+    return eSpecialType_Java;
+  }
+
   return eSpecialType_None;
 }
 
@@ -2022,7 +2037,7 @@ nsresult nsPluginHost::SetPluginsInContent(
           "",  // aFullPath
           tag.version().get(), tag.mimeTypes().Clone(),
           tag.mimeDescriptions().Clone(), tag.extensions().Clone(),
-          tag.isFlashPlugin(), tag.supportsAsyncRender(),
+          tag.isJavaPlugin(), tag.isFlashPlugin(), tag.supportsAsyncRender(),
           tag.lastModifiedTime(), tag.sandboxLevel(), tag.blocklistState());
       AddPluginTag(pluginTag);
     }
@@ -2096,7 +2111,7 @@ nsresult nsPluginHost::UpdateCachedSerializablePluginList() {
 
     mSerializablePlugins.AppendElement(PluginTag(
         tag->mId, tag->Name(), tag->Description(), tag->MimeTypes(),
-        tag->MimeDescriptions(), tag->Extensions(), tag->mIsFlashPlugin,
+        tag->MimeDescriptions(), tag->Extensions(), tag->mIsJavaPlugin, tag->mIsFlashPlugin,
         tag->mSupportsAsyncRender, tag->FileName(), tag->Version(),
         tag->mLastModifiedTime, tag->mSandboxLevel, blocklistState));
   }
@@ -2890,6 +2905,7 @@ bool nsPluginHost::CanUsePluginForMIMEType(const nsACString& aMIMEType) {
   if (nsPluginHost::GetSpecialType(aMIMEType) ==
           nsPluginHost::eSpecialType_Flash ||
       MimeTypeIsAllowedForFakePlugin(NS_ConvertUTF8toUTF16(aMIMEType)) ||
+      aMIMEType.LowerCaseEqualsLiteral("application/x-java-vm") ||
       aMIMEType.LowerCaseEqualsLiteral("application/x-test") ||
       aMIMEType.LowerCaseEqualsLiteral("application/x-second-test") ||
       aMIMEType.LowerCaseEqualsLiteral("application/x-third-test")) {

@@ -85,6 +85,7 @@ class UAWidgetsChild extends JSWindowActorChild {
         break;
       case "embed":
       case "object":
+      case "applet":
         uri = "chrome://global/content/elements/pluginProblem.js";
         widgetName = "PluginProblemWidget";
         break;

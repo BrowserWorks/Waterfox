@@ -126,7 +126,7 @@ class nsPluginTag final : public nsIInternalPluginTag {
               const char* aFileName, const char* aFullPath,
               const char* aVersion, nsTArray<nsCString> aMimeTypes,
               nsTArray<nsCString> aMimeDescriptions,
-              nsTArray<nsCString> aExtensions, bool aIsFlashPlugin,
+              nsTArray<nsCString> aExtensions, bool aIsJavaPlugin, bool aIsFlashPlugin,
               bool aSupportsAsyncRender, int64_t aLastModifiedTime,
               int32_t aSandboxLevel, uint32_t aBlocklistState);
 
@@ -162,6 +162,7 @@ class nsPluginTag final : public nsIInternalPluginTag {
 
   PRLibrary* mLibrary;
   RefPtr<nsNPAPIPlugin> mPlugin;
+  bool mIsJavaPlugin;
   bool mIsFlashPlugin;
   bool mSupportsAsyncRender;
   nsCString mFullPath;  // UTF-8

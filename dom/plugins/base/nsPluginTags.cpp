@@ -202,6 +202,7 @@ nsPluginTag::nsPluginTag(nsPluginInfo* aPluginInfo, int64_t aLastModifiedTime,
       mContentProcessRunningCount(0),
       mHadLocalInstance(false),
       mLibrary(nullptr),
+      mIsJavaPlugin(false),
       mIsFlashPlugin(false),
       mSupportsAsyncRender(false),
       mFullPath(aPluginInfo->fFullPath),
@@ -247,7 +248,7 @@ nsPluginTag::nsPluginTag(uint32_t aId, const char* aName,
                          const char* aFullPath, const char* aVersion,
                          nsTArray<nsCString> aMimeTypes,
                          nsTArray<nsCString> aMimeDescriptions,
-                         nsTArray<nsCString> aExtensions, bool aIsFlashPlugin,
+                         nsTArray<nsCString> aExtensions, bool aIsJavaPlugin, bool aIsFlashPlugin,
                          bool aSupportsAsyncRender, int64_t aLastModifiedTime,
                          int32_t aSandboxLevel, uint32_t aBlocklistState)
     : nsIInternalPluginTag(aName, aDescription, aFileName, aVersion, aMimeTypes,
@@ -256,6 +257,7 @@ nsPluginTag::nsPluginTag(uint32_t aId, const char* aName,
       mContentProcessRunningCount(0),
       mHadLocalInstance(false),
       mLibrary(nullptr),
+      mIsJavaPlugin(aIsJavaPlugin),
       mIsFlashPlugin(aIsFlashPlugin),
       mSupportsAsyncRender(aSupportsAsyncRender),
       mLastModifiedTime(aLastModifiedTime),
@@ -291,6 +293,9 @@ void nsPluginTag::InitMime(const char* const* aMimeTypes,
 
     // Look for certain special plugins.
     switch (nsPluginHost::GetSpecialType(mimeType)) {
+      case nsPluginHost::eSpecialType_Java:
+        mIsJavaPlugin = true;
+        break;
       case nsPluginHost::eSpecialType_Flash:
         // VLC sometimes claims to implement the Flash MIME type, and we want
         // to allow users to control that separately from Adobe Flash.
@@ -655,6 +660,11 @@ const nsCString& nsPluginTag::GetNiceFileName() {
 
   if (mIsFlashPlugin) {
     mNiceFileName.AssignLiteral("flash");
+    return mNiceFileName;
+  }
+
+  if (mIsJavaPlugin) {
+    mNiceFileName.AssignLiteral("java");
     return mNiceFileName;
   }
 

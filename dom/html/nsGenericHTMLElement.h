@@ -646,14 +646,14 @@ class nsGenericHTMLElement : public nsGenericHTMLElementBase {
 
   static inline bool CanHaveName(nsAtom* aTag) {
     return aTag == nsGkAtoms::img || aTag == nsGkAtoms::form ||
-           aTag == nsGkAtoms::embed || aTag == nsGkAtoms::object;
+           aTag == nsGkAtoms::applet || aTag == nsGkAtoms::embed || aTag == nsGkAtoms::object;
   }
   static inline bool ShouldExposeNameAsHTMLDocumentProperty(Element* aElement) {
     return aElement->IsHTMLElement() &&
            CanHaveName(aElement->NodeInfo()->NameAtom());
   }
   static inline bool ShouldExposeIdAsHTMLDocumentProperty(Element* aElement) {
-    if (aElement->IsHTMLElement(nsGkAtoms::object)) {
+    if (aElement->IsAnyOfHTMLElements(nsGkAtoms::applet, nsGkAtoms::object)) {
       return true;
     }
 
@@ -1239,6 +1239,7 @@ nsGenericHTMLElement* NS_NewCustomElement(
 
 NS_DECLARE_NS_NEW_HTML_ELEMENT(Shared)
 NS_DECLARE_NS_NEW_HTML_ELEMENT(SharedList)
+NS_DECLARE_NS_NEW_HTML_ELEMENT(Applet)
 
 NS_DECLARE_NS_NEW_HTML_ELEMENT(Anchor)
 NS_DECLARE_NS_NEW_HTML_ELEMENT(Area)

@@ -153,7 +153,7 @@ NS_IMETHODIMP PluginFinder::GetState(nsIPropertyBag** aBagOut) {
 }
 
 PluginFinder::PluginFinder(bool aFlashOnly)
-    : mFlashOnly(aFlashOnly),
+    : mFlashOnly(aFlashOnly), 
       mCreateList(false),
       mPluginsChanged(false),
       mFinishedFinding(false),
@@ -227,6 +227,7 @@ nsresult PluginFinder::Run() {
       WriteFlashInfo(mPlugins);
     }
     if (mCreateList) {
+      mPluginsChanged = true;
       mFoundPluginCallback(mPluginsChanged, mPlugins, mPluginBlocklistRequests);
     } else {
       mChangeCallback(mPluginsChanged);
@@ -443,32 +444,7 @@ struct CompareFilesByTime {
 }  // namespace
 
 bool PluginFinder::ShouldAddPlugin(const nsPluginInfo& info) {
-  if (!info.fName ||
-      (strcmp(info.fName, "Shockwave Flash") != 0 && mFlashOnly)) {
-    return false;
-  }
-  for (uint32_t i = 0; i < info.fVariantCount; ++i) {
-    if (info.fMimeTypeArray[i] &&
-        (!strcmp(info.fMimeTypeArray[i], "application/x-shockwave-flash") ||
-         !strcmp(info.fMimeTypeArray[i],
-                 "application/x-shockwave-flash-test"))) {
-      return true;
-    }
-    if (mFlashOnly) {
-      continue;
-    }
-    if (info.fMimeTypeArray[i] &&
-        (!strcmp(info.fMimeTypeArray[i], "application/x-test") ||
-         !strcmp(info.fMimeTypeArray[i], "application/x-Second-Test"))) {
-      return true;
-    }
-  }
-#ifdef PLUGIN_LOGGING
-  PLUGIN_LOG(PLUGIN_LOG_NORMAL,
-             ("ShouldAddPlugin : Ignoring non-flash plugin library %s\n",
-              aPluginTag->FileName().get()));
-#endif  // PLUGIN_LOGGING
-  return false;
+  return true;
 }
 
 nsresult PluginFinder::ScanPluginsDirectory(nsIFile* pluginsDir,

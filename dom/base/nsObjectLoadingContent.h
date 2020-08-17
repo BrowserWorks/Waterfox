@@ -369,7 +369,7 @@ class nsObjectLoadingContent : public nsImageLoadingContent,
    * @param aParameters     The array containing pairs of name/value strings
    *                        from nested <param> objects.
    */
-  void GetNestedParams(nsTArray<mozilla::dom::MozPluginParameter>& aParameters);
+  void GetNestedParams(nsTArray<mozilla::dom::MozPluginParameter>& aParameters, bool aIgnoreCodebase);
 
   MOZ_MUST_USE nsresult BuildParametersArray();
 
@@ -412,7 +412,7 @@ class nsObjectLoadingContent : public nsImageLoadingContent,
    *
    * @return Returns a bitmask of ParameterUpdateFlags values
    */
-  ParameterUpdateFlags UpdateObjectParameters();
+  ParameterUpdateFlags UpdateObjectParameters(bool aJavaURI = false);
 
   /**
    * Queue a CheckPluginStopEvent and track it in mPendingCheckPluginStopEvent
@@ -548,6 +548,8 @@ class nsObjectLoadingContent : public nsImageLoadingContent,
    * Does not flush.
    */
   nsPluginFrame* GetExistingFrame();
+
+  bool CheckJavaCodebase();
 
   /**
    * Used for identifying whether we can rewrite a youtube flash embed to

@@ -2545,6 +2545,11 @@ pref("plugins.navigator.hidden_ctp_plugin", "");
 // The default value for nsIPluginTag.enabledState (STATE_ENABLED = 2)
 pref("plugin.default.state", 2);
 
+// The MIME type that should bind to legacy java-specific invocations like
+// <applet> and <object data="java:foo">. Setting this to a non-java MIME type
+// is undefined behavior.
+pref("plugin.java.mime", "application/x-java-vm");
+
 // This pref can take 3 possible string values:
 // "always"     - always use favor fallback mode
 // "follow-ctp" - activate if ctp is active for the given

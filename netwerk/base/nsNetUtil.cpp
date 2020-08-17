@@ -45,6 +45,7 @@
 #include "nsIInterfaceRequestorUtils.h"
 #include "nsILoadContext.h"
 #include "nsIMIMEHeaderParam.h"
+//#include "nsIMutable.h" //tmatodo
 #include "nsINode.h"
 #include "nsIObjectLoadingContent.h"
 #include "nsIOfflineCacheUpdate.h"
@@ -1978,6 +1979,16 @@ bool NS_UsePrivateBrowsing(nsIChannel* channel) {
       channel, attrs, StoragePrincipalHelper::eRegularPrincipal);
   NS_ENSURE_TRUE(result, result);
   return attrs.mPrivateBrowsingId > 0;
+}
+
+void NS_TryToSetImmutable(nsIURI *uri)
+{
+  #if 0 // //tmatodo
+  nsCOMPtr<nsIMutable> mutableObj(do_QueryInterface(uri));
+  if (mutableObj) {
+    mutableObj->SetMutable(false);
+  }
+  #endif
 }
 
 bool NS_HasBeenCrossOrigin(nsIChannel* aChannel, bool aReport) {

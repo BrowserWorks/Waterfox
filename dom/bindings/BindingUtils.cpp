@@ -54,6 +54,7 @@
 #include "mozilla/dom/HTMLEmbedElement.h"
 #include "mozilla/dom/HTMLElementBinding.h"
 #include "mozilla/dom/HTMLEmbedElementBinding.h"
+#include "mozilla/dom/HTMLAppletElementBinding.h"
 #include "mozilla/dom/MaybeCrossOriginObject.h"
 #include "mozilla/dom/ReportingUtils.h"
 #include "mozilla/dom/XULElementBinding.h"
