@@ -128,6 +128,7 @@ nsURLFormatterService.prototype = {
       return this.OSVersion;
     },
     CHANNEL: () => UpdateUtils.UpdateChannel,
+	DISPLAY_VERSION:  () => AppConstants.MOZ_APP_VERSION_DISPLAY,
     MOZILLA_API_KEY: () => AppConstants.MOZ_MOZILLA_API_KEY,
     GOOGLE_LOCATION_SERVICE_API_KEY: () =>
       AppConstants.MOZ_GOOGLE_LOCATION_SERVICE_API_KEY,
