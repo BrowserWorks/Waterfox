@@ -321,8 +321,8 @@ stun_getifaddrs(nr_local_addr addrs[], int maxaddrs, int *count)
                /* TODO (Bug 896913): find backend network type of this VPN */
             }
 #else
-            addrs[*count].interface.type = NR_INTERFACE_TYPE_UNKNOWN;
-            addrs[*count].interface.estimated_speed = 0;
+            addrs[*count].Interface.type = NR_INTERFACE_TYPE_UNKNOWN;
+            addrs[*count].Interface.estimated_speed = 0;
 #endif
             (void)strlcpy(addrs[*count].addr.ifname, if_addr->ifa_name, sizeof(addrs[*count].addr.ifname));
             ++(*count);
