@@ -1249,6 +1249,12 @@ VARCACHE_PREF(
 )
 #undef PREF_VALUE
 
+VARCACHE_PREF(
+  "layout.css.resizeobserver.enabled",
+   layout_css_resizeobserver_enabled,
+  bool, true
+)
+
 // Is steps(jump-*) supported in easing functions?
 VARCACHE_PREF(
   "layout.css.step-position-jump.enabled",
@@ -1309,18 +1315,6 @@ VARCACHE_PREF(
    layout_css_shared_memory_ua_sheets_enabled,
   bool, false
 )
-
-#ifdef NIGHTLY_BUILD
-# define PREF_VALUE true
-#else
-# define PREF_VALUE false
-#endif
-VARCACHE_PREF(
-  "layout.css.resizeobserver.enabled",
-   layout_css_resizeobserver_enabled,
-  bool, PREF_VALUE
-)
-#undef PREF_VALUE
 
 // Is support for GeometryUtils.getBoxQuads enabled?
 #ifdef RELEASE_OR_BETA
