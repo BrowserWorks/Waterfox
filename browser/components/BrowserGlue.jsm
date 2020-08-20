@@ -1325,6 +1325,11 @@ BrowserGlue.prototype = {
       "1.0",
       "resource:///modules/themes/dark/"
     );
+    AddonManager.maybeInstallBuiltinAddon(
+      "firefox-alpenglow@mozilla.org",
+      "1.0",
+      "resource:///modules/themes/alpenglow/"
+    );
 
     if (AppConstants.MOZ_NORMANDY) {
       Normandy.init();
