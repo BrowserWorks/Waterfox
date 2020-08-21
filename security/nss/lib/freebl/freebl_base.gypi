@@ -130,29 +130,53 @@
         }],
       ],
     }],
-    ['target_arch=="ia32" or target_arch=="x64"', {
+    ['target_arch=="ia32" or target_arch=="x64" or target_arch=="arm64" or target_arch=="aarch64"', {
       'sources': [
-        # All intel architectures get the 64 bit version
+        # All intel and 64-bit ARM architectures get the 64 bit version.
         'ecl/curve25519_64.c',
-        'verified/hacl_curve25519_64.c',
+        'verified/Hacl_Curve25519.c',
+        'verified/FStar.c',
       ],
     }, {
       'sources': [
-        # All non intel architectures get the generic 32 bit implementation (slow!)
+        # All other architectures get the generic 32 bit implementation (slow!)
         'ecl/curve25519_32.c',
       ],
     }],
     [ 'disable_chachapoly==0', {
       'conditions': [
-        [ 'OS!="win" and target_arch=="x64"', {
-          'sources': [
-            'chacha20_vec.c',
-            'poly1305-donna-x64-sse2-incremental-source.c',
+        [ 'OS!="win"', {
+          'conditions': [
+            [ 'target_arch=="x64"', {
+              'sources': [
+                'chacha20_vec.c',
+                'verified/Hacl_Poly1305_64.c',
+              ],
+            }, {
+              # !Windows & !x64
+              'conditions': [
+                [ 'target_arch=="arm64" or target_arch=="aarch64"', {
+                  'sources': [
+                    'chacha20.c',
+                    'verified/Hacl_Chacha20.c',
+                    'verified/Hacl_Poly1305_64.c',
+                  ],
+                }, {
+                  # !Windows & !x64 & !arm64 & !aarch64
+                  'sources': [
+                    'chacha20.c',
+                    'verified/Hacl_Chacha20.c',
+                    'poly1305.c',
+                  ],
+                }],
+              ],
+            }],
           ],
         }, {
-          # not x64
+          # Windows
           'sources': [
             'chacha20.c',
+            'verified/Hacl_Chacha20.c',
             'poly1305.c',
           ],
         }],

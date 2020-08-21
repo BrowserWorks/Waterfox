@@ -13,6 +13,28 @@
 #include "secitem.h"
 #include "certt.h"
 
+typedef enum {
+    ssl_hs_hello_request = 0,
+    ssl_hs_client_hello = 1,
+    ssl_hs_server_hello = 2,
+    ssl_hs_hello_verify_request = 3,
+    ssl_hs_new_session_ticket = 4,
+    ssl_hs_end_of_early_data = 5,
+    ssl_hs_hello_retry_request = 6,
+    ssl_hs_encrypted_extensions = 8,
+    ssl_hs_certificate = 11,
+    ssl_hs_server_key_exchange = 12,
+    ssl_hs_certificate_request = 13,
+    ssl_hs_server_hello_done = 14,
+    ssl_hs_certificate_verify = 15,
+    ssl_hs_client_key_exchange = 16,
+    ssl_hs_finished = 20,
+    ssl_hs_certificate_status = 22,
+    ssl_hs_key_update = 24,
+    ssl_hs_next_proto = 67,
+    ssl_hs_message_hash = 254, /* Not a real message. */
+} SSLHandshakeType;
+
 typedef struct SSL3StatisticsStr {
     /* statistics from ssl3_SendClientHello (sch) */
     long sch_sid_cache_hits;
@@ -403,16 +425,19 @@ typedef enum {
     ssl_padding_xtn = 21,
     ssl_extended_master_secret_xtn = 23,
     ssl_session_ticket_xtn = 35,
-    ssl_tls13_key_share_xtn = 40,
+    /* 40 was used in draft versions of TLS 1.3; it is now reserved. */
     ssl_tls13_pre_shared_key_xtn = 41,
     ssl_tls13_early_data_xtn = 42,
     ssl_tls13_supported_versions_xtn = 43,
     ssl_tls13_cookie_xtn = 44,
     ssl_tls13_psk_key_exchange_modes_xtn = 45,
-    ssl_tls13_ticket_early_data_info_xtn = 46,
-    ssl_next_proto_nego_xtn = 13172,
+    ssl_tls13_ticket_early_data_info_xtn = 46, /* Deprecated. */
+    ssl_tls13_certificate_authorities_xtn = 47,
+    ssl_signature_algorithms_cert_xtn = 50,
+    ssl_tls13_key_share_xtn = 51,
+    ssl_next_proto_nego_xtn = 13172, /* Deprecated. */
     ssl_renegotiation_info_xtn = 0xff01,
-    ssl_tls13_short_header_xtn = 0xff03
+    ssl_tls13_short_header_xtn = 0xff03 /* Deprecated. */
 } SSLExtensionType;
 
 /* This is the old name for the supported_groups extensions. */

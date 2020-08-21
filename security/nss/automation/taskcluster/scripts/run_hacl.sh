@@ -12,13 +12,29 @@ set -e -x -v
 # The extracted C code from HACL* is already generated and the HACL* tests were
 # successfully executed.
 
+# Verify Poly1305 (doesn't work in docker image build)
+make verify -C ~/hacl-star/code/poly1305 -j$(nproc)
+
+# Add license header to specs
+spec_files=($(find ~/hacl-star/specs -type f -name '*.fst'))
+for f in "${spec_files[@]}"; do
+    cat /tmp/license.txt "$f" > /tmp/tmpfile && mv /tmp/tmpfile "$f"
+done
+
 # Format the extracted C code.
-cd ~/hacl-star/snapshots/nss-production
+cd ~/hacl-star/snapshots/nss
 cp ~/nss/.clang-format .
 find . -type f -name '*.[ch]' -exec clang-format -i {} \+
 
 # These diff commands will return 1 if there are differences and stop the script.
 files=($(find ~/nss/lib/freebl/verified/ -type f -name '*.[ch]'))
+for f in "${files[@]}"; do
+    diff $f $(basename "$f")
+done
+
+# Check that the specs didn't change either.
+cd ~/hacl-star/specs
+files=($(find ~/nss/lib/freebl/verified/specs -type f))
 for f in "${files[@]}"; do
     diff $f $(basename "$f")
 done

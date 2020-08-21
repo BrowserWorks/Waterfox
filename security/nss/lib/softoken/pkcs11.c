@@ -421,11 +421,20 @@ static const struct mechanismList mechanisms[] = {
 #endif
     /* --------------------- Secret Key Operations ------------------------ */
     { CKM_GENERIC_SECRET_KEY_GEN, { 1, 32, CKF_GENERATE }, PR_TRUE },
-    { CKM_CONCATENATE_BASE_AND_KEY, { 1, 32, CKF_GENERATE }, PR_FALSE },
-    { CKM_CONCATENATE_BASE_AND_DATA, { 1, 32, CKF_GENERATE }, PR_FALSE },
-    { CKM_CONCATENATE_DATA_AND_BASE, { 1, 32, CKF_GENERATE }, PR_FALSE },
-    { CKM_XOR_BASE_AND_DATA, { 1, 32, CKF_GENERATE }, PR_FALSE },
+    { CKM_CONCATENATE_BASE_AND_KEY, { 1, 32, CKF_DERIVE }, PR_FALSE },
+    { CKM_CONCATENATE_BASE_AND_DATA, { 1, 32, CKF_DERIVE }, PR_FALSE },
+    { CKM_CONCATENATE_DATA_AND_BASE, { 1, 32, CKF_DERIVE }, PR_FALSE },
+    { CKM_XOR_BASE_AND_DATA, { 1, 32, CKF_DERIVE }, PR_FALSE },
     { CKM_EXTRACT_KEY_FROM_KEY, { 1, 32, CKF_DERIVE }, PR_FALSE },
+    { CKM_DES3_ECB_ENCRYPT_DATA, { 1, 32, CKF_DERIVE }, PR_FALSE },
+    { CKM_DES3_CBC_ENCRYPT_DATA, { 1, 32, CKF_DERIVE }, PR_FALSE },
+    { CKM_AES_ECB_ENCRYPT_DATA, { 1, 32, CKF_DERIVE }, PR_FALSE },
+    { CKM_AES_CBC_ENCRYPT_DATA, { 1, 32, CKF_DERIVE }, PR_FALSE },
+    { CKM_CAMELLIA_ECB_ENCRYPT_DATA, { 1, 32, CKF_DERIVE }, PR_FALSE },
+    { CKM_CAMELLIA_CBC_ENCRYPT_DATA, { 1, 32, CKF_DERIVE }, PR_FALSE },
+    { CKM_SEED_ECB_ENCRYPT_DATA, { 1, 32, CKF_DERIVE }, PR_FALSE },
+    { CKM_SEED_CBC_ENCRYPT_DATA, { 1, 32, CKF_DERIVE }, PR_FALSE },
+
     /* ---------------------- SSL Key Derivations ------------------------- */
     { CKM_SSL3_PRE_MASTER_KEY_GEN, { 48, 48, CKF_GENERATE }, PR_FALSE },
     { CKM_SSL3_MASTER_KEY_DERIVE, { 48, 48, CKF_DERIVE }, PR_FALSE },
@@ -2355,17 +2364,22 @@ sftk_SlotFromID(CK_SLOT_ID slotID, PRBool all)
     return slot;
 }
 
-SFTKSlot *
-sftk_SlotFromSessionHandle(CK_SESSION_HANDLE handle)
+CK_SLOT_ID
+sftk_SlotIDFromSessionHandle(CK_SESSION_HANDLE handle)
 {
     CK_ULONG slotIDIndex = (handle >> 24) & 0x7f;
     CK_ULONG moduleIndex = (handle >> 31) & 1;
 
     if (slotIDIndex >= nscSlotCount[moduleIndex]) {
-        return NULL;
+        return (CK_SLOT_ID)-1;
     }
+    return nscSlotList[moduleIndex][slotIDIndex];
+}
 
-    return sftk_SlotFromID(nscSlotList[moduleIndex][slotIDIndex], PR_FALSE);
+SFTKSlot *
+sftk_SlotFromSessionHandle(CK_SESSION_HANDLE handle)
+{
+    return sftk_SlotFromID(sftk_SlotIDFromSessionHandle(handle), PR_FALSE);
 }
 
 static CK_RV

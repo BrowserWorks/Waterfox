@@ -64,9 +64,9 @@ ssl_init()
     PORT=$(($PORT + $padd))
   fi
   NSS_SSL_TESTS=${NSS_SSL_TESTS:-normal_normal}
-  nss_ssl_run="stapling signed_cert_timestamps cov auth stress"
+  nss_ssl_run="stapling signed_cert_timestamps cov auth stress dtls"
   NSS_SSL_RUN=${NSS_SSL_RUN:-$nss_ssl_run}
-
+  
   # Test case files
   SSLCOV=${QADIR}/ssl/sslcov.txt
   SSLAUTH=${QADIR}/ssl/sslauth.txt
@@ -682,7 +682,8 @@ ssl_crl_ssl()
 setup_policy()
 {
   policy="$1"
-  OUTFILE=${P_R_CLIENTDIR}/pkcs11.txt
+  outdir="$2"
+  OUTFILE="${outdir}/pkcs11.txt"
   cat > "$OUTFILE" << ++EOF++
 library=
 name=NSS Internal PKCS #11 Module
@@ -698,7 +699,7 @@ NSS=trustOrder=100
 ++EOF++
 
   echo "******************************Testing with: "
-  cat ${P_R_CLIENTDIR}/pkcs11.txt
+  cat "$OUTFILE"
   echo "******************************"
 }
 
@@ -745,7 +746,7 @@ ssl_policy()
 
           # load the policy
           policy=`echo ${policy} | sed -e 's;_; ;g'`
-          setup_policy "$policy"
+          setup_policy "$policy" ${P_R_CLIENTDIR}
 
           echo "tstclnt -4 -p ${PORT} -h ${HOSTADDR} -c ${param} -V ${VMIN}:${VMAX} ${CLIENT_OPTIONS} \\"
           echo "        -f -d ${P_R_CLIENTDIR} $verbose -w nss < ${REQUEST_FILE}"
@@ -799,7 +800,7 @@ ssl_policy_listsuites()
   cp ${P_R_CLIENTDIR}/pkcs11.txt ${P_R_CLIENTDIR}/pkcs11.txt.sav
 
   # Disallow all explicitly
-  setup_policy "disallow=all" 
+  setup_policy "disallow=all" ${P_R_CLIENTDIR}
   RET_EXP=1
   list_enabled_suites | grep '^TLS_'
   RET=$?
@@ -807,7 +808,7 @@ ssl_policy_listsuites()
            "produced a returncode of $RET, expected is $RET_EXP"
 
   # Disallow RSA in key exchange explicitly
-  setup_policy "disallow=rsa/ssl-key-exchange"
+  setup_policy "disallow=rsa/ssl-key-exchange" ${P_R_CLIENTDIR}
   RET_EXP=1
   list_enabled_suites | grep '^TLS_RSA_'
   RET=$?
@@ -816,6 +817,55 @@ ssl_policy_listsuites()
 
   cp ${P_R_CLIENTDIR}/pkcs11.txt.sav ${P_R_CLIENTDIR}/pkcs11.txt
 
+  html "</TABLE><BR>"
+}
+
+############################## ssl_policy_selfserv #####################
+# local shell function to perform SSL Policy tests, using selfserv
+########################################################################
+ssl_policy_selfserv()
+{
+  #verbose="-v"
+  html_head "SSL POLICY SELFSERV $NORM_EXT - server $SERVER_MODE/client $CLIENT_MODE"
+
+  testname=""
+  sparam="$CIPHER_SUITES"
+
+  if [ ! -f "${P_R_SERVERDIR}/pkcs11.txt" ] ; then
+      html_failed "${SCRIPTNAME}: ${P_R_SERVERDIR} is not initialized"
+      return 1;
+  fi
+
+  echo "Saving pkcs11.txt"
+  cp ${P_R_SERVERDIR}/pkcs11.txt ${P_R_SERVERDIR}/pkcs11.txt.sav
+
+  # Disallow RSA in key exchange explicitly
+  setup_policy "disallow=rsa/ssl-key-exchange" ${P_R_SERVERDIR}
+
+  start_selfserv # Launch the server
+
+  VMIN="ssl3"
+  VMAX="tls1.2"
+
+  # Try to connect to the server with a ciphersuite using RSA in key exchange
+  echo "tstclnt -4 -p ${PORT} -h ${HOSTADDR} -c d -V ${VMIN}:${VMAX} ${CLIENT_OPTIONS} \\"
+  echo "        -f -d ${P_R_CLIENTDIR} $verbose -w nss < ${REQUEST_FILE}"
+
+  rm ${TMP}/$HOST.tmp.$$ 2>/dev/null
+  RET_EXP=254
+  ${PROFTOOL} ${BINDIR}/tstclnt -4 -p ${PORT} -h ${HOSTADDR} -c d -V ${VMIN}:${VMAX} ${CLIENT_OPTIONS} -f \
+          -d ${P_R_CLIENTDIR} $verbose -w nss < ${REQUEST_FILE} \
+          >${TMP}/$HOST.tmp.$$  2>&1
+  RET=$?
+  cat ${TMP}/$HOST.tmp.$$
+  rm ${TMP}/$HOST.tmp.$$ 2>/dev/null
+
+  html_msg $RET $RET_EXP "${testname}" \
+           "produced a returncode of $RET, expected is $RET_EXP"
+
+  cp ${P_R_SERVERDIR}/pkcs11.txt.sav ${P_R_SERVERDIR}/pkcs11.txt
+
+  kill_selfserv
   html "</TABLE><BR>"
 }
 
@@ -1047,6 +1097,47 @@ ssl_crl_cache()
   html "</TABLE><BR>"
 }
 
+############################ ssl_dtls ###################################
+# local shell function to test tstclnt acting as client and server for DTLS
+#########################################################################
+ssl_dtls()
+{
+  #verbose="-v"
+  html_head "SSL DTLS $NORM_EXT - server $SERVER_MODE/client $CLIENT_MODE"
+
+    testname="ssl_dtls"
+    value=0
+
+    if [ "$SERVER_MODE" = "fips" -o "$CLIENT_MODE" = "fips" ] ; then
+        echo "$SCRIPTNAME: skipping  $testname (non-FIPS only)"
+        return 0
+    fi
+
+    echo "${testname}"
+
+    echo "tstclnt -4 -p ${PORT} -h ${HOSTADDR} -f -d ${P_R_SERVERDIR} $verbose ${SERVER_OPTIONS} \\"
+    echo "        -U -V tls1.1:tls1.2 -P server -Q < ${REQUEST_FILE} &"
+
+    ${PROFTOOL} ${BINDIR}/tstclnt -4 -p ${PORT} -h ${HOSTADDR} -f ${SERVER_OPTIONS} \
+                -d ${P_R_SERVERDIR} $verbose -U -V tls1.1:tls1.2 -P server -n ${HOSTADDR} -w nss < ${REQUEST_FILE} 2>&1 &
+
+    PID=$!
+    
+    sleep 1
+    
+    echo "tstclnt -4 -p ${PORT} -h ${HOSTADDR} -f -d ${P_R_CLIENTDIR} $verbose ${CLIENT_OPTIONS} \\"
+    echo "        -U -V tls1.1:tls1.2 -P client -Q < ${REQUEST_FILE}"
+    ${PROFTOOL} ${BINDIR}/tstclnt -4 -p ${PORT} -h ${HOSTADDR} -f ${CLIENT_OPTIONS} \
+            -d ${P_R_CLIENTDIR} $verbose -U -V tls1.1:tls1.2 -P client -Q < ${REQUEST_FILE} 2>&1 
+    ret=$?
+    html_msg $ret $value "${testname}" \
+             "produced a returncode of $ret, expected is $value"
+
+    kill ${PID}
+    
+  html "</TABLE><BR>"
+}
+
 
 ############################## ssl_cleanup #############################
 # local shell function to finish this script (no exit since it might be
@@ -1083,6 +1174,9 @@ ssl_run()
             ;;
         "stress")
             ssl_stress
+            ;;
+        "dtls")
+            ssl_dtls
             ;;
          esac
     done
@@ -1206,6 +1300,7 @@ ssl_run_tests()
         "policy")
             if [ "${TEST_MODE}" = "SHARED_DB" ] ; then
                 ssl_policy_listsuites
+                ssl_policy_selfserv
                 ssl_policy
             fi
             ;;
