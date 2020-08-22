@@ -104,6 +104,8 @@ extern nsresult nsStringInputStreamConstructor(nsISupports*, REFNSIID, void**);
 #include "nsMemoryInfoDumper.h"
 #include "nsSecurityConsoleMessage.h"
 #include "nsMessageLoop.h"
+#include "nss.h"
+#include "ssl.h"
 
 #include "nsStatusReporterManager.h"
 
@@ -1024,6 +1026,17 @@ ShutdownXPCOM(nsIServiceManager* aServMgr)
     // Shut down the JS engine.
     JS_ShutDown();
     sInitializedJS = false;
+  }
+
+  // At this point all networking threads should have been joined and the
+  // component manager is shut down. Any remaining objects that hold NSS
+  // resources (should!) have been released, so we can safely shut down NSS.
+  if (NSS_IsInitialized()) {
+    SSL_ClearSessionCache();
+    // XXX: It would be nice if we can enforce this shutdown.
+    if (NSS_Shutdown() != SECSuccess) {
+      NS_WARNING("NSS Shutdown failed - some resources are still in use");
+    }
   }
 
   // Release our own singletons
