@@ -10,7 +10,7 @@
 #include "sechash.h"
 
 #include "gtest/gtest.h"
-#include "scoped_ptrs.h"
+#include "nss_scoped_ptrs.h"
 
 #include "pk11_signature_test.h"
 #include "pk11_rsapss_vectors.h"
@@ -93,6 +93,20 @@ TEST_F(Pkcs11RsaPssTest, GenerateAndSignAndVerify) {
   EXPECT_EQ(rv, SECFailure);
 }
 
+TEST_F(Pkcs11RsaPssTest, NoLeakWithInvalidExponent) {
+  // Attempt to generate an RSA key with a public exponent of 1. This should
+  // fail, but it shouldn't leak memory.
+  PK11RSAGenParams rsaGenParams = {1024, 0x01};
+
+  // Generate RSA key pair.
+  ScopedPK11SlotInfo slot(PK11_GetInternalSlot());
+  SECKEYPublicKey* pubKey = nullptr;
+  SECKEYPrivateKey* privKey =
+      PK11_GenerateKeyPair(slot.get(), CKM_RSA_PKCS_KEY_PAIR_GEN, &rsaGenParams,
+                           &pubKey, false, false, nullptr);
+  EXPECT_FALSE(privKey);
+  EXPECT_FALSE(pubKey);
+}
 class Pkcs11RsaPssVectorTest
     : public Pkcs11RsaPssTest,
       public ::testing::WithParamInterface<Pkcs11SignatureTestParams> {};

@@ -16,7 +16,7 @@
                     /* include should be removed! */
 /*#include "cdbhdl.h" */
 #include "cryptohi.h"
-#include "key.h"
+#include "keyhi.h"
 #include "secasn1.h"
 #include "secitem.h"
 #include "secoid.h"
@@ -1596,7 +1596,6 @@ sec_pkcs7_verify_signature(SEC_PKCS7ContentInfo *cinfo,
     } else {
         SECItem *sig;
         SECItem holder;
-        SECStatus rv;
 
         /*
          * No authenticated attributes.

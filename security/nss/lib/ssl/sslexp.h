@@ -350,6 +350,27 @@ typedef SSLHelloRetryRequestAction(PR_CALLBACK *SSLHelloRetryRequestCallback)(
                          (PRFileDesc * _fd, PRBool _requestUpdate), \
                          (fd, requestUpdate))
 
+/* This function allows a server application to trigger
+ * re-authentication (TLS 1.3 only) after handshake.
+ *
+ * This function will cause a CertificateRequest message to be sent by
+ * a server.  This can be called once at a time, and is not allowed
+ * until an answer is received.
+ *
+ * The AuthCertificateCallback is called when the answer is received.
+ * If the answer is accepted by the server, the value returned by
+ * SSL_PeerCertificate() is replaced.  If you need to remember all the
+ * certificates, you will need to call SSL_PeerCertificate() and save
+ * what you get before calling this.
+ *
+ * If the AuthCertificateCallback returns SECFailure, the connection
+ * is aborted.
+ */
+#define SSL_SendCertificateRequest(fd)                 \
+    SSL_EXPERIMENTAL_API("SSL_SendCertificateRequest", \
+                         (PRFileDesc * _fd),           \
+                         (fd))
+
 /*
  * Session cache API.
  */
@@ -367,6 +388,7 @@ typedef struct SSLResumptionTokenInfoStr {
     PRUint8 *alpnSelection;
     PRUint32 alpnSelectionLen;
     PRUint32 maxEarlyDataSize;
+    PRTime expirationTime; /* added in NSS 3.41 */
 } SSLResumptionTokenInfo;
 
 /*
@@ -452,8 +474,256 @@ typedef SECStatus(PR_CALLBACK *SSLResumptionTokenCallback)(
                          (PRFileDesc * _fd, PRUint32 _size), \
                          (fd, size))
 
-/* Deprecated experimental APIs */
+/* Set the ESNI key pair on a socket (server side)
+ *
+ * fd -- the socket
+ * record/recordLen -- the encoded DNS record (not base64)
+ *
+ * Important: the suites that are advertised in the record must
+ * be configured on, or this call will fail.
+ */
+#define SSL_SetESNIKeyPair(fd,                                              \
+                           privKey, record, recordLen)                      \
+    SSL_EXPERIMENTAL_API("SSL_SetESNIKeyPair",                              \
+                         (PRFileDesc * _fd,                                 \
+                          SECKEYPrivateKey * _privKey,                      \
+                          const PRUint8 *_record, unsigned int _recordLen), \
+                         (fd, privKey,                                      \
+                          record, recordLen))
 
+/* Set the ESNI keys on a client
+ *
+ * fd -- the socket
+ * ensikeys/esniKeysLen -- the ESNI key structure (not base64)
+ * dummyESNI -- the dummy ESNI to use (if any)
+ */
+#define SSL_EnableESNI(fd, esniKeys, esniKeysLen, dummySNI) \
+    SSL_EXPERIMENTAL_API("SSL_EnableESNI",                  \
+                         (PRFileDesc * _fd,                 \
+                          const PRUint8 *_esniKeys,         \
+                          unsigned int _esniKeysLen,        \
+                          const char *_dummySNI),           \
+                         (fd, esniKeys, esniKeysLen, dummySNI))
+
+/*
+ * Generate an encoded ESNIKeys structure (presumably server side).
+ *
+ * cipherSuites -- the cipher suites that can be used
+ * cipherSuitesCount -- the number of suites in cipherSuites
+ * group -- the named group this key corresponds to
+ * pubKey -- the public key for the key pair
+ * pad -- the length to pad to
+ * notBefore/notAfter -- validity range
+ * out/outlen/maxlen -- where to output the data
+ */
+#define SSL_EncodeESNIKeys(cipherSuites, cipherSuiteCount,          \
+                           group, pubKey, pad, notBefore, notAfter, \
+                           out, outlen, maxlen)                     \
+    SSL_EXPERIMENTAL_API("SSL_EncodeESNIKeys",                      \
+                         (PRUint16 * _cipherSuites,                 \
+                          unsigned int _cipherSuiteCount,           \
+                          SSLNamedGroup _group,                     \
+                          SECKEYPublicKey *_pubKey,                 \
+                          PRUint16 _pad,                            \
+                          PRUint64 _notBefore, PRUint64 _notAfter,  \
+                          PRUint8 *_out, unsigned int *_outlen,     \
+                          unsigned int _maxlen),                    \
+                         (cipherSuites, cipherSuiteCount,           \
+                          group, pubKey, pad, notBefore, notAfter,  \
+                          out, outlen, maxlen))
+
+/* SSL_SetSecretCallback installs a callback that TLS calls when it installs new
+ * traffic secrets.
+ *
+ * SSLSecretCallback is called with the current epoch and the corresponding
+ * secret; this matches the epoch used in DTLS 1.3, even if the socket is
+ * operating in stream mode:
+ *
+ * - client_early_traffic_secret corresponds to epoch 1
+ * - {client|server}_handshake_traffic_secret is epoch 2
+ * - {client|server}_application_traffic_secret_{N} is epoch 3+N
+ *
+ * The callback is invoked separately for read secrets (client secrets on the
+ * server; server secrets on the client), and write secrets.
+ *
+ * This callback is only called if (D)TLS 1.3 is negotiated.
+ */
+typedef void(PR_CALLBACK *SSLSecretCallback)(
+    PRFileDesc *fd, PRUint16 epoch, SSLSecretDirection dir, PK11SymKey *secret,
+    void *arg);
+
+#define SSL_SecretCallback(fd, cb, arg)                                         \
+    SSL_EXPERIMENTAL_API("SSL_SecretCallback",                                  \
+                         (PRFileDesc * _fd, SSLSecretCallback _cb, void *_arg), \
+                         (fd, cb, arg))
+
+/* SSL_RecordLayerWriteCallback() is used to replace the TLS record layer.  This
+ * function installs a callback that TLS calls when it would otherwise encrypt
+ * and write a record to the underlying NSPR IO layer.  The application is
+ * responsible for ensuring that these records are encrypted and written.
+ *
+ * Calling this API also disables reads from the underlying NSPR layer.  The
+ * application is expected to push data when it is available using
+ * SSL_RecordLayerData().
+ *
+ * When data would be written, the provided SSLRecordWriteCallback with the
+ * epoch, TLS content type, and the data. The data provided to the callback is
+ * not split into record-sized writes.  If the callback returns SECFailure, the
+ * write will be considered to have failed; in particular, PR_WOULD_BLOCK_ERROR
+ * is not handled specially.
+ *
+ * If TLS 1.3 is in use, the epoch indicates the expected level of protection
+ * that the record would receive, this matches that used in DTLS 1.3:
+ *
+ * - epoch 0 corresponds to no record protection
+ * - epoch 1 corresponds to 0-RTT
+ * - epoch 2 corresponds to TLS handshake
+ * - epoch 3 and higher are application data
+ *
+ * Prior versions of TLS use epoch 1 and higher for application data.
+ *
+ * This API is not supported for DTLS.
+ */
+typedef SECStatus(PR_CALLBACK *SSLRecordWriteCallback)(
+    PRFileDesc *fd, PRUint16 epoch, SSLContentType contentType,
+    const PRUint8 *data, unsigned int len, void *arg);
+
+#define SSL_RecordLayerWriteCallback(fd, writeCb, arg)                   \
+    SSL_EXPERIMENTAL_API("SSL_RecordLayerWriteCallback",                 \
+                         (PRFileDesc * _fd, SSLRecordWriteCallback _wCb, \
+                          void *_arg),                                   \
+                         (fd, writeCb, arg))
+
+/* SSL_RecordLayerData() is used to provide new data to TLS.  The application
+ * indicates the epoch (see the description of SSL_RecordLayerWriteCallback()),
+ * content type, and the data that was received.  The application is responsible
+ * for removing any encryption or other protection before passing data to this
+ * function.
+ *
+ * This returns SECSuccess if the data was successfully processed.  If this
+ * function is used to drive the handshake and the caller needs to know when the
+ * handshake is complete, a call to SSL_ForceHandshake will return SECSuccess
+ * when the handshake is complete.
+ *
+ * This API is not supported for DTLS sockets.
+ */
+#define SSL_RecordLayerData(fd, epoch, ct, data, len)               \
+    SSL_EXPERIMENTAL_API("SSL_RecordLayerData",                     \
+                         (PRFileDesc * _fd, PRUint16 _epoch,        \
+                          SSLContentType _contentType,              \
+                          const PRUint8 *_data, unsigned int _len), \
+                         (fd, epoch, ct, data, len))
+
+/*
+ * SSL_GetCurrentEpoch() returns the read and write epochs that the socket is
+ * currently using.  NULL values for readEpoch or writeEpoch are ignored.
+ *
+ * See SSL_RecordLayerWriteCallback() for details on epochs.
+ */
+#define SSL_GetCurrentEpoch(fd, readEpoch, writeEpoch)             \
+    SSL_EXPERIMENTAL_API("SSL_GetCurrentEpoch",                    \
+                         (PRFileDesc * _fd, PRUint16 * _readEpoch, \
+                          PRUint16 * _writeEpoch),                 \
+                         (fd, readEpoch, writeEpoch))
+
+/*
+ * The following AEAD functions expose an AEAD primitive that uses a ciphersuite
+ * to set parameters.  The ciphersuite determines the Hash function used by
+ * HKDF, the AEAD function, and the size of key and IV.  This is only supported
+ * for TLS 1.3.
+ *
+ * The key and IV are generated using the TLS KDF with a custom label.  That is
+ * HKDF-Expand-Label(secret, labelPrefix + " key" or " iv", "", L).
+ *
+ * The encrypt and decrypt functions use a nonce construction identical to that
+ * used in TLS.  The lower bits of the IV are XORed with the 64-bit counter to
+ * produce the nonce.  Otherwise, this is an AEAD interface similar to that
+ * described in RFC 5116.
+ */
+typedef struct SSLAeadContextStr SSLAeadContext;
+
+#define SSL_MakeAead(version, cipherSuite, secret,                  \
+                     labelPrefix, labelPrefixLen, ctx)              \
+    SSL_EXPERIMENTAL_API("SSL_MakeAead",                            \
+                         (PRUint16 _version, PRUint16 _cipherSuite, \
+                          PK11SymKey * _secret,                     \
+                          const char *_labelPrefix,                 \
+                          unsigned int _labelPrefixLen,             \
+                          SSLAeadContext **_ctx),                   \
+                         (version, cipherSuite, secret,             \
+                          labelPrefix, labelPrefixLen, ctx))
+
+#define SSL_AeadEncrypt(ctx, counter, aad, aadLen, in, inLen,            \
+                        output, outputLen, maxOutputLen)                 \
+    SSL_EXPERIMENTAL_API("SSL_AeadEncrypt",                              \
+                         (const SSLAeadContext *_ctx, PRUint64 _counter, \
+                          const PRUint8 *_aad, unsigned int _aadLen,     \
+                          const PRUint8 *_in, unsigned int _inLen,       \
+                          PRUint8 *_out, unsigned int *_outLen,          \
+                          unsigned int _maxOut),                         \
+                         (ctx, counter, aad, aadLen, in, inLen,          \
+                          output, outputLen, maxOutputLen))
+
+#define SSL_AeadDecrypt(ctx, counter, aad, aadLen, in, inLen,            \
+                        output, outputLen, maxOutputLen)                 \
+    SSL_EXPERIMENTAL_API("SSL_AeadDecrypt",                              \
+                         (const SSLAeadContext *_ctx, PRUint64 _counter, \
+                          const PRUint8 *_aad, unsigned int _aadLen,     \
+                          const PRUint8 *_in, unsigned int _inLen,       \
+                          PRUint8 *_output, unsigned int *_outLen,       \
+                          unsigned int _maxOut),                         \
+                         (ctx, counter, aad, aadLen, in, inLen,          \
+                          output, outputLen, maxOutputLen))
+
+#define SSL_DestroyAead(ctx)                      \
+    SSL_EXPERIMENTAL_API("SSL_DestroyAead",       \
+                         (SSLAeadContext * _ctx), \
+                         (ctx))
+
+/* SSL_HkdfExtract and SSL_HkdfExpandLabel implement the functions from TLS,
+ * using the version and ciphersuite to set parameters. This allows callers to
+ * use these TLS functions as a KDF. This is only supported for TLS 1.3.
+ *
+ * SSL_HkdfExtract produces a key with a mechanism that is suitable for input to
+ * SSL_HkdfExpandLabel (and SSL_HkdfExpandLabelWithMech). */
+#define SSL_HkdfExtract(version, cipherSuite, salt, ikm, keyp)      \
+    SSL_EXPERIMENTAL_API("SSL_HkdfExtract",                         \
+                         (PRUint16 _version, PRUint16 _cipherSuite, \
+                          PK11SymKey * _salt, PK11SymKey * _ikm,    \
+                          PK11SymKey * *_keyp),                     \
+                         (version, cipherSuite, salt, ikm, keyp))
+
+/* SSL_HkdfExpandLabel produces a key with a mechanism that is suitable for
+ * input to SSL_HkdfExpandLabel or SSL_MakeAead. */
+#define SSL_HkdfExpandLabel(version, cipherSuite, prk,                     \
+                            hsHash, hsHashLen, label, labelLen, keyp)      \
+    SSL_EXPERIMENTAL_API("SSL_HkdfExpandLabel",                            \
+                         (PRUint16 _version, PRUint16 _cipherSuite,        \
+                          PK11SymKey * _prk,                               \
+                          const PRUint8 *_hsHash, unsigned int _hsHashLen, \
+                          const char *_label, unsigned int _labelLen,      \
+                          PK11SymKey **_keyp),                             \
+                         (version, cipherSuite, prk,                       \
+                          hsHash, hsHashLen, label, labelLen, keyp))
+
+/* SSL_HkdfExpandLabelWithMech uses the KDF from the selected TLS version and
+ * cipher suite, as with the other calls, but the provided mechanism and key
+ * size. This allows the key to be used more widely. */
+#define SSL_HkdfExpandLabelWithMech(version, cipherSuite, prk,             \
+                                    hsHash, hsHashLen, label, labelLen,    \
+                                    mech, keySize, keyp)                   \
+    SSL_EXPERIMENTAL_API("SSL_HkdfExpandLabelWithMech",                    \
+                         (PRUint16 _version, PRUint16 _cipherSuite,        \
+                          PK11SymKey * _prk,                               \
+                          const PRUint8 *_hsHash, unsigned int _hsHashLen, \
+                          const char *_label, unsigned int _labelLen,      \
+                          CK_MECHANISM_TYPE _mech, unsigned int _keySize,  \
+                          PK11SymKey **_keyp),                             \
+                         (version, cipherSuite, prk,                       \
+                          hsHash, hsHashLen, label, labelLen,              \
+                          mech, keySize, keyp))
+
+/* Deprecated experimental APIs */
 #define SSL_UseAltServerHelloType(fd, enable) SSL_DEPRECATED_EXPERIMENTAL_API
 
 SEC_END_PROTOS

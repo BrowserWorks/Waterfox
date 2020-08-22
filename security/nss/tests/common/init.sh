@@ -356,40 +356,34 @@ if [ -z "${INIT_SOURCED}" -o "${INIT_SOURCED}" != "TRUE" ]; then
 
 #HOST and DOMSUF are needed for the server cert
 
-    DOMAINNAME=`which domainname`
-    if [ -z "${DOMSUF}" -a $? -eq 0 -a -n "${DOMAINNAME}" ]; then
+    if [ -z "$DOMSUF" ] && hash domainname 2>/dev/null; then
         DOMSUF=`domainname`
     fi
+    # hostname -d and domainname both return (none) if hostname doesn't
+    # include a dot.  Pretend we didn't get an answer.
+    if [ "$DOMSUF" = "(none)" ]; then
+        DOMSUF=
+    fi
 
-    case $HOST in
+    if [ -z "$HOST" ]; then
+        HOST=`uname -n`
+    fi
+    case "$HOST" in
         *\.*)
-            if [ -z "${DOMSUF}" ]; then
-                DOMSUF=`echo $HOST | sed -e "s/^[^.]*\.//"`
+            if [ -z "$DOMSUF" ]; then
+                DOMSUF="${HOST#*.}"
             fi
-            HOST=`echo $HOST | sed -e "s/\..*//"`
+            HOST="${HOST%%.*}"
             ;;
         ?*)
             ;;
         *)
-            HOST=`uname -n`
-            case $HOST in
-                *\.*)
-                    if [ -z "${DOMSUF}" ]; then
-                        DOMSUF=`echo $HOST | sed -e "s/^[^.]*\.//"`
-                    fi
-                    HOST=`echo $HOST | sed -e "s/\..*//"`
-                    ;;
-                ?*)
-                    ;;
-                *)
-                    echo "$SCRIPTNAME: Fatal HOST environment variable is not defined."
-                    exit 1 #does not need to be Exit, very early in script
-                    ;;
-            esac
+            echo "$SCRIPTNAME: Fatal HOST environment variable is not defined."
+            exit 1 #does not need to be Exit, very early in script
             ;;
     esac
 
-    if [ -z "${DOMSUF}" -a "${OS_ARCH}" != "Android" ]; then
+    if [ -z "$DOMSUF" -a "$OS_ARCH" != "Android" ]; then
         echo "$SCRIPTNAME: Fatal DOMSUF env. variable is not defined."
         exit 1 #does not need to be Exit, very early in script
     fi
@@ -397,8 +391,8 @@ if [ -z "${INIT_SOURCED}" -o "${INIT_SOURCED}" != "TRUE" ]; then
 #HOSTADDR was a workaround for the dist. stress test, and is probably
 #not needed anymore (purpose: be able to use IP address for the server
 #cert instead of PC name which was not in the DNS because of dyn IP address
-    if [ -z "$USE_IP" -o "$USE_IP" != "TRUE" ] ; then
-        if [ -z "${DOMSUF}" ]; then
+    if [ "$USE_IP" != "TRUE" ] ; then
+        if [ -z "$DOMSUF" ]; then
             HOSTADDR=${HOST}
         else
             HOSTADDR=${HOST}.${DOMSUF}
@@ -543,8 +537,8 @@ if [ -z "${INIT_SOURCED}" -o "${INIT_SOURCED}" != "TRUE" ]; then
     D_DISTRUST="Distrust.$version"
     D_RSAPSS="RSAPSS.$version"
 
-    # we need relative pathnames of these files abd directories, since our
-    # tools can't handle the unix style absolut pathnames on cygnus
+    # we need relative pathnames of these files and directories, since our
+    # tools can't handle the unix style absolute pathnames on cygnus
 
     R_CADIR=../CA
     R_SERVERDIR=../server
@@ -565,6 +559,7 @@ if [ -z "${INIT_SOURCED}" -o "${INIT_SOURCED}" != "TRUE" ]; then
     R_NOLOGINDIR=../nologin
     R_SSLGTESTDIR=../ssl_gtests
     R_GTESTDIR=../gtests
+    R_RSAPSSDIR=../rsapss
 
     #
     # profiles are either paths or domains depending on the setting of
@@ -581,6 +576,7 @@ if [ -z "${INIT_SOURCED}" -o "${INIT_SOURCED}" != "TRUE" ]; then
     P_R_EXT_SERVERDIR=${R_EXT_SERVERDIR}
     P_R_EXT_CLIENTDIR=${R_EXT_CLIENTDIR}
     P_R_IMPLICIT_INIT_DIR=${R_IMPLICIT_INIT_DIR}
+    P_R_RSAPSSDIR=${R_RSAPSSDIR}
     if [ -n "${MULTIACCESS_DBM}" ]; then
         P_R_CADIR="multiaccess:${D_CA}"
         P_R_ALICEDIR="multiaccess:${D_ALICE}"
@@ -593,6 +589,7 @@ if [ -z "${INIT_SOURCED}" -o "${INIT_SOURCED}" != "TRUE" ]; then
         P_R_EXT_SERVERDIR="multiaccess:${D_EXT_SERVER}"
         P_R_EXT_CLIENTDIR="multiaccess:${D_EXT_CLIENT}"
         P_R_IMPLICIT_INIT_DIR="multiaccess:${D_IMPLICIT_INIT}"
+        P_R_RSAPSSDIR="multiaccess:${D_RSAPSS}"
     fi
 
     R_PWFILE=../tests.pw
@@ -654,8 +651,11 @@ if [ -z "${INIT_SOURCED}" -o "${INIT_SOURCED}" != "TRUE" ]; then
 
     RELOAD_CRL=1
 
-    NSS_DEFAULT_DB_TYPE="dbm"
-    export NSS_DEFAULT_DB_TYPE
+    # if test mode isn't set, test scripts default to expecting dbm
+    if [ "${TEST_MODE}" = "" ]; then
+        NSS_DEFAULT_DB_TYPE="dbm"
+        export NSS_DEFAULT_DB_TYPE
+    fi
 
     MSG_ID=0
 

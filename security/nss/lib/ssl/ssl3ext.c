@@ -39,7 +39,6 @@ static const ssl3ExtensionHandler clientHelloHandlers[] = {
     { ssl_ec_point_formats_xtn, &ssl3_HandleSupportedPointFormatsXtn },
     { ssl_session_ticket_xtn, &ssl3_ServerHandleSessionTicketXtn },
     { ssl_renegotiation_info_xtn, &ssl3_HandleRenegotiationInfoXtn },
-    { ssl_next_proto_nego_xtn, &ssl3_ServerHandleNextProtoNegoXtn },
     { ssl_app_layer_protocol_xtn, &ssl3_ServerHandleAppProtoXtn },
     { ssl_use_srtp_xtn, &ssl3_ServerHandleUseSRTPXtn },
     { ssl_cert_status_xtn, &ssl3_ServerHandleStatusRequestXtn },
@@ -51,6 +50,9 @@ static const ssl3ExtensionHandler clientHelloHandlers[] = {
     { ssl_tls13_early_data_xtn, &tls13_ServerHandleEarlyDataXtn },
     { ssl_tls13_psk_key_exchange_modes_xtn, &tls13_ServerHandlePskModesXtn },
     { ssl_tls13_cookie_xtn, &tls13_ServerHandleCookieXtn },
+    { ssl_tls13_encrypted_sni_xtn, &tls13_ServerHandleEsniXtn },
+    { ssl_tls13_post_handshake_auth_xtn, &tls13_ServerHandlePostHandshakeAuthXtn },
+    { ssl_record_size_limit_xtn, &ssl_HandleRecordSizeLimitXtn },
     { 0, NULL }
 };
 
@@ -61,7 +63,6 @@ static const ssl3ExtensionHandler serverHelloHandlersTLS[] = {
     /* TODO: add a handler for ssl_ec_point_formats_xtn */
     { ssl_session_ticket_xtn, &ssl3_ClientHandleSessionTicketXtn },
     { ssl_renegotiation_info_xtn, &ssl3_HandleRenegotiationInfoXtn },
-    { ssl_next_proto_nego_xtn, &ssl3_ClientHandleNextProtoNegoXtn },
     { ssl_app_layer_protocol_xtn, &ssl3_ClientHandleAppProtoXtn },
     { ssl_use_srtp_xtn, &ssl3_ClientHandleUseSRTPXtn },
     { ssl_cert_status_xtn, &ssl3_ClientHandleStatusRequestXtn },
@@ -70,6 +71,7 @@ static const ssl3ExtensionHandler serverHelloHandlersTLS[] = {
     { ssl_tls13_key_share_xtn, &tls13_ClientHandleKeyShareXtn },
     { ssl_tls13_pre_shared_key_xtn, &tls13_ClientHandlePreSharedKeyXtn },
     { ssl_tls13_early_data_xtn, &tls13_ClientHandleEarlyDataXtn },
+    { ssl_record_size_limit_xtn, &ssl_HandleRecordSizeLimitXtn },
     { 0, NULL }
 };
 
@@ -122,7 +124,6 @@ static const sslExtensionBuilder clientHelloSendersTLS[] =
       { ssl_supported_groups_xtn, &ssl_SendSupportedGroupsXtn },
       { ssl_ec_point_formats_xtn, &ssl3_SendSupportedPointFormatsXtn },
       { ssl_session_ticket_xtn, &ssl3_ClientSendSessionTicketXtn },
-      { ssl_next_proto_nego_xtn, &ssl3_ClientSendNextProtoNegoXtn },
       { ssl_app_layer_protocol_xtn, &ssl3_ClientSendAppProtoXtn },
       { ssl_use_srtp_xtn, &ssl3_ClientSendUseSRTPXtn },
       { ssl_cert_status_xtn, &ssl3_ClientSendStatusRequestXtn },
@@ -137,6 +138,9 @@ static const sslExtensionBuilder clientHelloSendersTLS[] =
       { ssl_signature_algorithms_xtn, &ssl3_SendSigAlgsXtn },
       { ssl_tls13_cookie_xtn, &tls13_ClientSendHrrCookieXtn },
       { ssl_tls13_psk_key_exchange_modes_xtn, &tls13_ClientSendPskModesXtn },
+      { ssl_tls13_encrypted_sni_xtn, &tls13_ClientSendEsniXtn },
+      { ssl_tls13_post_handshake_auth_xtn, &tls13_ClientSendPostHandshakeAuthXtn },
+      { ssl_record_size_limit_xtn, &ssl_SendRecordSizeLimitXtn },
       /* The pre_shared_key extension MUST be last. */
       { ssl_tls13_pre_shared_key_xtn, &tls13_ClientSendPreSharedKeyXtn },
       { 0, NULL }
@@ -183,7 +187,6 @@ static const struct {
     { ssl_tls13_psk_key_exchange_modes_xtn, ssl_ext_native_only },
     { ssl_tls13_ticket_early_data_info_xtn, ssl_ext_native_only },
     { ssl_tls13_certificate_authorities_xtn, ssl_ext_native },
-    { ssl_next_proto_nego_xtn, ssl_ext_none },
     { ssl_renegotiation_info_xtn, ssl_ext_native }
 };
 
@@ -339,8 +342,6 @@ ssl3_ParseExtensions(sslSocket *ss, PRUint8 **b, PRUint32 *length)
             return SECFailure; /* alert already sent */
         }
 
-        SSL_TRC(10, ("%d: SSL3[%d]: parsing extension %d",
-                     SSL_GETPID(), ss->fd, extension_type));
         /* Check whether an extension has been sent multiple times. */
         for (cursor = PR_NEXT_LINK(&ss->ssl3.hs.remoteExtensions);
              cursor != &ss->ssl3.hs.remoteExtensions;
@@ -357,6 +358,9 @@ ssl3_ParseExtensions(sslSocket *ss, PRUint8 **b, PRUint32 *length)
         if (rv != SECSuccess) {
             return rv; /* alert already sent */
         }
+
+        SSL_TRC(10, ("%d: SSL3[%d]: parsed extension %d len=%u",
+                     SSL_GETPID(), ss->fd, extension_type, extension_data.len));
 
         extension = PORT_ZNew(TLSExtension);
         if (!extension) {
@@ -410,7 +414,9 @@ ssl_CallExtensionHandler(sslSocket *ss, SSLHandshakeType handshakeMessage,
         /* Find extension_type in table of Hello Extension Handlers. */
         for (; handler->ex_handler != NULL; ++handler) {
             if (handler->ex_type == extension->type) {
-                rv = (*handler->ex_handler)(ss, &ss->xtnData, &extension->data);
+                SECItem tmp = extension->data;
+
+                rv = (*handler->ex_handler)(ss, &ss->xtnData, &tmp);
                 break;
             }
         }
@@ -681,7 +687,11 @@ ssl_CallCustomExtensionSenders(sslSocket *ss, sslBuffer *buf,
         }
     }
 
-    sslBuffer_Append(buf, tail.buf, tail.len);
+    rv = sslBuffer_Append(buf, tail.buf, tail.len);
+    if (rv != SECSuccess) {
+        goto loser; /* Code already set. */
+    }
+
     sslBuffer_Clear(&tail);
     return SECSuccess;
 
@@ -957,6 +967,8 @@ ssl3_DestroyExtensionData(TLSExtensionData *xtnData)
         xtnData->certReqAuthorities.arena = NULL;
     }
     PORT_Free(xtnData->advertised);
+    ssl_FreeEphemeralKeyPair(xtnData->esniPrivateKey);
+    SECITEM_FreeItem(&xtnData->keyShareExtension, PR_FALSE);
 }
 
 /* Free everything that has been allocated and then reset back to

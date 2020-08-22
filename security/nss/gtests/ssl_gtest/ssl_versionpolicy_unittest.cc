@@ -12,7 +12,7 @@
 #include "sslproto.h"
 
 #include "gtest_utils.h"
-#include "scoped_ptrs.h"
+#include "nss_scoped_ptrs.h"
 #include "tls_connect.h"
 #include "tls_filter.h"
 #include "tls_parser.h"
@@ -50,12 +50,12 @@ inline std::ostream& operator<<(std::ostream& stream,
 
 class VersionRangeWithLabel {
  public:
-  VersionRangeWithLabel(const std::string& label, const SSLVersionRange& vr)
-      : label_(label), vr_(vr) {}
-  VersionRangeWithLabel(const std::string& label, uint16_t min, uint16_t max)
-      : label_(label) {
-    vr_.min = min;
-    vr_.max = max;
+  VersionRangeWithLabel(const std::string& txt, const SSLVersionRange& vr)
+      : label_(txt), vr_(vr) {}
+  VersionRangeWithLabel(const std::string& txt, uint16_t start, uint16_t end)
+      : label_(txt) {
+    vr_.min = start;
+    vr_.max = end;
   }
   VersionRangeWithLabel(const std::string& label) : label_(label) {
     vr_.min = vr_.max = SSL_LIBRARY_VERSION_NONE;
@@ -214,12 +214,6 @@ class TestPolicyVersionRange
       ASSERT_EQ(SECSuccess, rv);
       rv = NSS_OptionSet(NSS_DTLS_VERSION_MAX_POLICY, saved_max_dtls_);
       ASSERT_EQ(SECSuccess, rv);
-      // If it wasn't set initially, clear the bit that we set.
-      if (!(saved_algorithm_policy_ & NSS_USE_POLICY_IN_SSL)) {
-        rv = NSS_SetAlgorithmPolicy(SEC_OID_APPLY_SSL_POLICY, 0,
-                                    NSS_USE_POLICY_IN_SSL);
-        ASSERT_EQ(SECSuccess, rv);
-      }
     }
 
    private:
@@ -233,16 +227,12 @@ class TestPolicyVersionRange
       ASSERT_EQ(SECSuccess, rv);
       rv = NSS_OptionGet(NSS_DTLS_VERSION_MAX_POLICY, &saved_max_dtls_);
       ASSERT_EQ(SECSuccess, rv);
-      rv = NSS_GetAlgorithmPolicy(SEC_OID_APPLY_SSL_POLICY,
-                                  &saved_algorithm_policy_);
-      ASSERT_EQ(SECSuccess, rv);
     }
 
     int32_t saved_min_tls_;
     int32_t saved_max_tls_;
     int32_t saved_min_dtls_;
     int32_t saved_max_dtls_;
-    uint32_t saved_algorithm_policy_;
   };
 
   VersionPolicy saved_version_policy_;

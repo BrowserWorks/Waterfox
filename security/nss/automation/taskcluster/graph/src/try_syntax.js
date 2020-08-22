@@ -5,6 +5,10 @@
 import * as queue from "./queue";
 import intersect from "intersect";
 import parse_args from "minimist";
+import util from "util";
+import child_process from 'child_process';
+
+let execFile = util.promisify(child_process.execFile);
 
 function parseOptions(opts) {
   opts = parse_args(opts.split(/\s+/), {
@@ -37,7 +41,7 @@ function parseOptions(opts) {
   let aliases = {"gtests": "gtest"};
   let allUnitTests = ["bogo", "crmf", "chains", "cipher", "db", "ec", "fips",
                       "gtest", "interop", "lowhash", "merge", "sdr", "smime", "tools",
-                      "ssl", "mpi", "scert", "spki"];
+                      "ssl", "mpi", "scert", "spki", "policy", "tlsfuzzer"];
   let unittests = intersect(opts.unittests.split(/\s*,\s*/).map(t => {
     return aliases[t] || t;
   }), allUnitTests);
@@ -51,7 +55,7 @@ function parseOptions(opts) {
   }
 
   // Parse tools.
-  let allTools = ["clang-format", "scan-build", "hacl", "saw", "abi"];
+  let allTools = ["clang-format", "scan-build", "hacl", "saw", "abi", "coverage"];
   let tools = intersect(opts.tools.split(/\s*,\s*/), allTools);
 
   // If the given value is "all" run all tools.
@@ -154,11 +158,16 @@ function filter(opts) {
   }
 }
 
-export function initFilter() {
-  let comment = process.env.TC_COMMENT || "";
+async function getCommitComment() {
+  const res = await execFile('hg', ['log', '-r', '.', '-T', '{desc}']);
+  return res.stdout;
+};
+
+export async function initFilter() {
+  let comment = await getCommitComment();
 
   // Check for try syntax in changeset comment.
-  let match = comment.match(/^\s*try:\s*(.*)\s*$/);
+  let match = comment.match(/\btry:\s*(.*)\s*$/m);
 
   // Add try syntax filter.
   if (match) {

@@ -11,6 +11,43 @@
 #include "sslimpl.h"
 #include "sslproto.h"
 
+SECStatus
+dtls13_InsertCipherTextHeader(const sslSocket *ss, ssl3CipherSpec *cwSpec,
+                              sslBuffer *wrBuf, PRBool *needsLength)
+{
+    PRUint32 seq;
+    SECStatus rv;
+
+    /* Avoid using short records for the handshake.  We pack multiple records
+     * into the one datagram for the handshake. */
+    if (ss->opt.enableDtlsShortHeader &&
+        cwSpec->epoch != TrafficKeyHandshake) {
+        *needsLength = PR_FALSE;
+        /* The short header is comprised of two octets in the form
+         * 0b001essssssssssss where 'e' is the low bit of the epoch and 's' is
+         * the low 12 bits of the sequence number. */
+        seq = 0x2000 |
+              (((uint64_t)cwSpec->epoch & 1) << 12) |
+              (cwSpec->nextSeqNum & 0xfff);
+        return sslBuffer_AppendNumber(wrBuf, seq, 2);
+    }
+
+    rv = sslBuffer_AppendNumber(wrBuf, ssl_ct_application_data, 1);
+    if (rv != SECSuccess) {
+        return SECFailure;
+    }
+
+    /* The epoch and sequence number are encoded on 4 octets, with the epoch
+     * consuming the first two bits. */
+    seq = (((uint64_t)cwSpec->epoch & 3) << 30) | (cwSpec->nextSeqNum & 0x3fffffff);
+    rv = sslBuffer_AppendNumber(wrBuf, seq, 4);
+    if (rv != SECSuccess) {
+        return SECFailure;
+    }
+    *needsLength = PR_TRUE;
+    return SECSuccess;
+}
+
 /* DTLS 1.3 Record map for ACK processing.
  * This represents a single fragment, so a record which includes
  * multiple fragments will have one entry for each fragment on the
@@ -82,10 +119,15 @@ dtls13_SendAck(sslSocket *ss)
     SECStatus rv = SECSuccess;
     PRCList *cursor;
     PRInt32 sent;
+    unsigned int offset;
 
     SSL_TRC(10, ("%d: SSL3[%d]: Sending ACK",
                  SSL_GETPID(), ss->fd));
 
+    rv = sslBuffer_Skip(&buf, 2, &offset);
+    if (rv != SECSuccess) {
+        goto loser;
+    }
     for (cursor = PR_LIST_HEAD(&ss->ssl3.hs.dtlsRcvdHandshake);
          cursor != &ss->ssl3.hs.dtlsRcvdHandshake;
          cursor = PR_NEXT_LINK(cursor)) {
@@ -99,8 +141,13 @@ dtls13_SendAck(sslSocket *ss)
         }
     }
 
+    rv = sslBuffer_InsertLength(&buf, offset, 2);
+    if (rv != SECSuccess) {
+        goto loser;
+    }
+
     ssl_GetXmitBufLock(ss);
-    sent = ssl3_SendRecord(ss, NULL, content_ack,
+    sent = ssl3_SendRecord(ss, NULL, ssl_ct_ack,
                            buf.buf, buf.len, 0);
     ssl_ReleaseXmitBufLock(ss);
     if (sent != buf.len) {
@@ -296,7 +343,7 @@ dtls13_SetupAcks(sslSocket *ss)
  */
 SECStatus
 dtls13_HandleOutOfEpochRecord(sslSocket *ss, const ssl3CipherSpec *spec,
-                              SSL3ContentType rType,
+                              SSLContentType rType,
                               sslBuffer *databuf)
 {
     SECStatus rv;
@@ -313,7 +360,7 @@ dtls13_HandleOutOfEpochRecord(sslSocket *ss, const ssl3CipherSpec *spec,
     SSL_TRC(10, ("%d: DTLS13[%d]: handle out of epoch record: type=%d", SSL_GETPID(),
                  ss->fd, rType));
 
-    if (rType == content_ack) {
+    if (rType == ssl_ct_ack) {
         ssl_GetSSL3HandshakeLock(ss);
         rv = dtls13_HandleAck(ss, &buf);
         ssl_ReleaseSSL3HandshakeLock(ss);
@@ -333,7 +380,7 @@ dtls13_HandleOutOfEpochRecord(sslSocket *ss, const ssl3CipherSpec *spec,
              * retransmitted Finished (e.g., because our ACK got lost.)
              * We just retransmit the previous Finished to let the client
              * complete. */
-            if (rType == content_handshake) {
+            if (rType == ssl_ct_handshake) {
                 if ((ss->sec.isServer) &&
                     (ss->ssl3.hs.ws == idle_handshake)) {
                     PORT_Assert(dtls_TimerActive(ss, ss->ssl3.hs.hdTimer));
@@ -364,6 +411,7 @@ dtls13_HandleAck(sslSocket *ss, sslBuffer *databuf)
 {
     PRUint8 *b = databuf->buf;
     PRUint32 l = databuf->len;
+    unsigned int length;
     SECStatus rv;
 
     /* Ensure we don't loop. */
@@ -372,10 +420,19 @@ dtls13_HandleAck(sslSocket *ss, sslBuffer *databuf)
     PORT_Assert(IS_DTLS(ss));
     if (!tls13_MaybeTls13(ss)) {
         tls13_FatalError(ss, SSL_ERROR_RX_UNKNOWN_RECORD_TYPE, illegal_parameter);
-        return SECSuccess;
+        return SECFailure;
     }
 
     SSL_TRC(10, ("%d: SSL3[%d]: Handling ACK", SSL_GETPID(), ss->fd));
+    rv = ssl3_ConsumeHandshakeNumber(ss, &length, 2, &b, &l);
+    if (rv != SECSuccess) {
+        return SECFailure;
+    }
+    if (length != l) {
+        tls13_FatalError(ss, SSL_ERROR_RX_MALFORMED_DTLS_ACK, decode_error);
+        return SECFailure;
+    }
+
     while (l > 0) {
         PRUint64 seq;
         PRCList *cursor;
@@ -425,7 +482,7 @@ dtls13_HandleAck(sslSocket *ss, sslBuffer *databuf)
          * for the holddown period to process retransmitted Finisheds.
          */
         if (!ss->sec.isServer && (ss->ssl3.hs.ws == idle_handshake)) {
-            ssl_CipherSpecReleaseByEpoch(ss, CipherSpecRead,
+            ssl_CipherSpecReleaseByEpoch(ss, ssl_secret_read,
                                          TrafficKeyHandshake);
         }
     }
@@ -452,6 +509,6 @@ dtls13_HolddownTimerCb(sslSocket *ss)
 {
     SSL_TRC(10, ("%d: SSL3[%d]: holddown timer fired",
                  SSL_GETPID(), ss->fd));
-    ssl_CipherSpecReleaseByEpoch(ss, CipherSpecRead, TrafficKeyHandshake);
+    ssl_CipherSpecReleaseByEpoch(ss, ssl_secret_read, TrafficKeyHandshake);
     ssl_ClearPRCList(&ss->ssl3.hs.dtlsRcvdHandshake, NULL);
 }

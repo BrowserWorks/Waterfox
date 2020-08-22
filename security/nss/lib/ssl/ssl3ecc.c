@@ -327,15 +327,12 @@ ssl3_HandleECDHClientKeyExchange(sslSocket *ss, PRUint8 *b,
 ** Take an encoded key share and make a public key out of it.
 */
 SECStatus
-ssl_ImportECDHKeyShare(sslSocket *ss, SECKEYPublicKey *peerKey,
+ssl_ImportECDHKeyShare(SECKEYPublicKey *peerKey,
                        PRUint8 *b, PRUint32 length,
                        const sslNamedGroupDef *ecGroup)
 {
     SECStatus rv;
     SECItem ecPoint = { siBuffer, NULL, 0 };
-
-    PORT_Assert(ss->opt.noLocks || ssl_HaveRecvBufLock(ss));
-    PORT_Assert(ss->opt.noLocks || ssl_HaveSSL3HandshakeLock(ss));
 
     if (!length) {
         PORT_SetError(SSL_ERROR_RX_MALFORMED_ECDHE_KEY_SHARE);
@@ -548,12 +545,14 @@ ssl3_HandleECDHServerKeyExchange(sslSocket *ss, PRUint8 *b, PRUint32 length)
     if (ss->ssl3.prSpec->version == SSL_LIBRARY_VERSION_TLS_1_2) {
         rv = ssl_ConsumeSignatureScheme(ss, &b, &length, &sigScheme);
         if (rv != SECSuccess) {
-            goto loser; /* malformed or unsupported. */
+            errCode = PORT_GetError();
+            goto alert_loser; /* malformed or unsupported. */
         }
         rv = ssl_CheckSignatureSchemeConsistency(ss, sigScheme,
                                                  ss->sec.peerCert);
         if (rv != SECSuccess) {
-            goto loser;
+            errCode = PORT_GetError();
+            goto alert_loser;
         }
         hashAlg = ssl_SignatureSchemeToHashType(sigScheme);
     } else {
@@ -614,7 +613,7 @@ ssl3_HandleECDHServerKeyExchange(sslSocket *ss, PRUint8 *b, PRUint32 length)
     peerKey->arena = arena;
 
     /* create public key from point data */
-    rv = ssl_ImportECDHKeyShare(ss, peerKey, ec_point.data, ec_point.len,
+    rv = ssl_ImportECDHKeyShare(peerKey, ec_point.data, ec_point.len,
                                 ecGroup);
     if (rv != SECSuccess) {
         /* error code is set */

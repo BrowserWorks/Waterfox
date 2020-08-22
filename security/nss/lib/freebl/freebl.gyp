@@ -7,6 +7,30 @@
   ],
   'targets': [
     {
+      'target_name': 'intel-gcm-s_lib',
+      'type': 'static_library',
+      'sources': [
+        'intel-aes.s',
+        'intel-gcm.s',
+      ],
+      'dependencies': [
+        '<(DEPTH)/exports.gyp:nss_exports'
+      ],
+      'conditions': [
+        [ 'cc_is_clang==1', {
+          'cflags': [
+            '-no-integrated-as',
+          ],
+          'cflags_mozilla': [
+            '-no-integrated-as',
+          ],
+          'asflags_mozilla': [
+            '-no-integrated-as',
+          ],
+        }],
+      ],
+    },
+    {
       'target_name': 'intel-gcm-wrap_c_lib',
       'type': 'static_library',
       'sources': [
@@ -15,12 +39,19 @@
       'dependencies': [
         '<(DEPTH)/exports.gyp:nss_exports'
       ],
+      'conditions': [
+        [ '(OS=="linux" or OS=="android") and target_arch=="x64"', {
+          'dependencies': [
+            'intel-gcm-s_lib',
+          ],
+        }],
+      ],
       'cflags': [
-        '-mssse3'
+        '-mssse3',
       ],
       'cflags_mozilla': [
         '-mssse3'
-      ]
+      ],
     },
     {
       # TODO: make this so that all hardware accelerated code is in here.
@@ -45,11 +76,11 @@
             '__SSSE3__',
           ],
         }],
-        [ 'OS=="android"', {
-          # On Android we can't use any of the hardware acceleration :(
-          'defines!': [
-            '__ARM_NEON__',
-            '__ARM_NEON',
+        [ 'target_arch=="arm"', {
+          # Gecko doesn't support non-NEON platform on Android, but tier-3
+          # platform such as Linux/arm will need it
+          'cflags_mozilla': [
+            '-mfpu=neon'
           ],
         }],
       ],
@@ -76,7 +107,7 @@
           ],
         }],
         # macOS build doesn't use cflags.
-        [ 'OS=="mac"', {
+        [ 'OS=="mac" or OS=="ios"', {
           'xcode_settings': {
             'OTHER_CFLAGS': [
               '-mpclmul', '-maes'
@@ -277,18 +308,10 @@
           'MP_IS_LITTLE_ENDIAN',
          ],
       }],
-      [ 'OS!="win"', {
-        'conditions': [
-          [ 'target_arch=="x64" or target_arch=="arm64" or target_arch=="aarch64"', {
-            'defines': [
-              # The Makefile does version-tests on GCC, but we're not doing that here.
-              'HAVE_INT128_SUPPORT',
-            ],
-          }, {
-            'defines': [
-              'KRML_NOUINT128',
-            ],
-          }],
+      [ 'have_int128_support==1', {
+        'defines': [
+          # The Makefile does version-tests on GCC, but we're not doing that here.
+          'HAVE_INT128_SUPPORT',
         ],
       }, {
         'defines': [
@@ -350,5 +373,18 @@
   },
   'variables': {
     'module': 'nss',
+    'conditions': [
+      [ 'OS!="win"', {
+        'conditions': [
+          [ 'target_arch=="x64" or target_arch=="arm64" or target_arch=="aarch64"', {
+            'have_int128_support%': 1,
+          }, {
+            'have_int128_support%': 0,
+          }],
+        ],
+      }, {
+        'have_int128_support%': 0,
+      }],
+    ],
   }
 }

@@ -82,7 +82,7 @@ class Tls13CompatTest : public TlsConnectStreamTls13 {
         // Only the second record can be a CCS.
         bool expected_match = expected && (i == 1);
         EXPECT_EQ(expected_match,
-                  kTlsChangeCipherSpecType ==
+                  ssl_ct_change_cipher_spec ==
                       records_->record(i).header.content_type());
       }
     }
@@ -214,8 +214,100 @@ TEST_F(Tls13CompatTest, EnabledHrrZeroRtt) {
   CheckForCompatHandshake();
 }
 
+class TlsSessionIDEchoFilter : public TlsHandshakeFilter {
+ public:
+  TlsSessionIDEchoFilter(const std::shared_ptr<TlsAgent>& a)
+      : TlsHandshakeFilter(
+            a, {kTlsHandshakeClientHello, kTlsHandshakeServerHello}) {}
+
+ protected:
+  virtual PacketFilter::Action FilterHandshake(const HandshakeHeader& header,
+                                               const DataBuffer& input,
+                                               DataBuffer* output) {
+    TlsParser parser(input);
+
+    // Skip version + random.
+    EXPECT_TRUE(parser.Skip(2 + 32));
+
+    // Capture CH.legacy_session_id.
+    if (header.handshake_type() == kTlsHandshakeClientHello) {
+      EXPECT_TRUE(parser.ReadVariable(&sid_, 1));
+      return KEEP;
+    }
+
+    // Check that server sends one too.
+    uint32_t sid_len = 0;
+    EXPECT_TRUE(parser.Read(&sid_len, 1));
+    EXPECT_EQ(sid_len, sid_.len());
+
+    // Echo the one we captured.
+    *output = input;
+    output->Write(parser.consumed(), sid_.data(), sid_.len());
+
+    return CHANGE;
+  }
+
+ private:
+  DataBuffer sid_;
+};
+
+TEST_F(TlsConnectTest, EchoTLS13CompatibilitySessionID) {
+  ConfigureSessionCache(RESUME_SESSIONID, RESUME_SESSIONID);
+
+  client_->SetOption(SSL_ENABLE_TLS13_COMPAT_MODE, PR_TRUE);
+
+  client_->SetVersionRange(SSL_LIBRARY_VERSION_TLS_1_2,
+                           SSL_LIBRARY_VERSION_TLS_1_3);
+
+  server_->SetVersionRange(SSL_LIBRARY_VERSION_TLS_1_2,
+                           SSL_LIBRARY_VERSION_TLS_1_2);
+
+  server_->SetFilter(MakeTlsFilter<TlsSessionIDEchoFilter>(client_));
+  ConnectExpectAlert(client_, kTlsAlertIllegalParameter);
+
+  client_->CheckErrorCode(SSL_ERROR_RX_MALFORMED_SERVER_HELLO);
+  server_->CheckErrorCode(SSL_ERROR_ILLEGAL_PARAMETER_ALERT);
+}
+
+class TlsSessionIDInjectFilter : public TlsHandshakeFilter {
+ public:
+  TlsSessionIDInjectFilter(const std::shared_ptr<TlsAgent>& a)
+      : TlsHandshakeFilter(a, {kTlsHandshakeServerHello}) {}
+
+ protected:
+  virtual PacketFilter::Action FilterHandshake(const HandshakeHeader& header,
+                                               const DataBuffer& input,
+                                               DataBuffer* output) {
+    TlsParser parser(input);
+
+    // Skip version + random.
+    EXPECT_TRUE(parser.Skip(2 + 32));
+
+    *output = input;
+
+    // Inject a Session ID.
+    const uint8_t fake_sid[SSL3_SESSIONID_BYTES] = {0xff};
+    output->Write(parser.consumed(), sizeof(fake_sid), 1);
+    output->Splice(fake_sid, sizeof(fake_sid), parser.consumed() + 1, 0);
+
+    return CHANGE;
+  }
+};
+
+TEST_F(TlsConnectTest, TLS13NonCompatModeSessionID) {
+  ConfigureVersion(SSL_LIBRARY_VERSION_TLS_1_3);
+
+  MakeTlsFilter<TlsSessionIDInjectFilter>(server_);
+  client_->ExpectSendAlert(kTlsAlertIllegalParameter);
+  server_->ExpectSendAlert(kTlsAlertUnexpectedMessage);
+  ConnectExpectFail();
+
+  client_->CheckErrorCode(SSL_ERROR_RX_MALFORMED_SERVER_HELLO);
+  server_->CheckErrorCode(SSL_ERROR_RX_UNEXPECTED_RECORD_TYPE);
+}
+
 static const uint8_t kCannedCcs[] = {
-    kTlsChangeCipherSpecType,
+    ssl_ct_change_cipher_spec,
     SSL_LIBRARY_VERSION_TLS_1_2 >> 8,
     SSL_LIBRARY_VERSION_TLS_1_2 & 0xff,
     0,
@@ -270,6 +362,19 @@ TEST_F(TlsConnectStreamTls13, ChangeCipherSpecBeforeClientHello12) {
   client_->CheckErrorCode(SSL_ERROR_HANDSHAKE_UNEXPECTED_ALERT);
 }
 
+TEST_F(TlsConnectStreamTls13, ChangeCipherSpecAfterFinished13) {
+  EnsureTlsSetup();
+  ConfigureVersion(SSL_LIBRARY_VERSION_TLS_1_3);
+  Connect();
+  SendReceive(10);
+  // Client sends CCS after the handshake.
+  client_->SendDirect(DataBuffer(kCannedCcs, sizeof(kCannedCcs)));
+  server_->ExpectSendAlert(kTlsAlertUnexpectedMessage);
+  server_->ExpectReadWriteError();
+  server_->ReadBytes();
+  EXPECT_EQ(SSL_ERROR_RX_UNEXPECTED_RECORD_TYPE, server_->error_code());
+}
+
 TEST_F(TlsConnectDatagram13, CompatModeDtlsClient) {
   EnsureTlsSetup();
   client_->SetOption(SSL_ENABLE_TLS13_COMPAT_MODE, PR_TRUE);
@@ -278,14 +383,14 @@ TEST_F(TlsConnectDatagram13, CompatModeDtlsClient) {
   Connect();
 
   ASSERT_EQ(2U, client_records->count());  // CH, Fin
-  EXPECT_EQ(kTlsHandshakeType, client_records->record(0).header.content_type());
-  EXPECT_EQ(kTlsApplicationDataType,
+  EXPECT_EQ(ssl_ct_handshake, client_records->record(0).header.content_type());
+  EXPECT_EQ(ssl_ct_application_data,
             client_records->record(1).header.content_type());
 
   ASSERT_EQ(6U, server_records->count());  // SH, EE, CT, CV, Fin, Ack
-  EXPECT_EQ(kTlsHandshakeType, server_records->record(0).header.content_type());
+  EXPECT_EQ(ssl_ct_handshake, server_records->record(0).header.content_type());
   for (size_t i = 1; i < server_records->count(); ++i) {
-    EXPECT_EQ(kTlsApplicationDataType,
+    EXPECT_EQ(ssl_ct_application_data,
               server_records->record(i).header.content_type());
   }
 }
@@ -330,12 +435,12 @@ TEST_F(TlsConnectDatagram13, CompatModeDtlsServer) {
   client_->Handshake();
 
   ASSERT_EQ(1U, client_records->count());
-  EXPECT_EQ(kTlsHandshakeType, client_records->record(0).header.content_type());
+  EXPECT_EQ(ssl_ct_handshake, client_records->record(0).header.content_type());
 
   ASSERT_EQ(5U, server_records->count());  // SH, EE, CT, CV, Fin
-  EXPECT_EQ(kTlsHandshakeType, server_records->record(0).header.content_type());
+  EXPECT_EQ(ssl_ct_handshake, server_records->record(0).header.content_type());
   for (size_t i = 1; i < server_records->count(); ++i) {
-    EXPECT_EQ(kTlsApplicationDataType,
+    EXPECT_EQ(ssl_ct_application_data,
               server_records->record(i).header.content_type());
   }
 

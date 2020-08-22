@@ -5,14 +5,14 @@
 #define UNUSED_ERROR(x) ER3(SSL_ERROR_UNUSED_##x, (SSL_ERROR_BASE + x), \
                             "Unrecognized SSL error_code.")
 
-/* SSL-specific security error codes  */
+/* SSL-specific security error codes */
 /* caller must include "sslerr.h" */
 
 ER3(SSL_ERROR_EXPORT_ONLY_SERVER, SSL_ERROR_BASE + 0,
-    "Unable to communicate securely.  Peer does not support high-grade encryption.")
+    "Unable to communicate securely. Peer does not support high-grade encryption.")
 
 ER3(SSL_ERROR_US_ONLY_SERVER, SSL_ERROR_BASE + 1,
-    "Unable to communicate securely.  Peer requires high-grade encryption which is not supported.")
+    "Unable to communicate securely. Peer requires high-grade encryption which is not supported.")
 
 ER3(SSL_ERROR_NO_CYPHER_OVERLAP, SSL_ERROR_BASE + 2,
     "Cannot communicate securely with peer: no common encryption algorithm(s).")
@@ -197,7 +197,7 @@ ER3(SSL_ERROR_RX_UNKNOWN_ALERT, (SSL_ERROR_BASE + 57),
     "SSL received an alert record with an unknown alert description.")
 
 /*
- * Received an alert reporting what we did wrong.  (more alerts above)
+ * Received an alert reporting what we did wrong. (more alerts above)
  */
 ER3(SSL_ERROR_CLOSE_NOTIFY_ALERT, (SSL_ERROR_BASE + 58),
     "SSL peer has closed this connection.")
@@ -374,7 +374,7 @@ ER3(SSL_ERROR_WEAK_SERVER_EPHEMERAL_DH_KEY, (SSL_ERROR_BASE + 115),
     "SSL received a weak ephemeral Diffie-Hellman key in Server Key Exchange handshake message.")
 
 ER3(SSL_ERROR_NEXT_PROTOCOL_DATA_INVALID, (SSL_ERROR_BASE + 116),
-    "SSL received invalid NPN extension data.")
+    "SSL received invalid ALPN extension data.")
 
 ER3(SSL_ERROR_FEATURE_NOT_SUPPORTED_FOR_SSL2, (SSL_ERROR_BASE + 117),
     "SSL feature not supported for SSL 2.0 connections.")
@@ -543,3 +543,27 @@ ER3(SSL_ERROR_TOO_MANY_KEY_UPDATES, (SSL_ERROR_BASE + 171),
 
 ER3(SSL_ERROR_HANDSHAKE_FAILED, (SSL_ERROR_BASE + 172),
     "SSL handshake has already failed. No more operations possible.")
+
+ER3(SSL_ERROR_BAD_RESUMPTION_TOKEN_ERROR, (SSL_ERROR_BASE + 173),
+    "SSL received an invalid resumption token.")
+
+ER3(SSL_ERROR_RX_MALFORMED_DTLS_ACK, (SSL_ERROR_BASE + 174),
+    "SSL received a malformed DTLS ACK")
+
+ER3(SSL_ERROR_DH_KEY_TOO_LONG, (SSL_ERROR_BASE + 175),
+    "SSL received a DH key share that's too long (>8192 bit).")
+
+ER3(SSL_ERROR_RX_MALFORMED_ESNI_KEYS, (SSL_ERROR_BASE + 176),
+    "SSL received a malformed ESNI keys structure")
+
+ER3(SSL_ERROR_RX_MALFORMED_ESNI_EXTENSION, (SSL_ERROR_BASE + 177),
+    "SSL received a malformed ESNI extension")
+
+ER3(SSL_ERROR_MISSING_ESNI_EXTENSION, (SSL_ERROR_BASE + 178),
+    "SSL did not receive an ESNI extension")
+
+ER3(SSL_ERROR_RX_UNEXPECTED_RECORD_TYPE, (SSL_ERROR_BASE + 179),
+    "SSL received an unexpected record type.")
+
+ER3(SSL_ERROR_RX_CERTIFICATE_REQUIRED_ALERT, (SSL_ERROR_BASE + 181),
+    "SSL received a certificate_required alert.")

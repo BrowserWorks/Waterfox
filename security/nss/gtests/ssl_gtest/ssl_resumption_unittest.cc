@@ -18,7 +18,8 @@ extern "C" {
 }
 
 #include "gtest_utils.h"
-#include "scoped_ptrs.h"
+#include "nss_scoped_ptrs.h"
+#include "scoped_ptrs_ssl.h"
 #include "tls_connect.h"
 #include "tls_filter.h"
 #include "tls_parser.h"
@@ -171,21 +172,143 @@ TEST_P(TlsConnectGenericResumption, ConnectResumeClientNoneServerBoth) {
   SendReceive();
 }
 
-TEST_P(TlsConnectGenericPre13, ConnectResumeWithHigherVersion) {
+TEST_P(TlsConnectGenericPre13, ResumeWithHigherVersionTls13) {
+  uint16_t lower_version = version_;
+  ConfigureSessionCache(RESUME_BOTH, RESUME_BOTH);
+  Connect();
+  SendReceive();
+  CheckKeys();
+
+  Reset();
+  ConfigureSessionCache(RESUME_BOTH, RESUME_BOTH);
+  EnsureTlsSetup();
+  auto psk_ext = std::make_shared<TlsExtensionCapture>(
+      client_, ssl_tls13_pre_shared_key_xtn);
+  auto ticket_ext =
+      std::make_shared<TlsExtensionCapture>(client_, ssl_session_ticket_xtn);
+  client_->SetFilter(std::make_shared<ChainedPacketFilter>(
+      ChainedPacketFilterInit({psk_ext, ticket_ext})));
+  SetExpectedVersion(SSL_LIBRARY_VERSION_TLS_1_3);
+  client_->SetVersionRange(lower_version, SSL_LIBRARY_VERSION_TLS_1_3);
+  server_->SetVersionRange(lower_version, SSL_LIBRARY_VERSION_TLS_1_3);
+  ExpectResumption(RESUME_NONE);
+  Connect();
+
+  // The client shouldn't have sent a PSK, though it will send a ticket.
+  EXPECT_FALSE(psk_ext->captured());
+  EXPECT_TRUE(ticket_ext->captured());
+}
+
+class CaptureSessionId : public TlsHandshakeFilter {
+ public:
+  CaptureSessionId(const std::shared_ptr<TlsAgent>& a)
+      : TlsHandshakeFilter(
+            a, {kTlsHandshakeClientHello, kTlsHandshakeServerHello}),
+        sid_() {}
+
+  const DataBuffer& sid() const { return sid_; }
+
+ protected:
+  PacketFilter::Action FilterHandshake(const HandshakeHeader& header,
+                                       const DataBuffer& input,
+                                       DataBuffer* output) override {
+    // The session_id is in the same place in both Hello messages:
+    size_t offset = 2 + 32;  // Version(2) + Random(32)
+    uint32_t len = 0;
+    EXPECT_TRUE(input.Read(offset, 1, &len));
+    offset++;
+    if (input.len() < offset + len) {
+      ADD_FAILURE() << "session_id overflows the Hello message";
+      return KEEP;
+    }
+    sid_.Assign(input.data() + offset, len);
+    return KEEP;
+  }
+
+ private:
+  DataBuffer sid_;
+};
+
+// Attempting to resume from TLS 1.2 when 1.3 is possible should not result in
+// resumption, though it will appear to be TLS 1.3 compatibility mode if the
+// server uses a session ID.
+TEST_P(TlsConnectGenericPre13, ResumeWithHigherVersionTls13SessionId) {
+  uint16_t lower_version = version_;
   ConfigureSessionCache(RESUME_SESSIONID, RESUME_SESSIONID);
-  ConfigureVersion(SSL_LIBRARY_VERSION_TLS_1_1);
-  SetExpectedVersion(SSL_LIBRARY_VERSION_TLS_1_1);
+  auto original_sid = MakeTlsFilter<CaptureSessionId>(server_);
+  Connect();
+  CheckKeys();
+  EXPECT_EQ(32U, original_sid->sid().len());
+
+  // The client should now attempt to resume with the session ID from the last
+  // connection.  This looks like compatibility mode, we just want to ensure
+  // that we get TLS 1.3 rather than 1.2 (and no resumption).
+  Reset();
+  auto client_sid = MakeTlsFilter<CaptureSessionId>(client_);
+  auto server_sid = MakeTlsFilter<CaptureSessionId>(server_);
+  ConfigureSessionCache(RESUME_SESSIONID, RESUME_SESSIONID);
+  SetExpectedVersion(SSL_LIBRARY_VERSION_TLS_1_3);
+  client_->SetVersionRange(lower_version, SSL_LIBRARY_VERSION_TLS_1_3);
+  server_->SetVersionRange(lower_version, SSL_LIBRARY_VERSION_TLS_1_3);
+  ExpectResumption(RESUME_NONE);
+
+  Connect();
+  SendReceive();
+
+  EXPECT_EQ(client_sid->sid(), original_sid->sid());
+  if (variant_ == ssl_variant_stream) {
+    EXPECT_EQ(client_sid->sid(), server_sid->sid());
+  } else {
+    // DTLS servers don't echo the session ID.
+    EXPECT_EQ(0U, server_sid->sid().len());
+  }
+}
+
+TEST_P(TlsConnectPre12, ResumeWithHigherVersionTls12) {
+  uint16_t lower_version = version_;
+  ConfigureSessionCache(RESUME_BOTH, RESUME_BOTH);
   Connect();
 
   Reset();
+  ConfigureSessionCache(RESUME_BOTH, RESUME_BOTH);
   EnsureTlsSetup();
-  SetExpectedVersion(SSL_LIBRARY_VERSION_TLS_1_2);
-  client_->SetVersionRange(SSL_LIBRARY_VERSION_TLS_1_1,
-                           SSL_LIBRARY_VERSION_TLS_1_2);
-  server_->SetVersionRange(SSL_LIBRARY_VERSION_TLS_1_1,
-                           SSL_LIBRARY_VERSION_TLS_1_2);
+  SetExpectedVersion(SSL_LIBRARY_VERSION_TLS_1_3);
+  client_->SetVersionRange(lower_version, SSL_LIBRARY_VERSION_TLS_1_3);
+  server_->SetVersionRange(lower_version, SSL_LIBRARY_VERSION_TLS_1_3);
   ExpectResumption(RESUME_NONE);
   Connect();
+}
+
+TEST_P(TlsConnectGenericPre13, ResumeWithLowerVersionFromTls13) {
+  uint16_t original_version = version_;
+  ConfigureSessionCache(RESUME_BOTH, RESUME_BOTH);
+  ConfigureVersion(SSL_LIBRARY_VERSION_TLS_1_3);
+  Connect();
+  SendReceive();
+  CheckKeys();
+
+  Reset();
+  ConfigureSessionCache(RESUME_BOTH, RESUME_BOTH);
+  ConfigureVersion(original_version);
+  ExpectResumption(RESUME_NONE);
+  Connect();
+  SendReceive();
+}
+
+TEST_P(TlsConnectPre12, ResumeWithLowerVersionFromTls12) {
+  uint16_t original_version = version_;
+  ConfigureSessionCache(RESUME_BOTH, RESUME_BOTH);
+  ConfigureVersion(SSL_LIBRARY_VERSION_TLS_1_2);
+  Connect();
+  SendReceive();
+  CheckKeys();
+
+  Reset();
+  ConfigureSessionCache(RESUME_BOTH, RESUME_BOTH);
+  ConfigureVersion(original_version);
+  ExpectResumption(RESUME_NONE);
+  Connect();
+  SendReceive();
 }
 
 TEST_P(TlsConnectGeneric, ConnectResumeClientBothTicketServerTicketForget) {
@@ -276,8 +399,13 @@ TEST_P(TlsConnectGeneric, ConnectResumeCorruptTicket) {
   ASSERT_NE(nullptr, hmac_key);
   SSLInt_SetSelfEncryptMacKey(hmac_key);
   ConfigureSessionCache(RESUME_BOTH, RESUME_TICKET);
-  ConnectExpectAlert(server_, illegal_parameter);
-  server_->CheckErrorCode(SSL_ERROR_RX_MALFORMED_CLIENT_HELLO);
+  if (version_ >= SSL_LIBRARY_VERSION_TLS_1_3) {
+    ExpectResumption(RESUME_NONE);
+    Connect();
+  } else {
+    ConnectExpectAlert(server_, illegal_parameter);
+    server_->CheckErrorCode(SSL_ERROR_RX_MALFORMED_CLIENT_HELLO);
+  }
 }
 
 // This callback switches out the "server" cert used on the server with
@@ -394,6 +522,64 @@ TEST_P(TlsConnectTls13, TestTls13ResumeDifferentGroup) {
             ssl_sig_rsa_pss_rsae_sha256);
 }
 
+// Verify that TLS 1.3 server doesn't request certificate in the main
+// handshake, after resumption.
+TEST_P(TlsConnectTls13, TestTls13ResumeNoCertificateRequest) {
+  ConfigureSessionCache(RESUME_BOTH, RESUME_TICKET);
+  client_->SetupClientAuth();
+  server_->RequestClientAuth(true);
+  Connect();
+  SendReceive();  // Need to read so that we absorb the session ticket.
+  ScopedCERTCertificate cert1(SSL_LocalCertificate(client_->ssl_fd()));
+
+  Reset();
+  ConfigureSessionCache(RESUME_BOTH, RESUME_TICKET);
+  ExpectResumption(RESUME_TICKET);
+  server_->RequestClientAuth(false);
+  auto cr_capture =
+      MakeTlsFilter<TlsHandshakeRecorder>(server_, ssl_hs_certificate_request);
+  cr_capture->EnableDecryption();
+  Connect();
+  SendReceive();
+  EXPECT_EQ(0U, cr_capture->buffer().len()) << "expect nothing captured yet";
+
+  // Sanity check whether the client certificate matches the one
+  // decrypted from ticket.
+  ScopedCERTCertificate cert2(SSL_PeerCertificate(server_->ssl_fd()));
+  EXPECT_TRUE(SECITEM_ItemsAreEqual(&cert1->derCert, &cert2->derCert));
+}
+
+// Here we test that 0.5 RTT is available at the server when resuming, even if
+// configured to request a client certificate.  The resumed handshake relies on
+// the authentication from the original handshake, so no certificate is
+// requested this time around.  The server can write before the handshake
+// completes because the PSK binder is sufficient authentication for the client.
+TEST_P(TlsConnectTls13, WriteBeforeHandshakeCompleteOnResumption) {
+  ConfigureSessionCache(RESUME_BOTH, RESUME_TICKET);
+  client_->SetupClientAuth();
+  server_->RequestClientAuth(true);
+  Connect();
+  SendReceive();  // Absorb the session ticket.
+  ScopedCERTCertificate cert1(SSL_LocalCertificate(client_->ssl_fd()));
+
+  Reset();
+  ConfigureSessionCache(RESUME_BOTH, RESUME_TICKET);
+  ExpectResumption(RESUME_TICKET);
+  server_->RequestClientAuth(false);
+  StartConnect();
+  client_->Handshake();  // ClientHello
+  server_->Handshake();  // ServerHello
+
+  server_->SendData(10);
+  client_->ReadBytes(10);  // Client should emit the Finished as a side-effect.
+  server_->Handshake();    // Server consumes the Finished.
+  CheckConnected();
+
+  // Check whether the client certificate matches the one from the ticket.
+  ScopedCERTCertificate cert2(SSL_PeerCertificate(server_->ssl_fd()));
+  EXPECT_TRUE(SECITEM_ItemsAreEqual(&cert1->derCert, &cert2->derCert));
+}
+
 // We need to enable different cipher suites at different times in the following
 // tests.  Those cipher suites need to be suited to the version.
 static uint16_t ChooseOneCipher(uint16_t version) {
@@ -467,7 +653,7 @@ TEST_P(TlsConnectStream, TestResumptionOverrideCipher) {
 
   if (version_ >= SSL_LIBRARY_VERSION_TLS_1_3) {
     client_->ExpectSendAlert(kTlsAlertIllegalParameter);
-    server_->ExpectSendAlert(kTlsAlertBadRecordMac);
+    server_->ExpectSendAlert(kTlsAlertUnexpectedMessage);
   } else {
     ExpectAlert(client_, kTlsAlertHandshakeFailure);
   }
@@ -476,7 +662,7 @@ TEST_P(TlsConnectStream, TestResumptionOverrideCipher) {
   if (version_ >= SSL_LIBRARY_VERSION_TLS_1_3) {
     // The reason this test is stream only: the server is unable to decrypt
     // the alert that the client sends, see bug 1304603.
-    server_->CheckErrorCode(SSL_ERROR_BAD_MAC_READ);
+    server_->CheckErrorCode(SSL_ERROR_RX_UNEXPECTED_RECORD_TYPE);
   } else {
     server_->CheckErrorCode(SSL_ERROR_HANDSHAKE_FAILURE_ALERT);
   }
@@ -484,10 +670,8 @@ TEST_P(TlsConnectStream, TestResumptionOverrideCipher) {
 
 class SelectedVersionReplacer : public TlsHandshakeFilter {
  public:
-  SelectedVersionReplacer(const std::shared_ptr<TlsAgent>& agent,
-                          uint16_t version)
-      : TlsHandshakeFilter(agent, {kTlsHandshakeServerHello}),
-        version_(version) {}
+  SelectedVersionReplacer(const std::shared_ptr<TlsAgent>& a, uint16_t version)
+      : TlsHandshakeFilter(a, {kTlsHandshakeServerHello}), version_(version) {}
 
  protected:
   PacketFilter::Action FilterHandshake(const HandshakeHeader& header,
@@ -762,6 +946,36 @@ TEST_F(TlsConnectDatagram13, SendSessionTicketDtls) {
   EXPECT_EQ(SSL_ERROR_FEATURE_NOT_SUPPORTED_FOR_VERSION, PORT_GetError());
 }
 
+TEST_F(TlsConnectStreamTls13, ExternalResumptionUseSecondTicket) {
+  ConfigureSessionCache(RESUME_BOTH, RESUME_BOTH);
+  ConfigureVersion(SSL_LIBRARY_VERSION_TLS_1_3);
+
+  struct ResumptionTicketState {
+    std::vector<uint8_t> ticket;
+    size_t invoked = 0;
+  } ticket_state;
+  auto cb = [](PRFileDesc* fd, const PRUint8* ticket, unsigned int ticket_len,
+               void* arg) -> SECStatus {
+    auto state = reinterpret_cast<ResumptionTicketState*>(arg);
+    state->ticket.assign(ticket, ticket + ticket_len);
+    state->invoked++;
+    return SECSuccess;
+  };
+  SSL_SetResumptionTokenCallback(client_->ssl_fd(), cb, &ticket_state);
+
+  Connect();
+  EXPECT_EQ(SECSuccess, SSL_SendSessionTicket(server_->ssl_fd(), nullptr, 0));
+  SendReceive();
+  EXPECT_EQ(2U, ticket_state.invoked);
+
+  Reset();
+  ConfigureSessionCache(RESUME_BOTH, RESUME_BOTH);
+  client_->SetResumptionToken(ticket_state.ticket);
+  ExpectResumption(RESUME_TICKET);
+  Connect();
+  SendReceive();
+}
+
 TEST_F(TlsConnectTest, TestTls13ResumptionDowngrade) {
   ConfigureSessionCache(RESUME_BOTH, RESUME_TICKET);
   ConfigureVersion(SSL_LIBRARY_VERSION_TLS_1_3);
@@ -832,10 +1046,10 @@ TEST_F(TlsConnectTest, TestTls13ResumptionForcedDowngrade) {
   // client expects to receive an unencrypted TLS 1.2 Certificate message.
   // The server can't decrypt the alert.
   client_->ExpectSendAlert(kTlsAlertUnexpectedMessage);
-  server_->ExpectSendAlert(kTlsAlertBadRecordMac);  // Server can't read
+  server_->ExpectSendAlert(kTlsAlertUnexpectedMessage);  // Server can't read
   ConnectExpectFail();
   client_->CheckErrorCode(SSL_ERROR_RX_UNEXPECTED_APPLICATION_DATA);
-  server_->CheckErrorCode(SSL_ERROR_BAD_MAC_READ);
+  server_->CheckErrorCode(SSL_ERROR_RX_UNEXPECTED_RECORD_TYPE);
 }
 
 TEST_P(TlsConnectGenericResumption, ReConnectTicket) {
@@ -910,6 +1124,36 @@ void CheckGetInfoResult(uint32_t alpnSize, uint32_t earlyDataSize,
   EXPECT_EQ(0, memcmp("a", token->alpnSelection, token->alpnSelectionLen));
 
   ASSERT_EQ(earlyDataSize, token->maxEarlyDataSize);
+
+  ASSERT_LT(ssl_TimeUsec(), token->expirationTime);
+}
+
+// The client should generate a new, randomized session_id
+// when resuming using an external token.
+TEST_P(TlsConnectGenericResumptionToken, CheckSessionId) {
+  ConfigureSessionCache(RESUME_BOTH, RESUME_BOTH);
+  auto original_sid = MakeTlsFilter<CaptureSessionId>(client_);
+  Connect();
+  SendReceive();
+
+  Reset();
+  ConfigureSessionCache(RESUME_BOTH, RESUME_BOTH);
+  ExpectResumption(RESUME_TICKET);
+
+  StartConnect();
+  ASSERT_TRUE(client_->MaybeSetResumptionToken());
+  auto resumed_sid = MakeTlsFilter<CaptureSessionId>(client_);
+
+  Handshake();
+  CheckConnected();
+  SendReceive();
+
+  if (version_ < SSL_LIBRARY_VERSION_TLS_1_3) {
+    EXPECT_NE(resumed_sid->sid(), original_sid->sid());
+    EXPECT_EQ(32U, resumed_sid->sid().len());
+  } else {
+    EXPECT_EQ(0U, resumed_sid->sid().len());
+  }
 }
 
 TEST_P(TlsConnectGenericResumptionToken, ConnectResumeGetInfo) {
@@ -1025,6 +1269,36 @@ TEST_P(TlsConnectGenericResumption, ConnectResumeClientAuth) {
     ExpectResumption(RESUME_TICKET);
   }
   Connect();
+  SendReceive();
+}
+
+TEST_F(TlsConnectStreamTls13, ExternalTokenAfterHrr) {
+  ConfigureSessionCache(RESUME_BOTH, RESUME_BOTH);
+  Connect();
+  SendReceive();
+
+  Reset();
+  ConfigureSessionCache(RESUME_BOTH, RESUME_BOTH);
+  ExpectResumption(RESUME_TICKET);
+
+  static const std::vector<SSLNamedGroup> groups = {ssl_grp_ec_secp384r1,
+                                                    ssl_grp_ec_secp521r1};
+  server_->ConfigNamedGroups(groups);
+
+  StartConnect();
+  ASSERT_TRUE(client_->MaybeSetResumptionToken());
+
+  client_->Handshake();  // Send ClientHello.
+  server_->Handshake();  // Process ClientHello, send HelloRetryRequest.
+
+  auto& token = client_->GetResumptionToken();
+  SECStatus rv =
+      SSL_SetResumptionToken(client_->ssl_fd(), token.data(), token.size());
+  ASSERT_EQ(SECFailure, rv);
+  ASSERT_EQ(SEC_ERROR_INVALID_ARGS, PORT_GetError());
+
+  Handshake();
+  CheckConnected();
   SendReceive();
 }
 

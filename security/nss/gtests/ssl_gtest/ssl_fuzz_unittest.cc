@@ -27,13 +27,13 @@ class TlsFuzzTest : public ::testing::Test {};
 // Record the application data stream.
 class TlsApplicationDataRecorder : public TlsRecordFilter {
  public:
-  TlsApplicationDataRecorder(const std::shared_ptr<TlsAgent>& agent)
-      : TlsRecordFilter(agent), buffer_() {}
+  TlsApplicationDataRecorder(const std::shared_ptr<TlsAgent>& a)
+      : TlsRecordFilter(a), buffer_() {}
 
   virtual PacketFilter::Action FilterRecord(const TlsRecordHeader& header,
                                             const DataBuffer& input,
                                             DataBuffer* output) {
-    if (header.content_type() == kTlsApplicationDataType) {
+    if (header.content_type() == ssl_ct_application_data) {
       buffer_.Append(input);
     }
 

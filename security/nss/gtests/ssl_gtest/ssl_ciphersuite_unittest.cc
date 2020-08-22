@@ -68,12 +68,6 @@ class TlsCipherSuiteTestBase : public TlsConnectTestBase {
   virtual void SetupCertificate() {
     if (version_ >= SSL_LIBRARY_VERSION_TLS_1_3) {
       switch (sig_scheme_) {
-        case ssl_sig_rsa_pkcs1_sha256:
-        case ssl_sig_rsa_pkcs1_sha384:
-        case ssl_sig_rsa_pkcs1_sha512:
-          Reset(TlsAgent::kServerRsaSign);
-          auth_type_ = ssl_auth_rsa_sign;
-          break;
         case ssl_sig_rsa_pss_rsae_sha256:
         case ssl_sig_rsa_pss_rsae_sha384:
           Reset(TlsAgent::kServerRsaSign);
@@ -83,6 +77,18 @@ class TlsCipherSuiteTestBase : public TlsConnectTestBase {
           // You can't fit SHA-512 PSS in a 1024-bit key.
           Reset(TlsAgent::kRsa2048);
           auth_type_ = ssl_auth_rsa_sign;
+          break;
+        case ssl_sig_rsa_pss_pss_sha256:
+          Reset(TlsAgent::kServerRsaPss);
+          auth_type_ = ssl_auth_rsa_pss;
+          break;
+        case ssl_sig_rsa_pss_pss_sha384:
+          Reset("rsa_pss384");
+          auth_type_ = ssl_auth_rsa_pss;
+          break;
+        case ssl_sig_rsa_pss_pss_sha512:
+          Reset("rsa_pss512");
+          auth_type_ = ssl_auth_rsa_pss;
           break;
         case ssl_sig_ecdsa_secp256r1_sha256:
           Reset(TlsAgent::kServerEcdsa256);
@@ -166,8 +172,8 @@ class TlsCipherSuiteTestBase : public TlsConnectTestBase {
       case ssl_calg_seed:
         break;
     }
-    EXPECT_TRUE(false) << "No limit for " << csinfo_.cipherSuiteName;
-    return 1ULL < 48;
+    ADD_FAILURE() << "No limit for " << csinfo_.cipherSuiteName;
+    return 0;
   }
 
   uint64_t last_safe_write() const {
@@ -246,12 +252,13 @@ TEST_P(TlsCipherSuiteTest, ReadLimit) {
 
     client_->SendData(10, 10);
     server_->ReadBytes();  // This should be OK.
+    server_->ReadBytes();  // Read twice to flush any 1,N-1 record splitting.
   } else {
     // In TLS 1.3, reading or writing triggers a KeyUpdate.  That would mean
     // that the sequence numbers would reset and we wouldn't hit the limit.  So
-    // we move the sequence number to one less than the limit directly and don't
-    // test sending and receiving just before the limit.
-    uint64_t last = record_limit() - 1;
+    // move the sequence number to the limit directly and don't test sending and
+    // receiving just before the limit.
+    uint64_t last = record_limit();
     EXPECT_EQ(SECSuccess, SSLInt_AdvanceReadSeqNum(server_->ssl_fd(), last));
   }
 
@@ -269,7 +276,7 @@ TEST_P(TlsCipherSuiteTest, ReadLimit) {
   } else {
     epoch = 0;
   }
-  TlsAgentTestBase::MakeRecord(variant_, kTlsApplicationDataType, version_,
+  TlsAgentTestBase::MakeRecord(variant_, ssl_ct_application_data, version_,
                                payload, sizeof(payload), &record,
                                (epoch << 48) | record_limit());
   client_->SendDirect(record);
@@ -309,14 +316,19 @@ static const auto kDummyNamedGroupParams = ::testing::Values(ssl_grp_none);
 static const auto kDummySignatureSchemesParams =
     ::testing::Values(ssl_sig_none);
 
-#ifndef NSS_DISABLE_TLS_1_3
 static SSLSignatureScheme kSignatureSchemesParamsArr[] = {
     ssl_sig_rsa_pkcs1_sha256,       ssl_sig_rsa_pkcs1_sha384,
     ssl_sig_rsa_pkcs1_sha512,       ssl_sig_ecdsa_secp256r1_sha256,
     ssl_sig_ecdsa_secp384r1_sha384, ssl_sig_rsa_pss_rsae_sha256,
     ssl_sig_rsa_pss_rsae_sha384,    ssl_sig_rsa_pss_rsae_sha512,
-};
-#endif
+    ssl_sig_rsa_pss_pss_sha256,     ssl_sig_rsa_pss_pss_sha384,
+    ssl_sig_rsa_pss_pss_sha512};
+
+static SSLSignatureScheme kSignatureSchemesParamsArrTls13[] = {
+    ssl_sig_ecdsa_secp256r1_sha256, ssl_sig_ecdsa_secp384r1_sha384,
+    ssl_sig_rsa_pss_rsae_sha256,    ssl_sig_rsa_pss_rsae_sha384,
+    ssl_sig_rsa_pss_rsae_sha512,    ssl_sig_rsa_pss_pss_sha256,
+    ssl_sig_rsa_pss_pss_sha384,     ssl_sig_rsa_pss_pss_sha512};
 
 INSTANTIATE_CIPHER_TEST_P(RC4, Stream, V10ToV12, kDummyNamedGroupParams,
                           kDummySignatureSchemesParams,
@@ -371,10 +383,18 @@ INSTANTIATE_CIPHER_TEST_P(
     TLS_ECDH_RSA_WITH_AES_128_CBC_SHA, TLS_ECDH_RSA_WITH_AES_256_CBC_SHA,
     TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA, TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,
     TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA);
+INSTANTIATE_CIPHER_TEST_P(
+    TLS12SigSchemes, All, V12, ::testing::ValuesIn(kFasterDHEGroups),
+    ::testing::ValuesIn(kSignatureSchemesParamsArr),
+    TLS_DHE_RSA_WITH_AES_256_CBC_SHA256, TLS_RSA_WITH_AES_256_CBC_SHA256,
+    TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256,
+    TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256, TLS_DHE_RSA_WITH_AES_128_CBC_SHA256,
+    TLS_RSA_WITH_AES_128_CBC_SHA256, TLS_DHE_DSS_WITH_AES_128_CBC_SHA256,
+    TLS_DHE_DSS_WITH_AES_256_CBC_SHA256);
 #ifndef NSS_DISABLE_TLS_1_3
 INSTANTIATE_CIPHER_TEST_P(TLS13, All, V13,
                           ::testing::ValuesIn(kFasterDHEGroups),
-                          ::testing::ValuesIn(kSignatureSchemesParamsArr),
+                          ::testing::ValuesIn(kSignatureSchemesParamsArrTls13),
                           TLS_AES_128_GCM_SHA256, TLS_CHACHA20_POLY1305_SHA256,
                           TLS_AES_256_GCM_SHA384);
 INSTANTIATE_CIPHER_TEST_P(TLS13AllGroups, All, V13,

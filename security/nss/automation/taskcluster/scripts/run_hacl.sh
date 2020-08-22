@@ -12,8 +12,8 @@ set -e -x -v
 # The extracted C code from HACL* is already generated and the HACL* tests were
 # successfully executed.
 
-# Verify Poly1305 (doesn't work in docker image build)
-make verify -C ~/hacl-star/code/poly1305 -j$(nproc)
+# Verify HACL*. Taskcluster fails when we do this in the image build.
+make -C hacl-star verify-nss -j$(nproc)
 
 # Add license header to specs
 spec_files=($(find ~/hacl-star/specs -type f -name '*.fst'))

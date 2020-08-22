@@ -35,6 +35,19 @@ typedef enum {
     ssl_hs_message_hash = 254, /* Not a real message. */
 } SSLHandshakeType;
 
+typedef enum {
+    ssl_ct_change_cipher_spec = 20,
+    ssl_ct_alert = 21,
+    ssl_ct_handshake = 22,
+    ssl_ct_application_data = 23,
+    ssl_ct_ack = 25
+} SSLContentType;
+
+typedef enum {
+    ssl_secret_read = 1,
+    ssl_secret_write = 2,
+} SSLSecretDirection;
+
 typedef struct SSL3StatisticsStr {
     /* statistics from ssl3_SendClientHello (sch) */
     long sch_sid_cache_hits;
@@ -320,6 +333,9 @@ typedef struct SSLChannelInfoStr {
 /* Preliminary channel info */
 #define ssl_preinfo_version (1U << 0)
 #define ssl_preinfo_cipher_suite (1U << 1)
+#define ssl_preinfo_0rtt_cipher_suite (1U << 2)
+/* ssl_preinfo_all doesn't contain ssl_preinfo_0rtt_cipher_suite because that
+ * field is only set if 0-RTT is sent (client) or accepted (server). */
 #define ssl_preinfo_all (ssl_preinfo_version | ssl_preinfo_cipher_suite)
 
 typedef struct SSLPreliminaryChannelInfoStr {
@@ -350,6 +366,13 @@ typedef struct SSLPreliminaryChannelInfoStr {
      * the value that was advertised in the session ticket that was used to
      * resume this session. */
     PRUint32 maxEarlyDataSize;
+
+    /* The following fields were added in NSS 3.39. */
+    /* This reports the cipher suite used for 0-RTT if it sent or accepted.  For
+     * a client, this is set earlier than |cipherSuite|, and will match that
+     * value if 0-RTT is accepted by the server.  The server only sets this
+     * after accepting 0-RTT, so this will contain the same value. */
+    PRUint16 zeroRttCipherSuite;
 
     /* When adding new fields to this structure, please document the
      * NSS version in which they were added. */
@@ -399,6 +422,12 @@ typedef struct SSLCipherSuiteInfoStr {
      * this instead of |authAlgorithm|. */
     SSLAuthType authType;
 
+    /* The following fields were added in NSS 3.39. */
+    /* This reports the hash function used in the TLS KDF, or HKDF for TLS 1.3.
+     * For suites defined for versions of TLS earlier than TLS 1.2, this reports
+     * ssl_hash_none. */
+    SSLHashType kdfHash;
+
     /* When adding new fields to this structure, please document the
      * NSS version in which they were added. */
 } SSLCipherSuiteInfo;
@@ -432,6 +461,7 @@ typedef enum {
     ssl_signed_cert_timestamp_xtn = 18,
     ssl_padding_xtn = 21,
     ssl_extended_master_secret_xtn = 23,
+    ssl_record_size_limit_xtn = 28,
     ssl_session_ticket_xtn = 35,
     /* 40 was used in draft versions of TLS 1.3; it is now reserved. */
     ssl_tls13_pre_shared_key_xtn = 41,
@@ -441,11 +471,13 @@ typedef enum {
     ssl_tls13_psk_key_exchange_modes_xtn = 45,
     ssl_tls13_ticket_early_data_info_xtn = 46, /* Deprecated. */
     ssl_tls13_certificate_authorities_xtn = 47,
+    ssl_tls13_post_handshake_auth_xtn = 49,
     ssl_signature_algorithms_cert_xtn = 50,
     ssl_tls13_key_share_xtn = 51,
     ssl_next_proto_nego_xtn = 13172, /* Deprecated. */
     ssl_renegotiation_info_xtn = 0xff01,
-    ssl_tls13_short_header_xtn = 0xff03 /* Deprecated. */
+    ssl_tls13_short_header_xtn = 0xff03, /* Deprecated. */
+    ssl_tls13_encrypted_sni_xtn = 0xffce,
 } SSLExtensionType;
 
 /* This is the old name for the supported_groups extensions. */
@@ -454,7 +486,7 @@ typedef enum {
 /* SSL_MAX_EXTENSIONS includes the maximum number of extensions that are
  * supported for any single message type.  That is, a ClientHello; ServerHello
  * and TLS 1.3 NewSessionTicket and HelloRetryRequest extensions have fewer. */
-#define SSL_MAX_EXTENSIONS 20
+#define SSL_MAX_EXTENSIONS 21
 
 /* Deprecated */
 typedef enum {

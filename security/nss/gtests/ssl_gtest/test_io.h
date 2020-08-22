@@ -17,7 +17,7 @@
 #include "databuffer.h"
 #include "dummy_io.h"
 #include "prio.h"
-#include "scoped_ptrs.h"
+#include "nss_scoped_ptrs.h"
 #include "sslt.h"
 
 namespace nss_test {
@@ -33,8 +33,10 @@ class PacketFilter {
     CHANGE,  // change the packet to a different value
     DROP     // drop the packet
   };
-  PacketFilter(bool enabled = true) : enabled_(enabled) {}
+  explicit PacketFilter(bool on = true) : enabled_(on) {}
   virtual ~PacketFilter() {}
+
+  bool enabled() const { return enabled_; }
 
   virtual Action Process(const DataBuffer& input, DataBuffer* output) {
     if (!enabled_) {
@@ -59,21 +61,23 @@ class PacketFilter {
 
 class DummyPrSocket : public DummyIOLayerMethods {
  public:
-  DummyPrSocket(const std::string& name, SSLProtocolVariant variant)
+  DummyPrSocket(const std::string& name, SSLProtocolVariant var)
       : name_(name),
-        variant_(variant),
+        variant_(var),
         peer_(),
         input_(),
         filter_(nullptr),
         write_error_(0) {}
   virtual ~DummyPrSocket() {}
 
+  static PRDescIdentity LayerId();
+
   // Create a file descriptor that will reference this object.  The fd must not
   // live longer than this adapter; call PR_Close() before.
   ScopedPRFileDesc CreateFD();
 
   std::weak_ptr<DummyPrSocket>& peer() { return peer_; }
-  void SetPeer(const std::shared_ptr<DummyPrSocket>& peer) { peer_ = peer; }
+  void SetPeer(const std::shared_ptr<DummyPrSocket>& p) { peer_ = p; }
   void SetPacketFilter(const std::shared_ptr<PacketFilter>& filter) {
     filter_ = filter;
   }

@@ -5,8 +5,7 @@ set +e
 
 # Default to clang if CC is not set.
 if [ -z "$CC" ]; then
-    command -v clang &> /dev/null 2>&1
-    if [ $? != 0 ]; then
+    if ! command -v clang &> /dev/null 2>&1; then
         echo "Fuzzing requires clang!"
         exit 1
     fi
@@ -15,7 +14,7 @@ if [ -z "$CC" ]; then
     export CXX=clang++
 fi
 
-gyp_params+=(-Dtest_build=1 -Dfuzz=1 -Dsign_libs=0)
+gyp_params+=(-Dtest_build=1 -Dstatic_libs=1 -Dfuzz=1 -Dsign_libs=0)
 
 # Add debug symbols even for opt builds.
 nspr_params+=(--enable-debug-symbols)
@@ -24,8 +23,8 @@ if [ "$fuzz_oss" = 1 ]; then
   gyp_params+=(-Dno_zdefs=1 -Dfuzz_oss=1)
 else
   enable_sanitizer asan
-  # Ubsan doesn't build on 32-bit at the moment. Disable it.
-  if [ "$build_64" = 1 ]; then
+  # Ubsan only builds on x64 for the moment.
+  if [ "$target_arch" = "x64" ]; then
     enable_ubsan
   fi
   enable_sancov

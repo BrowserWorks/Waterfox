@@ -59,7 +59,7 @@
     'sha_fast.c',
     'shvfy.c',
     'sysrand.c',
-    'tlsprfalg.c'
+    'tlsprfalg.c',
   ],
   'conditions': [
     [ 'OS=="linux" or OS=="android"', {
@@ -67,14 +67,12 @@
         [ 'target_arch=="x64"', {
           'sources': [
             'arcfour-amd64-gas.s',
-            'intel-aes.s',
-            'intel-gcm.s',
             'mpi/mpi_amd64.c',
             'mpi/mpi_amd64_gas.s',
             'mpi/mp_comba.c',
           ],
           'conditions': [
-            [ 'cc_is_clang==1', {
+            [ 'cc_is_clang==1 and fuzz!=1', {
               'cflags': [
                 '-no-integrated-as',
               ],
@@ -114,8 +112,7 @@
             'intel-gcm-x64-masm.asm',
           ],
         }],
-	      [ 'cc_use_gnu_ld!=1 and target_arch!="x64"', {
-          # not x64
+        [ 'cc_use_gnu_ld!=1 and target_arch=="ia32"', {
           'sources': [
             'mpi/mpi_x86_asm.c',
             'intel-aes-x86-masm.asm',
@@ -140,7 +137,6 @@
         # All intel and 64-bit ARM architectures get the 64 bit version.
         'ecl/curve25519_64.c',
         'verified/Hacl_Curve25519.c',
-        'verified/FStar.c',
       ],
     }, {
       'sources': [
@@ -172,7 +168,7 @@
                 }, {
                   # !Windows & !x64 & !arm64 & !aarch64
                   'sources': [
-                    'poly1305.c',
+                    'verified/Hacl_Poly1305_32.c',
                   ],
                 }],
               ],
@@ -181,7 +177,7 @@
         }, {
           # Windows
           'sources': [
-            'poly1305.c',
+            'verified/Hacl_Poly1305_32.c',
           ],
         }],
       ],
@@ -219,6 +215,9 @@
           ],
         }],
       ],
+    }],
+    [ 'have_int128_support==0', {
+        'sources': [ 'verified/FStar.c' ],
     }],
   ],
  'ldflags': [

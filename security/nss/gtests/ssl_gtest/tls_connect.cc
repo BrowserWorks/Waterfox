@@ -14,7 +14,7 @@ extern "C" {
 
 #include "databuffer.h"
 #include "gtest_utils.h"
-#include "scoped_ptrs.h"
+#include "nss_scoped_ptrs.h"
 #include "sslproto.h"
 
 extern std::string g_working_dir_path;
@@ -167,18 +167,8 @@ void TlsConnectTestBase::CheckShares(
 
 void TlsConnectTestBase::CheckEpochs(uint16_t client_epoch,
                                      uint16_t server_epoch) const {
-  uint16_t read_epoch = 0;
-  uint16_t write_epoch = 0;
-
-  EXPECT_EQ(SECSuccess,
-            SSLInt_GetEpochs(client_->ssl_fd(), &read_epoch, &write_epoch));
-  EXPECT_EQ(server_epoch, read_epoch) << "client read epoch";
-  EXPECT_EQ(client_epoch, write_epoch) << "client write epoch";
-
-  EXPECT_EQ(SECSuccess,
-            SSLInt_GetEpochs(server_->ssl_fd(), &read_epoch, &write_epoch));
-  EXPECT_EQ(client_epoch, read_epoch) << "server read epoch";
-  EXPECT_EQ(server_epoch, write_epoch) << "server write epoch";
+  client_->CheckEpochs(server_epoch, client_epoch);
+  server_->CheckEpochs(client_epoch, server_epoch);
 }
 
 void TlsConnectTestBase::ClearStats() {
@@ -193,12 +183,33 @@ void TlsConnectTestBase::ClearServerCache() {
   SSL_ConfigServerSessionIDCache(1024, 0, 0, g_working_dir_path.c_str());
 }
 
+void TlsConnectTestBase::SaveAlgorithmPolicy() {
+  saved_policies_.clear();
+  for (auto it = algorithms_.begin(); it != algorithms_.end(); ++it) {
+    uint32_t policy;
+    SECStatus rv = NSS_GetAlgorithmPolicy(*it, &policy);
+    ASSERT_EQ(SECSuccess, rv);
+    saved_policies_.push_back(std::make_tuple(*it, policy));
+  }
+}
+
+void TlsConnectTestBase::RestoreAlgorithmPolicy() {
+  for (auto it = saved_policies_.begin(); it != saved_policies_.end(); ++it) {
+    auto algorithm = std::get<0>(*it);
+    auto policy = std::get<1>(*it);
+    SECStatus rv = NSS_SetAlgorithmPolicy(
+        algorithm, policy, NSS_USE_POLICY_IN_SSL | NSS_USE_ALG_IN_SSL_KX);
+    ASSERT_EQ(SECSuccess, rv);
+  }
+}
+
 void TlsConnectTestBase::SetUp() {
   SSL_ConfigServerSessionIDCache(1024, 0, 0, g_working_dir_path.c_str());
   SSLInt_ClearSelfEncryptKey();
   SSLInt_SetTicketLifetime(30);
   SSL_SetupAntiReplay(1 * PR_USEC_PER_SEC, 1, 3);
   ClearStats();
+  SaveAlgorithmPolicy();
   Init();
 }
 
@@ -209,6 +220,7 @@ void TlsConnectTestBase::TearDown() {
   SSL_ClearSessionCache();
   SSLInt_ClearSelfEncryptKey();
   SSL_ShutdownServerSessionIDCache();
+  RestoreAlgorithmPolicy();
 }
 
 void TlsConnectTestBase::Init() {
@@ -238,6 +250,7 @@ void TlsConnectTestBase::Reset(const std::string& server_name,
     server_->SkipVersionChecks();
   }
 
+  std::cerr << "Reset" << std::endl;
   Init();
 }
 
@@ -559,16 +572,49 @@ void TlsConnectTestBase::CheckResumption(SessionResumptionMode expected) {
   EXPECT_EQ(stateless_count, stats->hsh_sid_stateless_resumes);
 
   if (expected != RESUME_NONE) {
-    if (client_->version() < SSL_LIBRARY_VERSION_TLS_1_3) {
+    if (client_->version() < SSL_LIBRARY_VERSION_TLS_1_3 &&
+        client_->GetResumptionToken().size() == 0) {
       // Check that the last two session ids match.
       ASSERT_EQ(1U + expected_resumptions_, session_ids_.size());
       EXPECT_EQ(session_ids_[session_ids_.size() - 1],
                 session_ids_[session_ids_.size() - 2]);
     } else {
-      // TLS 1.3 only uses tickets.
+      // We've either chosen TLS 1.3 or are using an external resumption token,
+      // both of which only use tickets.
       EXPECT_TRUE(expected & RESUME_TICKET);
     }
   }
+}
+
+static SECStatus NextProtoCallbackServer(void* arg, PRFileDesc* fd,
+                                         const unsigned char* protos,
+                                         unsigned int protos_len,
+                                         unsigned char* protoOut,
+                                         unsigned int* protoOutLen,
+                                         unsigned int protoMaxLen) {
+  EXPECT_EQ(protoMaxLen, 255U);
+  TlsAgent* agent = reinterpret_cast<TlsAgent*>(arg);
+  // Check that agent->alpn_value_to_use_ is in protos.
+  if (protos_len < 1) {
+    return SECFailure;
+  }
+  for (size_t i = 0; i < protos_len;) {
+    size_t l = protos[i];
+    EXPECT_LT(i + l, protos_len);
+    if (i + l >= protos_len) {
+      return SECFailure;
+    }
+    std::string protos_s(reinterpret_cast<const char*>(protos + i + 1), l);
+    if (protos_s == agent->alpn_value_to_use_) {
+      size_t s_len = agent->alpn_value_to_use_.size();
+      EXPECT_LE(s_len, 255U);
+      memcpy(protoOut, &agent->alpn_value_to_use_[0], s_len);
+      *protoOutLen = s_len;
+      return SECSuccess;
+    }
+    i += l + 1;
+  }
+  return SECFailure;
 }
 
 void TlsConnectTestBase::EnableAlpn() {
@@ -576,9 +622,21 @@ void TlsConnectTestBase::EnableAlpn() {
   server_->EnableAlpn(alpn_dummy_val_, sizeof(alpn_dummy_val_));
 }
 
-void TlsConnectTestBase::EnableAlpn(const uint8_t* val, size_t len) {
-  client_->EnableAlpn(val, len);
-  server_->EnableAlpn(val, len);
+void TlsConnectTestBase::EnableAlpnWithCallback(
+    const std::vector<uint8_t>& client_vals, std::string server_choice) {
+  EnsureTlsSetup();
+  server_->alpn_value_to_use_ = server_choice;
+  EXPECT_EQ(SECSuccess,
+            SSL_SetNextProtoNego(client_->ssl_fd(), client_vals.data(),
+                                 client_vals.size()));
+  SECStatus rv = SSL_SetNextProtoCallback(
+      server_->ssl_fd(), NextProtoCallbackServer, server_.get());
+  EXPECT_EQ(SECSuccess, rv);
+}
+
+void TlsConnectTestBase::EnableAlpn(const std::vector<uint8_t>& vals) {
+  client_->EnableAlpn(vals.data(), vals.size());
+  server_->EnableAlpn(vals.data(), vals.size());
 }
 
 void TlsConnectTestBase::EnsureModelSockets() {

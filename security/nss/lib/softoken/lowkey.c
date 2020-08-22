@@ -45,6 +45,23 @@ const SEC_ASN1Template nsslowkey_PrivateKeyInfoTemplate[] = {
     { 0 }
 };
 
+const SEC_ASN1Template nsslowkey_SubjectPublicKeyInfoTemplate[] = {
+    { SEC_ASN1_SEQUENCE, 0, NULL, sizeof(NSSLOWKEYSubjectPublicKeyInfo) },
+    { SEC_ASN1_INLINE | SEC_ASN1_XTRN,
+      offsetof(NSSLOWKEYSubjectPublicKeyInfo, algorithm),
+      SEC_ASN1_SUB(SECOID_AlgorithmIDTemplate) },
+    { SEC_ASN1_BIT_STRING,
+      offsetof(NSSLOWKEYSubjectPublicKeyInfo, subjectPublicKey) },
+    { 0 }
+};
+
+const SEC_ASN1Template nsslowkey_RSAPublicKeyTemplate[] = {
+    { SEC_ASN1_SEQUENCE, 0, NULL, sizeof(NSSLOWKEYPublicKey) },
+    { SEC_ASN1_INTEGER, offsetof(NSSLOWKEYPublicKey, u.rsa.modulus) },
+    { SEC_ASN1_INTEGER, offsetof(NSSLOWKEYPublicKey, u.rsa.publicExponent) },
+    { 0 }
+};
+
 const SEC_ASN1Template nsslowkey_PQGParamsTemplate[] = {
     { SEC_ASN1_SEQUENCE, 0, NULL, sizeof(PQGParams) },
     { SEC_ASN1_INTEGER, offsetof(PQGParams, prime) },
@@ -132,6 +149,13 @@ prepare_low_rsa_priv_key_for_asn1(NSSLOWKEYPrivateKey *key)
     key->u.rsa.exponent1.type = siUnsignedInteger;
     key->u.rsa.exponent2.type = siUnsignedInteger;
     key->u.rsa.coefficient.type = siUnsignedInteger;
+}
+
+void
+prepare_low_rsa_pub_key_for_asn1(NSSLOWKEYPublicKey *key)
+{
+    key->u.rsa.modulus.type = siUnsignedInteger;
+    key->u.rsa.publicExponent.type = siUnsignedInteger;
 }
 
 void
@@ -237,6 +261,7 @@ NSSLOWKEYPublicKey *
 nsslowkey_ConvertToPublicKey(NSSLOWKEYPrivateKey *privk)
 {
     NSSLOWKEYPublicKey *pubk;
+    SECItem publicValue;
     PLArenaPool *arena;
 
     arena = PORT_NewArena(DER_DEFAULT_CHUNKSIZE);
@@ -277,6 +302,19 @@ nsslowkey_ConvertToPublicKey(NSSLOWKEYPrivateKey *privk)
 
                 pubk->arena = arena;
                 pubk->keyType = privk->keyType;
+                /* if the public key value doesn't exist, calculate it */
+                if (privk->u.dsa.publicValue.len == 0) {
+                    rv = DH_Derive(&privk->u.dsa.params.base, &privk->u.dsa.params.prime,
+                                   &privk->u.dsa.privateValue, &publicValue, 0);
+                    if (rv != SECSuccess) {
+                        break;
+                    }
+                    rv = SECITEM_CopyItem(privk->arena, &privk->u.dsa.publicValue, &publicValue);
+                    SECITEM_FreeItem(&publicValue, PR_FALSE);
+                    if (rv != SECSuccess) {
+                        break;
+                    }
+                }
                 rv = SECITEM_CopyItem(arena, &pubk->u.dsa.publicValue,
                                       &privk->u.dsa.publicValue);
                 if (rv != SECSuccess)
@@ -303,6 +341,19 @@ nsslowkey_ConvertToPublicKey(NSSLOWKEYPrivateKey *privk)
 
                 pubk->arena = arena;
                 pubk->keyType = privk->keyType;
+                /* if the public key value doesn't exist, calculate it */
+                if (privk->u.dh.publicValue.len == 0) {
+                    rv = DH_Derive(&privk->u.dh.base, &privk->u.dh.prime,
+                                   &privk->u.dh.privateValue, &publicValue, 0);
+                    if (rv != SECSuccess) {
+                        break;
+                    }
+                    rv = SECITEM_CopyItem(privk->arena, &privk->u.dh.publicValue, &publicValue);
+                    SECITEM_FreeItem(&publicValue, PR_FALSE);
+                    if (rv != SECSuccess) {
+                        break;
+                    }
+                }
                 rv = SECITEM_CopyItem(arena, &pubk->u.dh.publicValue,
                                       &privk->u.dh.publicValue);
                 if (rv != SECSuccess)

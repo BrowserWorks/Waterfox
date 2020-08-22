@@ -15,30 +15,40 @@
 #include "selfencrypt.h"
 #include "ssl3ext.h"
 #include "ssl3exthandle.h"
+#include "tls13esni.h"
 #include "tls13exthandle.h" /* For tls13_ServerSendStatusRequestXtn. */
+
+PRBool
+ssl_ShouldSendSNIExtension(const sslSocket *ss, const char *url)
+{
+    PRNetAddr netAddr;
+
+    /* must have a hostname */
+    if (!url || !url[0]) {
+        return PR_FALSE;
+    }
+    /* must not be an IPv4 or IPv6 address */
+    if (PR_SUCCESS == PR_StringToNetAddr(url, &netAddr)) {
+        /* is an IP address (v4 or v6) */
+        return PR_FALSE;
+    }
+
+    return PR_TRUE;
+}
 
 /* Format an SNI extension, using the name from the socket's URL,
  * unless that name is a dotted decimal string.
  * Used by client and server.
  */
 SECStatus
-ssl3_ClientSendServerNameXtn(const sslSocket *ss, TLSExtensionData *xtnData,
-                             sslBuffer *buf, PRBool *added)
+ssl3_ClientFormatServerNameXtn(const sslSocket *ss, const char *url,
+                               TLSExtensionData *xtnData,
+                               sslBuffer *buf)
 {
     unsigned int len;
-    PRNetAddr netAddr;
     SECStatus rv;
 
-    /* must have a hostname */
-    if (!ss->url || !ss->url[0]) {
-        return SECSuccess;
-    }
-    /* must not be an IPv4 or IPv6 address */
-    if (PR_SUCCESS == PR_StringToNetAddr(ss->url, &netAddr)) {
-        /* is an IP address (v4 or v6) */
-        return SECSuccess;
-    }
-    len = PORT_Strlen(ss->url);
+    len = PORT_Strlen(url);
     /* length of server_name_list */
     rv = sslBuffer_AppendNumber(buf, len + 3, 2);
     if (rv != SECSuccess) {
@@ -50,7 +60,33 @@ ssl3_ClientSendServerNameXtn(const sslSocket *ss, TLSExtensionData *xtnData,
         return SECFailure;
     }
     /* HostName (length and value) */
-    rv = sslBuffer_AppendVariable(buf, (const PRUint8 *)ss->url, len, 2);
+    rv = sslBuffer_AppendVariable(buf, (const PRUint8 *)url, len, 2);
+    if (rv != SECSuccess) {
+        return SECFailure;
+    }
+
+    return SECSuccess;
+}
+
+SECStatus
+ssl3_ClientSendServerNameXtn(const sslSocket *ss, TLSExtensionData *xtnData,
+                             sslBuffer *buf, PRBool *added)
+{
+    SECStatus rv;
+
+    const char *url = ss->url;
+
+    /* We only make an ESNI private key if we are going to
+     * send ESNI. */
+    if (ss->xtnData.esniPrivateKey != NULL) {
+        url = ss->esniKeys->dummySni;
+    }
+
+    if (!ssl_ShouldSendSNIExtension(ss, url)) {
+        return SECSuccess;
+    }
+
+    rv = ssl3_ClientFormatServerNameXtn(ss, url, xtnData, buf);
     if (rv != SECSuccess) {
         return SECFailure;
     }
@@ -59,7 +95,6 @@ ssl3_ClientSendServerNameXtn(const sslSocket *ss, TLSExtensionData *xtnData,
     return SECSuccess;
 }
 
-/* Handle an incoming SNI extension. */
 SECStatus
 ssl3_HandleServerNameXtn(const sslSocket *ss, TLSExtensionData *xtnData,
                          SECItem *data)
@@ -70,6 +105,13 @@ ssl3_HandleServerNameXtn(const sslSocket *ss, TLSExtensionData *xtnData,
 
     if (!ss->sec.isServer) {
         return SECSuccess; /* ignore extension */
+    }
+
+    if (ssl3_ExtensionNegotiated(ss, ssl_tls13_encrypted_sni_xtn)) {
+        /* If we already have ESNI, make sure we don't overwrite
+         * the value. */
+        PORT_Assert(ss->version >= SSL_LIBRARY_VERSION_TLS_1_3);
+        return SECSuccess;
     }
 
     /* Server side - consume client data and register server sender. */
@@ -242,33 +284,11 @@ ssl_AlpnTagAllowed(const sslSocket *ss, const SECItem *tag)
     return PR_FALSE;
 }
 
-/* handle an incoming Next Protocol Negotiation extension. */
-SECStatus
-ssl3_ServerHandleNextProtoNegoXtn(const sslSocket *ss, TLSExtensionData *xtnData,
-                                  SECItem *data)
-{
-    PORT_Assert(ss->version < SSL_LIBRARY_VERSION_TLS_1_3);
-
-    if (ss->firstHsDone || data->len != 0) {
-        /* Clients MUST send an empty NPN extension, if any. */
-        PORT_SetError(SSL_ERROR_NEXT_PROTOCOL_DATA_INVALID);
-        return SECFailure;
-    }
-
-    xtnData->negotiated[xtnData->numNegotiated++] = ssl_next_proto_nego_xtn;
-
-    /* TODO: server side NPN support would require calling
-     * ssl3_RegisterServerHelloExtensionSender here in order to echo the
-     * extension back to the client. */
-
-    return SECSuccess;
-}
-
-/* ssl3_ValidateNextProtoNego checks that the given block of data is valid: none
+/* ssl3_ValidateAppProtocol checks that the given block of data is valid: none
  * of the lengths may be 0 and the sum of the lengths must equal the length of
  * the block. */
 SECStatus
-ssl3_ValidateNextProtoNego(const unsigned char *data, unsigned int length)
+ssl3_ValidateAppProtocol(const unsigned char *data, unsigned int length)
 {
     unsigned int offset = 0;
 
@@ -286,7 +306,7 @@ ssl3_ValidateNextProtoNego(const unsigned char *data, unsigned int length)
     return SECSuccess;
 }
 
-/* protocol selection handler for ALPN (server side) and NPN (client side) */
+/* Protocol selection handler for ALPN. */
 static SECStatus
 ssl3_SelectAppProtocol(const sslSocket *ss, TLSExtensionData *xtnData,
                        PRUint16 extension, SECItem *data)
@@ -295,7 +315,7 @@ ssl3_SelectAppProtocol(const sslSocket *ss, TLSExtensionData *xtnData,
     unsigned char resultBuffer[255];
     SECItem result = { siBuffer, resultBuffer, 0 };
 
-    rv = ssl3_ValidateNextProtoNego(data->data, data->len);
+    rv = ssl3_ValidateAppProtocol(data->data, data->len);
     if (rv != SECSuccess) {
         ssl3_ExtSendAlert(ss, alert_fatal, decode_error);
         PORT_SetError(SSL_ERROR_NEXT_PROTOCOL_DATA_INVALID);
@@ -303,11 +323,13 @@ ssl3_SelectAppProtocol(const sslSocket *ss, TLSExtensionData *xtnData,
     }
 
     PORT_Assert(ss->nextProtoCallback);
-    /* For ALPN, the cipher suite isn't selected yet.  Note that extensions
+    /* The cipher suite isn't selected yet.  Note that extensions
      * sometimes affect what cipher suite is selected, e.g., for ECC. */
     PORT_Assert((ss->ssl3.hs.preliminaryInfo &
                  ssl_preinfo_all & ~ssl_preinfo_cipher_suite) ==
                 (ssl_preinfo_all & ~ssl_preinfo_cipher_suite));
+    /* The callback has to make sure that either rv != SECSuccess or that result
+     * is not set if there is no common protocol. */
     rv = ss->nextProtoCallback(ss->nextProtoArg, ss->fd, data->data, data->len,
                                result.data, &result.len, sizeof(resultBuffer));
     if (rv != SECSuccess) {
@@ -320,21 +342,20 @@ ssl3_SelectAppProtocol(const sslSocket *ss, TLSExtensionData *xtnData,
      * stack. */
     if (result.len > sizeof(resultBuffer)) {
         PORT_SetError(SEC_ERROR_OUTPUT_LEN);
-        /* TODO: crash */
+        PORT_Assert(PR_FALSE);
         return SECFailure;
     }
 
     SECITEM_FreeItem(&xtnData->nextProto, PR_FALSE);
 
-    if (extension == ssl_app_layer_protocol_xtn &&
-        xtnData->nextProtoState != SSL_NEXT_PROTO_NEGOTIATED) {
-        /* The callback might say OK, but then it picks a default value - one
-         * that was not listed.  That's OK for NPN, but not ALPN. */
+    if (result.len < 1 || !result.data) {
+        /* Check that we actually got a result. */
         ssl3_ExtSendAlert(ss, alert_fatal, no_application_protocol);
         PORT_SetError(SSL_ERROR_NEXT_PROTOCOL_NO_PROTOCOL);
         return SECFailure;
     }
 
+    xtnData->nextProtoState = SSL_NEXT_PROTO_NEGOTIATED;
     xtnData->negotiated[xtnData->numNegotiated++] = extension;
     return SECITEM_CopyItem(NULL, &xtnData->nextProto, &result);
 }
@@ -356,7 +377,7 @@ ssl3_ServerHandleAppProtoXtn(const sslSocket *ss, TLSExtensionData *xtnData,
         return SECFailure;
     }
 
-    /* Unlike NPN, ALPN has extra redundant length information so that
+    /* ALPN has extra redundant length information so that
      * the extension is the same in both ClientHello and ServerHello. */
     rv = ssl3_ExtConsumeHandshakeNumber(ss, &count, 2, &data->data, &data->len);
     if (rv != SECSuccess || count != data->len) {
@@ -386,39 +407,6 @@ ssl3_ServerHandleAppProtoXtn(const sslSocket *ss, TLSExtensionData *xtnData,
         }
     }
     return SECSuccess;
-}
-
-SECStatus
-ssl3_ClientHandleNextProtoNegoXtn(const sslSocket *ss, TLSExtensionData *xtnData,
-                                  SECItem *data)
-{
-    PORT_Assert(ss->version < SSL_LIBRARY_VERSION_TLS_1_3);
-    PORT_Assert(!ss->firstHsDone);
-
-    if (ssl3_ExtensionNegotiated(ss, ssl_app_layer_protocol_xtn)) {
-        /* If the server negotiated ALPN then it has already told us what
-         * protocol to use, so it doesn't make sense for us to try to negotiate
-         * a different one by sending the NPN handshake message. However, if
-         * we've negotiated NPN then we're required to send the NPN handshake
-         * message. Thus, these two extensions cannot both be negotiated on the
-         * same connection. */
-        ssl3_ExtSendAlert(ss, alert_fatal, illegal_parameter);
-        PORT_SetError(SSL_ERROR_BAD_SERVER);
-        return SECFailure;
-    }
-
-    /* We should only get this call if we sent the extension, so
-     * ss->nextProtoCallback needs to be non-NULL.  However, it is possible
-     * that an application erroneously cleared the callback between the time
-     * we sent the ClientHello and now. */
-    if (!ss->nextProtoCallback) {
-        PORT_Assert(0);
-        ssl3_ExtSendAlert(ss, alert_fatal, internal_error);
-        PORT_SetError(SSL_ERROR_NEXT_PROTOCOL_NO_CALLBACK);
-        return SECFailure;
-    }
-
-    return ssl3_SelectAppProtocol(ss, xtnData, ssl_next_proto_nego_xtn, data);
 }
 
 SECStatus
@@ -475,19 +463,6 @@ ssl3_ClientHandleAppProtoXtn(const sslSocket *ss, TLSExtensionData *xtnData,
 }
 
 SECStatus
-ssl3_ClientSendNextProtoNegoXtn(const sslSocket *ss, TLSExtensionData *xtnData,
-                                sslBuffer *buf, PRBool *added)
-{
-    /* Renegotiations do not send this extension. */
-    if (!ss->opt.enableNPN || !ss->nextProtoCallback || ss->firstHsDone) {
-        return SECSuccess;
-    }
-
-    *added = PR_TRUE;
-    return SECSuccess;
-}
-
-SECStatus
 ssl3_ClientSendAppProtoXtn(const sslSocket *ss, TLSExtensionData *xtnData,
                            sslBuffer *buf, PRBool *added)
 {
@@ -499,35 +474,15 @@ ssl3_ClientSendAppProtoXtn(const sslSocket *ss, TLSExtensionData *xtnData,
         return SECSuccess;
     }
 
-    /* NPN requires that the client's fallback protocol is first in the
-     * list. However, ALPN sends protocols in preference order. So move the
-     * first protocol to the end of the list. */
-
     if (len > 0) {
         /* Each protocol string is prefixed with a single byte length. */
-        unsigned int i;
-
         rv = sslBuffer_AppendNumber(buf, len, 2);
         if (rv != SECSuccess) {
             return SECFailure;
         }
-
-        i = ss->opt.nextProtoNego.data[0] + 1;
-        if (i <= len) {
-            rv = sslBuffer_Append(buf, &ss->opt.nextProtoNego.data[i], len - i);
-            if (rv != SECSuccess) {
-                return SECFailure;
-            }
-            rv = sslBuffer_Append(buf, ss->opt.nextProtoNego.data, i);
-            if (rv != SECSuccess) {
-                return SECFailure;
-            }
-        } else {
-            /* This seems to be invalid data so we'll send as-is. */
-            rv = sslBuffer_Append(buf, ss->opt.nextProtoNego.data, len);
-            if (rv != SECSuccess) {
-                return SECFailure;
-            }
+        rv = sslBuffer_Append(buf, ss->opt.nextProtoNego.data, len);
+        if (rv != SECSuccess) {
+            return SECFailure;
         }
     }
 
@@ -1261,17 +1216,18 @@ ssl3_ProcessSessionTicketCommon(sslSocket *ss, const SECItem *ticket,
                                   &decryptedTicket.len,
                                   decryptedTicket.len);
     if (rv != SECSuccess) {
-        SECITEM_ZfreeItem(&decryptedTicket, PR_FALSE);
-
-        /* Fail with no ticket if we're not a recipient. Otherwise
-         * it's a hard failure. */
-        if (PORT_GetError() != SEC_ERROR_NOT_A_RECIPIENT) {
-            SSL3_SendAlert(ss, alert_fatal, illegal_parameter);
-            return SECFailure;
+        /* Ignore decryption failure if we are doing TLS 1.3; that
+         * means the server rejects the client's resumption
+         * attempt. In TLS 1.2, however, it's a hard failure, unless
+         * it's just because we're not the recipient of the ticket. */
+        if (ss->version >= SSL_LIBRARY_VERSION_TLS_1_3 ||
+            PORT_GetError() == SEC_ERROR_NOT_A_RECIPIENT) {
+            SECITEM_ZfreeItem(&decryptedTicket, PR_FALSE);
+            return SECSuccess;
         }
 
-        /* We didn't have the right key, so pretend we don't have a
-         * ticket. */
+        SSL3_SendAlert(ss, alert_fatal, illegal_parameter);
+        goto loser;
     }
 
     rv = ssl_ParseSessionTicket(ss, &decryptedTicket, &parsedTicket);
@@ -1953,5 +1909,69 @@ ssl_HandleSupportedGroupsXtn(const sslSocket *ss, TLSExtensionData *xtnData,
     /* Remember that we negotiated this extension. */
     xtnData->negotiated[xtnData->numNegotiated++] = ssl_supported_groups_xtn;
 
+    return SECSuccess;
+}
+
+SECStatus
+ssl_HandleRecordSizeLimitXtn(const sslSocket *ss, TLSExtensionData *xtnData,
+                             SECItem *data)
+{
+    SECStatus rv;
+    PRUint32 limit;
+    PRUint32 maxLimit = (ss->version >= SSL_LIBRARY_VERSION_TLS_1_3)
+                            ? (MAX_FRAGMENT_LENGTH + 1)
+                            : MAX_FRAGMENT_LENGTH;
+
+    rv = ssl3_ExtConsumeHandshakeNumber(ss, &limit, 2, &data->data, &data->len);
+    if (rv != SECSuccess) {
+        return SECFailure;
+    }
+    if (data->len != 0 || limit < 64) {
+        ssl3_ExtSendAlert(ss, alert_fatal, decode_error);
+        PORT_SetError(SSL_ERROR_RX_MALFORMED_HANDSHAKE);
+        return SECFailure;
+    }
+
+    if (ss->sec.isServer) {
+        rv = ssl3_RegisterExtensionSender(ss, xtnData, ssl_record_size_limit_xtn,
+                                          &ssl_SendRecordSizeLimitXtn);
+        if (rv != SECSuccess) {
+            return SECFailure; /* error already set. */
+        }
+    } else if (limit > maxLimit) {
+        /* The client can sensibly check the maximum. */
+        ssl3_ExtSendAlert(ss, alert_fatal, illegal_parameter);
+        PORT_SetError(SSL_ERROR_RX_MALFORMED_HANDSHAKE);
+        return SECFailure;
+    }
+
+    /* We can't enforce the maximum on a server. But we do need to ensure
+     * that we don't apply a limit that is too large. */
+    xtnData->recordSizeLimit = PR_MIN(maxLimit, limit);
+    xtnData->negotiated[xtnData->numNegotiated++] = ssl_record_size_limit_xtn;
+    return SECSuccess;
+}
+
+SECStatus
+ssl_SendRecordSizeLimitXtn(const sslSocket *ss, TLSExtensionData *xtnData,
+                           sslBuffer *buf, PRBool *added)
+{
+    PRUint32 maxLimit;
+    if (ss->sec.isServer) {
+        maxLimit = (ss->version >= SSL_LIBRARY_VERSION_TLS_1_3)
+                       ? (MAX_FRAGMENT_LENGTH + 1)
+                       : MAX_FRAGMENT_LENGTH;
+    } else {
+        maxLimit = (ss->vrange.max >= SSL_LIBRARY_VERSION_TLS_1_3)
+                       ? (MAX_FRAGMENT_LENGTH + 1)
+                       : MAX_FRAGMENT_LENGTH;
+    }
+    PRUint32 limit = PR_MIN(ss->opt.recordSizeLimit, maxLimit);
+    SECStatus rv = sslBuffer_AppendNumber(buf, limit, 2);
+    if (rv != SECSuccess) {
+        return SECFailure;
+    }
+
+    *added = PR_TRUE;
     return SECSuccess;
 }

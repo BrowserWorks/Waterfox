@@ -103,33 +103,47 @@ TEST_P(TlsPaddingTest, LastByteOfPadWrong) {
 
 class RecordReplacer : public TlsRecordFilter {
  public:
-  RecordReplacer(const std::shared_ptr<TlsAgent>& agent, size_t size)
-      : TlsRecordFilter(agent), enabled_(false), size_(size) {}
+  RecordReplacer(const std::shared_ptr<TlsAgent>& a, size_t size)
+      : TlsRecordFilter(a), size_(size) {
+    Disable();
+  }
 
   PacketFilter::Action FilterRecord(const TlsRecordHeader& header,
                                     const DataBuffer& data,
                                     DataBuffer* changed) override {
-    if (!enabled_) {
-      return KEEP;
-    }
-
-    EXPECT_EQ(kTlsApplicationDataType, header.content_type());
+    EXPECT_EQ(ssl_ct_application_data, header.content_type());
     changed->Allocate(size_);
 
     for (size_t i = 0; i < size_; ++i) {
       changed->data()[i] = i & 0xff;
     }
 
-    enabled_ = false;
+    Disable();
     return CHANGE;
   }
 
-  void Enable() { enabled_ = true; }
-
  private:
-  bool enabled_;
   size_t size_;
 };
+
+TEST_P(TlsConnectStream, BadRecordMac) {
+  EnsureTlsSetup();
+  Connect();
+  client_->SetFilter(std::make_shared<TlsRecordLastByteDamager>(client_));
+  ExpectAlert(server_, kTlsAlertBadRecordMac);
+  client_->SendData(10);
+
+  // Read from the client, get error.
+  uint8_t buf[10];
+  PRInt32 rv = PR_Read(server_->ssl_fd(), buf, sizeof(buf));
+  EXPECT_GT(0, rv);
+  EXPECT_EQ(SSL_ERROR_BAD_MAC_READ, PORT_GetError());
+
+  // Read the server alert.
+  rv = PR_Read(client_->ssl_fd(), buf, sizeof(buf));
+  EXPECT_GT(0, rv);
+  EXPECT_EQ(SSL_ERROR_BAD_MAC_ALERT, PORT_GetError());
+}
 
 TEST_F(TlsConnectStreamTls13, LargeRecord) {
   EnsureTlsSetup();
@@ -166,6 +180,29 @@ TEST_F(TlsConnectStreamTls13, TooLargeRecord) {
   rv = PR_Read(client_->ssl_fd(), buf, sizeof(buf));
   EXPECT_GT(0, rv);
   EXPECT_EQ(SSL_ERROR_RECORD_OVERFLOW_ALERT, PORT_GetError());
+}
+
+class ShortHeaderChecker : public PacketFilter {
+ public:
+  PacketFilter::Action Filter(const DataBuffer& input, DataBuffer* output) {
+    // The first octet should be 0b001xxxxx.
+    EXPECT_EQ(1, input.data()[0] >> 5);
+    return KEEP;
+  }
+};
+
+TEST_F(TlsConnectDatagram13, ShortHeadersClient) {
+  Connect();
+  client_->SetOption(SSL_ENABLE_DTLS_SHORT_HEADER, PR_TRUE);
+  client_->SetFilter(std::make_shared<ShortHeaderChecker>());
+  SendReceive();
+}
+
+TEST_F(TlsConnectDatagram13, ShortHeadersServer) {
+  Connect();
+  server_->SetOption(SSL_ENABLE_DTLS_SHORT_HEADER, PR_TRUE);
+  server_->SetFilter(std::make_shared<ShortHeaderChecker>());
+  SendReceive();
 }
 
 const static size_t kContentSizesArr[] = {

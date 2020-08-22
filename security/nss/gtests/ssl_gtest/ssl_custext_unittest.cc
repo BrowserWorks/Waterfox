@@ -68,6 +68,7 @@ static const uint16_t kManyExtensions[] = {
     ssl_next_proto_nego_xtn,
     ssl_renegotiation_info_xtn,
     ssl_tls13_short_header_xtn,
+    ssl_record_size_limit_xtn,
     1,
     0xffff};
 // The list here includes all extensions we expect to use (SSL_MAX_EXTENSIONS),
@@ -131,7 +132,7 @@ TEST_F(TlsConnectStreamTls13, CustomExtensionEmptyWriterServer) {
   // Sending extensions that the client doesn't expect leads to extensions
   // appearing even if the client didn't send one, or in the wrong messages.
   client_->ExpectSendAlert(kTlsAlertUnsupportedExtension);
-  server_->ExpectSendAlert(kTlsAlertBadRecordMac);
+  server_->ExpectSendAlert(kTlsAlertUnexpectedMessage);
   ConnectExpectFail();
 }
 
@@ -349,7 +350,7 @@ TEST_F(TlsConnectStreamTls13, CustomExtensionUnsolicitedServer) {
   auto capture = MakeTlsFilter<TlsExtensionCapture>(server_, extension_code);
 
   client_->ExpectSendAlert(kTlsAlertUnsupportedExtension);
-  server_->ExpectSendAlert(kTlsAlertBadRecordMac);
+  server_->ExpectSendAlert(kTlsAlertUnexpectedMessage);
   ConnectExpectFail();
 
   EXPECT_TRUE(capture->captured());
@@ -400,7 +401,7 @@ TEST_F(TlsConnectStreamTls13, CustomExtensionClientReject) {
   EXPECT_EQ(SECSuccess, rv);
 
   client_->ExpectSendAlert(kTlsAlertHandshakeFailure);
-  server_->ExpectSendAlert(kTlsAlertBadRecordMac);
+  server_->ExpectSendAlert(kTlsAlertUnexpectedMessage);
   ConnectExpectFail();
 }
 
@@ -450,7 +451,7 @@ TEST_F(TlsConnectStreamTls13, CustomExtensionClientRejectAlert) {
   EXPECT_EQ(SECSuccess, rv);
 
   client_->ExpectSendAlert(kCustomAlert);
-  server_->ExpectSendAlert(kTlsAlertBadRecordMac);
+  server_->ExpectSendAlert(kTlsAlertUnexpectedMessage);
   ConnectExpectFail();
 }
 

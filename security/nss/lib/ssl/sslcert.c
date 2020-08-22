@@ -256,7 +256,8 @@ ssl_PopulateKeyPair(sslServerCert *sc, sslKeyPair *keyPair)
 
         /* Get the size of the cert's public key, and remember it. */
         sc->serverKeyBits = SECKEY_PublicKeyStrengthInBits(keyPair->pubKey);
-        if (sc->serverKeyBits == 0) {
+        if (sc->serverKeyBits == 0 ||
+            (keyType == rsaKey && sc->serverKeyBits > SSL_MAX_RSA_KEY_BITS)) {
             PORT_SetError(SEC_ERROR_INVALID_ARGS);
             return SECFailure;
         }
@@ -435,8 +436,6 @@ ssl_GetCertificateAuthTypes(CERTCertificate *cert, SSLAuthType targetAuthType)
         case SEC_OID_PKCS1_RSA_ENCRYPTION:
             if (cert->keyUsage & KU_DIGITAL_SIGNATURE) {
                 authTypes |= 1 << ssl_auth_rsa_sign;
-                /* This certificate is RSA, assume that it's also PSS. */
-                authTypes |= 1 << ssl_auth_rsa_pss;
             }
 
             if (cert->keyUsage & KU_KEY_ENCIPHERMENT) {

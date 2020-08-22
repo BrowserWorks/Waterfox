@@ -16,32 +16,7 @@
 #include "nss.h"      /* for NSS_RegisterShutdown */
 #include "prinit.h"   /* for PR_CallOnceWithArg */
 
-/* Returns a SECStatus: SECSuccess or SECFailure, NOT SECWouldBlock.
- *
- * Currently, the list of functions called through ss->handshake is:
- *
- * In sslsocks.c:
- *  SocksGatherRecord
- *  SocksHandleReply
- *  SocksStartGather
- *
- * In sslcon.c:
- *  ssl_GatherRecord1stHandshake
- *  ssl_BeginClientHandshake
- *  ssl_BeginServerHandshake
- *
- * The ss->handshake function returns SECWouldBlock if it was returned by
- *  one of the callback functions, via one of these paths:
- *
- * -    ssl_GatherRecord1stHandshake() -> ssl3_GatherCompleteHandshake() ->
- *  ssl3_HandleRecord() -> ssl3_HandleHandshake() ->
- *  ssl3_HandleHandshakeMessage() -> ssl3_HandleCertificate() ->
- *  ss->handleBadCert()
- *
- * -    ssl_GatherRecord1stHandshake() -> ssl3_GatherCompleteHandshake() ->
- *  ssl3_HandleRecord() -> ssl3_HandleHandshake() ->
- *  ssl3_HandleHandshakeMessage() -> ssl3_HandleCertificateRequest() ->
- *  ss->getClientAuthData()
+/* Step through the handshake functions.
  *
  * Called from: SSL_ForceHandshake  (below),
  *              ssl_SecureRecv      (below) and
@@ -52,10 +27,10 @@
  *
  * Caller must hold the (write) handshakeLock.
  */
-int
+SECStatus
 ssl_Do1stHandshake(sslSocket *ss)
 {
-    int rv = SECSuccess;
+    SECStatus rv = SECSuccess;
 
     while (ss->handshake && rv == SECSuccess) {
         PORT_Assert(ss->opt.noLocks || ssl_Have1stHandshakeLock(ss));
@@ -70,10 +45,6 @@ ssl_Do1stHandshake(sslSocket *ss)
     PORT_Assert(ss->opt.noLocks || !ssl_HaveXmitBufLock(ss));
     PORT_Assert(ss->opt.noLocks || !ssl_HaveSSL3HandshakeLock(ss));
 
-    if (rv == SECWouldBlock) {
-        PORT_SetError(PR_WOULD_BLOCK_ERROR);
-        rv = SECFailure;
-    }
     return rv;
 }
 
@@ -106,8 +77,8 @@ ssl_FinishHandshake(sslSocket *ss)
 static SECStatus
 ssl3_AlwaysBlock(sslSocket *ss)
 {
-    PORT_SetError(PR_WOULD_BLOCK_ERROR); /* perhaps redundant. */
-    return SECWouldBlock;
+    PORT_SetError(PR_WOULD_BLOCK_ERROR);
+    return SECFailure;
 }
 
 /*
@@ -400,10 +371,13 @@ SSL_ForceHandshake(PRFileDesc *fd)
         ssl_ReleaseRecvBufLock(ss);
         if (gatherResult > 0) {
             rv = SECSuccess;
-        } else if (gatherResult == 0) {
-            PORT_SetError(PR_END_OF_FILE_ERROR);
-        } else if (gatherResult == SECWouldBlock) {
-            PORT_SetError(PR_WOULD_BLOCK_ERROR);
+        } else {
+            if (gatherResult == 0) {
+                PORT_SetError(PR_END_OF_FILE_ERROR);
+            }
+            /* We can rely on ssl3_GatherCompleteHandshake to set
+             * PR_WOULD_BLOCK_ERROR as needed here. */
+            rv = SECFailure;
         }
     } else {
         PORT_Assert(!ss->firstHsDone);
@@ -515,8 +489,7 @@ DoRecv(sslSocket *ss, unsigned char *out, int len, int flags)
                              SSL_GETPID(), ss->fd));
                 goto done;
             }
-            if ((rv != SECWouldBlock) &&
-                (PR_GetError() != PR_WOULD_BLOCK_ERROR)) {
+            if (PR_GetError() != PR_WOULD_BLOCK_ERROR) {
                 /* Some random error */
                 goto done;
             }
@@ -685,23 +658,6 @@ ssl_SecureConnect(sslSocket *ss, const PRNetAddr *sa)
 }
 
 /*
- * The TLS 1.2 RFC 5246, Section 7.2.1 says:
- *
- *     Unless some other fatal alert has been transmitted, each party is
- *     required to send a close_notify alert before closing the write side
- *     of the connection.  The other party MUST respond with a close_notify
- *     alert of its own and close down the connection immediately,
- *     discarding any pending writes.  It is not required for the initiator
- *     of the close to wait for the responding close_notify alert before
- *     closing the read side of the connection.
- *
- * The second sentence requires that we send a close_notify alert when we
- * have received a close_notify alert.  In practice, all SSL implementations
- * close the socket immediately after sending a close_notify alert (which is
- * allowed by the third sentence), so responding with a close_notify alert
- * would result in a write failure with the ECONNRESET error.  This is why
- * we don't respond with a close_notify alert.
- *
  * Also, in the unlikely event that the TCP pipe is full and the peer stops
  * reading, the SSL3_SendAlert call in ssl_SecureClose and ssl_SecureShutdown
  * may block indefinitely in blocking mode, and may fail (without retrying)
@@ -714,8 +670,7 @@ ssl_SecureClose(sslSocket *ss)
     int rv;
 
     if (!(ss->shutdownHow & ssl_SHUTDOWN_SEND) &&
-        ss->firstHsDone &&
-        !ss->recvdCloseNotify) {
+        ss->firstHsDone) {
 
         /* We don't want the final alert to be Nagle delayed. */
         if (!ss->delayDisabled) {
@@ -744,8 +699,7 @@ ssl_SecureShutdown(sslSocket *ss, int nsprHow)
 
     if ((sslHow & ssl_SHUTDOWN_SEND) != 0 &&
         !(ss->shutdownHow & ssl_SHUTDOWN_SEND) &&
-        ss->firstHsDone &&
-        !ss->recvdCloseNotify) {
+        ss->firstHsDone) {
 
         (void)SSL3_SendAlert(ss, alert_warning, close_notify);
     }
@@ -760,13 +714,14 @@ ssl_SecureShutdown(sslSocket *ss, int nsprHow)
 /************************************************************************/
 
 static SECStatus
-tls13_CheckKeyUpdate(sslSocket *ss, CipherSpecDirection dir)
+tls13_CheckKeyUpdate(sslSocket *ss, SSLSecretDirection dir)
 {
     PRBool keyUpdate;
     ssl3CipherSpec *spec;
     sslSequenceNumber seqNum;
     sslSequenceNumber margin;
-    SECStatus rv;
+    tls13KeyUpdateRequest keyUpdateRequest;
+    SECStatus rv = SECSuccess;
 
     /* Bug 1413368: enable for DTLS */
     if (ss->version < SSL_LIBRARY_VERSION_TLS_1_3 || IS_DTLS(ss)) {
@@ -784,14 +739,14 @@ tls13_CheckKeyUpdate(sslSocket *ss, CipherSpecDirection dir)
      * having the write margin larger reduces the number of times that a
      * KeyUpdate is sent by a reader. */
     ssl_GetSpecReadLock(ss);
-    if (dir == CipherSpecRead) {
+    if (dir == ssl_secret_read) {
         spec = ss->ssl3.crSpec;
         margin = spec->cipherDef->max_records / 8;
     } else {
         spec = ss->ssl3.cwSpec;
         margin = spec->cipherDef->max_records / 4;
     }
-    seqNum = spec->seqNum;
+    seqNum = spec->nextSeqNum;
     keyUpdate = seqNum > spec->cipherDef->max_records - margin;
     ssl_ReleaseSpecReadLock(ss);
     if (!keyUpdate) {
@@ -800,10 +755,16 @@ tls13_CheckKeyUpdate(sslSocket *ss, CipherSpecDirection dir)
 
     SSL_TRC(5, ("%d: SSL[%d]: automatic key update at %llx for %s cipher spec",
                 SSL_GETPID(), ss->fd, seqNum,
-                (dir == CipherSpecRead) ? "read" : "write"));
+                (dir == ssl_secret_read) ? "read" : "write"));
+    keyUpdateRequest = (dir == ssl_secret_read) ? update_requested : update_not_requested;
     ssl_GetSSL3HandshakeLock(ss);
-    rv = tls13_SendKeyUpdate(ss, (dir == CipherSpecRead) ? update_requested : update_not_requested,
-                             dir == CipherSpecWrite /* buffer */);
+    if (ss->ssl3.clientCertRequested) {
+        ss->ssl3.keyUpdateDeferred = PR_TRUE;
+        ss->ssl3.deferredKeyUpdateRequest = keyUpdateRequest;
+    } else {
+        rv = tls13_SendKeyUpdate(ss, keyUpdateRequest,
+                                 dir == ssl_secret_write /* buffer */);
+    }
     ssl_ReleaseSSL3HandshakeLock(ss);
     return rv;
 }
@@ -848,7 +809,7 @@ ssl_SecureRecv(sslSocket *ss, unsigned char *buf, int len, int flags)
         }
         ssl_Release1stHandshakeLock(ss);
     } else {
-        if (tls13_CheckKeyUpdate(ss, CipherSpecRead) != SECSuccess) {
+        if (tls13_CheckKeyUpdate(ss, ssl_secret_read) != SECSuccess) {
             rv = PR_FAILURE;
         }
     }
@@ -922,20 +883,48 @@ ssl_SecureSend(sslSocket *ss, const unsigned char *buf, int len, int flags)
      */
     if (!ss->firstHsDone) {
         PRBool allowEarlySend = PR_FALSE;
+        PRBool firstClientWrite = PR_FALSE;
 
         ssl_Get1stHandshakeLock(ss);
-        if (ss->opt.enableFalseStart ||
-            (ss->opt.enable0RttData && !ss->sec.isServer)) {
+        /* The client can sometimes send before the handshake is fully
+         * complete. In TLS 1.2: false start; in TLS 1.3: 0-RTT. */
+        if (!ss->sec.isServer &&
+            (ss->opt.enableFalseStart || ss->opt.enable0RttData)) {
             ssl_GetSSL3HandshakeLock(ss);
-            /* The client can sometimes send before the handshake is fully
-             * complete. In TLS 1.2: false start; in TLS 1.3: 0-RTT. */
             zeroRtt = ss->ssl3.hs.zeroRttState == ssl_0rtt_sent ||
                       ss->ssl3.hs.zeroRttState == ssl_0rtt_accepted;
             allowEarlySend = ss->ssl3.hs.canFalseStart || zeroRtt;
+            firstClientWrite = ss->ssl3.hs.ws == idle_handshake;
+            ssl_ReleaseSSL3HandshakeLock(ss);
+        }
+        /* Allow the server to send 0.5 RTT data in TLS 1.3. Requesting a
+         * certificate implies that the server might condition its sending on
+         * client authentication, so force servers that do that to wait.
+         *
+         * What might not be obvious here is that this allows 0.5 RTT when doing
+         * PSK-based resumption.  As a result, 0.5 RTT is always enabled when
+         * early data is accepted.
+         *
+         * This check might be more conservative than absolutely necessary.
+         * It's possible that allowing 0.5 RTT data when the server requests,
+         * but does not require client authentication is safe because we can
+         * expect the server to check for a client certificate properly. */
+        if (ss->sec.isServer &&
+            ss->version >= SSL_LIBRARY_VERSION_TLS_1_3 &&
+            !tls13_ShouldRequestClientAuth(ss)) {
+            ssl_GetSSL3HandshakeLock(ss);
+            allowEarlySend = TLS13_IN_HS_STATE(ss, wait_finished);
             ssl_ReleaseSSL3HandshakeLock(ss);
         }
         if (!allowEarlySend && ss->handshake) {
             rv = ssl_Do1stHandshake(ss);
+        }
+        if (firstClientWrite) {
+            /* Wait until after sending ClientHello and double-check 0-RTT. */
+            ssl_GetSSL3HandshakeLock(ss);
+            zeroRtt = ss->ssl3.hs.zeroRttState == ssl_0rtt_sent ||
+                      ss->ssl3.hs.zeroRttState == ssl_0rtt_accepted;
+            ssl_ReleaseSSL3HandshakeLock(ss);
         }
         ssl_Release1stHandshakeLock(ss);
     }
@@ -946,7 +935,7 @@ ssl_SecureSend(sslSocket *ss, const unsigned char *buf, int len, int flags)
     }
 
     if (ss->firstHsDone) {
-        if (tls13_CheckKeyUpdate(ss, CipherSpecWrite) != SECSuccess) {
+        if (tls13_CheckKeyUpdate(ss, ssl_secret_write) != SECSuccess) {
             rv = PR_FAILURE;
             goto done;
         }
@@ -962,7 +951,7 @@ ssl_SecureSend(sslSocket *ss, const unsigned char *buf, int len, int flags)
          * 1-RTT later.
          */
         ssl_GetSpecReadLock(ss);
-        len = tls13_LimitEarlyData(ss, content_application_data, len);
+        len = tls13_LimitEarlyData(ss, ssl_ct_application_data, len);
         ssl_ReleaseSpecReadLock(ss);
     }
 
@@ -999,6 +988,35 @@ int
 ssl_SecureWrite(sslSocket *ss, const unsigned char *buf, int len)
 {
     return ssl_SecureSend(ss, buf, len, 0);
+}
+
+SECStatus
+SSLExp_RecordLayerWriteCallback(PRFileDesc *fd, SSLRecordWriteCallback cb,
+                                void *arg)
+{
+    sslSocket *ss = ssl_FindSocket(fd);
+    if (!ss) {
+        SSL_DBG(("%d: SSL[%d]: invalid socket for SSL_RecordLayerWriteCallback",
+                 SSL_GETPID(), fd));
+        return SECFailure;
+    }
+    if (IS_DTLS(ss)) {
+        SSL_DBG(("%d: SSL[%d]: DTLS socket for SSL_RecordLayerWriteCallback",
+                 SSL_GETPID(), fd));
+        PORT_SetError(SEC_ERROR_INVALID_ARGS);
+        return SECFailure;
+    }
+
+    /* This needs both HS and Xmit locks because this value is checked under
+     * both locks. HS to disable reading from the underlying IO layer; Xmit to
+     * prevent writing. */
+    ssl_GetSSL3HandshakeLock(ss);
+    ssl_GetXmitBufLock(ss);
+    ss->recordWriteCallback = cb;
+    ss->recordWriteCallbackArg = arg;
+    ssl_ReleaseXmitBufLock(ss);
+    ssl_ReleaseSSL3HandshakeLock(ss);
+    return SECSuccess;
 }
 
 SECStatus

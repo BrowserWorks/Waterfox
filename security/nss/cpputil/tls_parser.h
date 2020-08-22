@@ -20,13 +20,6 @@
 
 namespace nss_test {
 
-const uint8_t kTlsChangeCipherSpecType = 20;
-const uint8_t kTlsAlertType = 21;
-const uint8_t kTlsHandshakeType = 22;
-const uint8_t kTlsApplicationDataType = 23;
-const uint8_t kTlsAltHandshakeType = 24;
-const uint8_t kTlsAckType = 25;
-
 const uint8_t kTlsHandshakeClientHello = 1;
 const uint8_t kTlsHandshakeServerHello = 2;
 const uint8_t kTlsHandshakeNewSessionTicket = 4;
@@ -48,6 +41,8 @@ const uint8_t kTlsAlertBadRecordMac = 20;
 const uint8_t kTlsAlertRecordOverflow = 22;
 const uint8_t kTlsAlertHandshakeFailure = 40;
 const uint8_t kTlsAlertBadCertificate = 42;
+const uint8_t kTlsAlertCertificateRevoked = 44;
+const uint8_t kTlsAlertCertificateExpired = 45;
 const uint8_t kTlsAlertIllegalParameter = 47;
 const uint8_t kTlsAlertDecodeError = 50;
 const uint8_t kTlsAlertDecryptError = 51;
@@ -57,10 +52,11 @@ const uint8_t kTlsAlertInappropriateFallback = 86;
 const uint8_t kTlsAlertMissingExtension = 109;
 const uint8_t kTlsAlertUnsupportedExtension = 110;
 const uint8_t kTlsAlertUnrecognizedName = 112;
+const uint8_t kTlsAlertCertificateRequired = 116;
 const uint8_t kTlsAlertNoApplicationProtocol = 120;
 
 const uint8_t kTlsFakeChangeCipherSpec[] = {
-    kTlsChangeCipherSpecType,  // Type
+    ssl_ct_change_cipher_spec,  // Type
     0xfe,
     0xff,  // Version
     0x00,
@@ -83,6 +79,32 @@ static const uint8_t kTls13PskSignAuth = 1;
 
 inline std::ostream& operator<<(std::ostream& os, SSLProtocolVariant v) {
   return os << ((v == ssl_variant_stream) ? "TLS" : "DTLS");
+}
+
+inline std::ostream& operator<<(std::ostream& os, SSLContentType v) {
+  switch (v) {
+    case ssl_ct_change_cipher_spec:
+      return os << "CCS";
+    case ssl_ct_alert:
+      return os << "alert";
+    case ssl_ct_handshake:
+      return os << "handshake";
+    case ssl_ct_application_data:
+      return os << "application data";
+    case ssl_ct_ack:
+      return os << "ack";
+  }
+  return os << "UNKNOWN content type " << static_cast<int>(v);
+}
+
+inline std::ostream& operator<<(std::ostream& os, SSLSecretDirection v) {
+  switch (v) {
+    case ssl_secret_read:
+      return os << "read";
+    case ssl_secret_write:
+      return os << "write";
+  }
+  return os << "UNKNOWN secret direction " << static_cast<int>(v);
 }
 
 inline bool IsDtls(uint16_t version) { return (version & 0x8000) == 0x8000; }
@@ -123,6 +145,7 @@ class TlsParser {
   bool Read(uint32_t* val, size_t size);
   // Reads len bytes into dest buffer, overwriting it.
   bool Read(DataBuffer* dest, size_t len);
+  bool ReadFromMark(DataBuffer* val, size_t len, size_t mark);
   // Reads bytes into dest buffer, overwriting it.  The number of bytes is
   // determined by reading from len_size bytes from the stream first.
   bool ReadVariable(DataBuffer* dest, size_t len_size);

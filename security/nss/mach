@@ -10,27 +10,45 @@
 
 import sys
 import argparse
+import fnmatch
 import subprocess
 import os
 import platform
-from hashlib import sha256
+import tempfile
 
+from hashlib import sha256
+from gtests.common.wycheproof.genTestVectors import generate_test_vectors
+
+DEVNULL = open(os.devnull, 'wb')
 cwd = os.path.dirname(os.path.abspath(__file__))
 
+def run_tests(test, cycles="standard", env={}, silent=False):
+    domsuf = os.getenv('DOMSUF', "localdomain")
+    host = os.getenv('HOST', "localhost")
+    env = env.copy()
+    env.update({
+        "NSS_TESTS": test,
+        "NSS_CYCLES": cycles,
+        "DOMSUF": domsuf,
+        "HOST": host
+    })
+    os_env = os.environ
+    os_env.update(env)
+    command = cwd + "/tests/all.sh"
+    stdout = stderr = DEVNULL if silent else None
+    subprocess.check_call(command, env=os_env, stdout=stdout, stderr=stderr)
 
 class cfAction(argparse.Action):
-    docker_command = ["docker"]
+    docker_command = None
     restorecon = None
 
     def __call__(self, parser, args, values, option_string=None):
-        if not args.noroot:
-            self.setDockerCommand()
+        self.setDockerCommand(args)
 
         if values:
             files = [os.path.relpath(os.path.abspath(x), start=cwd) for x in values]
         else:
             files = self.modifiedFiles()
-        files = [os.path.join('/home/worker/nss', x) for x in files]
 
         # First check if we can run docker.
         try:
@@ -38,9 +56,16 @@ class cfAction(argparse.Action):
                 subprocess.check_call(
                     self.docker_command + ["images"], stdout=f)
         except:
-            print("Please install docker and start the docker daemon.")
-            sys.exit(1)
+            self.docker_command = None
 
+        if self.docker_command is None:
+            print("warning: running clang-format directly, which isn't guaranteed to be correct")
+            command = [cwd + "/automation/clang-format/run_clang_format.sh"] + files
+            repr(command)
+            subprocess.call(command)
+            return
+
+        files = [os.path.join('/home/worker/nss', x) for x in files]
         docker_image = 'clang-format-service:latest'
         cf_docker_folder = cwd + "/automation/clang-format"
 
@@ -93,17 +118,23 @@ class cfAction(argparse.Action):
         subprocess.check_call(command)
         return
 
-    def setDockerCommand(self):
+    def setDockerCommand(self, args):
+        from distutils.spawn import find_executable
         if platform.system() == "Linux":
-            from distutils.spawn import find_executable
-            self.restorecon = find_executable('restorecon')
-            self.docker_command = ["sudo"] + self.docker_command
+            self.restorecon = find_executable("restorecon")
+        dcmd = find_executable("docker")
+        if dcmd is not None:
+            self.docker_command = [dcmd]
+            if not args.noroot:
+                self.docker_command = ["sudo"] + self.docker_command
+        else:
+            self.docker_command = None
 
     def modifiedFiles(self):
         files = []
         if os.path.exists(os.path.join(cwd, '.hg')):
             st = subprocess.Popen(['hg', 'status', '-m', '-a'],
-                                  cwd=cwd, stdout=subprocess.PIPE)
+                                  cwd=cwd, stdout=subprocess.PIPE, universal_newlines=True)
             for line in iter(st.stdout.readline, ''):
                 files += [line[2:].rstrip()]
         elif os.path.exists(os.path.join(cwd, '.git')):
@@ -127,29 +158,63 @@ class cfAction(argparse.Action):
 class buildAction(argparse.Action):
 
     def __call__(self, parser, args, values, option_string=None):
-        cwd = os.path.dirname(os.path.abspath(__file__))
         subprocess.check_call([cwd + "/build.sh"] + values)
 
 
 class testAction(argparse.Action):
 
-    def runTest(self, test, cycles="standard"):
-        cwd = os.path.dirname(os.path.abspath(__file__))
-        domsuf = os.getenv('DOMSUF', "localdomain")
-        host = os.getenv('HOST', "localhost")
+    def __call__(self, parser, args, values, option_string=None):
+        run_tests(values)
+
+
+class covAction(argparse.Action):
+
+    def runSslGtests(self, outdir):
         env = {
-            "NSS_TESTS": test,
-            "NSS_CYCLES": cycles,
-            "DOMSUF": domsuf,
-            "HOST": host
+            "GTESTFILTER": "*", # Prevent parallel test runs.
+            "ASAN_OPTIONS": "coverage=1:coverage_dir=" + outdir
         }
-        os_env = os.environ
-        os_env.update(env)
-        command = cwd + "/tests/all.sh"
-        subprocess.check_call(command, env=os_env)
+
+        run_tests("ssl_gtests", env=env, silent=True)
+
+    def findSanCovFile(self, outdir):
+        for file in os.listdir(outdir):
+            if fnmatch.fnmatch(file, 'ssl_gtest.*.sancov'):
+                return os.path.join(outdir, file)
+
+        return None
 
     def __call__(self, parser, args, values, option_string=None):
-        self.runTest(values)
+        outdir = args.outdir
+        print("Output directory: " + outdir)
+
+        print("\nBuild with coverage sanitizers...\n")
+        sancov_args = "edge,no-prune,trace-pc-guard,trace-cmp"
+        subprocess.check_call([
+            os.path.join(cwd, "build.sh"), "-c", "--clang", "--asan",
+            "--sancov=" + sancov_args
+        ])
+
+        print("\nRun ssl_gtests to get a coverage report...")
+        self.runSslGtests(outdir)
+        print("Done.")
+
+        sancov_file = self.findSanCovFile(outdir)
+        if not sancov_file:
+            print("Couldn't find .sancov file.")
+            sys.exit(1)
+
+        symcov_file = os.path.join(outdir, "ssl_gtest.symcov")
+        out = open(symcov_file, 'wb')
+        subprocess.check_call([
+            "sancov",
+            "-blacklist=" + os.path.join(cwd, ".sancov-blacklist"),
+            "-symbolize", sancov_file,
+            os.path.join(cwd, "../dist/Debug/bin/ssl_gtest")
+        ], stdout=out)
+        out.close()
+
+        print("\nCoverage report: " + symcov_file)
 
 
 class commandsAction(argparse.Action):
@@ -158,6 +223,13 @@ class commandsAction(argparse.Action):
     def __call__(self, parser, args, values, option_string=None):
         for c in commandsAction.commands:
             print(c)
+
+class wycheproofAction(argparse.Action):
+
+    def __call__(self, parser, args, values, option_string=None):
+        generate_test_vectors()
+        clangFormat = cfAction(None, None, None)
+        clangFormat(None, args, None)
 
 
 def parse_arguments():
@@ -194,10 +266,20 @@ def parse_arguments():
     tests = [
         "cipher", "lowhash", "chains", "cert", "dbtests", "tools", "fips",
         "sdr", "crmf", "smime", "ssl", "ocsp", "merge", "pkits", "ec",
-        "gtests", "ssl_gtests"
+        "gtests", "ssl_gtests", "bogo", "interop", "policy"
     ]
     parser_test.add_argument(
         'test', choices=tests, help="Available tests", action=testAction)
+
+    parser_cov = subparsers.add_parser(
+        'coverage', help='Generate coverage report')
+    cov_modules = ["ssl_gtests"]
+    parser_cov.add_argument(
+        '--outdir', help='Output directory for coverage report data.',
+        default=tempfile.mkdtemp())
+    parser_cov.add_argument(
+        'module', choices=cov_modules, help="Available coverage modules",
+        action=covAction)
 
     parser_commands = subparsers.add_parser(
         'mach-commands',
@@ -206,6 +288,18 @@ def parse_arguments():
         'mach-commands',
         nargs='*',
         action=commandsAction)
+
+    parser_wycheproof = subparsers.add_parser(
+        'wycheproof',
+        help="generate wycheproof test headers")
+    parser_wycheproof.add_argument(
+        '--noroot',
+        help='On linux, suppress the use of \'sudo\' for running docker.',
+        action='store_true')
+    parser_wycheproof.add_argument(
+        'wycheproof',
+        nargs='*',
+        action=wycheproofAction)
 
     commandsAction.commands = [c for c in subparsers.choices]
     return parser.parse_args()

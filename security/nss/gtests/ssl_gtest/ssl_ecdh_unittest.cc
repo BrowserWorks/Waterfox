@@ -17,7 +17,7 @@ extern "C" {
 }
 
 #include "gtest_utils.h"
-#include "scoped_ptrs.h"
+#include "nss_scoped_ptrs.h"
 #include "tls_connect.h"
 #include "tls_filter.h"
 #include "tls_parser.h"
@@ -192,8 +192,8 @@ TEST_P(TlsConnectGenericPre13, P384PriorityFromModelSocket) {
 
 class TlsKeyExchangeGroupCapture : public TlsHandshakeFilter {
  public:
-  TlsKeyExchangeGroupCapture(const std::shared_ptr<TlsAgent> &agent)
-      : TlsHandshakeFilter(agent, {kTlsHandshakeServerKeyExchange}),
+  TlsKeyExchangeGroupCapture(const std::shared_ptr<TlsAgent> &a)
+      : TlsHandshakeFilter(a, {kTlsHandshakeServerKeyExchange}),
         group_(ssl_grp_none) {}
 
   SSLNamedGroup group() const { return group_; }
@@ -557,6 +557,113 @@ TEST_P(TlsConnectGenericPre13, ConnectECDHEmptyClientPoint) {
   MakeTlsFilter<ECCClientKEXFilter>(client_);
   ConnectExpectAlert(server_, kTlsAlertIllegalParameter);
   server_->CheckErrorCode(SSL_ERROR_RX_MALFORMED_CLIENT_KEY_EXCH);
+}
+
+// Damage ECParams/ECPoint of a SKE.
+class ECCServerKEXDamager : public TlsHandshakeFilter {
+ public:
+  ECCServerKEXDamager(const std::shared_ptr<TlsAgent> &server, ECType ec_type,
+                      SSLNamedGroup named_curve)
+      : TlsHandshakeFilter(server, {kTlsHandshakeServerKeyExchange}),
+        ec_type_(ec_type),
+        named_curve_(named_curve) {}
+
+ protected:
+  virtual PacketFilter::Action FilterHandshake(const HandshakeHeader &header,
+                                               const DataBuffer &input,
+                                               DataBuffer *output) {
+    size_t offset = 0;
+    output->Allocate(5);
+    offset = output->Write(offset, ec_type_, 1);
+    offset = output->Write(offset, named_curve_, 2);
+    // Write a point with fmt != EC_POINT_FORM_UNCOMPRESSED.
+    offset = output->Write(offset, 1U, 1);
+    (void)output->Write(offset, 0x02, 1);  // EC_POINT_FORM_COMPRESSED_Y0
+    return CHANGE;
+  }
+
+ private:
+  ECType ec_type_;
+  SSLNamedGroup named_curve_;
+};
+
+TEST_P(TlsConnectGenericPre13, ConnectUnsupportedCurveType) {
+  EnsureTlsSetup();
+  client_->DisableAllCiphers();
+  client_->EnableCiphersByKeyExchange(ssl_kea_ecdh);
+
+  MakeTlsFilter<ECCServerKEXDamager>(server_, ec_type_explicitPrime,
+                                     ssl_grp_none);
+  ConnectExpectAlert(client_, kTlsAlertHandshakeFailure);
+  client_->CheckErrorCode(SEC_ERROR_UNSUPPORTED_ELLIPTIC_CURVE);
+}
+
+TEST_P(TlsConnectGenericPre13, ConnectUnsupportedCurve) {
+  EnsureTlsSetup();
+  client_->DisableAllCiphers();
+  client_->EnableCiphersByKeyExchange(ssl_kea_ecdh);
+
+  MakeTlsFilter<ECCServerKEXDamager>(server_, ec_type_named,
+                                     ssl_grp_ffdhe_2048);
+  ConnectExpectAlert(client_, kTlsAlertHandshakeFailure);
+  client_->CheckErrorCode(SEC_ERROR_UNSUPPORTED_ELLIPTIC_CURVE);
+}
+
+TEST_P(TlsConnectGenericPre13, ConnectUnsupportedPointFormat) {
+  EnsureTlsSetup();
+  client_->DisableAllCiphers();
+  client_->EnableCiphersByKeyExchange(ssl_kea_ecdh);
+
+  MakeTlsFilter<ECCServerKEXDamager>(server_, ec_type_named,
+                                     ssl_grp_ec_secp256r1);
+  ConnectExpectAlert(client_, kTlsAlertHandshakeFailure);
+  client_->CheckErrorCode(SEC_ERROR_UNSUPPORTED_EC_POINT_FORM);
+}
+
+// Replace SignatureAndHashAlgorithm of a SKE.
+class ECCServerKEXSigAlgReplacer : public TlsHandshakeFilter {
+ public:
+  ECCServerKEXSigAlgReplacer(const std::shared_ptr<TlsAgent> &server,
+                             SSLSignatureScheme sig_scheme)
+      : TlsHandshakeFilter(server, {kTlsHandshakeServerKeyExchange}),
+        sig_scheme_(sig_scheme) {}
+
+ protected:
+  virtual PacketFilter::Action FilterHandshake(const HandshakeHeader &header,
+                                               const DataBuffer &input,
+                                               DataBuffer *output) {
+    *output = input;
+
+    uint32_t point_len;
+    EXPECT_TRUE(output->Read(3, 1, &point_len));
+    output->Write(4 + point_len, sig_scheme_, 2);
+
+    return CHANGE;
+  }
+
+ private:
+  SSLSignatureScheme sig_scheme_;
+};
+
+TEST_P(TlsConnectTls12, ConnectUnsupportedSigAlg) {
+  EnsureTlsSetup();
+  client_->DisableAllCiphers();
+  client_->EnableCiphersByKeyExchange(ssl_kea_ecdh);
+
+  MakeTlsFilter<ECCServerKEXSigAlgReplacer>(server_, ssl_sig_none);
+  ConnectExpectAlert(client_, kTlsAlertIllegalParameter);
+  client_->CheckErrorCode(SSL_ERROR_UNSUPPORTED_SIGNATURE_ALGORITHM);
+}
+
+TEST_P(TlsConnectTls12, ConnectIncorrectSigAlg) {
+  EnsureTlsSetup();
+  client_->DisableAllCiphers();
+  client_->EnableCiphersByKeyExchange(ssl_kea_ecdh);
+
+  MakeTlsFilter<ECCServerKEXSigAlgReplacer>(server_,
+                                            ssl_sig_ecdsa_secp256r1_sha256);
+  ConnectExpectAlert(client_, kTlsAlertIllegalParameter);
+  client_->CheckErrorCode(SSL_ERROR_INCORRECT_SIGNATURE_ALGORITHM);
 }
 
 INSTANTIATE_TEST_CASE_P(KeyExchangeTest, TlsKeyExchangeTest,

@@ -9,7 +9,7 @@
 #include "cmslocal.h"
 
 #include "cert.h"
-#include "key.h"
+#include "keyhi.h"
 #include "secasn1.h"
 #include "secitem.h"
 #include "secoid.h"
@@ -82,7 +82,7 @@ nss_cmsrecipientinfo_create(NSSCMSMessage *cmsg,
     if (DERinput) {
         /* decode everything from DER */
         SECItem newinput;
-        SECStatus rv = SECITEM_CopyItem(poolp, &newinput, DERinput);
+        rv = SECITEM_CopyItem(poolp, &newinput, DERinput);
         if (SECSuccess != rv)
             goto loser;
         rv = SEC_QuickDERDecodeItem(poolp, ri, NSSCMSRecipientInfoTemplate, &newinput);

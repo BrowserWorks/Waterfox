@@ -322,4 +322,15 @@ _NSSUTIL_UTF8ToWide;-
 _NSSUTIL_Access;-
 ;-    local:
 ;-       *;
-;-};
+;+NSSUTIL_3.38 {         # NSS Utilities 3.38 release
+;+    global:
+SECITEM_MakeItem;
+;+    local:
+;+       *;
+;+};
+;+NSSUTIL_3.39 {         # NSS Utilities 3.39 release
+;+    global:
+NSSUTIL_AddNSSFlagToModuleSpec;
+;+    local:
+;+       *;
+;+};

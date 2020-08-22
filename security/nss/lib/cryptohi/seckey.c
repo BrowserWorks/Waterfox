@@ -1211,6 +1211,37 @@ SECKEY_CopyPublicKey(const SECKEYPublicKey *pubk)
     return NULL;
 }
 
+/*
+ * Use the private key to find a public key handle. The handle will be on
+ * the same slot as the private key.
+ */
+static CK_OBJECT_HANDLE
+seckey_FindPublicKeyHandle(SECKEYPrivateKey *privk, SECKEYPublicKey *pubk)
+{
+    CK_OBJECT_HANDLE keyID;
+
+    /* this helper function is only used below. If we want to make this more
+     * general, we would need to free up any already cached handles if the
+     * slot doesn't match up with the private key slot */
+    PORT_Assert(pubk->pkcs11ID == CK_INVALID_HANDLE);
+
+    /* first look for a matching public key */
+    keyID = PK11_MatchItem(privk->pkcs11Slot, privk->pkcs11ID, CKO_PUBLIC_KEY);
+    if (keyID != CK_INVALID_HANDLE) {
+        return keyID;
+    }
+
+    /* none found, create a temp one, make the pubk the owner */
+    pubk->pkcs11ID = PK11_DerivePubKeyFromPrivKey(privk);
+    if (pubk->pkcs11ID == CK_INVALID_HANDLE) {
+        /* end of the road. Token doesn't have matching public key, nor can
+          * token regenerate a new public key from and existing private key. */
+        return CK_INVALID_HANDLE;
+    }
+    pubk->pkcs11Slot = PK11_ReferenceSlot(privk->pkcs11Slot);
+    return pubk->pkcs11ID;
+}
+
 SECKEYPublicKey *
 SECKEY_ConvertToPublicKey(SECKEYPrivateKey *privk)
 {
@@ -1218,6 +1249,8 @@ SECKEY_ConvertToPublicKey(SECKEYPrivateKey *privk)
     PLArenaPool *arena;
     CERTCertificate *cert;
     SECStatus rv;
+    CK_OBJECT_HANDLE pubKeyHandle;
+    SECItem decodedPoint;
 
     /*
      * First try to look up the cert.
@@ -1248,11 +1281,47 @@ SECKEY_ConvertToPublicKey(SECKEYPrivateKey *privk)
 
     switch (privk->keyType) {
         case nullKey:
-        case dhKey:
-        case dsaKey:
             /* Nothing to query, if the cert isn't there, we're done -- no way
              * to get the public key */
             break;
+        case dsaKey:
+            pubKeyHandle = seckey_FindPublicKeyHandle(privk, pubk);
+            if (pubKeyHandle == CK_INVALID_HANDLE)
+                break;
+            rv = PK11_ReadAttribute(privk->pkcs11Slot, pubKeyHandle,
+                                    CKA_BASE, arena, &pubk->u.dsa.params.base);
+            if (rv != SECSuccess)
+                break;
+            rv = PK11_ReadAttribute(privk->pkcs11Slot, pubKeyHandle,
+                                    CKA_PRIME, arena, &pubk->u.dsa.params.prime);
+            if (rv != SECSuccess)
+                break;
+            rv = PK11_ReadAttribute(privk->pkcs11Slot, pubKeyHandle,
+                                    CKA_SUBPRIME, arena, &pubk->u.dsa.params.subPrime);
+            if (rv != SECSuccess)
+                break;
+            rv = PK11_ReadAttribute(privk->pkcs11Slot, pubKeyHandle,
+                                    CKA_VALUE, arena, &pubk->u.dsa.publicValue);
+            if (rv != SECSuccess)
+                break;
+            return pubk;
+        case dhKey:
+            pubKeyHandle = seckey_FindPublicKeyHandle(privk, pubk);
+            if (pubKeyHandle == CK_INVALID_HANDLE)
+                break;
+            rv = PK11_ReadAttribute(privk->pkcs11Slot, pubKeyHandle,
+                                    CKA_BASE, arena, &pubk->u.dh.base);
+            if (rv != SECSuccess)
+                break;
+            rv = PK11_ReadAttribute(privk->pkcs11Slot, pubKeyHandle,
+                                    CKA_PRIME, arena, &pubk->u.dh.prime);
+            if (rv != SECSuccess)
+                break;
+            rv = PK11_ReadAttribute(privk->pkcs11Slot, pubKeyHandle,
+                                    CKA_VALUE, arena, &pubk->u.dh.publicValue);
+            if (rv != SECSuccess)
+                break;
+            return pubk;
         case rsaKey:
             rv = PK11_ReadAttribute(privk->pkcs11Slot, privk->pkcs11ID,
                                     CKA_MODULUS, arena, &pubk->u.rsa.modulus);
@@ -1263,7 +1332,6 @@ SECKEY_ConvertToPublicKey(SECKEYPrivateKey *privk)
             if (rv != SECSuccess)
                 break;
             return pubk;
-            break;
         case ecKey:
             rv = PK11_ReadAttribute(privk->pkcs11Slot, privk->pkcs11ID,
                                     CKA_EC_PARAMS, arena, &pubk->u.ec.DEREncodedParams);
@@ -1273,7 +1341,23 @@ SECKEY_ConvertToPublicKey(SECKEYPrivateKey *privk)
             rv = PK11_ReadAttribute(privk->pkcs11Slot, privk->pkcs11ID,
                                     CKA_EC_POINT, arena, &pubk->u.ec.publicValue);
             if (rv != SECSuccess || pubk->u.ec.publicValue.len == 0) {
-                break;
+                pubKeyHandle = seckey_FindPublicKeyHandle(privk, pubk);
+                if (pubKeyHandle == CK_INVALID_HANDLE)
+                    break;
+                rv = PK11_ReadAttribute(privk->pkcs11Slot, pubKeyHandle,
+                                        CKA_EC_POINT, arena, &pubk->u.ec.publicValue);
+                if (rv != SECSuccess)
+                    break;
+            }
+            /* ec.publicValue should be decoded, PKCS #11 defines CKA_EC_POINT
+             * as encoded, but it's not always. try do decoded it and if it
+             * succeeds store the decoded value */
+            rv = SEC_QuickDERDecodeItem(arena, &decodedPoint,
+                                        SEC_ASN1_GET(SEC_OctetStringTemplate), &pubk->u.ec.publicValue);
+            if (rv == SECSuccess) {
+                /* both values are in the public key arena, so it's safe to
+                 * overwrite  the old value */
+                pubk->u.ec.publicValue = decodedPoint;
             }
             pubk->u.ec.encoding = ECPoint_Undefined;
             return pubk;
@@ -1281,7 +1365,9 @@ SECKEY_ConvertToPublicKey(SECKEYPrivateKey *privk)
             break;
     }
 
-    PORT_FreeArena(arena, PR_FALSE);
+    /* must use Destroy public key here, because some paths create temporary
+     * PKCS #11 objects which need to be freed */
+    SECKEY_DestroyPublicKey(pubk);
     return NULL;
 }
 
@@ -2020,66 +2106,63 @@ sec_GetMgfTypeByOidTag(SECOidTag tag)
 }
 
 SECStatus
-sec_RSAPSSParamsToMechanism(CK_RSA_PKCS_PSS_PARAMS *mech,
-                            const SECKEYRSAPSSParams *params)
+sec_DecodeRSAPSSParams(PLArenaPool *arena,
+                       const SECItem *params,
+                       SECOidTag *retHashAlg, SECOidTag *retMaskHashAlg,
+                       unsigned long *retSaltLength)
 {
-    SECStatus rv = SECSuccess;
-    SECOidTag hashAlgTag;
+    SECKEYRSAPSSParams pssParams;
+    SECOidTag hashAlg;
+    SECOidTag maskHashAlg;
     unsigned long saltLength;
     unsigned long trailerField;
+    SECStatus rv;
 
-    PORT_Memset(mech, 0, sizeof(CK_RSA_PKCS_PSS_PARAMS));
+    PORT_Memset(&pssParams, 0, sizeof(pssParams));
+    rv = SEC_QuickDERDecodeItem(arena, &pssParams,
+                                SECKEY_RSAPSSParamsTemplate,
+                                params);
+    if (rv != SECSuccess) {
+        return rv;
+    }
 
-    if (params->hashAlg) {
-        hashAlgTag = SECOID_GetAlgorithmTag(params->hashAlg);
+    if (pssParams.hashAlg) {
+        hashAlg = SECOID_GetAlgorithmTag(pssParams.hashAlg);
     } else {
-        hashAlgTag = SEC_OID_SHA1; /* default, SHA-1 */
-    }
-    mech->hashAlg = sec_GetHashMechanismByOidTag(hashAlgTag);
-    if (mech->hashAlg == CKM_INVALID_MECHANISM) {
-        return SECFailure;
+        hashAlg = SEC_OID_SHA1; /* default, SHA-1 */
     }
 
-    if (params->maskAlg) {
-        SECAlgorithmID maskHashAlg;
-        SECOidTag maskHashAlgTag;
-        PORTCheapArenaPool tmpArena;
+    if (pssParams.maskAlg) {
+        SECAlgorithmID algId;
 
-        if (SECOID_GetAlgorithmTag(params->maskAlg) != SEC_OID_PKCS1_MGF1) {
+        if (SECOID_GetAlgorithmTag(pssParams.maskAlg) != SEC_OID_PKCS1_MGF1) {
             /* only MGF1 is known to PKCS#11 */
             PORT_SetError(SEC_ERROR_INVALID_ALGORITHM);
             return SECFailure;
         }
 
-        PORT_InitCheapArena(&tmpArena, DER_DEFAULT_CHUNKSIZE);
-        rv = SEC_QuickDERDecodeItem(&tmpArena.arena, &maskHashAlg,
+        rv = SEC_QuickDERDecodeItem(arena, &algId,
                                     SEC_ASN1_GET(SECOID_AlgorithmIDTemplate),
-                                    &params->maskAlg->parameters);
-        PORT_DestroyCheapArena(&tmpArena);
+                                    &pssParams.maskAlg->parameters);
         if (rv != SECSuccess) {
             return rv;
         }
-        maskHashAlgTag = SECOID_GetAlgorithmTag(&maskHashAlg);
-        mech->mgf = sec_GetMgfTypeByOidTag(maskHashAlgTag);
-        if (mech->mgf == 0) {
-            return SECFailure;
-        }
+        maskHashAlg = SECOID_GetAlgorithmTag(&algId);
     } else {
-        mech->mgf = CKG_MGF1_SHA1; /* default, MGF1 with SHA-1 */
+        maskHashAlg = SEC_OID_SHA1; /* default, MGF1 with SHA-1 */
     }
 
-    if (params->saltLength.data) {
-        rv = SEC_ASN1DecodeInteger((SECItem *)&params->saltLength, &saltLength);
+    if (pssParams.saltLength.data) {
+        rv = SEC_ASN1DecodeInteger((SECItem *)&pssParams.saltLength, &saltLength);
         if (rv != SECSuccess) {
             return rv;
         }
     } else {
         saltLength = 20; /* default, 20 */
     }
-    mech->sLen = saltLength;
 
-    if (params->trailerField.data) {
-        rv = SEC_ASN1DecodeInteger((SECItem *)&params->trailerField, &trailerField);
+    if (pssParams.trailerField.data) {
+        rv = SEC_ASN1DecodeInteger((SECItem *)&pssParams.trailerField, &trailerField);
         if (rv != SECSuccess) {
             return rv;
         }
@@ -2091,5 +2174,46 @@ sec_RSAPSSParamsToMechanism(CK_RSA_PKCS_PSS_PARAMS *mech,
         }
     }
 
-    return rv;
+    if (retHashAlg) {
+        *retHashAlg = hashAlg;
+    }
+    if (retMaskHashAlg) {
+        *retMaskHashAlg = maskHashAlg;
+    }
+    if (retSaltLength) {
+        *retSaltLength = saltLength;
+    }
+
+    return SECSuccess;
+}
+
+SECStatus
+sec_DecodeRSAPSSParamsToMechanism(PLArenaPool *arena,
+                                  const SECItem *params,
+                                  CK_RSA_PKCS_PSS_PARAMS *mech)
+{
+    SECOidTag hashAlg;
+    SECOidTag maskHashAlg;
+    unsigned long saltLength;
+    SECStatus rv;
+
+    rv = sec_DecodeRSAPSSParams(arena, params,
+                                &hashAlg, &maskHashAlg, &saltLength);
+    if (rv != SECSuccess) {
+        return SECFailure;
+    }
+
+    mech->hashAlg = sec_GetHashMechanismByOidTag(hashAlg);
+    if (mech->hashAlg == CKM_INVALID_MECHANISM) {
+        return SECFailure;
+    }
+
+    mech->mgf = sec_GetMgfTypeByOidTag(maskHashAlg);
+    if (mech->mgf == 0) {
+        return SECFailure;
+    }
+
+    mech->sLen = saltLength;
+
+    return SECSuccess;
 }

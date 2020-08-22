@@ -18,6 +18,8 @@
 #include "private/pprio.h"
 #include "nss.h"
 #include "pk11pqg.h"
+#include "pk11pub.h"
+#include "tls13esni.h"
 
 static const sslSocketOps ssl_default_ops = { /* No SSL. */
                                               ssl_DefConnect,
@@ -55,6 +57,7 @@ static const sslSocketOps ssl_secure_ops = { /* SSL. */
 static sslOptions ssl_defaults = {
     .nextProtoNego = { siBuffer, NULL, 0 },
     .maxEarlyDataSize = 1 << 16,
+    .recordSizeLimit = MAX_FRAGMENT_LENGTH + 1,
     .useSecurity = PR_TRUE,
     .useSocks = PR_FALSE,
     .requestCertificate = PR_FALSE,
@@ -72,7 +75,6 @@ static sslOptions ssl_defaults = {
     .enableFalseStart = PR_FALSE,
     .cbcRandomIV = PR_TRUE,
     .enableOCSPStapling = PR_FALSE,
-    .enableNPN = PR_FALSE,
     .enableALPN = PR_TRUE,
     .reuseServerECDHEKey = PR_TRUE,
     .enableFallbackSCSV = PR_FALSE,
@@ -81,7 +83,11 @@ static sslOptions ssl_defaults = {
     .enableSignedCertTimestamps = PR_FALSE,
     .requireDHENamedGroups = PR_FALSE,
     .enable0RttData = PR_FALSE,
-    .enableTls13CompatMode = PR_FALSE
+    .enableTls13CompatMode = PR_FALSE,
+    .enableDtlsShortHeader = PR_FALSE,
+    .enableHelloDowngradeCheck = PR_FALSE,
+    .enableV2CompatibleHello = PR_FALSE,
+    .enablePostHandshakeAuth = PR_FALSE
 };
 
 /*
@@ -358,6 +364,13 @@ ssl_DupSocket(sslSocket *os)
         ss->resumptionTokenCallback = os->resumptionTokenCallback;
         ss->resumptionTokenContext = os->resumptionTokenContext;
 
+        if (os->esniKeys) {
+            ss->esniKeys = tls13_CopyESNIKeys(os->esniKeys);
+            if (!ss->esniKeys) {
+                goto loser;
+            }
+        }
+
         /* Create security data */
         rv = ssl_CopySecurityInfo(ss, os);
         if (rv != SECSuccess) {
@@ -443,6 +456,8 @@ ssl_DestroySocketContents(sslSocket *ss)
 
     ssl_ClearPRCList(&ss->ssl3.hs.dtlsSentHandshake, NULL);
     ssl_ClearPRCList(&ss->ssl3.hs.dtlsRcvdHandshake, NULL);
+
+    tls13_DestroyESNIKeys(ss->esniKeys);
 }
 
 /*
@@ -803,8 +818,33 @@ SSL_OptionSet(PRFileDesc *fd, PRInt32 which, PRIntn val)
             ss->opt.enable0RttData = val;
             break;
 
+        case SSL_RECORD_SIZE_LIMIT:
+            if (val < 64 || val > (MAX_FRAGMENT_LENGTH + 1)) {
+                PORT_SetError(SEC_ERROR_INVALID_ARGS);
+                rv = SECFailure;
+            } else {
+                ss->opt.recordSizeLimit = val;
+            }
+            break;
+
         case SSL_ENABLE_TLS13_COMPAT_MODE:
             ss->opt.enableTls13CompatMode = val;
+            break;
+
+        case SSL_ENABLE_DTLS_SHORT_HEADER:
+            ss->opt.enableDtlsShortHeader = val;
+            break;
+
+        case SSL_ENABLE_HELLO_DOWNGRADE_CHECK:
+            ss->opt.enableHelloDowngradeCheck = val;
+            break;
+
+        case SSL_ENABLE_V2_COMPATIBLE_HELLO:
+            ss->opt.enableV2CompatibleHello = val;
+            break;
+
+        case SSL_ENABLE_POST_HANDSHAKE_AUTH:
+            ss->opt.enablePostHandshakeAuth = val;
             break;
 
         default:
@@ -914,7 +954,7 @@ SSL_OptionGet(PRFileDesc *fd, PRInt32 which, PRIntn *pVal)
             val = ss->opt.enableOCSPStapling;
             break;
         case SSL_ENABLE_NPN:
-            val = ss->opt.enableNPN;
+            val = PR_FALSE;
             break;
         case SSL_ENABLE_ALPN:
             val = ss->opt.enableALPN;
@@ -940,8 +980,23 @@ SSL_OptionGet(PRFileDesc *fd, PRInt32 which, PRIntn *pVal)
         case SSL_ENABLE_0RTT_DATA:
             val = ss->opt.enable0RttData;
             break;
+        case SSL_RECORD_SIZE_LIMIT:
+            val = ss->opt.recordSizeLimit;
+            break;
         case SSL_ENABLE_TLS13_COMPAT_MODE:
             val = ss->opt.enableTls13CompatMode;
+            break;
+        case SSL_ENABLE_DTLS_SHORT_HEADER:
+            val = ss->opt.enableDtlsShortHeader;
+            break;
+        case SSL_ENABLE_HELLO_DOWNGRADE_CHECK:
+            val = ss->opt.enableHelloDowngradeCheck;
+            break;
+        case SSL_ENABLE_V2_COMPATIBLE_HELLO:
+            val = ss->opt.enableV2CompatibleHello;
+            break;
+        case SSL_ENABLE_POST_HANDSHAKE_AUTH:
+            val = ss->opt.enablePostHandshakeAuth;
             break;
         default:
             PORT_SetError(SEC_ERROR_INVALID_ARGS);
@@ -1037,7 +1092,7 @@ SSL_OptionGetDefault(PRInt32 which, PRIntn *pVal)
             val = ssl_defaults.enableOCSPStapling;
             break;
         case SSL_ENABLE_NPN:
-            val = ssl_defaults.enableNPN;
+            val = PR_FALSE;
             break;
         case SSL_ENABLE_ALPN:
             val = ssl_defaults.enableALPN;
@@ -1060,8 +1115,23 @@ SSL_OptionGetDefault(PRInt32 which, PRIntn *pVal)
         case SSL_ENABLE_0RTT_DATA:
             val = ssl_defaults.enable0RttData;
             break;
+        case SSL_RECORD_SIZE_LIMIT:
+            val = ssl_defaults.recordSizeLimit;
+            break;
         case SSL_ENABLE_TLS13_COMPAT_MODE:
             val = ssl_defaults.enableTls13CompatMode;
+            break;
+        case SSL_ENABLE_DTLS_SHORT_HEADER:
+            val = ssl_defaults.enableDtlsShortHeader;
+            break;
+        case SSL_ENABLE_HELLO_DOWNGRADE_CHECK:
+            val = ssl_defaults.enableHelloDowngradeCheck;
+            break;
+        case SSL_ENABLE_V2_COMPATIBLE_HELLO:
+            val = ssl_defaults.enableV2CompatibleHello;
+            break;
+        case SSL_ENABLE_POST_HANDSHAKE_AUTH:
+            val = ssl_defaults.enablePostHandshakeAuth;
             break;
         default:
             PORT_SetError(SEC_ERROR_INVALID_ARGS);
@@ -1242,8 +1312,32 @@ SSL_OptionSetDefault(PRInt32 which, PRIntn val)
             ssl_defaults.enable0RttData = val;
             break;
 
+        case SSL_RECORD_SIZE_LIMIT:
+            if (val < 64 || val > (MAX_FRAGMENT_LENGTH + 1)) {
+                PORT_SetError(SEC_ERROR_INVALID_ARGS);
+                return SECFailure;
+            }
+            ssl_defaults.recordSizeLimit = val;
+            break;
+
         case SSL_ENABLE_TLS13_COMPAT_MODE:
             ssl_defaults.enableTls13CompatMode = val;
+            break;
+
+        case SSL_ENABLE_DTLS_SHORT_HEADER:
+            ssl_defaults.enableDtlsShortHeader = val;
+            break;
+
+        case SSL_ENABLE_HELLO_DOWNGRADE_CHECK:
+            ssl_defaults.enableHelloDowngradeCheck = val;
+            break;
+
+        case SSL_ENABLE_V2_COMPATIBLE_HELLO:
+            ssl_defaults.enableV2CompatibleHello = val;
+            break;
+
+        case SSL_ENABLE_POST_HANDSHAKE_AUTH:
+            ssl_defaults.enablePostHandshakeAuth = val;
             break;
 
         default:
@@ -1895,10 +1989,7 @@ DTLS_ImportFD(PRFileDesc *model, PRFileDesc *fd)
 }
 
 /* SSL_SetNextProtoCallback is used to select an application protocol
- * for ALPN and NPN.  For ALPN, this runs on the server; for NPN it
- * runs on the client. */
-/* Note: The ALPN version doesn't allow for the use of a default, setting a
- * status of SSL_NEXT_PROTO_NO_OVERLAP is treated as a failure. */
+ * for ALPN. */
 SECStatus
 SSL_SetNextProtoCallback(PRFileDesc *fd, SSLNextProtoCallback callback,
                          void *arg)
@@ -1919,7 +2010,7 @@ SSL_SetNextProtoCallback(PRFileDesc *fd, SSLNextProtoCallback callback,
     return SECSuccess;
 }
 
-/* ssl_NextProtoNegoCallback is set as an ALPN/NPN callback when
+/* ssl_NextProtoNegoCallback is set as an ALPN callback when
  * SSL_SetNextProtoNego is used.
  */
 static SECStatus
@@ -1929,7 +2020,6 @@ ssl_NextProtoNegoCallback(void *arg, PRFileDesc *fd,
                           unsigned int protoMaxLen)
 {
     unsigned int i, j;
-    const unsigned char *result;
     sslSocket *ss = ssl_FindSocket(fd);
 
     if (!ss) {
@@ -1937,37 +2027,29 @@ ssl_NextProtoNegoCallback(void *arg, PRFileDesc *fd,
                  SSL_GETPID(), fd));
         return SECFailure;
     }
+    PORT_Assert(protoMaxLen <= 255);
+    if (protoMaxLen > 255) {
+        PORT_SetError(SEC_ERROR_OUTPUT_LEN);
+        return SECFailure;
+    }
 
-    /* For each protocol in server preference, see if we support it. */
-    for (i = 0; i < protos_len;) {
-        for (j = 0; j < ss->opt.nextProtoNego.len;) {
+    /* For each protocol in client preference, see if we support it. */
+    for (j = 0; j < ss->opt.nextProtoNego.len;) {
+        for (i = 0; i < protos_len;) {
             if (protos[i] == ss->opt.nextProtoNego.data[j] &&
                 PORT_Memcmp(&protos[i + 1], &ss->opt.nextProtoNego.data[j + 1],
                             protos[i]) == 0) {
                 /* We found a match. */
-                ss->xtnData.nextProtoState = SSL_NEXT_PROTO_NEGOTIATED;
-                result = &protos[i];
-                goto found;
+                const unsigned char *result = &protos[i];
+                memcpy(protoOut, result + 1, result[0]);
+                *protoOutLen = result[0];
+                return SECSuccess;
             }
-            j += 1 + (unsigned int)ss->opt.nextProtoNego.data[j];
+            i += 1 + (unsigned int)protos[i];
         }
-        i += 1 + (unsigned int)protos[i];
+        j += 1 + (unsigned int)ss->opt.nextProtoNego.data[j];
     }
 
-    /* The other side supports the extension, and either doesn't have any
-     * protocols configured, or none of its options match ours. In this case we
-     * request our favoured protocol. */
-    /* This will be treated as a failure for ALPN. */
-    ss->xtnData.nextProtoState = SSL_NEXT_PROTO_NO_OVERLAP;
-    result = ss->opt.nextProtoNego.data;
-
-found:
-    if (protoMaxLen < result[0]) {
-        PORT_SetError(SEC_ERROR_OUTPUT_LEN);
-        return SECFailure;
-    }
-    memcpy(protoOut, result + 1, result[0]);
-    *protoOutLen = result[0];
     return SECSuccess;
 }
 
@@ -1976,8 +2058,6 @@ SSL_SetNextProtoNego(PRFileDesc *fd, const unsigned char *data,
                      unsigned int length)
 {
     sslSocket *ss;
-    SECStatus rv;
-    SECItem dataItem = { siBuffer, (unsigned char *)data, length };
 
     ss = ssl_FindSocket(fd);
     if (!ss) {
@@ -1986,16 +2066,21 @@ SSL_SetNextProtoNego(PRFileDesc *fd, const unsigned char *data,
         return SECFailure;
     }
 
-    if (ssl3_ValidateNextProtoNego(data, length) != SECSuccess)
+    if (ssl3_ValidateAppProtocol(data, length) != SECSuccess) {
         return SECFailure;
+    }
 
+    /* NPN required that the client's fallback protocol is first in the
+     * list. However, ALPN sends protocols in preference order. So move the
+     * first protocol to the end of the list. */
     ssl_GetSSL3HandshakeLock(ss);
     SECITEM_FreeItem(&ss->opt.nextProtoNego, PR_FALSE);
-    rv = SECITEM_CopyItem(NULL, &ss->opt.nextProtoNego, &dataItem);
+    SECITEM_AllocItem(NULL, &ss->opt.nextProtoNego, length);
+    size_t firstLen = data[0] + 1;
+    /* firstLen <= length is ensured by ssl3_ValidateAppProtocol. */
+    PORT_Memcpy(ss->opt.nextProtoNego.data + (length - firstLen), data, firstLen);
+    PORT_Memcpy(ss->opt.nextProtoNego.data, data + firstLen, length - firstLen);
     ssl_ReleaseSSL3HandshakeLock(ss);
-
-    if (rv != SECSuccess)
-        return rv;
 
     return SSL_SetNextProtoCallback(fd, ssl_NextProtoNegoCallback, NULL);
 }
@@ -3034,26 +3119,27 @@ ssl_Poll(PRFileDesc *fd, PRInt16 how_flags, PRInt16 *p_out_flags)
                 } else { /* handshaking as server */
                     new_flags |= PR_POLL_READ;
                 }
-            } else
+            } else if (ss->lastWriteBlocked) {
                 /* First handshake is in progress */
-                if (ss->lastWriteBlocked) {
                 if (new_flags & PR_POLL_READ) {
                     /* The caller is waiting for data to be received,
                     ** but the initial handshake is blocked on write, or the
                     ** client's first handshake record has not been written.
                     ** The code should select on write, not read.
                     */
-                    new_flags ^= PR_POLL_READ;  /* don't select on read. */
+                    new_flags &= ~PR_POLL_READ; /* don't select on read. */
                     new_flags |= PR_POLL_WRITE; /* do    select on write. */
                 }
             } else if (new_flags & PR_POLL_WRITE) {
                 /* The caller is trying to write, but the handshake is
                 ** blocked waiting for data to read, and the first
                 ** handshake has been sent.  So do NOT to poll on write
-                ** unless we did false start.
+                ** unless we did false start or we are doing 0-RTT.
                 */
-                if (!ss->ssl3.hs.canFalseStart) {
-                    new_flags ^= PR_POLL_WRITE; /* don't select on write. */
+                if (!(ss->ssl3.hs.canFalseStart ||
+                      ss->ssl3.hs.zeroRttState == ssl_0rtt_sent ||
+                      ss->ssl3.hs.zeroRttState == ssl_0rtt_accepted)) {
+                    new_flags &= ~PR_POLL_WRITE; /* don't select on write. */
                 }
                 new_flags |= PR_POLL_READ; /* do    select on read. */
             }
@@ -3092,6 +3178,9 @@ ssl_Poll(PRFileDesc *fd, PRInt16 how_flags, PRInt16 *p_out_flags)
             new_flags = 0;
         }
     }
+
+    SSL_TRC(20, ("%d: SSL[%d]: ssl_Poll flags %x -> %x",
+                 SSL_GETPID(), fd, how_flags, new_flags));
 
     if (new_flags && (fd->lower->methods->poll != NULL)) {
         PRInt16 lower_out_flags = 0;
@@ -3570,6 +3659,7 @@ ssl_SetDefaultsFromEnvironment(void)
         char *ev;
         firsttime = 0;
 #ifdef DEBUG
+        ssl_trace_iob = NULL;
         ev = PR_GetEnvSecure("SSLDEBUGFILE");
         if (ev && ev[0]) {
             ssl_trace_iob = fopen(ev, "w");
@@ -3591,6 +3681,7 @@ ssl_SetDefaultsFromEnvironment(void)
         }
 #endif /* DEBUG */
 #ifdef NSS_ALLOW_SSLKEYLOGFILE
+        ssl_keylog_iob = NULL;
         ev = PR_GetEnvSecure("SSLKEYLOGFILE");
         if (ev && ev[0]) {
             ssl_keylog_iob = fopen(ev, "a");
@@ -3709,6 +3800,10 @@ ssl_GetKeyPairRef(sslKeyPair *keyPair)
 void
 ssl_FreeKeyPair(sslKeyPair *keyPair)
 {
+    if (!keyPair) {
+        return;
+    }
+
     PRInt32 newCount = PR_ATOMIC_DECREMENT(&keyPair->refCount);
     if (!newCount) {
         SECKEY_DestroyPrivateKey(keyPair->privKey);
@@ -3768,6 +3863,10 @@ ssl_CopyEphemeralKeyPair(sslEphemeralKeyPair *keyPair)
 void
 ssl_FreeEphemeralKeyPair(sslEphemeralKeyPair *keyPair)
 {
+    if (!keyPair) {
+        return;
+    }
+
     ssl_FreeKeyPair(keyPair->keys);
     PR_REMOVE_LINK(&keyPair->link);
     PORT_Free(keyPair);
@@ -3875,6 +3974,8 @@ ssl_NewSocket(PRBool makeLocks, SSLProtocolVariant protocolVariant)
     PR_INIT_CLIST(&ss->ssl3.hs.dtlsRcvdHandshake);
     dtls_InitTimers(ss);
 
+    ss->esniKeys = NULL;
+
     if (makeLocks) {
         rv = ssl_MakeLocks(ss);
         if (rv != SECSuccess)
@@ -3940,17 +4041,32 @@ struct {
     void *function;
 } ssl_experimental_functions[] = {
 #ifndef SSL_DISABLE_EXPERIMENTAL_API
+    EXP(AeadDecrypt),
+    EXP(AeadEncrypt),
+    EXP(DestroyAead),
+    EXP(DestroyResumptionTokenInfo),
+    EXP(EnableESNI),
+    EXP(EncodeESNIKeys),
+    EXP(GetCurrentEpoch),
     EXP(GetExtensionSupport),
+    EXP(GetResumptionTokenInfo),
     EXP(HelloRetryRequestCallback),
     EXP(InstallExtensionHooks),
+    EXP(HkdfExtract),
+    EXP(HkdfExpandLabel),
+    EXP(HkdfExpandLabelWithMech),
     EXP(KeyUpdate),
+    EXP(MakeAead),
+    EXP(RecordLayerData),
+    EXP(RecordLayerWriteCallback),
+    EXP(SecretCallback),
+    EXP(SendCertificateRequest),
     EXP(SendSessionTicket),
+    EXP(SetESNIKeyPair),
     EXP(SetMaxEarlyDataSize),
-    EXP(SetupAntiReplay),
     EXP(SetResumptionTokenCallback),
     EXP(SetResumptionToken),
-    EXP(GetResumptionTokenInfo),
-    EXP(DestroyResumptionTokenInfo),
+    EXP(SetupAntiReplay),
 #endif
     { "", NULL }
 };
@@ -4016,6 +4132,7 @@ SSLExp_SetResumptionToken(PRFileDesc *fd, const PRUint8 *token,
                           unsigned int len)
 {
     sslSocket *ss = ssl_FindSocket(fd);
+    sslSessionID *sid = NULL;
 
     if (!ss) {
         SSL_DBG(("%d: SSL[%d]: bad socket in SSL_SetResumptionToken",
@@ -4029,7 +4146,7 @@ SSLExp_SetResumptionToken(PRFileDesc *fd, const PRUint8 *token,
     if (ss->firstHsDone || ss->ssl3.hs.ws != idle_handshake ||
         ss->sec.isServer || len == 0 || !token) {
         PORT_SetError(SEC_ERROR_INVALID_ARGS);
-        goto done;
+        goto loser;
     }
 
     // We override any previously set session.
@@ -4040,41 +4157,44 @@ SSLExp_SetResumptionToken(PRFileDesc *fd, const PRUint8 *token,
 
     PRINT_BUF(50, (ss, "incoming resumption token", token, len));
 
-    ss->sec.ci.sid = ssl3_NewSessionID(ss, PR_FALSE);
-    if (!ss->sec.ci.sid) {
-        goto done;
+    sid = ssl3_NewSessionID(ss, PR_FALSE);
+    if (!sid) {
+        goto loser;
     }
 
     /* Populate NewSessionTicket values */
-    SECStatus rv = ssl_DecodeResumptionToken(ss->sec.ci.sid, token, len);
+    SECStatus rv = ssl_DecodeResumptionToken(sid, token, len);
     if (rv != SECSuccess) {
         // If decoding fails, we assume the token is bad.
         PORT_SetError(SSL_ERROR_BAD_RESUMPTION_TOKEN_ERROR);
-        ssl_FreeSID(ss->sec.ci.sid);
-        ss->sec.ci.sid = NULL;
-        goto done;
+        goto loser;
     }
 
-    // Make sure that the token is valid.
-    if (!ssl_IsResumptionTokenValid(ss)) {
-        ssl_FreeSID(ss->sec.ci.sid);
-        ss->sec.ci.sid = NULL;
+    // Make sure that the token is currently usable.
+    if (!ssl_IsResumptionTokenUsable(ss, sid)) {
         PORT_SetError(SSL_ERROR_BAD_RESUMPTION_TOKEN_ERROR);
-        goto done;
+        goto loser;
     }
 
+    // Generate a new random session ID for this ticket.
+    rv = PK11_GenerateRandom(sid->u.ssl3.sessionID, SSL3_SESSIONID_BYTES);
+    if (rv != SECSuccess) {
+        goto loser; // Code set by PK11_GenerateRandom.
+    }
+    sid->u.ssl3.sessionIDLength = SSL3_SESSIONID_BYTES;
     /* Use the sid->cached as marker that this is from an external cache and
      * we don't have to look up anything in the NSS internal cache. */
-    ss->sec.ci.sid->cached = in_external_cache;
-    // This has to be 2 to not free this in sendClientHello.
-    ss->sec.ci.sid->references = 2;
-    ss->sec.ci.sid->lastAccessTime = ssl_TimeSec();
+    sid->cached = in_external_cache;
+    sid->lastAccessTime = ssl_TimeSec();
+
+    ss->sec.ci.sid = sid;
 
     ssl_ReleaseSSL3HandshakeLock(ss);
     ssl_Release1stHandshakeLock(ss);
     return SECSuccess;
 
-done:
+loser:
+    ssl_FreeSID(sid);
     ssl_ReleaseSSL3HandshakeLock(ss);
     ssl_Release1stHandshakeLock(ss);
 
@@ -4131,6 +4251,7 @@ SSLExp_GetResumptionTokenInfo(const PRUint8 *tokenData, unsigned int tokenLen,
     } else {
         token.maxEarlyDataSize = 0;
     }
+    token.expirationTime = sid.expirationTime;
 
     token.length = PR_MIN(sizeof(SSLResumptionTokenInfo), len);
     PORT_Memcpy(tokenOut, &token, token.length);

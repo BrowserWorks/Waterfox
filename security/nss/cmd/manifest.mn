@@ -47,6 +47,7 @@ NSS_SRCDIRS = \
  listsuites \
  makepqg  \
  multinit \
+ nss-policy-check \
  ocspclnt  \
  ocspresp \
  oidcalc  \
@@ -55,6 +56,7 @@ NSS_SRCDIRS = \
  p7sign  \
  p7verify  \
  pk12util \
+ pk11importtest \
  pk11ectest \
  pk11gcmtest \
  pk11mode \

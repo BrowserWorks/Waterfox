@@ -16,13 +16,10 @@
 #include "blapi.h"
 #include "nssilock.h"
 #include "secitem.h"
-#include "blapi.h"
+#include "blapit.h"
 #include "mpi.h"
 #include "secmpi.h"
 #include "pqg.h"
-
-/* XXX to be replaced by define in blapit.h */
-#define NSS_FREEBL_DSA_DEFAULT_CHUNKSIZE 2048
 
 /*
  * FIPS 186-2 requires result from random output to be reduced mod q when
@@ -168,7 +165,7 @@ dsa_NewKeyExtended(const PQGParams *params, const SECItem *seed,
         return SECFailure;
     }
     /* Initialize an arena for the DSA key. */
-    arena = PORT_NewArena(NSS_FREEBL_DSA_DEFAULT_CHUNKSIZE);
+    arena = PORT_NewArena(NSS_FREEBL_DEFAULT_CHUNKSIZE);
     if (!arena) {
         PORT_SetError(SEC_ERROR_NO_MEMORY);
         return SECFailure;
@@ -213,8 +210,9 @@ cleanup:
     mp_clear(&g);
     mp_clear(&x);
     mp_clear(&y);
-    if (key)
+    if (key) {
         PORT_FreeArena(key->params.arena, PR_TRUE);
+    }
     if (err) {
         translate_mpi_error(err);
         return SECFailure;
@@ -315,12 +313,14 @@ DSA_NewKeyFromSeed(const PQGParams *params,
 
 static SECStatus
 dsa_SignDigest(DSAPrivateKey *key, SECItem *signature, const SECItem *digest,
-               const unsigned char *kb)
+               const unsigned char *kbytes)
 {
     mp_int p, q, g; /* PQG parameters */
     mp_int x, k;    /* private key & pseudo-random integer */
     mp_int r, s;    /* tuple (r, s) is signature) */
     mp_int t;       /* holding tmp values */
+    mp_int ar;      /* holding blinding values */
+    mp_digit fuzz;  /* blinding multiplier for q */
     mp_err err = MP_OKAY;
     SECStatus rv = SECSuccess;
     unsigned int dsa_subprime_len, dsa_signature_len, offset;
@@ -364,6 +364,7 @@ dsa_SignDigest(DSAPrivateKey *key, SECItem *signature, const SECItem *digest,
     MP_DIGITS(&r) = 0;
     MP_DIGITS(&s) = 0;
     MP_DIGITS(&t) = 0;
+    MP_DIGITS(&ar) = 0;
     CHECK_MPI_OK(mp_init(&p));
     CHECK_MPI_OK(mp_init(&q));
     CHECK_MPI_OK(mp_init(&g));
@@ -372,6 +373,8 @@ dsa_SignDigest(DSAPrivateKey *key, SECItem *signature, const SECItem *digest,
     CHECK_MPI_OK(mp_init(&r));
     CHECK_MPI_OK(mp_init(&s));
     CHECK_MPI_OK(mp_init(&t));
+    CHECK_MPI_OK(mp_init(&ar));
+
     /*
     ** Convert stored PQG and private key into MPI integers.
     */
@@ -379,14 +382,28 @@ dsa_SignDigest(DSAPrivateKey *key, SECItem *signature, const SECItem *digest,
     SECITEM_TO_MPINT(key->params.subPrime, &q);
     SECITEM_TO_MPINT(key->params.base, &g);
     SECITEM_TO_MPINT(key->privateValue, &x);
-    OCTETS_TO_MPINT(kb, &k, dsa_subprime_len);
+    OCTETS_TO_MPINT(kbytes, &k, dsa_subprime_len);
+
+    /* k blinding  create a single value that has the high bit set in
+     * the mp_digit*/
+    if (RNG_GenerateGlobalRandomBytes(&fuzz, sizeof(mp_digit)) != SECSuccess) {
+        PORT_SetError(SEC_ERROR_NEED_RANDOM);
+        rv = SECFailure;
+        goto cleanup;
+    }
+    fuzz |= 1ULL << ((sizeof(mp_digit) * PR_BITS_PER_BYTE - 1));
     /*
     ** FIPS 186-1, Section 5, Step 1
     **
     ** r = (g**k mod p) mod q
     */
-    CHECK_MPI_OK(mp_exptmod(&g, &k, &p, &r)); /* r = g**k mod p */
-    CHECK_MPI_OK(mp_mod(&r, &q, &r));         /* r = r mod q    */
+    CHECK_MPI_OK(mp_mul_d(&q, fuzz, &t)); /* t = q*fuzz */
+    CHECK_MPI_OK(mp_add(&k, &t, &t));     /* t = k+q*fuzz */
+    /* length of t is now fixed, bits in k have been blinded */
+    CHECK_MPI_OK(mp_exptmod(&g, &t, &p, &r)); /* r = g**t mod p */
+    /* r is now g**(k+q*fuzz) == g**k mod p */
+    CHECK_MPI_OK(mp_mod(&r, &q, &r)); /* r = r mod q    */
+
     /*
     ** FIPS 186-1, Section 5, Step 2
     **
@@ -397,14 +414,37 @@ dsa_SignDigest(DSAPrivateKey *key, SECItem *signature, const SECItem *digest,
         rv = SECFailure;
         goto cleanup;
     }
-    SECITEM_TO_MPINT(t2, &t);                /* t <-$ Zq */
+    SECITEM_TO_MPINT(t2, &t); /* t <-$ Zq */
+    SECITEM_FreeItem(&t2, PR_FALSE);
+    if (DSA_NewRandom(NULL, &key->params.subPrime, &t2) != SECSuccess) {
+        PORT_SetError(SEC_ERROR_NEED_RANDOM);
+        rv = SECFailure;
+        goto cleanup;
+    }
+    SECITEM_TO_MPINT(t2, &ar); /* ar <-$ Zq */
+    SECITEM_FreeItem(&t2, PR_FALSE);
+
+    /* Using mp_invmod on k directly would leak bits from k. */
+    CHECK_MPI_OK(mp_mul(&k, &ar, &k));       /* k = k * ar */
     CHECK_MPI_OK(mp_mulmod(&k, &t, &q, &k)); /* k = k * t mod q */
-    CHECK_MPI_OK(mp_invmod(&k, &q, &k));     /* k = k**-1 mod q */
+    /* k is now k*t*ar */
+    CHECK_MPI_OK(mp_invmod(&k, &q, &k)); /* k = k**-1 mod q */
+    /* k is now (k*t*ar)**-1 */
     CHECK_MPI_OK(mp_mulmod(&k, &t, &q, &k)); /* k = k * t mod q */
-    SECITEM_TO_MPINT(localDigest, &s);       /* s = HASH(M)     */
+    /* k is now (k*ar)**-1 */
+    SECITEM_TO_MPINT(localDigest, &s); /* s = HASH(M)     */
+    /* To avoid leaking secret bits here the addition is blinded. */
+    CHECK_MPI_OK(mp_mul(&x, &ar, &x)); /* x = x * ar */
+    /* x is now x*ar */
     CHECK_MPI_OK(mp_mulmod(&x, &r, &q, &x)); /* x = x * r mod q */
-    CHECK_MPI_OK(mp_addmod(&s, &x, &q, &s)); /* s = s + x mod q */
+    /* x is now x*r*ar */
+    CHECK_MPI_OK(mp_mulmod(&s, &ar, &q, &t)); /* t = s * ar mod q */
+    /* t is now hash(M)*ar */
+    CHECK_MPI_OK(mp_add(&t, &x, &s)); /* s = t + x */
+    /* s is now (HASH(M)+x*r)*ar */
     CHECK_MPI_OK(mp_mulmod(&s, &k, &q, &s)); /* s = s * k mod q */
+    /* s is now (HASH(M)+x*r)*ar*(k*ar)**-1 = (k**-1)*(HASH(M)+x*r) */
+
     /*
     ** verify r != 0 and s != 0
     ** mentioned as optional in FIPS 186-1.
@@ -438,7 +478,7 @@ cleanup:
     mp_clear(&r);
     mp_clear(&s);
     mp_clear(&t);
-    SECITEM_FreeItem(&t2, PR_FALSE);
+    mp_clear(&ar);
     if (err) {
         translate_mpi_error(err);
         rv = SECFailure;

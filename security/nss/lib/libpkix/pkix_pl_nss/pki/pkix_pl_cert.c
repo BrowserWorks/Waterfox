@@ -2914,7 +2914,8 @@ PKIX_PL_Cert_CheckValidity(
         requiredUsages = ((PKIX_PL_NssContext*)plContext)->certificateUsage;
         allowOverride =
             (PRBool)((requiredUsages & certificateUsageSSLServer) ||
-                     (requiredUsages & certificateUsageSSLServerWithStepUp));
+                     (requiredUsages & certificateUsageSSLServerWithStepUp) ||
+                     (requiredUsages & certificateUsageIPsec));
         val = CERT_CheckCertValidTimes(cert->nssCert, timeToCheck, allowOverride);
         if (val != secCertTimeValid){
                 PKIX_ERROR(PKIX_CERTCHECKCERTVALIDTIMESFAILED);

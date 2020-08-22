@@ -37,10 +37,13 @@
 #   memleak.sh   - memory leak testing (optional)
 #   ssl_gtests.sh- Gtest based unit tests for ssl
 #   gtests.sh    - Gtest based unit tests for everything else
+#   policy.sh    - Crypto Policy tests
 #   bogo.sh      - Bogo interop tests (disabled by default)
 #                  https://boringssl.googlesource.com/boringssl/+/master/ssl/test/PORTING.md
 #   interop.sh   - Interoperability tests (disabled by default)
 #                  https://github.com/ekr/tls_interop
+#   tlsfuzzer.sh - tlsfuzzer interop tests (disabled by default)
+#                  https://github.com/tomato42/tlsfuzzer/
 #
 # NSS testing is now devided to 4 cycles:
 # ---------------------------------------
@@ -300,7 +303,7 @@ if [ $NO_INIT_SUPPORT -eq 0 ]; then
     RUN_FIPS="fips"
 fi
 
-tests="cipher lowhash libpkix cert dbtests tools $RUN_FIPS sdr crmf smime ssl ocsp merge pkits ec gtests ssl_gtests"
+tests="cipher lowhash libpkix cert dbtests tools $RUN_FIPS sdr crmf smime ssl ocsp merge pkits ec gtests ssl_gtests policy"
 # Don't run chains tests when we have a gyp build.
 if [ "$OBJDIR" != "Debug" -a "$OBJDIR" != "Release" ]; then
   tests="$tests chains"
@@ -309,13 +312,13 @@ TESTS=${NSS_TESTS:-$tests}
 
 ALL_TESTS=${TESTS}
 
-nss_ssl_tests="crl iopr policy"
+nss_ssl_tests="crl iopr policy normal_normal"
 if [ $NO_INIT_SUPPORT -eq 0 ]; then
     nss_ssl_tests="$nss_ssl_tests fips_normal normal_fips"
 fi
 NSS_SSL_TESTS="${NSS_SSL_TESTS:-$nss_ssl_tests}"
 
-nss_ssl_run="cov auth stapling stress"
+nss_ssl_run="cov auth stapling signed_cert_timestamps stress scheme"
 NSS_SSL_RUN="${NSS_SSL_RUN:-$nss_ssl_run}"
 
 # NOTE:

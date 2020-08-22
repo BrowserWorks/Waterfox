@@ -151,6 +151,7 @@ class SSLv2ClientHelloTestF : public TlsConnectTestBase {
   void SetUp() override {
     TlsConnectTestBase::SetUp();
     filter_ = MakeTlsFilter<SSLv2ClientHelloFilter>(client_, version_);
+    server_->SetOption(SSL_ENABLE_V2_COMPATIBLE_HELLO, PR_TRUE);
   }
 
   void SetExpectedVersion(uint16_t version) {
@@ -195,6 +196,27 @@ class SSLv2ClientHelloTest : public SSLv2ClientHelloTestF,
 TEST_P(SSLv2ClientHelloTest, Connect) {
   SetAvailableCipherSuite(TLS_DHE_RSA_WITH_AES_128_CBC_SHA);
   Connect();
+}
+
+TEST_P(SSLv2ClientHelloTest, ConnectDisabled) {
+  server_->SetOption(SSL_ENABLE_V2_COMPATIBLE_HELLO, PR_FALSE);
+  SetAvailableCipherSuite(TLS_DHE_RSA_WITH_AES_128_CBC_SHA);
+
+  StartConnect();
+  client_->Handshake();  // Send the modified ClientHello.
+  server_->Handshake();  // Read some.
+  // The problem here is that the v2 ClientHello puts the version where the v3
+  // ClientHello puts a version number.  So the version number (0x0301+) appears
+  // to be a length and server blocks waiting for that much data.
+  EXPECT_EQ(PR_WOULD_BLOCK_ERROR, PORT_GetError());
+
+  // This is usually what happens with v2-compatible: the server hangs.
+  // But to be certain, feed in more data to see if an error comes out.
+  uint8_t zeros[SSL_LIBRARY_VERSION_TLS_1_2] = {0};
+  client_->SendDirect(DataBuffer(zeros, sizeof(zeros)));
+  ExpectAlert(server_, kTlsAlertIllegalParameter);
+  server_->Handshake();
+  client_->Handshake();
 }
 
 // Sending a v2 ClientHello after a no-op v3 record must fail.
@@ -326,6 +348,30 @@ TEST_P(SSLv2ClientHelloTest, RequireSafeRenegotiationWithSCSV) {
                                          TLS_EMPTY_RENEGOTIATION_INFO_SCSV};
   SetAvailableCipherSuites(cipher_suites);
   Connect();
+}
+
+TEST_P(SSLv2ClientHelloTest, CheckServerRandom) {
+  ConfigureSessionCache(RESUME_NONE, RESUME_NONE);
+  SetAvailableCipherSuite(TLS_DHE_RSA_WITH_AES_128_CBC_SHA);
+
+  static const size_t random_len = 32;
+  uint8_t srandom1[random_len];
+  uint8_t z[random_len] = {0};
+
+  auto sh = MakeTlsFilter<TlsHandshakeRecorder>(server_, ssl_hs_server_hello);
+  Connect();
+  ASSERT_TRUE(sh->buffer().len() > (random_len + 2));
+  memcpy(srandom1, sh->buffer().data() + 2, random_len);
+  EXPECT_NE(0, memcmp(srandom1, z, random_len));
+
+  Reset();
+  sh = MakeTlsFilter<TlsHandshakeRecorder>(server_, ssl_hs_server_hello);
+  Connect();
+  ASSERT_TRUE(sh->buffer().len() > (random_len + 2));
+  const uint8_t* srandom2 = sh->buffer().data() + 2;
+
+  EXPECT_NE(0, memcmp(srandom2, z, random_len));
+  EXPECT_NE(0, memcmp(srandom1, srandom2, random_len));
 }
 
 // Connect to the server with TLS 1.1, signalling that this is a fallback from

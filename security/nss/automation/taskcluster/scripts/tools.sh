@@ -2,11 +2,15 @@
 
 set -v -e -x
 
+# Assert that we're not running as root.
 if [[ $(id -u) -eq 0 ]]; then
-    # Drop privileges by re-running this script.
-    # Note: this mangles arguments, better to avoid running scripts as root.
+    # This exec is still needed until aarch64 images are updated (Bug 1488325).
+    # Remove when images are updated.  Until then, assert that things are good.
+    [[ $(uname -m) == aarch64 ]]
     exec su worker -c "$0 $*"
 fi
+
+export PATH="${PATH}:/home/worker/.cargo/bin/:/usr/lib/go-1.6/bin"
 
 # Usage: hg_clone repo dir [revision=@]
 hg_clone() {
@@ -26,7 +30,11 @@ hg_clone() {
 }
 
 fetch_dist() {
-    url=https://queue.taskcluster.net/v1/task/$TC_PARENT_TASK_ID/artifacts/public/dist.tar.bz2
+    if [ "$TASKCLUSTER_ROOT_URL" = "https://taskcluster.net" ] || [ -z "$TASKCLUSTER_ROOT_URL" ]; then
+        url=https://queue.taskcluster.net/v1/task/$TC_PARENT_TASK_ID/artifacts/public/dist.tar.bz2
+    else
+        url=$TASKCLUSTER_ROOT_URL/api/queue/v1/task/$TC_PARENT_TASK_ID/artifacts/public/dist.tar.bz2
+    fi
     if [ ! -d "dist" ]; then
         for i in 0 2 5; do
             sleep $i
