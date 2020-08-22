@@ -24,7 +24,8 @@ interop_init()
   cd "${HOSTDIR}/interop"
   INTEROP=${INTEROP:=tls_interop}
   if [ ! -d "$INTEROP" ]; then
-    git clone -q https://github.com/mozilla/tls-interop "$INTEROP"
+    git clone -q https://github.com/ttaubert/tls-interop "$INTEROP"
+    git -C "$INTEROP" checkout -q 07930b791827c1bdb6f4c19ca0aa63850fd59e22
   fi
   INTEROP=$(cd "$INTEROP";pwd -P)
 
@@ -56,7 +57,12 @@ interop_run()
 
   (cd "$INTEROP";
    cargo run -- --client "$client" --server "$server" --rootdir "$BORING"/ssl/test/runner/ --test-cases cases.json) 2>interop-${test_name}.errors | tee interop-${test_name}.log
-  html_msg "${PIPESTATUS[0]}" 0 "Interop" "Run successfully"
+  RESULT=${PIPESTATUS[0]}
+  html_msg "${RESULT}" 0 "Interop" "Run successfully"
+  if [ $RESULT -ne 0 ]; then
+    cat interop-${test_name}.errors
+    cat interop-${test_name}.log
+  fi
   grep -i 'FAILED\|Assertion failure' interop-${test_name}.errors
   html_msg $? 1 "Interop" "No failures"
 }

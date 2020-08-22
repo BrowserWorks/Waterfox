@@ -122,6 +122,11 @@
             'intel-gcm-x86-masm.asm',
           ],
         }],
+        [ 'cc_use_gnu_ld==1', {
+          # mingw
+          'sources': [
+          ],
+        }],
         [ 'cc_is_clang!=1', {
           # MSVC
           'sources': [
@@ -144,12 +149,17 @@
       ],
     }],
     [ 'disable_chachapoly==0', {
+      # The ChaCha20 code is linked in through the static ssse3-crypto lib on
+      # all platforms that support SSSE3. There are runtime checks in place to
+      # choose the correct ChaCha implementation at runtime.
+      'sources': [
+        'verified/Hacl_Chacha20.c',
+      ],
       'conditions': [
         [ 'OS!="win"', {
           'conditions': [
             [ 'target_arch=="x64"', {
               'sources': [
-                'chacha20_vec.c',
                 'verified/Hacl_Poly1305_64.c',
               ],
             }, {
@@ -157,15 +167,11 @@
               'conditions': [
                 [ 'target_arch=="arm64" or target_arch=="aarch64"', {
                   'sources': [
-                    'chacha20.c',
-                    'verified/Hacl_Chacha20.c',
                     'verified/Hacl_Poly1305_64.c',
                   ],
                 }, {
                   # !Windows & !x64 & !arm64 & !aarch64
                   'sources': [
-                    'chacha20.c',
-                    'verified/Hacl_Chacha20.c',
                     'poly1305.c',
                   ],
                 }],
@@ -175,8 +181,6 @@
         }, {
           # Windows
           'sources': [
-            'chacha20.c',
-            'verified/Hacl_Chacha20.c',
             'poly1305.c',
           ],
         }],

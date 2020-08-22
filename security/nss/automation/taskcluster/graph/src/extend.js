@@ -30,6 +30,11 @@ const HACL_GEN_IMAGE = {
   path: "automation/taskcluster/docker-hacl"
 };
 
+const SAW_IMAGE = {
+  name: "saw",
+  path: "automation/taskcluster/docker-saw"
+};
+
 const WINDOWS_CHECKOUT_CMD =
   "bash -c \"hg clone -r $NSS_HEAD_REVISION $NSS_HEAD_REPOSITORY nss || " +
     "(sleep 2; hg clone -r $NSS_HEAD_REVISION $NSS_HEAD_REPOSITORY nss) || " +
@@ -72,7 +77,8 @@ queue.filter(task => {
     }
   }
 
-  if (task.tests == "fips" && task.platform == "mac") {
+  if (task.tests == "fips" &&
+     (task.platform == "mac" || task.platform == "aarch64")) {
     return false;
   }
 
@@ -88,7 +94,7 @@ queue.filter(task => {
     }
   }
 
-  // Don't run additional hardware tests on ARM (we don't have anything there).
+  // Don't run all additional hardware tests on ARM.
   if (task.group == "Cipher" && task.platform == "aarch64" && task.env &&
       (task.env.NSS_DISABLE_PCLMUL == "1" || task.env.NSS_DISABLE_HW_AES == "1"
        || task.env.NSS_DISABLE_AVX == "1")) {
@@ -187,8 +193,8 @@ export default async function main() {
       UBSAN_OPTIONS: "print_stacktrace=1",
       NSS_DISABLE_ARENA_FREE_LIST: "1",
       NSS_DISABLE_UNLOAD: "1",
-      CC: "clang",
-      CCC: "clang++",
+      CC: "clang-5.0",
+      CCC: "clang++-5.0",
     },
     platform: "linux64",
     collection: "asan",
@@ -263,6 +269,18 @@ export default async function main() {
         "bin/checkout.sh && nss/automation/taskcluster/scripts/build_gyp.sh --opt"
       ],
       collection: "opt",
+    }, aarch64_base)
+  );
+
+  await scheduleLinux("Linux AArch64 (debug, make)",
+    merge({
+      env: {USE_64: "1"},
+      command: [
+         "/bin/bash",
+         "-c",
+         "bin/checkout.sh && nss/automation/taskcluster/scripts/build.sh"
+      ],
+      collection: "make",
     }, aarch64_base)
   );
 
@@ -418,12 +436,12 @@ async function scheduleLinux(name, base, args = "") {
   // Extra builds.
   let extra_base = merge({group: "Builds"}, build_base);
   queue.scheduleTask(merge(extra_base, {
-    name: `${name} w/ clang-4.0`,
+    name: `${name} w/ clang-5.0`,
     env: {
-      CC: "clang",
-      CCC: "clang++",
+      CC: "clang-5.0",
+      CCC: "clang++-5.0",
     },
-    symbol: "clang-4.0"
+    symbol: "clang-5.0"
   }));
 
   queue.scheduleTask(merge(extra_base, {
@@ -895,6 +913,13 @@ function scheduleTests(task_build, task_cert, test_base) {
     env: {NSS_DISABLE_AVX: "1"}, group: "Cipher"
   }));
   queue.scheduleTask(merge(no_cert_base, {
+    name: "Cipher tests", symbol: "NoSSSE3|NEON", tests: "cipher",
+    env: {
+      NSS_DISABLE_ARM_NEON: "1",
+      NSS_DISABLE_SSSE3: "1"
+    }, group: "Cipher"
+  }));
+  queue.scheduleTask(merge(no_cert_base, {
     name: "EC tests", symbol: "EC", tests: "ec"
   }));
   queue.scheduleTask(merge(no_cert_base, {
@@ -946,6 +971,18 @@ async function scheduleTools() {
     kind: "test"
   };
 
+  //ABI check task
+  queue.scheduleTask(merge(base, {
+    symbol: "abi",
+    name: "abi",
+    image: LINUX_IMAGE,
+    command: [
+      "/bin/bash",
+      "-c",
+      "bin/checkout.sh && nss/automation/taskcluster/scripts/check_abi.sh"
+    ],
+  }));
+
   queue.scheduleTask(merge(base, {
     symbol: "clang-format-3.9",
     name: "clang-format-3.9",
@@ -958,13 +995,13 @@ async function scheduleTools() {
   }));
 
   queue.scheduleTask(merge(base, {
-    symbol: "scan-build-4.0",
-    name: "scan-build-4.0",
+    symbol: "scan-build-5.0",
+    name: "scan-build-5.0",
     image: LINUX_IMAGE,
     env: {
       USE_64: "1",
-      CC: "clang",
-      CCC: "clang++",
+      CC: "clang-5.0",
+      CCC: "clang++-5.0",
     },
     artifacts: {
       public: {
@@ -988,6 +1025,70 @@ async function scheduleTools() {
       "/bin/bash",
       "-c",
       "bin/checkout.sh && nss/automation/taskcluster/scripts/run_hacl.sh"
+    ]
+  }));
+
+  let task_saw = queue.scheduleTask(merge(base, {
+    symbol: "B",
+    group: "SAW",
+    name: "LLVM bitcode build (32 bit)",
+    image: SAW_IMAGE,
+    kind: "build",
+    env: {
+      AR: "llvm-ar-3.8",
+      CC: "clang-3.8",
+      CCC: "clang++-3.8"
+    },
+    artifacts: {
+      public: {
+        expires: 24 * 7,
+        type: "directory",
+        path: "/home/worker/artifacts"
+      }
+    },
+    command: [
+      "/bin/bash",
+      "-c",
+      "bin/checkout.sh && nss/automation/taskcluster/scripts/build_gyp.sh --disable-tests --emit-llvm -m32"
+    ]
+  }));
+
+  queue.scheduleTask(merge(base, {
+    parent: task_saw,
+    symbol: "bmul",
+    group: "SAW",
+    name: "bmul.saw",
+    image: SAW_IMAGE,
+    command: [
+      "/bin/bash",
+      "-c",
+      "bin/checkout.sh && nss/automation/taskcluster/scripts/run_saw.sh bmul"
+    ]
+  }));
+
+  queue.scheduleTask(merge(base, {
+    parent: task_saw,
+    symbol: "ChaCha20",
+    group: "SAW",
+    name: "chacha20.saw",
+    image: SAW_IMAGE,
+    command: [
+      "/bin/bash",
+      "-c",
+      "bin/checkout.sh && nss/automation/taskcluster/scripts/run_saw.sh chacha20"
+    ]
+  }));
+
+  queue.scheduleTask(merge(base, {
+    parent: task_saw,
+    symbol: "Poly1305",
+    group: "SAW",
+    name: "poly1305.saw",
+    image: SAW_IMAGE,
+    command: [
+      "/bin/bash",
+      "-c",
+      "bin/checkout.sh && nss/automation/taskcluster/scripts/run_saw.sh poly1305"
     ]
   }));
 

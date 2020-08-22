@@ -168,8 +168,11 @@ struct ssl3CertNodeStr {
 
 typedef SECStatus (*sslHandshakeFunc)(sslSocket *ss);
 
-typedef void (*sslSessionIDCacheFunc)(sslSessionID *sid);
-typedef void (*sslSessionIDUncacheFunc)(sslSessionID *sid);
+void ssl_CacheSessionID(sslSocket *ss);
+void ssl_UncacheSessionID(sslSocket *ss);
+void ssl_ServerCacheSessionID(sslSessionID *sid);
+void ssl_ServerUncacheSessionID(sslSessionID *sid);
+
 typedef sslSessionID *(*sslSessionIDLookupFunc)(const PRIPv6Addr *addr,
                                                 unsigned char *sid,
                                                 unsigned int sidLen,
@@ -230,6 +233,7 @@ typedef struct sslOptionsStr {
      * list of supported protocols. */
     SECItem nextProtoNego;
 
+    PRUint32 maxEarlyDataSize;
     unsigned int useSecurity : 1;
     unsigned int useSocks : 1;
     unsigned int requestCertificate : 1;
@@ -341,9 +345,11 @@ struct sslGatherStr {
 #define GS_HEADER 1
 #define GS_DATA 2
 
+#define WRAPPED_MASTER_SECRET_SIZE 48
+
 typedef struct {
-    PRUint8 wrapped_master_secret[48];
-    PRUint16 wrapped_master_secret_len;
+    PRUint8 wrapped_master_secret[WRAPPED_MASTER_SECRET_SIZE];
+    PRUint8 wrapped_master_secret_len;
     PRUint8 resumable;
     PRUint8 extendedMasterSecretUsed;
 } ssl3SidKeys; /* 52 bytes */
@@ -351,7 +357,8 @@ typedef struct {
 typedef enum { never_cached,
                in_client_cache,
                in_server_cache,
-               invalid_cache /* no longer in any cache. */
+               invalid_cache, /* no longer in any cache. */
+               in_external_cache
 } Cached;
 
 #include "sslcert.h"
@@ -398,16 +405,10 @@ struct sslSessionIDStr {
             PRUint8 sessionID[SSL3_SESSIONID_BYTES];
 
             ssl3CipherSuite cipherSuite;
-            int policy;
+            PRUint8 policy;
             ssl3SidKeys keys;
             /* mechanism used to wrap master secret */
             CK_MECHANISM_TYPE masterWrapMech;
-
-            /* The following values are NOT restored from the server's on-disk
-             * session cache, but are restored from the client's cache.
-             */
-            PK11SymKey *clientWriteKey;
-            PK11SymKey *serverWriteKey;
 
             /* The following values pertain to the slot that wrapped the
             ** master secret. (used only in client)
@@ -740,7 +741,7 @@ struct ssl3StateStr {
     CERTCertificateList *clientCertChain; /* used by client */
     PRBool sendEmptyCert;                 /* used by client */
 
-    int policy;
+    PRUint8 policy;
     /* This says what cipher suites we can do, and should
      * be either SSL_ALLOWED or SSL_RESTRICTED
      */
@@ -897,14 +898,6 @@ struct sslSecurityInfoStr {
     /* The selected certificate (for servers only). */
     const sslServerCert *serverCert;
 
-    /*
-    ** Procs used for SID cache (nonce) management.
-    ** Different implementations exist for clients/servers
-    ** The lookup proc is only used for servers.  Baloney!
-    */
-    sslSessionIDCacheFunc cache;
-    sslSessionIDUncacheFunc uncache;
-
     /* These are used during a connection handshake */
     sslConnectInfo ci;
 };
@@ -982,6 +975,8 @@ struct sslSocketStr {
     SSLHelloRetryRequestCallback hrrCallback;
     void *hrrCallbackArg;
     PRCList extensionHooks;
+    SSLResumptionTokenCallback resumptionTokenCallback;
+    void *resumptionTokenContext;
 
     PRIntervalTime rTimeout; /* timeout for NSPR I/O */
     PRIntervalTime wTimeout; /* timeout for NSPR I/O */
@@ -1075,13 +1070,10 @@ extern FILE *ssl_keylog_iob;
 extern PZLock *ssl_keylog_lock;
 extern PRUint32 ssl3_sid_timeout;
 extern PRUint32 ssl_ticket_lifetime;
-extern PRUint32 ssl_max_early_data_size;
 
 extern const char *const ssl3_cipherName[];
 
 extern sslSessionIDLookupFunc ssl_sid_lookup;
-extern sslSessionIDCacheFunc ssl_sid_cache;
-extern sslSessionIDUncacheFunc ssl_sid_uncache;
 
 extern const sslNamedGroupDef ssl_named_groups[];
 
@@ -1163,14 +1155,13 @@ extern SECStatus ssl_BeginClientHandshake(sslSocket *ss);
 extern SECStatus ssl_BeginServerHandshake(sslSocket *ss);
 extern int ssl_Do1stHandshake(sslSocket *ss);
 
-extern void ssl_ChooseSessionIDProcs(sslSecurityInfo *sec);
-
 extern SECStatus ssl3_InitPendingCipherSpecs(sslSocket *ss, PK11SymKey *secret,
                                              PRBool derive);
 extern sslSessionID *ssl3_NewSessionID(sslSocket *ss, PRBool is_server);
 extern sslSessionID *ssl_LookupSID(const PRIPv6Addr *addr, PRUint16 port,
                                    const char *peerID, const char *urlSvrName);
 extern void ssl_FreeSID(sslSessionID *sid);
+extern void ssl_DestroySID(sslSessionID *sid, PRBool freeIt);
 
 extern int ssl3_SendApplicationData(sslSocket *ss, const PRUint8 *in,
                                     int len, int flags);
@@ -1691,6 +1682,26 @@ PRBool ssl_AlpnTagAllowed(const sslSocket *ss, const SECItem *tag);
 #endif
 
 void ssl_Trace(const char *format, ...);
+
+void ssl_CacheExternalToken(sslSocket *ss);
+SECStatus ssl_DecodeResumptionToken(sslSessionID *sid, const PRUint8 *encodedTicket,
+                                    PRUint32 encodedTicketLen);
+PRBool ssl_IsResumptionTokenValid(sslSocket *ss);
+
+/* Remove when stable. */
+
+SECStatus SSLExp_SetResumptionTokenCallback(PRFileDesc *fd,
+                                            SSLResumptionTokenCallback cb,
+                                            void *ctx);
+SECStatus SSLExp_SetResumptionToken(PRFileDesc *fd, const PRUint8 *token,
+                                    unsigned int len);
+
+SECStatus SSLExp_GetResumptionTokenInfo(const PRUint8 *tokenData, unsigned int tokenLen,
+                                        SSLResumptionTokenInfo *token, unsigned int version);
+
+SECStatus SSLExp_DestroyResumptionTokenInfo(SSLResumptionTokenInfo *token);
+
+#define SSLResumptionTokenVersion 2
 
 SEC_END_PROTOS
 

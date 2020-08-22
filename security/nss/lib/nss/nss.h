@@ -22,10 +22,10 @@
  * The format of the version string should be
  *     "<major version>.<minor version>[.<patch level>[.<build number>]][ <ECC>][ <Beta>]"
  */
-#define NSS_VERSION "3.35" _NSS_CUSTOMIZED
+#define NSS_VERSION "3.36.8" _NSS_CUSTOMIZED
 #define NSS_VMAJOR 3
-#define NSS_VMINOR 35
-#define NSS_VPATCH 0
+#define NSS_VMINOR 36
+#define NSS_VPATCH 8
 #define NSS_VBUILD 0
 #define NSS_BETA PR_FALSE
 
