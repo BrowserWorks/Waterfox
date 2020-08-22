@@ -131,7 +131,7 @@ FirefoxProfileMigrator.prototype._getResourcesInternal = function(sourceProfileD
   let favicons = getFileResource(types.HISTORY, ["favicons.sqlite", "favicons.sqlite-wal"]);
   let cookies = getFileResource(types.COOKIES, ["cookies.sqlite", "cookies.sqlite-wal"]);
   let passwords = getFileResource(types.PASSWORDS,
-    ["signons.sqlite", "logins.json", "key3.db",
+    ["signons.sqlite", "logins.json", "key3.db", "key4.db",
      "signedInUser.json"]);
   let formData = getFileResource(types.FORMDATA, [
     "formhistory.sqlite",
