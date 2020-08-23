@@ -3181,6 +3181,15 @@ int NS_main(int argc, NS_tchar** argv) {
         return 1;
       }
 
+// Only invoke the service for installations in Program Files.
+// This check is duplicated in workmonitor.cpp because the service can
+// be invoked directly without going through the updater.
+#  ifndef TEST_UPDATER
+      if (useService) {
+        useService = IsProgramFilesPath(gInstallDirPath);
+      }
+#  endif
+
       // Make sure the path to the updater to use for the update is on local.
       // We do this check to make sure that file locking is available for
       // race condition security checks.

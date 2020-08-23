@@ -180,6 +180,5 @@ jobs:
       run-on-projects:
           - mozilla-central
           - mozilla-beta
-          - mozilla-esr68
       when:
           - {minute: 45}

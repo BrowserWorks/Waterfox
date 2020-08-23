@@ -7103,7 +7103,7 @@ org.zw
 
 // newGTLDs
 
-// List of new gTLDs imported from https://www.icann.org/resources/registries/gtlds/v2/gtlds.json on 2020-07-18T17:05:44Z
+// List of new gTLDs imported from https://www.icann.org/resources/registries/gtlds/v2/gtlds.json on 2020-08-07T17:16:50Z
 // This list is auto-generated, don't edit it manually.
 // aaa : 2015-02-26 American Automobile Association, Inc.
 aaa
@@ -7318,7 +7318,7 @@ auspost
 // author : 2014-12-18 Amazon Registry Services, Inc.
 author
 
-// auto : 2014-11-13 Cars Registry Limited
+// auto : 2014-11-13 XYZ.COM LLC
 auto
 
 // autos : 2014-01-09 DERAutos, LLC
@@ -7594,7 +7594,7 @@ capital
 // capitalone : 2015-08-06 Capital One Financial Corporation
 capitalone
 
-// car : 2015-01-22 Cars Registry Limited
+// car : 2015-01-22 XYZ.COM LLC
 car
 
 // caravan : 2013-12-12 Caravan International, Inc.
@@ -7612,7 +7612,7 @@ career
 // careers : 2013-10-02 Binky Moon, LLC
 careers
 
-// cars : 2014-11-13 Cars Registry Limited
+// cars : 2014-11-13 XYZ.COM LLC
 cars
 
 // casa : 2013-11-21 Minds + Machines Group Limited
@@ -8797,7 +8797,7 @@ law
 // lawyer : 2014-03-20 Dog Beach, LLC
 lawyer
 
-// lds : 2014-03-20 IRI Domain Management, LLC ("Applicant")
+// lds : 2014-03-20 IRI Domain Management, LLC
 lds
 
 // lease : 2014-03-06 Binky Moon, LLC
@@ -9064,7 +9064,7 @@ money
 // monster : 2015-09-11 XYZ.COM LLC
 monster
 
-// mormon : 2013-12-05 IRI Domain Management, LLC ("Applicant")
+// mormon : 2013-12-05 IRI Domain Management, LLC
 mormon
 
 // mortgage : 2014-03-20 Dog Beach, LLC
@@ -9546,9 +9546,6 @@ richardli
 
 // ricoh : 2014-11-20 Ricoh Company, Ltd.
 ricoh
-
-// rightathome : 2015-07-23 Johnson Shareholdings, Inc.
-rightathome
 
 // ril : 2015-04-02 Reliance Industries Limited
 ril
@@ -10075,7 +10072,7 @@ travelers
 // travelersinsurance : 2015-03-26 Travelers TLD, LLC
 travelersinsurance
 
-// trust : 2014-10-16 NCC Group Inc.
+// trust : 2014-10-16 NCC Group Domain Services, Inc.
 trust
 
 // trv : 2015-03-26 Travelers TLD, LLC
@@ -10685,6 +10682,12 @@ barsy.ca
 // Submitted by Werner Kaltofen <wk@all-inkl.com>
 kasserver.com
 
+// Algorithmia, Inc. : algorithmia.com
+// Submitted by Eli Perelman <eperelman@algorithmia.io>
+*.algorithmia.com
+!teams.algorithmia.com
+!test.algorithmia.com
+
 // Altervista: https://www.altervista.org
 // Submitted by Carlo Cannas <tech_staff@altervista.it>
 altervista.org
@@ -11165,6 +11168,10 @@ debian.net
 // deSEC : https://desec.io/
 // Submitted by Peter Thomassen <peter@desec.io>
 dedyn.io
+
+// DNS Africa Ltd https://dns.business
+// Submitted by Calvin Browne <calvin@dns.business>
+jozi.biz
 
 // DNShome : https://www.dnshome.de/
 // Submitted by Norbert Auler <mail@dnshome.de>
@@ -11860,6 +11867,10 @@ lolipop.io
 cloudapps.digital
 london.cloudapps.digital
 
+// GOV.UK Pay : https://www.payments.service.gov.uk/
+// Submitted by Richard Baker <richard.baker@digital.cabinet-office.gov.uk>
+pymnt.uk
+
 // UKHomeOffice : https://www.gov.uk/government/organisations/home-office
 // Submitted by Jon Shanks <jon.shanks@digital.homeoffice.gov.uk>
 homeoffice.gov.uk
@@ -12097,6 +12108,10 @@ to.leg.br
 // Submitted by Wolfgang Schwarz <admin@intermetrics.de>
 pixolino.com
 
+// Internet-Pro, LLP: https://netangels.ru/
+// Submited by Vasiliy Sheredeko <piphon@gmail.com>
+na4u.ru
+
 // IPiFony Systems, Inc. : https://www.ipifony.com/
 // Submitted by Matthew Hardeman <mhardeman@ipifony.com>
 ipifony.net
@@ -12287,6 +12302,11 @@ mayfirst.org
 // Submitted by Ilya Zaretskiy <zaretskiy@corp.mail.ru>
 hb.cldmail.ru
 
+// McHost : https://mchost.ru
+// Submitted by Evgeniy Subbotin <e.subbotin@mchost.ru>
+mcdir.ru
+vps.mcdir.ru
+
 // Memset hosting : https://www.memset.com
 // Submitted by Tom Whitwell <domains@memset.com>
 miniserver.com
@@ -12334,6 +12354,19 @@ bmoattachments.org
 net.ru
 org.ru
 pp.ru
+
+// Mythic Beasts : https://www.mythic-beasts.com
+// Submitted by Paul Cammish <kelduum@mythic-beasts.com>
+hostedpi.com
+customer.mythic-beasts.com
+lynx.mythic-beasts.com
+ocelot.mythic-beasts.com
+onza.mythic-beasts.com
+sphinx.mythic-beasts.com
+vs.mythic-beasts.com
+x.mythic-beasts.com
+yali.mythic-beasts.com
+cust.retrosnub.co.uk
 
 // Nabu Casa : https://www.nabucasa.com
 // Submitted by Paulus Schoutsen <infra@nabucasa.com>
@@ -12635,6 +12668,13 @@ pagefrontapp.com
 // PageXL : https://pagexl.com
 // Submitted by Yann Guichard <yann@pagexl.com>
 pagexl.com
+
+// pcarrier.ca Software Inc: https://pcarrier.ca/
+// Submitted by Pierre Carrier <pc@rrier.ca>
+bar0.net
+bar1.net
+bar2.net
+rdv.to
 
 // .pl domains (grandfathered)
 art.pl
@@ -13008,6 +13048,8 @@ cust.dev.thingdust.io
 cust.disrec.thingdust.io
 cust.prod.thingdust.io
 cust.testing.thingdust.io
+*.firenet.ch
+*.svc.firenet.ch
 
 // Tlon.io : https://tlon.io
 // Submitted by Mark Staarink <mark@tlon.io>
@@ -13275,4 +13317,8 @@ mintere.site
 // Submitted by Michael Smith <michael.smith@wpengine.com>
 wpenginepowered.com
 
+// Impertrix Solutions : <https://impertrixcdn.com>
+// Submitted by Zhixiang Zhao <csuite@impertrix.com>
+impertrixcdn.com
+impertrix.com
 // ===END PRIVATE DOMAINS===
