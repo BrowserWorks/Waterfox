@@ -3230,7 +3230,8 @@ nsLayoutUtils::GetFramesForArea(nsIFrame* aFrame, const nsRect& aRect,
   }
 
   builder.EnterPresShell(aFrame);
-  aFrame->BuildDisplayListForStackingContext(&builder, aRect, &list);
+  builder.SetDirtyRect(aRect);
+  aFrame->BuildDisplayListForStackingContext(&builder, &list);
   builder.LeavePresShell(aFrame, nullptr);
 
 #ifdef MOZ_DUMP_PAINTING
@@ -3585,7 +3586,8 @@ nsLayoutUtils::PaintFrame(gfxContext* aRenderingContext, nsIFrame* aFrame,
 
       nsDisplayListBuilder::AutoCurrentScrollParentIdSetter idSetter(&builder, id);
 
-      aFrame->BuildDisplayListForStackingContext(&builder, dirtyRect, &list);
+      builder.SetDirtyRect(dirtyRect);
+      aFrame->BuildDisplayListForStackingContext(&builder, &list);
     }
 
     LayoutFrameType frameType = aFrame->Type();
