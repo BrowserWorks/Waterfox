@@ -309,7 +309,8 @@ nsContentSink::ProcessHeaderData(nsIAtom* aHeader, const nsAString& aValue,
 
   mDocument->SetHeaderData(aHeader, aValue);
 
-  if (aHeader == nsGkAtoms::setcookie) {
+  if (aHeader == nsGkAtoms::setcookie &&
+      Preferences::GetBool("dom.metaElement.setCookie.allowed", true)) {
     // Note: Necko already handles cookies set via the channel.  We can't just
     // call SetCookie on the channel because we want to do some security checks
     // here.
