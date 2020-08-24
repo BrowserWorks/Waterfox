@@ -328,6 +328,8 @@ static const struct mechanismList mechanisms[] = {
     { CKM_AES_CTS, { 16, 32, CKF_EN_DE }, PR_TRUE },
     { CKM_AES_CTR, { 16, 32, CKF_EN_DE }, PR_TRUE },
     { CKM_AES_GCM, { 16, 32, CKF_EN_DE }, PR_TRUE },
+    { CKM_AES_XCBC_MAC_96, { 16, 16, CKF_SN_VR }, PR_TRUE },
+    { CKM_AES_XCBC_MAC, { 16, 16, CKF_SN_VR }, PR_TRUE },
     /* ------------------------- Camellia Operations --------------------- */
     { CKM_CAMELLIA_KEY_GEN, { 16, 32, CKF_GENERATE }, PR_TRUE },
     { CKM_CAMELLIA_ECB, { 16, 32, CKF_EN_DE_WR_UN }, PR_TRUE },
@@ -346,6 +348,7 @@ static const struct mechanismList mechanisms[] = {
     /* ------------------------- ChaCha20 Operations ---------------------- */
     { CKM_NSS_CHACHA20_KEY_GEN, { 32, 32, CKF_GENERATE }, PR_TRUE },
     { CKM_NSS_CHACHA20_POLY1305, { 32, 32, CKF_EN_DE }, PR_TRUE },
+    { CKM_NSS_CHACHA20_CTR, { 32, 32, CKF_EN_DE }, PR_TRUE },
 #endif /* NSS_DISABLE_CHACHAPOLY */
     /* ------------------------- Hashing Operations ----------------------- */
     { CKM_MD2, { 0, 0, CKF_DIGEST }, PR_FALSE },
@@ -421,11 +424,20 @@ static const struct mechanismList mechanisms[] = {
 #endif
     /* --------------------- Secret Key Operations ------------------------ */
     { CKM_GENERIC_SECRET_KEY_GEN, { 1, 32, CKF_GENERATE }, PR_TRUE },
-    { CKM_CONCATENATE_BASE_AND_KEY, { 1, 32, CKF_GENERATE }, PR_FALSE },
-    { CKM_CONCATENATE_BASE_AND_DATA, { 1, 32, CKF_GENERATE }, PR_FALSE },
-    { CKM_CONCATENATE_DATA_AND_BASE, { 1, 32, CKF_GENERATE }, PR_FALSE },
-    { CKM_XOR_BASE_AND_DATA, { 1, 32, CKF_GENERATE }, PR_FALSE },
+    { CKM_CONCATENATE_BASE_AND_KEY, { 1, 32, CKF_DERIVE }, PR_FALSE },
+    { CKM_CONCATENATE_BASE_AND_DATA, { 1, 32, CKF_DERIVE }, PR_FALSE },
+    { CKM_CONCATENATE_DATA_AND_BASE, { 1, 32, CKF_DERIVE }, PR_FALSE },
+    { CKM_XOR_BASE_AND_DATA, { 1, 32, CKF_DERIVE }, PR_FALSE },
     { CKM_EXTRACT_KEY_FROM_KEY, { 1, 32, CKF_DERIVE }, PR_FALSE },
+    { CKM_DES3_ECB_ENCRYPT_DATA, { 1, 32, CKF_DERIVE }, PR_FALSE },
+    { CKM_DES3_CBC_ENCRYPT_DATA, { 1, 32, CKF_DERIVE }, PR_FALSE },
+    { CKM_AES_ECB_ENCRYPT_DATA, { 1, 32, CKF_DERIVE }, PR_FALSE },
+    { CKM_AES_CBC_ENCRYPT_DATA, { 1, 32, CKF_DERIVE }, PR_FALSE },
+    { CKM_CAMELLIA_ECB_ENCRYPT_DATA, { 1, 32, CKF_DERIVE }, PR_FALSE },
+    { CKM_CAMELLIA_CBC_ENCRYPT_DATA, { 1, 32, CKF_DERIVE }, PR_FALSE },
+    { CKM_SEED_ECB_ENCRYPT_DATA, { 1, 32, CKF_DERIVE }, PR_FALSE },
+    { CKM_SEED_CBC_ENCRYPT_DATA, { 1, 32, CKF_DERIVE }, PR_FALSE },
+
     /* ---------------------- SSL Key Derivations ------------------------- */
     { CKM_SSL3_PRE_MASTER_KEY_GEN, { 48, 48, CKF_GENERATE }, PR_FALSE },
     { CKM_SSL3_MASTER_KEY_DERIVE, { 48, 48, CKF_DERIVE }, PR_FALSE },
@@ -500,7 +512,11 @@ static const struct mechanismList mechanisms[] = {
     { CKM_NSS_JPAKE_FINAL_SHA512, { 0, 0, CKF_DERIVE }, PR_TRUE },
     /* -------------------- Constant Time TLS MACs ----------------------- */
     { CKM_NSS_HMAC_CONSTANT_TIME, { 0, 0, CKF_DIGEST }, PR_TRUE },
-    { CKM_NSS_SSL3_MAC_CONSTANT_TIME, { 0, 0, CKF_DIGEST }, PR_TRUE }
+    { CKM_NSS_SSL3_MAC_CONSTANT_TIME, { 0, 0, CKF_DIGEST }, PR_TRUE },
+    /* --------------------IPSEC ----------------------- */
+    { CKM_NSS_IKE_PRF_PLUS_DERIVE, { 8, 255 * 64, CKF_DERIVE }, PR_TRUE },
+    { CKM_NSS_IKE_PRF_DERIVE, { 8, 64, CKF_DERIVE }, PR_TRUE },
+    { CKM_NSS_IKE1_PRF_DERIVE, { 8, 64, CKF_DERIVE }, PR_TRUE }
 };
 static const CK_ULONG mechanismCount = sizeof(mechanisms) / sizeof(mechanisms[0]);
 
@@ -1334,7 +1350,6 @@ sftk_handleSecretKeyObject(SFTKSession *session, SFTKObject *object,
     if (sftk_isTrue(object, CKA_TOKEN)) {
         SFTKSlot *slot = session->slot;
         SFTKDBHandle *keyHandle = sftk_getKeyDB(slot);
-        CK_RV crv;
 
         if (keyHandle == NULL) {
             return CKR_TOKEN_WRITE_PROTECTED;
@@ -1807,8 +1822,6 @@ sftk_GetPubKey(SFTKObject *object, CK_KEY_TYPE key_type,
                     break; /* key was not DER encoded, no need to unwrap */
                 }
 
-                PORT_Assert(pubKey->u.ec.ecParams.name != ECCurve25519);
-
                 /* handle the encoded case */
                 if ((pubKey->u.ec.publicValue.data[0] == SEC_ASN1_OCTET_STRING) &&
                     pubKey->u.ec.publicValue.len > keyLen) {
@@ -1819,7 +1832,13 @@ sftk_GetPubKey(SFTKObject *object, CK_KEY_TYPE key_type,
                                                 SEC_ASN1_GET(SEC_OctetStringTemplate),
                                                 &pubKey->u.ec.publicValue);
                     /* nope, didn't decode correctly */
-                    if ((rv != SECSuccess) || (publicValue.data[0] != EC_POINT_FORM_UNCOMPRESSED) || (publicValue.len != keyLen)) {
+                    if ((rv != SECSuccess) || (publicValue.len != keyLen)) {
+                        crv = CKR_ATTRIBUTE_VALUE_INVALID;
+                        break;
+                    }
+                    /* we don't handle compressed points except in the case of ECCurve25519 */
+                    if ((pubKey->u.ec.ecParams.fieldID.type != ec_field_plain) &&
+                        (publicValue.data[0] != EC_POINT_FORM_UNCOMPRESSED)) {
                         crv = CKR_ATTRIBUTE_VALUE_INVALID;
                         break;
                     }
@@ -2187,6 +2206,119 @@ sftk_GetPrivKey(SFTKObject *object, CK_KEY_TYPE key_type, CK_RV *crvp)
     return priv;
 }
 
+/* populate a public key object from a lowpublic keys structure */
+CK_RV
+sftk_PutPubKey(SFTKObject *publicKey, SFTKObject *privateKey, CK_KEY_TYPE keyType, NSSLOWKEYPublicKey *pubKey)
+{
+    CK_OBJECT_CLASS classType = CKO_PUBLIC_KEY;
+    CK_BBOOL cktrue = CK_TRUE;
+    CK_RV crv = CKR_OK;
+    sftk_DeleteAttributeType(publicKey, CKA_CLASS);
+    sftk_DeleteAttributeType(publicKey, CKA_KEY_TYPE);
+    sftk_DeleteAttributeType(publicKey, CKA_VALUE);
+
+    switch (keyType) {
+        case CKK_RSA:
+            sftk_DeleteAttributeType(publicKey, CKA_MODULUS);
+            sftk_DeleteAttributeType(publicKey, CKA_PUBLIC_EXPONENT);
+            /* format the keys */
+            /* fill in the RSA dependent paramenters in the public key */
+            crv = sftk_AddAttributeType(publicKey, CKA_MODULUS,
+                                        sftk_item_expand(&pubKey->u.rsa.modulus));
+            if (crv != CKR_OK) {
+                break;
+            }
+            crv = sftk_AddAttributeType(publicKey, CKA_PUBLIC_EXPONENT,
+                                        sftk_item_expand(&pubKey->u.rsa.publicExponent));
+            break;
+        case CKK_DSA:
+            sftk_DeleteAttributeType(publicKey, CKA_PRIME);
+            sftk_DeleteAttributeType(publicKey, CKA_SUBPRIME);
+            sftk_DeleteAttributeType(publicKey, CKA_BASE);
+            crv = sftk_AddAttributeType(publicKey, CKA_PRIME,
+                                        sftk_item_expand(&pubKey->u.dsa.params.prime));
+            if (crv != CKR_OK) {
+                break;
+            }
+            crv = sftk_AddAttributeType(publicKey, CKA_SUBPRIME,
+                                        sftk_item_expand(&pubKey->u.dsa.params.subPrime));
+            if (crv != CKR_OK) {
+                break;
+            }
+            crv = sftk_AddAttributeType(publicKey, CKA_BASE,
+                                        sftk_item_expand(&pubKey->u.dsa.params.base));
+            if (crv != CKR_OK) {
+                break;
+            }
+            crv = sftk_AddAttributeType(publicKey, CKA_VALUE,
+                                        sftk_item_expand(&pubKey->u.dsa.publicValue));
+            break;
+        case CKK_DH:
+            sftk_DeleteAttributeType(publicKey, CKA_PRIME);
+            sftk_DeleteAttributeType(publicKey, CKA_BASE);
+            crv = sftk_AddAttributeType(publicKey, CKA_PRIME,
+                                        sftk_item_expand(&pubKey->u.dh.prime));
+            if (crv != CKR_OK) {
+                break;
+            }
+            crv = sftk_AddAttributeType(publicKey, CKA_BASE,
+                                        sftk_item_expand(&pubKey->u.dh.base));
+            if (crv != CKR_OK) {
+                break;
+            }
+            crv = sftk_AddAttributeType(publicKey, CKA_VALUE,
+                                        sftk_item_expand(&pubKey->u.dh.publicValue));
+            break;
+        case CKK_EC:
+            sftk_DeleteAttributeType(publicKey, CKA_EC_PARAMS);
+            sftk_DeleteAttributeType(publicKey, CKA_EC_POINT);
+            crv = sftk_AddAttributeType(publicKey, CKA_EC_PARAMS,
+                                        sftk_item_expand(&pubKey->u.ec.ecParams.DEREncoding));
+            if (crv != CKR_OK) {
+                break;
+            }
+            crv = sftk_AddAttributeType(publicKey, CKA_EC_POINT,
+                                        sftk_item_expand(&pubKey->u.ec.publicValue));
+            break;
+        default:
+            return CKR_KEY_TYPE_INCONSISTENT;
+    }
+    crv = sftk_AddAttributeType(publicKey, CKA_CLASS, &classType,
+                                sizeof(CK_OBJECT_CLASS));
+    if (crv != CKR_OK)
+        return crv;
+    crv = sftk_AddAttributeType(publicKey, CKA_KEY_TYPE, &keyType,
+                                sizeof(CK_KEY_TYPE));
+    if (crv != CKR_OK)
+        return crv;
+    /* now handle the operator attributes */
+    if (sftk_isTrue(privateKey, CKA_DECRYPT)) {
+        crv = sftk_forceAttribute(publicKey, CKA_ENCRYPT, &cktrue, sizeof(CK_BBOOL));
+        if (crv != CKR_OK) {
+            return crv;
+        }
+    }
+    if (sftk_isTrue(privateKey, CKA_SIGN)) {
+        crv = sftk_forceAttribute(publicKey, CKA_VERIFY, &cktrue, sizeof(CK_BBOOL));
+        if (crv != CKR_OK) {
+            return crv;
+        }
+    }
+    if (sftk_isTrue(privateKey, CKA_SIGN_RECOVER)) {
+        crv = sftk_forceAttribute(publicKey, CKA_VERIFY_RECOVER, &cktrue, sizeof(CK_BBOOL));
+        if (crv != CKR_OK) {
+            return crv;
+        }
+    }
+    if (sftk_isTrue(privateKey, CKA_DERIVE)) {
+        crv = sftk_forceAttribute(publicKey, CKA_DERIVE, &cktrue, sizeof(CK_BBOOL));
+        if (crv != CKR_OK) {
+            return crv;
+        }
+    }
+    return crv;
+}
+
 /*
  **************************** Symetric Key utils ************************
  */
@@ -2355,17 +2487,22 @@ sftk_SlotFromID(CK_SLOT_ID slotID, PRBool all)
     return slot;
 }
 
-SFTKSlot *
-sftk_SlotFromSessionHandle(CK_SESSION_HANDLE handle)
+CK_SLOT_ID
+sftk_SlotIDFromSessionHandle(CK_SESSION_HANDLE handle)
 {
     CK_ULONG slotIDIndex = (handle >> 24) & 0x7f;
     CK_ULONG moduleIndex = (handle >> 31) & 1;
 
     if (slotIDIndex >= nscSlotCount[moduleIndex]) {
-        return NULL;
+        return (CK_SLOT_ID)-1;
     }
+    return nscSlotList[moduleIndex][slotIDIndex];
+}
 
-    return sftk_SlotFromID(nscSlotList[moduleIndex][slotIDIndex], PR_FALSE);
+SFTKSlot *
+sftk_SlotFromSessionHandle(CK_SESSION_HANDLE handle)
+{
+    return sftk_SlotFromID(sftk_SlotIDFromSessionHandle(handle), PR_FALSE);
 }
 
 static CK_RV
@@ -3139,7 +3276,7 @@ nsc_CommonFinalize(CK_VOID_PTR pReserved, PRBool isFIPS)
      * this call doesn't force freebl to be reloaded. */
     BL_SetForkState(PR_FALSE);
 
-#ifndef NSS_TEST_BUILD
+#ifndef NSS_STATIC_SOFTOKEN
     /* unload freeBL shared library from memory. This may only decrement the
      * OS refcount if it's been loaded multiple times, eg. by libssl */
     BL_Unload();
@@ -3793,12 +3930,12 @@ NSC_SetPIN(CK_SESSION_HANDLE hSession, CK_CHAR_PTR pOldPin,
         PZ_Unlock(slot->slotLock);
         /* Reset login flags. */
         if (ulNewLen == 0) {
-            PRBool tokenRemoved = PR_FALSE;
             PZ_Lock(slot->slotLock);
             slot->isLoggedIn = PR_FALSE;
             slot->ssoLoggedIn = PR_FALSE;
             PZ_Unlock(slot->slotLock);
 
+            tokenRemoved = PR_FALSE;
             rv = sftkdb_CheckPassword(handle, "", &tokenRemoved);
             if (tokenRemoved) {
                 sftk_CloseAllSessions(slot, PR_FALSE);
@@ -4408,6 +4545,44 @@ NSC_GetObjectSize(CK_SESSION_HANDLE hSession,
     return CKR_OK;
 }
 
+static CK_RV
+nsc_GetTokenAttributeValue(SFTKSession *session, CK_OBJECT_HANDLE hObject,
+                           CK_ATTRIBUTE_PTR pTemplate, CK_ULONG ulCount)
+{
+    SFTKSlot *slot = sftk_SlotFromSession(session);
+    SFTKDBHandle *dbHandle = sftk_getDBForTokenObject(slot, hObject);
+    SFTKDBHandle *keydb = NULL;
+    CK_RV crv;
+
+    if (dbHandle == NULL) {
+        return CKR_OBJECT_HANDLE_INVALID;
+    }
+
+    crv = sftkdb_GetAttributeValue(dbHandle, hObject, pTemplate, ulCount);
+
+    /* make sure we don't export any sensitive information */
+    keydb = sftk_getKeyDB(slot);
+    if (dbHandle == keydb) {
+        CK_ULONG i;
+        for (i = 0; i < ulCount; i++) {
+            if (sftk_isSensitive(pTemplate[i].type, CKO_PRIVATE_KEY)) {
+                crv = CKR_ATTRIBUTE_SENSITIVE;
+                if (pTemplate[i].pValue && (pTemplate[i].ulValueLen != -1)) {
+                    PORT_Memset(pTemplate[i].pValue, 0,
+                                pTemplate[i].ulValueLen);
+                }
+                pTemplate[i].ulValueLen = -1;
+            }
+        }
+    }
+
+    sftk_freeDB(dbHandle);
+    if (keydb) {
+        sftk_freeDB(keydb);
+    }
+    return crv;
+}
+
 /* NSC_GetAttributeValue obtains the value of one or more object attributes. */
 CK_RV
 NSC_GetAttributeValue(CK_SESSION_HANDLE hSession,
@@ -4436,37 +4611,8 @@ NSC_GetAttributeValue(CK_SESSION_HANDLE hSession,
 
     /* short circuit everything for token objects */
     if (sftk_isToken(hObject)) {
-        SFTKSlot *slot = sftk_SlotFromSession(session);
-        SFTKDBHandle *dbHandle = sftk_getDBForTokenObject(slot, hObject);
-        SFTKDBHandle *keydb = NULL;
-
-        if (dbHandle == NULL) {
-            sftk_FreeSession(session);
-            return CKR_OBJECT_HANDLE_INVALID;
-        }
-
-        crv = sftkdb_GetAttributeValue(dbHandle, hObject, pTemplate, ulCount);
-
-        /* make sure we don't export any sensitive information */
-        keydb = sftk_getKeyDB(slot);
-        if (dbHandle == keydb) {
-            for (i = 0; i < (int)ulCount; i++) {
-                if (sftk_isSensitive(pTemplate[i].type, CKO_PRIVATE_KEY)) {
-                    crv = CKR_ATTRIBUTE_SENSITIVE;
-                    if (pTemplate[i].pValue && (pTemplate[i].ulValueLen != -1)) {
-                        PORT_Memset(pTemplate[i].pValue, 0,
-                                    pTemplate[i].ulValueLen);
-                    }
-                    pTemplate[i].ulValueLen = -1;
-                }
-            }
-        }
-
+        crv = nsc_GetTokenAttributeValue(session, hObject, pTemplate, ulCount);
         sftk_FreeSession(session);
-        sftk_freeDB(dbHandle);
-        if (keydb) {
-            sftk_freeDB(keydb);
-        }
         return crv;
     }
 

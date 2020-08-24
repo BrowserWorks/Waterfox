@@ -110,6 +110,7 @@ CERT_GenTime2FormattedAscii_Util
 CERT_GetCertChainFromCert
 CERT_GetCertEmailAddress
 CERT_GetCertificateRequestExtensions
+CERT_GetCertKeyType
 CERT_GetCertTimes
 CERT_GetCertTrust
 CERT_GetCommonName
@@ -163,7 +164,6 @@ DER_GeneralizedTimeToTime
 DER_GeneralizedTimeToTime_Util
 DER_GetInteger
 DER_GetInteger_Util
-DER_Lengths
 DER_SetUInteger
 DER_UTCTimeToTime_Util
 DSAU_DecodeDerSigToLen
@@ -175,6 +175,7 @@ HASH_Create
 HASH_Destroy
 HASH_End
 HASH_GetHashObject
+HASH_GetHashOidTagByHashType
 HASH_GetType
 HASH_HashBuf
 HASH_ResultLenByOidTag
@@ -213,7 +214,9 @@ NSS_CMSSignedData_Create
 NSS_CMSSignedData_CreateCertsOnly
 NSS_CMSSignedData_Destroy
 NSS_CMSSignedData_GetContentInfo
+NSS_CMSSignedData_GetDigestAlgs
 NSS_CMSSignedData_GetSignerInfo
+NSS_CMSSignedData_HasDigests
 NSS_CMSSignedData_ImportCerts
 NSS_CMSSignedData_SetDigestValue
 NSS_CMSSignedData_SignerInfoCount
@@ -275,6 +278,10 @@ NSSSMIME_GetVersion
 NSS_SMIMESignerInfo_SaveSMIMEProfile
 NSS_SMIMEUtil_FindBulkAlgForRecipients
 NSSSSL_GetVersion
+#ifdef XP_WIN
+_NSSUTIL_Access
+#endif
+NSSUTIL_AddNSSFlagToModuleSpec
 NSSUTIL_ArgDecodeNumber
 NSSUTIL_ArgFetchValue
 NSSUTIL_ArgGetLabel
@@ -296,6 +303,9 @@ NSSUTIL_MkModuleSpec
 NSSUTIL_MkNSSString
 NSSUTIL_MkSlotString
 NSSUTIL_Quote
+#ifdef XP_WIN
+_NSSUTIL_UTF8ToWide
+#endif
 PK11_AlgtagToMechanism
 PK11_Authenticate
 PK11_ChangePW
@@ -362,7 +372,6 @@ PK11_GetKeyData
 PK11_GetKeyGen
 PK11_GetLowLevelKeyIDForPrivateKey
 PK11_GetMechanism
-PK11_GetMinimumPwdLength
 PK11_GetModInfo
 PK11_GetModuleURI
 PK11_GetNextSafe
@@ -370,10 +379,10 @@ PK11_GetNextSymKey
 PK11_GetPadMechanism
 PK11_GetPrivateKeyNickname
 PK11_GetPrivateModulusLen
+PK11_GetSlotFromPrivateKey
 PK11_GetSlotID
 PK11_GetSlotInfo
 PK11_GetSlotName
-PK11_GetSlotPWValues
 PK11_GetSlotSeries
 PK11_GetSymKeyNickname
 PK11_GetTokenInfo
@@ -432,7 +441,6 @@ PK11_ResetToken
 PK11SDR_Decrypt
 PK11SDR_Encrypt
 PK11_SetPasswordFunc
-PK11_SetSlotPWValues
 PK11_SetSymKeyNickname
 PK11_Sign
 PK11_SignatureLen

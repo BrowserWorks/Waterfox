@@ -121,6 +121,9 @@ static PRBool enableCertStatus = PR_FALSE;
 
 PRIntervalTime maxInterval = PR_INTERVAL_NO_TIMEOUT;
 
+static const SSLSignatureScheme *enabledSigSchemes = NULL;
+static unsigned int enabledSigSchemeCount = 0;
+
 char *progName;
 
 secuPWData pwdata = { PW_NONE, 0 };
@@ -137,13 +140,14 @@ SECItem bigBuf;
     fprintf
 
 static void
-Usage(const char *progName)
+Usage(void)
 {
     fprintf(stderr,
             "Usage: %s [-n nickname] [-p port] [-d dbdir] [-c connections]\n"
             "          [-BDNovqs] [-f filename] [-N | -P percentage]\n"
             "          [-w dbpasswd] [-C cipher(s)] [-t threads] [-W pwfile]\n"
-            "          [-V [min-version]:[max-version]] [-a sniHostName] hostname\n"
+            "          [-V [min-version]:[max-version]] [-a sniHostName]\n"
+            "          [-J signatureschemes] hostname\n"
             " where -v means verbose\n"
             "       -o flag is interpreted as follows:\n"
             "          1 -o   means override the result of server certificate validation.\n"
@@ -161,7 +165,17 @@ Usage(const char *progName)
             "       -T enable the cert_status extension (OCSP stapling)\n"
             "       -u enable TLS Session Ticket extension\n"
             "       -z enable compression\n"
-            "       -g enable false start\n",
+            "       -g enable false start\n"
+            "       -J enable signature schemes\n"
+            "          This takes a comma separated list of signature schemes in preference\n"
+            "          order.\n"
+            "          Possible values are:\n"
+            "          rsa_pkcs1_sha1, rsa_pkcs1_sha256, rsa_pkcs1_sha384, rsa_pkcs1_sha512,\n"
+            "          ecdsa_sha1, ecdsa_secp256r1_sha256, ecdsa_secp384r1_sha384,\n"
+            "          ecdsa_secp521r1_sha512,\n"
+            "          rsa_pss_rsae_sha256, rsa_pss_rsae_sha384, rsa_pss_rsae_sha512,\n"
+            "          rsa_pss_pss_sha256, rsa_pss_pss_sha384, rsa_pss_pss_sha512,\n"
+            "          dsa_sha1, dsa_sha256, dsa_sha384, dsa_sha512\n",
             progName);
     exit(1);
 }
@@ -260,7 +274,6 @@ void
 printSecurityInfo(PRFileDesc *fd)
 {
     CERTCertificate *cert = NULL;
-    SSL3Statistics *ssl3stats = SSL_GetStatistics();
     SECStatus result;
     SSLChannelInfo channel;
     SSLCipherSuiteInfo suite;
@@ -1095,7 +1108,6 @@ client_main(
         while (0 != (ndx = *cipherString)) {
             const char *startCipher = cipherString++;
             int cipher = 0;
-            SECStatus rv;
 
             if (ndx == ':') {
                 cipher = hexchar_to_int(*cipherString++);
@@ -1158,6 +1170,14 @@ client_main(
     rv = SSL_VersionRangeSet(model_sock, &enabledVersions);
     if (rv != SECSuccess) {
         errExit("error setting SSL/TLS version range ");
+    }
+
+    if (enabledSigSchemes) {
+        rv = SSL_SignatureSchemePrefSet(model_sock, enabledSigSchemes,
+                                        enabledSigSchemeCount);
+        if (rv < 0) {
+            errExit("SSL_SignatureSchemePrefSet");
+        }
     }
 
     if (bigBuf.data) { /* doing FDX */
@@ -1318,7 +1338,7 @@ main(int argc, char **argv)
     /* XXX: 'B' was used in the past but removed in 3.28,
      *      please leave some time before resuing it. */
     optstate = PL_CreateOptState(argc, argv,
-                                 "C:DNP:TUV:W:a:c:d:f:gin:op:qst:uvw:z");
+                                 "C:DJ:NP:TUV:W:a:c:d:f:gin:op:qst:uvw:z");
     while ((status = PL_GetNextOpt(optstate)) == PL_OPT_OK) {
         switch (optstate->option) {
             case 'C':
@@ -1330,6 +1350,15 @@ main(int argc, char **argv)
                 break;
 
             case 'I': /* reserved for OCSP multi-stapling */
+                break;
+
+            case 'J':
+                rv = parseSigSchemeList(optstate->value, &enabledSigSchemes, &enabledSigSchemeCount);
+                if (rv != SECSuccess) {
+                    PL_DestroyOptState(optstate);
+                    fprintf(stderr, "Bad signature scheme specified.\n");
+                    Usage();
+                }
                 break;
 
             case 'N':
@@ -1353,7 +1382,7 @@ main(int argc, char **argv)
                                                     enabledVersions, &enabledVersions) !=
                     SECSuccess) {
                     fprintf(stderr, "Bad version specified.\n");
-                    Usage(progName);
+                    Usage();
                 }
                 break;
 
@@ -1431,27 +1460,27 @@ main(int argc, char **argv)
 
             case 0: /* positional parameter */
                 if (hostName) {
-                    Usage(progName);
+                    Usage();
                 }
                 hostName = PL_strdup(optstate->value);
                 break;
 
             default:
             case '?':
-                Usage(progName);
+                Usage();
                 break;
         }
     }
     PL_DestroyOptState(optstate);
 
     if (!hostName || status == PL_OPT_BAD)
-        Usage(progName);
+        Usage();
 
     if (fullhs != NO_FULLHS_PERCENTAGE && (fullhs < 0 || fullhs > 100 || NoReuse))
-        Usage(progName);
+        Usage();
 
     if (port == 0)
-        Usage(progName);
+        Usage();
 
     if (fileName)
         readBigFile(fileName);
@@ -1517,6 +1546,8 @@ main(int argc, char **argv)
     }
 
     PL_strfree(hostName);
+
+    PORT_Free((SSLSignatureScheme *)enabledSigSchemes);
 
     /* some final stats. */
     printf(

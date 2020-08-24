@@ -482,7 +482,6 @@ SocketListener.prototype = {
   _setAdditionalSocketOptions: Task.async(function* () {
     if (this.encryption) {
       this._socket.serverCert = yield cert.local.getOrCreate();
-      this._socket.setSessionCache(false);
       this._socket.setSessionTickets(false);
       let requestCert = Ci.nsITLSServerSocket.REQUEST_NEVER;
       this._socket.setRequestClientCertificate(requestCert);

@@ -43,6 +43,7 @@ SignArchive(char *tree, char *keyName, char *zip_file, int javascript,
     int status;
     char tempfn[FNSIZE], fullfn[FNSIZE];
     int keyType = rsaKey;
+    int count;
 
     metafile = meta_file;
     optimize = _optimize;
@@ -81,9 +82,18 @@ SignArchive(char *tree, char *keyName, char *zip_file, int javascript,
         }
 
         /* rsa/dsa to zip */
-        sprintf(tempfn, "META-INF/%s.%s", base, (keyType == dsaKey ? "dsa"
-                                                                   : "rsa"));
-        sprintf(fullfn, "%s/%s", tree, tempfn);
+        count = snprintf(tempfn, sizeof(tempfn), "META-INF/%s.%s", base, (keyType == dsaKey ? "dsa" : "rsa"));
+        if (count >= sizeof(tempfn)) {
+            PR_fprintf(errorFD, "unable to write key metadata\n");
+            errorCount++;
+            exit(ERRX);
+        }
+        count = snprintf(fullfn, sizeof(fullfn), "%s/%s", tree, tempfn);
+        if (count >= sizeof(fullfn)) {
+            PR_fprintf(errorFD, "unable to write key metadata\n");
+            errorCount++;
+            exit(ERRX);
+        }
         JzipAdd(fullfn, tempfn, zipfile, compression_level);
 
         /* Loop through all files & subdirectories, add to archive */
@@ -93,20 +103,44 @@ SignArchive(char *tree, char *keyName, char *zip_file, int javascript,
     }
     /* mf to zip */
     strcpy(tempfn, "META-INF/manifest.mf");
-    sprintf(fullfn, "%s/%s", tree, tempfn);
+    count = snprintf(fullfn, sizeof(fullfn), "%s/%s", tree, tempfn);
+    if (count >= sizeof(fullfn)) {
+        PR_fprintf(errorFD, "unable to write manifest\n");
+        errorCount++;
+        exit(ERRX);
+    }
     JzipAdd(fullfn, tempfn, zipfile, compression_level);
 
     /* sf to zip */
-    sprintf(tempfn, "META-INF/%s.sf", base);
-    sprintf(fullfn, "%s/%s", tree, tempfn);
+    count = snprintf(tempfn, sizeof(tempfn), "META-INF/%s.sf", base);
+    if (count >= sizeof(tempfn)) {
+        PR_fprintf(errorFD, "unable to write sf metadata\n");
+        errorCount++;
+        exit(ERRX);
+    }
+    count = snprintf(fullfn, sizeof(fullfn), "%s/%s", tree, tempfn);
+    if (count >= sizeof(fullfn)) {
+        PR_fprintf(errorFD, "unable to write sf metadata\n");
+        errorCount++;
+        exit(ERRX);
+    }
     JzipAdd(fullfn, tempfn, zipfile, compression_level);
 
     /* Add the rsa/dsa file to the zip archive normally */
     if (!xpi_arc) {
         /* rsa/dsa to zip */
-        sprintf(tempfn, "META-INF/%s.%s", base, (keyType == dsaKey ? "dsa"
-                                                                   : "rsa"));
-        sprintf(fullfn, "%s/%s", tree, tempfn);
+        count = snprintf(tempfn, sizeof(tempfn), "META-INF/%s.%s", base, (keyType == dsaKey ? "dsa" : "rsa"));
+        if (count >= sizeof(tempfn)) {
+            PR_fprintf(errorFD, "unable to write key metadata\n");
+            errorCount++;
+            exit(ERRX);
+        }
+        count = snprintf(fullfn, sizeof(fullfn), "%s/%s", tree, tempfn);
+        if (count >= sizeof(fullfn)) {
+            PR_fprintf(errorFD, "unable to write key metadata\n");
+            errorCount++;
+            exit(ERRX);
+        }
         JzipAdd(fullfn, tempfn, zipfile, compression_level);
     }
 
@@ -141,16 +175,16 @@ typedef struct {
  *
  */
 int
-SignAllArc(char *jartree, char *keyName, int javascript, char *metafile,
-           char *install_script, int optimize, PRBool recurse)
+SignAllArc(char *jartree, char *keyName, int javascript, char *metafilename,
+           char *install_script, int optimize_level, PRBool recurse)
 {
     SignArcInfo info;
 
     info.keyName = keyName;
     info.javascript = javascript;
-    info.metafile = metafile;
+    info.metafile = metafilename;
     info.install_script = install_script;
-    info.optimize = optimize;
+    info.optimize = optimize_level;
 
     return foreach (jartree, "", sign_all_arc_fn, recurse,
                     PR_TRUE /*include dirs*/, (void *)&info);
@@ -160,7 +194,7 @@ static int
 sign_all_arc_fn(char *relpath, char *basedir, char *reldir, char *filename,
                 void *arg)
 {
-    char *zipfile = NULL;
+    char *zipfilename = NULL;
     char *arc = NULL, *archive = NULL;
     int retval = 0;
     SignArcInfo *infop = (SignArcInfo *)arg;
@@ -178,8 +212,8 @@ sign_all_arc_fn(char *relpath, char *basedir, char *reldir, char *filename,
         }
         archive = PR_smprintf("%s/%s", basedir, relpath);
 
-        zipfile = PL_strdup(archive);
-        arc = PORT_Strrchr(zipfile, '.');
+        zipfilename = PL_strdup(archive);
+        arc = PORT_Strrchr(zipfilename, '.');
 
         if (arc == NULL) {
             PR_fprintf(errorFD, "%s: Internal failure\n", PROGRAM_NAME);
@@ -191,17 +225,17 @@ sign_all_arc_fn(char *relpath, char *basedir, char *reldir, char *filename,
         PL_strcpy(arc, ".jar");
 
         if (verbosity >= 0) {
-            PR_fprintf(outputFD, "\nsigning: %s\n", zipfile);
+            PR_fprintf(outputFD, "\nsigning: %s\n", zipfilename);
         }
-        retval = SignArchive(archive, infop->keyName, zipfile,
+        retval = SignArchive(archive, infop->keyName, zipfilename,
                              infop->javascript, infop->metafile, infop->install_script,
                              infop->optimize, PR_TRUE /* recurse */);
     }
 finish:
     if (archive)
         PR_Free(archive);
-    if (zipfile)
-        PR_Free(zipfile);
+    if (zipfilename)
+        PR_Free(zipfilename);
 
     return retval;
 }
@@ -408,6 +442,7 @@ static int
 manifesto_xpi_fn(char *relpath, char *basedir, char *reldir, char *filename, void *arg)
 {
     char fullname[FNSIZE];
+    int count;
 
     if (verbosity >= 0) {
         PR_fprintf(outputFD, "--> %s\n", relpath);
@@ -421,7 +456,10 @@ manifesto_xpi_fn(char *relpath, char *basedir, char *reldir, char *filename, voi
         if (!PL_HashTableLookup(extensions, ext))
             return 0;
     }
-    sprintf(fullname, "%s/%s", basedir, relpath);
+    count = snprintf(fullname, sizeof(fullname), "%s/%s", basedir, relpath);
+    if (count >= sizeof(fullname)) {
+        return 1;
+    }
     JzipAdd(fullname, relpath, zipfile, compression_level);
 
     return 0;
@@ -669,8 +707,8 @@ SignFile(FILE *outFile, FILE *inFile, CERTCertificate *cert)
 static int
 generate_SF_file(char *manifile, char *who)
 {
-    FILE *sf;
-    FILE *mf;
+    FILE *sfFile;
+    FILE *mfFile;
     long r1, r2, r3;
     char whofile[FNSIZE];
     char *buf, *name = NULL;
@@ -680,12 +718,12 @@ generate_SF_file(char *manifile, char *who)
 
     strcpy(whofile, who);
 
-    if ((mf = fopen(manifile, "rb")) == NULL) {
+    if ((mfFile = fopen(manifile, "rb")) == NULL) {
         perror(manifile);
         exit(ERRX);
     }
 
-    if ((sf = fopen(whofile, "wb")) == NULL) {
+    if ((sfFile = fopen(whofile, "wb")) == NULL) {
         perror(who);
         exit(ERRX);
     }
@@ -698,11 +736,11 @@ generate_SF_file(char *manifile, char *who)
     if (buf == NULL || name == NULL)
         out_of_memory();
 
-    fprintf(sf, "Signature-Version: 1.0\n");
-    fprintf(sf, "Created-By: %s\n", CREATOR);
-    fprintf(sf, "Comments: %s\n", BREAKAGE);
+    fprintf(sfFile, "Signature-Version: 1.0\n");
+    fprintf(sfFile, "Created-By: %s\n", CREATOR);
+    fprintf(sfFile, "Comments: %s\n", BREAKAGE);
 
-    if (fgets(buf, BUFSIZ, mf) == NULL) {
+    if (fgets(buf, BUFSIZ, mfFile) == NULL) {
         PR_fprintf(errorFD, "%s: empty manifest file!\n", PROGRAM_NAME);
         errorCount++;
         exit(ERRX);
@@ -714,15 +752,15 @@ generate_SF_file(char *manifile, char *who)
         exit(ERRX);
     }
 
-    fseek(mf, 0L, SEEK_SET);
+    fseek(mfFile, 0L, SEEK_SET);
 
     /* Process blocks of headers, and calculate their hashen */
 
     while (1) {
         /* Beginning range */
-        r1 = ftell(mf);
+        r1 = ftell(mfFile);
 
-        if (fgets(name, BUFSIZ, mf) == NULL)
+        if (fgets(name, BUFSIZ, mfFile) == NULL)
             break;
 
         line++;
@@ -736,46 +774,46 @@ generate_SF_file(char *manifile, char *who)
         }
 
         r2 = r1;
-        while (fgets(buf, BUFSIZ, mf)) {
+        while (fgets(buf, BUFSIZ, mfFile)) {
             if (*buf == 0 || *buf == '\n' || *buf == '\r')
                 break;
 
             line++;
 
             /* Ending range for hashing */
-            r2 = ftell(mf);
+            r2 = ftell(mfFile);
         }
 
-        r3 = ftell(mf);
+        r3 = ftell(mfFile);
 
         if (r1) {
-            fprintf(sf, "\n");
-            fprintf(sf, "%s", name);
+            fprintf(sfFile, "\n");
+            fprintf(sfFile, "%s", name);
         }
 
-        calculate_MD5_range(mf, r1, r2, &dig);
+        calculate_MD5_range(mfFile, r1, r2, &dig);
 
         if (optimize == 0) {
-            fprintf(sf, "Digest-Algorithms: MD5 SHA1\n");
+            fprintf(sfFile, "Digest-Algorithms: MD5 SHA1\n");
 
             md5 = BTOA_DataToAscii(dig.md5, MD5_LENGTH);
-            fprintf(sf, "MD5-Digest: %s\n", md5);
+            fprintf(sfFile, "MD5-Digest: %s\n", md5);
             PORT_Free(md5);
         }
 
         sha1 = BTOA_DataToAscii(dig.sha1, SHA1_LENGTH);
-        fprintf(sf, "SHA1-Digest: %s\n", sha1);
+        fprintf(sfFile, "SHA1-Digest: %s\n", sha1);
         PORT_Free(sha1);
 
         /* restore normalcy after changing offset position */
-        fseek(mf, r3, SEEK_SET);
+        fseek(mfFile, r3, SEEK_SET);
     }
 
     PORT_Free(buf);
     PORT_Free(name);
 
-    fclose(sf);
-    fclose(mf);
+    fclose(sfFile);
+    fclose(mfFile);
 
     return 0;
 }

@@ -199,9 +199,6 @@ PORT_Strdup(const char *str)
 void
 PORT_SetError(int value)
 {
-#ifdef DEBUG_jp96085
-    PORT_Assert(value != SEC_ERROR_REUSED_ISSUER_AND_SERIAL);
-#endif
     PR_SetError(value, 0);
     return;
 }
@@ -789,7 +786,7 @@ unsigned int
 NSS_SecureMemcmpZero(const void *mem, size_t n)
 {
     PRUint8 zero = 0;
-    int i;
+    size_t i;
     for (i = 0; i < n; ++i) {
         zero |= *(PRUint8 *)((uintptr_t)mem + i);
     }

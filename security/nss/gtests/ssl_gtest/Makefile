@@ -29,15 +29,17 @@ include ../common/gtest.mk
 
 CFLAGS += -I$(CORE_DEPTH)/lib/ssl
 
-ifdef NSS_SSL_ENABLE_ZLIB
-include $(CORE_DEPTH)/coreconf/zlib.mk
-endif
-
 ifdef NSS_DISABLE_TLS_1_3
 NSS_DISABLE_TLS_1_3=1
 # Run parameterized tests only, for which we can easily exclude TLS 1.3
 CPPSRCS := $(filter-out $(shell grep -l '^TEST_F' $(CPPSRCS)), $(CPPSRCS))
 CFLAGS += -DNSS_DISABLE_TLS_1_3
+endif
+
+ifdef NSS_ALLOW_SSLKEYLOGFILE
+SSLKEYLOGFILE_FILES = ssl_keylog_unittest.cc
+else
+SSLKEYLOGFILE_FILES = $(NULL)
 endif
 
 #######################################################################

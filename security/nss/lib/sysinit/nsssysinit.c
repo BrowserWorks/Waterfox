@@ -15,11 +15,10 @@
  * of pkcs11 modules common to all applications.
  */
 
-/*
- * OS Specific function to get where the NSS user database should reside.
- */
+#ifndef LINUX
+#error __FILE__ only builds on Linux.
+#endif
 
-#ifdef XP_UNIX
 #include <unistd.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -37,9 +36,41 @@ testdir(char *dir)
     return S_ISDIR(buf.st_mode);
 }
 
+/**
+ * Append given @dir to @path and creates the directory with mode @mode.
+ * Returns 0 if successful, -1 otherwise.
+ * Assumes that the allocation for @path has sufficient space for @dir
+ * to be added.
+ */
+static int
+appendDirAndCreate(char *path, char *dir, mode_t mode)
+{
+    PORT_Strcat(path, dir);
+    if (!testdir(path)) {
+        if (mkdir(path, mode)) {
+            return -1;
+        }
+    }
+    return 0;
+}
+
+#define XDG_NSS_USER_PATH1 "/.local"
+#define XDG_NSS_USER_PATH2 "/share"
+#define XDG_NSS_USER_PATH3 "/pki"
+
 #define NSS_USER_PATH1 "/.pki"
 #define NSS_USER_PATH2 "/nssdb"
-static char *
+
+/**
+ * Return the path to user's NSS database.
+ * We search in the following dirs in order:
+ * (1) $HOME/.pki/nssdb;
+ * (2) $XDG_DATA_HOME/pki/nssdb if XDG_DATA_HOME is set;
+ * (3) $HOME/.local/share/pki/nssdb (default XDG_DATA_HOME value).
+ * If (1) does not exist, then the returned dir will be set to either
+ * (2) or (3), depending if XDG_DATA_HOME is set.
+ */
+char *
 getUserDB(void)
 {
     char *userdir = PR_GetEnvSecure("HOME");
@@ -50,22 +81,47 @@ getUserDB(void)
     }
 
     nssdir = PORT_Alloc(strlen(userdir) + sizeof(NSS_USER_PATH1) + sizeof(NSS_USER_PATH2));
+    PORT_Strcpy(nssdir, userdir);
+    PORT_Strcat(nssdir, NSS_USER_PATH1 NSS_USER_PATH2);
+    if (testdir(nssdir)) {
+        /* $HOME/.pki/nssdb exists */
+        return nssdir;
+    } else {
+        /* either $HOME/.pki or $HOME/.pki/nssdb does not exist */
+        PORT_Free(nssdir);
+    }
+    int size = 0;
+    char *xdguserdatadir = PR_GetEnvSecure("XDG_DATA_HOME");
+    if (xdguserdatadir) {
+        size = strlen(xdguserdatadir);
+    } else {
+        size = strlen(userdir) + sizeof(XDG_NSS_USER_PATH1) + sizeof(XDG_NSS_USER_PATH2);
+    }
+    size += sizeof(XDG_NSS_USER_PATH3) + sizeof(NSS_USER_PATH2);
+
+    nssdir = PORT_Alloc(size);
     if (nssdir == NULL) {
         return NULL;
     }
-    PORT_Strcpy(nssdir, userdir);
-    /* verify it exists */
-    if (!testdir(nssdir)) {
-        PORT_Free(nssdir);
-        return NULL;
+
+    if (xdguserdatadir) {
+        PORT_Strcpy(nssdir, xdguserdatadir);
+        if (!testdir(nssdir)) {
+            PORT_Free(nssdir);
+            return NULL;
+        }
+
+    } else {
+        PORT_Strcpy(nssdir, userdir);
+        if (appendDirAndCreate(nssdir, XDG_NSS_USER_PATH1, 0755) ||
+            appendDirAndCreate(nssdir, XDG_NSS_USER_PATH2, 0755)) {
+            PORT_Free(nssdir);
+            return NULL;
+        }
     }
-    PORT_Strcat(nssdir, NSS_USER_PATH1);
-    if (!testdir(nssdir) && mkdir(nssdir, 0760)) {
-        PORT_Free(nssdir);
-        return NULL;
-    }
-    PORT_Strcat(nssdir, NSS_USER_PATH2);
-    if (!testdir(nssdir) && mkdir(nssdir, 0760)) {
+    /* ${XDG_DATA_HOME:-$HOME/.local/share}/pki/nssdb */
+    if (appendDirAndCreate(nssdir, XDG_NSS_USER_PATH3, 0760) ||
+        appendDirAndCreate(nssdir, NSS_USER_PATH2, 0760)) {
         PORT_Free(nssdir);
         return NULL;
     }
@@ -93,44 +149,6 @@ userCanModifySystemDB()
     return (access(NSS_DEFAULT_SYSTEM, W_OK) == 0);
 }
 
-#else
-#ifdef XP_WIN
-static char *
-getUserDB(void)
-{
-    /* use the registry to find the user's NSS_DIR. if no entry exists, create
-     * one in the users Appdir location */
-    return NULL;
-}
-
-static char *
-getSystemDB(void)
-{
-    /* use the registry to find the system's NSS_DIR. if no entry exists, create
-     * one based on the windows system data area */
-    return NULL;
-}
-
-static PRBool
-userIsRoot()
-{
-    /* use the registry to find if the user is the system administrator. */
-    return PR_FALSE;
-}
-
-static PRBool
-userCanModifySystemDB()
-{
-    /* use the registry to find if the user has administrative privilege
-    * to modify the system's nss database. */
-    return PR_FALSE;
-}
-
-#else
-#error "Need to write getUserDB, SystemDB, userIsRoot, and userCanModifySystemDB functions"
-#endif
-#endif
-
 static PRBool
 getFIPSEnv(void)
 {
@@ -146,7 +164,6 @@ getFIPSEnv(void)
     }
     return PR_FALSE;
 }
-#ifdef XP_LINUX
 
 static PRBool
 getFIPSMode(void)
@@ -170,14 +187,6 @@ getFIPSMode(void)
         return PR_FALSE;
     return PR_TRUE;
 }
-
-#else
-static PRBool
-getFIPSMode(void)
-{
-    return getFIPSEnv();
-}
-#endif
 
 #define NSS_DEFAULT_FLAGS "flags=readonly"
 

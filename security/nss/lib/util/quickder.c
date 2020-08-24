@@ -520,8 +520,7 @@ DecodeGroup(void* dest,
         if (SECSuccess == rv) {
             /* allocate room for pointer array and entries */
             /* we want to allocate the array even if there is 0 entry */
-            entries = (void**)PORT_ArenaZAlloc(arena, sizeof(void*) *
-                                                              (totalEntries + 1) + /* the extra one is for NULL termination */
+            entries = (void**)PORT_ArenaZAlloc(arena, sizeof(void*) * (totalEntries + 1) + /* the extra one is for NULL termination */
                                                           subTemplate->size * totalEntries);
 
             if (entries) {
@@ -758,6 +757,13 @@ DecodeItem(void* dest,
                         }
 
                         case SEC_ASN1_BIT_STRING: {
+                            /* Can't be 8 or more spare bits, or any spare bits
+			     * if there are no octets. */
+                            if (temp.data[0] >= 8 || (temp.data[0] > 0 && temp.len == 1)) {
+                                PORT_SetError(SEC_ERROR_BAD_DER);
+                                rv = SECFailure;
+                                break;
+                            }
                             /* change the length in the SECItem to be the number
                                of bits */
                             temp.len = (temp.len - 1) * 8 - (temp.data[0] & 0x7);

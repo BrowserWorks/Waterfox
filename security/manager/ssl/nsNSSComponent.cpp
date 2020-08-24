@@ -8,12 +8,11 @@
 
 #include "ExtendedValidation.h"
 #include "NSSCertDBTrustDomain.h"
-#include "PKCS11.h"
+#include "PKCS11ModuleDB.h"
 #include "ScopedNSSTypes.h"
 #include "SharedSSLState.h"
 #include "cert.h"
 #include "certdb.h"
-#include "mozStorageCID.h"
 #include "mozilla/ArrayUtils.h"
 #include "mozilla/Assertions.h"
 #include "mozilla/Casting.h"
@@ -1721,15 +1720,6 @@ static nsresult
 GetNSSProfilePath(nsAutoCString& aProfilePath)
 {
   aProfilePath.Truncate();
-  const char* dbDirOverride = getenv("MOZPSM_NSSDBDIR_OVERRIDE");
-  if (dbDirOverride && strlen(dbDirOverride) > 0) {
-    MOZ_LOG(gPIPNSSLog, LogLevel::Debug,
-           ("Using specified MOZPSM_NSSDBDIR_OVERRIDE as NSS DB dir: %s\n",
-            dbDirOverride));
-    aProfilePath.Assign(dbDirOverride);
-    return NS_OK;
-  }
-
   nsCOMPtr<nsIFile> profileFile;
   nsresult rv = NS_GetSpecialDirectory(NS_APP_USER_PROFILE_50_DIR,
                                        getter_AddRefs(profileFile));
@@ -1740,15 +1730,17 @@ GetNSSProfilePath(nsAutoCString& aProfilePath)
   }
 
 #if defined(XP_WIN)
-  // Native path will drop Unicode characters that cannot be mapped to system's
-  // codepage, using short (canonical) path as workaround.
+  // SQLite always takes UTF-8 file paths regardless of the current system
+  // code page.
   nsCOMPtr<nsILocalFileWin> profileFileWin(do_QueryInterface(profileFile));
   if (!profileFileWin) {
     MOZ_LOG(gPIPNSSLog, LogLevel::Error,
            ("Could not get nsILocalFileWin for profile directory.\n"));
     return NS_ERROR_FAILURE;
   }
-  rv = profileFileWin->GetNativeCanonicalPath(aProfilePath);
+  nsAutoString u16ProfilePath;
+  rv = profileFileWin->GetCanonicalPath(u16ProfilePath);
+  CopyUTF16toUTF8(u16ProfilePath, aProfilePath);
 #else
   rv = profileFile->GetNativePath(aProfilePath);
 #endif
@@ -1770,19 +1762,11 @@ GetNSSProfilePath(nsAutoCString& aProfilePath)
 // returns NS_OK even if renaming the file didn't work. This simplifies the
 // logic of the calling code.
 static nsresult
-AttemptToRenamePKCS11ModuleDB(const nsACString& profilePath)
+AttemptToRenamePKCS11ModuleDB(const nsACString& profilePath,
+                              const nsACString& moduleDBFilename)
 {
-  // profilePath may come from the environment variable
-  // MOZPSM_NSSDBDIR_OVERRIDE. If so, the user's NSS DBs are most likely not in
-  // their profile directory and we shouldn't mess with them.
-  const char* dbDirOverride = getenv("MOZPSM_NSSDBDIR_OVERRIDE");
-  if (dbDirOverride && strlen(dbDirOverride) > 0) {
-    MOZ_LOG(gPIPNSSLog, LogLevel::Debug,
-            ("MOZPSM_NSSDBDIR_OVERRIDE set - not renaming PKCS#11 module DB"));
-    return NS_OK;
-  }
-  NS_NAMED_LITERAL_CSTRING(moduleDBFilename, "secmod.db");
-  NS_NAMED_LITERAL_CSTRING(destModuleDBFilename, "secmod.db.fips");
+  nsAutoCString destModuleDBFilename(moduleDBFilename);
+  destModuleDBFilename.Append(".fips");
   nsCOMPtr<nsIFile> dbFile = do_CreateInstance("@mozilla.org/file/local;1");
   if (!dbFile) {
     return NS_ERROR_FAILURE;
@@ -1804,7 +1788,7 @@ AttemptToRenamePKCS11ModuleDB(const nsACString& profilePath)
   // This is strange, but not a catastrophic failure.
   if (!exists) {
     MOZ_LOG(gPIPNSSLog, LogLevel::Debug,
-            ("%s doesn't exist?", moduleDBFilename.get()));
+            ("%s doesn't exist?", PromiseFlatCString(moduleDBFilename).get()));
     return NS_OK;
   }
   nsCOMPtr<nsIFile> destDBFile = do_CreateInstance("@mozilla.org/file/local;1");
@@ -1847,6 +1831,113 @@ AttemptToRenamePKCS11ModuleDB(const nsACString& profilePath)
   Unused << dbFile->MoveToNative(profileDir, destModuleDBFilename);
   return NS_OK;
 }
+
+// The platform now only uses the sqlite-backed databases, so we'll try to
+// rename "pkcs11.txt". However, if we're upgrading from a version that used the
+// old format, we need to try to rename the old "secmod.db" as well (if we were
+// to only rename "pkcs11.txt", initializing NSS will still fail due to the old
+// database being in FIPS mode).
+static nsresult
+AttemptToRenameBothPKCS11ModuleDBVersions(const nsACString& profilePath)
+{
+  NS_NAMED_LITERAL_CSTRING(legacyModuleDBFilename, "secmod.db");
+  NS_NAMED_LITERAL_CSTRING(sqlModuleDBFilename, "pkcs11.txt");
+  nsresult rv = AttemptToRenamePKCS11ModuleDB(profilePath,
+                                              legacyModuleDBFilename);
+  if (NS_FAILED(rv)) {
+    return rv;
+  }
+  return AttemptToRenamePKCS11ModuleDB(profilePath, sqlModuleDBFilename);
+}
+
+// Helper function to take a path and a file name and create a handle for the
+// file in that location, if it exists.
+static nsresult
+GetFileIfExists(const nsACString& path, const nsACString& filename,
+                /* out */ nsIFile** result)
+{
+  MOZ_ASSERT(result);
+  if (!result) {
+    return NS_ERROR_INVALID_ARG;
+  }
+  *result = nullptr;
+  nsCOMPtr<nsIFile> file = do_CreateInstance("@mozilla.org/file/local;1");
+  if (!file) {
+    return NS_ERROR_FAILURE;
+  }
+  nsresult rv = file->InitWithNativePath(path);
+  if (NS_FAILED(rv)) {
+    return rv;
+  }
+  rv = file->AppendNative(filename);
+  if (NS_FAILED(rv)) {
+    return rv;
+  }
+  bool exists;
+  rv = file->Exists(&exists);
+  if (NS_FAILED(rv)) {
+    return rv;
+  }
+  if (exists) {
+    file.forget(result);
+  }
+  return NS_OK;
+}
+
+// When we changed from the old dbm database format to the newer sqlite
+// implementation, the upgrade process left behind the existing files. Suppose a
+// user had not set a password for the old key3.db (which is about 99% of
+// users). After upgrading, both the old database and the new database are
+// unprotected. If the user then sets a password for the new database, the old
+// one will not be protected. In this scenario, we should probably just remove
+// the old database (it would only be relevant if the user downgraded to a
+// version of Firefox before 58, but we have to trade this off against the
+// user's old private keys being unexpectedly unprotected after setting a
+// password).
+// This was never an issue on Android because we always used the new
+// implementation.
+static void
+MaybeCleanUpOldNSSFiles(const nsACString& profilePath)
+{
+  UniquePK11SlotInfo slot(PK11_GetInternalKeySlot());
+  if (!slot) {
+    return;
+  }
+  // Unfortunately we can't now tell the difference between "there already was a
+  // password when the upgrade happened" and "there was not a password but then
+  // the user added one after upgrading".
+  bool hasPassword = PK11_NeedLogin(slot.get()) &&
+                     !PK11_NeedUserInit(slot.get());
+  if (!hasPassword) {
+    return;
+  }
+  NS_NAMED_LITERAL_CSTRING(newKeyDBFilename, "key4.db");
+  nsCOMPtr<nsIFile> newDBFile;
+  nsresult rv = GetFileIfExists(profilePath, newKeyDBFilename,
+                                getter_AddRefs(newDBFile));
+  if (NS_FAILED(rv)) {
+    return;
+  }
+  // If the new key DB file doesn't exist, we don't want to remove the old DB
+  // file. This can happen if the system is configured to use the old DB format
+  // even though we're a version of Firefox that expects to use the new format.
+  if (!newDBFile) {
+    return;
+  }
+  NS_NAMED_LITERAL_CSTRING(oldKeyDBFilename, "key3.db");
+  nsCOMPtr<nsIFile> oldDBFile;
+  rv = GetFileIfExists(profilePath, oldKeyDBFilename,
+                       getter_AddRefs(oldDBFile));
+  if (NS_FAILED(rv)) {
+    return;
+  }
+  if (!oldDBFile) {
+    return;
+  }
+  // Since this isn't a directory, the `recursive` argument to `Remove` is
+  // irrelevant.
+  Unused << oldDBFile->Remove(false);
+}
 #endif // ifndef ANDROID
 
 // Given a profile directory, attempt to initialize NSS. If nocertdb is true,
@@ -1871,15 +1962,16 @@ InitializeNSSWithFallbacks(const nsACString& profilePath, bool nocertdb,
   }
 
 
-  const nsCString& profilePathCStr = PromiseFlatCString(profilePath);
   // Try read/write mode. If we're in safeMode, we won't load PKCS#11 modules.
 #ifndef ANDROID
   PRErrorCode savedPRErrorCode1;
 #endif // ifndef ANDROID
-  SECStatus srv = ::mozilla::psm::InitializeNSS(profilePathCStr.get(), false,
-                                                !safeMode);
+  SECStatus srv = ::mozilla::psm::InitializeNSS(profilePath, false, !safeMode);
   if (srv == SECSuccess) {
     MOZ_LOG(gPIPNSSLog, LogLevel::Debug, ("initialized NSS in r/w mode"));
+#ifndef ANDROID
+    MaybeCleanUpOldNSSFiles(profilePath);
+#endif // ifndef ANDROID
     return NS_OK;
   }
 #ifndef ANDROID
@@ -1887,13 +1979,17 @@ InitializeNSSWithFallbacks(const nsACString& profilePath, bool nocertdb,
   PRErrorCode savedPRErrorCode2;
 #endif // ifndef ANDROID
   // That failed. Try read-only mode.
-  srv = ::mozilla::psm::InitializeNSS(profilePathCStr.get(), true, !safeMode);
+  srv = ::mozilla::psm::InitializeNSS(profilePath, true, !safeMode);
   if (srv == SECSuccess) {
     MOZ_LOG(gPIPNSSLog, LogLevel::Debug, ("initialized NSS in r-o mode"));
     return NS_OK;
   }
 #ifndef ANDROID
   savedPRErrorCode2 = PR_GetError();
+
+  MOZ_LOG(gPIPNSSLog, LogLevel::Debug,
+          ("failed to initialize NSS with codes %d %d", savedPRErrorCode1,
+           savedPRErrorCode2));
 #endif // ifndef ANDROID
 
 #ifndef ANDROID
@@ -1901,14 +1997,16 @@ InitializeNSSWithFallbacks(const nsACString& profilePath, bool nocertdb,
   // in FIPS mode, but we don't support FIPS? Test load NSS without PKCS#11
   // modules. If that succeeds, that's probably what's going on.
   if (!safeMode && (savedPRErrorCode1 == SEC_ERROR_LEGACY_DATABASE ||
-                    savedPRErrorCode2 == SEC_ERROR_LEGACY_DATABASE)) {
+                    savedPRErrorCode2 == SEC_ERROR_LEGACY_DATABASE ||
+                    savedPRErrorCode1 == SEC_ERROR_PKCS11_DEVICE_ERROR ||
+                    savedPRErrorCode2 == SEC_ERROR_PKCS11_DEVICE_ERROR)) {
     MOZ_LOG(gPIPNSSLog, LogLevel::Debug, ("attempting no-module db init"));
     // It would make sense to initialize NSS in read-only mode here since this
     // is just a test to see if the PKCS#11 module DB being in FIPS mode is the
     // problem, but for some reason the combination of read-only and no-moddb
     // flags causes NSS initialization to fail, so unfortunately we have to use
     // read-write mode.
-    srv = ::mozilla::psm::InitializeNSS(profilePathCStr.get(), false, false);
+    srv = ::mozilla::psm::InitializeNSS(profilePath, false, false);
     if (srv == SECSuccess) {
       MOZ_LOG(gPIPNSSLog, LogLevel::Debug, ("FIPS may be the problem"));
       // Unload NSS so we can attempt to fix this situation for the user.
@@ -1920,16 +2018,16 @@ InitializeNSSWithFallbacks(const nsACString& profilePath, bool nocertdb,
       // If this fails non-catastrophically, we'll attempt to initialize NSS
       // again in r/w then r-o mode (both of which will fail), and then we'll
       // fall back to NSS_NoDB_Init, which is the behavior we want.
-      nsresult rv = AttemptToRenamePKCS11ModuleDB(profilePath);
+      nsresult rv = AttemptToRenameBothPKCS11ModuleDBVersions(profilePath);
       if (NS_FAILED(rv)) {
         return rv;
       }
-      srv = ::mozilla::psm::InitializeNSS(profilePathCStr.get(), false, true);
+      srv = ::mozilla::psm::InitializeNSS(profilePath, false, true);
       if (srv == SECSuccess) {
         MOZ_LOG(gPIPNSSLog, LogLevel::Debug, ("initialized in r/w mode"));
         return NS_OK;
       }
-      srv = ::mozilla::psm::InitializeNSS(profilePathCStr.get(), true, true);
+      srv = ::mozilla::psm::InitializeNSS(profilePath, true, true);
       if (srv == SECSuccess) {
         MOZ_LOG(gPIPNSSLog, LogLevel::Debug, ("initialized in r-o mode"));
         return NS_OK;
@@ -2039,17 +2137,6 @@ nsNSSComponent::InitializeNSS()
 
   if (NS_FAILED(InitializeCipherSuite())) {
     MOZ_LOG(gPIPNSSLog, LogLevel::Error, ("Unable to initialize cipher suite settings\n"));
-    return NS_ERROR_FAILURE;
-  }
-
-  // TLSServerSocket may be run with the session cache enabled. It is necessary
-  // to call this once before that can happen. This specifies a maximum of 1000
-  // cache entries (the default number of cache entries is 10000, which seems a
-  // little excessive as there probably won't be that many clients connecting to
-  // any TLSServerSockets the browser runs.)
-  // Note that this must occur before any calls to SSL_ClearSessionCache
-  // (otherwise memory will leak).
-  if (SSL_ConfigServerSessionIDCache(1000, 0, 0, nullptr) != SECSuccess) {
     return NS_ERROR_FAILURE;
   }
 
@@ -2189,14 +2276,6 @@ nsNSSComponent::Init()
     return NS_ERROR_NOT_AVAILABLE;
   }
 
-  // To avoid a sqlite3_config race in NSS init, as a workaround for
-  // bug 730495, we require the storage service to get initialized first.
-  nsCOMPtr<nsISupports> storageService =
-    do_GetService(MOZ_STORAGE_SERVICE_CONTRACTID);
-  if (!storageService) {
-    return NS_ERROR_NOT_AVAILABLE;
-  }
-
   MOZ_LOG(gPIPNSSLog, LogLevel::Debug, ("Beginning NSS initialization\n"));
 
   nsresult rv = InitializePIPNSSBundle();
@@ -2228,8 +2307,14 @@ NS_IMETHODIMP
 nsNSSComponent::Observe(nsISupports* aSubject, const char* aTopic,
                         const char16_t* someData)
 {
-  if (nsCRT::strcmp(aTopic, PROFILE_BEFORE_CHANGE_TOPIC) == 0) {
-    MOZ_LOG(gPIPNSSLog, LogLevel::Debug, ("receiving profile change topic\n"));
+  // In some tests, we don't receive a "profile-before-change" topic. However,
+  // we still have to shut down before the storage service shuts down, because
+  // closing the sql-backed softoken requires sqlite still be available. Thus,
+  // we observe "xpcom-shutdown" just in case.
+  if (nsCRT::strcmp(aTopic, PROFILE_BEFORE_CHANGE_TOPIC) == 0 ||
+      nsCRT::strcmp(aTopic, NS_XPCOM_SHUTDOWN_OBSERVER_ID) == 0) {
+    MOZ_LOG(gPIPNSSLog, LogLevel::Debug,
+            ("receiving profile change or XPCOM shutdown notification"));
     ShutdownNSS();
   } else if (nsCRT::strcmp(aTopic, NS_PREFBRANCH_PREFCHANGE_TOPIC_ID) == 0) {
     nsNSSShutDownPreventionLock locker;
@@ -2350,6 +2435,7 @@ nsNSSComponent::RegisterObservers()
   // keep a strong reference to this component. As a result, this will live at
   // least as long as the observer service.
   observerService->AddObserver(this, PROFILE_BEFORE_CHANGE_TOPIC, false);
+  observerService->AddObserver(this, NS_XPCOM_SHUTDOWN_OBSERVER_ID, false);
 
   return NS_OK;
 }

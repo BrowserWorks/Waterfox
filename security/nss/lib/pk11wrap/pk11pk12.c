@@ -14,7 +14,7 @@
 #include "pkcs11.h"
 #include "pk11func.h"
 #include "secitem.h"
-#include "key.h"
+#include "keyhi.h"
 #include "secoid.h"
 #include "secasn1.h"
 #include "secerr.h"
@@ -344,16 +344,13 @@ PK11_ImportAndReturnPrivateKey(PK11SlotInfo *slot, SECKEYRawPrivateKey *lpk,
     switch (lpk->keyType) {
         case rsaKey:
             keyType = CKK_RSA;
-            PK11_SETATTRS(attrs, CKA_UNWRAP, (keyUsage & KU_KEY_ENCIPHERMENT) ? &cktrue
-                                                                              : &ckfalse,
+            PK11_SETATTRS(attrs, CKA_UNWRAP, (keyUsage & KU_KEY_ENCIPHERMENT) ? &cktrue : &ckfalse,
                           sizeof(CK_BBOOL));
             attrs++;
-            PK11_SETATTRS(attrs, CKA_DECRYPT, (keyUsage & KU_DATA_ENCIPHERMENT) ? &cktrue
-                                                                                : &ckfalse,
+            PK11_SETATTRS(attrs, CKA_DECRYPT, (keyUsage & KU_DATA_ENCIPHERMENT) ? &cktrue : &ckfalse,
                           sizeof(CK_BBOOL));
             attrs++;
-            PK11_SETATTRS(attrs, CKA_SIGN, (keyUsage & KU_DIGITAL_SIGNATURE) ? &cktrue
-                                                                             : &ckfalse,
+            PK11_SETATTRS(attrs, CKA_SIGN, (keyUsage & KU_DIGITAL_SIGNATURE) ? &cktrue : &ckfalse,
                           sizeof(CK_BBOOL));
             attrs++;
             PK11_SETATTRS(attrs, CKA_SIGN_RECOVER,
@@ -491,8 +488,7 @@ PK11_ImportAndReturnPrivateKey(PK11SlotInfo *slot, SECKEYRawPrivateKey *lpk,
                               lpk->u.ec.publicValue.len);
                 attrs++;
             }
-            PK11_SETATTRS(attrs, CKA_SIGN, (keyUsage & KU_DIGITAL_SIGNATURE) ? &cktrue
-                                                                             : &ckfalse,
+            PK11_SETATTRS(attrs, CKA_SIGN, (keyUsage & KU_DIGITAL_SIGNATURE) ? &cktrue : &ckfalse,
                           sizeof(CK_BBOOL));
             attrs++;
             PK11_SETATTRS(attrs, CKA_SIGN_RECOVER,
@@ -500,8 +496,7 @@ PK11_ImportAndReturnPrivateKey(PK11SlotInfo *slot, SECKEYRawPrivateKey *lpk,
                                                             : &ckfalse,
                           sizeof(CK_BBOOL));
             attrs++;
-            PK11_SETATTRS(attrs, CKA_DERIVE, (keyUsage & KU_KEY_AGREEMENT) ? &cktrue
-                                                                           : &ckfalse,
+            PK11_SETATTRS(attrs, CKA_DERIVE, (keyUsage & KU_KEY_AGREEMENT) ? &cktrue : &ckfalse,
                           sizeof(CK_BBOOL));
             attrs++;
             ck_id = PK11_MakeIDFromPubKey(&lpk->u.ec.publicValue);
@@ -510,7 +505,7 @@ PK11_ImportAndReturnPrivateKey(PK11SlotInfo *slot, SECKEYRawPrivateKey *lpk,
             }
             PK11_SETATTRS(attrs, CKA_ID, ck_id->data, ck_id->len);
             attrs++;
-            signedattr = attrs;
+            /* No signed attrs for EC */
             /* curveOID always is a copy of AlgorithmID.parameters. */
             PK11_SETATTRS(attrs, CKA_EC_PARAMS, lpk->u.ec.curveOID.data,
                           lpk->u.ec.curveOID.len);
@@ -528,11 +523,12 @@ PK11_ImportAndReturnPrivateKey(PK11SlotInfo *slot, SECKEYRawPrivateKey *lpk,
     }
     templateCount = attrs - theTemplate;
     PORT_Assert(templateCount <= sizeof(theTemplate) / sizeof(CK_ATTRIBUTE));
-    PORT_Assert(signedattr != NULL);
-    signedcount = attrs - signedattr;
-
-    for (ap = signedattr; signedcount; ap++, signedcount--) {
-        pk11_SignedToUnsigned(ap);
+    if (lpk->keyType != ecKey) {
+        PORT_Assert(signedattr);
+        signedcount = attrs - signedattr;
+        for (ap = signedattr; signedcount; ap++, signedcount--) {
+            pk11_SignedToUnsigned(ap);
+        }
     }
 
     rv = PK11_CreateNewObject(slot, CK_INVALID_SESSION,

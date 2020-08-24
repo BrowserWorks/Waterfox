@@ -13,7 +13,7 @@
 #include "prio.h"
 #include "seccomon.h"
 #include "cert.h"
-#include "keyt.h"
+#include "keythi.h"
 
 #include "sslt.h" /* public ssl data types */
 
@@ -107,8 +107,7 @@ SSL_IMPORT PRFileDesc *DTLS_ImportFD(PRFileDesc *model, PRFileDesc *fd);
 #define SSL_NO_LOCKS 17                 /* Don't use locks for protection */
 #define SSL_ENABLE_SESSION_TICKETS 18   /* Enable TLS SessionTicket       */
                                         /* extension (off by default)     */
-#define SSL_ENABLE_DEFLATE 19           /* Enable TLS compression with    */
-                                        /* DEFLATE (off by default)       */
+#define SSL_ENABLE_DEFLATE 19           /* (unsupported, deprecated, off) */
 #define SSL_ENABLE_RENEGOTIATION 20     /* Values below (default: never)  */
 #define SSL_REQUIRE_SAFE_NEGOTIATION 21 /* Peer must send Signaling       */
                                         /* Cipher Suite Value (SCSV) or   */
@@ -159,23 +158,18 @@ SSL_IMPORT PRFileDesc *DTLS_ImportFD(PRFileDesc *model, PRFileDesc *fd);
 #define SSL_CBC_RANDOM_IV 23
 #define SSL_ENABLE_OCSP_STAPLING 24 /* Request OCSP stapling (client) */
 
-/* SSL_ENABLE_NPN controls whether the NPN extension is enabled for the initial
- * handshake when application layer protocol negotiation is used.
- * SSL_SetNextProtoCallback or SSL_SetNextProtoNego must be used to control the
- * application layer protocol negotiation; otherwise, the NPN extension will
- * not be negotiated. SSL_ENABLE_NPN is currently enabled by default but this
- * may change in future versions.
- */
+/* SSL_ENABLE_NPN is defunct and defaults to false.
+ * Using this option will not have any effect but won't produce an error. */
 #define SSL_ENABLE_NPN 25
 
 /* SSL_ENABLE_ALPN controls whether the ALPN extension is enabled for the
  * initial handshake when application layer protocol negotiation is used.
- * SSL_SetNextProtoNego (not SSL_SetNextProtoCallback) must be used to control
- * the application layer protocol negotiation; otherwise, the ALPN extension
- * will not be negotiated. ALPN is not negotiated for renegotiation handshakes,
- * even though the ALPN specification defines a way to use ALPN during
- * renegotiations. SSL_ENABLE_ALPN is currently disabled by default, but this
- * may change in future versions.
+ * SSL_SetNextProtoNego or SSL_SetNextProtoCallback can be used to control
+ * the application layer protocol negotiation;
+ * ALPN is not negotiated for renegotiation handshakes, even though the ALPN
+ * specification defines a way to use ALPN during renegotiations.
+ * SSL_ENABLE_ALPN is currently enabled by default, but this may change in
+ * future versions.
  */
 #define SSL_ENABLE_ALPN 26
 
@@ -243,26 +237,101 @@ SSL_IMPORT PRFileDesc *DTLS_ImportFD(PRFileDesc *model, PRFileDesc *fd);
  * WARNING: 0-RTT data has different anti-replay and PFS properties than
  * the rest of the TLS data. See [draft-ietf-tls-tls13; Section 8]
  * for more details.
+ *
+ * Note: when DTLS 1.3 is in use, any 0-RTT data received after EndOfEarlyData
+ * (e.g., because of reordering) is discarded.
  */
 #define SSL_ENABLE_0RTT_DATA 33
 
+/* Sets a limit to the size of encrypted records (see
+ * draft-ietf-tls-record-limit). This is the value that is advertised to peers,
+ * not a limit on the size of records that will be created.  Setting this value
+ * reduces the size of records that will be received (not sent).
+ *
+ * This limit applies to the plaintext, but the records that appear on the wire
+ * will be bigger.  This doesn't include record headers, IVs, block cipher
+ * padding, and authentication tags or MACs.
+ *
+ * NSS always advertises the record size limit extension.  If this option is not
+ * set, the extension will contain the maximum allowed size for the selected TLS
+ * version (currently this is 16384 or 2^14 for TLS 1.2 and lower and 16385 for
+ * TLS 1.3).
+ *
+ * By default, NSS creates records that are the maximum size possible, using all
+ * the data that was written by the application.  Writes larger than the maximum
+ * are split into maximum sized records, and any remainder (unless
+ * SSL_CBC_RANDOM_IV is enabled and active).  If a peer advertises a record size
+ * limit then that value is used instead.
+ */
+#define SSL_RECORD_SIZE_LIMIT 34
+
+/* Enables TLS 1.3 compatibility mode.  In this mode, the client includes a fake
+ * session ID in the handshake and sends a ChangeCipherSpec.  A server will
+ * always use the setting chosen by the client, so the value of this option has
+ * no effect for a server. This setting is ignored for DTLS. */
+#define SSL_ENABLE_TLS13_COMPAT_MODE 35
+
+/* Enables the sending of DTLS records using the short (two octet) record
+ * header.  Only do this if there are 2^10 or fewer packets in flight at a time;
+ * using this with a larger number of packets in flight could mean that packets
+ * are dropped if there is reordering.
+ *
+ * This applies to TLS 1.3 only.  This is not a parameter that is negotiated
+ * during the TLS handshake. Unlike other socket options, this option can be
+ * changed after a handshake is complete.
+ */
+#define SSL_ENABLE_DTLS_SHORT_HEADER 36
+
+/*
+ * Enables the processing of the downgrade sentinel that can be added to the
+ * ServerHello.random by a server that supports Section 4.1.3 of TLS 1.3
+ * [RFC8446].  This sentinel will always be generated by a server that
+ * negotiates a version lower than its maximum, this only controls whether a
+ * client will treat receipt of a value that indicates a downgrade as an error.
+ */
+#define SSL_ENABLE_HELLO_DOWNGRADE_CHECK 37
+
+/* Enables the SSLv2-compatible ClientHello for servers. NSS does not support
+ * SSLv2 and will never send an SSLv2-compatible ClientHello as a client.  An
+ * NSS server with this option enabled will accept a ClientHello that is
+ * v2-compatible as defined in Appendix E.1 of RFC 6101.
+ *
+ * This is disabled by default and will be removed in a future version. */
+#define SSL_ENABLE_V2_COMPATIBLE_HELLO 38
+
+/* Enables the post-handshake authentication in TLS 1.3.  If it is set
+ * to PR_TRUE, the client will send the "post_handshake_auth"
+ * extension to indicate that it will process CertificateRequest
+ * messages after handshake.
+ *
+ * This option applies only to clients.  For a server, the
+ * SSL_SendCertificateRequest can be used to request post-handshake
+ * authentication.
+ */
+#define SSL_ENABLE_POST_HANDSHAKE_AUTH 39
+
 #ifdef SSL_DEPRECATED_FUNCTION
 /* Old deprecated function names */
-SSL_IMPORT SECStatus SSL_Enable(PRFileDesc *fd, int option, PRBool on);
-SSL_IMPORT SECStatus SSL_EnableDefault(int option, PRBool on);
+SSL_IMPORT SECStatus SSL_Enable(PRFileDesc *fd, int option, PRIntn on);
+SSL_IMPORT SECStatus SSL_EnableDefault(int option, PRIntn on);
 #endif
 
-/* New function names */
-SSL_IMPORT SECStatus SSL_OptionSet(PRFileDesc *fd, PRInt32 option, PRBool on);
-SSL_IMPORT SECStatus SSL_OptionGet(PRFileDesc *fd, PRInt32 option, PRBool *on);
-SSL_IMPORT SECStatus SSL_OptionSetDefault(PRInt32 option, PRBool on);
-SSL_IMPORT SECStatus SSL_OptionGetDefault(PRInt32 option, PRBool *on);
+/* Set (and get) options for sockets and defaults for newly created sockets.
+ *
+ * While the |val| parameter of these methods is PRIntn, options only support
+ * two values by default: PR_TRUE or PR_FALSE.  The documentation of specific
+ * options will explain if other values are permitted.
+ */
+SSL_IMPORT SECStatus SSL_OptionSet(PRFileDesc *fd, PRInt32 option, PRIntn val);
+SSL_IMPORT SECStatus SSL_OptionGet(PRFileDesc *fd, PRInt32 option, PRIntn *val);
+SSL_IMPORT SECStatus SSL_OptionSetDefault(PRInt32 option, PRIntn val);
+SSL_IMPORT SECStatus SSL_OptionGetDefault(PRInt32 option, PRIntn *val);
 SSL_IMPORT SECStatus SSL_CertDBHandleSet(PRFileDesc *fd, CERTCertDBHandle *dbHandle);
 
-/* SSLNextProtoCallback is called during the handshake for the client, when a
- * Next Protocol Negotiation (NPN) extension has been received from the server.
- * |protos| and |protosLen| define a buffer which contains the server's
- * advertisement. This data is guaranteed to be well formed per the NPN spec.
+/* SSLNextProtoCallback is called during the handshake for the server, when an
+ * Application-Layer Protocol Negotiation (ALPN) extension has been received
+ * from the client. |protos| and |protosLen| define a buffer which contains the
+ * client's advertisement.
  * |protoOut| is a buffer provided by the caller, of length 255 (the maximum
  * allowed by the protocol). On successful return, the protocol to be announced
  * to the server will be in |protoOut| and its length in |*protoOutLen|.
@@ -278,27 +347,24 @@ typedef SECStatus(PR_CALLBACK *SSLNextProtoCallback)(
     unsigned int *protoOutLen,
     unsigned int protoMaxOut);
 
-/* SSL_SetNextProtoCallback sets a callback function to handle Next Protocol
- * Negotiation. It causes a client to advertise NPN. */
+/* SSL_SetNextProtoCallback sets a callback function to handle ALPN Negotiation.
+ * It causes a client to advertise ALPN. */
 SSL_IMPORT SECStatus SSL_SetNextProtoCallback(PRFileDesc *fd,
                                               SSLNextProtoCallback callback,
                                               void *arg);
 
 /* SSL_SetNextProtoNego can be used as an alternative to
- * SSL_SetNextProtoCallback. It also causes a client to advertise NPN and
- * installs a default callback function which selects the first supported
- * protocol in server-preference order. If no matching protocol is found it
- * selects the first supported protocol.
+ * SSL_SetNextProtoCallback.
  *
- * Using this function also allows the client to transparently support ALPN.
+ * Using this function allows client and server to transparently support ALPN.
  * The same set of protocols will be advertised via ALPN and, if the server
  * uses ALPN to select a protocol, SSL_GetNextProto will return
  * SSL_NEXT_PROTO_SELECTED as the state.
  *
- * Since NPN uses the first protocol as the fallback protocol, when sending an
- * ALPN extension, the first protocol is moved to the end of the list. This
- * indicates that the fallback protocol is the least preferred. The other
- * protocols should be in preference order.
+ * Because the predecessor to ALPN, NPN, used the first protocol as the fallback
+ * protocol, when sending an ALPN extension, the first protocol is moved to the
+ * end of the list. This indicates that the fallback protocol is the least
+ * preferred. The other protocols should be in preference order.
  *
  * The supported protocols are specified in |data| in wire-format (8-bit
  * length-prefixed). For example: "\010http/1.1\006spdy/2". */

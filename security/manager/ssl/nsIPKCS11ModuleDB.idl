@@ -18,16 +18,16 @@ interface nsISimpleEnumerator;
 interface nsIPKCS11ModuleDB : nsISupports
 {
   [must_use]
-  nsIPKCS11Module getInternal();
+  void deleteModule(in AString moduleName);
 
   [must_use]
-  nsIPKCS11Module getInternalFIPS();
+  void addModule(in AString moduleName,
+                 in AString libraryFullPath,
+                 in long cryptoMechanismFlags,
+                 in long cipherFlags);
 
   [must_use]
   nsIPKCS11Module findModuleByName(in AUTF8String name);
-
-  [must_use]
-  nsIPKCS11Slot findSlotByName(in AUTF8String name);
 
   [must_use]
   nsISimpleEnumerator listModules();

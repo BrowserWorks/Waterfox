@@ -7,13 +7,13 @@ import context_hash from "./context_hash";
 import taskcluster from "taskcluster-client";
 
 async function taskHasImageArtifact(taskId) {
-  let queue = new taskcluster.Queue();
+  let queue = new taskcluster.Queue(taskcluster.fromEnvVars());
   let {artifacts} = await queue.listLatestArtifacts(taskId);
   return artifacts.some(artifact => artifact.name == "public/image.tar");
 }
 
 async function findTaskWithImageArtifact(ns) {
-  let index = new taskcluster.Index();
+  let index = new taskcluster.Index(taskcluster.fromEnvVars());
   let {taskId} = await index.findTask(ns);
   let has_image = await taskHasImageArtifact(taskId);
   return has_image ? taskId : null;
@@ -30,7 +30,7 @@ export async function buildTask({name, path}) {
   let ns = `docker.images.v1.${process.env.TC_PROJECT}.${name}.hash.${hash}`;
 
   return {
-    name: "Image Builder",
+    name: `Image Builder (${name})`,
     image: "nssdev/image_builder:0.1.5",
     routes: ["index." + ns],
     env: {
@@ -54,6 +54,7 @@ export async function buildTask({name, path}) {
     ],
     platform: "nss-decision",
     features: ["dind"],
+    maxRunTime: 7200,
     kind: "build",
     symbol: "I"
   };

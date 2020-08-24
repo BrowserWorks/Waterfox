@@ -15,8 +15,8 @@ dnl ========================================================
 dnl = Defaults
 dnl ========================================================
 MOD_MAJOR_VERSION=4
-MOD_MINOR_VERSION=16
-MOD_PATCH_VERSION=0
+MOD_MINOR_VERSION=21
+MOD_PATCH_VERSION=1
 NSPR_MODNAME=nspr20
 _HAVE_PTHREADS=
 USE_PTHREADS=
@@ -147,21 +147,6 @@ mipsel-*android*)
     ;;
 esac
 
-dnl ========================================================
-dnl = Gonk is a fork of Android used for Mozilla's B2G project.
-dnl = Configuration is done largely by the top level config
-dnl = and the specified gonk directory doesn't matter here.
-dnl ========================================================
-
-AC_ARG_WITH(gonk,
-[  --with-gonk=DIR         location of gonk dir],
-    gonkdir=$withval)
-
-if test -n "$gonkdir" ; then
-    dnl Most things are directly configured by env vars when building for gonk
-
-    AC_DEFINE(ANDROID)
-else
 case "$target" in
 *-android*|*-linuxandroid*)
     if test -z "$android_ndk" ; then
@@ -246,7 +231,6 @@ case "$target" in
     AC_DEFINE(ANDROID)
     ;;
 esac
-fi
 
 dnl ========================================================
 dnl =
@@ -2106,6 +2090,10 @@ tools are selected during the Xcode/Developer Tools installation.])
 	    AC_DEFINE(_AMD64_)
 	    USE_64=1
 	    ;;
+    aarch64)
+	    AC_DEFINE(_ARM64_)
+	    USE_64=1
+	    ;;
     ia64)
 	    AC_DEFINE(_IA64_)
 	    USE_64=1
@@ -2889,13 +2877,8 @@ case "$target" in
         AC_DEFINE(_PR_LOCAL_THREADS_ONLY)
     fi 
     if test "$USE_PTHREADS"; then
-        if echo "$OS_RELEASE" | egrep '^(B.10.10|B.10.20)' >/dev/null; then
-            AC_DEFINE(_REENTRANT)
-            AC_DEFINE(_PR_DCETHREADS)
-        else
-            AC_DEFINE_UNQUOTED(_POSIX_C_SOURCE,199506L)
-            AC_DEFINE(_PR_HAVE_THREADSAFE_GETHOST)
-        fi
+        AC_DEFINE_UNQUOTED(_POSIX_C_SOURCE,199506L)
+        AC_DEFINE(_PR_HAVE_THREADSAFE_GETHOST)
     fi
     if test "$USE_USER_PTHREADS"; then
         AC_DEFINE_UNQUOTED(_POSIX_C_SOURCE,199506L)

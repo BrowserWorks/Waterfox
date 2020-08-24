@@ -15,7 +15,7 @@
 #include "cert.h"
 #include "certi.h"
 #include "secitem.h"
-#include "key.h"
+#include "keyhi.h"
 #include "secoid.h"
 #include "pkcs7t.h"
 #include "cmsreclist.h"
@@ -184,7 +184,9 @@ PK11_IsUserCert(PK11SlotInfo *slot, CERTCertificate *cert,
             SECKEY_DestroyPublicKey(pubKey);
             return PR_FALSE;
         }
-        pk11_SignedToUnsigned(&theTemplate);
+        if (pubKey->keyType != ecKey) {
+            pk11_SignedToUnsigned(&theTemplate);
+        }
         if (pk11_FindObjectByTemplate(slot, &theTemplate, 1) != CK_INVALID_HANDLE) {
             SECKEY_DestroyPublicKey(pubKey);
             return PR_TRUE;
@@ -741,7 +743,7 @@ find_certs_from_nickname(const char *nickname, void *wincx)
     char *delimit = NULL;
     char *tokenName;
 
-    if (!strncmp(nickname, "pkcs11:", strlen("pkcs11:"))) {
+    if (!PORT_Strncasecmp(nickname, "pkcs11:", strlen("pkcs11:"))) {
         certs = find_certs_from_uri(nickname, wincx);
         if (certs)
             return certs;

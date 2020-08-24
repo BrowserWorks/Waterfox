@@ -767,14 +767,6 @@ function add_prevented_cert_override_test(aHost, aExpectedBits, aExpectedError) 
   add_connection_test(aHost, aExpectedError);
 }
 
-function loginToDBWithDefaultPassword() {
-  let tokenDB = Cc["@mozilla.org/security/pk11tokendb;1"]
-                  .getService(Ci.nsIPK11TokenDB);
-  let token = tokenDB.getInternalKeyToken();
-  token.initPassword("");
-  token.login(/* force */ false);
-}
-
 // Helper for asyncTestCertificateUsages.
 class CertVerificationResult {
   constructor(certName, usageString, successExpected, resolve) {
@@ -847,16 +839,17 @@ function loadPKCS11TestModule(expectModuleUnloadToFail) {
   libraryFile.append(ctypes.libraryName("pkcs11testmodule"));
   ok(libraryFile.exists(), "The pkcs11testmodule file should exist");
 
-  let pkcs11 = Cc["@mozilla.org/security/pkcs11;1"].getService(Ci.nsIPKCS11);
+  let pkcs11ModuleDB = Cc["@mozilla.org/security/pkcs11moduledb;1"]
+                         .getService(Ci.nsIPKCS11ModuleDB);
   do_register_cleanup(() => {
     try {
-      pkcs11.deleteModule("PKCS11 Test Module");
+      pkcs11ModuleDB.deleteModule("PKCS11 Test Module");
     } catch (e) {
       Assert.ok(expectModuleUnloadToFail,
                 `Module unload should suceed only when expected: ${e}`);
     }
   });
-  pkcs11.addModule("PKCS11 Test Module", libraryFile.path, 0, 0);
+  pkcs11ModuleDB.addModule("PKCS11 Test Module", libraryFile.path, 0, 0);
 }
 
 /**

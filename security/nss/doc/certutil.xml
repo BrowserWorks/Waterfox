@@ -84,11 +84,11 @@
 
       <varlistentry>
         <term>-F</term>
-        <listitem><para>Delete a private key from a key database. Specify the key to delete with the -n argument. Specify the database from which to delete the key with the 
-<option>-d</option> argument. Use the <option>-k</option> argument to specify explicitly whether to delete a DSA, RSA, or ECC key. If you don't use the <option>-k</option> argument, the option looks for an RSA key matching the specified nickname. 
+        <listitem><para>Delete a private key and the associated certificate from a database. Specify the key to delete with the -n argument or the -k argument. Specify the database from which to delete the key with the
+<option>-d</option> argument.
 </para>
 <para>
-When you delete keys, be sure to also remove any certificates associated with those keys from the certificate database, by using -D. Some smart cards do not let you remove a public key you have generated. In such a case, only the private key is deleted from the key pair. You can display the public key with the command certutil -K -h tokenname. </para></listitem>
+Some smart cards do not let you remove a public key you have generated. In such a case, only the private key is deleted from the key pair.</para></listitem>
       </varlistentry>
 
       <varlistentry>
@@ -180,6 +180,10 @@ For certificate requests, ASCII output defaults to standard output unless redire
       </varlistentry>
 
       <varlistentry>
+	<term>--simple-self-signed</term>
+	<listitem><para>When printing the certificate chain, don't search for a chain if issuer name equals to subject name.</para></listitem>
+      </varlistentry>
+      <varlistentry>
         <term>-b validity-time</term>
         <listitem><para>Specify a time at which a certificate is required to be valid. Use when checking certificate validity with the <option>-V</option> option. The format of the <emphasis>validity-time</emphasis> argument is <emphasis>YYMMDDHHMMSS[+HHMM|-HHMM|Z]</emphasis>, which allows offsets to be set relative to the validity end time. Specifying seconds (<emphasis>SS</emphasis>) is optional. When specifying an explicit time, use a Z at the end of the term, <emphasis>YYMMDDHHMMSSZ</emphasis>, to close it. When specifying an offset time, use <emphasis>YYMMDDHHMMSS+HHMM</emphasis> or <emphasis>YYMMDDHHMMSS-HHMM</emphasis> for adding or subtracting time, respectively.
 </para>
@@ -258,7 +262,8 @@ Add one or multiple extensions that certutil cannot encode yet, by loading their
 
       <varlistentry>
         <term>-h tokenname</term>
-        <listitem><para>Specify the name of a token to use or act on. If not specified the default token is the internal database slot.</para></listitem>
+        <listitem><para>Specify the name of a token to use or act on. If not specified the default token is the internal database slot.</para>
+	<para>The name can also be a PKCS #11 URI. For example, the NSS internal certificate store can be unambiguously specified as "pkcs11:token=NSS%20Certificate%20DB". For details about the format, see RFC 7512.</para></listitem>
       </varlistentry>
 
      <varlistentry>
@@ -292,7 +297,8 @@ Add one or multiple extensions that certutil cannot encode yet, by loading their
 
       <varlistentry>
         <term>-n nickname</term>
-        <listitem><para>Specify the nickname of a certificate or key to list, create, add to a database, modify, or validate. Bracket the nickname string with quotation marks if it contains spaces.</para></listitem>
+        <listitem><para>Specify the nickname of a certificate or key to list, create, add to a database, modify, or validate. Bracket the nickname string with quotation marks if it contains spaces.</para>
+	<para>The nickname can also be a PKCS #11 URI. For example, if you have a certificate named "my-server-cert" on the internal certificate store, it can be unambiguously specified as "pkcs11:token=NSS%20Certificate%20DB;object=my-server-cert". For details about the format, see RFC 7512.</para></listitem>
       </varlistentry>
 
       <varlistentry>
@@ -421,6 +427,9 @@ of the attribute codes:
 	</listitem>
 	<listitem>
 <para><command>J</command> (as an object signer)</para>
+	</listitem>
+	<listitem>
+<para><command>I</command> (as an IPSEC user)</para>
 	</listitem>
 	</itemizedlist></listitem>
       </varlistentry>
@@ -654,6 +663,41 @@ of the attribute codes:
 	<listitem>
 	<para>
 		critical
+	</para>
+	</listitem>
+	<listitem>
+	<para>
+		x509Any
+	</para>
+	</listitem>
+	<listitem>
+	<para>
+		ipsecIKE
+	</para>
+	</listitem>
+	<listitem>
+	<para>
+		ipsecIKEEnd
+	</para>
+	</listitem>
+	<listitem>
+	<para>
+		ipsecIKEIntermediate
+	</para>
+	</listitem>
+	<listitem>
+	<para>
+		ipsecEnd
+	</para>
+	</listitem>
+	<listitem>
+	<para>
+		ipsecTunnel
+	</para>
+	</listitem>
+	<listitem>
+	<para>
+		ipsecUser
 	</para>
 	</listitem>
 	</itemizedlist>
@@ -1017,9 +1061,11 @@ certutil: Checking token "NSS Certificate DB" in slot "NSS User Private Key and 
 
     slot: NSS User Private Key and Certificate Services                  
    token: NSS Certificate DB
+     uri: pkcs11:token=NSS%20Certificate%20DB;manufacturer=Mozilla%20Foundation;serial=0000000000000000;model=NSS%203
 
     slot: NSS Internal Cryptographic Services                            
-   token: NSS Generic Crypto Services</programlisting>
+   token: NSS Generic Crypto Services
+     uri: pkcs11:token=NSS%20Generic%20Crypto%20Services;manufacturer=Mozilla%20Foundation;serial=0000000000000000;model=NSS%203</programlisting>
 
 	<para><command>Adding Certificates to the Database</command></para>
 	<para>

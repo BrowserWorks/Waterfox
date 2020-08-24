@@ -16,7 +16,7 @@
                     /* include should be removed! */
 /*#include "cdbhdl.h" */
 #include "cryptohi.h"
-#include "key.h"
+#include "keyhi.h"
 #include "secasn1.h"
 #include "secitem.h"
 #include "secoid.h"
@@ -560,6 +560,7 @@ sec_pkcs7_decoder_start_decrypt(SEC_PKCS7DecoderContext *p7dcx, int depth,
     return SECSuccess;
 
 no_decryption:
+    PK11_FreeSymKey(bulkkey);
     /*
      * For some reason (error set already, if appropriate), we cannot
      * decrypt the content.  I am not sure what exactly is the right
@@ -1031,6 +1032,11 @@ SECStatus
 SEC_PKCS7DecoderUpdate(SEC_PKCS7DecoderContext *p7dcx,
                        const char *buf, unsigned long len)
 {
+    if (!p7dcx) {
+        PORT_SetError(SEC_ERROR_INVALID_ARGS);
+        return SECFailure;
+    }
+
     if (p7dcx->cinfo != NULL && p7dcx->dcx != NULL) {
         PORT_Assert(p7dcx->error == 0);
         if (p7dcx->error == 0) {
@@ -1590,7 +1596,6 @@ sec_pkcs7_verify_signature(SEC_PKCS7ContentInfo *cinfo,
     } else {
         SECItem *sig;
         SECItem holder;
-        SECStatus rv;
 
         /*
          * No authenticated attributes.

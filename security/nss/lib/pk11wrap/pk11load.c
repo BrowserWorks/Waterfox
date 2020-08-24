@@ -64,8 +64,7 @@ secmodUnlockMutext(CK_VOID_PTR mutext)
 static SECMODModuleID nextModuleID = 1;
 static const CK_C_INITIALIZE_ARGS secmodLockFunctions = {
     secmodCreateMutext, secmodDestroyMutext, secmodLockMutext,
-    secmodUnlockMutext, CKF_LIBRARY_CANT_CREATE_OS_THREADS |
-                            CKF_OS_LOCKING_OK,
+    secmodUnlockMutext, CKF_LIBRARY_CANT_CREATE_OS_THREADS | CKF_OS_LOCKING_OK,
     NULL
 };
 static const CK_C_INITIALIZE_ARGS secmodNoLockArgs = {
@@ -354,7 +353,7 @@ SECMOD_SetRootCerts(PK11SlotInfo *slot, SECMODModule *mod)
     }
 }
 
-#ifndef NSS_TEST_BUILD
+#ifndef NSS_STATIC_SOFTOKEN
 static const char *my_shlib_name =
     SHLIB_PREFIX "nss" SHLIB_VERSION "." SHLIB_SUFFIX;
 static const char *softoken_shlib_name =
@@ -404,7 +403,7 @@ secmod_LoadPKCS11Module(SECMODModule *mod, SECMODModule **oldModule)
 
     /* internal modules get loaded from their internal list */
     if (mod->internal && (mod->dllName == NULL)) {
-#ifdef NSS_TEST_BUILD
+#ifdef NSS_STATIC_SOFTOKEN
         entry = (CK_C_GetFunctionList)NSC_GetFunctionList;
 #else
         /*
@@ -431,7 +430,7 @@ secmod_LoadPKCS11Module(SECMODModule *mod, SECMODModule **oldModule)
 
         if (mod->isModuleDB) {
             mod->moduleDBFunc = (CK_C_GetFunctionList)
-#ifdef NSS_TEST_BUILD
+#ifdef NSS_STATIC_SOFTOKEN
                 NSC_ModuleDBFunc;
 #else
                 PR_FindSymbol(softokenLib, "NSC_ModuleDBFunc");
@@ -613,7 +612,7 @@ SECMOD_UnloadModule(SECMODModule *mod)
      * if not, we should change this to SECFailure and move it above the
      * mod->loaded = PR_FALSE; */
     if (mod->internal && (mod->dllName == NULL)) {
-#ifndef NSS_TEST_BUILD
+#ifndef NSS_STATIC_SOFTOKEN
         if (0 == PR_ATOMIC_DECREMENT(&softokenLoadCount)) {
             if (softokenLib) {
                 disableUnload = PR_GetEnvSecure("NSS_DISABLE_UNLOAD");

@@ -44,17 +44,13 @@ const char *ssl_version = "SECURITY_VERSION:"
  * This function acquires and releases the RecvBufLock.
  *
  * returns SECSuccess for success.
- * returns SECWouldBlock when that value is returned by
- *  ssl3_GatherCompleteHandshake().
- * returns SECFailure on all other errors.
+ * returns SECFailure on error, setting PR_WOULD_BLOCK_ERROR if only blocked.
  *
  * The gather functions called by ssl_GatherRecord1stHandshake are expected
  *  to return values interpreted as follows:
  *  1 : the function completed without error.
  *  0 : the function read EOF.
  * -1 : read error, or PR_WOULD_BLOCK_ERROR, or handleRecord error.
- * -2 : the function wants ssl_GatherRecord1stHandshake to be called again
- *  immediately, by ssl_Do1stHandshake.
  *
  * This code is similar to, and easily confused with, DoRecv() in sslsecur.c
  *
@@ -82,15 +78,13 @@ ssl_GatherRecord1stHandshake(sslSocket *ss)
     ssl_ReleaseRecvBufLock(ss);
 
     if (rv <= 0) {
-        if (rv == SECWouldBlock) {
-            /* Progress is blocked waiting for callback completion.  */
-            SSL_TRC(10, ("%d: SSL[%d]: handshake blocked (need %d)",
-                         SSL_GETPID(), ss->fd, ss->gs.remainder));
-            return SECWouldBlock;
-        }
         if (rv == 0) {
             /* EOF. Loser  */
             PORT_SetError(PR_END_OF_FILE_ERROR);
+        }
+        if (PORT_GetError() == PR_WOULD_BLOCK_ERROR) {
+            SSL_TRC(10, ("%d: SSL[%d]: handshake blocked (need %d)",
+                         SSL_GETPID(), ss->fd, ss->gs.remainder));
         }
         return SECFailure; /* rv is < 0 here. */
     }
@@ -119,13 +113,12 @@ ssl_CheckConfigSanity(sslSocket *ss)
 SECStatus
 ssl_BeginClientHandshake(sslSocket *ss)
 {
-    sslSessionID *sid;
+    sslSessionID *sid = NULL;
     SECStatus rv;
 
     PORT_Assert(ss->opt.noLocks || ssl_Have1stHandshakeLock(ss));
 
     ss->sec.isServer = PR_FALSE;
-    ssl_ChooseSessionIDProcs(&ss->sec);
 
     rv = ssl_CheckConfigSanity(ss);
     if (rv != SECSuccess)
@@ -156,19 +149,22 @@ ssl_BeginClientHandshake(sslSocket *ss)
 
     SSL_TRC(3, ("%d: SSL[%d]: sending client-hello", SSL_GETPID(), ss->fd));
 
-    /* Try to find server in our session-id cache */
-    if (ss->opt.noCache) {
-        sid = NULL;
-    } else {
+    /* If there's an sid set from an external cache, use it. */
+    if (ss->sec.ci.sid && ss->sec.ci.sid->cached == in_external_cache) {
+        sid = ss->sec.ci.sid;
+        SSL_TRC(3, ("%d: SSL[%d]: using external token", SSL_GETPID(), ss->fd));
+    } else if (!ss->opt.noCache) {
+        /* Try to find server in our session-id cache */
         sid = ssl_LookupSID(&ss->sec.ci.peer, ss->sec.ci.port, ss->peerID,
                             ss->url);
     }
+
     if (sid) {
         if (sid->version >= ss->vrange.min && sid->version <= ss->vrange.max) {
             PORT_Assert(!ss->sec.localCert);
             ss->sec.localCert = CERT_DupCertificate(sid->localCert);
         } else {
-            ss->sec.uncache(sid);
+            ssl_UncacheSessionID(ss);
             ssl_FreeSID(sid);
             sid = NULL;
         }
@@ -218,7 +214,6 @@ ssl_BeginServerHandshake(sslSocket *ss)
 
     ss->sec.isServer = PR_TRUE;
     ss->ssl3.hs.ws = wait_client_hello;
-    ssl_ChooseSessionIDProcs(&ss->sec);
 
     rv = ssl_CheckConfigSanity(ss);
     if (rv != SECSuccess)

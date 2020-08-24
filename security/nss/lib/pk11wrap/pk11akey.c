@@ -13,7 +13,7 @@
 #include "pkcs11t.h"
 #include "pk11func.h"
 #include "cert.h"
-#include "key.h"
+#include "keyhi.h"
 #include "keyi.h"
 #include "secitem.h"
 #include "secasn1.h"
@@ -190,7 +190,6 @@ PK11_ImportPublicKey(PK11SlotInfo *slot, SECKEYPublicKey *pubKey,
                 attrs++;
                 PK11_SETATTRS(attrs, CKA_DERIVE, &cktrue, sizeof(CK_BBOOL));
                 attrs++;
-                signedattr = attrs;
                 PK11_SETATTRS(attrs, CKA_EC_PARAMS,
                               pubKey->u.ec.DEREncodedParams.data,
                               pubKey->u.ec.DEREncodedParams.len);
@@ -222,12 +221,14 @@ PK11_ImportPublicKey(PK11SlotInfo *slot, SECKEYPublicKey *pubKey,
                 PORT_SetError(SEC_ERROR_BAD_KEY);
                 return CK_INVALID_HANDLE;
         }
-
         templateCount = attrs - theTemplate;
-        signedcount = attrs - signedattr;
         PORT_Assert(templateCount <= (sizeof(theTemplate) / sizeof(CK_ATTRIBUTE)));
-        for (attrs = signedattr; signedcount; attrs++, signedcount--) {
-            pk11_SignedToUnsigned(attrs);
+        if (pubKey->keyType != ecKey) {
+            PORT_Assert(signedattr);
+            signedcount = attrs - signedattr;
+            for (attrs = signedattr; signedcount; attrs++, signedcount--) {
+                pk11_SignedToUnsigned(attrs);
+            }
         }
         rv = PK11_CreateNewObject(slot, CK_INVALID_SESSION, theTemplate,
                                   templateCount, isToken, &objectID);
@@ -1074,9 +1075,13 @@ pk11_loadPrivKeyWithFlags(PK11SlotInfo *slot, SECKEYPrivateKey *privKey,
                                         &cktrue, &ckfalse);
 
     /* Not everyone can handle zero padded key values, give
-      * them the raw data as unsigned */
-    for (ap = attrs; extra_count; ap++, extra_count--) {
-        pk11_SignedToUnsigned(ap);
+     * them the raw data as unsigned. The exception is EC,
+     * where the values are encoded or zero-preserving
+     * per-RFC5915 */
+    if (privKey->keyType != ecKey) {
+        for (ap = attrs; extra_count; ap++, extra_count--) {
+            pk11_SignedToUnsigned(ap);
+        }
     }
 
     /* now Store the puppies */
@@ -1677,6 +1682,95 @@ PK11_MakeKEAPubKey(unsigned char *keyData, int length)
     return pubk;
 }
 
+SECStatus
+SECKEY_SetPublicValue(SECKEYPrivateKey *privKey, SECItem *publicValue)
+{
+    SECStatus rv;
+    SECKEYPublicKey pubKey;
+    PLArenaPool *arena;
+    PK11SlotInfo *slot;
+    CK_OBJECT_HANDLE privKeyID;
+
+    if (privKey == NULL || publicValue == NULL ||
+        publicValue->data == NULL || publicValue->len == 0) {
+        PORT_SetError(SEC_ERROR_INVALID_ARGS);
+        return SECFailure;
+    }
+
+    pubKey.arena = NULL;
+    pubKey.keyType = privKey->keyType;
+    pubKey.pkcs11Slot = NULL;
+    pubKey.pkcs11ID = CK_INVALID_HANDLE;
+    /* can't use PORT_InitCheapArena here becase SECKEY_DestroyPublic is used
+      * to free it, and it uses PORT_FreeArena which not only frees the 
+      * underlying arena, it also frees the allocated arena struct. */
+    arena = PORT_NewArena(DER_DEFAULT_CHUNKSIZE);
+    pubKey.arena = arena;
+    if (arena == NULL) {
+        return SECFailure;
+    }
+
+    slot = privKey->pkcs11Slot;
+    privKeyID = privKey->pkcs11ID;
+    rv = SECFailure;
+    switch (privKey->keyType) {
+        default:
+            /* error code already set to SECFailure */
+            break;
+        case rsaKey:
+            pubKey.u.rsa.modulus = *publicValue;
+            rv = PK11_ReadAttribute(slot, privKeyID, CKA_PUBLIC_EXPONENT,
+                                    arena, &pubKey.u.rsa.publicExponent);
+            break;
+        case dsaKey:
+            pubKey.u.dsa.publicValue = *publicValue;
+            rv = PK11_ReadAttribute(slot, privKeyID, CKA_PRIME,
+                                    arena, &pubKey.u.dsa.params.prime);
+            if (rv != SECSuccess) {
+                break;
+            }
+            rv = PK11_ReadAttribute(slot, privKeyID, CKA_SUBPRIME,
+                                    arena, &pubKey.u.dsa.params.subPrime);
+            if (rv != SECSuccess) {
+                break;
+            }
+            rv = PK11_ReadAttribute(slot, privKeyID, CKA_BASE,
+                                    arena, &pubKey.u.dsa.params.base);
+            break;
+        case dhKey:
+            pubKey.u.dh.publicValue = *publicValue;
+            rv = PK11_ReadAttribute(slot, privKeyID, CKA_PRIME,
+                                    arena, &pubKey.u.dh.prime);
+            if (rv != SECSuccess) {
+                break;
+            }
+            rv = PK11_ReadAttribute(slot, privKeyID, CKA_BASE,
+                                    arena, &pubKey.u.dh.base);
+            break;
+        case ecKey:
+            pubKey.u.ec.publicValue = *publicValue;
+            pubKey.u.ec.encoding = ECPoint_Undefined;
+            pubKey.u.ec.size = 0;
+            rv = PK11_ReadAttribute(slot, privKeyID, CKA_EC_PARAMS,
+                                    arena, &pubKey.u.ec.DEREncodedParams);
+            break;
+    }
+    if (rv == SECSuccess) {
+        rv = PK11_ImportPublicKey(slot, &pubKey, PR_TRUE);
+    }
+    /* Even though pubKey is stored on the stack, we've allocated
+     * some of it's data from the arena. SECKEY_DestroyPublicKey
+     * destroys keys by freeing the arena, so this will clean up all
+     * the data we allocated specifically for the key above. It will
+     * also free any slot references which we may have picked up in
+     * PK11_ImportPublicKey. It won't delete the underlying key if
+     * its a Token/Permanent key (which it will be if
+     * PK11_ImportPublicKey succeeds). */
+    SECKEY_DestroyPublicKey(&pubKey);
+
+    return rv;
+}
+
 /*
  * NOTE: This function doesn't return a SECKEYPrivateKey struct to represent
  * the new private key object.  If it were to create a session object that
@@ -1802,12 +1896,6 @@ try_faulty_3des:
                                  nickname, publicValue, isPerm, isPrivate,
                                  key_type, usage, usageCount, wincx);
     if (privKey) {
-        if (privk) {
-            *privk = privKey;
-        } else {
-            SECKEY_DestroyPrivateKey(privKey);
-        }
-        privKey = NULL;
         rv = SECSuccess;
         goto done;
     }
@@ -1837,6 +1925,25 @@ try_faulty_3des:
     rv = SECFailure;
 
 done:
+    if ((rv == SECSuccess) && isPerm) {
+        /* If we are importing a token object,
+         * create the corresponding public key.
+         * If this fails, just continue as the target
+         * token simply might not support persistant
+         * public keys. Such tokens are usable, but
+         * need to be authenticated before searching
+         * for user certs. */
+        (void)SECKEY_SetPublicValue(privKey, publicValue);
+    }
+
+    if (privKey) {
+        if (privk) {
+            *privk = privKey;
+        } else {
+            SECKEY_DestroyPrivateKey(privKey);
+        }
+        privKey = NULL;
+    }
     if (crypto_param != NULL) {
         SECITEM_ZfreeItem(crypto_param, PR_TRUE);
     }

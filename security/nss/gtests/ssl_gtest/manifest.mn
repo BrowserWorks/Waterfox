@@ -12,12 +12,13 @@ CSRCS = \
       $(NULL)
 
 CPPSRCS = \
+      bloomfilter_unittest.cc \
       ssl_0rtt_unittest.cc \
       ssl_agent_unittest.cc \
-      ssl_alths_unittest.cc \
       ssl_auth_unittest.cc \
       ssl_cert_ext_unittest.cc \
       ssl_ciphersuite_unittest.cc \
+      ssl_custext_unittest.cc \
       ssl_damage_unittest.cc \
       ssl_dhe_unittest.cc \
       ssl_drop_unittest.cc \
@@ -30,14 +31,18 @@ CPPSRCS = \
       ssl_gather_unittest.cc \
       ssl_gtest.cc \
       ssl_hrr_unittest.cc \
-      ssl_keylog_unittest.cc \
+      ssl_keyupdate_unittest.cc \
       ssl_loopback_unittest.cc \
       ssl_misc_unittest.cc \
+      ssl_primitive_unittest.cc \
       ssl_record_unittest.cc \
+      ssl_recordsep_unittest.cc \
+      ssl_recordsize_unittest.cc \
       ssl_resumption_unittest.cc \
       ssl_renegotiation_unittest.cc \
       ssl_skip_unittest.cc \
       ssl_staticrsa_unittest.cc \
+      ssl_tls13compat_unittest.cc \
       ssl_v2_client_hello_unittest.cc \
       ssl_version_unittest.cc \
       ssl_versionpolicy_unittest.cc \
@@ -48,6 +53,8 @@ CPPSRCS = \
       tls_hkdf_unittest.cc \
       tls_filter.cc \
       tls_protect.cc \
+      tls_esni_unittest.cc \
+      $(SSLKEYLOGFILE_FILES) \
       $(NULL)
 
 INCLUDES += -I$(CORE_DEPTH)/gtests/google_test/gtest/include \

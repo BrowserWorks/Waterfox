@@ -242,7 +242,7 @@ static int
 pk11uri_CompareByPosition(const char *a, const char *b,
                           const char **attr_names, size_t num_attr_names)
 {
-    int i, j;
+    size_t i, j;
 
     for (i = 0; i < num_attr_names; i++) {
         if (strcmp(a, attr_names[i]) == 0) {
@@ -674,7 +674,7 @@ PK11URI_ParseURI(const char *string)
     const char *p = string;
     SECStatus ret;
 
-    if (strncmp("pkcs11:", p, 7) != 0) {
+    if (PORT_Strncasecmp("pkcs11:", p, 7) != 0) {
         return NULL;
     }
     p += 7;

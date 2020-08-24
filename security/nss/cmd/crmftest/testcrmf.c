@@ -66,7 +66,7 @@
 #include "crmf.h"
 #include "secerr.h"
 #include "pk11func.h"
-#include "key.h"
+#include "keyhi.h"
 #include "cmmf.h"
 #include "plgetopt.h"
 #include "secutil.h"
@@ -577,7 +577,6 @@ Decode(void)
         printf("WARNING: The DER contained %d messages.\n", numMsgs);
     }
     for (i = 0; i < numMsgs; i++) {
-        SECStatus rv;
         printf("crmftest: Processing cert request %d\n", i);
         certReqMsg = CRMF_CertReqMessagesGetCertReqMsgAtIndex(certReqMsgs, i);
         if (certReqMsg == NULL) {

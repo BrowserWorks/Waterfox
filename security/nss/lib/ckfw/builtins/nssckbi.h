@@ -32,7 +32,7 @@
  * - whenever possible, if older branches require a modification to the
  *   list, these changes should be made on the main line of development (trunk),
  *   and the older branches should update to the most recent list.
- * 
+ *
  * - ODD minor version numbers are reserved to indicate a snapshot that has
  *   deviated from the main line of development, e.g. if it was necessary
  *   to modify the list on a stable branch.
@@ -46,8 +46,8 @@
  * It's recommend to switch back to 0 after having reached version 98/99.
  */
 #define NSS_BUILTINS_LIBRARY_VERSION_MAJOR 2
-#define NSS_BUILTINS_LIBRARY_VERSION_MINOR 18
-#define NSS_BUILTINS_LIBRARY_VERSION "2.18"
+#define NSS_BUILTINS_LIBRARY_VERSION_MINOR 32
+#define NSS_BUILTINS_LIBRARY_VERSION "2.32"
 
 /* These version numbers detail the semantic changes to the ckfw engine. */
 #define NSS_BUILTINS_HARDWARE_VERSION_MAJOR 1

@@ -11,7 +11,6 @@
 #include "pk11func.h"
 #include "ssl.h"
 #include "sslt.h"
-#include "ssl3encode.h"
 #include "sslimpl.h"
 #include "selfencrypt.h"
 
@@ -121,12 +120,11 @@ ssl_SelfEncryptProtectInt(
     PRUint8 *out, unsigned int *outLen, unsigned int maxOutLen)
 {
     unsigned int len;
+    unsigned int lenOffset;
     unsigned char iv[AES_BLOCK_SIZE];
     SECItem ivItem = { siBuffer, iv, sizeof(iv) };
-    unsigned char mac[SHA256_LENGTH]; /* SHA-256 */
-    unsigned int macLen;
-    SECItem outItem = { siBuffer, out, maxOutLen };
-    SECItem lengthBytesItem;
+    /* Write directly to out. */
+    sslBuffer buf = SSL_BUFFER_FIXED(out, maxOutLen);
     SECStatus rv;
 
     /* Generate a random IV */
@@ -137,52 +135,54 @@ ssl_SelfEncryptProtectInt(
     }
 
     /* Add header. */
-    rv = ssl3_AppendToItem(&outItem, keyName, SELF_ENCRYPT_KEY_NAME_LEN);
+    rv = sslBuffer_Append(&buf, keyName, SELF_ENCRYPT_KEY_NAME_LEN);
     if (rv != SECSuccess) {
         return SECFailure;
     }
-    rv = ssl3_AppendToItem(&outItem, iv, sizeof(iv));
-    if (rv != SECSuccess) {
-        return SECFailure;
-    }
-
-    /* Skip forward by two so we can encode the ciphertext in place. */
-    lengthBytesItem = outItem;
-    rv = ssl3_AppendNumberToItem(&outItem, 0, 2);
+    rv = sslBuffer_Append(&buf, iv, sizeof(iv));
     if (rv != SECSuccess) {
         return SECFailure;
     }
 
+    /* Leave space for the length of the ciphertext. */
+    rv = sslBuffer_Skip(&buf, 2, &lenOffset);
+    if (rv != SECSuccess) {
+        return SECFailure;
+    }
+
+    /* Encode the ciphertext in place. */
     rv = PK11_Encrypt(encKey, CKM_AES_CBC_PAD, &ivItem,
-                      outItem.data, &len, outItem.len, in, inLen);
+                      SSL_BUFFER_NEXT(&buf), &len,
+                      SSL_BUFFER_SPACE(&buf), in, inLen);
+    if (rv != SECSuccess) {
+        return SECFailure;
+    }
+    rv = sslBuffer_Skip(&buf, len, NULL);
     if (rv != SECSuccess) {
         return SECFailure;
     }
 
-    outItem.data += len;
-    outItem.len -= len;
-
-    /* Now encode the ciphertext length. */
-    rv = ssl3_AppendNumberToItem(&lengthBytesItem, len, 2);
+    rv = sslBuffer_InsertLength(&buf, lenOffset, 2);
     if (rv != SECSuccess) {
         return SECFailure;
     }
 
-    /* MAC the entire output buffer and append the MAC to the end. */
+    /* MAC the entire output buffer into the output. */
+    PORT_Assert(buf.space - buf.len >= SHA256_LENGTH);
     rv = ssl_MacBuffer(macKey, CKM_SHA256_HMAC,
-                       out, outItem.data - out,
-                       mac, &macLen, sizeof(mac));
+                       SSL_BUFFER_BASE(&buf), /* input */
+                       SSL_BUFFER_LEN(&buf),
+                       SSL_BUFFER_NEXT(&buf), &len, /* output */
+                       SHA256_LENGTH);
     if (rv != SECSuccess) {
         return SECFailure;
     }
-    PORT_Assert(macLen == sizeof(mac));
-
-    rv = ssl3_AppendToItem(&outItem, mac, macLen);
+    rv = sslBuffer_Skip(&buf, len, NULL);
     if (rv != SECSuccess) {
         return SECFailure;
     }
 
-    *outLen = outItem.data - out;
+    *outLen = SSL_BUFFER_LEN(&buf);
     return SECSuccess;
 }
 
@@ -192,75 +192,71 @@ ssl_SelfEncryptUnprotectInt(
     const PRUint8 *in, unsigned int inLen,
     PRUint8 *out, unsigned int *outLen, unsigned int maxOutLen)
 {
-    unsigned char *encodedKeyName;
-    unsigned char *iv;
-    SECItem ivItem = { siBuffer, NULL, 0 };
-    SECItem inItem = { siBuffer, (unsigned char *)in, inLen };
-    unsigned char *cipherText;
-    PRUint32 cipherTextLen;
-    unsigned char *encodedMac;
-    unsigned char computedMac[SHA256_LENGTH];
-    unsigned int computedMacLen;
-    unsigned int bytesToMac;
-    SECStatus rv;
+    sslReader reader = SSL_READER(in, inLen);
 
-    rv = ssl3_ConsumeFromItem(&inItem, &encodedKeyName,
-                              SELF_ENCRYPT_KEY_NAME_LEN);
+    sslReadBuffer encodedKeyNameBuffer = { 0 };
+    SECStatus rv = sslRead_Read(&reader, SELF_ENCRYPT_KEY_NAME_LEN,
+                                &encodedKeyNameBuffer);
     if (rv != SECSuccess) {
         return SECFailure;
     }
 
-    rv = ssl3_ConsumeFromItem(&inItem, &iv, AES_BLOCK_SIZE);
+    sslReadBuffer ivBuffer = { 0 };
+    rv = sslRead_Read(&reader, AES_BLOCK_SIZE, &ivBuffer);
     if (rv != SECSuccess) {
         return SECFailure;
     }
 
-    rv = ssl3_ConsumeNumberFromItem(&inItem, &cipherTextLen, 2);
+    PRUint64 cipherTextLen = 0;
+    rv = sslRead_ReadNumber(&reader, 2, &cipherTextLen);
     if (rv != SECSuccess) {
         return SECFailure;
     }
 
-    rv = ssl3_ConsumeFromItem(&inItem, &cipherText, cipherTextLen);
+    sslReadBuffer cipherTextBuffer = { 0 };
+    rv = sslRead_Read(&reader, (unsigned int)cipherTextLen, &cipherTextBuffer);
     if (rv != SECSuccess) {
         return SECFailure;
     }
-    bytesToMac = inItem.data - in;
+    unsigned int bytesToMac = reader.offset;
 
-    rv = ssl3_ConsumeFromItem(&inItem, &encodedMac, SHA256_LENGTH);
+    sslReadBuffer encodedMacBuffer = { 0 };
+    rv = sslRead_Read(&reader, SHA256_LENGTH, &encodedMacBuffer);
     if (rv != SECSuccess) {
         return SECFailure;
     }
 
     /* Make sure we're at the end of the block. */
-    if (inItem.len) {
+    if (reader.offset != reader.buf.len) {
         PORT_SetError(SEC_ERROR_BAD_DATA);
         return SECFailure;
     }
 
     /* Now that everything is decoded, we can make progress. */
     /* 1. Check that we have the right key. */
-    if (PORT_Memcmp(keyName, encodedKeyName, SELF_ENCRYPT_KEY_NAME_LEN)) {
+    if (PORT_Memcmp(keyName, encodedKeyNameBuffer.buf, SELF_ENCRYPT_KEY_NAME_LEN)) {
         PORT_SetError(SEC_ERROR_NOT_A_RECIPIENT);
         return SECFailure;
     }
 
     /* 2. Check the MAC */
+    unsigned char computedMac[SHA256_LENGTH];
+    unsigned int computedMacLen = 0;
     rv = ssl_MacBuffer(macKey, CKM_SHA256_HMAC, in, bytesToMac,
                        computedMac, &computedMacLen, sizeof(computedMac));
     if (rv != SECSuccess) {
         return SECFailure;
     }
     PORT_Assert(computedMacLen == SHA256_LENGTH);
-    if (NSS_SecureMemcmp(computedMac, encodedMac, computedMacLen) != 0) {
+    if (NSS_SecureMemcmp(computedMac, encodedMacBuffer.buf, computedMacLen) != 0) {
         PORT_SetError(SEC_ERROR_BAD_DATA);
         return SECFailure;
     }
 
     /* 3. OK, it verifies, now decrypt. */
-    ivItem.data = iv;
-    ivItem.len = AES_BLOCK_SIZE;
+    SECItem ivItem = { siBuffer, (unsigned char *)ivBuffer.buf, AES_BLOCK_SIZE };
     rv = PK11_Decrypt(encKey, CKM_AES_CBC_PAD, &ivItem,
-                      out, outLen, maxOutLen, cipherText, cipherTextLen);
+                      out, outLen, maxOutLen, cipherTextBuffer.buf, cipherTextLen);
     if (rv != SECSuccess) {
         return SECFailure;
     }
@@ -268,6 +264,17 @@ ssl_SelfEncryptUnprotectInt(
     return SECSuccess;
 }
 #endif
+
+/* Predict the size of the encrypted data, including padding */
+unsigned int
+ssl_SelfEncryptGetProtectedSize(unsigned int inLen)
+{
+    return SELF_ENCRYPT_KEY_NAME_LEN +
+           AES_BLOCK_SIZE +
+           2 +
+           ((inLen / AES_BLOCK_SIZE) + 1) * AES_BLOCK_SIZE + /* Padded */
+           SHA256_LENGTH;
+}
 
 SECStatus
 ssl_SelfEncryptProtect(

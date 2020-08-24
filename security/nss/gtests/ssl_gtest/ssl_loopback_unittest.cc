@@ -18,7 +18,7 @@ extern "C" {
 }
 
 #include "gtest_utils.h"
-#include "scoped_ptrs.h"
+#include "nss_scoped_ptrs.h"
 #include "tls_connect.h"
 #include "tls_filter.h"
 #include "tls_parser.h"
@@ -56,7 +56,8 @@ TEST_P(TlsConnectGeneric, CipherSuiteMismatch) {
 
 class TlsAlertRecorder : public TlsRecordFilter {
  public:
-  TlsAlertRecorder() : level_(255), description_(255) {}
+  TlsAlertRecorder(const std::shared_ptr<TlsAgent>& a)
+      : TlsRecordFilter(a), level_(255), description_(255) {}
 
   PacketFilter::Action FilterRecord(const TlsRecordHeader& header,
                                     const DataBuffer& input,
@@ -64,7 +65,7 @@ class TlsAlertRecorder : public TlsRecordFilter {
     if (level_ != 255) {  // Already captured.
       return KEEP;
     }
-    if (header.content_type() != kTlsAlertType) {
+    if (header.content_type() != ssl_ct_alert) {
       return KEEP;
     }
 
@@ -85,13 +86,13 @@ class TlsAlertRecorder : public TlsRecordFilter {
 };
 
 class HelloTruncator : public TlsHandshakeFilter {
+ public:
+  HelloTruncator(const std::shared_ptr<TlsAgent>& a)
+      : TlsHandshakeFilter(
+            a, {kTlsHandshakeClientHello, kTlsHandshakeServerHello}) {}
   PacketFilter::Action FilterHandshake(const HandshakeHeader& header,
                                        const DataBuffer& input,
                                        DataBuffer* output) override {
-    if (header.handshake_type() != kTlsHandshakeClientHello &&
-        header.handshake_type() != kTlsHandshakeServerHello) {
-      return KEEP;
-    }
     output->Assign(input.data(), input.len() - 1);
     return CHANGE;
   }
@@ -99,9 +100,8 @@ class HelloTruncator : public TlsHandshakeFilter {
 
 // Verify that when NSS reports that an alert is sent, it is actually sent.
 TEST_P(TlsConnectGeneric, CaptureAlertServer) {
-  client_->SetPacketFilter(std::make_shared<HelloTruncator>());
-  auto alert_recorder = std::make_shared<TlsAlertRecorder>();
-  server_->SetPacketFilter(alert_recorder);
+  MakeTlsFilter<HelloTruncator>(client_);
+  auto alert_recorder = MakeTlsFilter<TlsAlertRecorder>(server_);
 
   ConnectExpectAlert(server_, kTlsAlertDecodeError);
   EXPECT_EQ(kTlsAlertFatal, alert_recorder->level());
@@ -109,9 +109,8 @@ TEST_P(TlsConnectGeneric, CaptureAlertServer) {
 }
 
 TEST_P(TlsConnectGenericPre13, CaptureAlertClient) {
-  server_->SetPacketFilter(std::make_shared<HelloTruncator>());
-  auto alert_recorder = std::make_shared<TlsAlertRecorder>();
-  client_->SetPacketFilter(alert_recorder);
+  MakeTlsFilter<HelloTruncator>(server_);
+  auto alert_recorder = MakeTlsFilter<TlsAlertRecorder>(client_);
 
   ConnectExpectAlert(client_, kTlsAlertDecodeError);
   EXPECT_EQ(kTlsAlertFatal, alert_recorder->level());
@@ -120,12 +119,10 @@ TEST_P(TlsConnectGenericPre13, CaptureAlertClient) {
 
 // In TLS 1.3, the server can't read the client alert.
 TEST_P(TlsConnectTls13, CaptureAlertClient) {
-  server_->SetPacketFilter(std::make_shared<HelloTruncator>());
-  auto alert_recorder = std::make_shared<TlsAlertRecorder>();
-  client_->SetPacketFilter(alert_recorder);
+  MakeTlsFilter<HelloTruncator>(server_);
+  auto alert_recorder = MakeTlsFilter<TlsAlertRecorder>(client_);
 
-  server_->StartConnect();
-  client_->StartConnect();
+  StartConnect();
 
   client_->Handshake();
   client_->ExpectSendAlert(kTlsAlertDecodeError);
@@ -133,7 +130,7 @@ TEST_P(TlsConnectTls13, CaptureAlertClient) {
   client_->Handshake();
   if (variant_ == ssl_variant_stream) {
     // DTLS just drops the alert it can't decrypt.
-    server_->ExpectSendAlert(kTlsAlertBadRecordMac);
+    server_->ExpectSendAlert(kTlsAlertUnexpectedMessage);
   }
   server_->Handshake();
   EXPECT_EQ(kTlsAlertFatal, alert_recorder->level());
@@ -152,12 +149,60 @@ TEST_P(TlsConnectGeneric, ConnectAlpn) {
   CheckAlpn("a");
 }
 
+TEST_P(TlsConnectGeneric, ConnectAlpnPriorityA) {
+  // "alpn" "npn"
+  // alpn is the fallback here. npn has the highest priority and should be
+  // picked.
+  const std::vector<uint8_t> alpn = {0x04, 0x61, 0x6c, 0x70, 0x6e,
+                                     0x03, 0x6e, 0x70, 0x6e};
+  EnableAlpn(alpn);
+  Connect();
+  CheckAlpn("npn");
+}
+
+TEST_P(TlsConnectGeneric, ConnectAlpnPriorityB) {
+  // "alpn" "npn" "http"
+  // npn has the highest priority and should be picked.
+  const std::vector<uint8_t> alpn = {0x04, 0x61, 0x6c, 0x70, 0x6e, 0x03, 0x6e,
+                                     0x70, 0x6e, 0x04, 0x68, 0x74, 0x74, 0x70};
+  EnableAlpn(alpn);
+  Connect();
+  CheckAlpn("npn");
+}
+
 TEST_P(TlsConnectGeneric, ConnectAlpnClone) {
   EnsureModelSockets();
   client_model_->EnableAlpn(alpn_dummy_val_, sizeof(alpn_dummy_val_));
   server_model_->EnableAlpn(alpn_dummy_val_, sizeof(alpn_dummy_val_));
   Connect();
   CheckAlpn("a");
+}
+
+TEST_P(TlsConnectGeneric, ConnectAlpnWithCustomCallbackA) {
+  // "ab" "alpn"
+  const std::vector<uint8_t> client_alpn = {0x02, 0x61, 0x62, 0x04,
+                                            0x61, 0x6c, 0x70, 0x6e};
+  EnableAlpnWithCallback(client_alpn, "alpn");
+  Connect();
+  CheckAlpn("alpn");
+}
+
+TEST_P(TlsConnectGeneric, ConnectAlpnWithCustomCallbackB) {
+  // "ab" "alpn"
+  const std::vector<uint8_t> client_alpn = {0x02, 0x61, 0x62, 0x04,
+                                            0x61, 0x6c, 0x70, 0x6e};
+  EnableAlpnWithCallback(client_alpn, "ab");
+  Connect();
+  CheckAlpn("ab");
+}
+
+TEST_P(TlsConnectGeneric, ConnectAlpnWithCustomCallbackC) {
+  // "cd" "npn" "alpn"
+  const std::vector<uint8_t> client_alpn = {0x02, 0x63, 0x64, 0x03, 0x6e, 0x70,
+                                            0x6e, 0x04, 0x61, 0x6c, 0x70, 0x6e};
+  EnableAlpnWithCallback(client_alpn, "npn");
+  Connect();
+  CheckAlpn("npn");
 }
 
 TEST_P(TlsConnectDatagram, ConnectSrtp) {
@@ -169,6 +214,156 @@ TEST_P(TlsConnectDatagram, ConnectSrtp) {
 
 TEST_P(TlsConnectGeneric, ConnectSendReceive) {
   Connect();
+  SendReceive();
+}
+
+class SaveTlsRecord : public TlsRecordFilter {
+ public:
+  SaveTlsRecord(const std::shared_ptr<TlsAgent>& a, size_t index)
+      : TlsRecordFilter(a), index_(index), count_(0), contents_() {}
+
+  const DataBuffer& contents() const { return contents_; }
+
+ protected:
+  PacketFilter::Action FilterRecord(const TlsRecordHeader& header,
+                                    const DataBuffer& data,
+                                    DataBuffer* changed) override {
+    if (count_++ == index_) {
+      contents_ = data;
+    }
+    return KEEP;
+  }
+
+ private:
+  const size_t index_;
+  size_t count_;
+  DataBuffer contents_;
+};
+
+// Check that decrypting filters work and can read any record.
+// This test (currently) only works in TLS 1.3 where we can decrypt.
+TEST_F(TlsConnectStreamTls13, DecryptRecordClient) {
+  EnsureTlsSetup();
+  // 0 = ClientHello, 1 = Finished, 2 = SendReceive, 3 = SendBuffer
+  auto saved = MakeTlsFilter<SaveTlsRecord>(client_, 3);
+  saved->EnableDecryption();
+  Connect();
+  SendReceive();
+
+  static const uint8_t data[] = {0xde, 0xad, 0xdc};
+  DataBuffer buf(data, sizeof(data));
+  client_->SendBuffer(buf);
+  EXPECT_EQ(buf, saved->contents());
+}
+
+TEST_F(TlsConnectStreamTls13, DecryptRecordServer) {
+  EnsureTlsSetup();
+  // Disable tickets so that we are sure to not get NewSessionTicket.
+  EXPECT_EQ(SECSuccess, SSL_OptionSet(server_->ssl_fd(),
+                                      SSL_ENABLE_SESSION_TICKETS, PR_FALSE));
+  // 0 = ServerHello, 1 = other handshake, 2 = SendReceive, 3 = SendBuffer
+  auto saved = MakeTlsFilter<SaveTlsRecord>(server_, 3);
+  saved->EnableDecryption();
+  Connect();
+  SendReceive();
+
+  static const uint8_t data[] = {0xde, 0xad, 0xd5};
+  DataBuffer buf(data, sizeof(data));
+  server_->SendBuffer(buf);
+  EXPECT_EQ(buf, saved->contents());
+}
+
+class DropTlsRecord : public TlsRecordFilter {
+ public:
+  DropTlsRecord(const std::shared_ptr<TlsAgent>& a, size_t index)
+      : TlsRecordFilter(a), index_(index), count_(0) {}
+
+ protected:
+  PacketFilter::Action FilterRecord(const TlsRecordHeader& header,
+                                    const DataBuffer& data,
+                                    DataBuffer* changed) override {
+    if (count_++ == index_) {
+      return DROP;
+    }
+    return KEEP;
+  }
+
+ private:
+  const size_t index_;
+  size_t count_;
+};
+
+// Test that decrypting filters work correctly and are able to drop records.
+TEST_F(TlsConnectStreamTls13, DropRecordServer) {
+  EnsureTlsSetup();
+  // Disable session tickets so that the server doesn't send an extra record.
+  EXPECT_EQ(SECSuccess, SSL_OptionSet(server_->ssl_fd(),
+                                      SSL_ENABLE_SESSION_TICKETS, PR_FALSE));
+
+  // 0 = ServerHello, 1 = other handshake, 2 = first write
+  auto filter = MakeTlsFilter<DropTlsRecord>(server_, 2);
+  filter->EnableDecryption();
+  Connect();
+  server_->SendData(23, 23);  // This should be dropped, so it won't be counted.
+  server_->ResetSentBytes();
+  SendReceive();
+}
+
+TEST_F(TlsConnectStreamTls13, DropRecordClient) {
+  EnsureTlsSetup();
+  // 0 = ClientHello, 1 = Finished, 2 = first write
+  auto filter = MakeTlsFilter<DropTlsRecord>(client_, 2);
+  filter->EnableDecryption();
+  Connect();
+  client_->SendData(26, 26);  // This should be dropped, so it won't be counted.
+  client_->ResetSentBytes();
+  SendReceive();
+}
+
+// Check that a server can use 0.5 RTT if client authentication isn't enabled.
+TEST_P(TlsConnectTls13, WriteBeforeClientFinished) {
+  EnsureTlsSetup();
+  StartConnect();
+  client_->Handshake();  // ClientHello
+  server_->Handshake();  // ServerHello
+
+  server_->SendData(10);
+  client_->ReadBytes(10);  // Client should emit the Finished as a side-effect.
+  server_->Handshake();    // Server consumes the Finished.
+  CheckConnected();
+}
+
+// We don't allow 0.5 RTT if client authentication is requested.
+TEST_P(TlsConnectTls13, WriteBeforeClientFinishedClientAuth) {
+  client_->SetupClientAuth();
+  server_->RequestClientAuth(false);
+  StartConnect();
+  client_->Handshake();  // ClientHello
+  server_->Handshake();  // ServerHello
+
+  static const uint8_t data[] = {1, 2, 3};
+  EXPECT_GT(0, PR_Write(server_->ssl_fd(), data, sizeof(data)));
+  EXPECT_EQ(PR_WOULD_BLOCK_ERROR, PORT_GetError());
+
+  Handshake();
+  CheckConnected();
+  SendReceive();
+}
+
+// 0.5 RTT should fail with client authentication required.
+TEST_P(TlsConnectTls13, WriteBeforeClientFinishedClientAuthRequired) {
+  client_->SetupClientAuth();
+  server_->RequestClientAuth(true);
+  StartConnect();
+  client_->Handshake();  // ClientHello
+  server_->Handshake();  // ServerHello
+
+  static const uint8_t data[] = {1, 2, 3};
+  EXPECT_GT(0, PR_Write(server_->ssl_fd(), data, sizeof(data)));
+  EXPECT_EQ(PR_WOULD_BLOCK_ERROR, PORT_GetError());
+
+  Handshake();
+  CheckConnected();
   SendReceive();
 }
 
@@ -218,30 +413,75 @@ TEST_P(TlsConnectGeneric, ConnectWithCompressionEnabled) {
   SendReceive();
 }
 
-TEST_P(TlsConnectDatagram, TestDtlsHolddownExpiry) {
+class TlsHolddownTest : public TlsConnectDatagram {
+ protected:
+  // This causes all timers to run to completion.  It advances the clock and
+  // handshakes on both peers until both peers have no more timers pending,
+  // which should happen at the end of a handshake.  This is necessary to ensure
+  // that the relatively long holddown timer expires, but that any other timers
+  // also expire and run correctly.
+  void RunAllTimersDown() {
+    while (true) {
+      PRIntervalTime time;
+      SECStatus rv = DTLS_GetHandshakeTimeout(client_->ssl_fd(), &time);
+      if (rv != SECSuccess) {
+        rv = DTLS_GetHandshakeTimeout(server_->ssl_fd(), &time);
+        if (rv != SECSuccess) {
+          break;  // Neither peer has an outstanding timer.
+        }
+      }
+
+      if (g_ssl_gtest_verbose) {
+        std::cerr << "Shifting timers" << std::endl;
+      }
+      ShiftDtlsTimers();
+      Handshake();
+    }
+  }
+};
+
+TEST_P(TlsHolddownTest, TestDtlsHolddownExpiry) {
   Connect();
-  std::cerr << "Expiring holddown timer\n";
-  SSLInt_ForceTimerExpiry(client_->ssl_fd());
-  SSLInt_ForceTimerExpiry(server_->ssl_fd());
+  std::cerr << "Expiring holddown timer" << std::endl;
+  RunAllTimersDown();
   SendReceive();
   if (version_ >= SSL_LIBRARY_VERSION_TLS_1_3) {
     // One for send, one for receive.
-    EXPECT_EQ(2, SSLInt_CountTls13CipherSpecs(client_->ssl_fd()));
+    EXPECT_EQ(2, SSLInt_CountCipherSpecs(client_->ssl_fd()));
   }
+}
+
+TEST_P(TlsHolddownTest, TestDtlsHolddownExpiryResumption) {
+  ConfigureSessionCache(RESUME_BOTH, RESUME_TICKET);
+  Connect();
+  SendReceive();
+
+  Reset();
+  ConfigureSessionCache(RESUME_BOTH, RESUME_TICKET);
+  ExpectResumption(RESUME_TICKET);
+  Connect();
+  RunAllTimersDown();
+  SendReceive();
+  // One for send, one for receive.
+  EXPECT_EQ(2, SSLInt_CountCipherSpecs(client_->ssl_fd()));
 }
 
 class TlsPreCCSHeaderInjector : public TlsRecordFilter {
  public:
-  TlsPreCCSHeaderInjector() {}
+  TlsPreCCSHeaderInjector(const std::shared_ptr<TlsAgent>& a)
+      : TlsRecordFilter(a) {}
   virtual PacketFilter::Action FilterRecord(
       const TlsRecordHeader& record_header, const DataBuffer& input,
       size_t* offset, DataBuffer* output) override {
-    if (record_header.content_type() != kTlsChangeCipherSpecType) return KEEP;
+    if (record_header.content_type() != ssl_ct_change_cipher_spec) {
+      return KEEP;
+    }
 
     std::cerr << "Injecting Finished header before CCS\n";
     const uint8_t hhdr[] = {kTlsHandshakeFinished, 0x00, 0x00, 0x0c};
     DataBuffer hhdr_buf(hhdr, sizeof(hhdr));
-    TlsRecordHeader nhdr(record_header.version(), kTlsHandshakeType, 0);
+    TlsRecordHeader nhdr(record_header.variant(), record_header.version(),
+                         ssl_ct_handshake, 0);
     *offset = nhdr.Write(output, *offset, hhdr_buf);
     *offset = record_header.Write(output, *offset, input);
     return CHANGE;
@@ -249,16 +489,15 @@ class TlsPreCCSHeaderInjector : public TlsRecordFilter {
 };
 
 TEST_P(TlsConnectStreamPre13, ClientFinishedHeaderBeforeCCS) {
-  client_->SetPacketFilter(std::make_shared<TlsPreCCSHeaderInjector>());
+  MakeTlsFilter<TlsPreCCSHeaderInjector>(client_);
   ConnectExpectAlert(server_, kTlsAlertUnexpectedMessage);
   client_->CheckErrorCode(SSL_ERROR_HANDSHAKE_UNEXPECTED_ALERT);
   server_->CheckErrorCode(SSL_ERROR_RX_UNEXPECTED_CHANGE_CIPHER);
 }
 
 TEST_P(TlsConnectStreamPre13, ServerFinishedHeaderBeforeCCS) {
-  server_->SetPacketFilter(std::make_shared<TlsPreCCSHeaderInjector>());
-  client_->StartConnect();
-  server_->StartConnect();
+  MakeTlsFilter<TlsPreCCSHeaderInjector>(server_);
+  StartConnect();
   ExpectAlert(client_, kTlsAlertUnexpectedMessage);
   Handshake();
   EXPECT_EQ(TlsAgent::STATE_ERROR, client_->state());
@@ -287,23 +526,206 @@ TEST_P(TlsConnectTls13, AlertWrongLevel) {
   client_->WaitForErrorCode(SSL_ERROR_HANDSHAKE_UNEXPECTED_ALERT, 2000);
 }
 
+TEST_P(TlsConnectTls13, UnknownRecord) {
+  static const uint8_t kUknownRecord[] = {
+      0xff, SSL_LIBRARY_VERSION_TLS_1_2 >> 8,
+      SSL_LIBRARY_VERSION_TLS_1_2 & 0xff, 0, 0};
+
+  Connect();
+  if (variant_ == ssl_variant_stream) {
+    // DTLS just drops the record with an invalid type.
+    server_->ExpectSendAlert(kTlsAlertUnexpectedMessage);
+  }
+  client_->SendDirect(DataBuffer(kUknownRecord, sizeof(kUknownRecord)));
+  server_->ExpectReadWriteError();
+  server_->ReadBytes();
+  if (variant_ == ssl_variant_stream) {
+    EXPECT_EQ(SSL_ERROR_RX_UNEXPECTED_RECORD_TYPE, server_->error_code());
+  } else {
+    EXPECT_EQ(SSL_ERROR_RX_UNKNOWN_RECORD_TYPE, server_->error_code());
+  }
+}
+
 TEST_F(TlsConnectStreamTls13, Tls13FailedWriteSecondFlight) {
   EnsureTlsSetup();
-  client_->StartConnect();
-  server_->StartConnect();
+  StartConnect();
   client_->Handshake();
   server_->Handshake();  // Send first flight.
-  client_->adapter()->CloseWrites();
+  client_->adapter()->SetWriteError(PR_IO_ERROR);
   client_->Handshake();  // This will get an error, but shouldn't crash.
   client_->CheckErrorCode(SSL_ERROR_SOCKET_WRITE_FAILURE);
 }
 
-TEST_F(TlsConnectStreamTls13, NegotiateShortHeaders) {
-  client_->SetShortHeadersEnabled();
-  server_->SetShortHeadersEnabled();
-  client_->ExpectShortHeaders();
-  server_->ExpectShortHeaders();
+TEST_P(TlsConnectDatagram, BlockedWrite) {
   Connect();
+
+  // Mark the socket as blocked.
+  client_->adapter()->SetWriteError(PR_WOULD_BLOCK_ERROR);
+  static const uint8_t data[] = {1, 2, 3};
+  int32_t rv = PR_Write(client_->ssl_fd(), data, sizeof(data));
+  EXPECT_GT(0, rv);
+  EXPECT_EQ(PR_WOULD_BLOCK_ERROR, PORT_GetError());
+
+  // Remove the write error and though the previous write failed, future reads
+  // and writes should just work as if it never happened.
+  client_->adapter()->SetWriteError(0);
+  SendReceive();
+}
+
+TEST_F(TlsConnectTest, ConnectSSLv3) {
+  ConfigureVersion(SSL_LIBRARY_VERSION_3_0);
+  EnableOnlyStaticRsaCiphers();
+  Connect();
+  CheckKeys(ssl_kea_rsa, ssl_grp_none, ssl_auth_rsa_decrypt, ssl_sig_none);
+}
+
+TEST_F(TlsConnectTest, ConnectSSLv3ClientAuth) {
+  ConfigureVersion(SSL_LIBRARY_VERSION_3_0);
+  EnableOnlyStaticRsaCiphers();
+  client_->SetupClientAuth();
+  server_->RequestClientAuth(true);
+  Connect();
+  CheckKeys(ssl_kea_rsa, ssl_grp_none, ssl_auth_rsa_decrypt, ssl_sig_none);
+}
+
+static size_t ExpectedCbcLen(size_t in, size_t hmac = 20, size_t block = 16) {
+  // MAC-then-Encrypt expansion formula:
+  return ((in + hmac + (block - 1)) / block) * block;
+}
+
+TEST_F(TlsConnectTest, OneNRecordSplitting) {
+  ConfigureVersion(SSL_LIBRARY_VERSION_TLS_1_0);
+  EnsureTlsSetup();
+  ConnectWithCipherSuite(TLS_RSA_WITH_AES_128_CBC_SHA);
+  auto records = MakeTlsFilter<TlsRecordRecorder>(server_);
+  // This should be split into 1, 16384 and 20.
+  DataBuffer big_buffer;
+  big_buffer.Allocate(1 + 16384 + 20);
+  server_->SendBuffer(big_buffer);
+  ASSERT_EQ(3U, records->count());
+  EXPECT_EQ(ExpectedCbcLen(1), records->record(0).buffer.len());
+  EXPECT_EQ(ExpectedCbcLen(16384), records->record(1).buffer.len());
+  EXPECT_EQ(ExpectedCbcLen(20), records->record(2).buffer.len());
+}
+
+// We can't test for randomness easily here, but we can test that we don't
+// produce a zero value, or produce the same value twice.  There are 5 values
+// here: two ClientHello.random, two ServerHello.random, and one zero value.
+// Matrix them and fail if any are the same.
+TEST_P(TlsConnectGeneric, CheckRandoms) {
+  ConfigureSessionCache(RESUME_NONE, RESUME_NONE);
+
+  static const size_t random_len = 32;
+  uint8_t crandom1[random_len], srandom1[random_len];
+  uint8_t z[random_len] = {0};
+
+  auto ch = MakeTlsFilter<TlsHandshakeRecorder>(client_, ssl_hs_client_hello);
+  auto sh = MakeTlsFilter<TlsHandshakeRecorder>(server_, ssl_hs_server_hello);
+  Connect();
+  ASSERT_TRUE(ch->buffer().len() > (random_len + 2));
+  ASSERT_TRUE(sh->buffer().len() > (random_len + 2));
+  memcpy(crandom1, ch->buffer().data() + 2, random_len);
+  memcpy(srandom1, sh->buffer().data() + 2, random_len);
+  EXPECT_NE(0, memcmp(crandom1, srandom1, random_len));
+  EXPECT_NE(0, memcmp(crandom1, z, random_len));
+  EXPECT_NE(0, memcmp(srandom1, z, random_len));
+
+  Reset();
+  ch = MakeTlsFilter<TlsHandshakeRecorder>(client_, ssl_hs_client_hello);
+  sh = MakeTlsFilter<TlsHandshakeRecorder>(server_, ssl_hs_server_hello);
+  Connect();
+  ASSERT_TRUE(ch->buffer().len() > (random_len + 2));
+  ASSERT_TRUE(sh->buffer().len() > (random_len + 2));
+  const uint8_t* crandom2 = ch->buffer().data() + 2;
+  const uint8_t* srandom2 = sh->buffer().data() + 2;
+
+  EXPECT_NE(0, memcmp(crandom2, srandom2, random_len));
+  EXPECT_NE(0, memcmp(crandom2, z, random_len));
+  EXPECT_NE(0, memcmp(srandom2, z, random_len));
+
+  EXPECT_NE(0, memcmp(crandom1, crandom2, random_len));
+  EXPECT_NE(0, memcmp(crandom1, srandom2, random_len));
+  EXPECT_NE(0, memcmp(srandom1, crandom2, random_len));
+  EXPECT_NE(0, memcmp(srandom1, srandom2, random_len));
+}
+
+void FailOnCloseNotify(const PRFileDesc* fd, void* arg, const SSLAlert* alert) {
+  ADD_FAILURE() << "received alert " << alert->description;
+}
+
+void CheckCloseNotify(const PRFileDesc* fd, void* arg, const SSLAlert* alert) {
+  *reinterpret_cast<bool*>(arg) = true;
+  EXPECT_EQ(close_notify, alert->description);
+  EXPECT_EQ(alert_warning, alert->level);
+}
+
+TEST_P(TlsConnectGeneric, ShutdownOneSide) {
+  Connect();
+
+  // Setup to check alerts.
+  EXPECT_EQ(SECSuccess, SSL_AlertSentCallback(server_->ssl_fd(),
+                                              FailOnCloseNotify, nullptr));
+  EXPECT_EQ(SECSuccess, SSL_AlertReceivedCallback(client_->ssl_fd(),
+                                                  FailOnCloseNotify, nullptr));
+
+  bool client_sent = false;
+  EXPECT_EQ(SECSuccess, SSL_AlertSentCallback(client_->ssl_fd(),
+                                              CheckCloseNotify, &client_sent));
+  bool server_received = false;
+  EXPECT_EQ(SECSuccess,
+            SSL_AlertReceivedCallback(server_->ssl_fd(), CheckCloseNotify,
+                                      &server_received));
+  EXPECT_EQ(PR_SUCCESS, PR_Shutdown(client_->ssl_fd(), PR_SHUTDOWN_SEND));
+
+  // Make sure that the server reads out the close_notify.
+  uint8_t buf[10];
+  EXPECT_EQ(0, PR_Read(server_->ssl_fd(), buf, sizeof(buf)));
+
+  // Reading and writing should still work in the one open direction.
+  EXPECT_TRUE(client_sent);
+  EXPECT_TRUE(server_received);
+  server_->SendData(10, 10);
+  client_->ReadBytes(10);
+
+  // Now close the other side and do the same checks.
+  bool server_sent = false;
+  EXPECT_EQ(SECSuccess, SSL_AlertSentCallback(server_->ssl_fd(),
+                                              CheckCloseNotify, &server_sent));
+  bool client_received = false;
+  EXPECT_EQ(SECSuccess,
+            SSL_AlertReceivedCallback(client_->ssl_fd(), CheckCloseNotify,
+                                      &client_received));
+  EXPECT_EQ(PR_SUCCESS, PR_Shutdown(server_->ssl_fd(), PR_SHUTDOWN_SEND));
+
+  EXPECT_EQ(0, PR_Read(client_->ssl_fd(), buf, sizeof(buf)));
+  EXPECT_TRUE(server_sent);
+  EXPECT_TRUE(client_received);
+}
+
+TEST_P(TlsConnectGeneric, ShutdownOneSideThenCloseTcp) {
+  Connect();
+
+  bool client_sent = false;
+  EXPECT_EQ(SECSuccess, SSL_AlertSentCallback(client_->ssl_fd(),
+                                              CheckCloseNotify, &client_sent));
+  bool server_received = false;
+  EXPECT_EQ(SECSuccess,
+            SSL_AlertReceivedCallback(server_->ssl_fd(), CheckCloseNotify,
+                                      &server_received));
+  EXPECT_EQ(PR_SUCCESS, PR_Shutdown(client_->ssl_fd(), PR_SHUTDOWN_SEND));
+
+  // Make sure that the server reads out the close_notify.
+  uint8_t buf[10];
+  EXPECT_EQ(0, PR_Read(server_->ssl_fd(), buf, sizeof(buf)));
+
+  // Now simulate the underlying connection closing.
+  client_->adapter()->Reset();
+
+  // Now close the other side and see that things don't explode.
+  EXPECT_EQ(PR_SUCCESS, PR_Shutdown(server_->ssl_fd(), PR_SHUTDOWN_SEND));
+
+  EXPECT_GT(0, PR_Read(client_->ssl_fd(), buf, sizeof(buf)));
+  EXPECT_EQ(PR_NOT_CONNECTED_ERROR, PR_GetError());
 }
 
 INSTANTIATE_TEST_CASE_P(
@@ -318,6 +740,8 @@ INSTANTIATE_TEST_CASE_P(
 INSTANTIATE_TEST_CASE_P(StreamOnly, TlsConnectStream,
                         TlsConnectTestBase::kTlsVAll);
 INSTANTIATE_TEST_CASE_P(DatagramOnly, TlsConnectDatagram,
+                        TlsConnectTestBase::kTlsV11Plus);
+INSTANTIATE_TEST_CASE_P(DatagramHolddown, TlsHolddownTest,
                         TlsConnectTestBase::kTlsV11Plus);
 
 INSTANTIATE_TEST_CASE_P(
@@ -351,4 +775,27 @@ INSTANTIATE_TEST_CASE_P(Version12Plus, TlsConnectTls12Plus,
                         ::testing::Combine(TlsConnectTestBase::kTlsVariantsAll,
                                            TlsConnectTestBase::kTlsV12Plus));
 
-}  // namespace nspr_test
+INSTANTIATE_TEST_CASE_P(
+    GenericStream, TlsConnectGenericResumption,
+    ::testing::Combine(TlsConnectTestBase::kTlsVariantsStream,
+                       TlsConnectTestBase::kTlsVAll,
+                       ::testing::Values(true, false)));
+INSTANTIATE_TEST_CASE_P(
+    GenericDatagram, TlsConnectGenericResumption,
+    ::testing::Combine(TlsConnectTestBase::kTlsVariantsDatagram,
+                       TlsConnectTestBase::kTlsV11Plus,
+                       ::testing::Values(true, false)));
+
+INSTANTIATE_TEST_CASE_P(
+    GenericStream, TlsConnectGenericResumptionToken,
+    ::testing::Combine(TlsConnectTestBase::kTlsVariantsStream,
+                       TlsConnectTestBase::kTlsVAll));
+INSTANTIATE_TEST_CASE_P(
+    GenericDatagram, TlsConnectGenericResumptionToken,
+    ::testing::Combine(TlsConnectTestBase::kTlsVariantsDatagram,
+                       TlsConnectTestBase::kTlsV11Plus));
+
+INSTANTIATE_TEST_CASE_P(GenericDatagram, TlsConnectTls13ResumptionToken,
+                        TlsConnectTestBase::kTlsVariantsAll);
+
+}  // namespace nss_test

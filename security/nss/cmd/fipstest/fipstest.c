@@ -34,6 +34,11 @@
 #if 0
 #include "../../lib/freebl/mpi/mpi.h"
 #endif
+#define MATCH_OPENSSL 1
+/*#define MATCH_NIST 1 */
+#ifdef MATCH_NIST
+#define VERBOSE_REASON 1
+#endif
 
 extern SECStatus
 EC_DecodeParams(const SECItem *encodedParams, ECParams **ecparams);
@@ -2335,6 +2340,34 @@ sha_get_hashType(int hashbits)
     return hashType;
 }
 
+HASH_HashType
+hash_string_to_hashType(const char *src)
+{
+    HASH_HashType shaAlg = HASH_AlgNULL;
+    if (strncmp(src, "SHA-1", 5) == 0) {
+        shaAlg = HASH_AlgSHA1;
+    } else if (strncmp(src, "SHA-224", 7) == 0) {
+        shaAlg = HASH_AlgSHA224;
+    } else if (strncmp(src, "SHA-256", 7) == 0) {
+        shaAlg = HASH_AlgSHA256;
+    } else if (strncmp(src, "SHA-384", 7) == 0) {
+        shaAlg = HASH_AlgSHA384;
+    } else if (strncmp(src, "SHA-512", 7) == 0) {
+        shaAlg = HASH_AlgSHA512;
+    } else if (strncmp(src, "SHA1", 4) == 0) {
+        shaAlg = HASH_AlgSHA1;
+    } else if (strncmp(src, "SHA224", 6) == 0) {
+        shaAlg = HASH_AlgSHA224;
+    } else if (strncmp(src, "SHA256", 6) == 0) {
+        shaAlg = HASH_AlgSHA256;
+    } else if (strncmp(src, "SHA384", 6) == 0) {
+        shaAlg = HASH_AlgSHA384;
+    } else if (strncmp(src, "SHA512", 6) == 0) {
+        shaAlg = HASH_AlgSHA512;
+    }
+    return shaAlg;
+}
+
 /*
  * Perform the ECDSA Key Pair Generation Test.
  *
@@ -2628,17 +2661,8 @@ ecdsa_siggen_test(char *reqfn)
             *dst = '\0';
             src++; /* skip the comma */
             /* set the SHA Algorithm */
-            if (strncmp(src, "SHA-1", 5) == 0) {
-                shaAlg = HASH_AlgSHA1;
-            } else if (strncmp(src, "SHA-224", 7) == 0) {
-                shaAlg = HASH_AlgSHA224;
-            } else if (strncmp(src, "SHA-256", 7) == 0) {
-                shaAlg = HASH_AlgSHA256;
-            } else if (strncmp(src, "SHA-384", 7) == 0) {
-                shaAlg = HASH_AlgSHA384;
-            } else if (strncmp(src, "SHA-512", 7) == 0) {
-                shaAlg = HASH_AlgSHA512;
-            } else {
+            shaAlg = hash_string_to_hashType(src);
+            if (shaAlg == HASH_AlgNULL) {
                 fprintf(ecdsaresp, "ERROR: Unable to find SHAAlg type");
                 goto loser;
             }
@@ -2798,17 +2822,8 @@ ecdsa_sigver_test(char *reqfn)
             *dst = '\0';
             src++; /* skip the comma */
             /* set the SHA Algorithm */
-            if (strncmp(src, "SHA-1", 5) == 0) {
-                shaAlg = HASH_AlgSHA1;
-            } else if (strncmp(src, "SHA-224", 7) == 0) {
-                shaAlg = HASH_AlgSHA224;
-            } else if (strncmp(src, "SHA-256", 7) == 0) {
-                shaAlg = HASH_AlgSHA256;
-            } else if (strncmp(src, "SHA-384", 7) == 0) {
-                shaAlg = HASH_AlgSHA384;
-            } else if (strncmp(src, "SHA-512", 7) == 0) {
-                shaAlg = HASH_AlgSHA512;
-            } else {
+            shaAlg = hash_string_to_hashType(src);
+            if (shaAlg == HASH_AlgNULL) {
                 fprintf(ecdsaresp, "ERROR: Unable to find SHAAlg type");
                 goto loser;
             }
@@ -2954,6 +2969,940 @@ loser:
         PORT_FreeArena(ecpub.ecParams.arena, PR_FALSE);
     }
     fclose(ecdsareq);
+}
+
+/*
+ * Perform the ECDH Functional Test.
+ *
+ * reqfn is the pathname of the REQUEST file.
+ *
+ * The output RESPONSE file is written to stdout.
+ */
+#define MAX_ECC_PARAMS 256
+void
+ecdh_functional(char *reqfn, PRBool response)
+{
+    char buf[256];  /* holds one line from the input REQUEST file.
+                         * needs to be large enough to hold the longest
+                         * line "Qx = <144 hex digits>\n".
+                         */
+    FILE *ecdhreq;  /* input stream from the REQUEST file */
+    FILE *ecdhresp; /* output stream to the RESPONSE file */
+    char curve[16]; /* "nistxddd" */
+    unsigned char hashBuf[HASH_LENGTH_MAX];
+    ECParams *ecparams[MAX_ECC_PARAMS] = { NULL };
+    ECPrivateKey *ecpriv = NULL;
+    ECParams *current_ecparams = NULL;
+    SECItem pubkey;
+    SECItem ZZ;
+    unsigned int i;
+    unsigned int len = 0;
+    unsigned int uit_len = 0;
+    int current_curve = -1;
+    HASH_HashType hash = HASH_AlgNULL; /* type of SHA Alg */
+
+    ecdhreq = fopen(reqfn, "r");
+    ecdhresp = stdout;
+    strcpy(curve, "nist");
+    pubkey.data = NULL;
+    while (fgets(buf, sizeof buf, ecdhreq) != NULL) {
+        /* a comment or blank line */
+        if (buf[0] == '#' || buf[0] == '\n' || buf[0] == '\r') {
+            fputs(buf, ecdhresp);
+            continue;
+        }
+        if (buf[0] == '[') {
+            /* [Ex] */
+            if (buf[1] == 'E' && buf[3] == ']') {
+                current_curve = buf[2] - 'A';
+                fputs(buf, ecdhresp);
+                continue;
+            }
+            /* [Curve selected: x-nnn */
+            if (strncmp(buf, "[Curve ", 7) == 0) {
+                const char *src;
+                char *dst;
+                SECItem *encodedparams;
+
+                if ((current_curve < 0) || (current_curve > MAX_ECC_PARAMS)) {
+                    fprintf(stderr, "No curve type defined\n");
+                    goto loser;
+                }
+
+                src = &buf[1];
+                /* skip passed the colon */
+                while (*src && *src != ':')
+                    src++;
+                if (*src != ':') {
+                    fprintf(stderr,
+                            "No colon in curve selected statement\n%s", buf);
+                    goto loser;
+                }
+                src++;
+                /* skip to the first non-space */
+                while (*src && *src == ' ')
+                    src++;
+                dst = &curve[4];
+                *dst++ = tolower(*src);
+                src += 2; /* skip the hyphen */
+                *dst++ = *src++;
+                *dst++ = *src++;
+                *dst++ = *src++;
+                *dst = '\0';
+                if (ecparams[current_curve] != NULL) {
+                    PORT_FreeArena(ecparams[current_curve]->arena, PR_FALSE);
+                    ecparams[current_curve] = NULL;
+                }
+                encodedparams = getECParams(curve);
+                if (encodedparams == NULL) {
+                    fprintf(stderr, "Unknown curve %s.", curve);
+                    goto loser;
+                }
+                if (EC_DecodeParams(encodedparams, &ecparams[current_curve]) != SECSuccess) {
+                    fprintf(stderr, "Curve %s not supported.\n", curve);
+                    goto loser;
+                }
+                SECITEM_FreeItem(encodedparams, PR_TRUE);
+                fputs(buf, ecdhresp);
+                continue;
+            }
+            /* [Ex - SHAxxx] */
+            if (buf[1] == 'E' && buf[3] == ' ') {
+                const char *src;
+                current_curve = buf[2] - 'A';
+                if ((current_curve < 0) || (current_curve > 256)) {
+                    fprintf(stderr, "bad curve type defined (%c)\n", buf[2]);
+                    goto loser;
+                }
+                current_ecparams = ecparams[current_curve];
+                if (current_ecparams == NULL) {
+                    fprintf(stderr, "no curve defined for type %c defined\n",
+                            buf[2]);
+                    goto loser;
+                }
+                /* skip passed the colon */
+                src = &buf[1];
+                while (*src && *src != '-')
+                    src++;
+                if (*src != '-') {
+                    fprintf(stderr,
+                            "No data in curve selected statement\n%s", buf);
+                    goto loser;
+                }
+                src++;
+                /* skip to the first non-space */
+                while (*src && *src == ' ')
+                    src++;
+                hash = hash_string_to_hashType(src);
+                if (hash == HASH_AlgNULL) {
+                    fprintf(ecdhresp, "ERROR: Unable to find SHAAlg type");
+                    goto loser;
+                }
+                fputs(buf, ecdhresp);
+                continue;
+            }
+            fputs(buf, ecdhresp);
+            continue;
+        }
+        /* COUNT = ... */
+        if (strncmp(buf, "COUNT", 5) == 0) {
+            fputs(buf, ecdhresp);
+            if (current_ecparams == NULL) {
+                fprintf(stderr, "no curve defined for type %c defined\n",
+                        buf[2]);
+                goto loser;
+            }
+            len = (current_ecparams->fieldID.size + 7) >> 3;
+            if (pubkey.data != NULL) {
+                PORT_Free(pubkey.data);
+                pubkey.data = NULL;
+            }
+            SECITEM_AllocItem(NULL, &pubkey, EC_GetPointSize(current_ecparams));
+            if (pubkey.data == NULL) {
+                goto loser;
+            }
+            pubkey.data[0] = EC_POINT_FORM_UNCOMPRESSED;
+            continue;
+        }
+        /* QeCAVSx = ... */
+        if (strncmp(buf, "QeCAVSx", 7) == 0) {
+            fputs(buf, ecdhresp);
+            i = 7;
+            while (isspace(buf[i]) || buf[i] == '=') {
+                i++;
+            }
+            from_hex_str(&pubkey.data[1], len, &buf[i]);
+            continue;
+        }
+        /* QeCAVSy = ... */
+        if (strncmp(buf, "QeCAVSy", 7) == 0) {
+            fputs(buf, ecdhresp);
+            i = 7;
+            while (isspace(buf[i]) || buf[i] == '=') {
+                i++;
+            }
+            from_hex_str(&pubkey.data[1 + len], len, &buf[i]);
+            if (current_ecparams == NULL) {
+                fprintf(stderr, "no curve defined\n");
+                goto loser;
+            }
+            /* validate CAVS public key */
+            if (EC_ValidatePublicKey(current_ecparams, &pubkey) != SECSuccess) {
+                fprintf(stderr, "BAD key detected\n");
+                goto loser;
+            }
+
+            /* generate ECC key pair */
+            if (EC_NewKey(current_ecparams, &ecpriv) != SECSuccess) {
+                fprintf(stderr, "Failed to generate new key\n");
+                goto loser;
+            }
+            /* validate UIT generated public key */
+            if (EC_ValidatePublicKey(current_ecparams, &ecpriv->publicValue) !=
+                SECSuccess) {
+                fprintf(stderr, "generate key did not validate\n");
+                goto loser;
+            }
+            /* output UIT public key */
+            uit_len = ecpriv->publicValue.len;
+            if (uit_len % 2 == 0) {
+                fprintf(stderr, "generate key had invalid public value len\n");
+                goto loser;
+            }
+            uit_len = (uit_len - 1) / 2;
+            if (ecpriv->publicValue.data[0] != EC_POINT_FORM_UNCOMPRESSED) {
+                fprintf(stderr, "generate key was compressed\n");
+                goto loser;
+            }
+            fputs("deIUT = ", ecdhresp);
+            to_hex_str(buf, ecpriv->privateValue.data, ecpriv->privateValue.len);
+            fputs(buf, ecdhresp);
+            fputc('\n', ecdhresp);
+            fputs("QeIUTx = ", ecdhresp);
+            to_hex_str(buf, &ecpriv->publicValue.data[1], uit_len);
+            fputs(buf, ecdhresp);
+            fputc('\n', ecdhresp);
+            fputs("QeIUTy = ", ecdhresp);
+            to_hex_str(buf, &ecpriv->publicValue.data[1 + uit_len], uit_len);
+            fputs(buf, ecdhresp);
+            fputc('\n', ecdhresp);
+            /* ECDH */
+            if (ECDH_Derive(&pubkey, current_ecparams, &ecpriv->privateValue,
+                            PR_FALSE, &ZZ) != SECSuccess) {
+                fprintf(stderr, "Derive failed\n");
+                goto loser;
+            }
+            /* output hash of ZZ */
+            if (fips_hashBuf(hash, hashBuf, ZZ.data, ZZ.len) != SECSuccess) {
+                fprintf(stderr, "hash of derived key failed\n");
+                goto loser;
+            }
+            SECITEM_FreeItem(&ZZ, PR_FALSE);
+            fputs("HashZZ = ", ecdhresp);
+            to_hex_str(buf, hashBuf, fips_hashLen(hash));
+            fputs(buf, ecdhresp);
+            fputc('\n', ecdhresp);
+            fputc('\n', ecdhresp);
+            PORT_FreeArena(ecpriv->ecParams.arena, PR_TRUE);
+            ecpriv = NULL;
+            continue;
+        }
+    }
+loser:
+    if (ecpriv != NULL) {
+        PORT_FreeArena(ecpriv->ecParams.arena, PR_TRUE);
+    }
+    for (i = 0; i < MAX_ECC_PARAMS; i++) {
+        if (ecparams[i] != NULL) {
+            PORT_FreeArena(ecparams[i]->arena, PR_FALSE);
+            ecparams[i] = NULL;
+        }
+    }
+    if (pubkey.data != NULL) {
+        PORT_Free(pubkey.data);
+    }
+    fclose(ecdhreq);
+}
+
+/*
+ * Perform the ECDH Validity Test.
+ *
+ * reqfn is the pathname of the REQUEST file.
+ *
+ * The output RESPONSE file is written to stdout.
+ */
+void
+ecdh_verify(char *reqfn, PRBool response)
+{
+    char buf[256];  /* holds one line from the input REQUEST file.
+                         * needs to be large enough to hold the longest
+                         * line "Qx = <144 hex digits>\n".
+                         */
+    FILE *ecdhreq;  /* input stream from the REQUEST file */
+    FILE *ecdhresp; /* output stream to the RESPONSE file */
+    char curve[16]; /* "nistxddd" */
+    unsigned char hashBuf[HASH_LENGTH_MAX];
+    unsigned char cavsHashBuf[HASH_LENGTH_MAX];
+    unsigned char private_data[MAX_ECKEY_LEN];
+    ECParams *ecparams[MAX_ECC_PARAMS] = { NULL };
+    ECParams *current_ecparams = NULL;
+    SECItem pubkey;
+    SECItem ZZ;
+    SECItem private_value;
+    unsigned int i;
+    unsigned int len = 0;
+    int current_curve = -1;
+    HASH_HashType hash = HASH_AlgNULL; /* type of SHA Alg */
+
+    ecdhreq = fopen(reqfn, "r");
+    ecdhresp = stdout;
+    strcpy(curve, "nist");
+    pubkey.data = NULL;
+    while (fgets(buf, sizeof buf, ecdhreq) != NULL) {
+        /* a comment or blank line */
+        if (buf[0] == '#' || buf[0] == '\n' || buf[0] == '\r') {
+            fputs(buf, ecdhresp);
+            continue;
+        }
+        if (buf[0] == '[') {
+            /* [Ex] */
+            if (buf[1] == 'E' && buf[3] == ']') {
+                current_curve = buf[2] - 'A';
+                fputs(buf, ecdhresp);
+                continue;
+            }
+            /* [Curve selected: x-nnn */
+            if (strncmp(buf, "[Curve ", 7) == 0) {
+                const char *src;
+                char *dst;
+                SECItem *encodedparams;
+
+                if ((current_curve < 0) || (current_curve > MAX_ECC_PARAMS)) {
+                    fprintf(stderr, "No curve type defined\n");
+                    goto loser;
+                }
+
+                src = &buf[1];
+                /* skip passed the colon */
+                while (*src && *src != ':')
+                    src++;
+                if (*src != ':') {
+                    fprintf(stderr,
+                            "No colon in curve selected statement\n%s", buf);
+                    goto loser;
+                }
+                src++;
+                /* skip to the first non-space */
+                while (*src && *src == ' ')
+                    src++;
+                dst = &curve[4];
+                *dst++ = tolower(*src);
+                src += 2; /* skip the hyphen */
+                *dst++ = *src++;
+                *dst++ = *src++;
+                *dst++ = *src++;
+                *dst = '\0';
+                if (ecparams[current_curve] != NULL) {
+                    PORT_FreeArena(ecparams[current_curve]->arena, PR_FALSE);
+                    ecparams[current_curve] = NULL;
+                }
+                encodedparams = getECParams(curve);
+                if (encodedparams == NULL) {
+                    fprintf(stderr, "Unknown curve %s.\n", curve);
+                    goto loser;
+                }
+                if (EC_DecodeParams(encodedparams, &ecparams[current_curve]) != SECSuccess) {
+                    fprintf(stderr, "Curve %s not supported.\n", curve);
+                    goto loser;
+                }
+                SECITEM_FreeItem(encodedparams, PR_TRUE);
+                fputs(buf, ecdhresp);
+                continue;
+            }
+            /* [Ex - SHAxxx] */
+            if (buf[1] == 'E' && buf[3] == ' ') {
+                const char *src;
+                current_curve = buf[2] - 'A';
+                if ((current_curve < 0) || (current_curve > 256)) {
+                    fprintf(stderr, "bad curve type defined (%c)\n", buf[2]);
+                    goto loser;
+                }
+                current_ecparams = ecparams[current_curve];
+                if (current_ecparams == NULL) {
+                    fprintf(stderr, "no curve defined for type %c defined\n",
+                            buf[2]);
+                    goto loser;
+                }
+                /* skip passed the colon */
+                src = &buf[1];
+                while (*src && *src != '-')
+                    src++;
+                if (*src != '-') {
+                    fprintf(stderr,
+                            "No data in curve selected statement\n%s", buf);
+                    goto loser;
+                }
+                src++;
+                /* skip to the first non-space */
+                while (*src && *src == ' ')
+                    src++;
+                hash = hash_string_to_hashType(src);
+                if (hash == HASH_AlgNULL) {
+                    fprintf(ecdhresp, "ERROR: Unable to find SHAAlg type");
+                    goto loser;
+                }
+                fputs(buf, ecdhresp);
+                continue;
+            }
+            fputs(buf, ecdhresp);
+            continue;
+        }
+        /* COUNT = ... */
+        if (strncmp(buf, "COUNT", 5) == 0) {
+            fputs(buf, ecdhresp);
+            if (current_ecparams == NULL) {
+                fprintf(stderr, "no curve defined for type %c defined\n",
+                        buf[2]);
+                goto loser;
+            }
+            len = (current_ecparams->fieldID.size + 7) >> 3;
+            if (pubkey.data != NULL) {
+                PORT_Free(pubkey.data);
+                pubkey.data = NULL;
+            }
+            SECITEM_AllocItem(NULL, &pubkey, EC_GetPointSize(current_ecparams));
+            if (pubkey.data == NULL) {
+                goto loser;
+            }
+            pubkey.data[0] = EC_POINT_FORM_UNCOMPRESSED;
+            continue;
+        }
+        /* QeCAVSx = ... */
+        if (strncmp(buf, "QeCAVSx", 7) == 0) {
+            fputs(buf, ecdhresp);
+            i = 7;
+            while (isspace(buf[i]) || buf[i] == '=') {
+                i++;
+            }
+            from_hex_str(&pubkey.data[1], len, &buf[i]);
+            continue;
+        }
+        /* QeCAVSy = ... */
+        if (strncmp(buf, "QeCAVSy", 7) == 0) {
+            fputs(buf, ecdhresp);
+            i = 7;
+            while (isspace(buf[i]) || buf[i] == '=') {
+                i++;
+            }
+            from_hex_str(&pubkey.data[1 + len], len, &buf[i]);
+            continue;
+        }
+        if (strncmp(buf, "deIUT", 5) == 0) {
+            fputs(buf, ecdhresp);
+            i = 5;
+            while (isspace(buf[i]) || buf[i] == '=') {
+                i++;
+            }
+            from_hex_str(private_data, len, &buf[i]);
+            private_value.data = private_data;
+            private_value.len = len;
+            continue;
+        }
+        if (strncmp(buf, "QeIUTx", 6) == 0) {
+            fputs(buf, ecdhresp);
+            continue;
+        }
+        if (strncmp(buf, "QeIUTy", 6) == 0) {
+            fputs(buf, ecdhresp);
+            continue;
+        }
+        if ((strncmp(buf, "CAVSHashZZ", 10) == 0) ||
+            (strncmp(buf, "HashZZ", 6) == 0)) {
+            fputs(buf, ecdhresp);
+            i = (buf[0] == 'C') ? 10 : 6;
+            while (isspace(buf[i]) || buf[i] == '=') {
+                i++;
+            }
+            from_hex_str(cavsHashBuf, fips_hashLen(hash), &buf[i]);
+            if (current_ecparams == NULL) {
+                fprintf(stderr, "no curve defined for type defined\n");
+                goto loser;
+            }
+            /* validate CAVS public key */
+            if (EC_ValidatePublicKey(current_ecparams, &pubkey) != SECSuccess) {
+#ifdef VERBOSE_REASON
+                fprintf(ecdhresp, "Result = F # key didn't validate\n");
+#else
+                fprintf(ecdhresp, "Result = F\n");
+#endif
+                continue;
+            }
+
+            /* ECDH */
+            if (ECDH_Derive(&pubkey, current_ecparams, &private_value,
+                            PR_FALSE, &ZZ) != SECSuccess) {
+#ifdef VERBOSE_REASON
+                fprintf(ecdhresp, "Result = F # derive failure\n");
+#else
+                fprintf(ecdhresp, "Result = F\n");
+#endif
+                continue;
+            }
+/* output  ZZ */
+#ifndef MATCH_OPENSSL
+            fputs("Z = ", ecdhresp);
+            to_hex_str(buf, ZZ.data, ZZ.len);
+            fputs(buf, ecdhresp);
+            fputc('\n', ecdhresp);
+#endif
+
+            if (fips_hashBuf(hash, hashBuf, ZZ.data, ZZ.len) != SECSuccess) {
+                fprintf(stderr, "hash of derived key failed\n");
+                goto loser;
+            }
+            SECITEM_FreeItem(&ZZ, PR_FALSE);
+#ifndef MATCH_NIST
+            fputs("IUTHashZZ = ", ecdhresp);
+            to_hex_str(buf, hashBuf, fips_hashLen(hash));
+            fputs(buf, ecdhresp);
+            fputc('\n', ecdhresp);
+#endif
+            if (memcmp(hashBuf, cavsHashBuf, fips_hashLen(hash)) != 0) {
+#ifdef VERBOSE_REASON
+                fprintf(ecdhresp, "Result = F # hash doesn't match\n");
+#else
+                fprintf(ecdhresp, "Result = F\n");
+#endif
+            } else {
+                fprintf(ecdhresp, "Result = P\n");
+            }
+#ifndef MATCH_OPENSSL
+            fputc('\n', ecdhresp);
+#endif
+            continue;
+        }
+    }
+loser:
+    for (i = 0; i < MAX_ECC_PARAMS; i++) {
+        if (ecparams[i] != NULL) {
+            PORT_FreeArena(ecparams[i]->arena, PR_FALSE);
+            ecparams[i] = NULL;
+        }
+    }
+    if (pubkey.data != NULL) {
+        PORT_Free(pubkey.data);
+    }
+    fclose(ecdhreq);
+}
+
+/*
+ * Perform the DH Functional Test.
+ *
+ * reqfn is the pathname of the REQUEST file.
+ *
+ * The output RESPONSE file is written to stdout.
+ */
+#define MAX_ECC_PARAMS 256
+void
+dh_functional(char *reqfn, PRBool response)
+{
+    char buf[1024]; /* holds one line from the input REQUEST file.
+                         * needs to be large enough to hold the longest
+                         * line "YephCAVS = <512 hex digits>\n".
+                         */
+    FILE *dhreq;    /* input stream from the REQUEST file */
+    FILE *dhresp;   /* output stream to the RESPONSE file */
+    unsigned char hashBuf[HASH_LENGTH_MAX];
+    DSAPrivateKey *dsapriv = NULL;
+    PQGParams pqg = { 0 };
+    unsigned char pubkeydata[DSA_MAX_P_BITS / 8];
+    SECItem pubkey;
+    SECItem ZZ;
+    unsigned int i, j;
+    unsigned int pgySize;
+    HASH_HashType hash = HASH_AlgNULL; /* type of SHA Alg */
+
+    dhreq = fopen(reqfn, "r");
+    dhresp = stdout;
+    while (fgets(buf, sizeof buf, dhreq) != NULL) {
+        /* a comment or blank line */
+        if (buf[0] == '#' || buf[0] == '\n' || buf[0] == '\r') {
+            fputs(buf, dhresp);
+            continue;
+        }
+        if (buf[0] == '[') {
+            /* [Fx - SHAxxx] */
+            if (buf[1] == 'F' && buf[3] == ' ') {
+                const char *src;
+                /* skip passed the colon */
+                src = &buf[1];
+                while (*src && *src != '-')
+                    src++;
+                if (*src != '-') {
+                    fprintf(stderr, "No hash specified\n%s", buf);
+                    goto loser;
+                }
+                src++;
+                /* skip to the first non-space */
+                while (*src && *src == ' ')
+                    src++;
+                hash = hash_string_to_hashType(src);
+                if (hash == HASH_AlgNULL) {
+                    fprintf(dhresp, "ERROR: Unable to find SHAAlg type");
+                    goto loser;
+                }
+                /* clear the PQG parameters */
+                if (pqg.prime.data) { /* P */
+                    SECITEM_ZfreeItem(&pqg.prime, PR_FALSE);
+                }
+                if (pqg.subPrime.data) { /* Q */
+                    SECITEM_ZfreeItem(&pqg.subPrime, PR_FALSE);
+                }
+                if (pqg.base.data) { /* G */
+                    SECITEM_ZfreeItem(&pqg.base, PR_FALSE);
+                }
+                pgySize = DSA_MAX_P_BITS / 8; /* change if more key sizes are supported in CAVS */
+                SECITEM_AllocItem(NULL, &pqg.prime, pgySize);
+                SECITEM_AllocItem(NULL, &pqg.base, pgySize);
+                pqg.prime.len = pqg.base.len = pgySize;
+
+                /* set q to the max allows */
+                SECITEM_AllocItem(NULL, &pqg.subPrime, DSA_MAX_Q_BITS / 8);
+                pqg.subPrime.len = DSA_MAX_Q_BITS / 8;
+                fputs(buf, dhresp);
+                continue;
+            }
+            fputs(buf, dhresp);
+            continue;
+        }
+        if (buf[0] == 'P') {
+            i = 1;
+            while (isspace(buf[i]) || buf[i] == '=') {
+                i++;
+            }
+            for (j = 0; j < pqg.prime.len; i += 2, j++) {
+                if (!isxdigit(buf[i])) {
+                    pqg.prime.len = j;
+                    break;
+                }
+                hex_to_byteval(&buf[i], &pqg.prime.data[j]);
+            }
+
+            fputs(buf, dhresp);
+            continue;
+        }
+
+        /* Q = ... */
+        if (buf[0] == 'Q') {
+            i = 1;
+            while (isspace(buf[i]) || buf[i] == '=') {
+                i++;
+            }
+            for (j = 0; j < pqg.subPrime.len; i += 2, j++) {
+                if (!isxdigit(buf[i])) {
+                    pqg.subPrime.len = j;
+                    break;
+                }
+                hex_to_byteval(&buf[i], &pqg.subPrime.data[j]);
+            }
+
+            fputs(buf, dhresp);
+            continue;
+        }
+
+        /* G = ... */
+        if (buf[0] == 'G') {
+            i = 1;
+            while (isspace(buf[i]) || buf[i] == '=') {
+                i++;
+            }
+            for (j = 0; j < pqg.base.len; i += 2, j++) {
+                if (!isxdigit(buf[i])) {
+                    pqg.base.len = j;
+                    break;
+                }
+                hex_to_byteval(&buf[i], &pqg.base.data[j]);
+            }
+
+            fputs(buf, dhresp);
+            continue;
+        }
+
+        /* COUNT = ... */
+        if (strncmp(buf, "COUNT", 5) == 0) {
+            fputs(buf, dhresp);
+            continue;
+        }
+
+        /* YephemCAVS = ... */
+        if (strncmp(buf, "YephemCAVS", 10) == 0) {
+            fputs(buf, dhresp);
+            i = 10;
+            while (isspace(buf[i]) || buf[i] == '=') {
+                i++;
+            }
+            from_hex_str(pubkeydata, pqg.prime.len, &buf[i]);
+            pubkey.data = pubkeydata;
+            pubkey.len = pqg.prime.len;
+
+            /* generate FCC key pair, nist uses pqg rather then pg,
+             * so use DSA to generate the key */
+            if (DSA_NewKey(&pqg, &dsapriv) != SECSuccess) {
+                fprintf(stderr, "Failed to generate new key\n");
+                goto loser;
+            }
+            fputs("XephemIUT = ", dhresp);
+            to_hex_str(buf, dsapriv->privateValue.data, dsapriv->privateValue.len);
+            fputs(buf, dhresp);
+            fputc('\n', dhresp);
+            fputs("YephemIUT = ", dhresp);
+            to_hex_str(buf, dsapriv->publicValue.data, dsapriv->publicValue.len);
+            fputs(buf, dhresp);
+            fputc('\n', dhresp);
+            /* DH */
+            if (DH_Derive(&pubkey, &pqg.prime, &dsapriv->privateValue,
+                          &ZZ, pqg.prime.len) != SECSuccess) {
+                fprintf(stderr, "Derive failed\n");
+                goto loser;
+            }
+            /* output hash of ZZ */
+            if (fips_hashBuf(hash, hashBuf, ZZ.data, ZZ.len) != SECSuccess) {
+                fprintf(stderr, "hash of derived key failed\n");
+                goto loser;
+            }
+            SECITEM_FreeItem(&ZZ, PR_FALSE);
+            fputs("HashZZ = ", dhresp);
+            to_hex_str(buf, hashBuf, fips_hashLen(hash));
+            fputs(buf, dhresp);
+            fputc('\n', dhresp);
+            fputc('\n', dhresp);
+            PORT_FreeArena(dsapriv->params.arena, PR_TRUE);
+            dsapriv = NULL;
+            continue;
+        }
+    }
+loser:
+    if (dsapriv != NULL) {
+        PORT_FreeArena(dsapriv->params.arena, PR_TRUE);
+    }
+    fclose(dhreq);
+}
+
+/*
+ * Perform the DH Validity Test.
+ *
+ * reqfn is the pathname of the REQUEST file.
+ *
+ * The output RESPONSE file is written to stdout.
+ */
+void
+dh_verify(char *reqfn, PRBool response)
+{
+    char buf[1024]; /* holds one line from the input REQUEST file.
+                         * needs to be large enough to hold the longest
+                         * line "YephCAVS = <512 hex digits>\n".
+                         */
+    FILE *dhreq;    /* input stream from the REQUEST file */
+    FILE *dhresp;   /* output stream to the RESPONSE file */
+    unsigned char hashBuf[HASH_LENGTH_MAX];
+    unsigned char cavsHashBuf[HASH_LENGTH_MAX];
+    PQGParams pqg = { 0 };
+    unsigned char pubkeydata[DSA_MAX_P_BITS / 8];
+    unsigned char privkeydata[DSA_MAX_P_BITS / 8];
+    SECItem pubkey;
+    SECItem privkey;
+    SECItem ZZ;
+    unsigned int i, j;
+    unsigned int pgySize;
+    HASH_HashType hash = HASH_AlgNULL; /* type of SHA Alg */
+
+    dhreq = fopen(reqfn, "r");
+    dhresp = stdout;
+    while (fgets(buf, sizeof buf, dhreq) != NULL) {
+        /* a comment or blank line */
+        if (buf[0] == '#' || buf[0] == '\n' || buf[0] == '\r') {
+            fputs(buf, dhresp);
+            continue;
+        }
+        if (buf[0] == '[') {
+            /* [Fx - SHAxxx] */
+            if (buf[1] == 'F' && buf[3] == ' ') {
+                const char *src;
+                /* skip passed the colon */
+                src = &buf[1];
+                while (*src && *src != '-')
+                    src++;
+                if (*src != '-') {
+                    fprintf(stderr, "No hash specified\n%s", buf);
+                    goto loser;
+                }
+                src++;
+                /* skip to the first non-space */
+                while (*src && *src == ' ')
+                    src++;
+                hash = hash_string_to_hashType(src);
+                if (hash == HASH_AlgNULL) {
+                    fprintf(dhresp, "ERROR: Unable to find SHAAlg type");
+                    goto loser;
+                }
+                /* clear the PQG parameters */
+                if (pqg.prime.data) { /* P */
+                    SECITEM_ZfreeItem(&pqg.prime, PR_FALSE);
+                }
+                if (pqg.subPrime.data) { /* Q */
+                    SECITEM_ZfreeItem(&pqg.subPrime, PR_FALSE);
+                }
+                if (pqg.base.data) { /* G */
+                    SECITEM_ZfreeItem(&pqg.base, PR_FALSE);
+                }
+                pgySize = DSA_MAX_P_BITS / 8; /* change if more key sizes are supported in CAVS */
+                SECITEM_AllocItem(NULL, &pqg.prime, pgySize);
+                SECITEM_AllocItem(NULL, &pqg.base, pgySize);
+                pqg.prime.len = pqg.base.len = pgySize;
+
+                /* set q to the max allows */
+                SECITEM_AllocItem(NULL, &pqg.subPrime, DSA_MAX_Q_BITS / 8);
+                pqg.subPrime.len = DSA_MAX_Q_BITS / 8;
+                fputs(buf, dhresp);
+                continue;
+            }
+            fputs(buf, dhresp);
+            continue;
+        }
+        if (buf[0] == 'P') {
+            i = 1;
+            while (isspace(buf[i]) || buf[i] == '=') {
+                i++;
+            }
+            for (j = 0; j < pqg.prime.len; i += 2, j++) {
+                if (!isxdigit(buf[i])) {
+                    pqg.prime.len = j;
+                    break;
+                }
+                hex_to_byteval(&buf[i], &pqg.prime.data[j]);
+            }
+
+            fputs(buf, dhresp);
+            continue;
+        }
+
+        /* Q = ... */
+        if (buf[0] == 'Q') {
+            i = 1;
+            while (isspace(buf[i]) || buf[i] == '=') {
+                i++;
+            }
+            for (j = 0; j < pqg.subPrime.len; i += 2, j++) {
+                if (!isxdigit(buf[i])) {
+                    pqg.subPrime.len = j;
+                    break;
+                }
+                hex_to_byteval(&buf[i], &pqg.subPrime.data[j]);
+            }
+
+            fputs(buf, dhresp);
+            continue;
+        }
+
+        /* G = ... */
+        if (buf[0] == 'G') {
+            i = 1;
+            while (isspace(buf[i]) || buf[i] == '=') {
+                i++;
+            }
+            for (j = 0; j < pqg.base.len; i += 2, j++) {
+                if (!isxdigit(buf[i])) {
+                    pqg.base.len = j;
+                    break;
+                }
+                hex_to_byteval(&buf[i], &pqg.base.data[j]);
+            }
+
+            fputs(buf, dhresp);
+            continue;
+        }
+
+        /* COUNT = ... */
+        if (strncmp(buf, "COUNT", 5) == 0) {
+            fputs(buf, dhresp);
+            continue;
+        }
+
+        /* YephemCAVS = ... */
+        if (strncmp(buf, "YephemCAVS", 10) == 0) {
+            fputs(buf, dhresp);
+            i = 10;
+            while (isspace(buf[i]) || buf[i] == '=') {
+                i++;
+            }
+            from_hex_str(pubkeydata, pqg.prime.len, &buf[i]);
+            pubkey.data = pubkeydata;
+            pubkey.len = pqg.prime.len;
+            continue;
+        }
+        /* XephemUIT = ... */
+        if (strncmp(buf, "XephemIUT", 9) == 0) {
+            fputs(buf, dhresp);
+            i = 9;
+            while (isspace(buf[i]) || buf[i] == '=') {
+                i++;
+            }
+            from_hex_str(privkeydata, pqg.subPrime.len, &buf[i]);
+            privkey.data = privkeydata;
+            privkey.len = pqg.subPrime.len;
+            continue;
+        }
+        /* YephemUIT = ... */
+        if (strncmp(buf, "YephemIUT", 9) == 0) {
+            fputs(buf, dhresp);
+            continue;
+        }
+        /* CAVSHashZZ = ... */
+        if ((strncmp(buf, "CAVSHashZZ", 10) == 0) ||
+            (strncmp(buf, "HashZZ", 6) == 0)) {
+            fputs(buf, dhresp);
+            i = buf[0] == 'C' ? 10 : 6;
+            while (isspace(buf[i]) || buf[i] == '=') {
+                i++;
+            }
+            from_hex_str(cavsHashBuf, fips_hashLen(hash), &buf[i]);
+            /* do the DH operation*/
+            if (DH_Derive(&pubkey, &pqg.prime, &privkey,
+                          &ZZ, pqg.prime.len) != SECSuccess) {
+                fprintf(stderr, "Derive failed\n");
+                goto loser;
+            }
+/* output  ZZ */
+#ifndef MATCH_OPENSSL
+            fputs("Z = ", dhresp);
+            to_hex_str(buf, ZZ.data, ZZ.len);
+            fputs(buf, dhresp);
+            fputc('\n', dhresp);
+#endif
+            if (fips_hashBuf(hash, hashBuf, ZZ.data, ZZ.len) != SECSuccess) {
+                fprintf(stderr, "hash of derived key failed\n");
+                goto loser;
+            }
+            SECITEM_FreeItem(&ZZ, PR_FALSE);
+#ifndef MATCH_NIST
+            fputs("IUTHashZZ = ", dhresp);
+            to_hex_str(buf, hashBuf, fips_hashLen(hash));
+            fputs(buf, dhresp);
+            fputc('\n', dhresp);
+#endif
+            if (memcmp(hashBuf, cavsHashBuf, fips_hashLen(hash)) != 0) {
+                fprintf(dhresp, "Result = F\n");
+            } else {
+                fprintf(dhresp, "Result = P\n");
+            }
+#ifndef MATCH_OPENSSL
+            fputc('\n', dhresp);
+#endif
+            continue;
+        }
+    }
+loser:
+    fclose(dhreq);
 }
 
 PRBool
@@ -5342,17 +6291,8 @@ rsa_siggen_test(char *reqfn)
                 i++;
             }
             /* set the SHA Algorithm */
-            if (strncmp(&buf[i], "SHA1", 4) == 0) {
-                shaAlg = HASH_AlgSHA1;
-            } else if (strncmp(&buf[i], "SHA224", 6) == 0) {
-                shaAlg = HASH_AlgSHA224;
-            } else if (strncmp(&buf[i], "SHA256", 6) == 0) {
-                shaAlg = HASH_AlgSHA256;
-            } else if (strncmp(&buf[i], "SHA384", 6) == 0) {
-                shaAlg = HASH_AlgSHA384;
-            } else if (strncmp(&buf[i], "SHA512", 6) == 0) {
-                shaAlg = HASH_AlgSHA512;
-            } else {
+            shaAlg = hash_string_to_hashType(&buf[i]);
+            if (shaAlg == HASH_AlgNULL) {
                 fprintf(rsaresp, "ERROR: Unable to find SHAAlg type");
                 goto loser;
             }
@@ -5537,17 +6477,8 @@ rsa_sigver_test(char *reqfn)
                 i++;
             }
             /* set the SHA Algorithm */
-            if (strncmp(&buf[i], "SHA1", 4) == 0) {
-                shaAlg = HASH_AlgSHA1;
-            } else if (strncmp(&buf[i], "SHA224", 6) == 0) {
-                shaAlg = HASH_AlgSHA224;
-            } else if (strncmp(&buf[i], "SHA256", 6) == 0) {
-                shaAlg = HASH_AlgSHA256;
-            } else if (strncmp(&buf[i], "SHA384", 6) == 0) {
-                shaAlg = HASH_AlgSHA384;
-            } else if (strncmp(&buf[i], "SHA512", 6) == 0) {
-                shaAlg = HASH_AlgSHA512;
-            } else {
+            shaAlg = hash_string_to_hashType(&buf[i]);
+            if (shaAlg == HASH_AlgNULL) {
                 fprintf(rsaresp, "ERROR: Unable to find SHAAlg type");
                 goto loser;
             }
@@ -5922,8 +6853,7 @@ tls(char *reqfn)
                 goto loser;
             }
             crv = NSC_DeriveKey(session, &master_mech, pms_handle,
-                                derive_template, derive_template_count -
-                                                     1,
+                                derive_template, derive_template_count - 1,
                                 &master_handle);
             if (crv != CKR_OK) {
                 fprintf(stderr, "NSC_DeriveKey(master) failed crv=0x%x\n",
@@ -5981,6 +6911,1296 @@ loser:
         free(key_block);
     if (tlsreq)
         fclose(tlsreq);
+}
+
+void
+ikev1(char *reqfn)
+{
+    char buf[4096]; /* holds one line from the input REQUEST file.
+                         * needs to be large enough to hold the longest
+                         * line "g^xy = <2048 hex digits>\n".
+                         */
+    unsigned char *gxy = NULL;
+    int gxy_len;
+    unsigned char *Ni = NULL;
+    int Ni_len;
+    unsigned char *Nr = NULL;
+    int Nr_len;
+    unsigned char CKYi[8];
+    int CKYi_len;
+    unsigned char CKYr[8];
+    int CKYr_len;
+    unsigned int i, j;
+    FILE *ikereq = NULL; /* input stream from the REQUEST file */
+    FILE *ikeresp;       /* output stream to the RESPONSE file */
+
+    CK_SLOT_ID slotList[10];
+    CK_SLOT_ID slotID;
+    CK_ULONG slotListCount = sizeof(slotList) / sizeof(slotList[0]);
+    CK_ULONG count;
+    static const CK_C_INITIALIZE_ARGS pk11args = {
+        NULL, NULL, NULL, NULL, CKF_LIBRARY_CANT_CREATE_OS_THREADS,
+        (void *)"flags=readOnly,noCertDB,noModDB", NULL
+    };
+    static CK_OBJECT_CLASS ck_secret = CKO_SECRET_KEY;
+    static CK_KEY_TYPE ck_generic = CKK_GENERIC_SECRET;
+    static CK_BBOOL ck_true = CK_TRUE;
+    static CK_ULONG keyLen = 1;
+    CK_ATTRIBUTE gxy_template[] = {
+        { CKA_VALUE, NULL, 0 }, /* must be first */
+        { CKA_CLASS, &ck_secret, sizeof(ck_secret) },
+        { CKA_KEY_TYPE, &ck_generic, sizeof(ck_generic) },
+        { CKA_DERIVE, &ck_true, sizeof(ck_true) },
+    };
+    CK_ULONG gxy_template_count =
+        sizeof(gxy_template) / sizeof(gxy_template[0]);
+    CK_ATTRIBUTE derive_template[] = {
+        { CKA_CLASS, &ck_secret, sizeof(ck_secret) },
+        { CKA_KEY_TYPE, &ck_generic, sizeof(ck_generic) },
+        { CKA_DERIVE, &ck_true, sizeof(ck_true) },
+        { CKA_VALUE_LEN, &keyLen, sizeof(keyLen) }, /* must be last */
+    };
+    CK_ULONG derive_template_count =
+        sizeof(derive_template) / sizeof(derive_template[0]);
+    CK_ATTRIBUTE skeyid_template =
+        { CKA_VALUE, NULL, 0 };
+    CK_ATTRIBUTE skeyid_d_template =
+        { CKA_VALUE, NULL, 0 };
+    CK_ATTRIBUTE skeyid_a_template =
+        { CKA_VALUE, NULL, 0 };
+    CK_ATTRIBUTE skeyid_e_template =
+        { CKA_VALUE, NULL, 0 };
+    unsigned char skeyid_secret[HASH_LENGTH_MAX];
+    unsigned char skeyid_d_secret[HASH_LENGTH_MAX];
+    unsigned char skeyid_a_secret[HASH_LENGTH_MAX];
+    unsigned char skeyid_e_secret[HASH_LENGTH_MAX];
+
+    CK_MECHANISM ike_mech = { CKM_NSS_IKE_PRF_DERIVE, NULL, 0 };
+    CK_MECHANISM ike1_mech = { CKM_NSS_IKE1_PRF_DERIVE, NULL, 0 };
+    CK_NSS_IKE_PRF_DERIVE_PARAMS ike_prf;
+    CK_NSS_IKE1_PRF_DERIVE_PARAMS ike1_prf;
+    CK_RV crv;
+
+    /* set up PKCS #11 parameters */
+    ike_prf.bDataAsKey = PR_TRUE;
+    ike_prf.bRekey = PR_FALSE;
+    ike_prf.hNewKey = CK_INVALID_HANDLE;
+    CKYi_len = sizeof(CKYi);
+    CKYr_len = sizeof(CKYr);
+    ike1_prf.pCKYi = CKYi;
+    ike1_prf.ulCKYiLen = CKYi_len;
+    ike1_prf.pCKYr = CKYr;
+    ike1_prf.ulCKYrLen = CKYr_len;
+    ike_mech.pParameter = &ike_prf;
+    ike_mech.ulParameterLen = sizeof(ike_prf);
+    ike1_mech.pParameter = &ike1_prf;
+    ike1_mech.ulParameterLen = sizeof(ike1_prf);
+    skeyid_template.pValue = skeyid_secret;
+    skeyid_template.ulValueLen = HASH_LENGTH_MAX;
+    skeyid_d_template.pValue = skeyid_d_secret;
+    skeyid_d_template.ulValueLen = HASH_LENGTH_MAX;
+    skeyid_a_template.pValue = skeyid_a_secret;
+    skeyid_a_template.ulValueLen = HASH_LENGTH_MAX;
+    skeyid_e_template.pValue = skeyid_e_secret;
+    skeyid_e_template.ulValueLen = HASH_LENGTH_MAX;
+
+    crv = NSC_Initialize((CK_VOID_PTR)&pk11args);
+    if (crv != CKR_OK) {
+        fprintf(stderr, "NSC_Initialize failed crv=0x%x\n", (unsigned int)crv);
+        goto loser;
+    }
+    count = slotListCount;
+    crv = NSC_GetSlotList(PR_TRUE, slotList, &count);
+    if (crv != CKR_OK) {
+        fprintf(stderr, "NSC_GetSlotList failed crv=0x%x\n", (unsigned int)crv);
+        goto loser;
+    }
+    if ((count > slotListCount) || count < 1) {
+        fprintf(stderr,
+                "NSC_GetSlotList returned too many or too few slots: %d slots max=%d min=1\n",
+                (int)count, (int)slotListCount);
+        goto loser;
+    }
+    slotID = slotList[0];
+    ikereq = fopen(reqfn, "r");
+    ikeresp = stdout;
+    while (fgets(buf, sizeof buf, ikereq) != NULL) {
+        /* a comment or blank line */
+        if (buf[0] == '#' || buf[0] == '\n') {
+            fputs(buf, ikeresp);
+            continue;
+        }
+        /* [.....] */
+        if (buf[0] == '[') {
+            if (strncmp(buf, "[SHA-1]", 7) == 0) {
+                ike_prf.prfMechanism = CKM_SHA_1_HMAC;
+                ike1_prf.prfMechanism = CKM_SHA_1_HMAC;
+            }
+            if (strncmp(buf, "[SHA-224]", 9) == 0) {
+                ike_prf.prfMechanism = CKM_SHA224_HMAC;
+                ike1_prf.prfMechanism = CKM_SHA224_HMAC;
+            }
+            if (strncmp(buf, "[SHA-256]", 9) == 0) {
+                ike_prf.prfMechanism = CKM_SHA256_HMAC;
+                ike1_prf.prfMechanism = CKM_SHA256_HMAC;
+            }
+            if (strncmp(buf, "[SHA-384]", 9) == 0) {
+                ike_prf.prfMechanism = CKM_SHA384_HMAC;
+                ike1_prf.prfMechanism = CKM_SHA384_HMAC;
+            }
+            if (strncmp(buf, "[SHA-512]", 9) == 0) {
+                ike_prf.prfMechanism = CKM_SHA512_HMAC;
+                ike1_prf.prfMechanism = CKM_SHA512_HMAC;
+            }
+            if (strncmp(buf, "[AES-XCBC", 9) == 0) {
+                ike_prf.prfMechanism = CKM_AES_XCBC_MAC;
+                ike1_prf.prfMechanism = CKM_AES_XCBC_MAC;
+            }
+            if (strncmp(buf, "[g^xy", 5) == 0) {
+                if (sscanf(buf, "[g^xy length = %d]",
+                           &gxy_len) != 1) {
+                    goto loser;
+                }
+                gxy_len = gxy_len / 8;
+                if (gxy)
+                    free(gxy);
+                gxy = malloc(gxy_len);
+                gxy_template[0].pValue = gxy;
+                gxy_template[0].ulValueLen = gxy_len;
+            }
+            if (strncmp(buf, "[Ni", 3) == 0) {
+                if (sscanf(buf, "[Ni length = %d]", &Ni_len) != 1) {
+                    goto loser;
+                }
+                Ni_len = Ni_len / 8;
+                if (Ni)
+                    free(Ni);
+                Ni = malloc(Ni_len);
+                ike_prf.pNi = Ni;
+                ike_prf.ulNiLen = Ni_len;
+            }
+            if (strncmp(buf, "[Nr", 3) == 0) {
+                if (sscanf(buf, "[Nr length = %d]", &Nr_len) != 1) {
+                    goto loser;
+                }
+                Nr_len = Nr_len / 8;
+                if (Nr)
+                    free(Nr);
+                Nr = malloc(Nr_len);
+                ike_prf.pNr = Nr;
+                ike_prf.ulNrLen = Nr_len;
+            }
+            fputs(buf, ikeresp);
+            continue;
+        }
+        /* "COUNT = x" begins a new data set */
+        if (strncmp(buf, "COUNT", 5) == 0) {
+            /* zeroize the variables for the test with this data set */
+            memset(gxy, 0, gxy_len);
+            memset(Ni, 0, Ni_len);
+            memset(Nr, 0, Nr_len);
+            memset(CKYi, 0, CKYi_len);
+            memset(CKYr, 0, CKYr_len);
+            fputs(buf, ikeresp);
+            continue;
+        }
+        /* Ni = ... */
+        if (strncmp(buf, "Ni", 2) == 0) {
+            i = 2;
+            while (isspace(buf[i]) || buf[i] == '=') {
+                i++;
+            }
+            for (j = 0; j < Ni_len; i += 2, j++) {
+                hex_to_byteval(&buf[i], &Ni[j]);
+            }
+            fputs(buf, ikeresp);
+            continue;
+        }
+        /* Nr = ... */
+        if (strncmp(buf, "Nr", 2) == 0) {
+            i = 2;
+            while (isspace(buf[i]) || buf[i] == '=') {
+                i++;
+            }
+            for (j = 0; j < Nr_len; i += 2, j++) {
+                hex_to_byteval(&buf[i], &Nr[j]);
+            }
+            fputs(buf, ikeresp);
+            continue;
+        }
+        /* CKYi = ... */
+        if (strncmp(buf, "CKY_I", 5) == 0) {
+            i = 5;
+            while (isspace(buf[i]) || buf[i] == '=') {
+                i++;
+            }
+            for (j = 0; j < CKYi_len; i += 2, j++) {
+                hex_to_byteval(&buf[i], &CKYi[j]);
+            }
+            fputs(buf, ikeresp);
+            continue;
+        }
+        /* CKYr = ... */
+        if (strncmp(buf, "CKY_R", 5) == 0) {
+            i = 5;
+            while (isspace(buf[i]) || buf[i] == '=') {
+                i++;
+            }
+            for (j = 0; j < CKYr_len; i += 2, j++) {
+                hex_to_byteval(&buf[i], &CKYr[j]);
+            }
+            fputs(buf, ikeresp);
+            continue;
+        }
+        /* g^xy = ... */
+        if (strncmp(buf, "g^xy", 4) == 0) {
+            CK_SESSION_HANDLE session;
+            CK_OBJECT_HANDLE gxy_handle;
+            CK_OBJECT_HANDLE skeyid_handle;
+            CK_OBJECT_HANDLE skeyid_d_handle;
+            CK_OBJECT_HANDLE skeyid_a_handle;
+            CK_OBJECT_HANDLE skeyid_e_handle;
+            i = 4;
+            while (isspace(buf[i]) || buf[i] == '=') {
+                i++;
+            }
+            for (j = 0; j < gxy_len; i += 2, j++) {
+                hex_to_byteval(&buf[i], &gxy[j]);
+            }
+            fputs(buf, ikeresp);
+            crv = NSC_OpenSession(slotID, 0, NULL, NULL, &session);
+            if (crv != CKR_OK) {
+                fprintf(stderr, "NSC_OpenSession failed crv=0x%x\n",
+                        (unsigned int)crv);
+                goto loser;
+            }
+            crv = NSC_CreateObject(session, gxy_template,
+                                   gxy_template_count, &gxy_handle);
+            if (crv != CKR_OK) {
+                fprintf(stderr, "NSC_CreateObject failed crv=0x%x\n",
+                        (unsigned int)crv);
+                goto loser;
+            }
+            /* get the skeyid key */
+            crv = NSC_DeriveKey(session, &ike_mech, gxy_handle,
+                                derive_template, derive_template_count - 1,
+                                &skeyid_handle);
+            if (crv != CKR_OK) {
+                fprintf(stderr, "NSC_DeriveKey(skeyid) failed crv=0x%x\n",
+                        (unsigned int)crv);
+                goto loser;
+            }
+            skeyid_template.ulValueLen = HASH_LENGTH_MAX;
+            crv = NSC_GetAttributeValue(session, skeyid_handle,
+                                        &skeyid_template, 1);
+            if (crv != CKR_OK) {
+                fprintf(stderr, "NSC_GetAttribute(skeyid) failed crv=0x%x\n",
+                        (unsigned int)crv);
+                goto loser;
+            }
+            /* use the length of the skeyid to set the target length of all the
+             * other keys */
+            keyLen = skeyid_template.ulValueLen;
+            ike1_prf.hKeygxy = gxy_handle;
+            ike1_prf.bHasPrevKey = PR_FALSE;
+            ike1_prf.keyNumber = 0;
+            crv = NSC_DeriveKey(session, &ike1_mech, skeyid_handle,
+                                derive_template, derive_template_count,
+                                &skeyid_d_handle);
+            if (crv != CKR_OK) {
+                fprintf(stderr, "NSC_DeriveKey(skeyid_d) failed crv=0x%x\n",
+                        (unsigned int)crv);
+                goto loser;
+            }
+
+            ike1_prf.hKeygxy = gxy_handle;
+            ike1_prf.bHasPrevKey = CK_TRUE;
+            ike1_prf.hPrevKey = skeyid_d_handle;
+            ike1_prf.keyNumber = 1;
+            crv = NSC_DeriveKey(session, &ike1_mech, skeyid_handle,
+                                derive_template, derive_template_count,
+                                &skeyid_a_handle);
+            if (crv != CKR_OK) {
+                fprintf(stderr, "NSC_DeriveKey(skeyid_a) failed crv=0x%x\n",
+                        (unsigned int)crv);
+                goto loser;
+            }
+            ike1_prf.hKeygxy = gxy_handle;
+            ike1_prf.bHasPrevKey = CK_TRUE;
+            ike1_prf.hPrevKey = skeyid_a_handle;
+            ike1_prf.keyNumber = 2;
+            crv = NSC_DeriveKey(session, &ike1_mech, skeyid_handle,
+                                derive_template, derive_template_count,
+                                &skeyid_e_handle);
+            if (crv != CKR_OK) {
+                fprintf(stderr, "NSC_DeriveKey(skeyid_e) failed crv=0x%x\n",
+                        (unsigned int)crv);
+                goto loser;
+            }
+            fputs("SKEYID = ", ikeresp);
+            to_hex_str(buf, skeyid_secret, keyLen);
+            fputs(buf, ikeresp);
+            fputc('\n', ikeresp);
+
+            skeyid_d_template.ulValueLen = keyLen;
+            crv = NSC_GetAttributeValue(session, skeyid_d_handle,
+                                        &skeyid_d_template, 1);
+            if (crv != CKR_OK) {
+                fprintf(stderr, "NSC_GetAttribute(skeyid_d) failed crv=0x%x\n",
+                        (unsigned int)crv);
+                goto loser;
+            }
+            fputs("SKEYID_d = ", ikeresp);
+            to_hex_str(buf, skeyid_d_secret, skeyid_d_template.ulValueLen);
+            fputs(buf, ikeresp);
+            fputc('\n', ikeresp);
+
+            skeyid_a_template.ulValueLen = keyLen;
+            crv = NSC_GetAttributeValue(session, skeyid_a_handle,
+                                        &skeyid_a_template, 1);
+            if (crv != CKR_OK) {
+                fprintf(stderr, "NSC_GetAttribute(skeyid_a) failed crv=0x%x\n",
+                        (unsigned int)crv);
+                goto loser;
+            }
+            fputs("SKEYID_a = ", ikeresp);
+            to_hex_str(buf, skeyid_a_secret, skeyid_a_template.ulValueLen);
+            fputs(buf, ikeresp);
+            fputc('\n', ikeresp);
+
+            skeyid_e_template.ulValueLen = keyLen;
+            crv = NSC_GetAttributeValue(session, skeyid_e_handle,
+                                        &skeyid_e_template, 1);
+            if (crv != CKR_OK) {
+                fprintf(stderr, "NSC_GetAttribute(skeyid_e) failed crv=0x%x\n",
+                        (unsigned int)crv);
+                goto loser;
+            }
+            fputs("SKEYID_e = ", ikeresp);
+            to_hex_str(buf, skeyid_e_secret, skeyid_e_template.ulValueLen);
+            fputs(buf, ikeresp);
+            fputc('\n', ikeresp);
+
+            crv = NSC_CloseSession(session);
+            continue;
+        }
+    }
+loser:
+    NSC_Finalize(NULL);
+    if (gxy)
+        free(gxy);
+    if (Ni)
+        free(Ni);
+    if (Nr)
+        free(Nr);
+    if (ikereq)
+        fclose(ikereq);
+}
+
+void
+ikev1_psk(char *reqfn)
+{
+    char buf[4096]; /* holds one line from the input REQUEST file.
+                         * needs to be large enough to hold the longest
+                         * line "g^xy = <2048 hex digits>\n".
+                         */
+    unsigned char *gxy = NULL;
+    int gxy_len;
+    unsigned char *Ni = NULL;
+    int Ni_len;
+    unsigned char *Nr = NULL;
+    int Nr_len;
+    unsigned char CKYi[8];
+    int CKYi_len;
+    unsigned char CKYr[8];
+    int CKYr_len;
+    unsigned char *psk = NULL;
+    int psk_len;
+    unsigned int i, j;
+    FILE *ikereq = NULL; /* input stream from the REQUEST file */
+    FILE *ikeresp;       /* output stream to the RESPONSE file */
+
+    CK_SLOT_ID slotList[10];
+    CK_SLOT_ID slotID;
+    CK_ULONG slotListCount = sizeof(slotList) / sizeof(slotList[0]);
+    CK_ULONG count;
+    static const CK_C_INITIALIZE_ARGS pk11args = {
+        NULL, NULL, NULL, NULL, CKF_LIBRARY_CANT_CREATE_OS_THREADS,
+        (void *)"flags=readOnly,noCertDB,noModDB", NULL
+    };
+    static CK_OBJECT_CLASS ck_secret = CKO_SECRET_KEY;
+    static CK_KEY_TYPE ck_generic = CKK_GENERIC_SECRET;
+    static CK_BBOOL ck_true = CK_TRUE;
+    static CK_ULONG keyLen = 1;
+    CK_ATTRIBUTE gxy_template[] = {
+        { CKA_VALUE, NULL, 0 }, /* must be first */
+        { CKA_CLASS, &ck_secret, sizeof(ck_secret) },
+        { CKA_KEY_TYPE, &ck_generic, sizeof(ck_generic) },
+        { CKA_DERIVE, &ck_true, sizeof(ck_true) },
+    };
+    CK_ULONG gxy_template_count =
+        sizeof(gxy_template) / sizeof(gxy_template[0]);
+    CK_ATTRIBUTE psk_template[] = {
+        { CKA_VALUE, NULL, 0 }, /* must be first */
+        { CKA_CLASS, &ck_secret, sizeof(ck_secret) },
+        { CKA_KEY_TYPE, &ck_generic, sizeof(ck_generic) },
+        { CKA_DERIVE, &ck_true, sizeof(ck_true) },
+    };
+    CK_ULONG psk_template_count =
+        sizeof(psk_template) / sizeof(psk_template[0]);
+    CK_ATTRIBUTE derive_template[] = {
+        { CKA_CLASS, &ck_secret, sizeof(ck_secret) },
+        { CKA_KEY_TYPE, &ck_generic, sizeof(ck_generic) },
+        { CKA_DERIVE, &ck_true, sizeof(ck_true) },
+        { CKA_VALUE_LEN, &keyLen, sizeof(keyLen) }, /* must be last */
+    };
+    CK_ULONG derive_template_count =
+        sizeof(derive_template) / sizeof(derive_template[0]);
+    CK_ATTRIBUTE skeyid_template =
+        { CKA_VALUE, NULL, 0 };
+    CK_ATTRIBUTE skeyid_d_template =
+        { CKA_VALUE, NULL, 0 };
+    CK_ATTRIBUTE skeyid_a_template =
+        { CKA_VALUE, NULL, 0 };
+    CK_ATTRIBUTE skeyid_e_template =
+        { CKA_VALUE, NULL, 0 };
+    unsigned char skeyid_secret[HASH_LENGTH_MAX];
+    unsigned char skeyid_d_secret[HASH_LENGTH_MAX];
+    unsigned char skeyid_a_secret[HASH_LENGTH_MAX];
+    unsigned char skeyid_e_secret[HASH_LENGTH_MAX];
+
+    CK_MECHANISM ike_mech = { CKM_NSS_IKE_PRF_DERIVE, NULL, 0 };
+    CK_MECHANISM ike1_mech = { CKM_NSS_IKE1_PRF_DERIVE, NULL, 0 };
+    CK_NSS_IKE_PRF_DERIVE_PARAMS ike_prf;
+    CK_NSS_IKE1_PRF_DERIVE_PARAMS ike1_prf;
+    CK_RV crv;
+
+    /* set up PKCS #11 parameters */
+    ike_prf.bDataAsKey = PR_FALSE;
+    ike_prf.bRekey = PR_FALSE;
+    ike_prf.hNewKey = CK_INVALID_HANDLE;
+    CKYi_len = 8;
+    CKYr_len = 8;
+    ike1_prf.pCKYi = CKYi;
+    ike1_prf.ulCKYiLen = CKYi_len;
+    ike1_prf.pCKYr = CKYr;
+    ike1_prf.ulCKYrLen = CKYr_len;
+    ike_mech.pParameter = &ike_prf;
+    ike_mech.ulParameterLen = sizeof(ike_prf);
+    ike1_mech.pParameter = &ike1_prf;
+    ike1_mech.ulParameterLen = sizeof(ike1_prf);
+    skeyid_template.pValue = skeyid_secret;
+    skeyid_template.ulValueLen = HASH_LENGTH_MAX;
+    skeyid_d_template.pValue = skeyid_d_secret;
+    skeyid_d_template.ulValueLen = HASH_LENGTH_MAX;
+    skeyid_a_template.pValue = skeyid_a_secret;
+    skeyid_a_template.ulValueLen = HASH_LENGTH_MAX;
+    skeyid_e_template.pValue = skeyid_e_secret;
+    skeyid_e_template.ulValueLen = HASH_LENGTH_MAX;
+
+    crv = NSC_Initialize((CK_VOID_PTR)&pk11args);
+    if (crv != CKR_OK) {
+        fprintf(stderr, "NSC_Initialize failed crv=0x%x\n", (unsigned int)crv);
+        goto loser;
+    }
+    count = slotListCount;
+    crv = NSC_GetSlotList(PR_TRUE, slotList, &count);
+    if (crv != CKR_OK) {
+        fprintf(stderr, "NSC_GetSlotList failed crv=0x%x\n", (unsigned int)crv);
+        goto loser;
+    }
+    if ((count > slotListCount) || count < 1) {
+        fprintf(stderr,
+                "NSC_GetSlotList returned too many or too few slots: %d slots max=%d min=1\n",
+                (int)count, (int)slotListCount);
+        goto loser;
+    }
+    slotID = slotList[0];
+    ikereq = fopen(reqfn, "r");
+    ikeresp = stdout;
+    while (fgets(buf, sizeof buf, ikereq) != NULL) {
+        /* a comment or blank line */
+        if (buf[0] == '#' || buf[0] == '\n') {
+            fputs(buf, ikeresp);
+            continue;
+        }
+        /* [.....] */
+        if (buf[0] == '[') {
+            if (strncmp(buf, "[SHA-1]", 7) == 0) {
+                ike_prf.prfMechanism = CKM_SHA_1_HMAC;
+                ike1_prf.prfMechanism = CKM_SHA_1_HMAC;
+            }
+            if (strncmp(buf, "[SHA-224]", 9) == 0) {
+                ike_prf.prfMechanism = CKM_SHA224_HMAC;
+                ike1_prf.prfMechanism = CKM_SHA224_HMAC;
+            }
+            if (strncmp(buf, "[SHA-256]", 9) == 0) {
+                ike_prf.prfMechanism = CKM_SHA256_HMAC;
+                ike1_prf.prfMechanism = CKM_SHA256_HMAC;
+            }
+            if (strncmp(buf, "[SHA-384]", 9) == 0) {
+                ike_prf.prfMechanism = CKM_SHA384_HMAC;
+                ike1_prf.prfMechanism = CKM_SHA384_HMAC;
+            }
+            if (strncmp(buf, "[SHA-512]", 9) == 0) {
+                ike_prf.prfMechanism = CKM_SHA512_HMAC;
+                ike1_prf.prfMechanism = CKM_SHA512_HMAC;
+            }
+            if (strncmp(buf, "[AES-XCBC", 9) == 0) {
+                ike_prf.prfMechanism = CKM_AES_XCBC_MAC;
+                ike1_prf.prfMechanism = CKM_AES_XCBC_MAC;
+            }
+            if (strncmp(buf, "[g^xy", 5) == 0) {
+                if (sscanf(buf, "[g^xy length = %d]",
+                           &gxy_len) != 1) {
+                    goto loser;
+                }
+                gxy_len = gxy_len / 8;
+                if (gxy)
+                    free(gxy);
+                gxy = malloc(gxy_len);
+                gxy_template[0].pValue = gxy;
+                gxy_template[0].ulValueLen = gxy_len;
+            }
+            if (strncmp(buf, "[pre-shared-key", 15) == 0) {
+                if (sscanf(buf, "[pre-shared-key length = %d]",
+                           &psk_len) != 1) {
+                    goto loser;
+                }
+                psk_len = psk_len / 8;
+                if (psk)
+                    free(psk);
+                psk = malloc(psk_len);
+                psk_template[0].pValue = psk;
+                psk_template[0].ulValueLen = psk_len;
+            }
+            if (strncmp(buf, "[Ni", 3) == 0) {
+                if (sscanf(buf, "[Ni length = %d]", &Ni_len) != 1) {
+                    goto loser;
+                }
+                Ni_len = Ni_len / 8;
+                if (Ni)
+                    free(Ni);
+                Ni = malloc(Ni_len);
+                ike_prf.pNi = Ni;
+                ike_prf.ulNiLen = Ni_len;
+            }
+            if (strncmp(buf, "[Nr", 3) == 0) {
+                if (sscanf(buf, "[Nr length = %d]", &Nr_len) != 1) {
+                    goto loser;
+                }
+                Nr_len = Nr_len / 8;
+                if (Nr)
+                    free(Nr);
+                Nr = malloc(Nr_len);
+                ike_prf.pNr = Nr;
+                ike_prf.ulNrLen = Nr_len;
+            }
+            fputs(buf, ikeresp);
+            continue;
+        }
+        /* "COUNT = x" begins a new data set */
+        if (strncmp(buf, "COUNT", 5) == 0) {
+            /* zeroize the variables for the test with this data set */
+            memset(gxy, 0, gxy_len);
+            memset(Ni, 0, Ni_len);
+            memset(Nr, 0, Nr_len);
+            memset(CKYi, 0, CKYi_len);
+            memset(CKYr, 0, CKYr_len);
+            fputs(buf, ikeresp);
+            continue;
+        }
+        /* Ni = ... */
+        if (strncmp(buf, "Ni", 2) == 0) {
+            i = 2;
+            while (isspace(buf[i]) || buf[i] == '=') {
+                i++;
+            }
+            for (j = 0; j < Ni_len; i += 2, j++) {
+                hex_to_byteval(&buf[i], &Ni[j]);
+            }
+            fputs(buf, ikeresp);
+            continue;
+        }
+        /* Nr = ... */
+        if (strncmp(buf, "Nr", 2) == 0) {
+            i = 2;
+            while (isspace(buf[i]) || buf[i] == '=') {
+                i++;
+            }
+            for (j = 0; j < Nr_len; i += 2, j++) {
+                hex_to_byteval(&buf[i], &Nr[j]);
+            }
+            fputs(buf, ikeresp);
+            continue;
+        }
+        /* CKYi = ... */
+        if (strncmp(buf, "CKY_I", 5) == 0) {
+            i = 5;
+            while (isspace(buf[i]) || buf[i] == '=') {
+                i++;
+            }
+            for (j = 0; j < CKYi_len; i += 2, j++) {
+                hex_to_byteval(&buf[i], &CKYi[j]);
+            }
+            fputs(buf, ikeresp);
+            continue;
+        }
+        /* CKYr = ... */
+        if (strncmp(buf, "CKY_R", 5) == 0) {
+            i = 5;
+            while (isspace(buf[i]) || buf[i] == '=') {
+                i++;
+            }
+            for (j = 0; j < CKYr_len; i += 2, j++) {
+                hex_to_byteval(&buf[i], &CKYr[j]);
+            }
+            fputs(buf, ikeresp);
+            continue;
+        }
+        /* g^xy = ... */
+        if (strncmp(buf, "g^xy", 4) == 0) {
+            i = 4;
+            while (isspace(buf[i]) || buf[i] == '=') {
+                i++;
+            }
+            for (j = 0; j < gxy_len; i += 2, j++) {
+                hex_to_byteval(&buf[i], &gxy[j]);
+            }
+            fputs(buf, ikeresp);
+            continue;
+        }
+        /* pre-shared-key = ... */
+        if (strncmp(buf, "pre-shared-key", 14) == 0) {
+            CK_SESSION_HANDLE session;
+            CK_OBJECT_HANDLE gxy_handle;
+            CK_OBJECT_HANDLE psk_handle;
+            CK_OBJECT_HANDLE skeyid_handle;
+            CK_OBJECT_HANDLE skeyid_d_handle;
+            CK_OBJECT_HANDLE skeyid_a_handle;
+            CK_OBJECT_HANDLE skeyid_e_handle;
+            i = 14;
+            while (isspace(buf[i]) || buf[i] == '=') {
+                i++;
+            }
+            for (j = 0; j < psk_len; i += 2, j++) {
+                hex_to_byteval(&buf[i], &psk[j]);
+            }
+            fputs(buf, ikeresp);
+            crv = NSC_OpenSession(slotID, 0, NULL, NULL, &session);
+            if (crv != CKR_OK) {
+                fprintf(stderr, "NSC_OpenSession failed crv=0x%x\n",
+                        (unsigned int)crv);
+                goto loser;
+            }
+            crv = NSC_CreateObject(session, psk_template,
+                                   psk_template_count, &psk_handle);
+            if (crv != CKR_OK) {
+                fprintf(stderr, "NSC_CreateObject(psk) failed crv=0x%x\n",
+                        (unsigned int)crv);
+                goto loser;
+            }
+            crv = NSC_CreateObject(session, gxy_template,
+                                   gxy_template_count, &gxy_handle);
+            if (crv != CKR_OK) {
+                fprintf(stderr, "NSC_CreateObject(gxy) failed crv=0x%x\n",
+                        (unsigned int)crv);
+                goto loser;
+            }
+            /* get the skeyid key */
+            crv = NSC_DeriveKey(session, &ike_mech, psk_handle,
+                                derive_template, derive_template_count - 1,
+                                &skeyid_handle);
+            if (crv != CKR_OK) {
+                fprintf(stderr, "NSC_DeriveKey(skeyid) failed crv=0x%x\n",
+                        (unsigned int)crv);
+                goto loser;
+            }
+            skeyid_template.ulValueLen = HASH_LENGTH_MAX;
+            crv = NSC_GetAttributeValue(session, skeyid_handle,
+                                        &skeyid_template, 1);
+            if (crv != CKR_OK) {
+                fprintf(stderr, "NSC_GetAttribute(skeyid) failed crv=0x%x\n",
+                        (unsigned int)crv);
+                goto loser;
+            }
+            /* use the length of the skeyid to set the target length of all the
+             * other keys */
+            keyLen = skeyid_template.ulValueLen;
+            ike1_prf.hKeygxy = gxy_handle;
+            ike1_prf.bHasPrevKey = PR_FALSE;
+            ike1_prf.keyNumber = 0;
+            crv = NSC_DeriveKey(session, &ike1_mech, skeyid_handle,
+                                derive_template, derive_template_count,
+                                &skeyid_d_handle);
+            if (crv != CKR_OK) {
+                fprintf(stderr, "NSC_DeriveKey(skeyid_d) failed crv=0x%x\n",
+                        (unsigned int)crv);
+                goto loser;
+            }
+
+            ike1_prf.hKeygxy = gxy_handle;
+            ike1_prf.bHasPrevKey = CK_TRUE;
+            ike1_prf.hPrevKey = skeyid_d_handle;
+            ike1_prf.keyNumber = 1;
+            crv = NSC_DeriveKey(session, &ike1_mech, skeyid_handle,
+                                derive_template, derive_template_count,
+                                &skeyid_a_handle);
+            if (crv != CKR_OK) {
+                fprintf(stderr, "NSC_DeriveKey(skeyid_a) failed crv=0x%x\n",
+                        (unsigned int)crv);
+                goto loser;
+            }
+            ike1_prf.hKeygxy = gxy_handle;
+            ike1_prf.bHasPrevKey = CK_TRUE;
+            ike1_prf.hPrevKey = skeyid_a_handle;
+            ike1_prf.keyNumber = 2;
+            crv = NSC_DeriveKey(session, &ike1_mech, skeyid_handle,
+                                derive_template, derive_template_count,
+                                &skeyid_e_handle);
+            if (crv != CKR_OK) {
+                fprintf(stderr, "NSC_DeriveKey(skeyid_e) failed crv=0x%x\n",
+                        (unsigned int)crv);
+                goto loser;
+            }
+            fputs("SKEYID = ", ikeresp);
+            to_hex_str(buf, skeyid_secret, keyLen);
+            fputs(buf, ikeresp);
+            fputc('\n', ikeresp);
+
+            skeyid_d_template.ulValueLen = keyLen;
+            crv = NSC_GetAttributeValue(session, skeyid_d_handle,
+                                        &skeyid_d_template, 1);
+            if (crv != CKR_OK) {
+                fprintf(stderr, "NSC_GetAttribute(skeyid_d) failed crv=0x%x\n",
+                        (unsigned int)crv);
+                goto loser;
+            }
+            fputs("SKEYID_d = ", ikeresp);
+            to_hex_str(buf, skeyid_d_secret, skeyid_d_template.ulValueLen);
+            fputs(buf, ikeresp);
+            fputc('\n', ikeresp);
+
+            skeyid_a_template.ulValueLen = keyLen;
+            crv = NSC_GetAttributeValue(session, skeyid_a_handle,
+                                        &skeyid_a_template, 1);
+            if (crv != CKR_OK) {
+                fprintf(stderr, "NSC_GetAttribute(skeyid_a) failed crv=0x%x\n",
+                        (unsigned int)crv);
+                goto loser;
+            }
+            fputs("SKEYID_a = ", ikeresp);
+            to_hex_str(buf, skeyid_a_secret, skeyid_a_template.ulValueLen);
+            fputs(buf, ikeresp);
+            fputc('\n', ikeresp);
+
+            skeyid_e_template.ulValueLen = keyLen;
+            crv = NSC_GetAttributeValue(session, skeyid_e_handle,
+                                        &skeyid_e_template, 1);
+            if (crv != CKR_OK) {
+                fprintf(stderr, "NSC_GetAttribute(skeyid_e) failed crv=0x%x\n",
+                        (unsigned int)crv);
+                goto loser;
+            }
+            fputs("SKEYID_e = ", ikeresp);
+            to_hex_str(buf, skeyid_e_secret, skeyid_e_template.ulValueLen);
+            fputs(buf, ikeresp);
+            fputc('\n', ikeresp);
+
+            crv = NSC_CloseSession(session);
+            continue;
+        }
+    }
+loser:
+    NSC_Finalize(NULL);
+    if (psk)
+        free(psk);
+    if (gxy)
+        free(gxy);
+    if (Ni)
+        free(Ni);
+    if (Nr)
+        free(Nr);
+    if (ikereq)
+        fclose(ikereq);
+}
+
+void
+ikev2(char *reqfn)
+{
+    char buf[4096]; /* holds one line from the input REQUEST file.
+                         * needs to be large enough to hold the longest
+                         * line "g^xy = <2048 hex digits>\n".
+                         */
+    unsigned char *gir = NULL;
+    unsigned char *gir_new = NULL;
+    int gir_len;
+    unsigned char *Ni = NULL;
+    int Ni_len;
+    unsigned char *Nr = NULL;
+    int Nr_len;
+    unsigned char *SPIi = NULL;
+    int SPIi_len = 8;
+    unsigned char *SPIr = NULL;
+    int SPIr_len = 8;
+    unsigned char *DKM = NULL;
+    int DKM_len;
+    unsigned char *DKM_child = NULL;
+    int DKM_child_len;
+    unsigned char *seed_data = NULL;
+    int seed_data_len = 0;
+    unsigned int i, j;
+    FILE *ikereq = NULL; /* input stream from the REQUEST file */
+    FILE *ikeresp;       /* output stream to the RESPONSE file */
+
+    CK_SLOT_ID slotList[10];
+    CK_SLOT_ID slotID;
+    CK_ULONG slotListCount = sizeof(slotList) / sizeof(slotList[0]);
+    CK_ULONG count;
+    static const CK_C_INITIALIZE_ARGS pk11args = {
+        NULL, NULL, NULL, NULL, CKF_LIBRARY_CANT_CREATE_OS_THREADS,
+        (void *)"flags=readOnly,noCertDB,noModDB", NULL
+    };
+    static CK_OBJECT_CLASS ck_secret = CKO_SECRET_KEY;
+    static CK_KEY_TYPE ck_generic = CKK_GENERIC_SECRET;
+    static CK_BBOOL ck_true = CK_TRUE;
+    static CK_ULONG keyLen = 1;
+    CK_ATTRIBUTE gir_template[] = {
+        { CKA_VALUE, NULL, 0 },
+        { CKA_CLASS, &ck_secret, sizeof(ck_secret) },
+        { CKA_KEY_TYPE, &ck_generic, sizeof(ck_generic) },
+        { CKA_DERIVE, &ck_true, sizeof(ck_true) },
+    };
+    CK_ULONG gir_template_count =
+        sizeof(gir_template) / sizeof(gir_template[0]);
+    CK_ATTRIBUTE gir_new_template[] = {
+        { CKA_VALUE, NULL, 0 },
+        { CKA_CLASS, &ck_secret, sizeof(ck_secret) },
+        { CKA_KEY_TYPE, &ck_generic, sizeof(ck_generic) },
+        { CKA_DERIVE, &ck_true, sizeof(ck_true) },
+    };
+    CK_ULONG gir_new_template_count =
+        sizeof(gir_new_template) / sizeof(gir_new_template[0]);
+    CK_ATTRIBUTE derive_template[] = {
+        { CKA_CLASS, &ck_secret, sizeof(ck_secret) },
+        { CKA_KEY_TYPE, &ck_generic, sizeof(ck_generic) },
+        { CKA_DERIVE, &ck_true, sizeof(ck_true) },
+        { CKA_VALUE_LEN, &keyLen, sizeof(keyLen) },
+    };
+    CK_ULONG derive_template_count =
+        sizeof(derive_template) / sizeof(derive_template[0]);
+    CK_ATTRIBUTE skeyseed_template =
+        { CKA_VALUE, NULL, 0 };
+    CK_ATTRIBUTE dkm_template =
+        { CKA_VALUE, NULL, 0 };
+    CK_ATTRIBUTE dkm_child_template =
+        { CKA_VALUE, NULL, 0 };
+    unsigned char skeyseed_secret[HASH_LENGTH_MAX];
+
+    CK_MECHANISM ike_mech = { CKM_NSS_IKE_PRF_DERIVE, NULL, 0 };
+    CK_MECHANISM ike2_mech = { CKM_NSS_IKE_PRF_PLUS_DERIVE, NULL, 0 };
+    CK_MECHANISM subset_mech = { CKM_EXTRACT_KEY_FROM_KEY, NULL, 0 };
+    CK_NSS_IKE_PRF_DERIVE_PARAMS ike_prf;
+    CK_NSS_IKE_PRF_PLUS_DERIVE_PARAMS ike2_prf;
+    CK_EXTRACT_PARAMS subset_params;
+    CK_RV crv;
+
+    /* set up PKCS #11 parameters */
+    ike_mech.pParameter = &ike_prf;
+    ike_mech.ulParameterLen = sizeof(ike_prf);
+    ike2_mech.pParameter = &ike2_prf;
+    ike2_mech.ulParameterLen = sizeof(ike2_prf);
+    subset_mech.pParameter = &subset_params;
+    subset_mech.ulParameterLen = sizeof(subset_params);
+    subset_params = 0;
+    skeyseed_template.pValue = skeyseed_secret;
+    skeyseed_template.ulValueLen = HASH_LENGTH_MAX;
+
+    crv = NSC_Initialize((CK_VOID_PTR)&pk11args);
+    if (crv != CKR_OK) {
+        fprintf(stderr, "NSC_Initialize failed crv=0x%x\n", (unsigned int)crv);
+        goto loser;
+    }
+    count = slotListCount;
+    crv = NSC_GetSlotList(PR_TRUE, slotList, &count);
+    if (crv != CKR_OK) {
+        fprintf(stderr, "NSC_GetSlotList failed crv=0x%x\n", (unsigned int)crv);
+        goto loser;
+    }
+    if ((count > slotListCount) || count < 1) {
+        fprintf(stderr,
+                "NSC_GetSlotList returned too many or too few slots: %d slots max=%d min=1\n",
+                (int)count, (int)slotListCount);
+        goto loser;
+    }
+    slotID = slotList[0];
+    ikereq = fopen(reqfn, "r");
+    ikeresp = stdout;
+    while (fgets(buf, sizeof buf, ikereq) != NULL) {
+        /* a comment or blank line */
+        if (buf[0] == '#' || buf[0] == '\n') {
+            fputs(buf, ikeresp);
+            continue;
+        }
+        /* [.....] */
+        if (buf[0] == '[') {
+            if (strncmp(buf, "[SHA-1]", 7) == 0) {
+                ike_prf.prfMechanism = CKM_SHA_1_HMAC;
+                ike2_prf.prfMechanism = CKM_SHA_1_HMAC;
+            }
+            if (strncmp(buf, "[SHA-224]", 9) == 0) {
+                ike_prf.prfMechanism = CKM_SHA224_HMAC;
+                ike2_prf.prfMechanism = CKM_SHA224_HMAC;
+            }
+            if (strncmp(buf, "[SHA-256]", 9) == 0) {
+                ike_prf.prfMechanism = CKM_SHA256_HMAC;
+                ike2_prf.prfMechanism = CKM_SHA256_HMAC;
+            }
+            if (strncmp(buf, "[SHA-384]", 9) == 0) {
+                ike_prf.prfMechanism = CKM_SHA384_HMAC;
+                ike2_prf.prfMechanism = CKM_SHA384_HMAC;
+            }
+            if (strncmp(buf, "[SHA-512]", 9) == 0) {
+                ike_prf.prfMechanism = CKM_SHA512_HMAC;
+                ike2_prf.prfMechanism = CKM_SHA512_HMAC;
+            }
+            if (strncmp(buf, "[AES-XCBC", 9) == 0) {
+                ike_prf.prfMechanism = CKM_AES_XCBC_MAC;
+                ike2_prf.prfMechanism = CKM_AES_XCBC_MAC;
+            }
+            if (strncmp(buf, "[g^ir", 5) == 0) {
+                if (sscanf(buf, "[g^ir length = %d]",
+                           &gir_len) != 1) {
+                    goto loser;
+                }
+                gir_len = gir_len / 8;
+                if (gir)
+                    free(gir);
+                if (gir_new)
+                    free(gir_new);
+                gir = malloc(gir_len);
+                gir_new = malloc(gir_len);
+                gir_template[0].pValue = gir;
+                gir_template[0].ulValueLen = gir_len;
+                gir_new_template[0].pValue = gir_new;
+                gir_new_template[0].ulValueLen = gir_len;
+            }
+            if (strncmp(buf, "[Ni", 3) == 0) {
+                if (sscanf(buf, "[Ni length = %d]", &Ni_len) != 1) {
+                    goto loser;
+                }
+                Ni_len = Ni_len / 8;
+            }
+            if (strncmp(buf, "[Nr", 3) == 0) {
+                if (sscanf(buf, "[Nr length = %d]", &Nr_len) != 1) {
+                    goto loser;
+                }
+                Nr_len = Nr_len / 8;
+            }
+            if (strncmp(buf, "[DKM", 4) == 0) {
+                if (sscanf(buf, "[DKM length = %d]",
+                           &DKM_len) != 1) {
+                    goto loser;
+                }
+                DKM_len = DKM_len / 8;
+                if (DKM)
+                    free(DKM);
+                DKM = malloc(DKM_len);
+                dkm_template.pValue = DKM;
+                dkm_template.ulValueLen = DKM_len;
+            }
+            if (strncmp(buf, "[Child SA DKM", 13) == 0) {
+                if (sscanf(buf, "[Child SA DKM length = %d]",
+                           &DKM_child_len) != 1) {
+                    goto loser;
+                }
+                DKM_child_len = DKM_child_len / 8;
+                if (DKM_child)
+                    free(DKM_child);
+                DKM_child = malloc(DKM_child_len);
+                dkm_child_template.pValue = DKM_child;
+                dkm_child_template.ulValueLen = DKM_child_len;
+            }
+            fputs(buf, ikeresp);
+            continue;
+        }
+        /* "COUNT = x" begins a new data set */
+        if (strncmp(buf, "COUNT", 5) == 0) {
+            /* zeroize the variables for the test with this data set */
+            int new_seed_len = Ni_len + Nr_len + SPIi_len + SPIr_len;
+            if (seed_data_len != new_seed_len) {
+                if (seed_data)
+                    free(seed_data);
+                seed_data_len = new_seed_len;
+                seed_data = malloc(seed_data_len);
+                Ni = seed_data;
+                Nr = &seed_data[Ni_len];
+                SPIi = &seed_data[Ni_len + Nr_len];
+                SPIr = &seed_data[new_seed_len - SPIr_len];
+                ike_prf.pNi = Ni;
+                ike_prf.ulNiLen = Ni_len;
+                ike_prf.pNr = Nr;
+                ike_prf.ulNrLen = Nr_len;
+                ike2_prf.pSeedData = seed_data;
+            }
+            memset(gir, 0, gir_len);
+            memset(gir_new, 0, gir_len);
+            memset(seed_data, 0, seed_data_len);
+            fputs(buf, ikeresp);
+            continue;
+        }
+        /* Ni = ... */
+        if (strncmp(buf, "Ni", 2) == 0) {
+            i = 2;
+            while (isspace(buf[i]) || buf[i] == '=') {
+                i++;
+            }
+            for (j = 0; j < Ni_len; i += 2, j++) {
+                hex_to_byteval(&buf[i], &Ni[j]);
+            }
+            fputs(buf, ikeresp);
+            continue;
+        }
+        /* Nr = ... */
+        if (strncmp(buf, "Nr", 2) == 0) {
+            i = 2;
+            while (isspace(buf[i]) || buf[i] == '=') {
+                i++;
+            }
+            for (j = 0; j < Nr_len; i += 2, j++) {
+                hex_to_byteval(&buf[i], &Nr[j]);
+            }
+            fputs(buf, ikeresp);
+            continue;
+        }
+        /* g^ir (new) = ... */
+        if (strncmp(buf, "g^ir (new)", 10) == 0) {
+            i = 10;
+            while (isspace(buf[i]) || buf[i] == '=') {
+                i++;
+            }
+            for (j = 0; j < gir_len; i += 2, j++) {
+                hex_to_byteval(&buf[i], &gir_new[j]);
+            }
+            fputs(buf, ikeresp);
+            continue;
+        }
+        /* g^ir = ... */
+        if (strncmp(buf, "g^ir", 4) == 0) {
+            i = 4;
+            while (isspace(buf[i]) || buf[i] == '=') {
+                i++;
+            }
+            for (j = 0; j < gir_len; i += 2, j++) {
+                hex_to_byteval(&buf[i], &gir[j]);
+            }
+            fputs(buf, ikeresp);
+            continue;
+        }
+        /* SPIi = ... */
+        if (strncmp(buf, "SPIi", 4) == 0) {
+            i = 4;
+            while (isspace(buf[i]) || buf[i] == '=') {
+                i++;
+            }
+            for (j = 0; j < SPIi_len; i += 2, j++) {
+                hex_to_byteval(&buf[i], &SPIi[j]);
+            }
+            fputs(buf, ikeresp);
+            continue;
+        }
+        /* SPIr = ... */
+        if (strncmp(buf, "SPIr", 4) == 0) {
+            CK_SESSION_HANDLE session;
+            CK_OBJECT_HANDLE gir_handle;
+            CK_OBJECT_HANDLE gir_new_handle;
+            CK_OBJECT_HANDLE skeyseed_handle;
+            CK_OBJECT_HANDLE sk_d_handle;
+            CK_OBJECT_HANDLE skeyseed_new_handle;
+            CK_OBJECT_HANDLE dkm_handle;
+            CK_OBJECT_HANDLE dkm_child_handle;
+            i = 4;
+            while (isspace(buf[i]) || buf[i] == '=') {
+                i++;
+            }
+            for (j = 0; j < SPIr_len; i += 2, j++) {
+                hex_to_byteval(&buf[i], &SPIr[j]);
+            }
+            fputs(buf, ikeresp);
+            crv = NSC_OpenSession(slotID, 0, NULL, NULL, &session);
+            if (crv != CKR_OK) {
+                fprintf(stderr, "NSC_OpenSession failed crv=0x%x\n",
+                        (unsigned int)crv);
+                goto loser;
+            }
+            crv = NSC_CreateObject(session, gir_template,
+                                   gir_template_count, &gir_handle);
+            if (crv != CKR_OK) {
+                fprintf(stderr, "NSC_CreateObject (g^ir) failed crv=0x%x\n",
+                        (unsigned int)crv);
+                goto loser;
+            }
+            crv = NSC_CreateObject(session, gir_new_template,
+                                   gir_new_template_count, &gir_new_handle);
+            if (crv != CKR_OK) {
+                fprintf(stderr, "NSC_CreateObject (g^ir new) failed crv=0x%x\n",
+                        (unsigned int)crv);
+                goto loser;
+            }
+            /* get the SKEYSEED key */
+            ike_prf.bDataAsKey = CK_TRUE;
+            ike_prf.bRekey = CK_FALSE;
+            ike_prf.hNewKey = CK_INVALID_HANDLE;
+            crv = NSC_DeriveKey(session, &ike_mech, gir_handle,
+                                derive_template, derive_template_count - 1,
+                                &skeyseed_handle);
+            if (crv != CKR_OK) {
+                fprintf(stderr, "NSC_DeriveKey(skeyid) failed crv=0x%x\n",
+                        (unsigned int)crv);
+                goto loser;
+            }
+            skeyseed_template.ulValueLen = HASH_LENGTH_MAX;
+            crv = NSC_GetAttributeValue(session, skeyseed_handle,
+                                        &skeyseed_template, 1);
+            if (crv != CKR_OK) {
+                fprintf(stderr, "NSC_GetAttribute(skeyid) failed crv=0x%x\n",
+                        (unsigned int)crv);
+                goto loser;
+            }
+            fputs("SKEYSEED = ", ikeresp);
+            to_hex_str(buf, skeyseed_secret, skeyseed_template.ulValueLen);
+            fputs(buf, ikeresp);
+            fputc('\n', ikeresp);
+
+            /* get DKM */
+            keyLen = DKM_len;
+            ike2_prf.bHasSeedKey = CK_FALSE;
+            ike2_prf.hSeedKey = CK_INVALID_HANDLE;
+            ike2_prf.ulSeedDataLen = seed_data_len;
+            crv = NSC_DeriveKey(session, &ike2_mech, skeyseed_handle,
+                                derive_template, derive_template_count,
+                                &dkm_handle);
+            if (crv != CKR_OK) {
+                fprintf(stderr, "NSC_DeriveKey(DKM) failed crv=0x%x\n",
+                        (unsigned int)crv);
+                goto loser;
+            }
+            crv = NSC_GetAttributeValue(session, dkm_handle,
+                                        &dkm_template, 1);
+            if (crv != CKR_OK) {
+                fprintf(stderr, "NSC_GetAttribute(DKM) failed crv=0x%x\n",
+                        (unsigned int)crv);
+                goto loser;
+            }
+            fputs("DKM = ", ikeresp);
+            to_hex_str(buf, DKM, DKM_len);
+            fputs(buf, ikeresp);
+            fputc('\n', ikeresp);
+
+            /* get the sk_d from the DKM */
+            keyLen = skeyseed_template.ulValueLen;
+            crv = NSC_DeriveKey(session, &subset_mech, dkm_handle,
+                                derive_template, derive_template_count,
+                                &sk_d_handle);
+            if (crv != CKR_OK) {
+                fprintf(stderr, "NSC_DeriveKey(sk_d) failed crv=0x%x\n",
+                        (unsigned int)crv);
+                goto loser;
+            }
+
+            /* get DKM child */
+            keyLen = DKM_child_len;
+            ike2_prf.bHasSeedKey = CK_FALSE;
+            ike2_prf.hSeedKey = CK_INVALID_HANDLE;
+            ike2_prf.ulSeedDataLen = Ni_len + Nr_len;
+            crv = NSC_DeriveKey(session, &ike2_mech, sk_d_handle,
+                                derive_template, derive_template_count,
+                                &dkm_child_handle);
+            if (crv != CKR_OK) {
+                fprintf(stderr, "NSC_DeriveKey(DKM Child SA) failed crv=0x%x\n",
+                        (unsigned int)crv);
+                goto loser;
+            }
+            crv = NSC_GetAttributeValue(session, dkm_child_handle,
+                                        &dkm_child_template, 1);
+            if (crv != CKR_OK) {
+                fprintf(stderr, "NSC_GetAttribute(DKM Child SA) failed crv=0x%x\n",
+                        (unsigned int)crv);
+                goto loser;
+            }
+            fputs("DKM(Child SA) = ", ikeresp);
+            to_hex_str(buf, DKM_child, DKM_child_len);
+            fputs(buf, ikeresp);
+            fputc('\n', ikeresp);
+
+            /* get DKM child D-H*/
+            keyLen = DKM_child_len;
+            ike2_prf.bHasSeedKey = CK_TRUE;
+            ike2_prf.hSeedKey = gir_new_handle;
+            ike2_prf.ulSeedDataLen = Ni_len + Nr_len;
+            crv = NSC_DeriveKey(session, &ike2_mech, sk_d_handle,
+                                derive_template, derive_template_count,
+                                &dkm_child_handle);
+            if (crv != CKR_OK) {
+                fprintf(stderr, "NSC_DeriveKey(DKM Child SA D-H) failed crv=0x%x\n",
+                        (unsigned int)crv);
+                goto loser;
+            }
+            crv = NSC_GetAttributeValue(session, dkm_child_handle,
+                                        &dkm_child_template, 1);
+            if (crv != CKR_OK) {
+                fprintf(stderr, "NSC_GetAttribute(DKM Child SA D-H) failed crv=0x%x\n",
+                        (unsigned int)crv);
+                goto loser;
+            }
+            fputs("DKM(Child SA D-H) = ", ikeresp);
+            to_hex_str(buf, DKM_child, DKM_child_len);
+            fputs(buf, ikeresp);
+            fputc('\n', ikeresp);
+
+            /* get SKEYSEED(rekey) */
+            ike_prf.bDataAsKey = CK_FALSE;
+            ike_prf.bRekey = CK_TRUE;
+            ike_prf.hNewKey = gir_new_handle;
+            crv = NSC_DeriveKey(session, &ike_mech, sk_d_handle,
+                                derive_template, derive_template_count - 1,
+                                &skeyseed_new_handle);
+            if (crv != CKR_OK) {
+                fprintf(stderr, "NSC_DeriveKey(skeyid rekey) failed crv=0x%x\n",
+                        (unsigned int)crv);
+                goto loser;
+            }
+            skeyseed_template.ulValueLen = HASH_LENGTH_MAX;
+            crv = NSC_GetAttributeValue(session, skeyseed_new_handle,
+                                        &skeyseed_template, 1);
+            if (crv != CKR_OK) {
+                fprintf(stderr, "NSC_GetAttribute(skeyid) failed crv=0x%x\n",
+                        (unsigned int)crv);
+                goto loser;
+            }
+            fputs("SKEYSEED(rekey) = ", ikeresp);
+            to_hex_str(buf, skeyseed_secret, skeyseed_template.ulValueLen);
+            fputs(buf, ikeresp);
+            fputc('\n', ikeresp);
+
+            crv = NSC_CloseSession(session);
+            continue;
+        }
+    }
+loser:
+    NSC_Finalize(NULL);
+    if (gir)
+        free(gir);
+    if (gir_new)
+        free(gir_new);
+    if (seed_data)
+        free(seed_data);
+    if (DKM)
+        free(DKM);
+    if (DKM_child)
+        free(DKM_child);
+    if (ikereq)
+        fclose(ikereq);
 }
 
 int
@@ -6109,6 +8329,34 @@ main(int argc, char **argv)
             ecdsa_sigver_test(argv[3]);
         }
         /*************/
+        /*   ECDH   */
+        /*************/
+    } else if (strcmp(argv[1], "ecdh") == 0) {
+        /* argv[2]={init|resp}-{func|verify} argv[3]=<test name>.req */
+        if (strcmp(argv[2], "init-func") == 0) {
+            ecdh_functional(argv[3], 0);
+        } else if (strcmp(argv[2], "resp-func") == 0) {
+            ecdh_functional(argv[3], 1);
+        } else if (strcmp(argv[2], "init-verify") == 0) {
+            ecdh_verify(argv[3], 0);
+        } else if (strcmp(argv[2], "resp-verify") == 0) {
+            ecdh_verify(argv[3], 1);
+        }
+        /*************/
+        /*   DH   */
+        /*************/
+    } else if (strcmp(argv[1], "dh") == 0) {
+        /* argv[2]={init|resp}-{func|verify} argv[3]=<test name>.req */
+        if (strcmp(argv[2], "init-func") == 0) {
+            dh_functional(argv[3], 0);
+        } else if (strcmp(argv[2], "resp-func") == 0) {
+            dh_functional(argv[3], 1);
+        } else if (strcmp(argv[2], "init-verify") == 0) {
+            dh_verify(argv[3], 0);
+        } else if (strcmp(argv[2], "resp-verify") == 0) {
+            dh_verify(argv[3], 1);
+        }
+        /*************/
         /*   RNG     */
         /*************/
     } else if (strcmp(argv[1], "rng") == 0) {
@@ -6126,6 +8374,14 @@ main(int argc, char **argv)
     } else if (strcmp(argv[1], "ddrbg") == 0) {
         debug = 1;
         drbg(argv[2]);
+    } else if (strcmp(argv[1], "tls") == 0) {
+        tls(argv[2]);
+    } else if (strcmp(argv[1], "ikev1") == 0) {
+        ikev1(argv[2]);
+    } else if (strcmp(argv[1], "ikev1-psk") == 0) {
+        ikev1_psk(argv[2]);
+    } else if (strcmp(argv[1], "ikev2") == 0) {
+        ikev2(argv[2]);
     }
     return 0;
 }

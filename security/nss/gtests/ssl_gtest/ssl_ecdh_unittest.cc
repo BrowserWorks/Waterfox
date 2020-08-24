@@ -17,7 +17,7 @@ extern "C" {
 }
 
 #include "gtest_utils.h"
-#include "scoped_ptrs.h"
+#include "nss_scoped_ptrs.h"
 #include "tls_connect.h"
 #include "tls_filter.h"
 #include "tls_parser.h"
@@ -69,20 +69,19 @@ TEST_P(TlsConnectGeneric, ConnectEcdheP384Client) {
   server_->ConfigNamedGroups(groups);
   Connect();
   CheckKeys(ssl_kea_ecdh, ssl_grp_ec_secp384r1, ssl_auth_rsa_sign,
-            ssl_sig_rsa_pss_sha256);
+            ssl_sig_rsa_pss_rsae_sha256);
 }
 
 // This causes a HelloRetryRequest in TLS 1.3.  Earlier versions don't care.
 TEST_P(TlsConnectGeneric, ConnectEcdheP384Server) {
   EnsureTlsSetup();
-  auto hrr_capture = std::make_shared<TlsInspectorRecordHandshakeMessage>(
-      kTlsHandshakeHelloRetryRequest);
-  server_->SetPacketFilter(hrr_capture);
+  auto hrr_capture = MakeTlsFilter<TlsHandshakeRecorder>(
+      server_, kTlsHandshakeHelloRetryRequest);
   const std::vector<SSLNamedGroup> groups = {ssl_grp_ec_secp384r1};
   server_->ConfigNamedGroups(groups);
   Connect();
   CheckKeys(ssl_kea_ecdh, ssl_grp_ec_secp384r1, ssl_auth_rsa_sign,
-            ssl_sig_rsa_pss_sha256);
+            ssl_sig_rsa_pss_rsae_sha256);
   EXPECT_EQ(version_ == SSL_LIBRARY_VERSION_TLS_1_3,
             hrr_capture->buffer().len() != 0);
 }
@@ -112,7 +111,7 @@ TEST_P(TlsKeyExchangeTest, P384Priority) {
   Connect();
 
   CheckKeys(ssl_kea_ecdh, ssl_grp_ec_secp384r1, ssl_auth_rsa_sign,
-            ssl_sig_rsa_pss_sha256);
+            ssl_sig_rsa_pss_rsae_sha256);
 
   std::vector<SSLNamedGroup> shares = {ssl_grp_ec_secp384r1};
   CheckKEXDetails(groups, shares);
@@ -129,7 +128,7 @@ TEST_P(TlsKeyExchangeTest, DuplicateGroupConfig) {
   Connect();
 
   CheckKeys(ssl_kea_ecdh, ssl_grp_ec_secp384r1, ssl_auth_rsa_sign,
-            ssl_sig_rsa_pss_sha256);
+            ssl_sig_rsa_pss_rsae_sha256);
 
   std::vector<SSLNamedGroup> shares = {ssl_grp_ec_secp384r1};
   std::vector<SSLNamedGroup> expectedGroups = {ssl_grp_ec_secp384r1,
@@ -147,7 +146,7 @@ TEST_P(TlsKeyExchangeTest, P384PriorityDHEnabled) {
   Connect();
 
   CheckKeys(ssl_kea_ecdh, ssl_grp_ec_secp384r1, ssl_auth_rsa_sign,
-            ssl_sig_rsa_pss_sha256);
+            ssl_sig_rsa_pss_rsae_sha256);
 
   if (version_ >= SSL_LIBRARY_VERSION_TLS_1_3) {
     std::vector<SSLNamedGroup> shares = {ssl_grp_ec_secp384r1};
@@ -172,7 +171,7 @@ TEST_P(TlsConnectGenericPre13, P384PriorityOnServer) {
   Connect();
 
   CheckKeys(ssl_kea_ecdh, ssl_grp_ec_secp384r1, ssl_auth_rsa_sign,
-            ssl_sig_rsa_pss_sha256);
+            ssl_sig_rsa_pss_rsae_sha256);
 }
 
 TEST_P(TlsConnectGenericPre13, P384PriorityFromModelSocket) {
@@ -188,12 +187,14 @@ TEST_P(TlsConnectGenericPre13, P384PriorityFromModelSocket) {
   Connect();
 
   CheckKeys(ssl_kea_ecdh, ssl_grp_ec_secp384r1, ssl_auth_rsa_sign,
-            ssl_sig_rsa_pss_sha256);
+            ssl_sig_rsa_pss_rsae_sha256);
 }
 
 class TlsKeyExchangeGroupCapture : public TlsHandshakeFilter {
  public:
-  TlsKeyExchangeGroupCapture() : group_(ssl_grp_none) {}
+  TlsKeyExchangeGroupCapture(const std::shared_ptr<TlsAgent> &a)
+      : TlsHandshakeFilter(a, {kTlsHandshakeServerKeyExchange}),
+        group_(ssl_grp_none) {}
 
   SSLNamedGroup group() const { return group_; }
 
@@ -201,10 +202,6 @@ class TlsKeyExchangeGroupCapture : public TlsHandshakeFilter {
   virtual PacketFilter::Action FilterHandshake(const HandshakeHeader &header,
                                                const DataBuffer &input,
                                                DataBuffer *output) {
-    if (header.handshake_type() != kTlsHandshakeServerKeyExchange) {
-      return KEEP;
-    }
-
     uint32_t value = 0;
     EXPECT_TRUE(input.Read(0, 1, &value));
     EXPECT_EQ(3U, value) << "curve type has to be 3";
@@ -223,10 +220,8 @@ class TlsKeyExchangeGroupCapture : public TlsHandshakeFilter {
 // P-256 is supported by the client (<= 1.2 only).
 TEST_P(TlsConnectGenericPre13, DropSupportedGroupExtensionP256) {
   EnsureTlsSetup();
-  client_->SetPacketFilter(
-      std::make_shared<TlsExtensionDropper>(ssl_supported_groups_xtn));
-  auto group_capture = std::make_shared<TlsKeyExchangeGroupCapture>();
-  server_->SetPacketFilter(group_capture);
+  MakeTlsFilter<TlsExtensionDropper>(client_, ssl_supported_groups_xtn);
+  auto group_capture = MakeTlsFilter<TlsKeyExchangeGroupCapture>(server_);
 
   ConnectExpectAlert(server_, kTlsAlertDecryptError);
   client_->CheckErrorCode(SSL_ERROR_DECRYPT_ERROR_ALERT);
@@ -238,8 +233,7 @@ TEST_P(TlsConnectGenericPre13, DropSupportedGroupExtensionP256) {
 // Supported groups is mandatory in TLS 1.3.
 TEST_P(TlsConnectTls13, DropSupportedGroupExtension) {
   EnsureTlsSetup();
-  client_->SetPacketFilter(
-      std::make_shared<TlsExtensionDropper>(ssl_supported_groups_xtn));
+  MakeTlsFilter<TlsExtensionDropper>(client_, ssl_supported_groups_xtn);
   ConnectExpectAlert(server_, kTlsAlertMissingExtension);
   client_->CheckErrorCode(SSL_ERROR_MISSING_EXTENSION_ALERT);
   server_->CheckErrorCode(SSL_ERROR_MISSING_SUPPORTED_GROUPS_EXTENSION);
@@ -278,7 +272,7 @@ TEST_P(TlsConnectStreamPre13, ConfiguredGroupsRenegotiate) {
   Connect();
 
   CheckKeys(ssl_kea_ecdh, ssl_grp_ec_secp256r1, ssl_auth_rsa_sign,
-            ssl_sig_rsa_pss_sha256);
+            ssl_sig_rsa_pss_rsae_sha256);
   CheckConnected();
 
   // The renegotiation has to use the same preferences as the original session.
@@ -286,7 +280,7 @@ TEST_P(TlsConnectStreamPre13, ConfiguredGroupsRenegotiate) {
   client_->StartRenegotiate();
   Handshake();
   CheckKeys(ssl_kea_ecdh, ssl_grp_ec_secp256r1, ssl_auth_rsa_sign,
-            ssl_sig_rsa_pss_sha256);
+            ssl_sig_rsa_pss_rsae_sha256);
 }
 
 TEST_P(TlsKeyExchangeTest, Curve25519) {
@@ -320,7 +314,7 @@ TEST_P(TlsConnectGenericPre13, GroupPreferenceServerPriority) {
   Connect();
 
   CheckKeys(ssl_kea_ecdh, ssl_grp_ec_curve25519, ssl_auth_rsa_sign,
-            ssl_sig_rsa_pss_sha256);
+            ssl_sig_rsa_pss_rsae_sha256);
 }
 
 #ifndef NSS_DISABLE_TLS_1_3
@@ -339,7 +333,7 @@ TEST_P(TlsKeyExchangeTest13, Curve25519P256EqualPriorityClient13) {
   Connect();
 
   CheckKeys(ssl_kea_ecdh, ssl_grp_ec_secp256r1, ssl_auth_rsa_sign,
-            ssl_sig_rsa_pss_sha256);
+            ssl_sig_rsa_pss_rsae_sha256);
   const std::vector<SSLNamedGroup> shares = {ssl_grp_ec_secp256r1};
   CheckKEXDetails(client_groups, shares);
 }
@@ -359,7 +353,7 @@ TEST_P(TlsKeyExchangeTest13, Curve25519P256EqualPriorityServer13) {
   Connect();
 
   CheckKeys(ssl_kea_ecdh, ssl_grp_ec_curve25519, ssl_auth_rsa_sign,
-            ssl_sig_rsa_pss_sha256);
+            ssl_sig_rsa_pss_rsae_sha256);
   const std::vector<SSLNamedGroup> shares = {ssl_grp_ec_curve25519};
   CheckKEXDetails(client_groups, shares);
 }
@@ -381,7 +375,7 @@ TEST_P(TlsKeyExchangeTest13, EqualPriorityTestRetryECServer13) {
   Connect();
 
   CheckKeys(ssl_kea_ecdh, ssl_grp_ec_secp256r1, ssl_auth_rsa_sign,
-            ssl_sig_rsa_pss_sha256);
+            ssl_sig_rsa_pss_rsae_sha256);
   const std::vector<SSLNamedGroup> shares = {ssl_grp_ec_curve25519};
   CheckKEXDetails(client_groups, shares, ssl_grp_ec_secp256r1);
 }
@@ -403,7 +397,7 @@ TEST_P(TlsKeyExchangeTest13, NotEqualPriorityWithIntermediateGroup13) {
   Connect();
 
   CheckKeys(ssl_kea_ecdh, ssl_grp_ec_secp256r1, ssl_auth_rsa_sign,
-            ssl_sig_rsa_pss_sha256);
+            ssl_sig_rsa_pss_rsae_sha256);
   const std::vector<SSLNamedGroup> shares = {ssl_grp_ec_curve25519};
   CheckKEXDetails(client_groups, shares, ssl_grp_ec_secp256r1);
 }
@@ -425,7 +419,7 @@ TEST_P(TlsKeyExchangeTest13,
   Connect();
 
   CheckKeys(ssl_kea_ecdh, ssl_grp_ec_secp256r1, ssl_auth_rsa_sign,
-            ssl_sig_rsa_pss_sha256);
+            ssl_sig_rsa_pss_rsae_sha256);
   const std::vector<SSLNamedGroup> shares = {ssl_grp_ec_curve25519};
   CheckKEXDetails(client_groups, shares, ssl_grp_ec_secp256r1);
 }
@@ -447,7 +441,7 @@ TEST_P(TlsKeyExchangeTest13,
   Connect();
 
   CheckKeys(ssl_kea_ecdh, ssl_grp_ec_secp256r1, ssl_auth_rsa_sign,
-            ssl_sig_rsa_pss_sha256);
+            ssl_sig_rsa_pss_rsae_sha256);
   const std::vector<SSLNamedGroup> shares = {ssl_grp_ec_curve25519};
   CheckKEXDetails(client_groups, shares, ssl_grp_ec_secp256r1);
 }
@@ -509,7 +503,7 @@ TEST_P(TlsKeyExchangeTest13, MultipleClientShares) {
 
   // The server would accept 25519 but its preferred group (P256) has to win.
   CheckKeys(ssl_kea_ecdh, ssl_grp_ec_secp256r1, ssl_auth_rsa_sign,
-            ssl_sig_rsa_pss_sha256);
+            ssl_sig_rsa_pss_rsae_sha256);
   const std::vector<SSLNamedGroup> shares = {ssl_grp_ec_curve25519,
                                              ssl_grp_ec_secp256r1};
   CheckKEXDetails(client_groups, shares);
@@ -518,16 +512,13 @@ TEST_P(TlsKeyExchangeTest13, MultipleClientShares) {
 // Replace the point in the client key exchange message with an empty one
 class ECCClientKEXFilter : public TlsHandshakeFilter {
  public:
-  ECCClientKEXFilter() {}
+  ECCClientKEXFilter(const std::shared_ptr<TlsAgent> &client)
+      : TlsHandshakeFilter(client, {kTlsHandshakeClientKeyExchange}) {}
 
  protected:
   virtual PacketFilter::Action FilterHandshake(const HandshakeHeader &header,
                                                const DataBuffer &input,
                                                DataBuffer *output) {
-    if (header.handshake_type() != kTlsHandshakeClientKeyExchange) {
-      return KEEP;
-    }
-
     // Replace the client key exchange message with an empty point
     output->Allocate(1);
     output->Write(0, 0U, 1);  // set point length 0
@@ -538,16 +529,13 @@ class ECCClientKEXFilter : public TlsHandshakeFilter {
 // Replace the point in the server key exchange message with an empty one
 class ECCServerKEXFilter : public TlsHandshakeFilter {
  public:
-  ECCServerKEXFilter() {}
+  ECCServerKEXFilter(const std::shared_ptr<TlsAgent> &server)
+      : TlsHandshakeFilter(server, {kTlsHandshakeServerKeyExchange}) {}
 
  protected:
   virtual PacketFilter::Action FilterHandshake(const HandshakeHeader &header,
                                                const DataBuffer &input,
                                                DataBuffer *output) {
-    if (header.handshake_type() != kTlsHandshakeServerKeyExchange) {
-      return KEEP;
-    }
-
     // Replace the server key exchange message with an empty point
     output->Allocate(4);
     output->Write(0, 3U, 1);  // named curve
@@ -560,17 +548,122 @@ class ECCServerKEXFilter : public TlsHandshakeFilter {
 };
 
 TEST_P(TlsConnectGenericPre13, ConnectECDHEmptyServerPoint) {
-  // add packet filter
-  server_->SetPacketFilter(std::make_shared<ECCServerKEXFilter>());
+  MakeTlsFilter<ECCServerKEXFilter>(server_);
   ConnectExpectAlert(client_, kTlsAlertIllegalParameter);
   client_->CheckErrorCode(SSL_ERROR_RX_MALFORMED_SERVER_KEY_EXCH);
 }
 
 TEST_P(TlsConnectGenericPre13, ConnectECDHEmptyClientPoint) {
-  // add packet filter
-  client_->SetPacketFilter(std::make_shared<ECCClientKEXFilter>());
+  MakeTlsFilter<ECCClientKEXFilter>(client_);
   ConnectExpectAlert(server_, kTlsAlertIllegalParameter);
   server_->CheckErrorCode(SSL_ERROR_RX_MALFORMED_CLIENT_KEY_EXCH);
+}
+
+// Damage ECParams/ECPoint of a SKE.
+class ECCServerKEXDamager : public TlsHandshakeFilter {
+ public:
+  ECCServerKEXDamager(const std::shared_ptr<TlsAgent> &server, ECType ec_type,
+                      SSLNamedGroup named_curve)
+      : TlsHandshakeFilter(server, {kTlsHandshakeServerKeyExchange}),
+        ec_type_(ec_type),
+        named_curve_(named_curve) {}
+
+ protected:
+  virtual PacketFilter::Action FilterHandshake(const HandshakeHeader &header,
+                                               const DataBuffer &input,
+                                               DataBuffer *output) {
+    size_t offset = 0;
+    output->Allocate(5);
+    offset = output->Write(offset, ec_type_, 1);
+    offset = output->Write(offset, named_curve_, 2);
+    // Write a point with fmt != EC_POINT_FORM_UNCOMPRESSED.
+    offset = output->Write(offset, 1U, 1);
+    (void)output->Write(offset, 0x02, 1);  // EC_POINT_FORM_COMPRESSED_Y0
+    return CHANGE;
+  }
+
+ private:
+  ECType ec_type_;
+  SSLNamedGroup named_curve_;
+};
+
+TEST_P(TlsConnectGenericPre13, ConnectUnsupportedCurveType) {
+  EnsureTlsSetup();
+  client_->DisableAllCiphers();
+  client_->EnableCiphersByKeyExchange(ssl_kea_ecdh);
+
+  MakeTlsFilter<ECCServerKEXDamager>(server_, ec_type_explicitPrime,
+                                     ssl_grp_none);
+  ConnectExpectAlert(client_, kTlsAlertHandshakeFailure);
+  client_->CheckErrorCode(SEC_ERROR_UNSUPPORTED_ELLIPTIC_CURVE);
+}
+
+TEST_P(TlsConnectGenericPre13, ConnectUnsupportedCurve) {
+  EnsureTlsSetup();
+  client_->DisableAllCiphers();
+  client_->EnableCiphersByKeyExchange(ssl_kea_ecdh);
+
+  MakeTlsFilter<ECCServerKEXDamager>(server_, ec_type_named,
+                                     ssl_grp_ffdhe_2048);
+  ConnectExpectAlert(client_, kTlsAlertHandshakeFailure);
+  client_->CheckErrorCode(SEC_ERROR_UNSUPPORTED_ELLIPTIC_CURVE);
+}
+
+TEST_P(TlsConnectGenericPre13, ConnectUnsupportedPointFormat) {
+  EnsureTlsSetup();
+  client_->DisableAllCiphers();
+  client_->EnableCiphersByKeyExchange(ssl_kea_ecdh);
+
+  MakeTlsFilter<ECCServerKEXDamager>(server_, ec_type_named,
+                                     ssl_grp_ec_secp256r1);
+  ConnectExpectAlert(client_, kTlsAlertHandshakeFailure);
+  client_->CheckErrorCode(SEC_ERROR_UNSUPPORTED_EC_POINT_FORM);
+}
+
+// Replace SignatureAndHashAlgorithm of a SKE.
+class ECCServerKEXSigAlgReplacer : public TlsHandshakeFilter {
+ public:
+  ECCServerKEXSigAlgReplacer(const std::shared_ptr<TlsAgent> &server,
+                             SSLSignatureScheme sig_scheme)
+      : TlsHandshakeFilter(server, {kTlsHandshakeServerKeyExchange}),
+        sig_scheme_(sig_scheme) {}
+
+ protected:
+  virtual PacketFilter::Action FilterHandshake(const HandshakeHeader &header,
+                                               const DataBuffer &input,
+                                               DataBuffer *output) {
+    *output = input;
+
+    uint32_t point_len;
+    EXPECT_TRUE(output->Read(3, 1, &point_len));
+    output->Write(4 + point_len, sig_scheme_, 2);
+
+    return CHANGE;
+  }
+
+ private:
+  SSLSignatureScheme sig_scheme_;
+};
+
+TEST_P(TlsConnectTls12, ConnectUnsupportedSigAlg) {
+  EnsureTlsSetup();
+  client_->DisableAllCiphers();
+  client_->EnableCiphersByKeyExchange(ssl_kea_ecdh);
+
+  MakeTlsFilter<ECCServerKEXSigAlgReplacer>(server_, ssl_sig_none);
+  ConnectExpectAlert(client_, kTlsAlertIllegalParameter);
+  client_->CheckErrorCode(SSL_ERROR_UNSUPPORTED_SIGNATURE_ALGORITHM);
+}
+
+TEST_P(TlsConnectTls12, ConnectIncorrectSigAlg) {
+  EnsureTlsSetup();
+  client_->DisableAllCiphers();
+  client_->EnableCiphersByKeyExchange(ssl_kea_ecdh);
+
+  MakeTlsFilter<ECCServerKEXSigAlgReplacer>(server_,
+                                            ssl_sig_ecdsa_secp256r1_sha256);
+  ConnectExpectAlert(client_, kTlsAlertIllegalParameter);
+  client_->CheckErrorCode(SSL_ERROR_INCORRECT_SIGNATURE_ALGORITHM);
 }
 
 INSTANTIATE_TEST_CASE_P(KeyExchangeTest, TlsKeyExchangeTest,

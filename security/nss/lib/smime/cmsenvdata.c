@@ -9,7 +9,7 @@
 #include "cmslocal.h"
 
 #include "cert.h"
-#include "key.h"
+#include "keyhi.h"
 #include "secasn1.h"
 #include "secitem.h"
 #include "secoid.h"
@@ -143,6 +143,11 @@ NSS_CMSEnvelopedData_Encode_BeforeStart(NSSCMSEnvelopedData *envd)
 
     poolp = envd->cmsg->poolp;
     cinfo = &(envd->contentInfo);
+
+    if (cinfo == NULL) {
+        PORT_SetError(SEC_ERROR_BAD_DATA);
+        goto loser;
+    }
 
     recipientinfos = envd->recipientInfos;
     if (recipientinfos == NULL) {

@@ -57,11 +57,10 @@ endif
 
 endif
 
-ifdef NSS_SSL_ENABLE_ZLIB
-DEFINES += -DNSS_SSL_ENABLE_ZLIB
-include $(CORE_DEPTH)/coreconf/zlib.mk
-endif
-
 ifdef NSS_DISABLE_TLS_1_3
 DEFINES += -DNSS_DISABLE_TLS_1_3
+endif
+
+ifeq (,$(filter-out DragonFly FreeBSD Linux NetBSD OpenBSD, $(OS_TARGET)))
+CFLAGS += -std=gnu99
 endif

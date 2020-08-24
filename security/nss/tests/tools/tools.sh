@@ -104,6 +104,8 @@ tools_init()
   cp ${QADIR}/tools/sign*.html ${TOOLSDIR}/html
   mkdir -p ${TOOLSDIR}/data
   cp ${QADIR}/tools/TestOldCA.p12 ${TOOLSDIR}/data
+  cp ${QADIR}/tools/TestOldAES128CA.p12 ${TOOLSDIR}/data
+  cp ${QADIR}/tools/TestRSAPSS.p12 ${TOOLSDIR}/data
 
   cd ${TOOLSDIR}
 }
@@ -421,12 +423,35 @@ tools_p12_export_list_import_with_default_ciphers()
 
 tools_p12_import_old_files()
 {
-  echo "$SCRIPTNAME: Importing CA cert & key created with NSS 3.21 --------------"
+  echo "$SCRIPTNAME: Importing PKCS#12 files created with older NSS --------------"
   echo "pk12util -i TestOldCA.p12 -d ${P_R_COPYDIR} -k ${R_PWFILE} -w ${R_PWFILE}"
   ${BINDIR}/pk12util -i ${TOOLSDIR}/data/TestOldCA.p12 -d ${P_R_COPYDIR} -k ${R_PWFILE} -w ${R_PWFILE} 2>&1
   ret=$?
-  html_msg $ret 0 "Importing CA cert & key created with NSS 3.21"
+  html_msg $ret 0 "Importing PKCS#12 file created with NSS 3.21 (PBES2 with BMPString password)"
   check_tmpfile
+
+  echo "pk12util -i TestOldAES128CA.p12 -d ${P_R_COPYDIR} -k ${R_PWFILE} -w ${R_PWFILE}"
+  ${BINDIR}/pk12util -i ${TOOLSDIR}/data/TestOldAES128CA.p12 -d ${P_R_COPYDIR} -k ${R_PWFILE} -w ${R_PWFILE} 2>&1
+  ret=$?
+  html_msg $ret 0 "Importing PKCS#12 file created with NSS 3.29.5 (PBES2 with incorrect AES-128-CBC algorithm ID)"
+  check_tmpfile
+}
+
+tools_p12_import_rsa_pss_private_key()
+{
+  echo "$SCRIPTNAME: Importing RSA-PSS private key from PKCS#12 file --------------"
+  ${BINDIR}/pk12util -i ${TOOLSDIR}/data/TestRSAPSS.p12 -d ${P_R_COPYDIR} -k ${R_PWFILE} -W '' 2>&1
+  ret=$?
+  html_msg $ret 0 "Importing RSA-PSS private key from PKCS#12 file"
+  check_tmpfile
+
+  # Check if RSA-PSS identifier is included in the key listing
+  ${BINDIR}/certutil -d ${P_R_COPYDIR} -K -f ${R_PWFILE} | grep '^<[0-9 ]*> *rsaPss'
+  ret=$?
+  html_msg $ret 0 "Listing RSA-PSS private key imported from PKCS#12 file"
+  check_tmpfile
+
+  return $ret
 }
 
 ############################## tools_p12 ###############################
@@ -441,6 +466,9 @@ tools_p12()
   tools_p12_export_with_none_ciphers
   tools_p12_export_with_invalid_ciphers
   tools_p12_import_old_files
+  if [ "${TEST_MODE}" = "SHARED_DB" ] ; then
+    tools_p12_import_rsa_pss_private_key
+  fi
 }
 
 ############################## tools_sign ##############################

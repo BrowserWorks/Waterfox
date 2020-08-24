@@ -133,7 +133,7 @@ lg_CopyAttribute(CK_ATTRIBUTE *attr, CK_ATTRIBUTE_TYPE type,
         attr->ulValueLen = (CK_ULONG)-1;
         return CKR_BUFFER_TOO_SMALL;
     }
-    if (value != NULL) {
+    if (len > 0 && value != NULL) {
         PORT_Memcpy(attr->pValue, value, len);
     }
     attr->ulValueLen = len;
@@ -950,9 +950,9 @@ lg_FindECPrivateKeyAttribute(NSSLOWKEYPrivateKey *key, CK_ATTRIBUTE_TYPE type,
         case CKA_UNWRAP:
             return LG_CLONE_ATTR(attribute, type, lg_StaticFalseAttr);
         case CKA_VALUE:
-            return lg_CopyPrivAttrSigned(attribute, type,
-                                         key->u.ec.privateValue.data,
-                                         key->u.ec.privateValue.len, sdbpw);
+            return lg_CopyPrivAttribute(attribute, type,
+                                        key->u.ec.privateValue.data,
+                                        key->u.ec.privateValue.len, sdbpw);
         case CKA_EC_PARAMS:
             return lg_CopyAttributeSigned(attribute, type,
                                           key->u.ec.ecParams.DEREncoding.data,

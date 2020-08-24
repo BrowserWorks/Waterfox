@@ -9,7 +9,7 @@
 #include "cmslocal.h"
 
 #include "cert.h"
-#include "key.h"
+#include "keyhi.h"
 #include "secasn1.h"
 #include "secitem.h"
 #include "secoid.h"
@@ -87,8 +87,7 @@ nss_cms_decoder_notify(void *arg, PRBool before, void *dest, int depth)
 /* XXX error handling: need to set p7dcx->error */
 
 #ifdef CMSDEBUG
-    fprintf(stderr, "%6.6s, dest = 0x%08x, depth = %d\n", before ? "before"
-                                                                 : "after",
+    fprintf(stderr, "%6.6s, dest = 0x%08x, depth = %d\n", before ? "before" : "after",
             dest, depth);
 #endif
 

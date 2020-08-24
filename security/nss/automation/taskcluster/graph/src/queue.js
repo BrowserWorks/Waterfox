@@ -15,7 +15,7 @@ let tasks = new Map();
 let image_tasks = new Map();
 
 let queue = new taskcluster.Queue({
-  baseUrl: "http://taskcluster/queue/v1"
+  rootUrl: process.env.TASKCLUSTER_PROXY_URL,
 });
 
 function fromNow(hours) {
@@ -31,10 +31,11 @@ function parseRoutes(routes) {
   ];
 
   // Notify about failures (except on try).
-  if (process.env.TC_PROJECT != "nss-try") {
+  // Turned off, too noisy.
+  /*if (process.env.TC_PROJECT != "nss-try") {
     rv.push(`notify.email.${process.env.TC_OWNER}.on-failed`,
             `notify.email.${process.env.TC_OWNER}.on-exception`);
-  }
+  }*/
 
   return rv;
 }
@@ -132,9 +133,10 @@ function convertTask(def) {
   }
 
   return {
-    provisionerId: def.provisioner || "aws-provisioner-v1",
-    workerType: def.workerType || "hg-worker",
-    schedulerId: "task-graph-scheduler",
+    provisionerId: def.provisioner || `nss-${process.env.MOZ_SCM_LEVEL}`,
+    workerType: def.workerType || "linux",
+    schedulerId: process.env.TC_SCHEDULER_ID,
+    taskGroupId: process.env.TASK_ID,
 
     scopes,
     created: fromNow(0),

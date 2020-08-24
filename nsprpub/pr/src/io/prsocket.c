@@ -304,7 +304,25 @@ static PRStatus PR_CALLBACK SocketConnectContinue(
         if (err != 0) {
             _PR_MD_MAP_CONNECT_ERROR(err);
         } else {
+#if defined(_WIN64)
+            if (fd->secret->overlappedActive) {
+                PRInt32 rvSent;
+                if (GetOverlappedResult(osfd, &fd->secret->ol, &rvSent, FALSE) == FALSE) {
+                    err = WSAGetLastError();
+                    PR_LOG(_pr_io_lm, PR_LOG_MIN,
+                           ("SocketConnectContinue GetOverlappedResult failed %d\n", err));
+                    if (err != ERROR_IO_INCOMPLETE) {
+                        _PR_MD_MAP_CONNECT_ERROR(err);
+                        fd->secret->overlappedActive = PR_FALSE;
+                    }
+                }
+            }
+            if (err == 0) {
+                PR_SetError(PR_UNKNOWN_ERROR, 0);
+            }
+#else
             PR_SetError(PR_UNKNOWN_ERROR, 0);
+#endif
         }
         return PR_FAILURE;
     }
@@ -719,6 +737,56 @@ static PRStatus PR_CALLBACK SocketClose(PRFileDesc *fd)
 	}
 
 	if (fd->secret->state == _PR_FILEDESC_OPEN) {
+#if defined(_WIN64) && defined(WIN95)
+    /* TCP Fast Open on Windows must use ConnectEx, which uses overlapped
+     * input/output. Before closing such a socket we must cancelIO.
+     */
+    if (fd->secret->overlappedActive) {
+      PR_ASSERT(fd->secret->nonblocking);
+      if (CancelIo((HANDLE) fd->secret->md.osfd) == TRUE) {
+        PR_LOG(_pr_io_lm, PR_LOG_MIN,
+               ("SocketClose - CancelIo succeeded\n"));
+      } else {
+        DWORD err = WSAGetLastError();
+        PR_LOG(_pr_io_lm, PR_LOG_MIN,
+               ("SocketClose - CancelIo failed err=%x\n", err));
+      }
+
+      DWORD rvSent;
+      if (GetOverlappedResult((HANDLE)fd->secret->md.osfd, &fd->secret->ol, &rvSent, FALSE) == TRUE) {
+        fd->secret->overlappedActive = PR_FALSE;
+        PR_LOG(_pr_io_lm, PR_LOG_MIN,
+               ("SocketClose GetOverlappedResult succeeded\n"));
+      } else {
+        DWORD err = WSAGetLastError();
+        PR_LOG(_pr_io_lm, PR_LOG_MIN,
+               ("SocketClose GetOverlappedResult failed %d\n", err));
+        if (err != ERROR_IO_INCOMPLETE) {
+          _PR_MD_MAP_CONNECT_ERROR(err);
+          fd->secret->overlappedActive = PR_FALSE;
+        }
+      }
+    }
+
+    if (fd->secret->overlappedActive &&
+        _fd_waiting_for_overlapped_done_lock) {
+      // Put osfd into the list to be checked later.
+      PRFileDescList *forWaiting = PR_NEW(PRFileDescList);
+      if (!forWaiting) {
+        PR_SetError(PR_OUT_OF_MEMORY_ERROR, 0);
+        return PR_FAILURE;
+      }
+      forWaiting->fd = fd;
+
+      PR_Lock(_fd_waiting_for_overlapped_done_lock);
+      forWaiting->next = _fd_waiting_for_overlapped_done;
+      _fd_waiting_for_overlapped_done = forWaiting;
+      PR_Unlock(_fd_waiting_for_overlapped_done_lock);
+
+      return PR_SUCCESS;
+    }
+#endif
+
 		if (_PR_MD_CLOSE_SOCKET(fd->secret->md.osfd) < 0) {
 			return PR_FAILURE;
 		}
