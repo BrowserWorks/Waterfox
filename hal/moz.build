@@ -53,14 +53,6 @@ elif CONFIG['OS_TARGET'] == 'Linux':
         'linux/LinuxMemory.cpp',
         'linux/LinuxPower.cpp',
     ]
-    if CONFIG['MOZ_ENABLE_DBUS']:
-        UNIFIED_SOURCES += [
-            'linux/UPowerClient.cpp',
-        ]
-    else:
-        UNIFIED_SOURCES += [
-            'fallback/FallbackBattery.cpp',
-        ]
 elif CONFIG['OS_TARGET'] == 'WINNT':
     UNIFIED_SOURCES += [
         'fallback/FallbackMemory.cpp',
@@ -69,13 +61,8 @@ elif CONFIG['OS_TARGET'] == 'WINNT':
         'fallback/FallbackVibration.cpp',
         'windows/WindowsSensor.cpp',
     ]
-    # WindowsBattery.cpp cannot be built in unified mode because it relies on HalImpl.h.
-    SOURCES += [
-        'windows/WindowsBattery.cpp',
-    ]
 elif CONFIG['MOZ_WIDGET_TOOLKIT'] == 'cocoa':
     UNIFIED_SOURCES += [
-        'cocoa/CocoaBattery.cpp',
         'fallback/FallbackMemory.cpp',
         'fallback/FallbackPower.cpp',
         'fallback/FallbackScreenConfiguration.cpp',
@@ -89,17 +76,8 @@ elif CONFIG['OS_TARGET'] in ('OpenBSD', 'NetBSD', 'FreeBSD', 'DragonFly'):
         'fallback/FallbackSensor.cpp',
         'fallback/FallbackVibration.cpp',
     ]
-    if CONFIG['MOZ_ENABLE_DBUS']:
-        UNIFIED_SOURCES += [
-            'linux/UPowerClient.cpp',
-        ]
-    else:
-        UNIFIED_SOURCES += [
-            'fallback/FallbackBattery.cpp',
-        ]
 else:
     UNIFIED_SOURCES += [
-        'fallback/FallbackBattery.cpp',
         'fallback/FallbackMemory.cpp',
         'fallback/FallbackPower.cpp',
         'fallback/FallbackScreenConfiguration.cpp',

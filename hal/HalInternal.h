@@ -25,16 +25,6 @@ namespace mozilla {
 namespace MOZ_HAL_NAMESPACE {
 
 /**
- * Enables battery notifications from the backend.
- */
-void EnableBatteryNotifications();
-
-/**
- * Disables battery notifications from the backend.
- */
-void DisableBatteryNotifications();
-
-/**
  * Enables network notifications from the backend.
  */
 void EnableNetworkNotifications();
