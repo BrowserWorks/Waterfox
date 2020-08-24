@@ -131,13 +131,15 @@ XMLStylesheetProcessingInstruction::GetStyleSheetInfo(nsAString& aTitle,
                                                       nsAString& aType,
                                                       nsAString& aMedia,
                                                       bool* aIsScoped,
-                                                      bool* aIsAlternate)
+                                                      bool* aIsAlternate,
+                                                      bool* aIsExplicitlyEnabled)
 {
   aTitle.Truncate();
   aType.Truncate();
   aMedia.Truncate();
   *aIsScoped = false;
   *aIsAlternate = false;
+  *aIsExplicitlyEnabled = false;
 
   // xml-stylesheet PI is special only in prolog
   if (!nsContentUtils::InProlog(this)) {

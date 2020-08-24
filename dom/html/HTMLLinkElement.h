@@ -84,8 +84,8 @@ public:
   virtual bool HasDeferredDNSPrefetchRequest() override;
 
   // WebIDL
-  bool Disabled();
-  void SetDisabled(bool aDisabled);
+  bool Disabled() const;
+  void SetDisabled(bool aDisabled, ErrorResult& aRv);
   // XPCOM GetHref is fine.
   void SetHref(const nsAString& aHref, ErrorResult& aRv)
   {
@@ -185,9 +185,16 @@ protected:
                                  nsAString& aType,
                                  nsAString& aMedia,
                                  bool* aIsScoped,
-                                 bool* aIsAlternate) override;
-protected:
+                                 bool* aIsAlternate,
+                                 bool* aIsExplicitlyEnabled) override;
   RefPtr<nsDOMTokenList> mRelList;
+
+  // The "explicitly enabled" flag. This flag is set whenever the `disabled`
+  // attribute is explicitly unset, and makes alternate stylesheets not be
+  // disabled by default anymore.
+  //
+  // See https://github.com/whatwg/html/issues/3840#issuecomment-481034206.
+  bool mExplicitlyEnabled = false;
 };
 
 } // namespace dom

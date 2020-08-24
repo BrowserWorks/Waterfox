@@ -794,13 +794,14 @@ nsContentSink::ProcessStyleLink(nsIContent* aElement,
   // If this is a fragment parser, we don't want to observe.
   // We don't support CORS for processing instructions
   bool isAlternate;
+  bool isExplicitlyEnabled;
   rv = mCSSLoader->LoadStyleLink(aElement, url, aTitle, aMedia, aAlternate,
                                  CORS_NONE, mDocument->GetReferrerPolicy(),
                                  integrity, mRunsToCompletion ? nullptr : this,
-                                 &isAlternate);
+                                 &isAlternate, &isExplicitlyEnabled);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  if (!isAlternate && !mRunsToCompletion) {
+  if ((!isAlternate || isExplicitlyEnabled) && !mRunsToCompletion) {
     ++mPendingSheetCount;
     mScriptLoader->AddParserBlockingScriptExecutionBlocker();
   }

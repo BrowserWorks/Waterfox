@@ -507,8 +507,9 @@ nsStyleLinkElement::DoUpdateStyleSheet(nsIDocument* aOldDocument,
   nsAutoString title, type, media;
   bool isScoped;
   bool isAlternate;
+  bool isExplicitlyEnabled;
 
-  GetStyleSheetInfo(title, type, media, &isScoped, &isAlternate);
+  GetStyleSheetInfo(title, type, media, &isScoped, &isAlternate, &isExplicitlyEnabled);
 
   if (!type.LowerCaseEqualsLiteral("text/css")) {
     return NS_OK;
@@ -539,7 +540,8 @@ nsStyleLinkElement::DoUpdateStyleSheet(nsIDocument* aOldDocument,
     // Parse the style sheet.
     rv = doc->CSSLoader()->
       LoadInlineStyle(thisContent, text, mLineNumber, title, media,
-                      scopeElement, aObserver, &doneLoading, &isAlternate);
+                      scopeElement, aObserver, &doneLoading, &isAlternate,
+                      &isExplicitlyEnabled);
   }
   else {
     nsAutoString integrity;
@@ -566,13 +568,14 @@ nsStyleLinkElement::DoUpdateStyleSheet(nsIDocument* aOldDocument,
     rv = doc->CSSLoader()->
       LoadStyleLink(thisContent, clonedURI, title, media, isAlternate,
                     GetCORSMode(), referrerPolicy, integrity,
-                    aObserver, &isAlternate);
+                    aObserver, &isAlternate, &isExplicitlyEnabled);
     if (NS_FAILED(rv)) {
       // Don't propagate LoadStyleLink() errors further than this, since some
       // consumers (e.g. nsXMLContentSink) will completely abort on innocuous
       // things like a stylesheet load being blocked by the security system.
       doneLoading = true;
       isAlternate = false;
+      isExplicitlyEnabled = false;
       rv = NS_OK;
     }
   }
