@@ -1279,6 +1279,14 @@ pref("dom.storage.testing", false);
 
 pref("dom.send_after_paint_to_content", false);
 
+// Whether the disabled attribute in HTMLLinkElement disables the sheet loading
+// altogether, or forwards to the inner stylesheet method without attribute
+// reflection.
+//
+// Historical behavior is the second, the first is being discussed at:
+// https://github.com/whatwg/html/issues/3840
+pref("dom.link.disabled_attribute.enabled", true);
+
 // Timeout clamp in ms for timeouts we clamp
 pref("dom.min_timeout_value", 4);
 // And for background windows
@@ -5544,6 +5552,9 @@ pref("intl.allow-insecure-text-input", false);
 
 // Enable meta-viewport support in remote APZ-enabled frames.
 pref("dom.meta-viewport.enabled", false);
+
+// Disable <meta http-equiv=set-cookie> support. See BMO 1457503.
+pref("dom.metaElement.setCookie.allowed", false);
 
 // Search service settings
 pref("browser.search.log", false);

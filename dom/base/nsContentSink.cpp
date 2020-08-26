@@ -309,7 +309,8 @@ nsContentSink::ProcessHeaderData(nsIAtom* aHeader, const nsAString& aValue,
 
   mDocument->SetHeaderData(aHeader, aValue);
 
-  if (aHeader == nsGkAtoms::setcookie) {
+  if (aHeader == nsGkAtoms::setcookie &&
+      Preferences::GetBool("dom.metaElement.setCookie.allowed", true)) {
     // Note: Necko already handles cookies set via the channel.  We can't just
     // call SetCookie on the channel because we want to do some security checks
     // here.
@@ -793,13 +794,14 @@ nsContentSink::ProcessStyleLink(nsIContent* aElement,
   // If this is a fragment parser, we don't want to observe.
   // We don't support CORS for processing instructions
   bool isAlternate;
+  bool isExplicitlyEnabled;
   rv = mCSSLoader->LoadStyleLink(aElement, url, aTitle, aMedia, aAlternate,
                                  CORS_NONE, mDocument->GetReferrerPolicy(),
                                  integrity, mRunsToCompletion ? nullptr : this,
-                                 &isAlternate);
+                                 &isAlternate, &isExplicitlyEnabled);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  if (!isAlternate && !mRunsToCompletion) {
+  if ((!isAlternate || isExplicitlyEnabled) && !mRunsToCompletion) {
     ++mPendingSheetCount;
     mScriptLoader->AddParserBlockingScriptExecutionBlocker();
   }

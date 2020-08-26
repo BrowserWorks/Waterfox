@@ -82,7 +82,8 @@ protected:
                          nsAString& aType,
                          nsAString& aMedia,
                          bool* aIsScoped,
-                         bool* aIsAlternate) override;
+                         bool* aIsAlternate,
+                         bool* aIsExplicitlyEnabled) override;
   virtual nsGenericDOMDataNode* CloneDataNode(mozilla::dom::NodeInfo *aNodeInfo,
                                               bool aCloneText) const override;
 };

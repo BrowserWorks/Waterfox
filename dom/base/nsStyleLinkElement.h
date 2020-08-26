@@ -98,7 +98,8 @@ protected:
                                  nsAString& aType,
                                  nsAString& aMedia,
                                  bool* aIsScoped,
-                                 bool* aIsAlternate) = 0;
+                                 bool* aIsAlternate,
+                                 bool* aIsExplicitlyEnabled) = 0;
 
   virtual mozilla::CORSMode GetCORSMode() const
   {

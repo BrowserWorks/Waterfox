@@ -234,6 +234,8 @@ public:
    * @param [out] aCompleted whether parsing of the sheet completed.
    * @param [out] aIsAlternate whether the stylesheet ended up being an
    *        alternate sheet.
+   * @param [out] aIsExplicitlyEnabled whether the stylesheet was explicitly
+   *        enabled by having the disabled attribute removed.
    */
   nsresult LoadInlineStyle(nsIContent* aElement,
                            const nsAString& aBuffer,
@@ -243,7 +245,8 @@ public:
                            mozilla::dom::Element* aScopeElement,
                            nsICSSLoaderObserver* aObserver,
                            bool* aCompleted,
-                           bool* aIsAlternate);
+                           bool* aIsAlternate,
+                           bool* aIsExplicitlyEnabled);
 
   /**
    * Load a linked (document) stylesheet.  If a successful result is returned,
@@ -264,6 +267,8 @@ public:
    * @param [out] aIsAlternate whether the stylesheet actually ended up beinga
    *        an alternate sheet.  Note that this need not match
    *        aHasAlternateRel.
+   * @param [out] aIsExplicitlyEnabled whether the stylesheet was explicitly
+   *        enabled by having the disabled attribute removed.
    */
   nsresult LoadStyleLink(nsIContent* aElement,
                          nsIURI* aURL,
@@ -274,7 +279,8 @@ public:
                          ReferrerPolicy aReferrerPolicy,
                          const nsAString& aIntegrity,
                          nsICSSLoaderObserver* aObserver,
-                         bool* aIsAlternate);
+                         bool* aIsAlternate,
+                         bool* aIsExplicitlyEnabled);
 
   /**
    * Load a child (@import-ed) style sheet.  In addition to loading the sheet,
@@ -508,7 +514,8 @@ private:
                     const nsAString& aMediaString,
                     dom::MediaList* aMediaList,
                     dom::Element* aScopeElement,
-                    bool aIsAlternate);
+                    bool aIsAlternate,
+                    bool isExplicitlyEnabled);
 
   nsresult InsertSheetInDoc(StyleSheet* aSheet,
                             nsIContent* aLinkingContent,
