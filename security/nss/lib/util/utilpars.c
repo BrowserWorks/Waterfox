@@ -1201,7 +1201,7 @@ _NSSUTIL_EvaluateConfigDir(const char *configdir,
     dbType = NSS_DB_TYPE_SQL;
 #else
     dbType = NSS_DB_TYPE_LEGACY;
-#endifs
+#endif
     if (configdir == NULL) {
         checkEnvDefaultDB = PR_TRUE;
     } else if (PORT_Strncmp(configdir, MULTIACCESS, sizeof(MULTIACCESS) - 1) == 0) {
