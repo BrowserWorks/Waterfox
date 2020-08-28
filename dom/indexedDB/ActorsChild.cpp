@@ -3208,6 +3208,8 @@ void BackgroundCursorChild<CursorType>::DiscardCachedResponses(
       discardedCount, mCachedResponses.size());
 }
 
+BackgroundCursorChildBase::~BackgroundCursorChildBase() = default;
+
 void BackgroundCursorChildBase::HandleResponse(nsresult aResponse) {
   AssertIsOnOwningThread();
   MOZ_ASSERT(NS_FAILED(aResponse));
