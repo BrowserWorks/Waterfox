@@ -17,6 +17,8 @@ BROTLI_INTERNAL void FN(BrotliCompareAndPushToQueue)(
     size_t* num_pairs) CODE({
   BROTLI_BOOL is_good_pair = BROTLI_FALSE;
   HistogramPair p;
+  p.idx1 = p.idx2 = 0;
+  p.cost_diff = p.cost_combo = 0;
   if (idx1 == idx2) {
     return;
   }
@@ -213,7 +215,7 @@ BROTLI_INTERNAL size_t FN(BrotliHistogramReindex)(MemoryManager* m,
   uint32_t next_index;
   HistogramType* tmp;
   size_t i;
-  if (BROTLI_IS_OOM(m)) return 0;
+  if (BROTLI_IS_OOM(m) || BROTLI_IS_NULL(new_index)) return 0;
   for (i = 0; i < length; ++i) {
       new_index[i] = kInvalidIndex;
   }
@@ -227,7 +229,7 @@ BROTLI_INTERNAL size_t FN(BrotliHistogramReindex)(MemoryManager* m,
   /* TODO: by using idea of "cycle-sort" we can avoid allocation of
      tmp and reduce the number of copying by the factor of 2. */
   tmp = BROTLI_ALLOC(m, HistogramType, next_index);
-  if (BROTLI_IS_OOM(m)) return 0;
+  if (BROTLI_IS_OOM(m) || BROTLI_IS_NULL(tmp)) return 0;
   next_index = 0;
   for (i = 0; i < length; ++i) {
     if (new_index[symbols[i]] == next_index) {
@@ -257,7 +259,10 @@ BROTLI_INTERNAL void FN(BrotliClusterHistograms)(
   HistogramPair* pairs = BROTLI_ALLOC(m, HistogramPair, pairs_capacity + 1);
   size_t i;
 
-  if (BROTLI_IS_OOM(m)) return;
+  if (BROTLI_IS_OOM(m) || BROTLI_IS_NULL(cluster_size) ||
+      BROTLI_IS_NULL(clusters) || BROTLI_IS_NULL(pairs)) {
+    return;
+  }
 
   for (i = 0; i < in_size; ++i) {
     cluster_size[i] = 1;

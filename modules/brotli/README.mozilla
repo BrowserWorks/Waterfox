@@ -1,9 +1,6 @@
 This is the Brotli data compression library from
 https://github.com/google/brotli.
 
-Currently, we import only the Brotli decoder (the /dec/ subdirectory), not the
-encoder (/enc/ subdirectory).
-
 Upstream code can be viewed at
   https://github.com/google/brotli/tree/master/dec
 
@@ -14,4 +11,4 @@ The in-tree copy is updated by running
   sh update.sh
 from within the modules/brotli directory.
 
-Current version: [commit 46c1a881b41bb638c76247558aa04b1591af3aa7].
+Current version: [commit e61745a6b7add50d380cfd7d3883dd6c62fc2c71].
