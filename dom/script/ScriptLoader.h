@@ -348,6 +348,7 @@ public:
   virtual ~ScriptLoader();
 
   ScriptLoadRequest* CreateLoadRequest(ScriptKind aKind,
+                                       nsIURI* aURI,
                                        nsIScriptElement* aElement,
                                        uint32_t aVersion,
                                        mozilla::CORSMode aCORSMode,
@@ -500,7 +501,7 @@ public:
   void StartFetchingModuleDependencies(ModuleLoadRequest* aRequest);
 
   RefPtr<mozilla::GenericPromise>
-  StartFetchingModuleAndDependencies(ModuleLoadRequest* aRequest, nsIURI* aURI);
+  StartFetchingModuleAndDependencies(ModuleLoadRequest* aParent, nsIURI* aURI);
 
   nsIDocument* mDocument;                   // [WEAK]
   nsCOMArray<nsIScriptLoaderObserver> mObservers;

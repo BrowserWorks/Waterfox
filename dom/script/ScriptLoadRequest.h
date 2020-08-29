@@ -47,6 +47,7 @@ protected:
 
 public:
   ScriptLoadRequest(ScriptKind aKind,
+                    nsIURI* aURI,
                     nsIScriptElement* aElement,
                     uint32_t aVersion,
                     mozilla::CORSMode aCORSMode,
@@ -181,7 +182,7 @@ public:
   uint32_t mBytecodeOffset; // Offset of the bytecode in mScriptBytecode
 
   uint32_t mJSVersion;
-  nsCOMPtr<nsIURI> mURI;
+  const nsCOMPtr<nsIURI> mURI;
   nsCOMPtr<nsIPrincipal> mOriginPrincipal;
   nsAutoCString mURL;     // Keep the URI's filename alive during off thread parsing.
   int32_t mLineNo;
