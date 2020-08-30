@@ -170,9 +170,9 @@ already_AddRefed<VideoData> DAV1DDecoder::ConstructImage(
     const Dav1dPicture& aPicture) {
   VideoData::YCbCrBuffer b;
   if (aPicture.p.bpc == 10) {
-    b.mColorDepth = ColorDepth::COLOR_10;
+    b.mBitDepth = 10;
   } else if (aPicture.p.bpc == 12) {
-    b.mColorDepth = ColorDepth::COLOR_12;
+    b.mBitDepth = 12;
   }
 
   // On every other case use the default (BT601).
