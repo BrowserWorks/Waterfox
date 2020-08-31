@@ -87,11 +87,6 @@ PER_PROJECT_PARAMETERS = {
         'release_type': 'release',
     },
 
-    'mozilla-esr68': {
-        'target_tasks_method': 'mozilla_esr68_tasks',
-        'release_type': 'esr68',
-    },
-
     'mozilla-esr78': {
         'target_tasks_method': 'mozilla_esr78_tasks',
         'release_type': 'esr78',
@@ -105,11 +100,6 @@ PER_PROJECT_PARAMETERS = {
     'comm-beta': {
         'target_tasks_method': 'mozilla_beta_tasks',
         'release_type': 'beta',
-    },
-
-    'comm-esr68': {
-        'target_tasks_method': 'mozilla_esr68_tasks',
-        'release_type': 'release',
     },
 
     'comm-esr78': {

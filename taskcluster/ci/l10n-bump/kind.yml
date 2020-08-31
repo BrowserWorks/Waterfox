@@ -28,15 +28,6 @@ job-defaults:
                 default: https://hg.mozilla.org/mozilla-central
         l10n-bump-info:
             by-release-type:
-                esr68:
-                    name: Fennec l10n changesets
-                    path: mobile/locales/l10n-changesets.json
-                    version-path: mobile/android/config/version-files/release/version.txt
-                    revision-url: "https://l10n.mozilla.org/shipping/l10n-changesets?av=fennec%(COMBINED_MAJOR_VERSION)s"
-                    platform-configs: [{
-                        "platforms": ["android-multilocale"],
-                        "path": "mobile/android/locales/maemo-locales",
-                    }]
                 beta:
                     name: Firefox l10n changesets
                     path: browser/locales/l10n-changesets.json
