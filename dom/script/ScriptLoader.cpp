@@ -1091,17 +1091,13 @@ ScriptLoader::StartLoad(ScriptLoadRequest* aRequest)
     }
   }
 
-  nsIScriptElement* script = aRequest->mElement;
-  bool async = script ? script->GetScriptAsync() : aRequest->mPreloadAsAsync;
-  bool defer = script ? script->GetScriptDeferred() : aRequest->mPreloadAsDefer;
-
   nsCOMPtr<nsIClassOfService> cos(do_QueryInterface(channel));
   if (cos) {
-    if (aRequest->mScriptFromHead && !async && !defer) {
+    if (aRequest->mScriptFromHead && aRequest->IsBlockingScript()) {
       // synchronous head scripts block loading of most other non js/css
       // content such as images
       cos->AddClassFlags(nsIClassOfService::Leader);
-    } else if (!defer) {
+    } else if (!aRequest->IsDeferredScript()) {
       // other scripts are neither blocked nor prioritized unless marked deferred
       cos->AddClassFlags(nsIClassOfService::Unblocked);
     }
@@ -1360,8 +1356,15 @@ ScriptLoader::ProcessScriptElement(nsIScriptElement* aElement)
       }
     }
 
-    if (!request) {
-      // no usable preload
+    if (request) {
+      // Use a preload request.
+
+      // It's possible these attributes changed since we started the preload so
+      // update them here.
+      request->SetScriptMode(aElement->GetScriptDeferred(),
+                             aElement->GetScriptAsync());
+    } else {
+      // No usable preload found.
 
       SRIMetadata sriMetadata;
       {
@@ -1385,6 +1388,8 @@ ScriptLoader::ProcessScriptElement(nsIScriptElement* aElement)
                                   version, ourCORSMode, sriMetadata,
                                   ourRefPolicy);
       request->mIsInline = false;
+      request->SetScriptMode(aElement->GetScriptDeferred(),
+                             aElement->GetScriptAsync());
       // keep request->mScriptFromHead to false so we don't treat non preloaded
       // scripts as blockers for full page load. See bug 792438.
 
@@ -1407,7 +1412,7 @@ ScriptLoader::ProcessScriptElement(nsIScriptElement* aElement)
 
     request->mJSVersion = version;
 
-    if (aElement->GetScriptAsync()) {
+    if (request->IsAsyncScript()) {
       AddAsyncRequest(request);
       if (request->IsReadyToRun()) {
         // The script is available already. Run it ASAP when the event
@@ -1434,7 +1439,7 @@ ScriptLoader::ProcessScriptElement(nsIScriptElement* aElement)
     }
     // we now have a parser-inserted request that may or may not be still
     // loading
-    if (aElement->GetScriptDeferred() || request->IsModuleRequest()) {
+    if (request->IsDeferredScript()) {
       // We don't want to run this yet.
       // If we come here, the script is a parser-created script and it has
       // the defer attribute but not the async attribute. Since a
@@ -3129,8 +3134,7 @@ ScriptLoader::PreloadURI(nsIURI* aURI, const nsAString& aCharset,
                       aReferrerPolicy);
   request->mIsInline = false;
   request->mScriptFromHead = aScriptFromHead;
-  request->mPreloadAsAsync = aAsync;
-  request->mPreloadAsDefer = aDefer;
+  request->SetScriptMode(aDefer, aAsync);
 
   nsresult rv = StartLoad(request);
   if (NS_FAILED(rv)) {
@@ -3145,6 +3149,9 @@ ScriptLoader::PreloadURI(nsIURI* aURI, const nsAString& aCharset,
 void
 ScriptLoader::AddDeferRequest(ScriptLoadRequest* aRequest)
 {
+  MOZ_ASSERT(aRequest->IsDeferredScript());
+  MOZ_ASSERT(!aRequest->mInDeferList && !aRequest->mInAsyncList);
+
   aRequest->mInDeferList = true;
   mDeferRequests.AppendElement(aRequest);
   if (mDeferEnabled && aRequest == mDeferRequests.getFirst() &&
@@ -3158,6 +3165,9 @@ ScriptLoader::AddDeferRequest(ScriptLoadRequest* aRequest)
 void
 ScriptLoader::AddAsyncRequest(ScriptLoadRequest* aRequest)
 {
+  MOZ_ASSERT(aRequest->IsAsyncScript());
+  MOZ_ASSERT(!aRequest->mInDeferList && !aRequest->mInAsyncList);
+
   aRequest->mInAsyncList = true;
   if (aRequest->IsReadyToRun()) {
     mLoadedAsyncRequests.AppendElement(aRequest);
