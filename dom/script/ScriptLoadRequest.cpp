@@ -43,7 +43,7 @@ ScriptLoadRequest::ScriptLoadRequest(ScriptKind aKind,
                                      nsIScriptElement* aElement,
                                      uint32_t aVersion,
                                      mozilla::CORSMode aCORSMode,
-                                     const mozilla::dom::SRIMetadata& aIntegrity,
+                                     const SRIMetadata& aIntegrity,
                                      nsIURI* aReferrer,
                                      mozilla::net::ReferrerPolicy aReferrerPolicy)
   : mKind(aKind)

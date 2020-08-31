@@ -354,7 +354,7 @@ public:
                                        nsIScriptElement* aElement,
                                        uint32_t aVersion,
                                        mozilla::CORSMode aCORSMode,
-                                       const mozilla::dom::SRIMetadata& aIntegrity,
+                                       const SRIMetadata& aIntegrity,
                                        mozilla::net::ReferrerPolicy aReferrerPolicy);
 
   /**

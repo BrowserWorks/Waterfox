@@ -51,7 +51,7 @@ public:
                     nsIScriptElement* aElement,
                     uint32_t aVersion,
                     mozilla::CORSMode aCORSMode,
-                    const mozilla::dom::SRIMetadata &aIntegrity,
+                    const SRIMetadata &aIntegrity,
                     nsIURI* aReferrer,
                     mozilla::net::ReferrerPolicy aReferrerPolicy);
 
@@ -189,7 +189,7 @@ public:
   nsAutoCString mURL;     // Keep the URI's filename alive during off thread parsing.
   int32_t mLineNo;
   const mozilla::CORSMode mCORSMode;
-  const mozilla::dom::SRIMetadata mIntegrity;
+  const SRIMetadata mIntegrity;
   const nsCOMPtr<nsIURI> mReferrer;
   const mozilla::net::ReferrerPolicy mReferrerPolicy;
 
