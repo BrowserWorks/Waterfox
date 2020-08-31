@@ -49,6 +49,8 @@ public:
                     uint32_t aVersion,
                     CORSMode aCORSMode,
                     const SRIMetadata& aIntegrity,
+                    nsIURI* aReferrer,
+                    mozilla::net::ReferrerPolicy,
                     ScriptLoader* aLoader);
 
   // Create a module load request for an imported module.

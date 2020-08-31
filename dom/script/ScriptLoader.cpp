@@ -1080,7 +1080,7 @@ ScriptLoader::StartLoad(ScriptLoadRequest* aRequest)
                                        NS_LITERAL_CSTRING("*/*"),
                                        false);
     MOZ_ASSERT(NS_SUCCEEDED(rv));
-    rv = httpChannel->SetReferrerWithPolicy(mDocument->GetDocumentURI(),
+    rv = httpChannel->SetReferrerWithPolicy(aRequest->mReferrer,
                                             aRequest->mReferrerPolicy);
     MOZ_ASSERT(NS_SUCCEEDED(rv));
 
@@ -1213,16 +1213,22 @@ ScriptLoadRequest*
 ScriptLoader::CreateLoadRequest(ScriptKind aKind,
                                 nsIURI* aURI,
                                 nsIScriptElement* aElement,
-                                uint32_t aVersion, CORSMode aCORSMode,
-                                const SRIMetadata& aIntegrity)
+                                uint32_t aVersion,
+                                CORSMode aCORSMode,
+                                const SRIMetadata& aIntegrity,
+                                mozilla::net::ReferrerPolicy aReferrerPolicy)
 {
+  nsIURI* referrer = mDocument->GetDocumentURI();
+
   if (aKind == ScriptKind::Classic) {
-    return new ScriptLoadRequest(aKind, aURI, aElement, aVersion, aCORSMode,
-                                 aIntegrity);
+    return new ScriptLoadRequest(aKind, aURI, aElement,
+                                aVersion, aCORSMode, aIntegrity,
+                                referrer, aReferrerPolicy);
   }
 
   MOZ_ASSERT(aKind == ScriptKind::Module);
-  return new ModuleLoadRequest(aURI, aElement, aVersion, aCORSMode, aIntegrity, this);
+  return new ModuleLoadRequest(aURI, aElement, aVersion, aCORSMode,
+                               aIntegrity, referrer, aReferrerPolicy, this);
 }
 
 bool
@@ -1288,6 +1294,7 @@ ScriptLoader::ProcessScriptElement(nsIScriptElement* aElement)
   // Step 15. and later in the HTML5 spec
   nsresult rv = NS_OK;
   RefPtr<ScriptLoadRequest> request;
+  mozilla::net::ReferrerPolicy ourRefPolicy = mDocument->GetReferrerPolicy();
   if (aElement->GetScriptExternal()) {
     // external script
     nsCOMPtr<nsIURI> scriptURI = aElement->GetScriptURI();
@@ -1301,7 +1308,6 @@ ScriptLoader::ProcessScriptElement(nsIScriptElement* aElement)
     }
 
     // Double-check that the preload matches what we're asked to load now.
-    mozilla::net::ReferrerPolicy ourRefPolicy = mDocument->GetReferrerPolicy();
     CORSMode ourCORSMode = aElement->GetCORSMode();
     nsTArray<PreloadInfo>::index_type i =
       mPreloads.IndexOf(scriptURI.get(), 0, PreloadURIComparator());
@@ -1355,10 +1361,10 @@ ScriptLoader::ProcessScriptElement(nsIScriptElement* aElement)
         }
       }
 
-      request = CreateLoadRequest(scriptKind, scriptURI, aElement, version, ourCORSMode,
-                                  sriMetadata);
+      request = CreateLoadRequest(scriptKind, scriptURI, aElement,
+                                  version, ourCORSMode, sriMetadata,
+                                  ourRefPolicy);
       request->mIsInline = false;
-      request->mReferrerPolicy = ourRefPolicy;
       // keep request->mScriptFromHead to false so we don't treat non preloaded
       // scripts as blockers for full page load. See bug 792438.
 
@@ -1500,9 +1506,10 @@ ScriptLoader::ProcessScriptElement(nsIScriptElement* aElement)
     return false;
   }
 
-  // Inline scripts ignore ther CORS mode and are always CORS_NONE
+  // Inline scripts ignore ther CORS mode and are always CORS_NONE.
   request = CreateLoadRequest(scriptKind, mDocument->GetDocumentURI(), aElement, version, CORS_NONE,
-                              SRIMetadata()); // SRI doesn't apply
+                              SRIMetadata(), // SRI doesn't apply
+                              ourRefPolicy);
   request->mJSVersion = version;
   request->mIsInline = true;
   request->mLineNo = aElement->GetScriptLineNumber();
@@ -3081,9 +3088,9 @@ ScriptLoader::PreloadURI(nsIURI* aURI, const nsAString& aCharset,
 
   RefPtr<ScriptLoadRequest> request =
     CreateLoadRequest(ScriptKind::Classic, aURI, nullptr, 0,
-                      Element::StringToCORSMode(aCrossOrigin), sriMetadata);
+                      Element::StringToCORSMode(aCrossOrigin), sriMetadata,
+                      aReferrerPolicy);
   request->mIsInline = false;
-  request->mReferrerPolicy = aReferrerPolicy;
   request->mScriptFromHead = aScriptFromHead;
   request->mPreloadAsAsync = aAsync;
   request->mPreloadAsDefer = aDefer;

@@ -51,7 +51,9 @@ public:
                     nsIScriptElement* aElement,
                     uint32_t aVersion,
                     mozilla::CORSMode aCORSMode,
-                    const mozilla::dom::SRIMetadata &aIntegrity);
+                    const mozilla::dom::SRIMetadata &aIntegrity,
+                    nsIURI* aReferrer,
+                    mozilla::net::ReferrerPolicy aReferrerPolicy);
 
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
   NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_CLASS(ScriptLoadRequest)
@@ -188,7 +190,8 @@ public:
   int32_t mLineNo;
   const mozilla::CORSMode mCORSMode;
   const mozilla::dom::SRIMetadata mIntegrity;
-  mozilla::net::ReferrerPolicy mReferrerPolicy;
+  const nsCOMPtr<nsIURI> mReferrer;
+  const mozilla::net::ReferrerPolicy mReferrerPolicy;
 
   // Holds the Cache information, which is used to register the bytecode
   // on the cache entry, such that we can load it the next time.

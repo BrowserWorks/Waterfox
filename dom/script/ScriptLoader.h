@@ -352,7 +352,8 @@ public:
                                        nsIScriptElement* aElement,
                                        uint32_t aVersion,
                                        mozilla::CORSMode aCORSMode,
-                                       const mozilla::dom::SRIMetadata& aIntegrity);
+                                       const mozilla::dom::SRIMetadata& aIntegrity,
+                                       mozilla::net::ReferrerPolicy aReferrerPolicy);
 
   /**
    * Unblocks the creator parser of the parser-blocking scripts.
