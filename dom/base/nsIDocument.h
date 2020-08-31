@@ -3029,6 +3029,8 @@ public:
     return mIsWebComponentsEnabled;
   }
 
+  bool ModuleScriptsEnabled();
+
 protected:
   bool GetUseCounter(mozilla::UseCounter aUseCounter)
   {
