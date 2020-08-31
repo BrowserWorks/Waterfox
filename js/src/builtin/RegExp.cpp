@@ -1696,16 +1696,14 @@ NeedTwoBytes(HandleLinearString string,
     if (matched->hasTwoByteChars())
         return true;
 
-    for (size_t i = 0, len = captures.length(); i < len; i++) {
-        const Value& capture = captures[i];
+    for (const Value& capture : captures) {
         if (capture.isUndefined())
             continue;
         if (capture.toString()->hasTwoByteChars())
             return true;
     }
 
-    for (size_t i = 0, len = namedCaptures.length(); i < len; i++) {
-        const Value& capture = namedCaptures[i];
+    for (const Value& capture : namedCaptures) {
         if (capture.isUndefined()) {
             continue;
         }
