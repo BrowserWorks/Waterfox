@@ -48,6 +48,7 @@ js::CreateRegExpMatchResult(JSContext* cx,
                             const MatchPairs& matches,
                             MutableHandleValue rval)
 {
+    MOZ_ASSERT(re);
     MOZ_ASSERT(input);
 
     /*
@@ -1089,8 +1090,7 @@ RegExpMatcherImpl(JSContext* cx, HandleObject regexp, HandleString string, int32
     }
 
     /* Steps 16-25 */
-    Handle<RegExpObject*> reobj = regexp.as<RegExpObject>();
-    RootedRegExpShared shared(cx, RegExpObject::getShared(cx, reobj));
+    RootedRegExpShared shared(cx, regexp->as<RegExpObject>().getShared());
     return CreateRegExpMatchResult(cx, shared, string, matches, rval);
 }
 
@@ -1131,8 +1131,7 @@ js::RegExpMatcherRaw(JSContext* cx, HandleObject regexp, HandleString input,
     // The MatchPairs will always be passed in, but RegExp execution was
     // successful only if the pairs have actually been filled in.
     if (maybeMatches && maybeMatches->pairsRaw()[0] >= 0) {
-        Handle<RegExpObject*> reobj = regexp.as<RegExpObject>();
-        RootedRegExpShared shared(cx, RegExpObject::getShared(cx, reobj));
+        RootedRegExpShared shared(cx, regexp->as<RegExpObject>().getShared());
         return CreateRegExpMatchResult(cx, shared, input, *maybeMatches, output);
     }
 
