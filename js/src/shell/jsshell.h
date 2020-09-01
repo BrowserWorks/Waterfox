@@ -210,6 +210,8 @@ struct ShellContext
 
     JS::UniqueChars moduleLoadPath;
     UniquePtr<MarkBitObservers> markObservers;
+
+    JS::PersistentRootedFunction moduleResolveHook;
 };
 
 extern ShellContext*

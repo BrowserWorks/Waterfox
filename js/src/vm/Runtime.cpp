@@ -178,7 +178,8 @@ JSRuntime::JSRuntime(JSRuntime* parentRuntime)
     lastAnimationTime(0),
     performanceMonitoring_(thisFromCtor()),
     stackFormat_(parentRuntime ? js::StackFormat::Default
-                               : js::StackFormat::SpiderMonkey)
+                               : js::StackFormat::SpiderMonkey),
+    moduleResolveHook()
 {
     liveRuntimesCount++;
 
