@@ -418,7 +418,8 @@ void ScriptLoader::ClearModuleMap() {
   mFetchedModules.Clear();
 }
 
-nsresult ScriptLoader::ProcessFetchedModuleSource(ModuleLoadRequest* aRequest) {
+nsresult
+ScriptLoader::ProcessFetchedModuleSource(ModuleLoadRequest* aRequest) {
   MOZ_ASSERT(!aRequest->mModuleScript);
 
   nsresult rv = CreateModuleScript(aRequest);
@@ -1289,52 +1290,38 @@ ScriptLoader::ProcessScriptElement(nsIScriptElement* aElement)
   }
 
   // Step 15. and later in the HTML5 spec
-  nsresult rv = NS_OK;
-  RefPtr<ScriptLoadRequest> request;
-  mozilla::net::ReferrerPolicy ourRefPolicy = mDocument->GetReferrerPolicy();
   if (aElement->GetScriptExternal()) {
-    // external script
-    nsCOMPtr<nsIURI> scriptURI = aElement->GetScriptURI();
-    if (!scriptURI) {
-      // Asynchronously report the failure to create a URI object
-      NS_DispatchToCurrentThread(
-        NewRunnableMethod("nsIScriptElement::FireErrorEvent",
-                          aElement,
-                          &nsIScriptElement::FireErrorEvent));
+    return ProcessExternalScript(aElement, scriptKind, type, scriptContent);
+  }
+
+  return ProcessInlineScript(aElement, scriptKind);
+}
+
+bool
+ScriptLoader::ProcessExternalScript(nsIScriptElement* aElement,
+                                    ScriptKind aScriptKind,
+                                    nsAutoString aTypeAttr,
+                                    nsIContent* aScriptContent)
+{
+  nsCOMPtr<nsIURI> scriptURI = aElement->GetScriptURI();
+  JSVersion version = JSVERSION_DEFAULT;
+  if (!scriptURI) {
+    // Asynchronously report the failure to create a URI object
+    NS_DispatchToCurrentThread(
+      NewRunnableMethod("nsIScriptElement::FireErrorEvent",
+                        aElement,
+                        &nsIScriptElement::FireErrorEvent));
       return false;
     }
 
-    // Double-check that the preload matches what we're asked to load now.
-    CORSMode ourCORSMode = aElement->GetCORSMode();
-    nsTArray<PreloadInfo>::index_type i =
-      mPreloads.IndexOf(scriptURI.get(), 0, PreloadURIComparator());
-    if (i != nsTArray<PreloadInfo>::NoIndex) {
-      // preloaded
-      // note that a script-inserted script can steal a preload!
-      request = mPreloads[i].mRequest;
-      request->mElement = aElement;
-      nsString preloadCharset(mPreloads[i].mCharset);
-      mPreloads.RemoveElementAt(i);
+    RefPtr<ScriptLoadRequest> request = LookupPreloadRequest(aElement, aScriptKind);
 
-      // Double-check that the charset the preload used is the same as
-      // the charset we have now.
-      nsAutoString elementCharset;
-      aElement->GetScriptCharset(elementCharset);
-      if (elementCharset.Equals(preloadCharset) &&
-          ourCORSMode == request->mCORSMode &&
-          ourRefPolicy == request->mReferrerPolicy &&
-          scriptKind == request->mKind) {
-        rv = CheckContentPolicy(mDocument, aElement, request->mURI, type, false);
-        if (NS_FAILED(rv)) {
-          // probably plans have changed; even though the preload was allowed seems
-          // like the actual load is not; let's cancel the preload request.
-          request->Cancel();
-          return false;
-        }
-      } else {
-        // Drop the preload
-        request = nullptr;
-      }
+    if (request && NS_FAILED(CheckContentPolicy(mDocument, aElement, request->mURI,
+                                                aTypeAttr, false))) {
+      // Probably plans have changed; even though the preload was allowed seems
+      // like the actual load is not; let's cancel the preload request.
+      request->Cancel();
+      return false;
     }
 
     if (request) {
@@ -1350,22 +1337,15 @@ ScriptLoader::ProcessScriptElement(nsIScriptElement* aElement)
       SRIMetadata sriMetadata;
       {
         nsAutoString integrity;
-        scriptContent->GetAttr(kNameSpaceID_None, nsGkAtoms::integrity,
+        aScriptContent->GetAttr(kNameSpaceID_None,
+                               nsGkAtoms::integrity,
                                integrity);
-        if (!integrity.IsEmpty()) {
-          MOZ_LOG(SRILogHelper::GetSriLog(), mozilla::LogLevel::Debug,
-                  ("ScriptLoader::ProcessScriptElement, integrity=%s",
-                   NS_ConvertUTF16toUTF8(integrity).get()));
-          nsAutoCString sourceUri;
-          if (mDocument->GetDocumentURI()) {
-            mDocument->GetDocumentURI()->GetAsciiSpec(sourceUri);
-          }
-          SRICheck::IntegrityMetadata(integrity, sourceUri, mReporter,
-                                      &sriMetadata);
-        }
+        GetSRIMetadata(integrity, &sriMetadata);
       }
 
-      request = CreateLoadRequest(scriptKind, scriptURI, aElement,
+      CORSMode ourCORSMode = aElement->GetCORSMode();
+      mozilla::net::ReferrerPolicy ourRefPolicy = mDocument->GetReferrerPolicy();
+      request = CreateLoadRequest(aScriptKind, scriptURI, aElement,
                                   version, ourCORSMode, sriMetadata,
                                   ourRefPolicy);
       request->mIsInline = false;
@@ -1373,8 +1353,7 @@ ScriptLoader::ProcessScriptElement(nsIScriptElement* aElement)
                              aElement->GetScriptAsync());
       // keep request->mScriptFromHead to false so we don't treat non preloaded
       // scripts as blockers for full page load. See bug 792438.
-
-      rv = StartLoad(request);
+      nsresult rv = StartLoad(request);
       if (NS_FAILED(rv)) {
         ReportErrorToConsole(request, rv);
 
@@ -1475,9 +1454,12 @@ ScriptLoader::ProcessScriptElement(nsIScriptElement* aElement)
         "Parser-blocking scripts and XSLT scripts in the same doc!");
     mParserBlockingRequest = request;
     return true;
-  }
+}
 
-  // inline script
+bool
+ScriptLoader::ProcessInlineScript(nsIScriptElement* aElement,
+                                  ScriptKind aScriptKind)
+{
   // Is this document sandboxed without 'allow-scripts'?
   if (mDocument->HasScriptsBlockedBySandbox()) {
     return false;
@@ -1490,14 +1472,17 @@ ScriptLoader::ProcessScriptElement(nsIScriptElement* aElement)
 
   // Inline classic scripts ignore their CORS mode and are always CORS_NONE.
   CORSMode corsMode = CORS_NONE;
-  if (scriptKind == ScriptKind::eModule) {
+  if (aScriptKind == ScriptKind::eModule) {
     corsMode = aElement->GetCORSMode();
   }
 
-  request = CreateLoadRequest(scriptKind, mDocument->GetDocumentURI(), aElement,
-                              version, corsMode,
-                              SRIMetadata(), // SRI doesn't apply
-                              ourRefPolicy);
+  JSVersion version = JSVERSION_DEFAULT;
+
+  RefPtr<ScriptLoadRequest> request =
+    CreateLoadRequest(aScriptKind, mDocument->GetDocumentURI(), aElement,
+                      version, corsMode,
+                      SRIMetadata(), // SRI doesn't apply
+                      mDocument->GetReferrerPolicy());
   request->mJSVersion = version;
   request->mIsInline = true;
   request->mLineNo = aElement->GetScriptLineNumber();
@@ -1571,6 +1556,60 @@ ScriptLoader::ProcessScriptElement(nsIScriptElement* aElement)
   NS_ASSERTION(nsContentUtils::IsSafeToRunScript(),
       "Not safe to run a parser-inserted script?");
   return ProcessRequest(request) == NS_ERROR_HTMLPARSER_BLOCK;
+}
+
+ScriptLoadRequest*
+ScriptLoader::LookupPreloadRequest(nsIScriptElement* aElement,
+                                   ScriptKind aScriptKind)
+{
+  nsTArray<PreloadInfo>::index_type i =
+    mPreloads.IndexOf(aElement->GetScriptURI(), 0, PreloadURIComparator());
+  if (i == nsTArray<PreloadInfo>::NoIndex) {
+    return nullptr;
+  }
+
+  // Found preloaded request. Note that a script-inserted script can steal a
+  // preload!
+  RefPtr<ScriptLoadRequest> request = mPreloads[i].mRequest;
+  request->mElement = aElement;
+  nsString preloadCharset(mPreloads[i].mCharset);
+  mPreloads.RemoveElementAt(i);
+
+  // Double-check that the charset the preload used is the same as the charset
+  // we have now.
+  nsAutoString elementCharset;
+  aElement->GetScriptCharset(elementCharset);
+  if (!elementCharset.Equals(preloadCharset) ||
+      aElement->GetCORSMode() != request->mCORSMode ||
+      mDocument->GetReferrerPolicy() != request->mReferrerPolicy ||
+      aScriptKind != request->mKind) {
+    // Drop the preload.
+    return nullptr;
+  }
+
+  return request;
+}
+
+void
+ScriptLoader::GetSRIMetadata(const nsAString& aIntegrityAttr,
+                             SRIMetadata *aMetadataOut)
+{
+  MOZ_ASSERT(aMetadataOut->IsEmpty());
+
+  if (aIntegrityAttr.IsEmpty()) {
+    return;
+  }
+
+  MOZ_LOG(SRILogHelper::GetSriLog(), mozilla::LogLevel::Debug,
+          ("ScriptLoader::GetSRIMetadata, integrity=%s",
+           NS_ConvertUTF16toUTF8(aIntegrityAttr).get()));
+
+  nsAutoCString sourceUri;
+  if (mDocument->GetDocumentURI()) {
+    mDocument->GetDocumentURI()->GetAsciiSpec(sourceUri);
+  }
+  SRICheck::IntegrityMetadata(aIntegrityAttr, sourceUri, mReporter,
+                              aMetadataOut);
 }
 
 namespace {
@@ -3107,16 +3146,7 @@ ScriptLoader::PreloadURI(nsIURI* aURI, const nsAString& aCharset,
   }
 
   SRIMetadata sriMetadata;
-  if (!aIntegrity.IsEmpty()) {
-    MOZ_LOG(SRILogHelper::GetSriLog(), mozilla::LogLevel::Debug,
-            ("ScriptLoader::PreloadURI, integrity=%s",
-             NS_ConvertUTF16toUTF8(aIntegrity).get()));
-    nsAutoCString sourceUri;
-    if (mDocument->GetDocumentURI()) {
-      mDocument->GetDocumentURI()->GetAsciiSpec(sourceUri);
-    }
-    SRICheck::IntegrityMetadata(aIntegrity, sourceUri, mReporter, &sriMetadata);
-  }
+  GetSRIMetadata(aIntegrity, &sriMetadata);
 
   RefPtr<ScriptLoadRequest> request =
     CreateLoadRequest(ScriptKind::eClassic, aURI, nullptr, 0,
