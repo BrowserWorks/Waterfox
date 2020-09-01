@@ -438,7 +438,7 @@ nsresult GetSpecialSystemDirectory(SystemDirectories aSystemSystemDirectory,
       if (len == 0) {
         break;
       }
-      return NS_NewLocalFile(nsDependentString(path, len), true, aFile);
+      return NS_NewLocalFile(nsDependentString(path, len), false, aFile);
     }
 #elif defined(MOZ_WIDGET_COCOA)
     {
