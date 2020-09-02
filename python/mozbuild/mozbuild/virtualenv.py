@@ -624,6 +624,7 @@ class VirtualenvManager(object):
         env = ensure_subprocess_env(os.environ.copy())
         env.update(ensure_subprocess_env({
             'PIPENV_IGNORE_VIRTUALENVS': '1',
+            'PIP_NO_INDEX': '1',
             'WORKON_HOME': str(os.path.normpath(os.path.join(self.topobjdir, '_virtualenvs')))
         }))
         # On mac, running pipenv with LC_CTYPE set to "UTF-8" (which happens
@@ -663,10 +664,12 @@ class VirtualenvManager(object):
 
         if pipfile is not None:
             # Install from Pipfile
-            env.update(ensure_subprocess_env({
+            env_ = env.copy()
+            del env_['PIP_NO_INDEX']
+            env_.update(ensure_subprocess_env({
                 'PIPENV_PIPFILE': str(pipfile)
             }))
-            subprocess.check_call([pipenv, 'install'], stderr=subprocess.STDOUT, env=env)
+            subprocess.check_call([pipenv, 'install'], stderr=subprocess.STDOUT, env=env_)
 
         self.virtualenv_root = ensure_venv()
 
