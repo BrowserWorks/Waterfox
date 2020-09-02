@@ -15,12 +15,10 @@ NS_IMPL_CYCLE_COLLECTION_CLASS(AbortSignal)
 
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN_INHERITED(AbortSignal,
                                                   DOMEventTargetHelper)
-  NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mController)
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 
 NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN_INHERITED(AbortSignal,
                                                 DOMEventTargetHelper)
-  NS_IMPL_CYCLE_COLLECTION_UNLINK(mController)
 NS_IMPL_CYCLE_COLLECTION_UNLINK_END
 
 NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION_INHERITED(AbortSignal)
@@ -29,10 +27,9 @@ NS_INTERFACE_MAP_END_INHERITING(DOMEventTargetHelper)
 NS_IMPL_ADDREF_INHERITED(AbortSignal, DOMEventTargetHelper)
 NS_IMPL_RELEASE_INHERITED(AbortSignal, DOMEventTargetHelper)
 
-AbortSignal::AbortSignal(AbortController* aController,
+AbortSignal::AbortSignal(nsIGlobalObject* aGlobalObject,
                          bool aAborted)
-  : DOMEventTargetHelper(aController->GetParentObject())
-  , mController(aController)
+  : DOMEventTargetHelper(aGlobalObject)
   , mAborted(aAborted)
 {}
 
