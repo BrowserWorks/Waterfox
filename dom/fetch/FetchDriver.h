@@ -101,7 +101,7 @@ public:
               nsIEventTarget* aMainThreadEventTarget,
               bool aIsTrackingFetch);
 
-  nsresult Fetch(AbortSignal* aSignal,
+  nsresult Fetch(AbortSignalImpl* aSignalImpl,
                  FetchDriverObserver* aObserver);
 
   void

@@ -286,7 +286,7 @@ template <class Derived>
 FetchBodyConsumer<Derived>::Create(nsIGlobalObject* aGlobal,
                                    nsIEventTarget* aMainThreadEventTarget,
                                    FetchBody<Derived>* aBody,
-                                   AbortSignal* aSignal,
+                                   AbortSignalImpl* aSignalImpl,
                                    FetchConsumeType aType,
                                    ErrorResult& aRv)
 {
@@ -348,8 +348,8 @@ FetchBodyConsumer<Derived>::Create(nsIGlobalObject* aGlobal,
     return nullptr;
   }
 
-  if (aSignal) {
-    consumer->Follow(aSignal);
+  if (aSignalImpl) {
+    consumer->Follow(aSignalImpl);
   }
 
   return promise.forget();

@@ -24,7 +24,7 @@ public:
   static bool
   IsEnabled(JSContext* aCx, JSObject* aGlobal);
 
-  FetchObserver(nsIGlobalObject* aGlobal, AbortSignal* aSignal);
+  FetchObserver(nsIGlobalObject* aGlobal, AbortSignalImpl* aSignalImpl);
 
   JSObject*
   WrapObject(JSContext* aCx, JS::Handle<JSObject*> aGivenProto) override;

@@ -251,8 +251,8 @@ public:
     mBodyUsed = true;
   }
 
-  virtual AbortSignal*
-  GetSignal() const = 0;
+  virtual AbortSignalImpl*
+  GetSignalImpl() const = 0;
 
   // AbortFollower
   void

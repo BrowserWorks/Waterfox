@@ -34,7 +34,7 @@ class Response final : public nsISupports
 
 public:
   Response(nsIGlobalObject* aGlobal, InternalResponse* aInternalResponse,
-           AbortSignal* aSignal);
+           AbortSignalImpl* aSignalImpl);
 
   Response(const Response& aOther) = delete;
 
@@ -137,10 +137,10 @@ public:
   already_AddRefed<InternalResponse>
   GetInternalResponse() const;
 
-  AbortSignal*
-  GetSignal() const override
+  AbortSignalImpl*
+  GetSignalImpl() const override
   {
-    return mSignal;
+    return mSignalImpl;
   }
 
 private:
@@ -149,7 +149,7 @@ private:
   RefPtr<InternalResponse> mInternalResponse;
   // Lazily created
   RefPtr<Headers> mHeaders;
-  RefPtr<AbortSignal> mSignal;
+  RefPtr<AbortSignalImpl> mSignalImpl;
 };
 
 } // namespace dom
