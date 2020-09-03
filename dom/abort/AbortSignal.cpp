@@ -37,9 +37,9 @@ AbortSignalImpl::Abort()
   // until all followers have been aborted.
   RefPtr<AbortSignalImpl> pinThis = this;
 
-  // Let's inform the followers.
-  for (AbortFollower* follower : mFollowers) {
-    follower->Abort();
+  nsTObserverArray<AbortFollower*>::ForwardIterator iter(mFollowers);
+  while (iter.HasMore()) {
+    iter.GetNext()->Abort();
   }
 }
 
