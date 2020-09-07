@@ -896,6 +896,9 @@ nsHtml5TreeBuilder::elementPopped(int32_t aNamespace, nsIAtom* aName, nsIContent
   }
   if (aNamespace == kNameSpaceID_SVG) {
     if (aName == nsGkAtoms::svg) {
+      if (!scriptingEnabled || mPreventScriptExecution) {
+        return;
+      }
       if (mBuilder) {
         nsHtml5TreeOperation::SvgLoad(static_cast<nsIContent*>(aElement));
         return;
