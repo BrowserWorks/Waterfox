@@ -105,7 +105,7 @@ policy-ExtensionSettings = Manage all aspects of extension installation.
 
 policy-ExtensionUpdate = Enable or disable automatic extension updates.
 
-policy-FirefoxHome = Configure Firefox Home.
+policy-Home = Configure  Home.
 
 policy-FlashPlugin = Allow or deny usage of the Flash plugin.
 

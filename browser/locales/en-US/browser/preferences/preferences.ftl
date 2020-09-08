@@ -133,10 +133,10 @@ search-results-help-link = Need help? Visit <a data-l10n-name="url">{ -brand-sho
 
 startup-header = Startup
 
-# { -brand-short-name } will be 'Firefox Developer Edition',
-# since this setting is only exposed in Firefox Developer Edition
+# { -brand-short-name } will be ' Developer Edition',
+# since this setting is only exposed in  Developer Edition
 separate-profile-mode =
-    .label = Allow { -brand-short-name } and Firefox to run at the same time
+    .label = Allow { -brand-short-name } and  to run at the same time
 use-firefox-sync = Tip: This uses separate profiles. Use { -sync-brand-short-name } to share data between them.
 get-started-not-logged-in = Sign in to { -sync-brand-short-name }…
 get-started-configured = Open { -sync-brand-short-name } preferences
@@ -572,10 +572,10 @@ home-restore-defaults =
     .label = Restore Defaults
     .accesskey = R
 
-# "Firefox" should be treated as a brand and kept in English,
+# "" should be treated as a brand and kept in English,
 # while "Home" and "(Default)" can be localized.
 home-mode-choice-default =
-    .label = Firefox Home (Default)
+    .label =  Home (Default)
 
 home-mode-choice-custom =
     .label = Custom URLs…
@@ -602,10 +602,10 @@ choose-bookmark =
     .label = Use Bookmark…
     .accesskey = B
 
-## Home Section - Firefox Home Content Customization
+## Home Section -  Home Content Customization
 
-home-prefs-content-header = Firefox Home Content
-home-prefs-content-description = Choose what content you want on your Firefox Home screen.
+home-prefs-content-header =  Home Content
+home-prefs-content-description = Choose what content you want on your  Home screen.
 
 home-prefs-search-header =
     .label = Web Search
@@ -741,7 +741,7 @@ containers-preferences-button =
 containers-remove-button =
     .label = Remove
 
-## Firefox Account - Signed out. Note that "Sync" and "Firefox Account" are now
+##  Account - Signed out. Note that "Sync" and " Account" are now
 ## more discrete ("signed in" no longer means "and sync is connected").
 
 sync-signedout-caption = Take Your Web With You
@@ -759,9 +759,9 @@ sync-signedout-account-signin2 =
 #
 # They can be moved within the sentence as needed to adapt
 # to your language, but should not be changed or translated.
-sync-mobile-promo = Download Firefox for <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> or <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS</a> to sync with your mobile device.
+sync-mobile-promo = Download  for <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> or <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS</a> to sync with your mobile device.
 
-## Firefox Account - Signed in
+##  Account - Signed in
 
 sync-profile-picture =
     .tooltiptext = Change profile picture
@@ -866,7 +866,7 @@ sync-engine-creditcards =
 
 sync-engine-addons =
     .label = Add-ons
-    .tooltiptext = Extensions and themes for Firefox desktop
+    .tooltiptext = Extensions and themes for  desktop
     .accesskey = A
 
 sync-engine-prefs =
@@ -944,7 +944,7 @@ forms-master-pw-fips-desc = Password Change Failed
 master-password-os-auth-dialog-message-win = To create a Master Password, enter your Windows login credentials. This helps protect the security of your accounts.
 
 # This message can be seen by trying to add a Master Password.
-# The macOS strings are preceded by the operating system with "Firefox is trying to "
+# The macOS strings are preceded by the operating system with " is trying to "
 # and includes subtitle of "Enter password for the user "xxx" to allow this." These
 # notes are only valid for English. Please test in your locale.
 master-password-os-auth-dialog-message-macosx = create a Master Password
@@ -957,12 +957,12 @@ history-header = History
 # This label is followed, on the same line, by a dropdown list of options
 # (Remember history, etc.).
 # In English it visually creates a full sentence, e.g.
-# "Firefox will" + "Remember history".
+# " will" + "Remember history".
 #
 # If this doesn't work for your language, you can translate this message:
-#   - Simply as "Firefox", moving the verb into each option.
-#     This will result in "Firefox" + "Will remember history", etc.
-#   - As a stand-alone message, for example "Firefox history settings:".
+#   - Simply as "", moving the verb into each option.
+#     This will result in "" + "Will remember history", etc.
+#   - As a stand-alone message, for example " history settings:".
 history-remember-label = { -brand-short-name } will
     .accesskey = w
 
