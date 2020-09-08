@@ -20,6 +20,7 @@
 #include "gc/PublicIterators.h"
 #include "gc/WeakMap.h"
 #include "js/CharacterEncoding.h"
+#include "js/experimental/CodeCoverage.h"  // js::EnableCodeCoverage
 #include "js/Printf.h"
 #include "js/Proxy.h"
 #include "js/Wrapper.h"
@@ -1464,6 +1465,8 @@ AutoAssertNoContentJS::~AutoAssertNoContentJS() {
 JS_FRIEND_API void js::EnableAccessValidation(JSContext* cx, bool enabled) {
   cx->enableAccessValidation = enabled;
 }
+
+JS_FRIEND_API void js::EnableCodeCoverage() { js::coverage::EnableLCov(); }
 
 JS_FRIEND_API void js::SetRealmValidAccessPtr(JSContext* cx,
                                               JS::HandleObject global,

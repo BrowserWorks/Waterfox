@@ -104,10 +104,11 @@
 #include "js/CompileOptions.h"
 #include "js/ContextOptions.h"  // JS::ContextOptions{,Ref}
 #include "js/Debug.h"
-#include "js/Equality.h"                 // JS::SameValue
-#include "js/ErrorReport.h"              // JS::PrintError
-#include "js/Exception.h"                // JS::StealPendingExceptionStack
-#include "js/experimental/SourceHook.h"  // js::{Set,Forget,}SourceHook
+#include "js/Equality.h"                   // JS::SameValue
+#include "js/ErrorReport.h"                // JS::PrintError
+#include "js/Exception.h"                  // JS::StealPendingExceptionStack
+#include "js/experimental/CodeCoverage.h"  // js::EnableCodeCoverage
+#include "js/experimental/SourceHook.h"    // js::{Set,Forget,}SourceHook
 #include "js/GCVector.h"
 #include "js/Initialization.h"
 #include "js/JSON.h"
@@ -11416,7 +11417,7 @@ int main(int argc, char** argv, char** envp) {
 
   enableCodeCoverage = op.getBoolOption("code-coverage");
   if (enableCodeCoverage) {
-    coverage::EnableLCov();
+    js::EnableCodeCoverage();
   }
 
 #ifdef JS_WITHOUT_NSPR

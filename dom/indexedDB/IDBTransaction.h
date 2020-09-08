@@ -162,7 +162,7 @@ class IDBTransaction final
   indexedDB::BackgroundRequestChild* StartRequest(
       IDBRequest* aRequest, const indexedDB::RequestParams& aParams);
 
-  void OpenCursor(indexedDB::PBackgroundIDBCursorChild* aBackgroundActor,
+  void OpenCursor(indexedDB::PBackgroundIDBCursorChild& aBackgroundActor,
                   const indexedDB::OpenCursorParams& aParams);
 
   void RefreshSpec(bool aMayDelete);

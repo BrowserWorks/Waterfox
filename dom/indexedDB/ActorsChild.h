@@ -636,10 +636,21 @@ struct CloneInfo {
   UniquePtr<JSStructuredCloneData> mCloneData;
 };
 
-class BackgroundCursorChildBase : public PBackgroundIDBCursorChild {
+class BackgroundCursorChildBase
+    : public PBackgroundIDBCursorChild,
+      public SafeRefCounted<BackgroundCursorChildBase> {
  private:
   NS_DECL_OWNINGTHREAD
+
+ public:
+  MOZ_DECLARE_REFCOUNTED_TYPENAME(
+      mozilla::dom::indexedDB::BackgroundCursorChildBase)
+  MOZ_INLINE_DECL_SAFEREFCOUNTING_INHERITED(BackgroundCursorChildBase,
+                                            SafeRefCounted)
+
  protected:
+  ~BackgroundCursorChildBase();
+
   InitializedOnce<const NotNull<IDBRequest*>> mRequest;
   Maybe<IDBTransaction&> mTransaction;
 
@@ -731,6 +742,8 @@ class BackgroundCursorChild final : public BackgroundCursorChildBase {
   template <typename... Args>
   [[nodiscard]] RefPtr<IDBCursor> HandleIndividualCursorResponse(
       bool aUseAsCurrentResult, Args&&... aArgs);
+
+  SafeRefPtr<BackgroundCursorChild> SafeRefPtrFromThis();
 
  public:
   // IPDL methods are only called by IPDL.

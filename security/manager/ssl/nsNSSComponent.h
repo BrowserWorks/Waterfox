@@ -29,7 +29,6 @@
 
 class nsIDOMWindow;
 class nsIPrompt;
-class nsISerialEventTarget;
 class SmartCardThreadList;
 
 namespace mozilla {
@@ -137,9 +136,6 @@ class nsNSSComponent final : public nsINSSComponent, public nsIObserver {
   // to complete (because it will never complete) so we use this boolean to keep
   // track of if we should wait.
   bool mLoadLoadableCertsTaskDispatched;
-
-  // Serial background event queue. Used for caching intermediate certificates.
-  nsCOMPtr<nsISerialEventTarget> mBackgroundTaskQueue;
 };
 
 inline nsresult BlockUntilLoadableCertsLoaded() {
