@@ -1868,7 +1868,7 @@ function copyTestUpdaterToBinDir() {
   if (AppConstants.platform == "macosx") {
     updater.append("Contents");
     updater.append("MacOS");
-    updater.append("org.mozilla.updater");
+    updater.append("net.waterfox.updater");
   }
   return updater;
 }

@@ -100,8 +100,8 @@ tools repackage:: $(DIST)/bin/$(MOZ_APP_NAME)
 	cp -RL $(topsrcdir)/$(MOZ_BRANDING_DIRECTORY)/document.icns '$(dist_dest)/Contents/Resources/document.icns'
 	$(MKDIR) -p '$(dist_dest)/Contents/Library/LaunchServices'
 ifdef MOZ_UPDATER
-	mv -f '$(dist_dest)/Contents/MacOS/updater.app/Contents/MacOS/org.mozilla.updater' '$(dist_dest)/Contents/Library/LaunchServices'
-	ln -s ../../../../Library/LaunchServices/org.mozilla.updater '$(dist_dest)/Contents/MacOS/updater.app/Contents/MacOS/org.mozilla.updater'
+	mv -f '$(dist_dest)/Contents/MacOS/updater.app/Contents/MacOS/net.waterfox.updater' '$(dist_dest)/Contents/Library/LaunchServices'
+	ln -s ../../../../Library/LaunchServices/net.waterfox.updater '$(dist_dest)/Contents/MacOS/updater.app/Contents/MacOS/net.waterfox.updater'
 endif
 	printf APPLMOZB > '$(dist_dest)/Contents/PkgInfo'
 endif

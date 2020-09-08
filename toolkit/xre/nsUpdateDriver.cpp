@@ -62,7 +62,7 @@ static LazyLogModule sUpdateLog("updatedriver");
 #  define MAINTENANCE_SVC_NAME L"MozillaMaintenance"
 #elif XP_MACOSX
 #  define UPDATER_APP "updater.app"
-#  define UPDATER_BIN "org.mozilla.updater"
+#  define UPDATER_BIN "net.waterfox.updater"
 #else
 #  define UPDATER_BIN "updater"
 #endif

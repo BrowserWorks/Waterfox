@@ -104,7 +104,7 @@ using mozilla::InjectCrashRunnable;
 #include "mozilla/mozalloc_oom.h"
 
 #if defined(XP_MACOSX)
-CFStringRef reporterClientAppID = CFSTR("org.mozilla.crashreporter");
+CFStringRef reporterClientAppID = CFSTR("net.waterfox.crashreporter");
 #endif
 #if defined(MOZ_WIDGET_ANDROID)
 #  include "common/linux/file_id.h"

@@ -11,7 +11,7 @@
 	<key>CFBundleIconFile</key>
 	<string>crashreporter.icns</string>
 	<key>CFBundleIdentifier</key>
-	<string>org.mozilla.crashreporter</string>
+	<string>net.waterfox.crashreporter</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
