@@ -552,11 +552,11 @@ class TestFunctional(HelperMixin, unittest.TestCase):
 
         if target_platform() == "WINNT":
             self.target_bin = os.path.join(
-                buildconfig.topobjdir, "dist", "bin", "firefox.exe"
+                buildconfig.topobjdir, "dist", "bin", "waterfox.exe"
             )
         else:
             self.target_bin = os.path.join(
-                buildconfig.topobjdir, "dist", "bin", "firefox-bin"
+                buildconfig.topobjdir, "dist", "bin", "waterfox-bin"
             )
 
     def tearDown(self):

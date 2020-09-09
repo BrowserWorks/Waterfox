@@ -162,7 +162,7 @@ struct StartFirefoxParams {
 
 // Helper threadproc function for CreateVRWindow
 DWORD StartFirefoxThreadProc(_In_ LPVOID lpParameter) {
-  wchar_t cmd[] = L"%Sfirefox.exe -wait-for-browser -profile %S --fxr";
+  wchar_t cmd[] = L"%Swaterfox.exe -wait-for-browser -profile %S --fxr";
 
   StartFirefoxParams* params = static_cast<StartFirefoxParams*>(lpParameter);
   wchar_t cmdWithPath[MAX_PATH + MAX_PATH] = {0};
