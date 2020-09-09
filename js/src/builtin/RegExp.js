@@ -104,6 +104,9 @@ function RegExpMatch(string) {
     if (!IsObject(rx))
         ThrowTypeError(JSMSG_NOT_NONNULL_OBJECT, rx === null ? "null" : typeof rx);
 
+    if (rx.flags === undefined || rx.flags === null)
+        ThrowTypeError(JSMSG_FLAGS_UNDEFINED_OR_NULL);
+
     // Step 3.
     var S = ToString(string);
 
@@ -1102,9 +1105,9 @@ function RegExpMatchAll(string) {
     // Step 5.
     var flags = ToString(rx.flags);
 
-    // Step 2.b.iii; located here because it needs |flags|.
+    // Step 2.b.iii; located here because it needs to check |flags|.
     if (!callFunction(std_String_includes, flags, "g")) {
-        ThrowTypeError(JSMSG_BAD_REGEXP_FLAG, "- matchAll requires g");
+        ThrowTypeError(JSMSG_REQUIRES_GLOBAL_REGEXP, "matchAll");
     }
 
     // Step 6.
