@@ -48,15 +48,15 @@ namespace irregexp {
 bool
 ParsePattern(frontend::TokenStream& ts, LifoAlloc& alloc, JSAtom* str,
              bool multiline, bool match_only, bool unicode, bool ignore_case,
-             bool global, bool sticky, RegExpCompileData* data);
+             bool global, bool sticky, bool dotAll, RegExpCompileData* data);
 
 bool
 ParsePatternSyntax(frontend::TokenStream& ts, LifoAlloc& alloc, JSAtom* str,
-                   bool unicode);
+                   bool unicode, bool dotAll);
 
 bool
 ParsePatternSyntax(frontend::TokenStream& ts, LifoAlloc& alloc,
-                   const mozilla::Range<const char16_t> chars, bool unicode);
+                   const mozilla::Range<const char16_t> chars, bool unicode, bool dotAll);
 
 // A BufferedVector is an automatically growing list, just like (and backed
 // by) a Vector, that is optimized for the case of adding and removing
@@ -186,7 +186,7 @@ class RegExpParser
   public:
     RegExpParser(frontend::TokenStream& ts, LifoAlloc* alloc,
                  const CharT* chars, const CharT* end, bool multiline_mode, bool unicode,
-                 bool ignore_case);
+                 bool ignore_case, bool dotAll);
 
     RegExpTree* ParsePattern();
     RegExpTree* ParseDisjunction();
@@ -315,6 +315,7 @@ class RegExpParser
     bool multiline_;
     bool unicode_;
     bool ignore_case_;
+    bool dotAll_;
     bool simple_;
     bool contains_anchor_;
     bool is_scanned_for_captures_;

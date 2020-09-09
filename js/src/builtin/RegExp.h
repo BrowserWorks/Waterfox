@@ -149,6 +149,8 @@ extern MOZ_MUST_USE bool
 regexp_sticky(JSContext* cx, unsigned argc, JS::Value* vp);
 extern MOZ_MUST_USE bool
 regexp_unicode(JSContext* cx, unsigned argc, JS::Value* vp);
+extern MOZ_MUST_USE bool
+regexp_dotAll(JSContext* cx, unsigned argc, JS::Value* vp);
 
 } /* namespace js */
 

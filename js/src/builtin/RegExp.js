@@ -3,6 +3,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 // ES6 draft rev34 (2015/02/20) 21.2.5.3 get RegExp.prototype.flags
+// Updated for ES2018 /s (dotAll)
 function RegExpFlagsGetter() {
     // Steps 1-2.
     var R = this;
@@ -31,6 +32,10 @@ function RegExpFlagsGetter() {
     // Steps 16-18.
     if (R.sticky)
         result += "y";
+
+    // ES2018
+    if (R.dotAll)
+        result += "s";
 
     // Step 19.
     return result;
@@ -228,6 +233,7 @@ function RegExpGlobalMatchOpt(rx, S, fullUnicode) {
 //   * global
 //   * ignoreCase
 //   * multiline
+//   * dotAll
 //   * sticky
 //   * unicode
 //   * exec
