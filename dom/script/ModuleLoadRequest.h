@@ -57,7 +57,7 @@ public:
   ModuleLoadRequest(nsIURI* aURI,
                     ModuleLoadRequest* aParent);
 
-  bool IsTopLevel() const
+  bool IsTopLevel() const override
   {
     return mIsTopLevel;
   }

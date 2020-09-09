@@ -175,6 +175,13 @@ public:
     return mScriptMode == ScriptMode::eAsync;
   }
 
+  virtual bool IsTopLevel() const
+  {
+    // Classic scripts are always top level.
+    return true;
+  }
+
+
   void MaybeCancelOffThreadScript();
   void DropBytecodeCacheReferences();
 
