@@ -24,6 +24,7 @@
 #include "jstypes.h"
 #include "jsutil.h"
 
+#include "builtin/SelfHostingDefines.h"
 #include "ds/Sort.h"
 #include "gc/Marking.h"
 #include "js/Proxy.h"
@@ -1243,6 +1244,56 @@ js::NewStringIteratorObject(JSContext* cx, NewObjectKind newKind)
     return NewObjectWithGivenProto<StringIteratorObject>(cx, proto, newKind);
 }
 
+static const Class RegExpStringIteratorPrototypeClass = {
+    "RegExp String Iterator", 0
+};
+
+enum {
+  RegExpStringIteratorSlotRegExp,
+  RegExpStringIteratorSlotString,
+  RegExpStringIteratorSlotFlags,
+  RegExpStringIteratorSlotDone,
+  RegExpStringIteratorSlotCount
+};
+
+static_assert(RegExpStringIteratorSlotRegExp ==
+                  REGEXP_STRING_ITERATOR_REGEXP_SLOT,
+              "RegExpStringIteratorSlotRegExp must match self-hosting define "
+              "for regexp slot.");
+static_assert(RegExpStringIteratorSlotString ==
+                  REGEXP_STRING_ITERATOR_STRING_SLOT,
+              "RegExpStringIteratorSlotString must match self-hosting define "
+              "for string slot.");
+static_assert(RegExpStringIteratorSlotFlags ==
+                  REGEXP_STRING_ITERATOR_FLAGS_SLOT,
+              "RegExpStringIteratorSlotFlags must match self-hosting define "
+              "for flags slot.");
+static_assert(RegExpStringIteratorSlotDone == REGEXP_STRING_ITERATOR_DONE_SLOT,
+              "RegExpStringIteratorSlotDone must match self-hosting define for "
+              "done slot.");
+
+const Class RegExpStringIteratorObject::class_ = {
+    "RegExp String Iterator",
+    JSCLASS_HAS_RESERVED_SLOTS(RegExpStringIteratorSlotCount)
+};
+
+static const JSFunctionSpec regexp_string_iterator_methods[] = {
+    JS_SELF_HOSTED_FN("next", "RegExpStringIteratorNext", 0, 0),
+    JS_FS_END
+};
+
+RegExpStringIteratorObject* js::NewRegExpStringIteratorObject(
+    JSContext* cx, NewObjectKind newKind) {
+  RootedObject proto(cx, GlobalObject::getOrCreateRegExpStringIteratorPrototype(
+                             cx, cx->global()));
+  if (!proto) {
+    return nullptr;
+  }
+
+  return NewObjectWithGivenProto<RegExpStringIteratorObject>(cx, proto,
+                                                             newKind);
+}
+
 JSObject*
 js::ValueToIterator(JSContext* cx, unsigned flags, HandleValue vp)
 {
@@ -1653,6 +1704,32 @@ GlobalObject::initStringIteratorProto(JSContext* cx, Handle<GlobalObject*> globa
 
     global->setReservedSlot(STRING_ITERATOR_PROTO, ObjectValue(*proto));
     return true;
+}
+
+/* static */ bool
+GlobalObject::initRegExpStringIteratorProto(JSContext* cx, Handle<GlobalObject*> global)
+{
+  if (global->getReservedSlot(REGEXP_STRING_ITERATOR_PROTO).isObject()) {
+    return true;
+  }
+
+  RootedObject iteratorProto(cx, GlobalObject::getOrCreateIteratorPrototype(cx, global));
+  if (!iteratorProto) {
+    return false;
+  }
+
+  const Class* cls = &RegExpStringIteratorPrototypeClass;
+  RootedObject proto(cx, GlobalObject::createBlankPrototypeInheriting(cx, global, cls,
+                                                                      iteratorProto));
+  if (!proto ||
+      !DefinePropertiesAndFunctions(cx, proto, nullptr, regexp_string_iterator_methods) ||
+      !DefineToStringTag(cx, proto, cx->names().RegExpStringIterator))
+  {
+    return false;
+  }
+
+  global->setReservedSlot(REGEXP_STRING_ITERATOR_PROTO, ObjectValue(*proto));
+  return true;
 }
 
 JSObject*

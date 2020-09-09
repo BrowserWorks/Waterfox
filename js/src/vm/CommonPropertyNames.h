@@ -344,6 +344,7 @@
     macro(ReadableStreamTee, ReadableStreamTee, "ReadableStreamTee") \
     macro(reason, reason, "reason") \
     macro(RegExpFlagsGetter, RegExpFlagsGetter, "RegExpFlagsGetter") \
+    macro(RegExpStringIterator, RegExpStringIterator, "RegExp String Iterator") \
     macro(Reify, Reify, "Reify") \
     macro(reject, reject, "reject") \
     macro(rejected, rejected, "rejected") \

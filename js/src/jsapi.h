@@ -5268,7 +5268,8 @@ GetSymbolDescription(HandleSymbol symbol);
     macro(toPrimitive) \
     macro(toStringTag) \
     macro(unscopables) \
-    macro(asyncIterator)
+    macro(asyncIterator) \
+    macro(matchAll)
 
 enum class SymbolCode : uint32_t {
     // There is one SymbolCode for each well-known symbol.
