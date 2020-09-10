@@ -16,7 +16,7 @@ const SEARCH_ENGINE_TOPIC = "browser-search-engine-modified";
 const GOOD_CONFIG = [
   {
     webExtension: {
-      id: "engine@search.mozilla.org",
+      id: "engine@search.waterfox.net",
     },
     appliesTo: [
       {
@@ -30,7 +30,7 @@ const BAD_CONFIG = [
   ...GOOD_CONFIG,
   {
     webExtension: {
-      id: "engine-missing@search.mozilla.org",
+      id: "engine-missing@search.waterfox.net",
     },
     appliesTo: [
       {

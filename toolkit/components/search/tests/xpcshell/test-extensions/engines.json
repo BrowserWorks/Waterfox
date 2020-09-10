@@ -2,7 +2,7 @@
   "data": [
     {
       "webExtension": {
-        "id": "plainengine@search.mozilla.org"
+        "id": "plainengine@search.waterfox.net"
       },
       "orderHint": 10000,
       "appliesTo": [{
@@ -12,7 +12,7 @@
     },
     {
       "webExtension": {
-        "id": "special-engine@search.mozilla.org"
+        "id": "special-engine@search.waterfox.net"
       },
       "orderHint": 7000,
       "appliesTo": [{
@@ -24,7 +24,7 @@
     },
     {
       "webExtension": {
-        "id": "multilocale@search.mozilla.org",
+        "id": "multilocale@search.waterfox.net",
         "locales": ["an"]
       },
       "orderHint": 6000,
@@ -35,7 +35,7 @@
     },
     {
       "webExtension": {
-        "id": "multilocale@search.mozilla.org",
+        "id": "multilocale@search.waterfox.net",
         "locales": ["af", "an"]
       },
       "orderHint": 6500,

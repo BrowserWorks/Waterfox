@@ -5,7 +5,7 @@
   "version": "1.0",
   "applications": {
     "gecko": {
-      "id": "mailcom@search.mozilla.org"
+      "id": "mailcom@search.waterfox.net"
     }
   },
   "hidden": true,

@@ -5,7 +5,7 @@
   "version": "1.0",
   "applications": {
     "gecko": {
-      "id": "plainengine@search.mozilla.org"
+      "id": "plainengine@search.waterfox.net"
     }
   },
   "hidden": true,

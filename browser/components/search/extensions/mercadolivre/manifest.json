@@ -5,7 +5,7 @@
   "version": "1.0",
   "applications": {
     "gecko": {
-      "id": "mercadolivre@search.mozilla.org"
+      "id": "mercadolivre@search.waterfox.net"
     }
   },
   "hidden": true,

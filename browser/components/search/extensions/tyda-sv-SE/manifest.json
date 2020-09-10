@@ -5,7 +5,7 @@
   "version": "1.0",
   "applications": {
     "gecko": {
-      "id": "tyda-sv-SE@search.mozilla.org"
+      "id": "tyda-sv-SE@search.waterfox.net"
     }
   },
   "hidden": true,

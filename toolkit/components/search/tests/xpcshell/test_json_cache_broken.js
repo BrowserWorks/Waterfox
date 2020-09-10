@@ -36,15 +36,15 @@ const enginesCache = {
     "engine-reordered",
   ],
   builtInEngineList: [
-    { id: "engine@search.mozilla.org", locale: "default" },
-    { id: "engine-pref@search.mozilla.org", locale: "default" },
+    { id: "engine@search.waterfox.net", locale: "default" },
+    { id: "engine-pref@search.waterfox.net", locale: "default" },
     {
-      id: "engine-rel-searchform-purpose@search.mozilla.org",
+      id: "engine-rel-searchform-purpose@search.waterfox.net",
       locale: "default",
     },
-    { id: "engine-chromeicon@search.mozilla.org", locale: "default" },
-    { id: "engine-resourceicon@search.mozilla.org", locale: "default" },
-    { id: "engine-reordered@search.mozilla.org", locale: "default" },
+    { id: "engine-chromeicon@search.waterfox.net", locale: "default" },
+    { id: "engine-resourceicon@search.waterfox.net", locale: "default" },
+    { id: "engine-reordered@search.waterfox.net", locale: "default" },
   ],
   metaData: {
     searchDefault: "Test search engine",

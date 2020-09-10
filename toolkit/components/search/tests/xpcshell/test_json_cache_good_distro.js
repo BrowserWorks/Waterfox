@@ -35,8 +35,8 @@ const enginesCache = gModernConfig
       locale: "en-US",
       visibleDefaultEngines: ["engine1", "engine2"],
       builtInEngineList: [
-        { id: "engine1@search.mozilla.org", locale: "default" },
-        { id: "engine2@search.mozilla.org", locale: "default" },
+        { id: "engine1@search.waterfox.net", locale: "default" },
+        { id: "engine2@search.waterfox.net", locale: "default" },
       ],
       metaData: {
         searchDefault: "Test search engine",
@@ -90,8 +90,8 @@ const enginesCache = gModernConfig
       locale: "en-US",
       visibleDefaultEngines: ["engine1", "engine2"],
       builtInEngineList: [
-        { id: "engine1@search.mozilla.org", locale: "default" },
-        { id: "engine2@search.mozilla.org", locale: "default" },
+        { id: "engine1@search.waterfox.net", locale: "default" },
+        { id: "engine2@search.waterfox.net", locale: "default" },
       ],
       metaData: {
         searchDefault: "Test search engine",
@@ -119,7 +119,7 @@ const enginesCache = gModernConfig
           ],
           _metaData: { alias: null },
           _shortName: "engine1",
-          extensionID: "engine1@search.mozilla.org",
+          extensionID: "engine1@search.waterfox.net",
           extensionLocale: "default",
           _isBuiltin: true,
           _queryCharset: "UTF-8",
@@ -132,7 +132,7 @@ const enginesCache = gModernConfig
             "{}":
               "moz-extension://ec9d0671-9f8f-a24d-99b1-2a6590c0aa51/favicon.ico",
           },
-          _loadPath: "[other]addEngineWithDetails:engine1@search.mozilla.org",
+          _loadPath: "[other]addEngineWithDetails:engine1@search.waterfox.net",
         },
         {
           _urls: [
@@ -149,7 +149,7 @@ const enginesCache = gModernConfig
           ],
           _metaData: { alias: null },
           _shortName: "engine2",
-          extensionID: "engine2@search.mozilla.org",
+          extensionID: "engine2@search.waterfox.net",
           extensionLocale: "default",
           _isBuiltin: true,
           _queryCharset: "UTF-8",
@@ -162,7 +162,7 @@ const enginesCache = gModernConfig
             "{}":
               "moz-extension://ec9d0671-9f8f-a24d-99b1-2a6590c0aa51/favicon.ico",
           },
-          _loadPath: "[other]addEngineWithDetails:engine2@search.mozilla.org",
+          _loadPath: "[other]addEngineWithDetails:engine2@search.waterfox.net",
         },
         {
           _name: "engine3",

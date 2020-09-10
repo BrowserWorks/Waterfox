@@ -2,7 +2,7 @@
   "data": [
     {
       "webExtension": {
-        "id":"basic@search.mozilla.org"
+        "id":"basic@search.waterfox.net"
       },
       "telemetryId": "telemetry",
       "appliesTo": [{
@@ -12,7 +12,7 @@
     },
     {
       "webExtension": {
-        "id":"simple@search.mozilla.org"
+        "id":"simple@search.waterfox.net"
       },
       "appliesTo": [{
         "included": { "everywhere": true },

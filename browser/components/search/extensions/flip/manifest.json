@@ -5,7 +5,7 @@
   "version": "1.0",
   "applications": {
     "gecko": {
-      "id": "flip@search.mozilla.org"
+      "id": "flip@search.waterfox.net"
     }
   },
   "hidden": true,

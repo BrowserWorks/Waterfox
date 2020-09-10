@@ -44,7 +44,7 @@ add_task(async function setup() {
   await SearchTestUtils.useTestEngines("data", null, [
     {
       webExtension: {
-        id: "test@search.mozilla.org",
+        id: "test@search.waterfox.net",
       },
       appliesTo: [
         {
@@ -55,7 +55,7 @@ add_task(async function setup() {
     },
     {
       webExtension: {
-        id: "test2@search.mozilla.org",
+        id: "test2@search.waterfox.net",
       },
       appliesTo: [
         {
@@ -132,7 +132,7 @@ add_task(async function test_extension_overriding_app_provided_default() {
   sinon.stub(settings, "get").returns([
     {
       thirdPartyId: "test@thirdparty.example.com",
-      overridesId: "test2@search.mozilla.org",
+      overridesId: "test2@search.waterfox.net",
       urls: [
         {
           search_url: "https://example.com/?q={searchTerms}&foo=myparams",

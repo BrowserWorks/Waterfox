@@ -5,7 +5,7 @@
   "version": "1.0",
   "applications": {
     "gecko": {
-      "id": "daum-kr@search.mozilla.org"
+      "id": "daum-kr@search.waterfox.net"
     }
   },
   "hidden": true,

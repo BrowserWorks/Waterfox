@@ -5,7 +5,7 @@
   "version": "1.0",
   "applications": {
     "gecko": {
-      "id": "pogodak@search.mozilla.org"
+      "id": "pogodak@search.waterfox.net"
     }
   },
   "hidden": true,

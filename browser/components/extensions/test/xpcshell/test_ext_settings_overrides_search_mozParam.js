@@ -54,7 +54,7 @@ add_task(async function setup() {
   await SearchTestUtils.useTestEngines("data", null, [
     {
       webExtension: {
-        id: "test@search.mozilla.org",
+        id: "test@search.waterfox.net",
       },
       appliesTo: [
         {

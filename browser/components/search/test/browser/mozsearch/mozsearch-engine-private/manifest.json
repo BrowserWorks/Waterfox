@@ -5,7 +5,7 @@
   "version": "1.0",
   "applications": {
     "gecko": {
-      "id": "mozsearch-engine-private@search.mozilla.org"
+      "id": "mozsearch-engine-private@search.waterfox.net"
     }
   },
   "hidden": true,

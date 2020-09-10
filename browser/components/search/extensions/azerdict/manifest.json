@@ -5,7 +5,7 @@
   "version": "1.0",
   "applications": {
     "gecko": {
-      "id": "azerdict@search.mozilla.org"
+      "id": "azerdict@search.waterfox.net"
     }
   },
   "hidden": true,

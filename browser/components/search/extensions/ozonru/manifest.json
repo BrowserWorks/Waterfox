@@ -5,7 +5,7 @@
   "version": "1.2",
   "applications": {
     "gecko": {
-      "id": "ozonru@search.mozilla.org"
+      "id": "ozonru@search.waterfox.net"
     }
   },
   "hidden": true,

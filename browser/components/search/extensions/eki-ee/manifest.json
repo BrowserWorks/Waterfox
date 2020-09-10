@@ -5,7 +5,7 @@
   "version": "1.0",
   "applications": {
     "gecko": {
-      "id": "eki-ee@search.mozilla.org"
+      "id": "eki-ee@search.waterfox.net"
     }
   },
   "hidden": true,

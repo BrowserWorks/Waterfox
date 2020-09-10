@@ -12,7 +12,7 @@ SearchTestUtils.initXPCShellAddonManager(this);
 const whitelist = [
   {
     thirdPartyId: "test@thirdparty.example.com",
-    overridesId: "simple@search.mozilla.org",
+    overridesId: "simple@search.waterfox.net",
     urls: [],
   },
 ];
@@ -377,7 +377,7 @@ for (const test of tests) {
         {
           defaultSearchEngine: "simple-addon",
           defaultSearchEngineData: {
-            loadPath: "[other]addEngineWithDetails:simple@search.mozilla.org",
+            loadPath: "[other]addEngineWithDetails:simple@search.waterfox.net",
             name: "Simple Engine",
             origin: "default",
             submissionURL: test.expected.searchUrl.replace("{searchTerms}", ""),

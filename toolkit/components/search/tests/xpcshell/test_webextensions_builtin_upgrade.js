@@ -18,7 +18,7 @@ SearchTestUtils.initXPCShellAddonManager(this);
 const TEST_CONFIG = [
   {
     webExtension: {
-      id: "multilocale@search.mozilla.org",
+      id: "multilocale@search.waterfox.net",
       locales: ["af", "an"],
     },
     appliesTo: [{ included: { everywhere: true } }],
@@ -38,7 +38,7 @@ function makeExtension(version) {
       version,
       applications: {
         gecko: {
-          id: "multilocale@search.mozilla.org",
+          id: "multilocale@search.waterfox.net",
         },
       },
       default_locale: "an",

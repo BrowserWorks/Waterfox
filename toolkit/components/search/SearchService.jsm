@@ -72,7 +72,7 @@ const NS_APP_DISTRIBUTION_SEARCH_DIR_LIST = "SrchPluginsDistDL";
 const EXT_SEARCH_PREFIX = "resource://search-extensions/";
 
 // The address we use to sign the built in search extensions with.
-const EXT_SIGNING_ADDRESS = "search.mozilla.org";
+const EXT_SIGNING_ADDRESS = "search.waterfox.net";
 
 const TOPIC_LOCALES_CHANGE = "intl:app-locales-changed";
 const QUIT_APPLICATION_TOPIC = "quit-application";

@@ -2,7 +2,7 @@
   "data": [
     {
       "webExtension": {
-        "id": "engine1@search.mozilla.org"
+        "id": "engine1@search.waterfox.net"
       },
       "orderHint": 10000,
       "appliesTo": [{
@@ -12,7 +12,7 @@
     },
     {
       "webExtension": {
-        "id": "engine2@search.mozilla.org"
+        "id": "engine2@search.waterfox.net"
       },
       "orderHint": 7000,
       "appliesTo": [{

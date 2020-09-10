@@ -2,7 +2,7 @@
   "data": [
     {
       "webExtension": {
-        "id": "engine@search.mozilla.org"
+        "id": "engine@search.waterfox.net"
       },
       "appliesTo": [{
         "included": { "everywhere": true },
@@ -11,7 +11,7 @@
     },
     {
       "webExtension": {
-        "id": "engine-rel-searchform-purpose@search.mozilla.org"
+        "id": "engine-rel-searchform-purpose@search.waterfox.net"
       },
       "orderHint": 1000,
       "appliesTo": [{
@@ -22,7 +22,7 @@
     },
     {
       "webExtension": {
-        "id": "engine-chromeicon@search.mozilla.org"
+        "id": "engine-chromeicon@search.waterfox.net"
       },
       "orderHint": 1000,
       "appliesTo": [{
@@ -36,7 +36,7 @@
     },
     {
       "webExtension": {
-        "id": "engine-resourceicon@search.mozilla.org"
+        "id": "engine-resourceicon@search.waterfox.net"
       },
       "appliesTo": [{
         "included": { "locales": { "matches": ["en-US", "fr"] } },
@@ -48,7 +48,7 @@
     },
     {
       "webExtension": {
-        "id": "engine-reordered@search.mozilla.org"
+        "id": "engine-reordered@search.waterfox.net"
       },
       "appliesTo": [{
         "included": { "everywhere": true },
@@ -58,7 +58,7 @@
     },
     {
       "webExtension": {
-        "id": "engine-pref@search.mozilla.org"
+        "id": "engine-pref@search.waterfox.net"
       },
       "appliesTo": [{
         "included": { "everywhere": true },

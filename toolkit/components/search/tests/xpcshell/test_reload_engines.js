@@ -16,7 +16,7 @@ const SEARCH_ENGINE_TOPIC = "browser-search-engine-modified";
 const CONFIG = [
   {
     webExtension: {
-      id: "engine@search.mozilla.org",
+      id: "engine@search.waterfox.net",
     },
     orderHint: 30,
     appliesTo: [
@@ -30,7 +30,7 @@ const CONFIG = [
   },
   {
     webExtension: {
-      id: "engine-pref@search.mozilla.org",
+      id: "engine-pref@search.waterfox.net",
     },
     orderHint: 20,
     appliesTo: [
@@ -46,7 +46,7 @@ const CONFIG = [
 const ALTERNATE_CONFIG = [
   {
     webExtension: {
-      id: "engine-pref@search.mozilla.org",
+      id: "engine-pref@search.waterfox.net",
     },
     orderHint: 20,
     appliesTo: [
@@ -59,7 +59,7 @@ const ALTERNATE_CONFIG = [
   },
   {
     webExtension: {
-      id: "engine-chromeicon@search.mozilla.org",
+      id: "engine-chromeicon@search.waterfox.net",
     },
     orderHint: 20,
     appliesTo: [
@@ -76,7 +76,7 @@ const ALTERNATE_CONFIG = [
   },
   {
     webExtension: {
-      id: "engine-resourceicon@search.mozilla.org",
+      id: "engine-resourceicon@search.waterfox.net",
     },
     orderHint: 20,
     appliesTo: [

@@ -5,7 +5,7 @@
   "version": "1.0",
   "applications": {
     "gecko": {
-      "id": "ecosia@search.mozilla.org"
+      "id": "ecosia@search.waterfox.net"
     }
   },
   "hidden": true,

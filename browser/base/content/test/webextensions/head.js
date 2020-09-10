@@ -653,7 +653,7 @@ add_task(async function() {
       // during the test run, ignore those.
       if (
         !existingAddons.has(addon.id) &&
-        !(addon.isBuiltin && addon.id.endsWith("@search.mozilla.org"))
+        !(addon.isBuiltin && addon.id.endsWith("@search.waterfox.net"))
       ) {
         ok(
           false,

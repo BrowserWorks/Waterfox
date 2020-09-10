@@ -2,7 +2,7 @@
   "data": [
     {
       "webExtension": {
-        "id": "engine@search.mozilla.org"
+        "id": "engine@search.waterfox.net"
       },
       "orderHint": 10000,
       "appliesTo": [{
@@ -13,7 +13,7 @@
     },
     {
       "webExtension": {
-        "id": "engine-pref@search.mozilla.org"
+        "id": "engine-pref@search.waterfox.net"
       },
       "orderHint": 7000,
       "appliesTo": [{
@@ -25,7 +25,7 @@
     },
     {
       "webExtension": {
-        "id": "engine-rel-searchform-purpose@search.mozilla.org"
+        "id": "engine-rel-searchform-purpose@search.waterfox.net"
       },
       "orderHint": 6000,
       "appliesTo": [{
@@ -39,7 +39,7 @@
     },
     {
       "webExtension": {
-        "id": "engine-chromeicon@search.mozilla.org"
+        "id": "engine-chromeicon@search.waterfox.net"
       },
       "orderHint": 8000,
       "appliesTo": [{
@@ -53,7 +53,7 @@
     },
     {
       "webExtension": {
-        "id": "engine-resourceicon@search.mozilla.org"
+        "id": "engine-resourceicon@search.waterfox.net"
       },
       "orderHint": 9000,
       "appliesTo": [{
@@ -70,7 +70,7 @@
     },
     {
       "webExtension": {
-        "id": "engine-reordered@search.mozilla.org"
+        "id": "engine-reordered@search.waterfox.net"
       },
       "orderHint": 5000,
       "appliesTo": [{

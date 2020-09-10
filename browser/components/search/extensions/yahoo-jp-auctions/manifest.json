@@ -5,7 +5,7 @@
   "version": "1.2",
   "applications": {
     "gecko": {
-      "id": "yahoo-jp-auctions@search.mozilla.org"
+      "id": "yahoo-jp-auctions@search.waterfox.net"
     }
   },
   "hidden": true,

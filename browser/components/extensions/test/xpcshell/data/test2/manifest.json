@@ -4,7 +4,7 @@
   "version": "1.0",
   "applications": {
     "gecko": {
-      "id": "test2@search.mozilla.org"
+      "id": "test2@search.waterfox.net"
     }
   },
   "description": "A second test search engine",

@@ -5,7 +5,7 @@
   "version": "1.2",
   "applications": {
     "gecko": {
-      "id": "diec2@search.mozilla.org"
+      "id": "diec2@search.waterfox.net"
     }
   },
   "hidden": true,

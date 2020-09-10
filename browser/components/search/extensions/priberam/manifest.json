@@ -5,7 +5,7 @@
   "version": "1.2",
   "applications": {
     "gecko": {
-      "id": "priberam@search.mozilla.org"
+      "id": "priberam@search.waterfox.net"
     }
   },
   "hidden": true,

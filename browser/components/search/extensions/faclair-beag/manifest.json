@@ -5,7 +5,7 @@
   "version": "1.0",
   "applications": {
     "gecko": {
-      "id": "faclair-beag@search.mozilla.org"
+      "id": "faclair-beag@search.waterfox.net"
     }
   },
   "hidden": true,

@@ -5,7 +5,7 @@
   "version": "1.2",
   "applications": {
     "gecko": {
-      "id": "kannadastore@search.mozilla.org"
+      "id": "kannadastore@search.waterfox.net"
     }
   },
   "hidden": true,

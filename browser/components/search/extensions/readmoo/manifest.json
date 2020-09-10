@@ -5,7 +5,7 @@
   "version": "1.0",
   "applications": {
     "gecko": {
-      "id": "readmoo@search.mozilla.org"
+      "id": "readmoo@search.waterfox.net"
     }
   },
   "hidden": true,

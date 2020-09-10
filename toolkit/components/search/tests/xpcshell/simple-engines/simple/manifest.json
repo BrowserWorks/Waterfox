@@ -5,7 +5,7 @@
   "description": "Simple engine with a different name from the WebExtension id prefix",
   "applications": {
     "gecko": {
-      "id": "simple@search.mozilla.org"
+      "id": "simple@search.waterfox.net"
     }
   },
   "hidden": true,

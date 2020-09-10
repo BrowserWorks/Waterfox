@@ -5,7 +5,7 @@
   "version": "1.0",
   "applications": {
     "gecko": {
-      "id": "qxl-NO@search.mozilla.org"
+      "id": "qxl-NO@search.waterfox.net"
     }
   },
   "hidden": true,

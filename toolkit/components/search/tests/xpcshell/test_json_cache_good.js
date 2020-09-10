@@ -29,8 +29,8 @@ const enginesCache = {
   locale: "en-US",
   visibleDefaultEngines: ["engine1", "engine2"],
   builtInEngineList: [
-    { id: "engine1@search.mozilla.org", locale: "default" },
-    { id: "engine2@search.mozilla.org", locale: "default" },
+    { id: "engine1@search.waterfox.net", locale: "default" },
+    { id: "engine2@search.waterfox.net", locale: "default" },
   ],
   metaData: {
     searchDefault: "Test search engine",

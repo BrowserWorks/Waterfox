@@ -5,7 +5,7 @@
   "version": "1.2",
   "applications": {
     "gecko": {
-      "id": "zoznam-sk@search.mozilla.org"
+      "id": "zoznam-sk@search.waterfox.net"
     }
   },
   "hidden": true,

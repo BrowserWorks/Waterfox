@@ -5,9 +5,9 @@
  */
 
 const ENGINE_NAME = "mozSearch";
-const ENGINE_ID = "mozsearch-engine@search.mozilla.org";
+const ENGINE_ID = "mozsearch-engine@search.waterfox.net";
 const PRIVATE_ENGINE_NAME = "mozPrivateSearch";
-const PRIVATE_ENGINE_ID = "mozsearch-engine-private@search.mozilla.org";
+const PRIVATE_ENGINE_ID = "mozsearch-engine-private@search.waterfox.net";
 
 let engine;
 let privateEngine;

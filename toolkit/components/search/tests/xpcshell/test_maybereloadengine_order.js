@@ -5,11 +5,11 @@
 
 const TEST_CONFIG = [
   {
-    webExtension: { id: "plainengine@search.mozilla.org" },
+    webExtension: { id: "plainengine@search.waterfox.net" },
     appliesTo: [{ included: { everywhere: true } }],
   },
   {
-    webExtension: { id: "special-engine@search.mozilla.org" },
+    webExtension: { id: "special-engine@search.waterfox.net" },
     appliesTo: [{ default: "yes", included: { regions: ["FR"] } }],
   },
 ];

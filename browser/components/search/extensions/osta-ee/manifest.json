@@ -5,7 +5,7 @@
   "version": "1.0",
   "applications": {
     "gecko": {
-      "id": "osta-ee@search.mozilla.org"
+      "id": "osta-ee@search.waterfox.net"
     }
   },
   "hidden": true,

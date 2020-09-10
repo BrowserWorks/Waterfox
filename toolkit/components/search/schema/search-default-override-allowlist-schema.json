@@ -15,8 +15,8 @@
     "overridesId": {
       "type": "string",
       "title": "Add-on Id to Override",
-      "description": "The identifier of the app-provided add-on to be overriden. Should be of the format example@search.mozilla.org",
-      "pattern": "^[a-zA-Z0-9-._]*@search.mozilla.org$"
+      "description": "The identifier of the app-provided add-on to be overriden. Should be of the format example@search.waterfox.net",
+      "pattern": "^[a-zA-Z0-9-._]*@search.waterfox.net$"
     },
     "urls": {
       "type": "array",

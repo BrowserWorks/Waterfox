@@ -4,7 +4,7 @@
   "version": "1.0",
   "applications": {
     "gecko": {
-      "id": "engine-rel-searchform-post@search.mozilla.org"
+      "id": "engine-rel-searchform-post@search.waterfox.net"
     }
   },
   "hidden": true,

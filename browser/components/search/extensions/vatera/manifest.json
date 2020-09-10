@@ -5,7 +5,7 @@
   "version": "1.2",
   "applications": {
     "gecko": {
-      "id": "vatera@search.mozilla.org"
+      "id": "vatera@search.waterfox.net"
     }
   },
   "hidden": true,
