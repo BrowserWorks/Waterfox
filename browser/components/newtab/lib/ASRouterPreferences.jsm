@@ -183,7 +183,7 @@ class _ASRouterPreferences {
 
   getUserPreference(name) {
     const prefName = USER_PREFERENCES[name] || name;
-    return Services.prefs.getBoolPref(prefName, true);
+    return Services.prefs.getBoolPref(prefName, false);
   }
 
   getAllUserPreferences() {
