@@ -597,7 +597,7 @@ class WindowsGPOPoliciesProvider {
   _readData(wrk, root) {
     try {
       wrk.open(root, "SOFTWARE\\Policies", wrk.ACCESS_READ);
-      if (wrk.hasChild("Mozilla\\" + Services.appinfo.name)) {
+      if (wrk.hasChild("Waterfox\\" + Services.appinfo.name)) {
         this._policies = WindowsGPOParser.readPolicies(wrk, this._policies);
       }
       wrk.close();

@@ -34,7 +34,7 @@
 // This is the name of the directory to be put in the application data directory
 // if no vendor or application name is specified.
 // (i.e. C:\ProgramData\<FALLBACK_VENDOR_NAME>)
-#  define FALLBACK_VENDOR_NAME "Mozilla"
+#  define FALLBACK_VENDOR_NAME "Waterfox"
 // This describes the directory between the "Mozilla" directory and the install
 // path hash (i.e. C:\ProgramData\Mozilla\<UPDATE_PATH_MID_DIR_NAME>\<hash>)
 #  define UPDATE_PATH_MID_DIR_NAME "updates"
@@ -973,7 +973,7 @@ static HRESULT GetUpdateDirectory(const wchar_t* installPath,
     bool gotHash = false;
     SimpleAutoString regPath;
     regPath.AutoAllocAndAssignSprintf(L"SOFTWARE\\%S\\%S\\TaskBarIDs",
-                                      vendor ? vendor : "Mozilla",
+                                      vendor ? vendor : "Waterfox",
                                       MOZ_APP_BASENAME);
     if (regPath.Length() != 0) {
       gotHash = GetCachedHash(reinterpret_cast<const char16_t*>(installPath),

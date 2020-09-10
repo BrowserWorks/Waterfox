@@ -647,7 +647,7 @@ def cleanup_pending_crash_reports():
     See dom/system/OSFileConstants.cpp for platform variations of <UAppData>.
     """
     if mozinfo.isWin:
-        location = os.path.expanduser("~\\AppData\\Roaming\\Mozilla\\Firefox\\Crash Reports")
+        location = os.path.expanduser("~\\AppData\\Roaming\\Waterfox\\Waterfox\\Crash Reports")
     elif mozinfo.isMac:
         location = os.path.expanduser("~/Library/Application Support/firefox/Crash Reports")
     else:

@@ -83,7 +83,7 @@ static SendThreadData gSendData = {
 };
 static vector<string> gRestartArgs;
 static Json::Value gQueryParameters;
-static wstring gCrashReporterKey(L"Software\\Mozilla\\Crash Reporter");
+static wstring gCrashReporterKey(L"Software\\Waterfox\\Crash Reporter");
 static string gURLParameter;
 static int gCheckboxPadding = 6;
 static bool gRTLlayout = false;
