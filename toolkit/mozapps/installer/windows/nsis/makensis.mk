@@ -20,12 +20,15 @@ endif
 
 TOOLKIT_NSIS_FILES = \
 	common.nsh \
+	GetTime.nsh \
 	locale.nlf \
 	locale-fonts.nsh \
 	locale-rtl.nlf \
 	locales.nsi \
 	overrides.nsh \
+	replaceInFile.nsh \
 	setup.ico \
+	StrRep.nsh \
 	$(NULL)
 
 CUSTOM_NSIS_PLUGINS = \

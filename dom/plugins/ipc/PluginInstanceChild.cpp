@@ -1886,7 +1886,7 @@ BOOL WINAPI PluginInstanceChild::TrackPopupHookProc(HMENU hMenu, UINT uFlags,
   // displayed by plugins that have working parent-child relationships.
   wchar_t szClass[21];
   bool haveClass = GetClassNameW(hWnd, szClass, ArrayLength(szClass));
-  if (!haveClass || (wcscmp(szClass, L"MozillaWindowClass") &&
+  if (!haveClass || (wcscmp(szClass, L"WaterfoxWindowClass") &&
                      wcscmp(szClass, L"SWFlash_Placeholder"))) {
     // Unrecognized parent
     return sUser32TrackPopupMenuStub(hMenu, uFlags, x, y, nReserved, hWnd,

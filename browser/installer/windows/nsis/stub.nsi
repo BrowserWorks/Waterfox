@@ -48,7 +48,7 @@ Var ProgressCompleted
 Var UsingHighContrastMode
 
 Var ExitCode
-Var FirefoxLaunchCode
+Var WaterfoxLaunchCode
 
 Var StartDownloadPhaseTickCount
 ; Since the Intro and Options pages can be displayed multiple times the total
@@ -231,11 +231,11 @@ Var ArchToInstall
 !undef URLStubDownloadX86
 !undef URLStubDownloadAMD64
 !undef URLStubDownloadAArch64
-!define URLStubDownloadX86 "https://download.mozilla.org/?os=win&lang=${AB_CD}&product=firefox-beta-latest"
-!define URLStubDownloadAMD64 "https://download.mozilla.org/?os=win64&lang=${AB_CD}&product=firefox-beta-latest"
-!define URLStubDownloadAArch64 "https://download.mozilla.org/?os=win64-aarch64&lang=${AB_CD}&product=firefox-beta-latest"
+!define URLStubDownloadX86 "https://download.waterfox.net/?os=win&lang=${AB_CD}&product=firefox-beta-latest"
+!define URLStubDownloadAMD64 "https://download.waterfox.net/?os=win64&lang=${AB_CD}&product=firefox-beta-latest"
+!define URLStubDownloadAArch64 "https://download.waterfox.net/?os=win64-aarch64&lang=${AB_CD}&product=firefox-beta-latest"
 !undef URLManualDownload
-!define URLManualDownload "https://www.mozilla.org/${AB_CD}/firefox/installer-help/?channel=beta&installer_lang=${AB_CD}"
+!define URLManualDownload "https://www.waterfox.net/${AB_CD}/firefox/installer-help/?channel=beta&installer_lang=${AB_CD}"
 !undef Channel
 !define Channel "beta"
 !endif
@@ -328,19 +328,19 @@ Function .onInit
   ; path for this install, even if it's not the same architecture.
   SetRegView 32
   SetShellVarContext all ; Set SHCTX to HKLM
-  ${GetSingleInstallPath} "Software\Mozilla\${BrandFullNameInternal}" $R9
+  ${GetSingleInstallPath} "Software\Waterfox\${BrandFullNameInternal}" $R9
 
   ${If} "$R9" == "false"
     ${If} ${IsNativeAMD64}
     ${OrIf} ${IsNativeARM64}
       SetRegView 64
-      ${GetSingleInstallPath} "Software\Mozilla\${BrandFullNameInternal}" $R9
+      ${GetSingleInstallPath} "Software\Waterfox\${BrandFullNameInternal}" $R9
     ${EndIf}
   ${EndIf}
 
   ${If} "$R9" == "false"
     SetShellVarContext current ; Set SHCTX to HKCU
-    ${GetSingleInstallPath} "Software\Mozilla\${BrandFullNameInternal}" $R9
+    ${GetSingleInstallPath} "Software\Waterfox\${BrandFullNameInternal}" $R9
   ${EndIf}
 
   StrCpy $PreviousInstallDir ""
@@ -353,7 +353,7 @@ Function .onInit
   StrCpy $InitialInstallDir "$INSTDIR"
 
   ClearErrors
-  WriteRegStr HKLM "Software\Mozilla" "${BrandShortName}InstallerTest" \
+  WriteRegStr HKLM "Software\Waterfox" "${BrandShortName}InstallerTest" \
                    "Write Test"
 
   ; Only display set as default when there is write access to HKLM and on Win7
@@ -362,7 +362,7 @@ Function .onInit
   ${OrIf} ${AtLeastWin8}
     StrCpy $CanSetAsDefault "false"
   ${Else}
-    DeleteRegValue HKLM "Software\Mozilla" "${BrandShortName}InstallerTest"
+    DeleteRegValue HKLM "Software\Waterfox" "${BrandShortName}InstallerTest"
     StrCpy $CanSetAsDefault "true"
   ${EndIf}
   StrCpy $CheckboxSetAsDefault "0"
@@ -378,7 +378,7 @@ Function .onInit
   StrCpy $EndDownloadPhaseTickCount "0"
   StrCpy $InitialInstallRequirementsCode ""
   StrCpy $IsDownloadFinished ""
-  StrCpy $FirefoxLaunchCode "0"
+  StrCpy $WaterfoxLaunchCode "0"
   StrCpy $CheckboxShortcuts "1"
   StrCpy $CheckboxSendPing "1"
   StrCpy $CheckboxCleanupProfile "0"
@@ -480,7 +480,7 @@ Function .onInit
     Quit
   ${EndIf}
 
-  ${InitHashAppModelId} "$INSTDIR" "Software\Mozilla\${AppName}\TaskBarIDs"
+  ${InitHashAppModelId} "$INSTDIR" "Software\Waterfox\${AppName}\TaskBarIDs"
 
   File /oname=$PLUGINSDIR\stub_common.css "stub_common.css"
   File /oname=$PLUGINSDIR\stub_common.js "stub_common.js"
@@ -692,7 +692,7 @@ Function createInstall
     StrCpy $ExistingBuildID "0"
   ${EndIf}
 
-  ${If} ${FileExists} "$LOCALAPPDATA\Mozilla\Firefox"
+  ${If} ${FileExists} "$LOCALAPPDATA\Waterfox"
     StrCpy $ExistingProfile "1"
   ${Else}
     StrCpy $ExistingProfile "0"
@@ -1078,12 +1078,12 @@ Function SendPing
     ${EndIf}
 
     ClearErrors
-    WriteRegStr HKLM "Software\Mozilla" "${BrandShortName}InstallerTest" \
+    WriteRegStr HKLM "Software\Waterfox" "${BrandShortName}InstallerTest" \
                      "Write Test"
     ${If} ${Errors}
       StrCpy $R8 "0"
     ${Else}
-      DeleteRegValue HKLM "Software\Mozilla" "${BrandShortName}InstallerTest"
+      DeleteRegValue HKLM "Software\Waterfox" "${BrandShortName}InstallerTest"
       StrCpy $R8 "1"
     ${EndIf}
 
@@ -1099,17 +1099,17 @@ Function SendPing
       ${GetParent} "$R2" $R3
       ${GetLongPath} "$R3" $R3
       ${If} $R3 == $INSTDIR
-        StrCpy $R2 "1" ; This Firefox install is set as default.
+        StrCpy $R2 "1" ; This Waterfox install is set as default.
       ${Else}
-        StrCpy $R2 "$R2" "" -11 # length of firefox.exe
+        StrCpy $R2 "$R2" "" -12 # length of waterfox.exe
         ${If} "$R2" == "${FileMainEXE}"
-          StrCpy $R2 "2" ; Another Firefox install is set as default.
+          StrCpy $R2 "2" ; Another Waterfox install is set as default.
         ${Else}
           StrCpy $R2 "0"
         ${EndIf}
       ${EndIf}
     ${Else}
-      StrCpy $R2 "0" ; Firefox is not set as default.
+      StrCpy $R2 "0" ; Waterfox is not set as default.
     ${EndIf}
 
     ${If} "$R2" == "0"
@@ -1120,17 +1120,17 @@ Function SendPing
         ${GetParent} "$R2" $R3
         ${GetLongPath} "$R3" $R3
         ${If} $R3 == $INSTDIR
-          StrCpy $R2 "1" ; This Firefox install is set as default.
+          StrCpy $R2 "1" ; This Waterfox install is set as default.
         ${Else}
-          StrCpy $R2 "$R2" "" -11 # length of firefox.exe
+          StrCpy $R2 "$R2" "" -12 # length of waterfox.exe
           ${If} "$R2" == "${FileMainEXE}"
-            StrCpy $R2 "2" ; Another Firefox install is set as default.
+            StrCpy $R2 "2" ; Another Waterfox install is set as default.
           ${Else}
             StrCpy $R2 "0"
           ${EndIf}
         ${EndIf}
       ${Else}
-        StrCpy $R2 "0" ; Firefox is not set as default.
+        StrCpy $R2 "0" ; Waterfox is not set as default.
       ${EndIf}
     ${EndIf}
 
@@ -1154,7 +1154,7 @@ Function SendPing
                       $\nBuild Channel = ${Channel} \
                       $\nUpdate Channel = ${UpdateChannel} \
                       $\nLocale = ${AB_CD} \
-                      $\nFirefox x64 = $R0 \
+                      $\nWaterfox x64 = $R0 \
                       $\nRunning x64 Windows = $R1 \
                       $\nMajor = $5 \
                       $\nMinor = $6 \
@@ -1162,7 +1162,7 @@ Function SendPing
                       $\nServicePack = $8 \
                       $\nIsServer = $9 \
                       $\nExit Code = $ExitCode \
-                      $\nFirefox Launch Code = $FirefoxLaunchCode \
+                      $\nWaterfox Launch Code = $WaterfoxLaunchCode \
                       $\nDownload Retry Count = $DownloadRetryCount \
                       $\nDownloaded Bytes = $DownloadedBytes \
                       $\nDownload Size Bytes = $DownloadSizeBytes \
@@ -1195,7 +1195,7 @@ Function SendPing
     Call RelativeGotoPage
 !else
     ${StartTimer} ${DownloadIntervalMS} OnPing
-    InetBgDL::Get "${BaseURLStubPing}/${StubURLVersion}${StubURLVersionAppend}/${Channel}/${UpdateChannel}/${AB_CD}/$R0/$R1/$5/$6/$7/$8/$9/$ExitCode/$FirefoxLaunchCode/$DownloadRetryCount/$DownloadedBytes/$DownloadSizeBytes/$IntroPhaseSeconds/$OptionsPhaseSeconds/$0/$1/$DownloadFirstTransferSeconds/$2/$3/$4/$InitialInstallRequirementsCode/$OpenedDownloadPage/$ExistingProfile/$ExistingVersion/$ExistingBuildID/$R5/$R6/$R7/$R8/$R2/$R3/$DownloadServerIP/$PostSigningData/$ProfileCleanupPromptType/$CheckboxCleanupProfile" \
+    InetBgDL::Get "${BaseURLStubPing}/${StubURLVersion}${StubURLVersionAppend}/${Channel}/${UpdateChannel}/${AB_CD}/$R0/$R1/$5/$6/$7/$8/$9/$ExitCode/$WaterfoxLaunchCode/$DownloadRetryCount/$DownloadedBytes/$DownloadSizeBytes/$IntroPhaseSeconds/$OptionsPhaseSeconds/$0/$1/$DownloadFirstTransferSeconds/$2/$3/$4/$InitialInstallRequirementsCode/$OpenedDownloadPage/$ExistingProfile/$ExistingVersion/$ExistingBuildID/$R5/$R6/$R7/$R8/$R2/$R3/$DownloadServerIP/$PostSigningData/$ProfileCleanupPromptType/$CheckboxCleanupProfile" \
                   "$PLUGINSDIR\_temp" /END
 !endif
   ${Else}
@@ -1383,7 +1383,7 @@ Function CanWrite
 FunctionEnd
 
 Function LaunchApp
-  StrCpy $FirefoxLaunchCode "2"
+  StrCpy $WaterfoxLaunchCode "2"
 
   ; Set the current working directory to the installation directory
   SetOutPath "$INSTDIR"
@@ -1504,21 +1504,21 @@ Function ShouldPromptForProfileCleanup
     ${Do}
       ClearErrors
       ; Check if the section exists by reading a value that must be present.
-      ReadINIStr $1 "$APPDATA\Mozilla\Firefox\profiles.ini" "Profile$0" "Path"
+      ReadINIStr $1 "$APPDATA\Waterfox\profiles.ini" "Profile$0" "Path"
       ${If} ${Errors}
         ; We've run out of profile sections.
         ${Break}
       ${EndIf}
 
       ClearErrors
-      ReadINIStr $1 "$APPDATA\Mozilla\Firefox\profiles.ini" "Profile$0" "Default"
+      ReadINIStr $1 "$APPDATA\Waterfox\profiles.ini" "Profile$0" "Default"
       ${IfNot} ${Errors}
       ${AndIf} $1 == "1"
         ; We've found the default profile
-        ReadINIStr $1 "$APPDATA\Mozilla\Firefox\profiles.ini" "Profile$0" "Path"
-        ReadINIStr $2 "$APPDATA\Mozilla\Firefox\profiles.ini" "Profile$0" "IsRelative"
+        ReadINIStr $1 "$APPDATA\Waterfox\profiles.ini" "Profile$0" "Path"
+        ReadINIStr $2 "$APPDATA\Waterfox\profiles.ini" "Profile$0" "IsRelative"
         ${If} $2 == "1"
-          StrCpy $R0 "$APPDATA\Mozilla\Firefox\$1"
+          StrCpy $R0 "$APPDATA\Waterfox\$1"
         ${Else}
           StrCpy $R0 "$1"
         ${EndIf}
@@ -1549,7 +1549,7 @@ Function ShouldPromptForProfileCleanup
       ${Break}
     ${EndIf}
     ${WordFind} "$1" "-" "+1{" $2
-    ${If} $2 == "FirefoxURL"
+    ${If} $2 == "WaterfoxURL"
       ClearErrors
       ReadRegStr $2 HKCR "$1\DefaultIcon" ""
       ${IfNot} ${Errors}
@@ -1569,10 +1569,10 @@ Function ShouldPromptForProfileCleanup
 
   ; Okay, there's at least one install, let's see if it's for this channel.
   SetShellVarContext all
-  ${GetSingleInstallPath} "Software\Mozilla\${BrandFullNameInternal}" $0
+  ${GetSingleInstallPath} "Software\Waterfox\${BrandFullNameInternal}" $0
   ${If} $0 == "false"
     SetShellVarContext current
-    ${GetSingleInstallPath} "Software\Mozilla\${BrandFullNameInternal}" $0
+    ${GetSingleInstallPath} "Software\Waterfox\${BrandFullNameInternal}" $0
     ${If} $0 == "false"
       ; Existing installs are not for this channel. Don't show any prompt.
       GoTo end
@@ -1624,8 +1624,8 @@ Function GetLatestReleasedVersion
   Push $6 ; This is our response timeout counter
 
   InetBgDL::Get /RESET /END
-  InetBgDL::Get "https://product-details.mozilla.org/1.0/firefox_versions.json" \
-                "$PLUGINSDIR\firefox_versions.json" \
+  InetBgDL::Get "" \
+                "$PLwaterfox.netrefox_versions.json" \
                 /CONNECTTIMEOUT 120 /RECEIVETIMEOUT 120 /END
 
   ; Wait for the response, but only give it half a second since this is on the

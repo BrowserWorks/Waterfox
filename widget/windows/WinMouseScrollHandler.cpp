@@ -409,7 +409,7 @@ void MouseScrollHandler::ProcessNativeMouseWheelMessage(nsWindowBase* aWidget,
   }
 
   // Handle most cases first.  If the window under mouse cursor is our window
-  // except plugin window (MozillaWindowClass), we should handle the message
+  // except plugin window (WaterfoxWindowClass), we should handle the message
   // on the window.
   if (WinUtils::IsOurProcessWindow(underCursorWnd)) {
     nsWindowBase* destWindow = WinUtils::GetNSWindowBasePtr(underCursorWnd);
@@ -483,7 +483,7 @@ void MouseScrollHandler::ProcessNativeMouseWheelMessage(nsWindowBase* aWidget,
     return;
   }
 
-  // If we're a plugin window (MozillaWindowClass) and cursor in this window,
+  // If we're a plugin window (WaterfoxWindowClass) and cursor in this window,
   // the message shouldn't go to plugin's wndproc again.  So, we should handle
   // it on parent window.  However, note that the DOM event may cause accessing
   // the plugin.  Therefore, we should unlock the plugin process by using

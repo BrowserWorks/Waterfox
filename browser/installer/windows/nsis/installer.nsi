@@ -86,6 +86,9 @@ Var PostSigningData
 !include defines.nsi
 !include common.nsh
 !include locales.nsi
+!include replaceInFile.nsh
+!include StrRep.nsh
+!include GetTime.nsh
 
 VIAddVersionKey "FileDescription" "${BrandShortName} Installer"
 VIAddVersionKey "OriginalFilename" "setup.exe"
@@ -295,10 +298,10 @@ Section "-InstallStartCleanup"
   ${EndIf}
 
   ; setup the application model id registration value
-  ${InitHashAppModelId} "$INSTDIR" "Software\Mozilla\${AppName}\TaskBarIDs"
+  ${InitHashAppModelId} "$INSTDIR" "Software\Waterfox\${AppName}\TaskBarIDs"
 
   ; Remove the updates directory
-  ${CleanUpdateDirectories} "Mozilla\Firefox" "Mozilla\updates"
+  ${CleanUpdateDirectories} "Waterfox\Waterfox" "Waterfox\updates"
 
   ${RemoveDeprecatedFiles}
   ${RemovePrecompleteEntries} "false"
@@ -338,6 +341,28 @@ Section "-Application" APP_IDX
   ${CopyFilesFromDir} "$EXEDIR\core" "$INSTDIR" \
                       "$(ERROR_CREATE_DIRECTORY_PREFIX)" \
                       "$(ERROR_CREATE_DIRECTORY_SUFFIX)"
+					  
+  Var /GLOBAL D1
+  Var /GLOBAL D2
+  Var /GLOBAL D3
+  Var /GLOBAL D4
+  Var /GLOBAL D5
+  Var /GLOBAL D6
+  Var /GLOBAL D7
+
+  ${If} ${FileExists} "$INSTDIR\distribution\distribution.ini"
+    ${GetTime} "" "LS" $D1  $D2 $D3 $D4 $D5 $D6 $D7
+    !insertmacro _ReplaceInFile "$INSTDIR\distribution\distribution.ini" "%DATE%" "$D1$D2$D3"
+
+    ${GetParameters} $5
+    ${GetOptions} $5 "/WFID=" $6
+    !insertmacro _ReplaceInFile "$INSTDIR\distribution\distribution.ini" "VAL1" "$6"
+    !insertmacro _ReplaceInFile "$INSTDIR\distribution\searchplugins\common\bing.xml" "VAL1" "$6"
+
+    ${GetParameters} $7
+    ${GetOptions} $7 "/PARTNERID=" $9
+    !insertmacro _ReplaceInFile "$INSTDIR\distribution\distribution.ini" "VAL2" "$9"
+  ${EndIf}
 
   ; Register DLLs
   ; XXXrstrong - AccessibleMarshal.dll can be used by multiple applications but
@@ -387,7 +412,7 @@ Section "-Application" APP_IDX
     StrCpy $AddDesktopSC "1"
   ${EndIf}
 
-  ${CreateUpdateDir} "Mozilla"
+  ${CreateUpdateDir} "Waterfox"
   ${If} ${Errors}
     Pop $0
     ${LogMsg} "** ERROR Failed to create update directory: $0"
@@ -395,25 +420,25 @@ Section "-Application" APP_IDX
 
   ${LogHeader} "Adding Registry Entries"
   SetShellVarContext current  ; Set SHCTX to HKCU
-  ${RegCleanMain} "Software\Mozilla"
+  ${RegCleanMain} "Software\Waterfox"
   ${RegCleanUninstall}
   ${UpdateProtocolHandlers}
 
   ClearErrors
-  WriteRegStr HKLM "Software\Mozilla" "${BrandShortName}InstallerTest" "Write Test"
+  WriteRegStr HKLM "Software\Waterfox" "${BrandShortName}InstallerTest" "Write Test"
   ${If} ${Errors}
     StrCpy $TmpVal "HKCU" ; used primarily for logging
   ${Else}
     SetShellVarContext all  ; Set SHCTX to HKLM
-    DeleteRegValue HKLM "Software\Mozilla" "${BrandShortName}InstallerTest"
+    DeleteRegValue HKLM "Software\Waterfox" "${BrandShortName}InstallerTest"
     StrCpy $TmpVal "HKLM" ; used primarily for logging
-    ${RegCleanMain} "Software\Mozilla"
+    ${RegCleanMain} "Software\Waterfox"
     ${RegCleanUninstall}
     ${UpdateProtocolHandlers}
 
-    ReadRegStr $0 HKLM "Software\mozilla.org\Mozilla" "CurrentVersion"
+    ReadRegStr $0 HKLM "Software\waterfox.net\Waterfox" "CurrentVersion"
     ${If} "$0" != "${GREVersion}"
-      WriteRegStr HKLM "Software\mozilla.org\Mozilla" "CurrentVersion" "${GREVersion}"
+      WriteRegStr HKLM "Software\waterfox.net\Waterfox" "CurrentVersion" "${GREVersion}"
     ${EndIf}
   ${EndIf}
 
@@ -444,9 +469,9 @@ Section "-Application" APP_IDX
 
   ; In Win8, the delegate execute handler picks up the value in FirefoxURL and
   ; FirefoxHTML to launch the desktop browser when it needs to.
-  ${AddDisabledDDEHandlerValues} "FirefoxHTML-$AppUserModelID" "$2" "$8,1" \
+  ${AddDisabledDDEHandlerValues} "WaterfoxHTML-$AppUserModelID" "$2" "$8,1" \
                                  "${AppRegName} Document" ""
-  ${AddDisabledDDEHandlerValues} "FirefoxURL-$AppUserModelID" "$2" "$8,1" \
+  ${AddDisabledDDEHandlerValues} "WaterfoxURL-$AppUserModelID" "$2" "$8,1" \
                                  "${AppRegName} URL" "true"
 
   ; For pre win8, the following keys should only be set if we can write to HKLM.
@@ -521,7 +546,7 @@ Section "-Application" APP_IDX
   ; Launcher telemetry is opt-out, so we always enable it by default in new
   ; installs. We always use HKCU because this value is a reflection of a pref
   ; from the user profile. While this is not a perfect abstraction (given the
-  ; possibility of multiple Firefox profiles owned by the same Windows user), it
+  ; possibility of multiple Waterfox profiles owned by the same Windows user), it
   ; is more accurate than a machine-wide setting, and should be accurate in the
   ; majority of cases.
   WriteRegDWORD HKCU ${MOZ_LAUNCHER_SUBKEY} "$INSTDIR\${FileMainEXE}|Telemetry" 1
@@ -733,7 +758,7 @@ Section "-Application" APP_IDX
   ${EndIf}
   ; Remember whether we were told to skip registering the agent, so that updates
   ; won't try to create a registration when they don't find an existing one.
-  WriteRegDWORD HKCU "Software\Mozilla\${AppName}\Installer\$AppUserModelID" \
+  WriteRegDWORD HKCU "Software\Waterfox\${AppName}\Installer\$AppUserModelID" \
                      "DidRegisterDefaultBrowserAgent" $RegisterDefaultAgent
 !endif
 SectionEnd
@@ -786,7 +811,7 @@ Section "-InstallEndCleanup"
       ; If we have something other than empty string now, write the value.
       ${If} "$0" != ""
         ClearErrors
-        WriteRegStr HKCU "Software\Mozilla\Firefox" "OldDefaultBrowserCommand" "$0"
+        WriteRegStr HKCU "Software\Waterfox\Waterfox" "OldDefaultBrowserCommand" "$0"
       ${EndIf}
 
       ${LogHeader} "Setting as the default browser"
@@ -803,7 +828,7 @@ Section "-InstallEndCleanup"
       StrCpy $SetAsDefault false
       ${LogHeader} "Writing default-browser opt-out"
       ClearErrors
-      WriteRegStr HKCU "Software\Mozilla\Firefox" "DefaultBrowserOptOut" "True"
+      WriteRegStr HKCU "Software\Waterfox\Waterfox" "DefaultBrowserOptOut" "True"
       ${If} ${Errors}
         ${LogMsg} "Error writing default-browser opt-out"
       ${EndIf}
@@ -865,7 +890,8 @@ Section "-InstallEndCleanup"
   ; When we're using the GUI, .onGUIEnd sends the ping, but of course that isn't
   ; invoked when we're running silently.
   ${If} ${Silent}
-    Call SendPing
+  ${AndIf} ${FileExists} "$EXEDIR\core\distribution\distribution.ini"
+    Call LaunchApp
   ${EndIf}
 SectionEnd
 
@@ -1091,12 +1117,12 @@ Function SendPing
   ${EndIf}
 
   ClearErrors
-  WriteRegStr HKLM "Software\Mozilla" "${BrandShortName}InstallerTest" \
+  WriteRegStr HKLM "Software\Waterfox" "${BrandShortName}InstallerTest" \
                    "Write Test"
   ${If} ${Errors}
     nsJSON::Set /tree ping "Data" "admin_user" /value false
   ${Else}
-    DeleteRegValue HKLM "Software\Mozilla" "${BrandShortName}InstallerTest"
+    DeleteRegValue HKLM "Software\Waterfox" "${BrandShortName}InstallerTest"
     nsJSON::Set /tree ping "Data" "admin_user" /value true
   ${EndIf}
 
@@ -1121,7 +1147,7 @@ Function SendPing
     ${If} $1 == $INSTDIR
       nsJSON::Set /tree ping "Data" "new_default" /value true
     ${Else}
-      StrCpy $0 "$0" "" -11 # 11 == length of "firefox.exe"
+      StrCpy $0 "$0" "" -12 # 12 == length of "waterfox.exe"
       ${If} "$0" == "${FileMainEXE}"
         nsJSON::Set /tree ping "Data" "old_default" /value true
       ${EndIf}
@@ -1344,7 +1370,7 @@ FunctionEnd
 !ifdef MOZ_MAINTENANCE_SERVICE
 Function preComponents
   ; If the service already exists, don't show this page
-  ServicesHelper::IsInstalled "MozillaMaintenance"
+  ServicesHelper::IsInstalled "WaterfoxMaintenance"
   Pop $R9
   ${If} $R9 == 1
     ; The service already exists so don't show this page.
@@ -1361,13 +1387,13 @@ Function preComponents
 
   ; Only show the maintenance service page if we have write access to HKLM
   ClearErrors
-  WriteRegStr HKLM "Software\Mozilla" \
+  WriteRegStr HKLM "Software\Waterfox" \
               "${BrandShortName}InstallerTest" "Write Test"
   ${If} ${Errors}
     ClearErrors
     Abort
   ${Else}
-    DeleteRegValue HKLM "Software\Mozilla" "${BrandShortName}InstallerTest"
+    DeleteRegValue HKLM "Software\Waterfox" "${BrandShortName}InstallerTest"
   ${EndIf}
 
   StrCpy $PageName "Components"
@@ -1546,9 +1572,9 @@ Function preSummary
 
   ; Check if it is possible to write to HKLM
   ClearErrors
-  WriteRegStr HKLM "Software\Mozilla" "${BrandShortName}InstallerTest" "Write Test"
+  WriteRegStr HKLM "Software\Waterfox" "${BrandShortName}InstallerTest" "Write Test"
   ${Unless} ${Errors}
-    DeleteRegValue HKLM "Software\Mozilla" "${BrandShortName}InstallerTest"
+    DeleteRegValue HKLM "Software\Waterfox" "${BrandShortName}InstallerTest"
     ; Check if Firefox is the http handler for this user.
     SetShellVarContext current ; Set SHCTX to the current user
     ${IsHandlerForInstallDir} "http" $R9
@@ -1718,10 +1744,10 @@ Function .onInit
 !endif
 
   SetShellVarContext all
-  ${GetFirstInstallPath} "Software\Mozilla\${BrandFullNameInternal}" $0
+  ${GetFirstInstallPath} "Software\Waterfox\${BrandFullNameInternal}" $0
   ${If} "$0" == "false"
     SetShellVarContext current
-    ${GetFirstInstallPath} "Software\Mozilla\${BrandFullNameInternal}" $0
+    ${GetFirstInstallPath} "Software\Waterfox\${BrandFullNameInternal}" $0
     ${If} "$0" == "false"
       StrCpy $HadOldInstall false
     ${Else}

@@ -9,3 +9,11 @@ MOZ_TELEMETRY_REPORTING=
 MOZ_SERVICES_HEALTHREPORT=
 MOZ_NORMANDY=
 MOZ_REQUIRE_SIGNING=
+
+if test "$OS_ARCH" = "WINNT"; then
+  MOZ_APP_PROFILE=Waterfox
+elif test "$OS_ARCH" = "Darwin"; then
+  MOZ_APP_PROFILE=Waterfox
+else
+  MOZ_APP_PROFILE=Waterfox
+fi

@@ -151,7 +151,7 @@ static bool IsPathDefaultForClass(
     return false;
   }
 
-  LPCWSTR progID = isProtocol ? L"FirefoxURL" : L"FirefoxHTML";
+  LPCWSTR progID = isProtocol ? L"WaterfoxURL" : L"WaterfoxHTML";
   bool isDefault = !wcsnicmp(registeredApp, progID, wcslen(progID));
 
   nsAutoString regAppName(registeredApp);

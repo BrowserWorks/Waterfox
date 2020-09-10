@@ -925,9 +925,9 @@ nsresult nsWindow::Create(nsIWidget* aParent, nsNativeWidget aNativeParent,
     // We create two zero-sized windows as descendants of the top-level window,
     // like so:
     //
-    //   Top-level window (MozillaWindowClass)
-    //     FAKETRACKPOINTSCROLLCONTAINER (MozillaWindowClass)
-    //       FAKETRACKPOINTSCROLLABLE (MozillaWindowClass)
+    //   Top-level window (WaterfoxWindowClass)
+    //     FAKETRACKPOINTSCROLLCONTAINER (WaterfoxWindowClass)
+    //       FAKETRACKPOINTSCROLLABLE (WaterfoxWindowClass)
     //
     // We need to have the middle window, otherwise the Trackpoint driver
     // will fail to deliver scroll messages.  WM_MOUSEWHEEL messages are
