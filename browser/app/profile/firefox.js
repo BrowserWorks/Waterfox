@@ -40,7 +40,7 @@ pref("extensions.getAddons.get.url", "https://services.addons.mozilla.org/api/v3
 pref("extensions.getAddons.search.browseURL", "https://addons.mozilla.org/%LOCALE%/firefox/search?q=%TERMS%&platform=%OS%&appver=%VERSION%");
 pref("extensions.getAddons.link.url", "https://addons.mozilla.org/%LOCALE%/firefox/");
 pref("extensions.getAddons.langpacks.url", "https://services.addons.mozilla.org/api/v3/addons/language-tools/?app=firefox&type=language&appversion=%VERSION%");
-pref("extensions.getAddons.discovery.api_url", "");
+pref("extensions.getAddons.discovery.api_url", "", locked);
 
 // Use bloomfilters for the addons blocklist, instead of JSON only.
 pref("extensions.blocklist.useMLBF", true);
@@ -49,7 +49,7 @@ pref("extensions.blocklist.useMLBF.stashes", true);
 // The URL for the privacy policy related to recommended extensions.
 pref("extensions.recommendations.privacyPolicyUrl", "https://www.mozilla.org/privacy/firefox/?utm_source=firefox-browser&utm_medium=firefox-browser&utm_content=privacy-policy-link#addons");
 // The URL for Firefox Color, recommended on the theme page in about:addons.
-pref("extensions.recommendations.themeRecommendationUrl", "");
+pref("extensions.recommendations.themeRecommendationUrl", "", locked);
 
 pref("extensions.update.autoUpdateDefault", true);
 
@@ -74,8 +74,8 @@ pref("extensions.webextensions.remote", true);
 pref("extensions.webextensions.background-delayed-startup", true);
 
 // Require signed add-ons by default
-pref("extensions.langpacks.signatures.required", true);
-pref("xpinstall.signatures.required", true);
+pref("extensions.langpacks.signatures.required", false);
+pref("xpinstall.signatures.required", false);
 pref("xpinstall.signatures.devInfoURL", "https://wiki.mozilla.org/Addons/Extension_Signing");
 
 // Enable extensionStorage storage actor by default
@@ -274,7 +274,7 @@ pref("browser.urlbar.ctrlCanonizesURLs", true);
 pref("browser.urlbar.autoFill", true);
 
 // Whether to warm up network connections for autofill or search results.
-pref("browser.urlbar.speculativeConnect.enabled", true);
+pref("browser.urlbar.speculativeConnect.enabled", false);
 
 // Whether bookmarklets should be filtered out of Address Bar matches.
 // This is enabled for security reasons, when true it is still possible to
@@ -309,7 +309,7 @@ pref("browser.urlbar.suggest.topsites",             true);
 pref("browser.urlbar.maxCharsForSearchSuggestions", 100);
 
 pref("browser.urlbar.formatting.enabled", true);
-pref("browser.urlbar.trimURLs", true);
+pref("browser.urlbar.trimURLs", false);
 
 // If changed to true, copying the entire URL from the location bar will put the
 // human readable (percent-decoded) URL on the clipboard.
@@ -342,7 +342,7 @@ pref("browser.urlbar.update1.searchTips", true);
 // focused in design update 2.
 pref("browser.urlbar.update2.expandTextOnFocus", false);
 
-pref("browser.urlbar.eventTelemetry.enabled", false);
+pref("browser.urlbar.eventTelemetry.enabled", false, locked);
 
 // Controls when to DNS resolve single word search strings, after they were
 // searched for. If the string is resolved as a valid host, show a
@@ -375,7 +375,7 @@ pref("browser.download.panel.shown", false);
 
 // This controls whether the button is automatically shown/hidden depending
 // on whether there are downloads to show.
-pref("browser.download.autohideButton", true);
+pref("browser.download.autohideButton", false);
 
 #ifndef XP_MACOSX
   pref("browser.helperApps.deleteTempFileOnExit", true);
@@ -786,7 +786,7 @@ pref("intl.regional_prefs.use_os_locales", false);
 // 2 = check multi/single line controls
 pref("layout.spellcheckDefault", 1);
 
-pref("browser.send_pings", false, locked);
+pref("browser.send_pings", false);
 
 // At startup, if the handler service notices that the version number in the
 // region.properties file is newer than the version number in the handler
@@ -967,15 +967,15 @@ pref("browser.zoom.siteSpecific", true);
 pref("browser.zoom.updateBackgroundTabs", true);
 
 // The breakpad report server to link to in about:crashes
-pref("breakpad.reportURL", "");
+pref("breakpad.reportURL", "", locked);
 
 // URL for "Learn More" for DataCollection
 pref("toolkit.datacollection.infoURL",
-     "");
+     "", locked);
 
 // URL for "Learn More" for Crash Reporter
 pref("toolkit.crashreporter.infoURL",
-     "https://www.mozilla.org/legal/privacy/firefox.html#crash-reporter");
+     "", locked);
 
 // base URL for web-based support pages
 pref("app.support.baseURL", "https://support.mozilla.org/1/firefox/%VERSION%/%OS%/%LOCALE%/");
@@ -990,7 +990,7 @@ pref("app.support.baseURL", "https://support.mozilla.org/1/firefox/%VERSION%/%OS
 // Name of alternate about: page for certificate errors (when undefined, defaults to about:neterror)
 pref("security.alternate_certificate_error_page", "certerror");
 
-pref("security.certerrors.recordEventTelemetry", true);
+pref("security.certerrors.recordEventTelemetry", false, locked);
 pref("security.certerrors.permanentOverride", true);
 pref("security.certerrors.mitm.priming.enabled", true);
 pref("security.certerrors.mitm.priming.endpoint", "https://mitmdetection.services.mozilla.com/");
@@ -1174,7 +1174,7 @@ pref("services.sync.prefs.sync.accessibility.browsewithcaret", true);
 pref("services.sync.prefs.sync.accessibility.typeaheadfind", true);
 pref("services.sync.prefs.sync.accessibility.typeaheadfind.linksonly", true);
 pref("services.sync.prefs.sync.addons.ignoreUserEnabledChanges", true);
-pref("services.sync.prefs.sync.app.shield.optoutstudies.enabled", true);
+pref("services.sync.prefs.sync.app.shield.optoutstudies.enabled", false, locked);
 // The addons prefs related to repository verification are intentionally
 // not synced for security reasons. If a system is compromised, a user
 // could weaken the pref locally, install an add-on from an untrusted
@@ -1182,24 +1182,24 @@ pref("services.sync.prefs.sync.app.shield.optoutstudies.enabled", true);
 // uncompromised Sync-connected devices.
 pref("services.sync.prefs.sync.browser.contentblocking.category", true);
 pref("services.sync.prefs.sync.browser.contentblocking.features.strict", true);
-pref("services.sync.prefs.sync.browser.crashReports.unsubmittedCheck.autoSubmit2", true);
+pref("services.sync.prefs.sync.browser.crashReports.unsubmittedCheck.autoSubmit2", false, locked);
 pref("services.sync.prefs.sync.browser.ctrlTab.recentlyUsedOrder", true);
 pref("services.sync.prefs.sync.browser.discovery.enabled", true);
 pref("services.sync.prefs.sync.browser.download.useDownloadDir", true);
 pref("services.sync.prefs.sync.browser.formfill.enable", true);
 pref("services.sync.prefs.sync.browser.link.open_newwindow", true);
 pref("services.sync.prefs.sync.browser.newtabpage.activity-stream.showSearch", true);
-pref("services.sync.prefs.sync.browser.newtabpage.activity-stream.showSponsored", true);
+pref("services.sync.prefs.sync.browser.newtabpage.activity-stream.showSponsored", false, locked);
 pref("services.sync.prefs.sync.browser.newtabpage.activity-stream.feeds.topsites", true);
 pref("services.sync.prefs.sync.browser.newtabpage.activity-stream.topSitesRows", true);
 pref("services.sync.prefs.sync.browser.newtabpage.activity-stream.feeds.snippets", false, locked);
 pref("services.sync.prefs.sync.browser.newtabpage.activity-stream.feeds.section.topstories", false, locked);
-pref("services.sync.prefs.sync.browser.newtabpage.activity-stream.section.topstories.rows", true);
+pref("services.sync.prefs.sync.browser.newtabpage.activity-stream.section.topstories.rows", false, locked);
 pref("services.sync.prefs.sync.browser.newtabpage.activity-stream.feeds.section.highlights", true);
 pref("services.sync.prefs.sync.browser.newtabpage.activity-stream.section.highlights.includeVisited", true);
 pref("services.sync.prefs.sync.browser.newtabpage.activity-stream.section.highlights.includeBookmarks", true);
 pref("services.sync.prefs.sync.browser.newtabpage.activity-stream.section.highlights.includeDownloads", true);
-pref("services.sync.prefs.sync.browser.newtabpage.activity-stream.section.highlights.includePocket", true);
+pref("services.sync.prefs.sync.browser.newtabpage.activity-stream.section.highlights.includePocket", false, locked);
 pref("services.sync.prefs.sync.browser.newtabpage.activity-stream.section.highlights.rows", true);
 pref("services.sync.prefs.sync.browser.newtabpage.enabled", true);
 pref("services.sync.prefs.sync.browser.newtabpage.pinned", true);
@@ -1321,22 +1321,22 @@ pref("browser.newtabpage.activity-stream.asrouter.useRemoteL10n", false, locked)
 
 // These prefs control if Discovery Stream is enabled.
 pref("browser.newtabpage.activity-stream.discoverystream.enabled", false, locked);
-pref("browser.newtabpage.activity-stream.discoverystream.hardcoded-basic-layout", false);
-pref("browser.newtabpage.activity-stream.discoverystream.spocs-endpoint", "");
+pref("browser.newtabpage.activity-stream.discoverystream.hardcoded-basic-layout", false, locked);
+pref("browser.newtabpage.activity-stream.discoverystream.spocs-endpoint", "", locked);
 // List of regions that get stories by default.
-pref("browser.newtabpage.activity-stream.discoverystream.region-stories-config", "");
+pref("browser.newtabpage.activity-stream.discoverystream.region-stories-config", "", locked);
 // List of regions that get spocs by default.
-pref("browser.newtabpage.activity-stream.discoverystream.region-spocs-config", "");
+pref("browser.newtabpage.activity-stream.discoverystream.region-spocs-config", "", locked);
 // List of regions that get the 7 row layout.
-pref("browser.newtabpage.activity-stream.discoverystream.region-layout-config", "");
+pref("browser.newtabpage.activity-stream.discoverystream.region-layout-config", "", locked);
 // Allows Pocket story collections to be dismissed.
-pref("browser.newtabpage.activity-stream.discoverystream.isCollectionDismissible", true);
+pref("browser.newtabpage.activity-stream.discoverystream.isCollectionDismissible", true, locked);
 // Switch between different versions of the recommendation provider.
 pref("browser.newtabpage.activity-stream.discoverystream.personalization.version", 1);
 // Configurable keys used by personalization version 2.
 pref("browser.newtabpage.activity-stream.discoverystream.personalization.modelKeys", "nb_model_arts_and_entertainment, nb_model_autos_and_vehicles, nb_model_beauty_and_fitness, nb_model_blogging_resources_and_services, nb_model_books_and_literature, nb_model_business_and_industrial, nb_model_computers_and_electronics, nb_model_finance, nb_model_food_and_drink, nb_model_games, nb_model_health, nb_model_hobbies_and_leisure, nb_model_home_and_garden, nb_model_internet_and_telecom, nb_model_jobs_and_education, nb_model_law_and_government, nb_model_online_communities, nb_model_people_and_society, nb_model_pets_and_animals, nb_model_real_estate, nb_model_reference, nb_model_science, nb_model_shopping, nb_model_sports, nb_model_travel");
 // System pref to allow Pocket stories personalization to be turned on/off.
-pref("browser.newtabpage.activity-stream.discoverystream.recs.personalized", false);
+pref("browser.newtabpage.activity-stream.discoverystream.recs.personalized", false, locked);
 // System pref to allow Pocket sponsored content personalization to be turned on/off.
 pref("browser.newtabpage.activity-stream.discoverystream.spocs.personalized", true);
 
@@ -1400,9 +1400,9 @@ pref("pdfjs.handleOctetStream", true);
 // Is the sidebar positioned ahead of the content browser
 pref("sidebar.position_start", true);
 
-pref("security.identitypopup.recordEventTelemetry", true);
-pref("security.protectionspopup.recordEventTelemetry", true);
-pref("security.app_menu.recordEventTelemetry", true);
+pref("security.identitypopup.recordEventTelemetry", false, locked);
+pref("security.protectionspopup.recordEventTelemetry", false, locked);
+pref("security.app_menu.recordEventTelemetry", false, locked);
 
 // Block insecure active content on https pages
 pref("security.mixed_content.block_active_content", true);
@@ -1416,7 +1416,7 @@ pref("security.insecure_connection_icon.enabled", true);
 pref("security.insecure_connection_icon.pbmode.enabled", true);
 
 // For secure connections, show gray instead of green lock icon
-pref("security.secure_connection_icon_color_gray", true);
+pref("security.secure_connection_icon_color_gray", false);
 
 // Show "Not Secure" text for http pages; disabled for now
 pref("security.insecure_connection_text.enabled", true);
@@ -1483,8 +1483,8 @@ pref("identity.sendtabpromo.url", "", locked);
 
 // URLs for promo links to mobile browsers. Note that consumers are expected to
 // append a value for utm_campaign.
-pref("identity.mobilepromo.android", "");
-pref("identity.mobilepromo.ios", "");
+pref("identity.mobilepromo.android", "", locked);
+pref("identity.mobilepromo.ios", "", locked);
 
 // Migrate any existing Firefox Account data from the default profile to the
 // Developer Edition profile.
@@ -1713,11 +1713,11 @@ pref("browser.tabs.remote.warmup.maxTabs", 3);
 pref("browser.tabs.remote.warmup.unloadDelayMs", 2000);
 
 // For the about:tabcrashed page
-pref("browser.tabs.crashReporting.sendReport", false);
-pref("browser.tabs.crashReporting.includeURL", false);
-pref("browser.tabs.crashReporting.requestEmail", false);
-pref("browser.tabs.crashReporting.emailMe", false);
-pref("browser.tabs.crashReporting.email", "");
+pref("browser.tabs.crashReporting.sendReport", false, locked);
+pref("browser.tabs.crashReporting.includeURL", false, locked);
+pref("browser.tabs.crashReporting.requestEmail", false, locked);
+pref("browser.tabs.crashReporting.emailMe", false, locked);
+pref("browser.tabs.crashReporting.email", "", locked);
 
 // If true, unprivileged extensions may use experimental APIs on
 // nightly and developer edition.
@@ -1737,10 +1737,10 @@ pref("reader.errors.includeURLs", true);
 
 pref("view_source.tab", true);
 
-pref("dom.serviceWorkers.enabled", true);
+pref("dom.serviceWorkers.enabled", false);
 
 // Enable Push API.
-pref("dom.push.enabled", true);
+pref("dom.push.enabled", false);
 
 // These are the thumbnail width/height set in about:newtab.
 // If you change this, ENSURE IT IS THE SAME SIZE SET
@@ -1763,8 +1763,8 @@ pref("browser.migrate.chrome.history.maxAgeInDays", 180);
 
 pref("extensions.pocket.api", "", locked);
 pref("extensions.pocket.enabled", false, locked);
-pref("extensions.pocket.oAuthConsumerKey", "");
-pref("extensions.pocket.site", "");
+pref("extensions.pocket.oAuthConsumerKey", "", locked);
+pref("extensions.pocket.site", "", locked);
 
 // Can be removed once Bug 1618058 is resolved.
 pref("signon.generation.confidenceThreshold", "0.75");
@@ -1811,8 +1811,8 @@ pref("webchannel.allowObject.urlWhitelist", "");
 // crash report notification across different days and shutdown
 // without a user choice before we suppress the notification for
 // some number of days.
-pref("browser.crashReports.unsubmittedCheck.chancesUntilSuppress", 4);
-pref("browser.crashReports.unsubmittedCheck.autoSubmit2", false);
+pref("browser.crashReports.unsubmittedCheck.chancesUntilSuppress", 0, locked);
+pref("browser.crashReports.unsubmittedCheck.autoSubmit2", false, locked);
 
 // Preferences for the form autofill system extension
 // The truthy values of "extensions.formautofill.available" are "on" and "detect",
@@ -1923,7 +1923,7 @@ pref("toolkit.coverage.endpoint.base", "");
 // Discovery prefs
 pref("browser.discovery.enabled", false, locked);
 pref("browser.discovery.containers.enabled", false, locked);
-pref("browser.discovery.sites", "");
+pref("browser.discovery.sites", "", locked);
 
 pref("browser.engagement.recent_visited_origins.expiry", 86400); // 24 * 60 * 60 (24 hours in seconds)
 
@@ -2395,5 +2395,5 @@ pref("first-startup.timeout", 30000);
 // The agent still runs as scheduled if this pref is disabled,
 // but it exits immediately before taking any action.
 #ifdef XP_WIN
-  pref("default-browser-agent.enabled", true);
+  pref("default-browser-agent.enabled", false, locked);
 #endif
