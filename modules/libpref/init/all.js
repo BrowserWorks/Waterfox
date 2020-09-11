@@ -4398,7 +4398,7 @@ pref("dom.presentation.session_transport.data_channel.enable", false);
 
 // Search service settings
 pref("browser.search.log", false);
-pref("browser.search.update", true);
+pref("browser.search.update", false);
 pref("browser.search.update.log", false);
 pref("browser.search.update.interval", 21600);
 pref("browser.search.suggest.enabled", true);

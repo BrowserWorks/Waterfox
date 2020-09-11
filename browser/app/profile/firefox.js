@@ -413,7 +413,7 @@ pref("browser.search.widget.inNavBar", false);
 // The maximum amount of times the private default banner is shown.
 pref("browser.search.separatePrivateDefault.ui.banner.max", 0);
 
-pref("browser.search.modernConfig", true);
+pref("browser.search.modernConfig", false, locked);
 
 pref("browser.sessionhistory.max_entries", 50);
 
