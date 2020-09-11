@@ -13,6 +13,7 @@ if test "$OS_ARCH" = "WINNT"; then
             "$MOZ_UPDATE_CHANNEL" = "nightly-try" -o \
             "$MOZ_UPDATE_CHANNEL" = "aurora" -o \
             "$MOZ_UPDATE_CHANNEL" = "beta" -o \
+			"$MOZ_UPDATE_CHANNEL" = "current" -o \
             "$MOZ_UPDATE_CHANNEL" = "release"; then
       if ! test "$MOZ_DEBUG"; then
         if ! test "$USE_STUB_INSTALLER"; then

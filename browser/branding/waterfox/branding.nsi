@@ -24,7 +24,7 @@
 !define URLStubDownloadAArch64 ""
 !define URLManualDownload "https://www.waterfox.net/download/"
 !define URLSystemRequirements "https://www.waterfox.net/download/"
-!define Channel "release"
+!define Channel "current"
 
 # The installer's certificate name and issuer expected by the stub installer
 !define CertNameDownload   "Mozilla Corporation"

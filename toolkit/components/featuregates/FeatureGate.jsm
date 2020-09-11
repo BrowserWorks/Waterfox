@@ -29,6 +29,7 @@ XPCOMUtils.defineLazyGetter(this, "gFeatureDefinitionsPromise", async () => {
 
 const kTargetFacts = new Map([
   ["release", AppConstants.MOZ_UPDATE_CHANNEL === "release"],
+  ["current", AppConstants.MOZ_UPDATE_CHANNEL === "current"],
   ["beta", AppConstants.MOZ_UPDATE_CHANNEL === "beta"],
   ["dev-edition", AppConstants.MOZ_UPDATE_CHANNEL === "aurora"],
   ["nightly", AppConstants.MOZ_UPDATE_CHANNEL === "nightly"],

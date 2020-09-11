@@ -133,14 +133,14 @@ Preferences.addAll([
   { id: "browser.ctrlTab.recentlyUsedOrder", type: "bool" },
 
   // CFR
-  {
-    id: "browser.newtabpage.activity-stream.asrouter.userprefs.cfr.addons",
-    type: "bool",
-  },
-  {
-    id: "browser.newtabpage.activity-stream.asrouter.userprefs.cfr.features",
-    type: "bool",
-  },
+  // {
+  //   id: "browser.newtabpage.activity-stream.asrouter.userprefs.cfr.addons",
+  //   type: "bool",
+  // },
+  // {
+  //   id: "browser.newtabpage.activity-stream.asrouter.userprefs.cfr.features",
+  //   type: "bool",
+  // },
 
   // Fonts
   { id: "font.language.group", type: "wstring" },
@@ -380,13 +380,13 @@ var gMainPane = {
     // listener for future menu changes.
     gMainPane.initDefaultZoomValues();
 
-    let cfrLearnMoreUrl =
-      Services.urlFormatter.formatURLPref("app.support.baseURL") +
-      "extensionrecommendations";
-    for (const id of ["cfrLearnMore", "cfrFeaturesLearnMore"]) {
-      let link = document.getElementById(id);
-      link.setAttribute("href", cfrLearnMoreUrl);
-    }
+    // let cfrLearnMoreUrl =
+    //   Services.urlFormatter.formatURLPref("app.support.baseURL") +
+    //   "extensionrecommendations";
+    // for (const id of ["cfrLearnMore", "cfrFeaturesLearnMore"]) {
+    //   let link = document.getElementById(id);
+    //   link.setAttribute("href", cfrLearnMoreUrl);
+    // }
 
     if (
       Services.prefs.getBoolPref(

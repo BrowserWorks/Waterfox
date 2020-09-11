@@ -35,17 +35,17 @@ const PREFS_BEFORE_SECTIONS = [
   },
 ];
 
-const PREFS_AFTER_SECTIONS = [
-  {
-    id: "snippets",
-    pref: {
-      feed: "feeds.snippets",
-      titleString: "home-prefs-snippets-header",
-      descString: "home-prefs-snippets-description",
-    },
-    icon: "info",
-  },
-];
+// const PREFS_AFTER_SECTIONS = [
+//   {
+//     id: "snippets",
+//     pref: {
+//       feed: "feeds.snippets",
+//       titleString: "home-prefs-snippets-header",
+//       descString: "home-prefs-snippets-description",
+//     },
+//     icon: "info",
+//   },
+// ];
 
 this.AboutPreferences = class AboutPreferences {
   init() {
@@ -98,7 +98,7 @@ this.AboutPreferences = class AboutPreferences {
     this.renderPreferences(window, [
       ...PREFS_BEFORE_SECTIONS,
       ...sections,
-      ...PREFS_AFTER_SECTIONS,
+    //  ...PREFS_AFTER_SECTIONS,
     ]);
   }
 
