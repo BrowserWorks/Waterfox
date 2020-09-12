@@ -176,7 +176,6 @@ class JitFrameIterator
     JSFunction* maybeCallee() const;
     unsigned numActualArgs() const;
     JSScript* script() const;
-	JSScript* maybeForwardedScript() const;
     void baselineScriptAndPc(JSScript** scriptRes, jsbytecode** pcRes) const;
     Value* actualArgs() const;
 

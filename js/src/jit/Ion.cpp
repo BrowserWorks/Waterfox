@@ -2982,7 +2982,7 @@ InvalidateActivation(FreeOp* fop, const JitActivationIterator& activations, bool
                 type = "Baseline";
             else if (it.isBailoutJS())
                 type = "Bailing";
-            JSScript* script = it.maybeForwardedScript();
+            JSScript* script = MaybeForwarded(it.script());
             JitSpew(JitSpew_IonInvalidate,
                     "#%zu %s JS frame @ %p, %s:%zu (fun: %p, script: %p, pc %p)",
                     frameno, type, it.fp(), script()->maybeForwardedFilename(),
@@ -3020,7 +3020,7 @@ InvalidateActivation(FreeOp* fop, const JitActivationIterator& activations, bool
         if (!calledFromLinkStub && it.checkInvalidation())
             continue;
 
-        JSScript* script = it.maybeForwardedScript();
+        JSScript* script = MaybeForwarded(it.script());
         if (!script->hasIonScript())
             continue;
 
