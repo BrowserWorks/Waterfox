@@ -790,9 +790,6 @@ AddIntlExtras(JSContext* cx, unsigned argc, Value* vp)
     if (!JS_DefineFunctions(cx, intl, funcs))
         return false;
 
-    if (!js::AddPluralRulesConstructor(cx, intl))
-        return false;
-
     if (!js::AddMozDateTimeFormatConstructor(cx, intl))
         return false;
 
@@ -6652,8 +6649,7 @@ static const JSFunctionSpecWithHelp shell_functions[] = {
 "provided object (this should generally be Intl itself).  The added\n"
 "functions and their behavior are experimental: don't depend upon them\n"
 "unless you're willing to update your code if these experimental APIs change\n"
-"underneath you.  Calling this function more than once in a realm/global\n"
-"will throw."),
+"underneath you."),
 #endif // ENABLE_INTL_API
 
     JS_FS_HELP_END
