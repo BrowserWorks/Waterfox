@@ -33,7 +33,7 @@ class AutoCompartment;
 
 namespace jit {
 class JitContext;
-class DebugModeOSRVolatileJitFrameIterator;
+class DebugModeOSRVolatileJitFrameIter;
 } // namespace jit
 
 typedef HashSet<Shape*> ShapeSet;
@@ -315,7 +315,7 @@ struct JSContext : public JS::RootingContext,
     }
 
     friend class JS::AutoSaveExceptionState;
-    friend class js::jit::DebugModeOSRVolatileJitFrameIterator;
+    friend class js::jit::DebugModeOSRVolatileJitFrameIter;
     friend void js::ReportOverRecursed(JSContext*, unsigned errorNumber);
 
     // Returns to the embedding to allow other cooperative threads to run. We
@@ -651,7 +651,8 @@ struct JSContext : public JS::RootingContext,
 
     // A stack of live iterators that need to be updated in case of debug mode
     // OSR.
-    js::ThreadLocalData<js::jit::DebugModeOSRVolatileJitFrameIterator*> liveVolatileJitFrameIterators_;
+    js::ThreadLocalData<js::jit::DebugModeOSRVolatileJitFrameIter*>
+        liveVolatileJitFrameIter_;
 
   public:
     js::ThreadLocalData<int32_t> reportGranularity;  /* see vm/Probes.h */
