@@ -140,10 +140,14 @@ interface ChannelWrapper {
   object getResponseHeaders();
 
   [Throws]
-  void setRequestHeader(ByteString header, ByteString value);
+  void setRequestHeader(ByteString header,
+                        ByteString value,
+                        optional boolean merge = false);
 
   [Throws]
-  void setResponseHeader(ByteString header, ByteString value);
+  void setResponseHeader(ByteString header,
+                         ByteString value,
+                         optional boolean merge = false);
 };
 
 dictionary MozProxyInfo {
