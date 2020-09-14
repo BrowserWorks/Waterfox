@@ -586,7 +586,9 @@ nsresult
 nsTreeBodyFrame::GetSelectionRegion(nsIScriptableRegion **aRegion)
 {
   *aRegion = nullptr;
-
+    
+  if (!mView) return NS_OK;
+    
   nsCOMPtr<nsITreeSelection> selection;
   mView->GetSelection(getter_AddRefs(selection));
   NS_ENSURE_TRUE(selection, NS_OK);
