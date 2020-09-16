@@ -111,6 +111,14 @@ struct TableReflowInput {
       availSize.BSize(wm) = std::max(0, availSize.BSize(wm));
     }
   }
+
+  void ReduceAvailableBSizeBy(WritingMode aWM, nscoord aAmount) {
+    if (availSize.BSize(aWM) == NS_UNCONSTRAINEDSIZE) {
+      return;
+    }
+    availSize.BSize(aWM) -= aAmount;
+    availSize.BSize(aWM) = std::max(0, availSize.BSize(aWM));
+  }
 };
 
 }  // namespace mozilla
@@ -2873,9 +2881,7 @@ void nsTableFrame::PlaceChild(TableReflowInput& aReflowInput,
   aReflowInput.bCoord += aKidDesiredSize.BSize(wm);
 
   // If our bsize is constrained, then update the available bsize
-  if (NS_UNCONSTRAINEDSIZE != aReflowInput.availSize.BSize(wm)) {
-    aReflowInput.availSize.BSize(wm) -= aKidDesiredSize.BSize(wm);
-  }
+  aReflowInput.ReduceAvailableBSizeBy(wm, aKidDesiredSize.BSize(wm));
 }
 
 void nsTableFrame::OrderRowGroups(RowGroupArray& aChildren,
@@ -3184,9 +3190,7 @@ void nsTableFrame::ReflowChildren(TableReflowInput& aReflowInput,
         kidReflowInput.mFlags.mIsTopOfPage = false;
       }
       aReflowInput.bCoord += cellSpacingB;
-      if (NS_UNCONSTRAINEDSIZE != aReflowInput.availSize.BSize(wm)) {
-        aReflowInput.availSize.BSize(wm) -= cellSpacingB;
-      }
+      aReflowInput.ReduceAvailableBSizeBy(wm, cellSpacingB);
       // record the presence of a next in flow, it might get destroyed so we
       // need to reorder the row group array
       bool reorder = false;
@@ -3349,10 +3353,7 @@ void nsTableFrame::ReflowChildren(TableReflowInput& aReflowInput,
       }
       aReflowInput.bCoord += kidRect.BSize(wm);
 
-      // If our bsize is constrained then update the available bsize.
-      if (NS_UNCONSTRAINEDSIZE != aReflowInput.availSize.BSize(wm)) {
-        aReflowInput.availSize.BSize(wm) -= cellSpacingB + kidRect.BSize(wm);
-      }
+      aReflowInput.ReduceAvailableBSizeBy(wm, cellSpacingB + kidRect.BSize(wm));
     }
   }
 
