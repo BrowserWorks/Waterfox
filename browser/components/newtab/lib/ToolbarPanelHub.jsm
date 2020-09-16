@@ -544,13 +544,9 @@ class _ToolbarPanelHub {
     const infoButton = doc.getElementById("protections-popup-info-button");
     const panelContainer = doc.getElementById("protections-popup");
     const toggleMessage = () => {
-      const learnMoreLink = doc.querySelector(
-        "#messaging-system-message-container .text-link"
-      );
       container.toggleAttribute("disabled");
       infoButton.toggleAttribute("checked");
       panelContainer.toggleAttribute("infoMessageShowing");
-      learnMoreLink.disabled = !learnMoreLink.disabled;
     };
     if (!container.childElementCount) {
       const message = await this._getMessages({
