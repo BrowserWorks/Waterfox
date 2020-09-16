@@ -1228,7 +1228,7 @@ pref("services.sync.prefs.sync.intl.accept_languages", true);
 pref("services.sync.prefs.sync.intl.regional_prefs.use_os_locales", true);
 pref("services.sync.prefs.sync.layout.spellcheckDefault", true);
 pref("services.sync.prefs.sync.media.autoplay.default", true);
-pref("services.sync.prefs.sync.media.eme.enabled", true);
+pref("services.sync.prefs.sync.media.eme.enabled", false);
 pref("services.sync.prefs.sync.network.cookie.cookieBehavior", true);
 pref("services.sync.prefs.sync.network.cookie.lifetimePolicy", true);
 pref("services.sync.prefs.sync.network.cookie.thirdparty.sessionOnly", true);
@@ -1514,7 +1514,7 @@ pref("media.gmp.trial-create.enabled", true);
 
 #ifdef MOZ_WIDEVINE_EME
   pref("media.gmp-widevinecdm.visible", true);
-  pref("media.gmp-widevinecdm.enabled", false);
+  pref("media.gmp-widevinecdm.enabled", true);
 #endif
 
 pref("media.gmp-gmpopenh264.visible", true);

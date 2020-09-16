@@ -6527,17 +6527,14 @@
   type: bool
 #if defined(ANDROID)
   value: @IS_NIGHTLY_BUILD@
-#elif defined(XP_LINUX)
-  # On Linux EME is visible but disabled by default. This is so that the "Play
+#endif
+  # With Waterfox, EME is visible but disabled by default. This is so that the "Play
   # DRM content" checkbox in the Firefox UI is unchecked by default. DRM
-  # requires downloading and installing proprietary binaries, which users on an
-  # open source operating systems didn't opt into. The first time a site using
+  # requires downloading and installing proprietary binaries, which users on any
+  # operating system didn't opt into. The first time a site using
   # EME is encountered, the user will be prompted to enable DRM, whereupon the
   # EME plugin binaries will be downloaded if permission is granted.
   value: false
-#else
-  value: true
-#endif
   mirror: always
 
 # Whether we expose the functionality proposed in
