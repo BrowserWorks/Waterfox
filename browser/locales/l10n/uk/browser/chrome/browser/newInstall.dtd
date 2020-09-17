@@ -3,8 +3,8 @@
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!-- LOCALIZATION NOTE: For this feature, "installation" is used to mean "this
- discrete download of Firefox" and "version" is used to mean "the specific
- revision number of a given Firefox channel". These terms are not synonymous.
+ discrete download of Waterfox" and "version" is used to mean "the specific
+ revision number of a given Waterfox channel". These terms are not synonymous.
 -->
 
 <!ENTITY window.title "Важливі новини">
@@ -12,4 +12,4 @@
 <!ENTITY sync "Для синхронізації попередньо збережених даних в цьому встановленні &brandShortName;, виконайте вхід у свій &syncBrand.fxAccount.label;.">
 <!ENTITY continue-button "Продовжити">
 
-<!ENTITY mainText "Це встановлення &brandShortName; має новий профіль. Він не передає автоматично вашу збережену інформацію до інших встановлень Firefox (включаючи Firefox, Firefox ESR, Firefox Beta, Firefox Developer Edition та Firefox Nightly) на цьому комп'ютері.">
+<!ENTITY mainText "Це встановлення &brandShortName; має новий профіль. Він не передає автоматично вашу збережену інформацію до інших встановлень Waterfox (включаючи Waterfox, Waterfox ESR, Waterfox Beta, Waterfox Developer Edition та Waterfox Nightly) на цьому комп'ютері.">

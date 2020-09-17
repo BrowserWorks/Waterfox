@@ -86,9 +86,9 @@ manifest-loaded-ok = منشور لوڈ ہو گیا
 # load the manifest
 manifest-loaded-error = ااس مشور کو لوڈ  کرنے میں ایک نقص تھا
 
-# Text displayed as an error when there has been a Firefox DevTools error while
+# Text displayed as an error when there has been a Waterfox DevTools error while
 # trying to load the manifest
-manifest-loaded-devtools-error = Firefox DevTools نقص
+manifest-loaded-devtools-error = Waterfox DevTools نقص
 
 # Text displayed when the page has no manifest available
 manifest-non-existing = معائنہ کرنے کیلئے کوئی منشور نہیں ملا۔

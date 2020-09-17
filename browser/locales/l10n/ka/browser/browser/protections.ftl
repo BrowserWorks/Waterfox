@@ -27,9 +27,9 @@ graph-week-summary-private-window = მეთვალყურეები, რ
 
 protection-report-webpage-title = დაცვის მაჩვენებლები
 protection-report-page-content-title = დაცვის მაჩვენებლები
-# This message shows when all privacy protections are turned off, which is why we use the word "can", Firefox is able to protect your privacy, but it is currently not.
+# This message shows when all privacy protections are turned off, which is why we use the word "can", Waterfox is able to protect your privacy, but it is currently not.
 protection-report-page-summary = { -brand-short-name } იცავს თქვენს უსაფრთხოებას შეუმჩნევლად, გვერდების თვალიერებისას. აქ იხილავთ თქვენთვის განკუთვნილ დაცვის მაჩვენებლებსა და საშუალებებს, რომლებითაც შეძლებთ საკუთარი ინტერნეტცხოვრების მართვის სადავეების ხელში აღებას.
-# This message shows when at least some protections are turned on, we are more assertive compared to the message above, Firefox is actively protecting you.
+# This message shows when at least some protections are turned on, we are more assertive compared to the message above, Waterfox is actively protecting you.
 protection-report-page-summary-default = { -brand-short-name } იცავს თქვენს უსაფრთხოებას შეუმჩნევლად, გვერდების თვალიერებისას. აქ იხილავთ თქვენთვის განკუთვნილ დაცვის მაჩვენებლებსა და საშუალებებს, რომლებითაც შეძლებთ საკუთარი ინტერნეტცხოვრების მართვის სადავეების ხელში აღებას.
 
 protection-report-settings-link = პირადულობისა და უსართხოების პარამეტრები

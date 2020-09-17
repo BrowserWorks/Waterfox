@@ -24,9 +24,9 @@ graph-private-window = { -brand-short-name } segue  bloqueando os rastrexadores 
 graph-week-summary-private-window = Rastrexadores bloqueados polo { -brand-short-name } nesta semana
 protection-report-webpage-title = Panel de proteccións
 protection-report-page-content-title = Panel de proteccións
-# This message shows when all privacy protections are turned off, which is why we use the word "can", Firefox is able to protect your privacy, but it is currently not.
+# This message shows when all privacy protections are turned off, which is why we use the word "can", Waterfox is able to protect your privacy, but it is currently not.
 protection-report-page-summary = { -brand-short-name } pode protexer a súa privacidade entre bastidores mentres navega. Este é un resumo personalizado destas proteccións, incluíndo ferramentas para controlar a seguridade en liña.
-# This message shows when at least some protections are turned on, we are more assertive compared to the message above, Firefox is actively protecting you.
+# This message shows when at least some protections are turned on, we are more assertive compared to the message above, Waterfox is actively protecting you.
 protection-report-page-summary-default = { -brand-short-name } protexe a súa privacidade entre bastidores mentres navega. Este é un resumo personalizado destas proteccións, incluíndo ferramentas para controlar a seguridade en liña.
 protection-report-settings-link = Xestione a súa configuración de privacidade e seguridade
 etp-card-title-always = Protección de seguimento mellorada: sempre activada

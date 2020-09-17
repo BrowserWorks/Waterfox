@@ -58,11 +58,11 @@ onboarding-fullpage-welcome-subheader = আসুন আপনি যা কি�
 onboarding-fullpage-form-email =
     .placeholder = আপনার ইমেইল ঠিকানা…
 
-## Firefox Sync modal dialog strings.
+## Waterfox Sync modal dialog strings.
 
 onboarding-sync-welcome-header = অাপনি { -brand-product-name } ব্যবহার করুন
 onboarding-sync-welcome-content = আপনার সমস্ত ডিভাইসে আপনার বুকমার্ক, ইতিহাস, পাসওয়ার্ড এবং অন্যান্য সেটিংস পাওয়া যাবে।
-onboarding-sync-welcome-learn-more-link = Firefox অ্যাকাউন্ট সম্পর্কে আরও জানুন
+onboarding-sync-welcome-learn-more-link = Waterfox অ্যাকাউন্ট সম্পর্কে আরও জানুন
 
 onboarding-sync-form-input =
     .placeholder = ইমেইল
@@ -70,7 +70,7 @@ onboarding-sync-form-input =
 onboarding-sync-form-continue-button = চালিয়ে যান
 onboarding-sync-form-skip-login-button = এই ধাপটি বাদ দিন
 
-## This is part of the line "Enter your email to continue to Firefox Sync"
+## This is part of the line "Enter your email to continue to Waterfox Sync"
 
 onboarding-sync-form-header = আপনার ই-মেইল লিখুন
 onboarding-sync-form-sub-header = { -sync-brand-name } অব্যাহত রাখতে
@@ -83,7 +83,7 @@ onboarding-benefit-products-text = টুলসের সমষ্টি দি�
 
 # "Personal Data Promise" is a concept that should be translated consistently
 # across the product. It refers to a concept shown elsewhere to the user: "The
-# Firefox Personal Data Promise is the way we honor your data in everything we
+# Waterfox Personal Data Promise is the way we honor your data in everything we
 # make and do. We take less data. We keep it safe. And we make sure that we are
 # transparent about how we use it."
 onboarding-benefit-privacy-text = আমরা ব্যক্তিগত  তথ্যের প্রতিশ্রুতিকে সম্মান করি: কম রাখি , নিরাপদে রাখি , কোন লুকোচুরি নেই।

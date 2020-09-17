@@ -17,5 +17,5 @@
 <!ENTITY aboutPage.credits.label                "Imttekkiyen">
 <!ENTITY aboutPage.license.label                "Talɣut n turagt">
 
-<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Firefox" being trademarked, that's why we use it, instead of brandShortName. -->
-<!ENTITY aboutPage.logoTrademark                "Firefox d iluguten n Firefox d ticraḍ yettwasersen i tesbeddit Mozilla.">
+<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Waterfox" being trademarked, that's why we use it, instead of brandShortName. -->
+<!ENTITY aboutPage.logoTrademark                "Firefox d iluguten n Waterfox d ticraḍ yettwasersen i tesbeddit Mozilla.">

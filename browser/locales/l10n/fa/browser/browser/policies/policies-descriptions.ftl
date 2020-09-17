@@ -4,7 +4,7 @@
 
 
 ## The Enterprise Policies feature is aimed at system administrators
-## who want to deploy these settings across several Firefox installations
+## who want to deploy these settings across several Waterfox installations
 ## all at once. This is traditionally done through the Windows Group Policy
 ## feature, but the system also supports other forms of deployment.
 ## These are short descriptions for individual policies, to be displayed
@@ -36,7 +36,7 @@ policy-DisableDeveloperTools = دسترسی به ابزارهای توسعه‌�
 
 policy-DisableFirefoxAccounts = خدمات برپایه { -fxaccount-brand-name } شامل همگام‌سازی را غیرفعال کن.
 
-# Firefox Screenshots is the name of the feature, and should not be translated.
+# Waterfox Screenshots is the name of the feature, and should not be translated.
 policy-DisableFirefoxScreenshots = ویژگی Screenshots فایرفاکس را غیرفعال کن.
 
 policy-DisableFirefoxStudies = جلوی { -brand-short-name } را برای انجام مطالعات بگیر.

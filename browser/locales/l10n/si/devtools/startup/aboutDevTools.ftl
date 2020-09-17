@@ -3,7 +3,7 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 head-title = සංවර්ධක මෙවලම් පිළිබඳ
-enable-title = Firefox සංවර්ධක මෙවලම් සක්‍රීය කරන්න
+enable-title = Waterfox සංවර්ධක මෙවලම් සක්‍රීය කරන්න
 
 footer-learn-more-link = තවත් දැනගන්න
 

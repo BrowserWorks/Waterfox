@@ -14,8 +14,8 @@
 
 -brand-shorter-name = Thunderbird
 -brand-short-name = Thunderbird
--brand-full-name = Mozilla Thunderbird
+-brand-full-name = Waterfox Thunderbird
 # This brand name can be used in messages where the product name needs to
 # remain unchanged across different versions (Daily, Beta, etc.).
 -brand-product-name = Thunderbird
--vendor-short-name = Mozilla
+-vendor-short-name = Waterfox

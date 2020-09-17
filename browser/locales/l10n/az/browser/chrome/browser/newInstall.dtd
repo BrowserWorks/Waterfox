@@ -3,8 +3,8 @@
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!-- LOCALIZATION NOTE: For this feature, "installation" is used to mean "this
- discrete download of Firefox" and "version" is used to mean "the specific
- revision number of a given Firefox channel". These terms are not synonymous.
+ discrete download of Waterfox" and "version" is used to mean "the specific
+ revision number of a given Waterfox channel". These terms are not synonymous.
 -->
 
 <!ENTITY window.title "Vacib Xəbərlər">
@@ -12,4 +12,4 @@
 <!ENTITY sync "Firefox səyyahına artıq saxladığınız məlumatları &brandShortName; səyyahının bu quruluşu ilə sinxronlaşdırmaq istəyirsinizsə, &syncBrand.fxAccount.label;nıza daxil olun.">
 <!ENTITY continue-button "Davam et">
 
-<!ENTITY mainText "&brandShortName; səyyahının bu quruluşunda yeni profil var. Bu kompüterinizdəki digər Firefox quruluşları (Firefox, Firefox ESR, Firefox Beta, Firefox Developer Edition və Firefox Nightly daxil) ilə əlfəcin, parol və istifadəçi nizamlamalarını paylaşmır.">
+<!ENTITY mainText "&brandShortName; səyyahının bu quruluşunda yeni profil var. Bu kompüterinizdəki digər Waterfox quruluşları (Firefox, Waterfox ESR, Waterfox Beta, Waterfox Developer Edition və Waterfox Nightly daxil) ilə əlfəcin, parol və istifadəçi nizamlamalarını paylaşmır.">

@@ -8,8 +8,8 @@
 # These are the default window titles everywhere except macOS. The first two
 # attributes are used when the web content opened has no title:
 #
-# default - "Mozilla Firefox"
-# private - "Mozilla Firefox (Private Browsing)"
+# default - "Waterfox"
+# private - "Waterfox (Private Browsing)"
 #
 # The last two are for use when there *is* a content title.
 # Variables:
@@ -22,8 +22,8 @@ browser-main-window =
 # These are the default window titles on macOS. The first two are for use when
 # there is no content title:
 #
-# "default" - "Mozilla Firefox"
-# "private" - "Mozilla Firefox - (Private Browsing)"
+# "default" - "Waterfox"
+# "private" - "Waterfox - (Private Browsing)"
 #
 # The last two are for use when there *is* a content title.
 # Do not use the brand name in the last two attributes, as we do on non-macOS.
@@ -247,7 +247,7 @@ identity-clear-site-data =
 identity-connection-not-secure-security-view = Njejsćo wěsće zwězany z toś tym sedłom.
 identity-connection-verified = Sćo wěsće zwězany z toś tym sedłom.
 identity-ev-owner-label = Certifikat wudany na:
-identity-description-custom-root = Mozilla toś togo certifikatowego wudawarja njepśipóznawa. Jo se snaź pśidał pśez waš źěłowy system abo wót administratora. <label data-l10n-name="link">Dalšne informacije</label>
+identity-description-custom-root = Waterfox toś togo certifikatowego wudawarja njepśipóznawa. Jo se snaź pśidał pśez waš źěłowy system abo wót administratora. <label data-l10n-name="link">Dalšne informacije</label>
 identity-remove-cert-exception =
     .label = Wuwześe wótpóraś
     .accesskey = W

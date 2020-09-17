@@ -27,14 +27,14 @@ screenshots-request-error-title = Xizmat hozircha ishlamayapti.
 screenshots-request-error-details = Uzr! Rasmni saqlay olmaymiz. Keyinroq urinib ko‘ring.
 
 screenshots-connection-error-title = Skrinshotlaringiz sahifasiga ulana olmadik.
-screenshots-connection-error-details = Internetga ulanishni tekshiring. Ulana olsangiz, demak Firefox Screenshot xizmatida vaqtinchalik muammo bo‘lishi mumkin.
+screenshots-connection-error-details = Internetga ulanishni tekshiring. Ulana olsangiz, demak Waterfox Screenshot xizmatida vaqtinchalik muammo bo‘lishi mumkin.
 
-screenshots-login-error-details = Olingan rasmni saqlay olmaymiz, chunki Firefox Screenshot xizmatida muammo mavjud. Keyinroq urinib ko‘ring.
+screenshots-login-error-details = Olingan rasmni saqlay olmaymiz, chunki Waterfox Screenshot xizmatida muammo mavjud. Keyinroq urinib ko‘ring.
 
 screenshots-unshootable-page-error-title = Bu sahifani rasmga tushira olmaymiz.
 screenshots-unshootable-page-error-details = Bu sahifa standart sahifa emas, shuning uchun uni rasmga tushira olmaymiz.
 
-screenshots-self-screenshot-error-title = Firefox Screenshot sahifasini rasmga tushirish mumkin emas!
+screenshots-self-screenshot-error-title = Waterfox Screenshot sahifasini rasmga tushirish mumkin emas!
 
 screenshots-empty-selection-error-title = Tanlangan hudud juda kichik
 

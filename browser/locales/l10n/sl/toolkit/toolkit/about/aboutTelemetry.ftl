@@ -17,8 +17,8 @@ about-telemetry-next-ping = >>
 about-telemetry-page-title = Telemetrija
 about-telemetry-current-store = Trenutna shramba:
 about-telemetry-more-information = Iščete več informacij?
-about-telemetry-firefox-data-doc = <a data-l10n-name="data-doc-link">Dokumentacija o Firefoxovih podatkih</a> vsebuje vodnike o tem, kako uporabljati naša podatkovna orodja.
-about-telemetry-telemetry-client-doc = <a data-l10n-name="client-doc-link">Dokumentacija o Firefoxovem odjemalcu za telemetrijo</a> vsebuje definicije konceptov, dokumentacijo API in sklice podatkov.
+about-telemetry-firefox-data-doc = <a data-l10n-name="data-doc-link">Dokumentacija o Waterfoxovih podatkih</a> vsebuje vodnike o tem, kako uporabljati naša podatkovna orodja.
+about-telemetry-telemetry-client-doc = <a data-l10n-name="client-doc-link">Dokumentacija o Waterfoxovem odjemalcu za telemetrijo</a> vsebuje definicije konceptov, dokumentacijo API in sklice podatkov.
 about-telemetry-telemetry-dashboard = <a data-l10n-name="dashboard-link">Pregledne plošče telemetrije</a> omogočajo predstavitev podatkov, ki jih Mozilla prejme preko telemetrije.
 about-telemetry-telemetry-probe-dictionary = <a data-l10n-name="probe-dictionary-link">Slovar sond</a> vsebuje podrobnosti in opise sond, ki jih zbira telemetrija.
 about-telemetry-show-in-Firefox-json-viewer = Odpri v pregledovalniku JSON

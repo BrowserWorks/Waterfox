@@ -17,8 +17,8 @@
 
 <!-- LOCALIZATION NOTE (performanceUI.disabledRealTime.disabledE10S): This string
   -  is displayed as a message for why the real time overview graph is disabled
-  -  when running on a build that can run multiprocess Firefox, but just is not enabled. -->
-<!ENTITY performanceUI.disabledRealTime.disabledE10S "रियल टाइम में रिकॉर्डिंग डेटा प्रदान के लिए प्राथमिकताएँ में बहु प्रक्रिया Firefox सक्षम करें.">
+  -  when running on a build that can run multiprocess Waterfox, but just is not enabled. -->
+<!ENTITY performanceUI.disabledRealTime.disabledE10S "रियल टाइम में रिकॉर्डिंग डेटा प्रदान के लिए प्राथमिकताएँ में बहु प्रक्रिया Waterfox सक्षम करें.">
 
 <!-- LOCALIZATION NOTE (performanceUI.bufferStatusFull): This string
   -  is displayed when the profiler's circular buffer has started to overlap. -->

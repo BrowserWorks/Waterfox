@@ -69,7 +69,7 @@ app-basics-remote-processes-count = Қашықтағы үрдістер
 app-basics-enterprise-policies = Кәсіпоорындық саясаттар
 app-basics-location-service-key-google = Google орналасулар қызметінің кілті
 app-basics-safebrowsing-key-google = Google Safebrowsing кілті
-app-basics-key-mozilla = Mozilla орналасулар қызметінің кілті
+app-basics-key-mozilla = Waterfox орналасулар қызметінің кілті
 app-basics-safe-mode = Қауіпсіз режимі
 show-dir-label =
     { PLATFORM() ->
@@ -168,7 +168,7 @@ intl-regional-prefs = Аймақтық баптаулар
 
 ## Remote Debugging
 ##
-## The Firefox remote protocol provides low-level debugging interfaces
+## The Waterfox remote protocol provides low-level debugging interfaces
 ## used to inspect state and control execution of documents,
 ## browser instrumentation, user interaction simulation,
 ## and for subscribing to browser-internal events.

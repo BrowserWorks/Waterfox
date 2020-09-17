@@ -11,7 +11,7 @@ rights-intro-point-1 =
         [neuter] { -brand-short-name } je dostupné
        *[other] Aplikace { -brand-short-name } je dostupná
     } za podmínek stanovených licencí <a data-l10n-name="mozilla-public-license-link">Mozilla Public License</a> (MPL). Ta vám umožňuje aplikaci { -brand-short-name } používat, kopírovat a šířit. Pokud potřebujete, můžete také pozměnit zdrojový kód aplikace { -brand-short-name } podle vašich potřeb. MPL vám dává také právo šířit vámi pozměněné verze.
-rights-intro-point-2 = Nejsou vám však podstoupena žádná práva ani licence k ochranným známkám Mozilla Foundation, či třetích stran, a to zejména k logu a názvu Firefox. Podrobnější informace o ochranných známkách jsou dostupné <a data-l10n-name="mozilla-trademarks-link">zde</a>.
+rights-intro-point-2 = Nejsou vám však podstoupena žádná práva ani licence k ochranným známkám Waterfox Ltd., či třetích stran, a to zejména k logu a názvu Waterfox. Podrobnější informace o ochranných známkách jsou dostupné <a data-l10n-name="mozilla-trademarks-link">zde</a>.
 rights-intro-point-3 =
     Některé funkce aplikace { -brand-short-name }, jako např. hlášení pádů, vám umožní odeslat zpětnou vazbu { -vendor-short-name.gender ->
         [masculine] { -vendor-short-name(case: "dat") }

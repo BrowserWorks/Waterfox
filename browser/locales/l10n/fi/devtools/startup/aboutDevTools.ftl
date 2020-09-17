@@ -3,19 +3,19 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 head-title = Tietoja web-työkaluista
-enable-title = Firefoxin web-työkalujen käyttöönotto
-enable-inspect-element-title = Ota Firefoxin web-työkalut käyttöön, jotta voit käyttää Inspect Element -toimintoa
+enable-title = Waterfoxin web-työkalujen käyttöönotto
+enable-inspect-element-title = Ota Waterfoxin web-työkalut käyttöön, jotta voit käyttää Inspect Element -toimintoa
 enable-inspect-element-message = Voit tarkastella ja muokata HTML:ää ja CSS:ää web-työkalujen Inspector-työkalulla.
-enable-about-debugging-message = Voit kehittää WebExtensioneita, web workereitä, service workereitä ynnä muuta sekä jäljittää niiden virheitä Firefoxin web-työkaluilla.
+enable-about-debugging-message = Voit kehittää WebExtensioneita, web workereitä, service workereitä ynnä muuta sekä jäljittää niiden virheitä Waterfoxin web-työkaluilla.
 enable-key-shortcut-message = Käytit web-työkalun pikanäppäintä. Jos teit niin vahingossa, voit sulkea tämän välilehden.
 enable-menu-message = Hio verkkosivustosi HTML, CSS ja JavaScript käyttämällä työkaluja, kuten Inspector ja Debugger.
-enable-common-message = Firefoxin web-työkalut ovat oletusarvoisesti poissa käytöstä, jotta selain on paremmin hallittavissasi.
+enable-common-message = Waterfoxin web-työkalut ovat oletusarvoisesti poissa käytöstä, jotta selain on paremmin hallittavissasi.
 enable-learn-more-link = Lue lisää web-työkaluista englanniksi
 enable-enable-button = Ota englanninkieliset web-työkalut käyttöön
 enable-close-button = Sulje tämä välilehti
 
-welcome-title = Tervetuloa käyttämään Firefoxin web-työkaluja!
-newsletter-title = Mozilla Developer Newsletter
+welcome-title = Tervetuloa käyttämään Waterfoxin web-työkaluja!
+newsletter-title = Waterfox Developer Newsletter
 newsletter-message = Saa kehittäjille suunnattuja uutisia, vinkkejä ja resursseja sähköpostiisi englanniksi.
 newsletter-email-placeholder =
     .placeholder = Sähköposti
@@ -24,8 +24,8 @@ newsletter-subscribe-button = Tilaa
 newsletter-thanks-title = Kiitos!
 newsletter-thanks-message = Voit joutua vahvistamaan tilauksen, jos et ole aiemmin vahvistanut Mozillaan liittyvän uutiskirjeen tilausta. Tarkista sähköpostisi ja roskapostisuodattimesi viestimme varalta.
 
-footer-title = Firefox Developer Edition
-footer-message = Haluatko enemmän kuin web-työkalut? Kokeile Firefox-selainta, joka on tehty varta vasten kehittäjiä ja nykyaikaisia työtapoja varten.
+footer-title = Waterfox Developer Edition
+footer-message = Haluatko enemmän kuin web-työkalut? Kokeile Waterfox-selainta, joka on tehty varta vasten kehittäjiä ja nykyaikaisia työtapoja varten.
 footer-learn-more-link = Lue lisää
 
 features-learn-more = Lue lisää englanniksi

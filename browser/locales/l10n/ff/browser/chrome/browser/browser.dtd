@@ -44,23 +44,23 @@ this container is a toolbar. This avoids double-speaking. -->
 
 
 <!-- LOCALIZATION NOTE (fxa.signin) Used to define the different labels
-     for the Firefox Account toolbar signin menu screen. -->
+     for the Waterfox Account toolbar signin menu screen. -->
 
 <!-- LOCALIZATION NOTE (fxa.unverified) Used to define the different labels
-     for the Firefox Account toolbar unverified menu screen. -->
+     for the Waterfox Account toolbar unverified menu screen. -->
 
 <!-- LOCALIZATION NOTE (fxa.menu) Used to define the different labels
-     for the Firefox Account toolbart menu screen. The `Signed in as` text is
+     for the Waterfox Account toolbart menu screen. The `Signed in as` text is
      followed by the user's email. -->
 
 
 <!-- LOCALIZATION NOTE (fxa.menu) Used to define the different labels
-     for the Firefox Account toolbar menu screen. The `Signed in as` text is
+     for the Waterfox Account toolbar menu screen. The `Signed in as` text is
      followed by the user's email. -->
 
 
 <!-- LOCALIZATION NOTE (fxa.service) Used to define the different FxA services
-     for the Firefox Account toolbar menu screen.  -->
+     for the Waterfox Account toolbar menu screen.  -->
 
  <!-- LOCALIZATION NOTE (fullscreenWarning.beforeDomain.label,
      fullscreenWarning.afterDomain.label): these two strings are used
@@ -169,7 +169,7 @@ this container is a toolbar. This avoids double-speaking. -->
 <!ENTITY appMenuRemoteTabs.tabsnotsyncing.label "Hurmin cynkugol tabbe ngam yiyde tabbe iwɗe e kaɓirɗi maa goɗɗi.">
 <!-- LOCALIZATION NOTE (appMenuRemoteTabs.noclients.subtitle): This is shown
      when Sync is configured but this appears to be the only device attached to
-     the account. We also show links to download Firefox for android/ios. -->
+     the account. We also show links to download Waterfox for android/ios. -->
 <!ENTITY appMenuRemoteTabs.noclients.subtitle "Aɗa yiyde tabbe maa iwɗe e kaɓirɗi goɗɗi?">
 <!ENTITY appMenuRemoteTabs.opensyncprefs.label "Uddit Cuɓoraaɗe Jahdingol">
 <!ENTITY appMenuRemoteTabs.unverified.label "Konte maa ina cokli ƴeewteede.">

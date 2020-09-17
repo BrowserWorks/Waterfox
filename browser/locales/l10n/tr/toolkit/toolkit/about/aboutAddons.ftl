@@ -464,7 +464,7 @@ addon-permissions-empty = Bu eklenti herhangi bir izin gerektirmiyor
 recommended-extensions-heading = Önerilen eklentiler
 recommended-themes-heading = Önerilen temalar
 
-# A recommendation for the Firefox Color theme shown at the bottom of the theme
+# A recommendation for the Waterfox Color theme shown at the bottom of the theme
 # list view. The "Firefox Color" name itself should not be translated.
 recommended-theme-1 = Yaratıcı gününüzde misiniz? <a data-l10n-name="link">Firefox Color ile kendi temanızı oluşturun.</a>
 

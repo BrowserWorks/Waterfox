@@ -17,13 +17,13 @@
 # and kept in English.
 -sync-brand-name =
     { $case ->
-       *[nom] Firefox Sync
-        [gen] Firefox Syncu
-        [dat] Firefox Syncu
-        [acc] Firefox Sync
-        [voc] Firefox Syncu
-        [loc] Firefox Syncu
-        [ins] Firefox Syncem
+       *[nom] Waterfox Sync
+        [gen] Waterfox Syncu
+        [dat] Waterfox Syncu
+        [acc] Waterfox Sync
+        [voc] Waterfox Syncu
+        [loc] Waterfox Syncu
+        [ins] Waterfox Syncem
     }
 
 # “Account” can be localized, “Firefox” must be treated as a brand,
@@ -32,37 +32,37 @@
     { $case ->
        *[nom]
             { $capitalization ->
-               *[upper] Účet Firefoxu
-                [lower] účet Firefoxu
+               *[upper] Účet Waterfoxu
+                [lower] účet Waterfoxu
             }
         [gen]
             { $capitalization ->
-               *[upper] Účtu Firefoxu
-                [lower] účtu Firefoxu
+               *[upper] Účtu Waterfoxu
+                [lower] účtu Waterfoxu
             }
         [dat]
             { $capitalization ->
-               *[upper] Účtu Firefoxu
-                [lower] účtu Firefoxu
+               *[upper] Účtu Waterfoxu
+                [lower] účtu Waterfoxu
             }
         [acc]
             { $capitalization ->
-               *[upper] Účet Firefoxu
-                [lower] účet Firefoxu
+               *[upper] Účet Waterfoxu
+                [lower] účet Waterfoxu
             }
         [voc]
             { $capitalization ->
-               *[upper] Účte Firefoxu
-                [lower] účte Firefoxu
+               *[upper] Účte Waterfoxu
+                [lower] účte Waterfoxu
             }
         [loc]
             { $capitalization ->
-               *[upper] Účtu Firefoxu
-                [lower] účtu Firefoxu
+               *[upper] Účtu Waterfoxu
+                [lower] účtu Waterfoxu
             }
         [ins]
             { $capitalization ->
-               *[upper] Účtem Firefoxu
-                [lower] účtem Firefoxu
+               *[upper] Účtem Waterfoxu
+                [lower] účtem Waterfoxu
             }
     }

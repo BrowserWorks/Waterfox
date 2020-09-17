@@ -71,7 +71,7 @@ cfr-doorhanger-pintab-step3 = Ukoliko je stranica osvježena, vidjet ćete plavu
 cfr-doorhanger-pintab-animation-pause = Pauziraj
 cfr-doorhanger-pintab-animation-resume = Nastavi
 
-## Firefox Accounts Message
+## Waterfox Accounts Message
 
 cfr-doorhanger-bookmark-fxa-header = Sinkroniziraj svoje zabilješke svagdje.
 cfr-doorhanger-bookmark-fxa-body = Koristi ovu zabilješku i na mobilnom uređaju. Pokreni { -fxaccount-brand-name }.
@@ -179,7 +179,7 @@ cfr-doorhanger-send-tab-body = Kartica Pošalji omogućuje jednostavno slanje ov
 cfr-doorhanger-send-tab-ok-button = Pokušaj poslati karticu
     .accesskey = P
 
-## Firefox Send
+## Waterfox Send
 
 cfr-doorhanger-firefox-send-header = Dijeli ovaj PDF sigurno
 cfr-doorhanger-firefox-send-body = Čuvaj svoje osjetljive dokumente od znatiželjnih pogleda obostranim šifriranjem i s poveznicom, koja nestaje nakon što završiš.
@@ -217,7 +217,7 @@ cfr-doorhanger-milestone-ok-button = Vidi sve
 cfr-doorhanger-milestone-close-button = Zatvori
     .accesskey = Z
 
-## What’s New Panel Content for Firefox 76
+## What’s New Panel Content for Waterfox 76
 
 
 ## Lockwise message

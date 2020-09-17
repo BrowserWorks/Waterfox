@@ -122,7 +122,7 @@ search-results-help-link = לעזרה נוספת, נא לפנות אל <a data-l
 
 startup-header = הפעלה
 # { -brand-short-name } will be 'Firefox Developer Edition',
-# since this setting is only exposed in Firefox Developer Edition
+# since this setting is only exposed in Waterfox Developer Edition
 separate-profile-mode =
     .label = לאפשר ל־{ -brand-short-name } ול־Firefox לרוץ במקביל
 use-firefox-sync = טיפ: פעולה זו מתאפשרת תודות ליצירה של שני פרופילים נפרדים. ניתן להשתמש ב־{ -sync-brand-short-name } כדי לסנכרן נתונים בניהם.
@@ -455,10 +455,10 @@ home-newtabs-mode-label = לשוניות חדשות
 home-restore-defaults =
     .label = שחזור ברירות מחדל
     .accesskey = ש
-# "Firefox" should be treated as a brand and kept in English,
+# "Waterfox" should be treated as a brand and kept in English,
 # while "Home" and "(Default)" can be localized.
 home-mode-choice-default =
-    .label = מסך הבית של Firefox (ברירת מחדל)
+    .label = מסך הבית של Waterfox (ברירת מחדל)
 home-mode-choice-custom =
     .label = כתובות מותאמות אישית…
 home-mode-choice-blank =
@@ -480,10 +480,10 @@ choose-bookmark =
     .label = שימוש בסימנייה…
     .accesskey = ס
 
-## Home Section - Firefox Home Content Customization
+## Home Section - Waterfox Home Content Customization
 
-home-prefs-content-header = תוכן מסך הבית של Firefox
-home-prefs-content-description = בחירת תוכן שיוצג במסך הבית של Firefox.
+home-prefs-content-header = תוכן מסך הבית של Waterfox
+home-prefs-content-description = בחירת תוכן שיוצג במסך הבית של Waterfox.
 home-prefs-search-header =
     .label = חיפוש ברשת
 home-prefs-topsites-header =
@@ -602,7 +602,7 @@ containers-preferences-button =
 containers-remove-button =
     .label = הסרה
 
-## Firefox Account - Signed out. Note that "Sync" and "Firefox Account" are now
+## Waterfox Account - Signed out. Note that "Sync" and "Firefox Account" are now
 ## more discrete ("signed in" no longer means "and sync is connected").
 
 sync-signedout-caption = קחו את הרשת עמכם
@@ -618,9 +618,9 @@ sync-signedout-account-signin2 =
 #
 # They can be moved within the sentence as needed to adapt
 # to your language, but should not be changed or translated.
-sync-mobile-promo = הורידו את Firefox עבור <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> או <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS</a> כדי להסתנכרן עם המכשירים הניידים שלכם.
+sync-mobile-promo = הורידו את Waterfox עבור <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> או <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS</a> כדי להסתנכרן עם המכשירים הניידים שלכם.
 
-## Firefox Account - Signed in
+## Waterfox Account - Signed in
 
 sync-profile-picture =
     .tooltiptext = שינוי תמונת פרופיל
@@ -706,7 +706,7 @@ sync-engine-creditcards =
     .accesskey = א
 sync-engine-addons =
     .label = תוספות
-    .tooltiptext = הרחבות וערכות נושא עבור Firefox שולחני
+    .tooltiptext = הרחבות וערכות נושא עבור Waterfox שולחני
     .accesskey = ת
 sync-engine-prefs =
     .label =
@@ -812,8 +812,8 @@ history-header = היסטוריה
 # "Firefox will" + "Remember history".
 #
 # If this doesn't work for your language, you can translate this message:
-#   - Simply as "Firefox", moving the verb into each option.
-#     This will result in "Firefox" + "Will remember history", etc.
+#   - Simply as "Waterfox", moving the verb into each option.
+#     This will result in "Waterfox" + "Will remember history", etc.
 #   - As a stand-alone message, for example "Firefox history settings:".
 history-remember-label = { -brand-short-name }
     .accesskey = F

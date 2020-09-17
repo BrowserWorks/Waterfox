@@ -8,8 +8,8 @@
 # These are the default window titles everywhere except macOS. The first two
 # attributes are used when the web content opened has no title:
 #
-# default - "Mozilla Firefox"
-# private - "Mozilla Firefox (Private Browsing)"
+# default - "Waterfox"
+# private - "Waterfox (Private Browsing)"
 #
 # The last two are for use when there *is* a content title.
 # Variables:
@@ -22,8 +22,8 @@ browser-main-window =
 # These are the default window titles on macOS. The first two are for use when
 # there is no content title:
 #
-# "default" - "Mozilla Firefox"
-# "private" - "Mozilla Firefox - (Private Browsing)"
+# "default" - "Waterfox"
+# "private" - "Waterfox - (Private Browsing)"
 #
 # The last two are for use when there *is* a content title.
 # Do not use the brand name in the last two attributes, as we do on non-macOS.
@@ -233,7 +233,7 @@ identity-connection-internal = 안전한 { -brand-short-name } 페이지입니�
 identity-connection-file = 이 페이지는 컴퓨터에 저장되어 있습니다.
 identity-extension-page = 이 페이지는 확장 기능으로부터 로드되었습니다.
 identity-active-blocked = { -brand-short-name }가 안전하지 않은 페이지의 일부를 차단했습니다.
-identity-custom-root = Mozilla에서 인식하지 못하는 인증서 발급자가 연결을 확인했습니다.
+identity-custom-root = Waterfox에서 인식하지 못하는 인증서 발급자가 연결을 확인했습니다.
 identity-passive-loaded = 페이지의 일부(이미지 등)가 안전하지 않습니다.
 identity-active-loaded = 이 페이지에서 보호를 비활성화하셨습니다.
 identity-weak-encryption = 이 페이지는 약한 암호화를 사용합니다.
@@ -247,7 +247,7 @@ identity-clear-site-data =
 identity-connection-not-secure-security-view = 이 사이트에 안전하게 연결되어 있지 않습니다.
 identity-connection-verified = 이 사이트에 안전하게 연결되어 있습니다.
 identity-ev-owner-label = 인증서 발급 대상:
-identity-description-custom-root = Mozilla는 이 인증서 발급자를 인식하지 못합니다. 운영 체제 또는 관리자가 추가한 것일 수 있습니다. <label data-l10n-name="link">더 알아보기</label>
+identity-description-custom-root = Waterfox는 이 인증서 발급자를 인식하지 못합니다. 운영 체제 또는 관리자가 추가한 것일 수 있습니다. <label data-l10n-name="link">더 알아보기</label>
 identity-remove-cert-exception =
     .label = 예외 제거
     .accesskey = R

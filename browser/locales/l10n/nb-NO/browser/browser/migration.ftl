@@ -46,7 +46,7 @@ import-from-chromium =
     .label = Chromium
     .accesskey = u
 import-from-firefox =
-    .label = Firefox
+    .label = Waterfox
     .accesskey = x
 import-from-360se =
     .label = 360 sikker nettleser
@@ -88,7 +88,7 @@ source-name-chrome = Google Chrome
 source-name-chrome-beta = Google Chrome Beta
 source-name-chrome-dev = Google Chrome Dev
 source-name-chromium = Chromium
-source-name-firefox = Mozilla Firefox
+source-name-firefox = Waterfox
 source-name-360se = 360 sikker nettleser.
 
 imported-safari-reading-list = Leseliste (Fra Safari)

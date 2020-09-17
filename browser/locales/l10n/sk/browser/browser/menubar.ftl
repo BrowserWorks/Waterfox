@@ -22,7 +22,7 @@ menu-file-new-private-window =
     .accesskey = k
 # "Open Location" is only displayed on macOS, and only on windows
 # that aren't main browser windows, or when there are no windows
-# but Firefox is still running.
+# but Waterfox is still running.
 menu-file-open-location =
     .label = Otvoriť umiestnenie…
 menu-file-open-file =
@@ -179,7 +179,7 @@ menu-bookmarks-toolbar =
 menu-bookmarks-other =
     .label = Ostatné záložky
 menu-bookmarks-mobile =
-    .label = Záložky mobilného Firefoxu
+    .label = Záložky mobilného Waterfoxu
 
 ## Tools Menu
 

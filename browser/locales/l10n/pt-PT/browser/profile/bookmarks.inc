@@ -18,8 +18,8 @@
 #define getting_started Começar aqui
 
 # LOCALIZATION NOTE (firefox_heading):
-# Firefox links folder name
-#define firefox_heading Mozilla Firefox
+# Waterfox links folder name
+#define firefox_heading Waterfox
 
 # LOCALIZATION NOTE (firefox_help):
 # link title for https://www.mozilla.org/en-US/firefox/help/
@@ -27,7 +27,7 @@
 
 # LOCALIZATION NOTE (firefox_customize):
 # link title for https://www.mozilla.org/en-US/firefox/customize/
-#define firefox_customize Personalize o seu Firefox
+#define firefox_customize Personalize o seu Waterfox
 
 # LOCALIZATION NOTE (firefox_community):
 # link title for https://www.mozilla.org/en-US/contribute/
@@ -38,12 +38,12 @@
 #define firefox_about Acerca de nós
 
 # LOCALIZATION NOTE (nightly_heading):
-# Firefox Nightly links folder name
-#define nightly_heading Recursos do Firefox Nightly
+# Waterfox Nightly links folder name
+#define nightly_heading Recursos do Waterfox Nightly
 
 # LOCALIZATION NOTE (nightly_blog):
 # Nightly builds only, link title for https://blog.nightly.mozilla.org/
-#define nightly_blog Blogue do Firefox Nightly
+#define nightly_blog Blogue do Waterfox Nightly
 
 # LOCALIZATION NOTE (bugzilla):
 # Nightly builds only, link title for https://bugzilla.mozilla.org/

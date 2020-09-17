@@ -107,9 +107,9 @@ manifest-loaded-ok = Manifestua kargatuta.
 # load the manifest
 manifest-loaded-error = Errorea gertatu da orria manifestua kargatzean:
 
-# Text displayed as an error when there has been a Firefox DevTools error while
+# Text displayed as an error when there has been a Waterfox DevTools error while
 # trying to load the manifest
-manifest-loaded-devtools-error = Firefox DevTools errorea
+manifest-loaded-devtools-error = Waterfox DevTools errorea
 
 # Text displayed when the page has no manifest available
 manifest-non-existing = Ez da ikuskatzeko manifesturik aurkitu.

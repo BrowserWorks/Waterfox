@@ -4,7 +4,7 @@
 
 
 ## The Enterprise Policies feature is aimed at system administrators
-## who want to deploy these settings across several Firefox installations
+## who want to deploy these settings across several Waterfox installations
 ## all at once. This is traditionally done through the Windows Group Policy
 ## feature, but the system also supports other forms of deployment.
 ## These are short descriptions for individual policies, to be displayed
@@ -38,8 +38,8 @@ policy-DisableFeedbackCommands = Atspējo komandas, kas var nosūtīt atsauksmes
 
 policy-DisableFirefoxAccounts = Deaktivē { -fxaccount-brand-name } pakalpojumus, piemēram Sync.
 
-# Firefox Screenshots is the name of the feature, and should not be translated.
-policy-DisableFirefoxScreenshots = Deaktivē Firefox ekrānattēlu rīku.
+# Waterfox Screenshots is the name of the feature, and should not be translated.
+policy-DisableFirefoxScreenshots = Deaktivē Waterfox ekrānattēlu rīku.
 
 policy-DisableFirefoxStudies = Liedz { -brand-short-name } veikt pētījumus.
 

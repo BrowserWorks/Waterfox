@@ -18,7 +18,7 @@ about-telemetry-page-title = Data Telemetreg
 about-telemetry-current-store = Storfa Gyfredol:
 about-telemetry-more-information = Chwilio am ragor o wybodaeth?
 about-telemetry-firefox-data-doc = Mae'r <a data-l10n-name="data-doc-link">Firefox Data Documentation</a> yn cynnwys canllawiau ar sut i weithio gyda'n offer data.
-about-telemetry-telemetry-client-doc = Mae <a data-l10n-name="client-doc-link">dogfennaeth cleient Firefox Telemetry</a> yn cynnwys diffiniadau o gysyniadau, dogfennaeth API a chyfeiriadau data.
+about-telemetry-telemetry-client-doc = Mae <a data-l10n-name="client-doc-link">dogfennaeth cleient Waterfox Telemetry</a> yn cynnwys diffiniadau o gysyniadau, dogfennaeth API a chyfeiriadau data.
 about-telemetry-telemetry-dashboard = Mae <a data-l10n-name="dashboard-link">byrddau gwaith Telemetreg</a> yn caniatáu i chi weld y data mae Mozilla yn ei dderbyn drwy'r Delemetreg.
 about-telemetry-telemetry-probe-dictionary = Mae'r <a data-l10n-name="probe-dictionary-link">Geiriadur Archwilio</a> yn darparu manylion a disgrifiadau ar gyfer y chwilio gasglwyd gan Delemetreg.
 about-telemetry-show-in-Firefox-json-viewer = Agor yn y darllenydd JSON

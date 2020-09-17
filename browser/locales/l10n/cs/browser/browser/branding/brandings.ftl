@@ -34,13 +34,13 @@
     .gender = masculine
 -lockwise-brand-name =
     { $case ->
-       *[nom] Firefox Lockwise
-        [gen] Firefoxu Lockwise
-        [dat] Firefoxu Lockwise
-        [acc] Firefox Lockwise
-        [voc] Firefoxe Lockwise
-        [loc] Firefoxu Lockwise
-        [ins] Firefoxem Lockwise
+       *[nom] Waterfox Lockwise
+        [gen] Waterfoxu Lockwise
+        [dat] Waterfoxu Lockwise
+        [acc] Waterfox Lockwise
+        [voc] Waterfoxe Lockwise
+        [loc] Waterfoxu Lockwise
+        [ins] Waterfoxem Lockwise
     }
     .gender = masculine
 -lockwise-brand-short-name =
@@ -56,13 +56,13 @@
     .gender = masculine
 -monitor-brand-name =
     { $case ->
-       *[nom] Firefox Monitor
-        [gen] Firefox Monitoru
-        [dat] Firefox Monitoru
-        [acc] Firefox Monitor
-        [voc] Firefox Monitore
-        [loc] Firefox Monitoru
-        [ins] Firefox Monitorem
+       *[nom] Waterfox Monitor
+        [gen] Waterfox Monitoru
+        [dat] Waterfox Monitoru
+        [acc] Waterfox Monitor
+        [voc] Waterfox Monitore
+        [loc] Waterfox Monitoru
+        [ins] Waterfox Monitorem
     }
     .gender = masculine
 -monitor-brand-short-name =
@@ -89,14 +89,14 @@
     .gender = masculine
 -send-brand-name =
     { $case ->
-       *[nom] Firefox Send
-        [gen] Firefoxu Send
-        [dat] Firefoxu Send
-        [acc] Firefox Send
-        [voc] Firefoxe Send
-        [loc] Firefoxu Send
-        [ins] Firefoxem Send
+       *[nom] Waterfox Send
+        [gen] Waterfoxu Send
+        [dat] Waterfoxu Send
+        [acc] Waterfox Send
+        [voc] Waterfoxe Send
+        [loc] Waterfoxu Send
+        [ins] Waterfoxem Send
     }
     .gender = masculine
--screenshots-brand-name = Firefox Screenshots
--mozilla-vpn-brand-name = Mozilla VPN
+-screenshots-brand-name = Waterfox Screenshots
+-mozilla-vpn-brand-name = Waterfox VPN

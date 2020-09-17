@@ -17,8 +17,8 @@ about-telemetry-next-ping = >>
 about-telemetry-page-title = Të dhëna Telemetry-e
 about-telemetry-current-store = Depo e Tanishme:
 about-telemetry-more-information = Po kërkoni për më tepër informacion?
-about-telemetry-firefox-data-doc = <a data-l10n-name="data-doc-link">Dokumentimi i të Dhënave të Firefox-it</a> përmban udhërrëfyes se si të punohet me mjetet tona për të dhënat.
-about-telemetry-telemetry-client-doc = <a data-l10n-name="client-doc-link">Dokumentimi i klientit të Firefox Telemetry-së</a> përfshin përkufizime për koncepte, dokumentim të API-t dhe referenca të dhënash.
+about-telemetry-firefox-data-doc = <a data-l10n-name="data-doc-link">Dokumentimi i të Dhënave të Waterfox-it</a> përmban udhërrëfyes se si të punohet me mjetet tona për të dhënat.
+about-telemetry-telemetry-client-doc = <a data-l10n-name="client-doc-link">Dokumentimi i klientit të Waterfox Telemetry-së</a> përfshin përkufizime për koncepte, dokumentim të API-t dhe referenca të dhënash.
 about-telemetry-telemetry-dashboard = <a data-l10n-name="dashboard-link">Pultet e Telemetry-së</a> ju lejojnë të vizualizoni të dhënat që Mozilla merr përmes Telemetry-së.
 about-telemetry-telemetry-probe-dictionary = <a data-l10n-name="probe-dictionary-link">Fjalori i Mostrave</a> furnizon hollësi dhe përshkrime të mostrave të grumbulluara nga Telemetry-a.
 about-telemetry-show-in-Firefox-json-viewer = Hape në parësin JSON

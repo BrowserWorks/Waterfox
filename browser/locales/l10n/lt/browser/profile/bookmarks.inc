@@ -34,10 +34,10 @@
 # LOCALIZATION NOTE (firefox_heading):
 
 
-# Firefox links folder name
+# Waterfox links folder name
 
 
-#define firefox_heading Mozilla Firefox
+#define firefox_heading Waterfox
 
 
 # LOCALIZATION NOTE (firefox_help):
@@ -79,7 +79,7 @@
 # LOCALIZATION NOTE (nightly_heading):
 
 
-# Firefox Nightly links folder name
+# Waterfox Nightly links folder name
 
 
 #define nightly_heading „Firefox Nightly“ ištekliai

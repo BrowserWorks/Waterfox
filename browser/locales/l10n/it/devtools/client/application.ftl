@@ -84,7 +84,7 @@ manifest-loaded-ok = Caricato manifesto.
 
 manifest-loaded-error = Si è verificato un errore durante il caricamento del manifesto:
 
-manifest-loaded-devtools-error = Errore in Firefox DevTools
+manifest-loaded-devtools-error = Errore in Waterfox DevTools
 
 manifest-non-existing = Nessun manifesto trovato da analizzare.
 

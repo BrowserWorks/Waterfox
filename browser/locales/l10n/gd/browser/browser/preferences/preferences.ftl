@@ -132,9 +132,9 @@ search-results-help-link = A bheil cobhair a dhìth ort. Tadhail air <a data-l10
 startup-header = Aig an toiseach
 
 # { -brand-short-name } will be 'Firefox Developer Edition',
-# since this setting is only exposed in Firefox Developer Edition
+# since this setting is only exposed in Waterfox Developer Edition
 separate-profile-mode =
-    .label = Leig le { -brand-short-name } agus Firefox ruith aig an aon àm
+    .label = Leig le { -brand-short-name } agus Waterfox ruith aig an aon àm
 use-firefox-sync = Gliocas: Cleachdaidh seo pròifilean eadar-dhealaichte. Cleachd { -sync-brand-short-name } gus dàta a ghluasad eadar an dà dhiubh.
 get-started-not-logged-in = Clàraich a-steach gu { -sync-brand-short-name }...
 get-started-configured = Fosgail roghainnean { -sync-brand-short-name }
@@ -511,10 +511,10 @@ home-restore-defaults =
     .label = Aisig na bun-roghainnean
     .accesskey = r
 
-# "Firefox" should be treated as a brand and kept in English,
+# "Waterfox" should be treated as a brand and kept in English,
 # while "Home" and "(Default)" can be localized.
 home-mode-choice-default =
-    .label = Dachaidh Firefox (bun-roghainn)
+    .label = Dachaidh Waterfox (bun-roghainn)
 
 home-mode-choice-custom =
     .label = URLaichean gnàthaichte...
@@ -541,10 +541,10 @@ choose-bookmark =
     .label = Cleachd comharra-lìn…
     .accesskey = c
 
-## Home Section - Firefox Home Content Customization
+## Home Section - Waterfox Home Content Customization
 
-home-prefs-content-header = Susbaint sgrìn mhòr Firefox
-home-prefs-content-description = Tagh an t-susbaint a bu mhath leat fhaicinn air sgrìn mhòr Firefox
+home-prefs-content-header = Susbaint sgrìn mhòr Waterfox
+home-prefs-content-description = Tagh an t-susbaint a bu mhath leat fhaicinn air sgrìn mhòr Waterfox
 
 home-prefs-search-header =
     .label = Lorg air an lìon
@@ -663,7 +663,7 @@ containers-remove-button =
 ## Sync Section - Signed out
 
 
-## Firefox Account - Signed out. Note that "Sync" and "Firefox Account" are now
+## Waterfox Account - Signed out. Note that "Sync" and "Firefox Account" are now
 ## more discrete ("signed in" no longer means "and sync is connected").
 
 sync-signedout-caption = Thoir leat an lìon
@@ -677,12 +677,12 @@ sync-signedout-description = Sioncronaich an eachdraidh, na comharran-lìn, na f
 #
 # They can be moved within the sentence as needed to adapt
 # to your language, but should not be changed or translated.
-sync-mobile-promo = Luchdaich a-nuas Firefox airson <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> no <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS</a> gus sioncronachadh a dhèanamh leis an uidheam mobile agad.
+sync-mobile-promo = Luchdaich a-nuas Waterfox airson <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> no <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS</a> gus sioncronachadh a dhèanamh leis an uidheam mobile agad.
 
 ## Sync Section - Signed in
 
 
-## Firefox Account - Signed in
+## Waterfox Account - Signed in
 
 sync-profile-picture =
     .tooltiptext = Atharraich dealbh na pròifil
@@ -738,7 +738,7 @@ sync-engine-creditcards =
 
 sync-engine-addons =
     .label = na tuilleadain
-    .tooltiptext = Leudachain is ùrlaran airson Firefox desktop
+    .tooltiptext = Leudachain is ùrlaran airson Waterfox desktop
     .accesskey = a
 
 sync-engine-prefs =
@@ -815,8 +815,8 @@ history-header = Eachdraidh
 # "Firefox will" + "Remember history".
 #
 # If this doesn't work for your language, you can translate this message:
-#   - Simply as "Firefox", moving the verb into each option.
-#     This will result in "Firefox" + "Will remember history", etc.
+#   - Simply as "Waterfox", moving the verb into each option.
+#     This will result in "Waterfox" + "Will remember history", etc.
 #   - As a stand-alone message, for example "Firefox history settings:".
 history-remember-label = Nì { -brand-short-name } na leanas:
     .accesskey = N

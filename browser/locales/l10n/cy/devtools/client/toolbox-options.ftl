@@ -9,7 +9,7 @@
 ## Default Developer Tools section
 
 # The heading
-options-select-default-tools-label = Offer Datblygu Firefox Rhagosodedig
+options-select-default-tools-label = Offer Datblygu Waterfox Rhagosodedig
 
 # The label for the explanation of the * marker on a tool which is currently not supported
 # for the target of the toolbox.

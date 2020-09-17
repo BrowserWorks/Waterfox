@@ -77,7 +77,7 @@ onboarding-multistage-theme-description-automatic = Përdor temë sistemi
 onboarding-multistage-theme-label-light = E çelët
 onboarding-multistage-theme-label-dark = E errët
 # "Firefox Alpenglow" here is the name of the theme, and should be kept in English.
-onboarding-multistage-theme-label-alpenglow = Firefox Alpenglow
+onboarding-multistage-theme-label-alpenglow = Waterfox Alpenglow
 
 ## Please make sure to split the content of the title attribute into lines whose
 ## width corresponds to about 40 Latin characters, to ensure that the tooltip
@@ -137,17 +137,17 @@ onboarding-fullpage-welcome-subheader = Le të fillojmë eksplorimin e gjithçka
 onboarding-fullpage-form-email =
     .placeholder = Adresa juaj email…
 
-## Firefox Sync modal dialog strings.
+## Waterfox Sync modal dialog strings.
 
 onboarding-sync-welcome-header = Merreni { -brand-product-name }-in me Vete
 onboarding-sync-welcome-content = Merrni në krejt pajisjet tuaja faqerojtësit, historikun, fjalëkalimet dhe të tjera rregullime tuajat.
-onboarding-sync-welcome-learn-more-link = Mësoni më tepër rreth Llogarive Firefox
+onboarding-sync-welcome-learn-more-link = Mësoni më tepër rreth Llogarive Waterfox
 onboarding-sync-form-input =
     .placeholder = Email
 onboarding-sync-form-continue-button = Vazhdo
 onboarding-sync-form-skip-login-button = Anashkalojeni këtë hap
 
-## This is part of the line "Enter your email to continue to Firefox Sync"
+## This is part of the line "Enter your email to continue to Waterfox Sync"
 
 onboarding-sync-form-header = Jepni email-in tuaj
 onboarding-sync-form-sub-header = që të vazhdoni te { -sync-brand-name }
@@ -158,7 +158,7 @@ onboarding-sync-form-sub-header = që të vazhdoni te { -sync-brand-name }
 onboarding-benefit-products-text = Mbaroni punë me një familje mjetesh që respektojnë privatësinë tuaj nëpër pajisjet tuaja.
 # "Personal Data Promise" is a concept that should be translated consistently
 # across the product. It refers to a concept shown elsewhere to the user: "The
-# Firefox Personal Data Promise is the way we honor your data in everything we
+# Waterfox Personal Data Promise is the way we honor your data in everything we
 # make and do. We take less data. We keep it safe. And we make sure that we are
 # transparent about how we use it."
 onboarding-benefit-privacy-text = Gjithçka bëjmë pajtohet me Premtimin tonë Mbi të Dhënat Personale: Grumbullim sa më pak. Mbajtje e parrezik. Pa të fshehta.

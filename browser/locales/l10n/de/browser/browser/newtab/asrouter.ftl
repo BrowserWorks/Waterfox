@@ -80,7 +80,7 @@ cfr-doorhanger-pintab-animation-pause = Anhalten
 cfr-doorhanger-pintab-animation-resume = Fortfahren
 
 
-## Firefox Accounts Message
+## Waterfox Accounts Message
 
 cfr-doorhanger-bookmark-fxa-header = Synchronisieren Sie Ihre Lesezeichen, um sie überall verfügbar zu haben.
 cfr-doorhanger-bookmark-fxa-body = Jederzeit Zugriff auf dieses Lesezeichen - auch auf mobilen Geräten. Nutzen Sie dafür ein { -fxaccount-brand-name }.
@@ -197,7 +197,7 @@ cfr-doorhanger-send-tab-body = Die Funktion "Tab senden" ermöglicht es, diesen 
 cfr-doorhanger-send-tab-ok-button = "Tab senden" ausprobieren
     .accesskey = T
 
-## Firefox Send
+## Waterfox Send
 
 cfr-doorhanger-firefox-send-header = Diese PDF-Datei sicher teilen
 cfr-doorhanger-firefox-send-body = Schützen Sie Ihre Dokumente vor neugierigen Blicken mittels Ende-zu-Ende-Verschlüsselung und Links, welche nach der Benutzung ungültig werden.
@@ -235,7 +235,7 @@ cfr-doorhanger-milestone-ok-button = Alle anzeigen
 cfr-doorhanger-milestone-close-button = Schließen
     .accesskey = S
 
-## What’s New Panel Content for Firefox 76
+## What’s New Panel Content for Waterfox 76
 
 
 ## Lockwise message

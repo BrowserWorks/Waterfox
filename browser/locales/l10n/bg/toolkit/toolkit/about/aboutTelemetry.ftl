@@ -15,7 +15,7 @@ about-telemetry-previous-ping = <<
 about-telemetry-next-ping = >>
 about-telemetry-page-title = Данни за Телеметрията
 about-telemetry-more-information = Търсите повече информация?
-about-telemetry-firefox-data-doc = <a data-l10n-name="data-doc-link">Документацията за данни от Firefox</a> съдържа напътствия как да боравите с нашите инструменти за данни.
+about-telemetry-firefox-data-doc = <a data-l10n-name="data-doc-link">Документацията за данни от Waterfox</a> съдържа напътствия как да боравите с нашите инструменти за данни.
 about-telemetry-telemetry-client-doc = <a data-l10n-name="client-doc-link">Документацията за клиент на Телеметрията на FIrefox</a> съдържа дефинициите за концепции, документация за ППИ и наръчници за данни.
 about-telemetry-telemetry-dashboard = На <a data-l10n-name="dashboard-link">Таблата на Телеметрията</a> се изобразяват данните, които Mozilla получава от Телеметрията.
 about-telemetry-show-in-Firefox-json-viewer = Отваряне за преглед на JSON

@@ -7,7 +7,7 @@ rights-intro = { -brand-full-name } è ina software libra cun in code avert, cre
 rights-intro-point-1 = { -brand-short-name } è disponibel tenor las cundiziuns da la <a data-l10n-name="mozilla-public-license-link">Mozilla Public License</a>. Quai munta che ti pos utilisar, copiar e dar vinavant { -brand-short-name } ad auters. Ti dastgas era midar il code da funtauna da { -brand-short-name } ed al adattar a tes basegns. La Mozilla Public License ta dat era il dretg da distribuir tia versiun modifitgada.
 rights-intro-point-2 =
     Mozilla na ta conceda nagins dretgs e naginas licenzas per las marcas
-    da la Mozilla Foundation u dad in'autra partida; quai vala era senza limitaziun
+    da la Waterfox Ltd. u dad in'autra partida; quai vala era senza limitaziun
     per il num ed il logo da Thunderbird. Ulteriuras infurmaziuns davart las marcas
     chatt'ins <a data-l10n-name="mozilla-trademarks-link">qua</a>.
 rights-intro-point-3 = Tschertas funcziuns da { -brand-short-name }, sco las annunzias da collaps, ta porschan la pussaivladad da dar in resun a { -vendor-short-name }. Cun la decisiun da trametter il resun lubeschas ti a { -vendor-short-name } dad utilisar il resun per meglierar ses products, da publitgar il resun sin sias paginas d'internet e da distribuir il resun.

@@ -381,9 +381,9 @@ release-notes-error = Julkaisutietojen lataaminen epäonnistui.
 addon-permissions-empty = Tämä laajennus ei vaadi mitään oikeuksia
 recommended-extensions-heading = Suositellut laajennukset
 recommended-themes-heading = Suositellut teemat
-# A recommendation for the Firefox Color theme shown at the bottom of the theme
+# A recommendation for the Waterfox Color theme shown at the bottom of the theme
 # list view. The "Firefox Color" name itself should not be translated.
-recommended-theme-1 = Haluatko kokeilla itse? <a data-l10n-name="link">Voit luoda oman teeman Firefox Color -ohjelmalla.</a>
+recommended-theme-1 = Haluatko kokeilla itse? <a data-l10n-name="link">Voit luoda oman teeman Waterfox Color -ohjelmalla.</a>
 
 ## Page headings
 

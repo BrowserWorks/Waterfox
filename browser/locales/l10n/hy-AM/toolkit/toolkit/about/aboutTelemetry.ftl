@@ -17,7 +17,7 @@ about-telemetry-next-ping = »
 about-telemetry-page-title = Telemetry-ի տվյալ
 about-telemetry-current-store = Ընթացիկ խանութ.
 about-telemetry-more-information = Լրացուցիչ տեղեկություննե՞ր են պետք:
-about-telemetry-firefox-data-doc = <a data-l10n-name="data-doc-link"> Firefox-ի տվյալների փաստաթղթավորումը</a> պարունակում է ուղղորդներ` մեր տվյալների գործիքների հետ աշխատելու համար։
+about-telemetry-firefox-data-doc = <a data-l10n-name="data-doc-link"> Waterfox-ի տվյալների փաստաթղթավորումը</a> պարունակում է ուղղորդներ` մեր տվյալների գործիքների հետ աշխատելու համար։
 about-telemetry-telemetry-client-doc = <a data-l10n-name="client-doc-link">Firefox-ի հեռուսաչափության սպասառուի փաստաթղթավորումը</a> ներառում է հասկացուցումների սահմանումներ , API փաստաթղթավորում և տվյալների հղումներ։
 about-telemetry-telemetry-dashboard = <a data-l10n-name="dashboard-link">Հեռուսաչափության կառավահանակը</a> թույլատրում է հեռուսաչափության միջոցով տեսնել Mozilla֊ի ստացված տվյալները։
 about-telemetry-telemetry-probe-dictionary = <a data-l10n-name="probe-dictionary-link">Զննության բառարանը</a> մատակարարում է մանրամասնություններ և նկարագրություններ զննությունների համար, որոնք հավաքվել են հեռուսաչափության կողմից։
@@ -141,7 +141,7 @@ about-telemetry-origin-origin = Ծագում
 about-telemetry-origin-count = Քանակ
 # Variables:
 #   $telemetryServerOwner (String): the value of the toolkit.telemetry.server_owner preference. Typically "Mozilla"
-about-telemetry-origins-explanation = <a data-l10n-name="origin-doc-link"> Firefox-ի աղբյուրի հեռաչափությունը </a> կոդավորում է տվյալները ուղարկելուց առաջ, այնպես որ { $telemetryServerOwner } կարող է հաշվել իրերը, առանց իմանալու որևէ { -brand-product-name } մուտքագրման համար: Ավելին իմանալու համար <a data-l10n-name="prio-blog-link"> </a>)։
+about-telemetry-origins-explanation = <a data-l10n-name="origin-doc-link"> Waterfox-ի աղբյուրի հեռաչափությունը </a> կոդավորում է տվյալները ուղարկելուց առաջ, այնպես որ { $telemetryServerOwner } կարող է հաշվել իրերը, առանց իմանալու որևէ { -brand-product-name } մուտքագրման համար: Ավելին իմանալու համար <a data-l10n-name="prio-blog-link"> </a>)։
 # Variables:
 #  $process (String): type of process in subsection headers ( e.g. "content", "parent" )
 about-telemetry-process = { $process } գործնթաց

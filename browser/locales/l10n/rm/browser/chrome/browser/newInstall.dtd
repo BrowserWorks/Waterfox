@@ -3,13 +3,13 @@
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!-- LOCALIZATION NOTE: For this feature, "installation" is used to mean "this
- discrete download of Firefox" and "version" is used to mean "the specific
- revision number of a given Firefox channel". These terms are not synonymous.
+ discrete download of Waterfox" and "version" is used to mean "the specific
+ revision number of a given Waterfox channel". These terms are not synonymous.
 -->
 
 <!ENTITY window.title "Impurtantas novas">
 <!ENTITY window.style "width: 490px">
-<!ENTITY sync "Per sincronisar infurmaziuns che ti has gia memorisà en Firefox cun questa installaziun da &brandShortName;, t'annuzia cun tes &syncBrand.fxAccount.label;.">
+<!ENTITY sync "Per sincronisar infurmaziuns che ti has gia memorisà en Waterfox cun questa installaziun da &brandShortName;, t'annuzia cun tes &syncBrand.fxAccount.label;.">
 <!ENTITY continue-button "Cuntinuar">
 
-<!ENTITY mainText "Questa installaziun da &brandShortName; ha in nov profil. Ni segnapaginas, ni pleds-clav ni preferenzas da l'utilisader vegnan cundivididas cun autras installaziuns da Firefox (inclus Firefox, Firefox ESR, Firefox Beta, Firefox Developer Edition e Firefox Nightly) sin quest computer.">
+<!ENTITY mainText "Questa installaziun da &brandShortName; ha in nov profil. Ni segnapaginas, ni pleds-clav ni preferenzas da l'utilisader vegnan cundivididas cun autras installaziuns da Waterfox (inclus Waterfox, Waterfox ESR, Waterfox Beta, Waterfox Developer Edition e Waterfox Nightly) sin quest computer.">

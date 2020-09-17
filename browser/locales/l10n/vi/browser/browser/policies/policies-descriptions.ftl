@@ -4,7 +4,7 @@
 
 
 ## The Enterprise Policies feature is aimed at system administrators
-## who want to deploy these settings across several Firefox installations
+## who want to deploy these settings across several Waterfox installations
 ## all at once. This is traditionally done through the Windows Group Policy
 ## feature, but the system also supports other forms of deployment.
 ## These are short descriptions for individual policies, to be displayed
@@ -30,8 +30,8 @@ policy-DisableDefaultBrowserAgent = Ngăn chặn tác nhân người dùng trìn
 policy-DisableDeveloperTools = Chặn truy cập đến công cụ dành cho nhà phát triển.
 policy-DisableFeedbackCommands = Tắt các lệnh để gửi phản hồi từ bảng chọn trợ giúp (gửi phản hồi và báo cáo trang web lừa đảo).
 policy-DisableFirefoxAccounts = Vô hiệu hóa { -fxaccount-brand-name } dựa trên các dịch vụ, bao gồm cả đồng bộ.
-# Firefox Screenshots is the name of the feature, and should not be translated.
-policy-DisableFirefoxScreenshots = Vô hiệu hóa tính năng Firefox Screenshots.
+# Waterfox Screenshots is the name of the feature, and should not be translated.
+policy-DisableFirefoxScreenshots = Vô hiệu hóa tính năng Waterfox Screenshots.
 policy-DisableFirefoxStudies = Chặn { -brand-short-name } chạy các nghiên cứu.
 policy-DisableForgetButton = Chặn truy cập vào nút Quên.
 policy-DisableFormHistory = Không lưu lịch sử tìm kiếm và biểu mẫu.
@@ -62,7 +62,7 @@ policy-EncryptedMediaExtensions = Bật hoặc tắt tiện ích mở rộng ph�
 policy-Extensions = Cài đặt, gỡ cài đặt hoặc khóa tiện ích mở rộng. Tùy chọn Cài đặt lấy URL hoặc đường dẫn làm tham số. Các tùy chọn Gỡ cài đặt và Khóa lấy ID tiện ích mở rộng.
 policy-ExtensionSettings = Quản lý các cài đặt cài đặt khác nhau cho tiện ích mở rộng.
 policy-ExtensionUpdate = Bật hoặc tắt cập nhật tiện ích mở rộng tự động.
-policy-FirefoxHome = Cấu hình trang chủ Firefox.
+policy-FirefoxHome = Cấu hình trang chủ Waterfox.
 policy-FlashPlugin = Cho phép hoặc từ chối việc sử dụng phần bổ trợ Flash.
 policy-Handlers = Cấu hình trình xử lý ứng dụng mặc định.
 policy-HardwareAcceleration = Nếu không đúng, hãy tắt chế độ tăng tốc phần cứng.

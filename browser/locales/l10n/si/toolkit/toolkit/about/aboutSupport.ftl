@@ -51,7 +51,7 @@ app-basics-profiles = පැතිකඩයන්
 app-basics-launcher-process-status = දියත්කිරීම් සැකසුම
 app-basics-multi-process-support = බහුසැකසුම් කවුළු
 app-basics-enterprise-policies = ව්‍යවසාය ප්‍රතිපත්ති
-app-basics-key-mozilla = Mozilla ස්ථාන සේවා යතුර
+app-basics-key-mozilla = Waterfox ස්ථාන සේවා යතුර
 app-basics-safe-mode = ආරක්ෂිත ප්‍රකාරය
 show-dir-label =
     { PLATFORM() ->
@@ -104,7 +104,7 @@ intl-os-title = මෙහෙයුම් පද්ධතිය
 
 ## Remote Debugging
 ##
-## The Firefox remote protocol provides low-level debugging interfaces
+## The Waterfox remote protocol provides low-level debugging interfaces
 ## used to inspect state and control execution of documents,
 ## browser instrumentation, user interaction simulation,
 ## and for subscribing to browser-internal events.

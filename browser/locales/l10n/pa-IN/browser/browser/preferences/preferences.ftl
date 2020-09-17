@@ -122,7 +122,7 @@ search-results-help-link = ਮਦਦ ਚਾਹੀਦੀ ਹੈ? <a data-l10n-nam
 
 startup-header = ਸ਼ੁਰੂਆਤ
 # { -brand-short-name } will be 'Firefox Developer Edition',
-# since this setting is only exposed in Firefox Developer Edition
+# since this setting is only exposed in Waterfox Developer Edition
 separate-profile-mode =
     .label = { -brand-short-name } ਤੇ ਫਾਇਰਫਾਕਸ ਨੂੰ ਇੱਕੋ ਸਮੇਂ ਚੱਲਣ ਦੀ ਇਜ਼ਾਜ਼ਤ ਦਿਉ
 use-firefox-sync = ਟੋਟਕਾ: ਇਹ ਵੱਖਰੇ ਬਿਉਰੇ ਵਰਤਦੇ ਹਨ। ਉਹਨਾਂ ਵਿਚਾਲੇ ਡੇਟਾ ਸਾਂਝਾ ਕਰਨ ਲਈ { -sync-brand-short-name } ਵਰਤੋ।
@@ -455,7 +455,7 @@ home-newtabs-mode-label = ਨਵੀਆਂ ਟੈਬਾਂ
 home-restore-defaults =
     .label = ਮੂਲ ਬਹਾਲ ਕਰੋ
     .accesskey = R
-# "Firefox" should be treated as a brand and kept in English,
+# "Waterfox" should be treated as a brand and kept in English,
 # while "Home" and "(Default)" can be localized.
 home-mode-choice-default =
     .label = ਫਾਇਰਫਾਕਸ ਮੁੱਖ ਸਫ਼ਾ (ਮੂਲ)
@@ -480,7 +480,7 @@ choose-bookmark =
     .label = …ਬੁੱਕਮਾਰਕ ਵਰਤੋ
     .accesskey = B
 
-## Home Section - Firefox Home Content Customization
+## Home Section - Waterfox Home Content Customization
 
 home-prefs-content-header = ਫਾਇਰਫਾਕਸ ਮੁੱਖ ਪੰਨਾ
 home-prefs-content-description = ਉਹ ਸਮੱਗਰੀ ਚੁਣੋ ਜੋ ਤੁਸੀਂ ਆਪਣੇ ਫਾਇਰਫਾਕਸ ਮੁੱਖ ਪੰਨੇ 'ਤੇ ਚਾਹੁੰਦੇ ਹੋ।
@@ -600,7 +600,7 @@ containers-preferences-button =
 containers-remove-button =
     .label = ਹਟਾਓ
 
-## Firefox Account - Signed out. Note that "Sync" and "Firefox Account" are now
+## Waterfox Account - Signed out. Note that "Sync" and "Firefox Account" are now
 ## more discrete ("signed in" no longer means "and sync is connected").
 
 sync-signedout-caption = ਆਪਣੇ ਵੈੱਬ ਨੂੰ ਆਪਣੇ ਨਾਲ ਲੈ ਜਾਓ
@@ -618,7 +618,7 @@ sync-signedout-account-signin2 =
 # to your language, but should not be changed or translated.
 sync-mobile-promo = ਆਪਣੇ ਮੋਬਾਈਲ ਡਿਵਾਈਸ ਨਾਲ ਸਿੰਕ ਕਰਨ ਲਈ <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">ਐਂਡਰਾਈਡ</a> ਜਾਂ <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS</a> ਲਈ ਫਾਇਰਫਾਕਸ ਨੂੰ ਡਾਊਨਲੋਡ ਕਰੋ।
 
-## Firefox Account - Signed in
+## Waterfox Account - Signed in
 
 sync-profile-picture =
     .tooltiptext = ਬਿਉਰਾ ਤਸਵੀਰ ਨੂੰ ਬਦਲੋ
@@ -810,8 +810,8 @@ history-header = ਅਤੀਤ
 # "Firefox will" + "Remember history".
 #
 # If this doesn't work for your language, you can translate this message:
-#   - Simply as "Firefox", moving the verb into each option.
-#     This will result in "Firefox" + "Will remember history", etc.
+#   - Simply as "Waterfox", moving the verb into each option.
+#     This will result in "Waterfox" + "Will remember history", etc.
 #   - As a stand-alone message, for example "Firefox history settings:".
 history-remember-label = { -brand-short-name }
     .accesskey = w

@@ -104,9 +104,9 @@ manifest-loaded-ok = Manifest indlæst.
 # Text displayed as a caption when there has been an error while trying to
 # load the manifest
 manifest-loaded-error = Der opstod en fejl under indlæsning af manifestet:
-# Text displayed as an error when there has been a Firefox DevTools error while
+# Text displayed as an error when there has been a Waterfox DevTools error while
 # trying to load the manifest
-manifest-loaded-devtools-error = Der opstod en fejl i udviklerværktøjerne i Firefox
+manifest-loaded-devtools-error = Der opstod en fejl i udviklerværktøjerne i Waterfox
 # Text displayed when the page has no manifest available
 manifest-non-existing = Der blev ikke fundet noget manifest at inspicere.
 # Text displayed when the page has a manifest embedded in a Data URL and

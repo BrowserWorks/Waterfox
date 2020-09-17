@@ -80,7 +80,7 @@ cfr-doorhanger-pintab-animation-pause = השהיה
 cfr-doorhanger-pintab-animation-resume = המשך
 
 
-## Firefox Accounts Message
+## Waterfox Accounts Message
 
 cfr-doorhanger-bookmark-fxa-header = סנכרון הסימניות שלך לכל מקום.
 cfr-doorhanger-bookmark-fxa-link-text = סנכרון הסימניות כעת…
@@ -173,7 +173,7 @@ cfr-doorhanger-send-tab-header = לקריאה בדרכים
 cfr-doorhanger-send-tab-ok-button = לנסות את Send Tab
     .accesskey = ל
 
-## Firefox Send
+## Waterfox Send
 
 cfr-doorhanger-firefox-send-header = שיתוף ה־PDF הזה באופן מאובטח
 cfr-doorhanger-firefox-send-ok-button = לנסות את { -send-brand-name }
@@ -208,7 +208,7 @@ cfr-doorhanger-milestone-ok-button = צפייה בהכל
 cfr-doorhanger-milestone-close-button = סגירה
     .accesskey = ס
 
-## What’s New Panel Content for Firefox 76
+## What’s New Panel Content for Waterfox 76
 
 
 ## Lockwise message

@@ -3,13 +3,13 @@
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!-- LOCALIZATION NOTE: For this feature, "installation" is used to mean "this
- discrete download of Firefox" and "version" is used to mean "the specific
- revision number of a given Firefox channel". These terms are not synonymous.
+ discrete download of Waterfox" and "version" is used to mean "the specific
+ revision number of a given Waterfox channel". These terms are not synonymous.
 -->
 
 <!ENTITY window.title "Tin tức quan trọng">
 <!ENTITY window.style "width: 490px">
-<!ENTITY sync "Để đồng bộ hóa thông tin bạn đã lưu vào Firefox với bản cài đặt &brandShortName;, đăng nhập bằng &syncBrand.fxAccount.label;.">
+<!ENTITY sync "Để đồng bộ hóa thông tin bạn đã lưu vào Waterfox với bản cài đặt &brandShortName;, đăng nhập bằng &syncBrand.fxAccount.label;.">
 <!ENTITY continue-button "Tiếp tục">
 
-<!ENTITY mainText "Cài đặt này của &brandShortName; có một hồ sơ mới. Nó không chia sẻ dấu trang, mật khẩu và tùy chọn người dùng với các bản cài đặt khác của Firefox (bao gồm Firefox, Firefox ESR, Firefox Beta, Firefox dành cho nhà phát triển và Firefox Nightly) trên máy tính này.">
+<!ENTITY mainText "Cài đặt này của &brandShortName; có một hồ sơ mới. Nó không chia sẻ dấu trang, mật khẩu và tùy chọn người dùng với các bản cài đặt khác của Waterfox (bao gồm Waterfox, Waterfox ESR, Waterfox Beta, Waterfox dành cho nhà phát triển và Waterfox Nightly) trên máy tính này.">

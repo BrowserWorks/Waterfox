@@ -78,7 +78,7 @@ cfr-doorhanger-pintab-animation-pause = Аялдату
 cfr-doorhanger-pintab-animation-resume = Жалғастыру
 
 
-## Firefox Accounts Message
+## Waterfox Accounts Message
 
 cfr-doorhanger-bookmark-fxa-header = Бетбелгілерді барлық жерде синхрондаңыз.
 cfr-doorhanger-bookmark-fxa-body = Тамаша табу! Енді мобильді құрылғыларыңызда бұл бетбелгісіз қалмаңыз. { -fxaccount-brand-name } қызметімен жұмысты бастаңыз.
@@ -193,7 +193,7 @@ cfr-doorhanger-send-tab-body = Беттерді жіберу мүмкіндіг�
 cfr-doorhanger-send-tab-ok-button = Бетті жіберуді қолданып көріңіз
     .accesskey = т
 
-## Firefox Send
+## Waterfox Send
 
 cfr-doorhanger-firefox-send-header = Бұл PDF файлымен қауіпсіз түрде бөлісіңіз
 cfr-doorhanger-firefox-send-body = Құпия құжаттарыңызбен бөтен көзден тыс, толық шифрлеумен және дайын болғаннан кейін өшірілетін сілтеме арқылы бөлісіңіз.
@@ -230,7 +230,7 @@ cfr-doorhanger-milestone-ok-button = Барлығын қарау
 cfr-doorhanger-milestone-close-button = Жабу
     .accesskey = Ж
 
-## What’s New Panel Content for Firefox 76
+## What’s New Panel Content for Waterfox 76
 
 
 ## Lockwise message

@@ -50,7 +50,7 @@ app-basics-service-workers = दर्ता भएका Service Workers
 app-basics-profiles = प्रोफाइलहरू
 app-basics-multi-process-support = बहुप्रक्रिया सञ्झ्यालहरू
 app-basics-enterprise-policies = व्यापारको नीतिहरू
-app-basics-key-mozilla = Mozilla स्थान सेवा कुञ्जी
+app-basics-key-mozilla = Waterfox स्थान सेवा कुञ्जी
 app-basics-safe-mode = सुरक्षित मोड
 show-dir-label =
     { PLATFORM() ->
@@ -130,7 +130,7 @@ intl-regional-prefs = क्षेत्रीय प्राथमिकता
 
 ## Remote Debugging
 ##
-## The Firefox remote protocol provides low-level debugging interfaces
+## The Waterfox remote protocol provides low-level debugging interfaces
 ## used to inspect state and control execution of documents,
 ## browser instrumentation, user interaction simulation,
 ## and for subscribing to browser-internal events.

@@ -8,8 +8,8 @@
 # These are the default window titles everywhere except macOS. The first two
 # attributes are used when the web content opened has no title:
 #
-# default - "Mozilla Firefox"
-# private - "Mozilla Firefox (Private Browsing)"
+# default - "Waterfox"
+# private - "Waterfox (Private Browsing)"
 #
 # The last two are for use when there *is* a content title.
 # Variables:
@@ -22,8 +22,8 @@ browser-main-window =
 # These are the default window titles on macOS. The first two are for use when
 # there is no content title:
 #
-# "default" - "Mozilla Firefox"
-# "private" - "Mozilla Firefox - (Private Browsing)"
+# "default" - "Waterfox"
+# "private" - "Waterfox - (Private Browsing)"
 #
 # The last two are for use when there *is* a content title.
 # Do not use the brand name in the last two attributes, as we do on non-macOS.
@@ -232,7 +232,7 @@ identity-clear-site-data =
 identity-connection-not-secure-security-view = Връзката със сайта не е сигурна.
 identity-connection-verified = Връзката със сайта е сигурна.
 identity-ev-owner-label = Сертификатът е издаден на:
-identity-description-custom-root = Mozilla не разпознава този издател на сертификати. Може да е добавен от вашата операционна система или от администратор. <label data-l10n-name="link">Научете повече</label>
+identity-description-custom-root = Waterfox не разпознава този издател на сертификати. Може да е добавен от вашата операционна система или от администратор. <label data-l10n-name="link">Научете повече</label>
 identity-remove-cert-exception =
     .label = Премахване на изключението
     .accesskey = П

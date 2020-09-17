@@ -383,7 +383,7 @@ release-notes-error = リリースノートの読み込み中にエラーが発�
 addon-permissions-empty = この拡張機能は許可設定を必要としません。
 recommended-extensions-heading = おすすめの拡張機能
 recommended-themes-heading = おすすめのテーマ
-# A recommendation for the Firefox Color theme shown at the bottom of the theme
+# A recommendation for the Waterfox Color theme shown at the bottom of the theme
 # list view. The "Firefox Color" name itself should not be translated.
 recommended-theme-1 = ご自分で作ってみませんか？ <a data-l10n-name="link">Firefox Color で独自のテーマを構築できます。</a>
 

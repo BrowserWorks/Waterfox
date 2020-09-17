@@ -29,9 +29,9 @@ graph-week-summary-private-window = Трэкеры, якія { -brand-short-name
 
 protection-report-webpage-title = Панэль стану аховы
 protection-report-page-content-title = Панэль стану аховы
-# This message shows when all privacy protections are turned off, which is why we use the word "can", Firefox is able to protect your privacy, but it is currently not.
+# This message shows when all privacy protections are turned off, which is why we use the word "can", Waterfox is able to protect your privacy, but it is currently not.
 protection-report-page-summary = { -brand-short-name } можа ахоўваць вашу прыватнасць за кадрам падчас аглядання. Гэта персаналізаваная зводка аб ахове, уключна з інструментамі для кантролю вашай бяспекі ў Інтэрнэце.
-# This message shows when at least some protections are turned on, we are more assertive compared to the message above, Firefox is actively protecting you.
+# This message shows when at least some protections are turned on, we are more assertive compared to the message above, Waterfox is actively protecting you.
 protection-report-page-summary-default = { -brand-short-name } ахоўвае вашу прыватнасць за кадрам падчас аглядання. Гэта персаналізаваная зводка аб ахове, уключна з інструментамі для кантролю вашай бяспекі ў Інтэрнэце.
 
 protection-report-settings-link = Кіруйце сваімі наладамі прыватнасці і бяспекі

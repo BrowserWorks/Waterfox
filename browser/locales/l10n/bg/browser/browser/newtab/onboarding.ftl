@@ -58,11 +58,11 @@ onboarding-cards-dismiss =
 onboarding-fullpage-form-email =
     .placeholder = Адрес на електронна поща
 
-## Firefox Sync modal dialog strings.
+## Waterfox Sync modal dialog strings.
 
 onboarding-sync-welcome-header = Вземете { -brand-product-name } с вас
 onboarding-sync-welcome-content = Вземете своите отметки, история, пароли и всички други настройки на всички ваши устройства.
-onboarding-sync-welcome-learn-more-link = Научете повече за Firefox Accounts
+onboarding-sync-welcome-learn-more-link = Научете повече за Waterfox Accounts
 
 onboarding-sync-form-input =
     .placeholder = адрес на електронна поща
@@ -70,7 +70,7 @@ onboarding-sync-form-input =
 onboarding-sync-form-continue-button = Продължаване
 onboarding-sync-form-skip-login-button = Пропускане
 
-## This is part of the line "Enter your email to continue to Firefox Sync"
+## This is part of the line "Enter your email to continue to Waterfox Sync"
 
 onboarding-sync-form-header = Въведете своята ел. поща,
 onboarding-sync-form-sub-header = за да продължите към { -sync-brand-name }
@@ -81,7 +81,7 @@ onboarding-sync-form-sub-header = за да продължите към { -sync-
 
 # "Personal Data Promise" is a concept that should be translated consistently
 # across the product. It refers to a concept shown elsewhere to the user: "The
-# Firefox Personal Data Promise is the way we honor your data in everything we
+# Waterfox Personal Data Promise is the way we honor your data in everything we
 # make and do. We take less data. We keep it safe. And we make sure that we are
 # transparent about how we use it."
 onboarding-benefit-privacy-text = Всичко, което правим зачита нашето обещание за личните данни: Взимаме по-малко, Пазим го зорко. Без тайни.

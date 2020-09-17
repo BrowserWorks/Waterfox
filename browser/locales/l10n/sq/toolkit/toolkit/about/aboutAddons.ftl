@@ -467,9 +467,9 @@ addon-permissions-empty = Ky zgjerim nuk lyp ndonjë leje
 recommended-extensions-heading = Zgjerime të Këshilluara
 recommended-themes-heading = Tema të Këshilluara
 
-# A recommendation for the Firefox Color theme shown at the bottom of the theme
+# A recommendation for the Waterfox Color theme shown at the bottom of the theme
 # list view. The "Firefox Color" name itself should not be translated.
-recommended-theme-1 = Ju ka kapluar fryma krijuese? <a data-l10n-name="link">Krijoni temën tuaj me  Firefox Color.</a>
+recommended-theme-1 = Ju ka kapluar fryma krijuese? <a data-l10n-name="link">Krijoni temën tuaj me  Waterfox Color.</a>
 
 ## Page headings
 

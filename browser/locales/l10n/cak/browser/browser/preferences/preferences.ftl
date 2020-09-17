@@ -122,9 +122,9 @@ search-results-help-link = ¿La nawajo' ato'ik? Tatz'eta' <a data-l10n-name="url
 
 startup-header = Tikirisab'äl
 # { -brand-short-name } will be 'Firefox Developer Edition',
-# since this setting is only exposed in Firefox Developer Edition
+# since this setting is only exposed in Waterfox Developer Edition
 separate-profile-mode =
-    .label = Tiya' q'ij chi ri { -brand-short-name } chuqa' Firefox ketzije' junam
+    .label = Tiya' q'ij chi ri { -brand-short-name } chuqa' Waterfox ketzije' junam
 use-firefox-sync = Pixa': Re re' nrokisaj jachon taq ruwäch b'i'aj. Tawokisaj { -sync-brand-short-name } richin nakomonij na'oj chi kikojol.
 get-started-not-logged-in = Tatz'ib'aj ab'i' pa { -sync-brand-short-name }…
 get-started-configured = Tijaq { -sync-brand-short-name } taq rajowab'al
@@ -455,10 +455,10 @@ home-newtabs-mode-label = K'ak'a' taq ruwi'
 home-restore-defaults =
     .label = Ketzolij ri E K'o wi
     .accesskey = K
-# "Firefox" should be treated as a brand and kept in English,
+# "Waterfox" should be treated as a brand and kept in English,
 # while "Home" and "(Default)" can be localized.
 home-mode-choice-default =
-    .label = Firefox Tikirib'äl (K'o wi)
+    .label = Waterfox Tikirib'äl (K'o wi)
 home-mode-choice-custom =
     .label = Ichinan URLs...
 home-mode-choice-blank =
@@ -480,10 +480,10 @@ choose-bookmark =
     .label = Tokisäx yaketal…
     .accesskey = y
 
-## Home Section - Firefox Home Content Customization
+## Home Section - Waterfox Home Content Customization
 
-home-prefs-content-header = Etamab'äl pa ri Rutikirib'al Firefox
-home-prefs-content-description = Tacha' achike etamab'äl nawajo' pa ri Rutikirib'al Firefox ruwäch.
+home-prefs-content-header = Etamab'äl pa ri Rutikirib'al Waterfox
+home-prefs-content-description = Tacha' achike etamab'äl nawajo' pa ri Rutikirib'al Waterfox ruwäch.
 home-prefs-search-header =
     .label = Ajk'amaya'l Kanoxïk
 home-prefs-topsites-header =
@@ -603,7 +603,7 @@ containers-preferences-button =
 containers-remove-button =
     .label = Tiyuj
 
-## Firefox Account - Signed out. Note that "Sync" and "Firefox Account" are now
+## Waterfox Account - Signed out. Note that "Sync" and "Firefox Account" are now
 ## more discrete ("signed in" no longer means "and sync is connected").
 
 sync-signedout-caption = Tak'waj awik'in ri Ajk'amaya'l
@@ -619,9 +619,9 @@ sync-signedout-account-signin2 =
 #
 # They can be moved within the sentence as needed to adapt
 # to your language, but should not be changed or translated.
-sync-mobile-promo = Taqasaj Firefox richin <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> chuqa' <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS</a> richin naxïm rik'in ri awoyonib'al okisaxel.
+sync-mobile-promo = Taqasaj Waterfox richin <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> chuqa' <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS</a> richin naxïm rik'in ri awoyonib'al okisaxel.
 
-## Firefox Account - Signed in
+## Waterfox Account - Signed in
 
 sync-profile-picture =
     .tooltiptext = Tijal ruwachib'al ruwäch b'i'aj
@@ -707,7 +707,7 @@ sync-engine-creditcards =
     .accesskey = C
 sync-engine-addons =
     .label = Taq tz'aqat
-    .tooltiptext = Taq k'amal chuqa' taq wachinïk richin Firefox ajk'ematz'ib'
+    .tooltiptext = Taq k'amal chuqa' taq wachinïk richin Waterfox ajk'ematz'ib'
     .accesskey = t
 sync-engine-prefs =
     .label =
@@ -813,8 +813,8 @@ history-header = Natab'äl
 # "Firefox will" + "Remember history".
 #
 # If this doesn't work for your language, you can translate this message:
-#   - Simply as "Firefox", moving the verb into each option.
-#     This will result in "Firefox" + "Will remember history", etc.
+#   - Simply as "Waterfox", moving the verb into each option.
+#     This will result in "Waterfox" + "Will remember history", etc.
 #   - As a stand-alone message, for example "Firefox history settings:".
 history-remember-label = { -brand-short-name } xtipo'
     .accesskey = x

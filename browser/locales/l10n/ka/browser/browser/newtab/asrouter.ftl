@@ -80,7 +80,7 @@ cfr-doorhanger-pintab-animation-pause = შეჩერება
 cfr-doorhanger-pintab-animation-resume = გაგრძელება
 
 
-## Firefox Accounts Message
+## Waterfox Accounts Message
 
 cfr-doorhanger-bookmark-fxa-header = დაასინქრონეთ სანიშნები ყველგან.
 cfr-doorhanger-bookmark-fxa-body = რაც მთავარია! ახლა უკვე არ დარჩებით სანიშნის გარეშე თქვენს მობილურ მოწყობილობებზე. გამოიყენეთ { -fxaccount-brand-name }.
@@ -197,7 +197,7 @@ cfr-doorhanger-send-tab-body = Send Tab საშუალებას გაძ
 cfr-doorhanger-send-tab-ok-button = გამოცადეთ Send Tab
     .accesskey = ც
 
-## Firefox Send
+## Waterfox Send
 
 cfr-doorhanger-firefox-send-header = გააზიარეთ ეს PDF უსაფრთხოდ
 cfr-doorhanger-firefox-send-body = დაიცავით თქვენი მნიშვნელოვანი მასალები ცნობისმოყვარეებისგან, გამჭოლი დაშიფვრითა და ბმულით, რომელიც თავისით გაქრება საქმის დასრულებისას.
@@ -235,7 +235,7 @@ cfr-doorhanger-milestone-ok-button = ყველას ნახვა
 cfr-doorhanger-milestone-close-button = დახურვა
     .accesskey = ხ
 
-## What’s New Panel Content for Firefox 76
+## What’s New Panel Content for Waterfox 76
 
 
 ## Lockwise message

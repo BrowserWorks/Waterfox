@@ -136,9 +136,9 @@ manifest-loaded-ok = Jegyzékfájl betöltve.
 # load the manifest
 manifest-loaded-error = Hiba történt a jegyzékfájl betöltésekor:
 
-# Text displayed as an error when there has been a Firefox DevTools error while
+# Text displayed as an error when there has been a Waterfox DevTools error while
 # trying to load the manifest
-manifest-loaded-devtools-error = Firefox fejlesztői eszközök hiba
+manifest-loaded-devtools-error = Waterfox fejlesztői eszközök hiba
 
 # Text displayed when the page has no manifest available
 manifest-non-existing = Nem található vizsgálható jegyzékfájl.

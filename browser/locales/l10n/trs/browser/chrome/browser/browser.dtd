@@ -50,7 +50,7 @@ this container is a toolbar. This avoids double-speaking. -->
 <!ENTITY pictureInPictureHideToggle.accesskey "H">
 
 <!-- LOCALIZATION NOTE (fxa.menu) Used to define the different labels
-     for the Firefox Account toolbar menu screen. The `Signed in as` text is
+     for the Waterfox Account toolbar menu screen. The `Signed in as` text is
      followed by the user's email. -->
 <!ENTITY fxa.menu.syncSettings2.label "&syncBrand.shortName.label; Nagi'iaj">
 <!ENTITY fxa.menu.connectAnotherDevice2.label "Duguatûj a'ngô aga'a…">
@@ -67,7 +67,7 @@ this container is a toolbar. This avoids double-speaking. -->
 <!ENTITY fxa.menu.setupSync.label "Nagi’iaj &syncBrand.shortName.label;">
 
 <!-- LOCALIZATION NOTE (fxa.service) Used to define the different FxA services
-     for the Firefox Account toolbar menu screen.  -->
+     for the Waterfox Account toolbar menu screen.  -->
 <!ENTITY fxa.service.sendTab.description "Nda nanè chre ga'ue ga'nïnjt rakïj ñanj gan'an riña amin 'ngō man'an aga' gayi'ìt sesiûn.">
 
 <!-- LOCALIZATION NOTE (fullscreenWarning.beforeDomain.label,
@@ -174,7 +174,7 @@ this container is a toolbar. This avoids double-speaking. -->
 <!ENTITY appMenuRemoteTabs.tabsnotsyncing.label "Nachrūn si sinkronisasion rakïj ñaj da' ni'iaj nej rakïj ñaj asij riña a'ngo si agat.">
 <!-- LOCALIZATION NOTE (appMenuRemoteTabs.noclients.subtitle): This is shown
      when Sync is configured but this appears to be the only device attached to
-     the account. We also show links to download Firefox for android/ios. -->
+     the account. We also show links to download Waterfox for android/ios. -->
 <!ENTITY appMenuRemoteTabs.noclients.subtitle "Ni'iaj rakïj ñaj nū riña a'ngo si aga' asij ñuna ànj">
 <!ENTITY appMenuRemoteTabs.opensyncprefs.label "Na'nït sa nagi'iaj Sync">
 <!ENTITY appMenuRemoteTabs.welcome.label "Ni’iāj nej rakïj ñaj āsìj riña a'ngô nej si agâ’t.">

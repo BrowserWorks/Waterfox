@@ -469,9 +469,9 @@ addon-permissions-empty = Denne utvidelsen krever ingen tillatelser
 recommended-extensions-heading = Anbefalte utvidelser
 recommended-themes-heading = Anbefalte temaer
 
-# A recommendation for the Firefox Color theme shown at the bottom of the theme
+# A recommendation for the Waterfox Color theme shown at the bottom of the theme
 # list view. The "Firefox Color" name itself should not be translated.
-recommended-theme-1 = Er du i det kreative hjørnet? <a data-l10n-name="link">Bygg ditt eget tema med Firefox Color.</a>
+recommended-theme-1 = Er du i det kreative hjørnet? <a data-l10n-name="link">Bygg ditt eget tema med Waterfox Color.</a>
 
 ## Page headings
 

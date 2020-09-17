@@ -104,9 +104,9 @@ manifest-loaded-ok = โหลดไฟล์กำกับแล้ว
 # Text displayed as a caption when there has been an error while trying to
 # load the manifest
 manifest-loaded-error = มีข้อผิดพลาดขณะโหลดไฟล์กำกับ:
-# Text displayed as an error when there has been a Firefox DevTools error while
+# Text displayed as an error when there has been a Waterfox DevTools error while
 # trying to load the manifest
-manifest-loaded-devtools-error = ข้อผิดพลาด Firefox DevTools
+manifest-loaded-devtools-error = ข้อผิดพลาด Waterfox DevTools
 # Text displayed when the page has no manifest available
 manifest-non-existing = ไม่พบไฟล์กำกับที่จะตรวจสอบ
 # Text displayed when the page has a manifest embedded in a Data URL and

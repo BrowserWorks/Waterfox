@@ -87,9 +87,9 @@ manifest-loaded-ok = ম্যানিফেস্ট লোড হয়েছে
 # load the manifest
 manifest-loaded-error = ম্যানিফেস্টটি লোড করার সময় একটি ত্রুটি হয়েছিল:
 
-# Text displayed as an error when there has been a Firefox DevTools error while
+# Text displayed as an error when there has been a Waterfox DevTools error while
 # trying to load the manifest
-manifest-loaded-devtools-error = Firefox DevTools ত্রুটি
+manifest-loaded-devtools-error = Waterfox DevTools ত্রুটি
 
 # Text displayed when the page has no manifest available
 manifest-non-existing = পরিদর্শন করার মতো কোনও ম্যানিফেস্ট পাওয়া যায় নি।

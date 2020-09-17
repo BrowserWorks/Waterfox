@@ -26,9 +26,9 @@ graph-private-window = Aplikácia { -brand-short-name } naďalej blokuje sledova
 graph-week-summary-private-window = Sledovacie prvky zablokované aplikáciou { -brand-short-name } tento týždeň
 protection-report-webpage-title = Nástenka ochrany súkromia
 protection-report-page-content-title = Nástenka ochrany súkromia
-# This message shows when all privacy protections are turned off, which is why we use the word "can", Firefox is able to protect your privacy, but it is currently not.
+# This message shows when all privacy protections are turned off, which is why we use the word "can", Waterfox is able to protect your privacy, but it is currently not.
 protection-report-page-summary = { -brand-short-name } chráni vaše súkromie počas prehliadania. Toto je prehľad ochranných nástrojov, s ktorými máte kontrolu nad svojou online bezpečnosťou.
-# This message shows when at least some protections are turned on, we are more assertive compared to the message above, Firefox is actively protecting you.
+# This message shows when at least some protections are turned on, we are more assertive compared to the message above, Waterfox is actively protecting you.
 protection-report-page-summary-default = { -brand-short-name } chráni vaše súkromie počas prehliadania. Toto je prehľad ochranných nástrojov, s ktorými máte kontrolu nad svojou online bezpečnosťou.
 etp-card-title-always = Rozšírená ochrana pred sledovaním: vždy zapnutá
 etp-card-title-custom-not-blocking = Rozšírená ochrana pred sledovaním: VYPNUTÁ

@@ -8,7 +8,7 @@ fxa-pair-device-dialog =
 fxa-qrcode-heading-phase1 = 1. Установите <a data-l10n-name="connect-another-device">Firefox на ваше мобильное устройство</a>, если вы ещё этого не сделали.
 fxa-qrcode-heading-phase2 = 2. Войдите в { -sync-brand-short-name(case: "accusative") }, или на Android отсканируйте код сопряжения из параметров { -sync-brand-short-name(case: "genitive") }.
 fxa-qrcode-heading-step1 = 1. Установите <a data-l10n-name="connect-another-device">Firefox на ваше мобильное устройство</a>, если вы ещё этого не сделали.
-fxa-qrcode-heading-step2 = 2. Откройте Firefox на вашем мобильном устройстве.
+fxa-qrcode-heading-step2 = 2. Откройте Waterfox на вашем мобильном устройстве.
 fxa-qrcode-heading-step3 = 3. Откройте <b>меню</b> (<img data-l10n-name="ios-menu-icon"/> или <img data-l10n-name="android-menu-icon"/>), нажмите на <img data-l10n-name="settings-icon"/> <b>Настройки</b> и выберите <b>Включить синхронизацию</b>
 fxa-qrcode-heading-step4 = 4. Просканируйте этот код:
 fxa-qrcode-error-title = Сопряжение не удалось.

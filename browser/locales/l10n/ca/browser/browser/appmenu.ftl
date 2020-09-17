@@ -18,7 +18,7 @@ appmenuitem-zoom-enlarge =
 appmenuitem-zoom-reduce =
     .label = Redueix
 
-## Firefox Account toolbar button and Sync panel in App menu.
+## Waterfox Account toolbar button and Sync panel in App menu.
 
 fxa-toolbar-sync-now =
     .label = Sincronitza ara

@@ -80,7 +80,7 @@ cfr-doorhanger-pintab-animation-pause = Mbopyta
 cfr-doorhanger-pintab-animation-resume = Eku’ejey
 
 
-## Firefox Accounts Message
+## Waterfox Accounts Message
 
 cfr-doorhanger-bookmark-fxa-header = Embojuehe nde rechaukaha eimeha guive.
 cfr-doorhanger-bookmark-fxa-body = ¡Mba’eguasu jejuhu! Ko’ág̃a aníke epyta ko techaukaha’ỹre ne pumbyry popeguápe. Eñepyrũ { -fxaccount-brand-name } ndive.
@@ -193,7 +193,7 @@ cfr-doorhanger-send-tab-body = Emondo tendayke emoherakuã hag̃ua ko juajuha ne
 cfr-doorhanger-send-tab-ok-button = Eñeha’ã emondo tendayke
     .accesskey = T
 
-## Firefox Send
+## Waterfox Send
 
 cfr-doorhanger-firefox-send-header = Emoherakuã ko PDF tekorosãme
 cfr-doorhanger-firefox-send-body = Eguereko nde kuatiakuéra ñemiguáva ambue ñema’ẽgui ipapapyetéva reheve ha juajuha oguéva ejapopa vove.
@@ -230,7 +230,7 @@ cfr-doorhanger-milestone-ok-button = Hechapa
 cfr-doorhanger-milestone-close-button = Mboty
     .accesskey = C
 
-## What’s New Panel Content for Firefox 76
+## What’s New Panel Content for Waterfox 76
 
 
 ## Lockwise message

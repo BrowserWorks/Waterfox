@@ -4,7 +4,7 @@
 
 
 ## The Enterprise Policies feature is aimed at system administrators
-## who want to deploy these settings across several Firefox installations
+## who want to deploy these settings across several Waterfox installations
 ## all at once. This is traditionally done through the Windows Group Policy
 ## feature, but the system also supports other forms of deployment.
 ## These are short descriptions for individual policies, to be displayed
@@ -42,8 +42,8 @@ policy-DisableFeedbackCommands = मदत मेनूवरून अभिप
 
 policy-DisableFirefoxAccounts = समक्रमणसह, { -fxaccount-brand-name } आधारित सेवा अक्षम करा.
 
-# Firefox Screenshots is the name of the feature, and should not be translated.
-policy-DisableFirefoxScreenshots = Firefox स्क्रीनशॉट सुविधा निष्क्रिय करा.
+# Waterfox Screenshots is the name of the feature, and should not be translated.
+policy-DisableFirefoxScreenshots = Waterfox स्क्रीनशॉट सुविधा निष्क्रिय करा.
 
 policy-DisableFormHistory = शोध व फॉर्म इतिहास साठवून ठेवू नका
 
@@ -75,7 +75,7 @@ policy-DownloadDirectory = डाउनलोड निर्देशिका 
 
 policy-ExtensionSettings = विस्तार स्थापनेच्या सर्व बाजू व्यवस्थापित करा.
 
-policy-FirefoxHome = Firefox मुख्यपृष्ठ कॉन्फिगर करा.
+policy-FirefoxHome = Waterfox मुख्यपृष्ठ कॉन्फिगर करा.
 
 policy-FlashPlugin = Flash प्लगइनच्या वापरास अनुमती द्या किंवा नाकारा.
 

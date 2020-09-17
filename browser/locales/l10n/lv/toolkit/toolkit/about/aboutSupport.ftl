@@ -50,7 +50,7 @@ app-basics-service-workers = Reģistrētie pakalpojumu darbinieki
 app-basics-profiles = Profili
 app-basics-multi-process-support = Vairāku procesu logs
 app-basics-enterprise-policies = Uzņēmuma politikas
-app-basics-key-mozilla = Mozilla atrašanās vietas pakalpojuma atslēga
+app-basics-key-mozilla = Waterfox atrašanās vietas pakalpojuma atslēga
 app-basics-safe-mode = Drošais režīms
 show-dir-label =
     { PLATFORM() ->
@@ -130,7 +130,7 @@ intl-regional-prefs = Reģiona iesatījumi
 
 ## Remote Debugging
 ##
-## The Firefox remote protocol provides low-level debugging interfaces
+## The Waterfox remote protocol provides low-level debugging interfaces
 ## used to inspect state and control execution of documents,
 ## browser instrumentation, user interaction simulation,
 ## and for subscribing to browser-internal events.

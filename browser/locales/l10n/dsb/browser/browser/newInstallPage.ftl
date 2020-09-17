@@ -4,21 +4,21 @@
 
 
 ### For this feature, "installation" is used to mean "this discrete download of
-### Firefox" and "version" is used to mean "the specific revision number of a
-### given Firefox channel". These terms are not synonymous.
+### Waterfox" and "version" is used to mean "the specific revision number of a
+### given Waterfox channel". These terms are not synonymous.
 
 title = Wažne nowosći
 heading = Změny na wašom profilu { -brand-short-name }
 
 changed-title = Co jo se změniło?
-changed-desc-profiles = Toś ta instalacija { -brand-short-name } ma nowy profil. Profil jo sajźba datajow, źož Firefox informacije ako cytańske znamjenja, gronidła a wužywaŕske nastajenja składujo.
-changed-desc-dedicated = Aby se pśešaltowanje mjazy instalacijami Firefox (Firefox, Firefox ESR, Firefox Beta, Firefox Developer Edition a Firefox Nightly) wólažcyło a wěsćej cyniło, ma toś ta instalacija něnto swójski pśisłušny profil. Njeźěli awtomatiski waše skłaźone informacije z drugimi instalacijami Firefox.
+changed-desc-profiles = Toś ta instalacija { -brand-short-name } ma nowy profil. Profil jo sajźba datajow, źož Waterfox informacije ako cytańske znamjenja, gronidła a wužywaŕske nastajenja składujo.
+changed-desc-dedicated = Aby se pśešaltowanje mjazy instalacijami Waterfox (Firefox, Waterfox ESR, Waterfox Beta, Waterfox Developer Edition a Waterfox Nightly) wólažcyło a wěsćej cyniło, ma toś ta instalacija něnto swójski pśisłušny profil. Njeźěli awtomatiski waše skłaźone informacije z drugimi instalacijami Waterfox.
 
-lost = <b>Njejsćo zgubił žedne wósobinske daty abo pśiměrjenja.</b> Jolic sćo južo składł informacije Firefox na toś tom licadle, su wóne hyšći w drugej instalaciji Firefox k dispoziciji.
+lost = <b>Njejsćo zgubił žedne wósobinske daty abo pśiměrjenja.</b> Jolic sćo južo składł informacije Waterfox na toś tom licadle, su wóne hyšći w drugej instalaciji Waterfox k dispoziciji.
 
 options-title = Co su móje nastajenja?
-options-do-nothing = Jolic nic njecyniśo, budu se waše profilowe daty w { -brand-short-name } wót profilowych datow w drugich instalacijach Firefox rozeznawaś.
-options-use-sync = Jolic cośo, až waše profilowe daty su te samske za wšykne instalacije Firefox, móžośo { -fxaccount-brand-name } wužywaś, aby je synchronizěrował.
+options-do-nothing = Jolic nic njecyniśo, budu se waše profilowe daty w { -brand-short-name } wót profilowych datow w drugich instalacijach Waterfox rozeznawaś.
+options-use-sync = Jolic cośo, až waše profilowe daty su te samske za wšykne instalacije Waterfox, móžośo { -fxaccount-brand-name } wužywaś, aby je synchronizěrował.
 
 resources = Resurse:
 support-link = Profilowy zastojnik wužywaś - nastawk pomocy
@@ -29,5 +29,5 @@ sync-input =
     .placeholder = E-mail
 sync-button = Dalej
 sync-terms = Gaž pókšacujośo, zwolijośo do <a data-l10n-name="terms">wužywańskich wuměnjenjow</a> a <a data-l10n-name="privacy">powěźeńki priwatnosći</a>.
-sync-first = Wužywaśo { -sync-brand-name } prědny raz? Musyśo se za kuždu instalaciju Firefox pśizjawiś, aby swóje informacije synchronizěrował.
+sync-first = Wužywaśo { -sync-brand-name } prědny raz? Musyśo se za kuždu instalaciju Waterfox pśizjawiś, aby swóje informacije synchronizěrował.
 sync-learn = Dalšne informacije

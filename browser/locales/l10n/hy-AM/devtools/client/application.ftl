@@ -107,9 +107,9 @@ manifest-loaded-ok = Manifest-ը բեռնված է։
 # load the manifest
 manifest-loaded-error = Սխալ՝ manifest-ը բեռնելիս․
 
-# Text displayed as an error when there has been a Firefox DevTools error while
+# Text displayed as an error when there has been a Waterfox DevTools error while
 # trying to load the manifest
-manifest-loaded-devtools-error = Firefox DevTools սխալ
+manifest-loaded-devtools-error = Waterfox DevTools սխալ
 
 # Text displayed when the page has no manifest available
 manifest-non-existing = Ստուգլու համար manifest չի հայտնաբերվել։

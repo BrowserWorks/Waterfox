@@ -50,7 +50,7 @@ this container is a toolbar. This avoids double-speaking. -->
 <!ENTITY pictureInPictureHideToggle.accesskey "M">
 
 <!-- LOCALIZATION NOTE (fxa.menu) Used to define the different labels
-     for the Firefox Account toolbar menu screen. The `Signed in as` text is
+     for the Waterfox Account toolbar menu screen. The `Signed in as` text is
      followed by the user's email. -->
 <!ENTITY fxa.menu.syncSettings2.label "Paramètres de &syncBrand.shortName.label;">
 <!ENTITY fxa.menu.connectAnotherDevice2.label "Connecter un autre appareil…">
@@ -67,7 +67,7 @@ this container is a toolbar. This avoids double-speaking. -->
 <!ENTITY fxa.menu.setupSync.label "Configurer &syncBrand.shortName.label;…">
 
 <!-- LOCALIZATION NOTE (fxa.service) Used to define the different FxA services
-     for the Firefox Account toolbar menu screen.  -->
+     for the Waterfox Account toolbar menu screen.  -->
 <!ENTITY fxa.service.sendTab.description "Envoyez instantanément un onglet sur n’importe quel appareil où vous êtes connecté·e.">
 
 <!-- LOCALIZATION NOTE (fullscreenWarning.beforeDomain.label,
@@ -174,7 +174,7 @@ this container is a toolbar. This avoids double-speaking. -->
 <!ENTITY appMenuRemoteTabs.tabsnotsyncing.label "Activez la synchronisation des onglets pour afficher la liste des onglets de vos autres appareils.">
 <!-- LOCALIZATION NOTE (appMenuRemoteTabs.noclients.subtitle): This is shown
      when Sync is configured but this appears to be the only device attached to
-     the account. We also show links to download Firefox for android/ios. -->
+     the account. We also show links to download Waterfox for android/ios. -->
 <!ENTITY appMenuRemoteTabs.noclients.subtitle "Vous souhaitez afficher ici les onglets de vos autres appareils ?">
 <!ENTITY appMenuRemoteTabs.opensyncprefs.label "Ouvrir les préférences de synchronisation">
 <!ENTITY appMenuRemoteTabs.welcome.label "Afficher la liste des onglets de vos autres appareils.">

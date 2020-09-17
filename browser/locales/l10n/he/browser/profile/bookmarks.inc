@@ -18,8 +18,8 @@
 #define getting_started התחלת שימוש
 
 # LOCALIZATION NOTE (firefox_heading):
-# Firefox links folder name
-#define firefox_heading Mozilla Firefox
+# Waterfox links folder name
+#define firefox_heading Waterfox
 
 # LOCALIZATION NOTE (firefox_help):
 # link title for https://www.mozilla.org/en-US/firefox/help/
@@ -27,7 +27,7 @@
 
 # LOCALIZATION NOTE (firefox_customize):
 # link title for https://www.mozilla.org/en-US/firefox/customize/
-#define firefox_customize התאמה אישית של Firefox
+#define firefox_customize התאמה אישית של Waterfox
 
 # LOCALIZATION NOTE (firefox_community):
 # link title for https://www.mozilla.org/en-US/contribute/
@@ -38,12 +38,12 @@
 #define firefox_about אודותינו
 
 # LOCALIZATION NOTE (nightly_heading):
-# Firefox Nightly links folder name
-#define nightly_heading משאבים עבור Firefox Nightly
+# Waterfox Nightly links folder name
+#define nightly_heading משאבים עבור Waterfox Nightly
 
 # LOCALIZATION NOTE (nightly_blog):
 # Nightly builds only, link title for https://blog.nightly.mozilla.org/
-#define nightly_blog הבלוג של Firefox Nightly
+#define nightly_blog הבלוג של Waterfox Nightly
 
 # LOCALIZATION NOTE (bugzilla):
 # Nightly builds only, link title for https://bugzilla.mozilla.org/
@@ -63,7 +63,7 @@
 
 # LOCALIZATION NOTE (irc):
 # Nightly builds only, link title for ircs://irc.mozilla.org/nightly
-#define irc דיונים על Firefox Nightly ב־IRC
+#define irc דיונים על Waterfox Nightly ב־IRC
 
 # LOCALIZATION NOTE (planet):
 # Nightly builds only, link title for https://planet.mozilla.org/

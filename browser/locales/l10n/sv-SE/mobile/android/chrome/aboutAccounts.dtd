@@ -10,4 +10,4 @@
 <!ENTITY aboutAccounts.retry.label "Försök igen">
 
 <!ENTITY aboutAccounts.restrictedError.title "Begränsade">
-<!ENTITY aboutAccounts.restrictedError.description "Du kan inte hantera Firefox-Konton från denna profil.">
+<!ENTITY aboutAccounts.restrictedError.description "Du kan inte hantera Waterfox-Konton från denna profil.">

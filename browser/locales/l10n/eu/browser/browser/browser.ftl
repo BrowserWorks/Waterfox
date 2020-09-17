@@ -8,8 +8,8 @@
 # These are the default window titles everywhere except macOS. The first two
 # attributes are used when the web content opened has no title:
 #
-# default - "Mozilla Firefox"
-# private - "Mozilla Firefox (Private Browsing)"
+# default - "Waterfox"
+# private - "Waterfox (Private Browsing)"
 #
 # The last two are for use when there *is* a content title.
 # Variables:
@@ -22,8 +22,8 @@ browser-main-window =
 # These are the default window titles on macOS. The first two are for use when
 # there is no content title:
 #
-# "default" - "Mozilla Firefox"
-# "private" - "Mozilla Firefox - (Private Browsing)"
+# "default" - "Waterfox"
+# "private" - "Waterfox - (Private Browsing)"
 #
 # The last two are for use when there *is* a content title.
 # Do not use the brand name in the last two attributes, as we do on non-macOS.
@@ -218,7 +218,7 @@ identity-connection-internal = { -brand-short-name } orri segurua da hau.
 identity-connection-file = Orri hau zure ordenagailuan biltegiratuta dago.
 identity-extension-page = Orri hau gehigarri batetik kargatu da.
 identity-active-blocked = { -brand-short-name }(e)k seguruak ez diren orri honetako zatiak blokeatu ditu.
-identity-custom-root = Mozillak onetsi gabeko ziurtagiri-jaulkitzaile batek egiaztatu du konexioa.
+identity-custom-root = Waterfoxk onetsi gabeko ziurtagiri-jaulkitzaile batek egiaztatu du konexioa.
 identity-passive-loaded = Orri honetako zenbait atal ez dira seguruak (adib. irudiak).
 identity-active-loaded = Babesa desgaitu duzu orri honetan.
 identity-weak-encryption = Orri honek zifraketa ahula erabiltzen du.
@@ -232,7 +232,7 @@ identity-clear-site-data =
 identity-connection-not-secure-security-view = Ez zaude modu seguruan konektatuta gune honetara.
 identity-connection-verified = Modu seguruan zaude konektatuta gune honetara.
 identity-ev-owner-label = Ziurtagiria honi jaulkia:
-identity-description-custom-root = Mozillak ez du ziurtagiri-jaulkitzaile hau ontzat hartzen. Zure sistema eragileak edo administratzaile batek gehitu du agian. <label data-l10n-name="link">Argibide gehiago</label>
+identity-description-custom-root = Waterfoxk ez du ziurtagiri-jaulkitzaile hau ontzat hartzen. Zure sistema eragileak edo administratzaile batek gehitu du agian. <label data-l10n-name="link">Argibide gehiago</label>
 identity-remove-cert-exception =
     .label = Kendu salbuespena
     .accesskey = K

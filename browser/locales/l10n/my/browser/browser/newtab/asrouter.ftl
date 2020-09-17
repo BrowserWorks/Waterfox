@@ -67,7 +67,7 @@ cfr-doorhanger-pintab-step3 = ဆိုက်ဒ်ကပြောင်းလ�
 cfr-doorhanger-pintab-animation-pause = ရပ်တန့်ပါ
 cfr-doorhanger-pintab-animation-resume = ဆက်လက်ဆောင်ရွက်ပါ
 
-## Firefox Accounts Message
+## Waterfox Accounts Message
 
 
 ## Protections panel
@@ -116,7 +116,7 @@ cfr-doorhanger-send-tab-header = ဒီကိုဖတ်ပါ
 cfr-doorhanger-send-tab-ok-button = Send Tabဖွင့်ပါ
     .accesskey = T
 
-## Firefox Send
+## Waterfox Send
 
 cfr-doorhanger-firefox-send-ok-button = { -send-brand-name } စမ်းကြည့်ပါ
     .accesskey = T
@@ -133,7 +133,7 @@ cfr-doorhanger-socialtracking-close-button = ပိတ်ပါ
 cfr-doorhanger-milestone-ok-button = အားလုံးကိုကြည့်ပါ
     .accesskey = s
 
-## What’s New Panel Content for Firefox 76
+## What’s New Panel Content for Waterfox 76
 
 
 ## Lockwise message

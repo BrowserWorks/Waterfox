@@ -122,9 +122,9 @@ search-results-help-link = ต้องการความช่วยเห�
 
 startup-header = เริ่มการทำงาน
 # { -brand-short-name } will be 'Firefox Developer Edition',
-# since this setting is only exposed in Firefox Developer Edition
+# since this setting is only exposed in Waterfox Developer Edition
 separate-profile-mode =
-    .label = อนุญาตให้ { -brand-short-name } และ Firefox ทำงานพร้อมกัน
+    .label = อนุญาตให้ { -brand-short-name } และ Waterfox ทำงานพร้อมกัน
 use-firefox-sync = เคล็ดลับ: สิ่งนี้ใช้โปรไฟล์แยก ใช้ { -sync-brand-short-name } เพื่อแบ่งปันข้อมูลระหว่างโปรไฟล์
 get-started-not-logged-in = ลงชื่อเข้า { -sync-brand-short-name }…
 get-started-configured = เปิดค่ากำหนด { -sync-brand-short-name }
@@ -443,10 +443,10 @@ home-newtabs-mode-label = แท็บใหม่
 home-restore-defaults =
     .label = เรียกคืนค่าเริ่มต้น
     .accesskey = ร
-# "Firefox" should be treated as a brand and kept in English,
+# "Waterfox" should be treated as a brand and kept in English,
 # while "Home" and "(Default)" can be localized.
 home-mode-choice-default =
-    .label = หน้าแรก Firefox (ค่าเริ่มต้น)
+    .label = หน้าแรก Waterfox (ค่าเริ่มต้น)
 home-mode-choice-custom =
     .label = URL ที่กำหนดเอง…
 home-mode-choice-blank =
@@ -468,10 +468,10 @@ choose-bookmark =
     .label = ใช้ที่คั่นหน้า…
     .accesskey = ท
 
-## Home Section - Firefox Home Content Customization
+## Home Section - Waterfox Home Content Customization
 
-home-prefs-content-header = เนื้อหาหน้าแรก Firefox
-home-prefs-content-description = เลือกเนื้อหาที่คุณต้องการในหน้าจอหน้าแรก Firefox ของคุณ
+home-prefs-content-header = เนื้อหาหน้าแรก Waterfox
+home-prefs-content-description = เลือกเนื้อหาที่คุณต้องการในหน้าจอหน้าแรก Waterfox ของคุณ
 home-prefs-search-header =
     .label = การค้นหาเว็บ
 home-prefs-topsites-header =
@@ -587,7 +587,7 @@ containers-preferences-button =
 containers-remove-button =
     .label = เอาออก
 
-## Firefox Account - Signed out. Note that "Sync" and "Firefox Account" are now
+## Waterfox Account - Signed out. Note that "Sync" and "Firefox Account" are now
 ## more discrete ("signed in" no longer means "and sync is connected").
 
 sync-signedout-caption = นำเว็บของคุณไปกับคุณ
@@ -603,9 +603,9 @@ sync-signedout-account-signin2 =
 #
 # They can be moved within the sentence as needed to adapt
 # to your language, but should not be changed or translated.
-sync-mobile-promo = ดาวน์โหลด Firefox สำหรับ <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> หรือ <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS</a> เพื่อซิงค์กับอุปกรณ์มือถือของคุณ
+sync-mobile-promo = ดาวน์โหลด Waterfox สำหรับ <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> หรือ <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS</a> เพื่อซิงค์กับอุปกรณ์มือถือของคุณ
 
-## Firefox Account - Signed in
+## Waterfox Account - Signed in
 
 sync-profile-picture =
     .tooltiptext = เปลี่ยนรูปโปรไฟล์
@@ -691,7 +691,7 @@ sync-engine-creditcards =
     .accesskey = ต
 sync-engine-addons =
     .label = ส่วนเสริม
-    .tooltiptext = ส่วนขยายและชุดตกแต่งสำหรับ Firefox เดสก์ท็อป
+    .tooltiptext = ส่วนขยายและชุดตกแต่งสำหรับ Waterfox เดสก์ท็อป
     .accesskey = ส
 sync-engine-prefs =
     .label =
@@ -797,8 +797,8 @@ history-header = ประวัติ
 # "Firefox will" + "Remember history".
 #
 # If this doesn't work for your language, you can translate this message:
-#   - Simply as "Firefox", moving the verb into each option.
-#     This will result in "Firefox" + "Will remember history", etc.
+#   - Simply as "Waterfox", moving the verb into each option.
+#     This will result in "Waterfox" + "Will remember history", etc.
 #   - As a stand-alone message, for example "Firefox history settings:".
 history-remember-label = { -brand-short-name } จะ
     .accesskey = จ

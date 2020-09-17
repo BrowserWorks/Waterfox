@@ -3,18 +3,18 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 head-title = Пра прылады распрацоўшчыка
-enable-title = Уключыць прылады распрацоўшчыка Firefox
+enable-title = Уключыць прылады распрацоўшчыка Waterfox
 enable-inspect-element-title = Уключыць інструменты распрацоўшчыка для выкарыстання інспектара элементаў
 enable-inspect-element-message = Даследуйце і рэдагуйце HTML і CSS з дапамогаю інструмента Інспектар.
-enable-about-debugging-message = Распрацоўка і адладка WebExtensions, web workers, service workers і шмат іншага ў інструментах распрацоўшчыка Firefox.
+enable-about-debugging-message = Распрацоўка і адладка WebExtensions, web workers, service workers і шмат іншага ў інструментах распрацоўшчыка Waterfox.
 enable-key-shortcut-message = Вы актывавалі хуткі доступ да інструментаў распрацоўшчыка. Калі гэта незнарок, можаце проста закрыць гэту картку.
 enable-menu-message = Удасканальвайце HTML, CSS і JavaScript свайго вэб-сайта такімі інструментамі, як Інспектар і Адладчык.
-enable-common-message = Інструменты распрацоўшчыка Firefox пачаткова выключаны, каб даць вам больш магчымасці кіравання вашым браўзерам.
+enable-common-message = Інструменты распрацоўшчыка Waterfox пачаткова выключаны, каб даць вам больш магчымасці кіравання вашым браўзерам.
 enable-learn-more-link = Падрабязней пра прылады распрацоўшчыка
 enable-enable-button = Уключыць прылады распрацоўшчыка
 enable-close-button = Закрыць гэту картку
 
-welcome-title = Сардэчна запрашаем у прылады распрацоўшчыка Firefox!
+welcome-title = Сардэчна запрашаем у прылады распрацоўшчыка Waterfox!
 newsletter-title = Рассылка навін Mozilla Developer
 newsletter-message = Атрымлівайце навіны ад распрацоўшчыкаў, парады і рэсурсы наўпрост у сваю паштовую скрыню.
 newsletter-email-placeholder =
@@ -24,8 +24,8 @@ newsletter-subscribe-button = Падпісацца
 newsletter-thanks-title = Дзякуй!
 newsletter-thanks-message = Калі вы раней не пацвярджалі падпіску на навіны ад Mozilla, вам можа спатрэбіцца зрабіць гэта. Калі ласка, паглядзіце ліст ад нас у сваёй пошце, у ўваходных або ў спаме.
 
-footer-title = Firefox Developer Edition
-footer-message = Шукаеце нешта большае, чым проста інструменты распрацоўшчыка? Паспрабуйце браўзер Firefox, створаны адмыслова для распрацоўшчыкаў і сучасных працэсаў распрацоўкі.
+footer-title = Waterfox Developer Edition
+footer-message = Шукаеце нешта большае, чым проста інструменты распрацоўшчыка? Паспрабуйце браўзер Waterfox, створаны адмыслова для распрацоўшчыкаў і сучасных працэсаў распрацоўкі.
 footer-learn-more-link = Падрабязней
 
 features-learn-more = Падрабязней

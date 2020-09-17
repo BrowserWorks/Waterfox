@@ -8,8 +8,8 @@
 # These are the default window titles everywhere except macOS. The first two
 # attributes are used when the web content opened has no title:
 #
-# default - "Mozilla Firefox"
-# private - "Mozilla Firefox (Private Browsing)"
+# default - "Waterfox"
+# private - "Waterfox (Private Browsing)"
 #
 # The last two are for use when there *is* a content title.
 # Variables:
@@ -22,8 +22,8 @@ browser-main-window =
 # These are the default window titles on macOS. The first two are for use when
 # there is no content title:
 #
-# "default" - "Mozilla Firefox"
-# "private" - "Mozilla Firefox - (Private Browsing)"
+# "default" - "Waterfox"
+# "private" - "Waterfox - (Private Browsing)"
 #
 # The last two are for use when there *is* a content title.
 # Do not use the brand name in the last two attributes, as we do on non-macOS.
@@ -247,7 +247,7 @@ identity-clear-site-data =
 identity-connection-not-secure-security-view = Aqli-k ur teqqineḍ ara s wudem aɣelsan ɣeṛ usmel-a.
 identity-connection-verified = Aqli-k teqqneḍ s wudem aɣelsan ɣeṛ usmel-a.
 identity-ev-owner-label = Aselkin yeffeɣ-d i:
-identity-description-custom-root = Mozilla ur teɛqil ara amazan-a n uselkin. Ahat yezmer yettwarn seg unagraw-ik n wammud neɣ anedbal. <label data-l10n-name="link">Issin ugar</label>
+identity-description-custom-root = Waterfox ur teɛqil ara amazan-a n uselkin. Ahat yezmer yettwarn seg unagraw-ik n wammud neɣ anedbal. <label data-l10n-name="link">Issin ugar</label>
 identity-remove-cert-exception =
     .label = Kkes tasureft
     .accesskey = K

@@ -86,7 +86,7 @@ cfr-doorhanger-pintab-animation-pause = Ehaniñ
 cfr-doorhanger-pintab-animation-resume = Kenderc'hel
 
 
-## Firefox Accounts Message
+## Waterfox Accounts Message
 
 cfr-doorhanger-bookmark-fxa-header = Goubredit ho sinedoù e pep lec'h.
 cfr-doorhanger-bookmark-fxa-body = Kavet ho peus ul lec'hienn a-zoare! Bremañ eo dav deoc'h adkavout ar sined-mañ war ho trevnadoù hezoug. Krogit gant : { -fxaccount-brand-name }.
@@ -203,7 +203,7 @@ cfr-doorhanger-send-tab-body = Gant "Kas an ivinell" e c'hallit rannañ an ere-m
 cfr-doorhanger-send-tab-ok-button = Esaeit da gas an ivinell
     .accesskey = E
 
-## Firefox Send
+## Waterfox Send
 
 cfr-doorhanger-firefox-send-header = Rannit ar restr PDF-mañ en un doare diogel
 cfr-doorhanger-firefox-send-body = Mirit ho teulioù kizidik da vezañ spiet gant an enrinegañ penn-ouzh-penn hag un ere a vo dilamet ur wech ma vo echu ganeoc'h.
@@ -244,7 +244,7 @@ cfr-doorhanger-milestone-ok-button = Gwelet pep tra
 cfr-doorhanger-milestone-close-button = Serriñ
     .accesskey = S
 
-## What’s New Panel Content for Firefox 76
+## What’s New Panel Content for Waterfox 76
 
 
 ## Lockwise message

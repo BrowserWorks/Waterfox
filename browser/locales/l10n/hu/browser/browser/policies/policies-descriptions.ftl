@@ -4,7 +4,7 @@
 
 
 ## The Enterprise Policies feature is aimed at system administrators
-## who want to deploy these settings across several Firefox installations
+## who want to deploy these settings across several Waterfox installations
 ## all at once. This is traditionally done through the Windows Group Policy
 ## feature, but the system also supports other forms of deployment.
 ## These are short descriptions for individual policies, to be displayed
@@ -30,8 +30,8 @@ policy-DisableDefaultBrowserAgent = Akadályozza meg, hogy az alapértelmezett b
 policy-DisableDeveloperTools = A fejlesztői eszközökhöz hozzáférés blokkolása.
 policy-DisableFeedbackCommands = A visszajelzés küldési parancsok letiltása a Súgó menüben (Visszajelzés beküldése és Félrevezető oldal jelentése).
 policy-DisableFirefoxAccounts = A { -fxaccount-brand-name } alapú szolgáltatások letiltása, beleértve a Syncet.
-# Firefox Screenshots is the name of the feature, and should not be translated.
-policy-DisableFirefoxScreenshots = A Firefox Screenshots funkció letiltása.
+# Waterfox Screenshots is the name of the feature, and should not be translated.
+policy-DisableFirefoxScreenshots = A Waterfox Screenshots funkció letiltása.
 policy-DisableFirefoxStudies = Annak a megakadályozása, hogy a { -brand-short-name } tanulmányokat futtasson.
 policy-DisableForgetButton = Az Elfelejtés gombhoz hozzáférés megakadályozása.
 policy-DisableFormHistory = Ne jegyezze meg a keresőmezők és űrlapmezők előzményeit.
@@ -62,7 +62,7 @@ policy-EncryptedMediaExtensions = A Titkosított médiakiterjesztések engedély
 policy-Extensions = Kiegészítők telepítése, eltávolítása vagy zárolása. A Telepítés lehetőség URL-t vagy útvonalat vár paraméterként. Az Eltávolítás és Zárolás kiegészítőazonosítót vár.
 policy-ExtensionSettings = Kezelje a kiegészítők telepítésének összes vonatkozását.
 policy-ExtensionUpdate = Az automatikus kiegészítőfrissítések engedélyezése vagy letiltása.
-policy-FirefoxHome = A Firefox kezdőlap beállítása.
+policy-FirefoxHome = A Waterfox kezdőlap beállítása.
 policy-FlashPlugin = A Flash bővítmény használatának engedélyezése vagy tiltása.
 policy-Handlers = Alapértelmezett alkalmazáskezelők beállítása
 policy-HardwareAcceleration = Ha hamis, akkor kikapcsolja a hardveres gyorsítást.

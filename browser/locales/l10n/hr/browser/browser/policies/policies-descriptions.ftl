@@ -4,7 +4,7 @@
 
 
 ## The Enterprise Policies feature is aimed at system administrators
-## who want to deploy these settings across several Firefox installations
+## who want to deploy these settings across several Waterfox installations
 ## all at once. This is traditionally done through the Windows Group Policy
 ## feature, but the system also supports other forms of deployment.
 ## These are short descriptions for individual policies, to be displayed
@@ -30,8 +30,8 @@ policy-DisableDefaultBrowserAgent = Spriječi standardnog agenta preglednika pod
 policy-DisableDeveloperTools = Blokiraj pristup programerskim alatima.
 policy-DisableFeedbackCommands = Onemogući naredbe za slanje povratnih informacija u izborniku pomoći (Pošalji povratne informacije i Prijavi obmanjujuću stranicu).
 policy-DisableFirefoxAccounts = Onemogući usluge koje se temelje na { -fxaccount-brand-name }u, uključujući sinkronizaciju.
-# Firefox Screenshots is the name of the feature, and should not be translated.
-policy-DisableFirefoxScreenshots = Onemogući funkciju Firefox Screenshots.
+# Waterfox Screenshots is the name of the feature, and should not be translated.
+policy-DisableFirefoxScreenshots = Onemogući funkciju Waterfox Screenshots.
 policy-DisableFirefoxStudies = Spriječite { -brand-short-name } da pokreće studije.
 policy-DisableForgetButton = Spriječite pristup tipki za brisanje povijesti pretraživanja.
 policy-DisableFormHistory = Nemoj pamtiti povijest pretraživanja i obrazaca.
@@ -62,7 +62,7 @@ policy-EncryptedMediaExtensions = Aktiviraj ili deaktiviraj proširenja za šifr
 policy-Extensions = Instaliraj, ukloni ili zaključaj dodatke. Mogućnost instalacije uzima URL-ove ili putanje kao parametre. Mogućnosti ukloni ili zaključaj uzima ID dodatka kao parametar.
 policy-ExtensionSettings = Upravljaj svim aspektima instalacije dodataka.
 policy-ExtensionUpdate = Aktiviraj ili deaktiviraj automatska aktualiziranja dodataka.
-policy-FirefoxHome = Postavite Firefox početnnu stranicu.
+policy-FirefoxHome = Postavite Waterfox početnnu stranicu.
 policy-FlashPlugin = Dozvoli ili zabrani upotrebu dodatka Flash.
 policy-Handlers = Postavite zadane rukovatelje aplikacijama.
 policy-HardwareAcceleration = Ukoliko je netočno, isključuje hardversko ubrzanje.

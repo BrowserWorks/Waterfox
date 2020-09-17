@@ -27,9 +27,9 @@ graph-week-summary-private-window = Ineḍfaṛen { -brand-short-name } ttwaḥe
 
 protection-report-webpage-title = Ammesten n tfelwit n usenqed
 protection-report-page-content-title = Ammesten n tfelwit n usenqed
-# This message shows when all privacy protections are turned off, which is why we use the word "can", Firefox is able to protect your privacy, but it is currently not.
+# This message shows when all privacy protections are turned off, which is why we use the word "can", Waterfox is able to protect your privacy, but it is currently not.
 protection-report-page-summary = { -brand-short-name } yezmer ad yeḥrez tabaḍnit-ik ɣef wayen yeffren mi ara tettinigeḍ. D agzul udmawan n tigra-nni, daɣen akked yifecka akken ad yezg usenqed n tɣellist-inek srid.
-# This message shows when at least some protections are turned on, we are more assertive compared to the message above, Firefox is actively protecting you.
+# This message shows when at least some protections are turned on, we are more assertive compared to the message above, Waterfox is actively protecting you.
 protection-report-page-summary-default = { -brand-short-name } Iḥerrez tabaḍnit-ik ɣef wayen yeffren mi ara tettinigeḍ. D agzul udmawan n tigra-nni, daɣen akked yifecka akken ad yezg usenqed n tɣellist-inek srid.
 
 protection-report-settings-link = Sefrek iɣewwaṛen-ik n tbaḍnit d tɣellist.

@@ -84,7 +84,7 @@ cfr-doorhanger-pintab-animation-pause = Premor
 cfr-doorhanger-pintab-animation-resume = Nadaljuj
 
 
-## Firefox Accounts Message
+## Waterfox Accounts Message
 
 cfr-doorhanger-bookmark-fxa-header = Sinhronizirajte zaznamke povsod.
 cfr-doorhanger-bookmark-fxa-body = Odlično! Vzemite ta zaznamek še na mobilno napravo. Začnite s { -fxaccount-brand-name }om.
@@ -205,7 +205,7 @@ cfr-doorhanger-send-tab-body = Send Tab vam omogoča enostavno deljenje te povez
 cfr-doorhanger-send-tab-ok-button = Preskusite Send Tab
     .accesskey = P
 
-## Firefox Send
+## Waterfox Send
 
 cfr-doorhanger-firefox-send-header = Varno delite ta PDF
 cfr-doorhanger-firefox-send-body = Ohranite svoje zaupne dokumente varne pred radovednimi očmi s šifriranjem od konca do konca in povezavo, ki izgine, ko končate.
@@ -245,7 +245,7 @@ cfr-doorhanger-milestone-ok-button = Prikaži vse
 cfr-doorhanger-milestone-close-button = Zapri
     .accesskey = Z
 
-## What’s New Panel Content for Firefox 76
+## What’s New Panel Content for Waterfox 76
 
 
 ## Lockwise message

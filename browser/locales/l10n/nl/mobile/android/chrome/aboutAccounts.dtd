@@ -10,4 +10,4 @@
 <!ENTITY aboutAccounts.retry.label "Opnieuw proberen">
 
 <!ENTITY aboutAccounts.restrictedError.title "Beperkt">
-<!ENTITY aboutAccounts.restrictedError.description "U kunt geen Firefox-accounts beheren vanuit dit profiel.">
+<!ENTITY aboutAccounts.restrictedError.description "U kunt geen Waterfox-accounts beheren vanuit dit profiel.">

@@ -78,7 +78,7 @@ cfr-doorhanger-pintab-animation-pause = Jeda
 cfr-doorhanger-pintab-animation-resume = Lanjutkan
 
 
-## Firefox Accounts Message
+## Waterfox Accounts Message
 
 cfr-doorhanger-bookmark-fxa-header = Sinkronkan markah Anda di mana saja.
 cfr-doorhanger-bookmark-fxa-body = Penemuan yang mantap! Sekarang jangan pergi tanpa markah ini di perangkat seluler Anda. Mulai dengan { -fxaccount-brand-name }.
@@ -191,7 +191,7 @@ cfr-doorhanger-send-tab-body = Fitur Kirim Tab dapat Anda gunakan untuk membagik
 cfr-doorhanger-send-tab-ok-button = Coba Kirim Tab
     .accesskey = K
 
-## Firefox Send
+## Waterfox Send
 
 cfr-doorhanger-firefox-send-header = Bagikan PDF ini dengan aman
 cfr-doorhanger-firefox-send-body = Jaga dokumen rahasia Anda dari pengintip dengan menggunakan penyandian ujung-ke-ujung dan tautan yang menghilang saat sudah selesai.
@@ -228,7 +228,7 @@ cfr-doorhanger-milestone-ok-button = Lihat Semua
 cfr-doorhanger-milestone-close-button = Tutup
     .accesskey = T
 
-## What’s New Panel Content for Firefox 76
+## What’s New Panel Content for Waterfox 76
 
 
 ## Lockwise message

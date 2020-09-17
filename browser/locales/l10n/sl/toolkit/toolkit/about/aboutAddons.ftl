@@ -471,9 +471,9 @@ addon-permissions-empty = Ta razširitev ne zahteva nobenih dovoljenj
 recommended-extensions-heading = Priporočene razširitve
 recommended-themes-heading = Priporočene teme
 
-# A recommendation for the Firefox Color theme shown at the bottom of the theme
+# A recommendation for the Waterfox Color theme shown at the bottom of the theme
 # list view. The "Firefox Color" name itself should not be translated.
-recommended-theme-1 = Ste ustvarjalno razpoloženi? <a data-l10n-name="link">Ustvarite lastno temo s Firefox Colorjem.</a>
+recommended-theme-1 = Ste ustvarjalno razpoloženi? <a data-l10n-name="link">Ustvarite lastno temo s Waterfox Colorjem.</a>
 
 ## Page headings
 

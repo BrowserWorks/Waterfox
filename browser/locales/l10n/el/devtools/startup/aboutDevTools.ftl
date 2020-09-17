@@ -3,17 +3,17 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 head-title = Σχετικά με τα εργαλεία προγραμματιστή
-enable-title = Ενεργοποίηση εργαλείων προγραμματιστή Firefox
-enable-inspect-element-title = Ενεργοποιήστε τα εργαλεία προγραμματιστή Firefox για να χρησιμοποιήσετε την Επιθεώρηση στοιχείου
+enable-title = Ενεργοποίηση εργαλείων προγραμματιστή Waterfox
+enable-inspect-element-title = Ενεργοποιήστε τα εργαλεία προγραμματιστή Waterfox για να χρησιμοποιήσετε την Επιθεώρηση στοιχείου
 enable-inspect-element-message = Εξετάστε και επεξεργαστείτε HTML και CSS με την Επιθεώρηση των εργαλείων προγραμματιστή.
-enable-about-debugging-message = Αναπτύξτε και διορθώστε WebExtensions, web workers, service workers και άλλα με τα εργαλεία προγραμματιστή Firefox.
+enable-about-debugging-message = Αναπτύξτε και διορθώστε WebExtensions, web workers, service workers και άλλα με τα εργαλεία προγραμματιστή Waterfox.
 enable-key-shortcut-message = Έχετε ενεργοποιήσει μια συντόμευση των εργαλείων προγραμματιστή. Αν το κάνατε κατά λάθος, μπορείτε να κλείσετε αυτή την καρτέλα.
 enable-menu-message = Τελειοποιήστε τους κώδικες HTML, CSS και JavaScript για την ιστοσελίδα σας με εργαλεία όπως η Επιθεώρηση και η Αποσφαλμάτωση.
-enable-common-message = Τα Εργαλεία Προγραμματιστή Firefox είναι απενεργοποιημένα από προεπιλογή για να έχετε περισσότερο έλεγχο στο πρόγραμμα περιήγησής σας.
+enable-common-message = Τα Εργαλεία Προγραμματιστή Waterfox είναι απενεργοποιημένα από προεπιλογή για να έχετε περισσότερο έλεγχο στο πρόγραμμα περιήγησής σας.
 enable-learn-more-link = Μάθετε περισσότερα για τα Εργαλεία Προγραμματιστή
 enable-enable-button = Ενεργοποίηση εργαλείων προγραμματιστή
 enable-close-button = Κλείσιμο της Καρτέλας
-welcome-title = Καλωσορίσατε στα Εργαλεία Προγραμματιστή Firefox!
+welcome-title = Καλωσορίσατε στα Εργαλεία Προγραμματιστή Waterfox!
 newsletter-title = Ενημέρωση προγραμματιστών Mozilla
 newsletter-message = Λάβετε ειδήσεις, κόλπα και πόρους για προγραμματιστές απευθείας στα εισερχόμενά σας.
 newsletter-email-placeholder =
@@ -22,8 +22,8 @@ newsletter-privacy-label = Δεν με πειράζει να διαχειρίζ�
 newsletter-subscribe-button = Εγγραφή
 newsletter-thanks-title = Ευχαριστούμε!
 newsletter-thanks-message = Αν δεν έχετε προηγουμένως επιβεβαιώσει την εγγραφή σας σε κάποιο newsletter σχετικό με τη Mozilla, ίσως θα πρέπει να το κάνετε. Παρακαλούμε ελέγξτε τα εισερχόμενα ή το φίλτρο ανεπιθύμητων για ένα e-mail από εμάς.
-footer-title = Firefox Developer Edition
-footer-message = Ψάχνετε περισσότερα από απλά εργαλεία προγραμματιστή; Ελέγξτε το πρόγραμμα περιήγησης Firefox που φτιάχνεται συγκεκριμένα για τους προγραμματιστές και τις σύγχρονες ροές εργασίας.
+footer-title = Waterfox Developer Edition
+footer-message = Ψάχνετε περισσότερα από απλά εργαλεία προγραμματιστή; Ελέγξτε το πρόγραμμα περιήγησης Waterfox που φτιάχνεται συγκεκριμένα για τους προγραμματιστές και τις σύγχρονες ροές εργασίας.
 footer-learn-more-link = Μάθετε περισσότερα
 features-learn-more = Μάθετε περισσότερα
 features-inspector-title = Επιθεώρηση

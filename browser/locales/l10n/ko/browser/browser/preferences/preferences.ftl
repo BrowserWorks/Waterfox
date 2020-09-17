@@ -122,9 +122,9 @@ search-results-help-link = 도움이 필요하세요? <a data-l10n-name="url">{ 
 
 startup-header = 시작 페이지
 # { -brand-short-name } will be 'Firefox Developer Edition',
-# since this setting is only exposed in Firefox Developer Edition
+# since this setting is only exposed in Waterfox Developer Edition
 separate-profile-mode =
-    .label = { -brand-short-name }과 Firefox 같이 돌리기
+    .label = { -brand-short-name }과 Waterfox 같이 돌리기
 use-firefox-sync = 팁: 이렇게 하면 프로필을 따로 쓰게 됩니다. { -sync-brand-short-name }를 써서 데이터를 공유하세요.
 get-started-not-logged-in = { -sync-brand-short-name }에 로그인…
 get-started-configured = { -sync-brand-short-name } 설정 열기
@@ -443,10 +443,10 @@ home-newtabs-mode-label = 새 탭
 home-restore-defaults =
     .label = 기본값으로 복원
     .accesskey = R
-# "Firefox" should be treated as a brand and kept in English,
+# "Waterfox" should be treated as a brand and kept in English,
 # while "Home" and "(Default)" can be localized.
 home-mode-choice-default =
-    .label = Firefox 홈 (기본값)
+    .label = Waterfox 홈 (기본값)
 home-mode-choice-custom =
     .label = 사용자 지정 URL…
 home-mode-choice-blank =
@@ -468,10 +468,10 @@ choose-bookmark =
     .label = 북마크 사용…
     .accesskey = B
 
-## Home Section - Firefox Home Content Customization
+## Home Section - Waterfox Home Content Customization
 
-home-prefs-content-header = Firefox 홈 콘텐츠
-home-prefs-content-description = Firefox 홈 화면에서 원하는 콘텐츠를 선택하세요.
+home-prefs-content-header = Waterfox 홈 콘텐츠
+home-prefs-content-description = Waterfox 홈 화면에서 원하는 콘텐츠를 선택하세요.
 home-prefs-search-header =
     .label = 웹 검색
 home-prefs-topsites-header =
@@ -587,7 +587,7 @@ containers-preferences-button =
 containers-remove-button =
     .label = 삭제
 
-## Firefox Account - Signed out. Note that "Sync" and "Firefox Account" are now
+## Waterfox Account - Signed out. Note that "Sync" and "Firefox Account" are now
 ## more discrete ("signed in" no longer means "and sync is connected").
 
 sync-signedout-caption = 웹과 함께 하세요.
@@ -603,9 +603,9 @@ sync-signedout-account-signin2 =
 #
 # They can be moved within the sentence as needed to adapt
 # to your language, but should not be changed or translated.
-sync-mobile-promo = 모바일 기기와 동기화하기 위해서 <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> 또는 <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS</a>용 Firefox를 다운로드하세요.
+sync-mobile-promo = 모바일 기기와 동기화하기 위해서 <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> 또는 <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS</a>용 Waterfox를 다운로드하세요.
 
-## Firefox Account - Signed in
+## Waterfox Account - Signed in
 
 sync-profile-picture =
     .tooltiptext = 프로필 사진 변경
@@ -691,7 +691,7 @@ sync-engine-creditcards =
     .accesskey = C
 sync-engine-addons =
     .label = 부가 기능
-    .tooltiptext = Firefox 데스크톱 용 확장 기능 및 테마
+    .tooltiptext = Waterfox 데스크톱 용 확장 기능 및 테마
     .accesskey = A
 sync-engine-prefs =
     .label =
@@ -797,8 +797,8 @@ history-header = 기록
 # "Firefox will" + "Remember history".
 #
 # If this doesn't work for your language, you can translate this message:
-#   - Simply as "Firefox", moving the verb into each option.
-#     This will result in "Firefox" + "Will remember history", etc.
+#   - Simply as "Waterfox", moving the verb into each option.
+#     This will result in "Waterfox" + "Will remember history", etc.
 #   - As a stand-alone message, for example "Firefox history settings:".
 history-remember-label = { -brand-short-name }가
     .accesskey = w

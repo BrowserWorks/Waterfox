@@ -17,8 +17,8 @@ about-telemetry-next-ping = >>
 about-telemetry-page-title = Date de telemetrie
 about-telemetry-current-store = Magazin actual:
 about-telemetry-more-information = Cauți mai multe informații?
-about-telemetry-firefox-data-doc = <a data-l10n-name="data-doc-link">Documentația de date Firefox</a> conține ghiduri despre cum să lucrezi cu uneltele noastre de date.
-about-telemetry-telemetry-client-doc = <a data-l10n-name="client-doc-link">Documentația privind clientul de telemetrie Firefox</a> include definiții de concepte, documentație API și referințe de date.
+about-telemetry-firefox-data-doc = <a data-l10n-name="data-doc-link">Documentația de date Waterfox</a> conține ghiduri despre cum să lucrezi cu uneltele noastre de date.
+about-telemetry-telemetry-client-doc = <a data-l10n-name="client-doc-link">Documentația privind clientul de telemetrie Waterfox</a> include definiții de concepte, documentație API și referințe de date.
 about-telemetry-telemetry-dashboard = <a data-l10n-name="dashboard-link">Tabloul de bord pentru telemetrie</a> îți permite să vizualizezi datele pe care Mozilla le primește prin intermediul telemetriei.
 about-telemetry-telemetry-probe-dictionary = <a data-l10n-name="probe-dictionary-link">Dicționarul de sonde</a> furnizează detalii și descrieri ale sondelor gestionate de telemetrie.
 about-telemetry-show-in-Firefox-json-viewer = Deschide în vizualizatorul JSON

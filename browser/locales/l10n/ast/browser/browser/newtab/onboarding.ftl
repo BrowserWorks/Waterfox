@@ -33,7 +33,7 @@ onboarding-cards-dismiss =
 
 ## Welcome full page string
 
-## Firefox Sync modal dialog strings.
+## Waterfox Sync modal dialog strings.
 
 onboarding-sync-form-input =
     .placeholder = Corréu
@@ -41,7 +41,7 @@ onboarding-sync-form-input =
 onboarding-sync-form-continue-button = Siguir
 onboarding-sync-form-skip-login-button = Saltar esti pasu
 
-## This is part of the line "Enter your email to continue to Firefox Sync"
+## This is part of the line "Enter your email to continue to Waterfox Sync"
 
 
 ## These are individual benefit messages shown with an image, title and

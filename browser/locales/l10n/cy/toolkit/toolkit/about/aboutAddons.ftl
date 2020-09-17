@@ -473,9 +473,9 @@ addon-permissions-empty = Nid oes angen unrhyw ganiatâd ar yr estyniad hwn
 recommended-extensions-heading = Estyniadau Cymeradwy
 recommended-themes-heading = Themâu Cymeradwy
 
-# A recommendation for the Firefox Color theme shown at the bottom of the theme
+# A recommendation for the Waterfox Color theme shown at the bottom of the theme
 # list view. The "Firefox Color" name itself should not be translated.
-recommended-theme-1 = Teimlo'n greadigol? <a data-l10n-name="link">Adeiladwch eich thema eich hun gyda Firefox Color. </a>
+recommended-theme-1 = Teimlo'n greadigol? <a data-l10n-name="link">Adeiladwch eich thema eich hun gyda Waterfox Color. </a>
 
 ## Page headings
 

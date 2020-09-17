@@ -27,9 +27,9 @@ graph-week-summary-private-window = Követők, melyet a { -brand-short-name } bl
 
 protection-report-webpage-title = Védelmi vezérlőpult
 protection-report-page-content-title = Védelmi vezérlőpult
-# This message shows when all privacy protections are turned off, which is why we use the word "can", Firefox is able to protect your privacy, but it is currently not.
+# This message shows when all privacy protections are turned off, which is why we use the word "can", Waterfox is able to protect your privacy, but it is currently not.
 protection-report-page-summary = Amíg Ön böngészik, a { -brand-short-name } a színfalak mögött gondoskodik az adatvédelméről. Ez ezen védelmek személyre szabott összefoglalója, olyan eszközökkel, melyekkel átveheti az irányítást az online biztonsága felett.
-# This message shows when at least some protections are turned on, we are more assertive compared to the message above, Firefox is actively protecting you.
+# This message shows when at least some protections are turned on, we are more assertive compared to the message above, Waterfox is actively protecting you.
 protection-report-page-summary-default = Amíg Ön böngészik, a { -brand-short-name } a színfalak mögött gondoskodik az adatvédelméről. Ez ezen védelmek személyre szabott összefoglalója, olyan eszközökkel, melyekkel átveheti az irányítást az online biztonsága felett.
 
 protection-report-settings-link = Kezelje az adatvédelmi és biztonsági beállításait

@@ -5,7 +5,7 @@
 rights-title = In sci teu diritti
 rights-intro = { -brand-full-name } a l'é 'n'aplicaçion libera co-o sorgente averto e a l'é fæta da 'na comunitæ de migiæa de personn-e de tutto o mondo. Gh'é de cöse che ti doviesci savei:
 rights-intro-point-1 = { -brand-short-name } te vegne dæto sotta a-i termini da <a data-l10n-name="mozilla-public-license-link">Licensa Pubrica de Mozilla</a>. Questo o veu dî che ti ti peu deuviâ, copiâ e distriboî o { -brand-short-name } a-i atri. Ti ê o benvegnuo anche a cangiâ i sorgenti de { -brand-short-name } pe-i teu bezeugni. A Licensa Pubrica de Mozilla a te dâ anche o dirito de distriboî e teu verscioin modificæ.
-rights-intro-point-2 = Mozilla no te dâ di diriti in sci marchi e lòghi de Mozilla e Firefox. Atre informaçioin in sci marchi e lòghi se peuan atrovâ <a data-l10n-name="mozilla-trademarks-link">chi</a>.
+rights-intro-point-2 = Waterfox no te dâ di diriti in sci marchi e lòghi de Mozilla e Waterfox. Atre informaçioin in sci marchi e lòghi se peuan atrovâ <a data-l10n-name="mozilla-trademarks-link">chi</a>.
 rights-intro-point-3 = Quarche fonçion de { -brand-short-name }, comme o Report di Cianti, te dâ a poscibilitæ de fornî comenti a { -vendor-short-name }. Se ti mandi di comenti a { -vendor-short-name } ti ne dæ anche o permisso de deuviali pe megioâ o produto e de pubricâ sti comenti in sci sciti web e de distriboili.
 rights-intro-point-4 = O mòddo che emmo de deuviâ e teu informaçioin e comenti che mandi a { -vendor-short-name } co-o { -brand-short-name } o l'é descrito inta <a data-l10n-name="mozilla-privacy-policy-link">Informativa in sciâ privacy de { -brand-short-name }</a>.
 rights-intro-point-4-unbranded = Tutte e informative in sciâ privacy pe sto produto devan ese chi.

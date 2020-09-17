@@ -10,4 +10,4 @@
 <!ENTITY aboutAccounts.retry.label "Повторен опит">
 
 <!ENTITY aboutAccounts.restrictedError.title "Ограничена">
-<!ENTITY aboutAccounts.restrictedError.description "Не може да управлявате сметки на Firefox Accounts от този профил.">
+<!ENTITY aboutAccounts.restrictedError.description "Не може да управлявате сметки на Waterfox Accounts от този профил.">

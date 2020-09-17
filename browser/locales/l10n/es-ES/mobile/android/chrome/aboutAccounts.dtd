@@ -10,4 +10,4 @@
 <!ENTITY aboutAccounts.retry.label "Vuelva a intentarlo">
 
 <!ENTITY aboutAccounts.restrictedError.title "Restringido">
-<!ENTITY aboutAccounts.restrictedError.description "No puede administrar cuentas Firefox desde este perfil.">
+<!ENTITY aboutAccounts.restrictedError.description "No puede administrar cuentas Waterfox desde este perfil.">

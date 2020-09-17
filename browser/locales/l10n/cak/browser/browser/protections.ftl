@@ -27,9 +27,9 @@ graph-week-summary-private-window = Ojqanela' { -brand-short-name } xeq'at re wu
 
 protection-report-webpage-title = Rupas taq Chajinïk
 protection-report-page-content-title = Rupas taq Chajinïk
-# This message shows when all privacy protections are turned off, which is why we use the word "can", Firefox is able to protect your privacy, but it is currently not.
+# This message shows when all privacy protections are turned off, which is why we use the word "can", Waterfox is able to protect your privacy, but it is currently not.
 protection-report-page-summary = { -brand-short-name } nitikïr nuchajij ri awichinaem toq atokinäq pa k'amaya'l. Rere' jun ichinan ch'uti kitzijol ri taq chajinïk, achi'el chuqa' ri taq samajib'äl richin nichap ri jikomal pa k'amab'ey.
-# This message shows when at least some protections are turned on, we are more assertive compared to the message above, Firefox is actively protecting you.
+# This message shows when at least some protections are turned on, we are more assertive compared to the message above, Waterfox is actively protecting you.
 protection-report-page-summary-default = { -brand-short-name } nuchajij ri awichinaem toq atokinäq pa k'amaya'l. Rere' jun ichinan ch'uti kitzijol ri taq chajinïk, achi'el chuqa' ri taq samajib'äl richin nichap ri jikomal pa k'amab'ey.
 
 protection-report-settings-link = Tanuk'samajij runuk'ulem awichinanem chuqa' ajikomal

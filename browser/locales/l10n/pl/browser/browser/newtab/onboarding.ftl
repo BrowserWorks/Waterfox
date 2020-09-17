@@ -77,7 +77,7 @@ onboarding-multistage-theme-description-automatic = Motyw systemowy
 onboarding-multistage-theme-label-light = Jasny
 onboarding-multistage-theme-label-dark = Ciemny
 # "Firefox Alpenglow" here is the name of the theme, and should be kept in English.
-onboarding-multistage-theme-label-alpenglow = Firefox Alpenglow
+onboarding-multistage-theme-label-alpenglow = Waterfox Alpenglow
 
 ## Please make sure to split the content of the title attribute into lines whose
 ## width corresponds to about 40 Latin characters, to ensure that the tooltip
@@ -137,7 +137,7 @@ onboarding-fullpage-welcome-subheader = Zacznij odkrywać wszystko, co możesz z
 onboarding-fullpage-form-email =
     .placeholder = Twój adres e-mail…
 
-## Firefox Sync modal dialog strings.
+## Waterfox Sync modal dialog strings.
 
 onboarding-sync-welcome-header = Zabierz przeglądarkę { -brand-product-name } ze sobą
 onboarding-sync-welcome-content = Zakładki, historia, hasła i inne ustawienia mogą być dostępne i synchronizowane na wszystkich urządzeniach.
@@ -147,7 +147,7 @@ onboarding-sync-form-input =
 onboarding-sync-form-continue-button = Kontynuuj
 onboarding-sync-form-skip-login-button = Pomiń
 
-## This is part of the line "Enter your email to continue to Firefox Sync"
+## This is part of the line "Enter your email to continue to Waterfox Sync"
 
 onboarding-sync-form-header = Wpisz adres e-mail
 onboarding-sync-form-sub-header = i zacznij korzystać z { -sync-brand-name(case: "gen", capitalization: "lower") }
@@ -158,7 +158,7 @@ onboarding-sync-form-sub-header = i zacznij korzystać z { -sync-brand-name(ca
 onboarding-benefit-products-text = Skorzystaj z rodziny narzędzi, które szanują Twoją prywatność na wszystkich urządzeniach.
 # "Personal Data Promise" is a concept that should be translated consistently
 # across the product. It refers to a concept shown elsewhere to the user: "The
-# Firefox Personal Data Promise is the way we honor your data in everything we
+# Waterfox Personal Data Promise is the way we honor your data in everything we
 # make and do. We take less data. We keep it safe. And we make sure that we are
 # transparent about how we use it."
 onboarding-benefit-privacy-text = Wszystko, co robimy, jest w zgodzie z naszą obietnicą o danych osobowych: zachowujemy mniej, pilnujemy ich bezpieczeństwa, nie mamy żadnych tajemnic.

@@ -9,4 +9,4 @@
    remain unchanged across different versions (Daily, Beta, etc.). -->
 <!ENTITY  brandProductName      "Thunderbird">
 <!ENTITY  vendorShortName       "Mozilla">
-<!ENTITY  trademarkInfo.part1   "Mozilla Thunderbird および Thunderbird ロゴは 米国 Mozilla Foundation の米国およびその他の国における商標または登録商標です。">
+<!ENTITY  trademarkInfo.part1   "Mozilla Thunderbird および Thunderbird ロゴは 米国 Waterfox Ltd. の米国およびその他の国における商標または登録商標です。">

@@ -10,4 +10,4 @@
 <!ENTITY aboutAccounts.retry.label "Prøv igjen">
 
 <!ENTITY aboutAccounts.restrictedError.title "Avgrensa">
-<!ENTITY aboutAccounts.restrictedError.description "Du kan ikkje handtere Firefox-kontoar frå denne profilen.">
+<!ENTITY aboutAccounts.restrictedError.description "Du kan ikkje handtere Waterfox-kontoar frå denne profilen.">

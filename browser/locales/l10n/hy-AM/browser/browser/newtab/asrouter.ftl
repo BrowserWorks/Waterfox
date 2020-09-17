@@ -80,7 +80,7 @@ cfr-doorhanger-pintab-animation-pause = Դադար
 cfr-doorhanger-pintab-animation-resume = Շարունակել
 
 
-## Firefox Accounts Message
+## Waterfox Accounts Message
 
 cfr-doorhanger-bookmark-fxa-header = Համաժամեցրեք ձեր էջանիշերը ամեն տեղ:
 cfr-doorhanger-bookmark-fxa-body = Մեծ գտածո: Այժմ մի մնացեք առանց այս էջանիշի ձեր բջջային սարքերում: Խորհուրդ ենք տալիս սկսել { -fxaccount-brand-name }-ի հետ։
@@ -193,7 +193,7 @@ cfr-doorhanger-send-tab-body = Ուղարկել ներդիրը հնարավոր�
 cfr-doorhanger-send-tab-ok-button = Փորձեք ուղարկել ներդիր
     .accesskey = T
 
-## Firefox Send
+## Waterfox Send
 
 cfr-doorhanger-firefox-send-header = Համօգտագործել այս PDF- ն անվտանգ կերպով
 cfr-doorhanger-firefox-send-body = Պահպանեք ձեր զգայուն փաստաթղթերը զերծ հայացք նետելուց՝վերջնական ծածկագրմամբ և այն հղմամբ, որն անհայտանում է, երբ ավարտվում եք։
@@ -231,7 +231,7 @@ cfr-doorhanger-milestone-ok-button = Պահպանել բոլորը
 cfr-doorhanger-milestone-close-button = Փակել
     .accesskey = C
 
-## What’s New Panel Content for Firefox 76
+## What’s New Panel Content for Waterfox 76
 
 
 ## Lockwise message

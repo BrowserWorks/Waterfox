@@ -10,4 +10,4 @@
 <!ENTITY aboutAccounts.retry.label "ხელახლა ცდა">
 
 <!ENTITY aboutAccounts.restrictedError.title "შეზღუდული">
-<!ENTITY aboutAccounts.restrictedError.description "ამ პროფილიდან Firefox-ანგარიშების მართვა არ შეიძლება.">
+<!ENTITY aboutAccounts.restrictedError.description "ამ პროფილიდან Waterfox-ანგარიშების მართვა არ შეიძლება.">

@@ -3,18 +3,18 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 head-title = À propos des outils de développement
-enable-title = Activer les outils de développement de Firefox
-enable-inspect-element-title = Activez les outils de développement de Firefox pour utiliser Examiner l’élément
+enable-title = Activer les outils de développement de Waterfox
+enable-inspect-element-title = Activez les outils de développement de Waterfox pour utiliser Examiner l’élément
 enable-inspect-element-message = Examinez et modifiez le contenu HTML et CSS à l’aide de l’inspecteur des outils de développement.
-enable-about-debugging-message = Développez et déboguez des WebExtensions, des web workers, des service workers et bien plus grâce aux outils de développement de Firefox.
+enable-about-debugging-message = Développez et déboguez des WebExtensions, des web workers, des service workers et bien plus grâce aux outils de développement de Waterfox.
 enable-key-shortcut-message = Vous avez activé un raccourci vers les outils de développement. S’il s’agit d’une erreur, vous pouvez fermer cet onglet.
 enable-menu-message = Perfectionnez le contenu HTML, CSS et JavaScript de votre site web grâce à des outils comme l’Inspecteur et le Débogueur.
-enable-common-message = Les outils de développement de Firefox sont désactivés par défaut afin de vous permettre de contrôler davantage votre navigateur.
+enable-common-message = Les outils de développement de Waterfox sont désactivés par défaut afin de vous permettre de contrôler davantage votre navigateur.
 enable-learn-more-link = En savoir plus sur les outils de développement
 enable-enable-button = Activer les outils de développement
 enable-close-button = Fermer cet onglet
 
-welcome-title = Bienvenue dans les outils de développement de Firefox !
+welcome-title = Bienvenue dans les outils de développement de Waterfox !
 newsletter-title = Lettre d’information de Mozilla pour les développeurs
 newsletter-message = Recevez des actualités, des astuces et des ressources pour les développeurs, directement dans votre boîte de réception.
 newsletter-email-placeholder =
@@ -24,8 +24,8 @@ newsletter-subscribe-button = S’abonner
 newsletter-thanks-title = Merci !
 newsletter-thanks-message = Si vous n’avez jamais confirmé d’abonnement à une lettre d’information liée à Mozilla, vous devrez peut-être le faire. Veuillez vérifier votre boîte de réception ou vos courriers indésirables et recherchez un message de notre part.
 
-footer-title = Firefox Developer Edition
-footer-message = Vous recherchez davantage que des outils de développement ? Découvrez le navigateur Firefox conçu spécifiquement pour les développeurs et les flux de travail modernes.
+footer-title = Waterfox Developer Edition
+footer-message = Vous recherchez davantage que des outils de développement ? Découvrez le navigateur Waterfox conçu spécifiquement pour les développeurs et les flux de travail modernes.
 footer-learn-more-link = En savoir plus
 
 features-learn-more = En savoir plus

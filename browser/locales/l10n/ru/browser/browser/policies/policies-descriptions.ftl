@@ -4,7 +4,7 @@
 
 
 ## The Enterprise Policies feature is aimed at system administrators
-## who want to deploy these settings across several Firefox installations
+## who want to deploy these settings across several Waterfox installations
 ## all at once. This is traditionally done through the Windows Group Policy
 ## feature, but the system also supports other forms of deployment.
 ## These are short descriptions for individual policies, to be displayed
@@ -30,8 +30,8 @@ policy-DisableDefaultBrowserAgent = Не позволяет агенту бра�
 policy-DisableDeveloperTools = Блокирует доступ к инструментам разработчика.
 policy-DisableFeedbackCommands = Отключает команды отправки отзывов в меню Справка («Отправить отзыв...» и «Сообщить о поддельном сайте...»).
 policy-DisableFirefoxAccounts = Отключает службы, основанные на { -fxaccount-brand-name(case: "prepositional") }, включая Синхронизацию.
-# Firefox Screenshots is the name of the feature, and should not be translated.
-policy-DisableFirefoxScreenshots = Отключает функцию Firefox Screenshots.
+# Waterfox Screenshots is the name of the feature, and should not be translated.
+policy-DisableFirefoxScreenshots = Отключает функцию Waterfox Screenshots.
 policy-DisableFirefoxStudies = Запрещает { -brand-short-name } выполнять исследования.
 policy-DisableForgetButton = Закрывает доступ к кнопке «Забыть».
 policy-DisableFormHistory = Отключает запоминание истории поиска и данных форм.
@@ -62,7 +62,7 @@ policy-EncryptedMediaExtensions = Включает или отключает Enc
 policy-Extensions = Устанавливает, удаляет или блокирует установку/удаление расширений. Параметр «Установка» использует URL-адреса или пути в качестве параметров. Параметры «Удаление» и «Блокировка» принимают идентификаторы расширений.
 policy-ExtensionSettings = Управляет всеми аспектами установки расширений.
 policy-ExtensionUpdate = Включает или отключает автоматические обновления расширений.
-policy-FirefoxHome = Настраивает домашнюю страницу Firefox.
+policy-FirefoxHome = Настраивает домашнюю страницу Waterfox.
 policy-FlashPlugin = Разрешает или запрещает использование плагина Flash.
 policy-Handlers = Настраивает обработчики приложений по умолчанию.
 policy-HardwareAcceleration = Отключает аппаратное ускорение, если установлена в false.

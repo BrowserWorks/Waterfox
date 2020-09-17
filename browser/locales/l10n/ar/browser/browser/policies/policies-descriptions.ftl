@@ -4,7 +4,7 @@
 
 
 ## The Enterprise Policies feature is aimed at system administrators
-## who want to deploy these settings across several Firefox installations
+## who want to deploy these settings across several Waterfox installations
 ## all at once. This is traditionally done through the Windows Group Policy
 ## feature, but the system also supports other forms of deployment.
 ## These are short descriptions for individual policies, to be displayed
@@ -29,8 +29,8 @@ policy-DisableDefaultBrowserAgent = امنع وكيل المتصفّح المب�
 policy-DisableDeveloperTools = منع الوصول إلى أدوات المطوّرين.
 policy-DisableFeedbackCommands = تعطيل أوامر إرسال الانطباعات في قائمة المساعدة (”أرسِل تعليقًا“ و ”أبلغ عن موقع مخادع“).
 policy-DisableFirefoxAccounts = تعطيل الخدمات التي تعتمد { -fxaccount-brand-name }، بما في ذلك المزامنة.
-# Firefox Screenshots is the name of the feature, and should not be translated.
-policy-DisableFirefoxScreenshots = تعطيل ميزة لقطات شاشة Firefox.
+# Waterfox Screenshots is the name of the feature, and should not be translated.
+policy-DisableFirefoxScreenshots = تعطيل ميزة لقطات شاشة Waterfox.
 policy-DisableFirefoxStudies = منع { -brand-short-name } من تشغيل الدارسات.
 policy-DisableForgetButton = منع الوصول إلى زر النسيان.
 policy-DisableFormHistory = عدم تذكّر تأريخ الاستمارات والبحث.
@@ -61,7 +61,7 @@ policy-EncryptedMediaExtensions = تفعيل أو تعطيل امتدادات ا
 policy-Extensions = تثبيت أو إزالة أو قفل حالة الامتدادات. يأخذ خيار التثبيت مسارات محلية أو شبكية كمعطيات. يأخذ خياري الإزالة والقفل معرّفات الامتدادات.
 policy-ExtensionSettings = أدِر كل ما يتعلّق بتثبيت الامتدادات.
 policy-ExtensionUpdate = تفعيل/تعطيل تحديث الامتدادات تلقائيًا.
-policy-FirefoxHome = ضبط صفحة المنزل داخل Firefox.
+policy-FirefoxHome = ضبط صفحة المنزل داخل Waterfox.
 policy-FlashPlugin = السماح باستخدام ملحقة فلاش أو منع ذلك.
 policy-Handlers = ضبط طرائق التعامل مع التطبيقات المبدئية.
 policy-HardwareAcceleration = إن كان ”خطأ“، عطِّل التسريع العتادي.

@@ -6,8 +6,8 @@
 
 # “Sync” can be localized, “Firefox” must be treated as a brand,
 # and kept in English.
--sync-brand-name = هم‌گام‌ سازی Firefox
+-sync-brand-name = هم‌گام‌ سازی Waterfox
 
 # “Account” can be localized, “Firefox” must be treated as a brand,
 # and kept in English.
--fxaccount-brand-name = حساب Firefox
+-fxaccount-brand-name = حساب Waterfox

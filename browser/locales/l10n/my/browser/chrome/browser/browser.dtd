@@ -38,13 +38,13 @@ in "Search through tabs". -->
 
 
 <!-- LOCALIZATION NOTE (fxa.signin) Used to define the different labels
-     for the Firefox Account toolbar signin menu screen. -->
+     for the Waterfox Account toolbar signin menu screen. -->
 
 <!-- LOCALIZATION NOTE (fxa.unverified) Used to define the different labels
-     for the Firefox Account toolbar unverified menu screen. -->
+     for the Waterfox Account toolbar unverified menu screen. -->
 
 <!-- LOCALIZATION NOTE (fxa.menu) Used to define the different labels
-     for the Firefox Account toolbart menu screen. The `Signed in as` text is
+     for the Waterfox Account toolbart menu screen. The `Signed in as` text is
      followed by the user's email. -->
 
  <!-- LOCALIZATION NOTE (fullscreenWarning.beforeDomain.label,
@@ -151,7 +151,7 @@ in "Search through tabs". -->
 <!ENTITY appMenuRemoteTabs.tabsnotsyncing.label "သင့်အခြား ကိရိယာများမှ တပ်ဗ်စာရင်းကို ကြည့်ရန် တပ်ဗ်ထပ်တူပြုအသုံးပြုခြင်းကို ဖွင့်ပါ။">
 <!-- LOCALIZATION NOTE (appMenuRemoteTabs.noclients.subtitle): This is shown
      when Sync is configured but this appears to be the only device attached to
-     the account. We also show links to download Firefox for android/ios. -->
+     the account. We also show links to download Waterfox for android/ios. -->
 <!ENTITY appMenuRemoteTabs.noclients.subtitle "အခြားကိရိယာများမှ တပ်ဗ်များကို ဒီမှာ ကြည့်ရှုချင်ပါသလား။">
 <!ENTITY appMenuRemoteTabs.opensyncprefs.label "Sync အပြင်အဆင်ကို ဖွင့်ပါ">
 <!ENTITY appMenuRemoteTabs.unverified.label "အကောင့်ကို အတည်ပြုရန် လိုအပ်သည်။">

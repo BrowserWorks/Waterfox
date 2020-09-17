@@ -138,7 +138,7 @@ manifest-loaded-error = 載入 manifest 時發生錯誤:
 
 # Text displayed as an error when there has been a Firefox DevTools error while
 # trying to load the manifest
-manifest-loaded-devtools-error = Firefox 開發者工具發生錯誤
+manifest-loaded-devtools-error = Waterfox 開發者工具發生錯誤
 
 # Text displayed when the page has no manifest available
 manifest-non-existing = 沒有找到可以檢測的 manifest。

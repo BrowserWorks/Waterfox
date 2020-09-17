@@ -18,8 +18,8 @@
 #define getting_started Cómo entamar
 
 # LOCALIZATION NOTE (firefox_heading):
-# Firefox links folder name
-#define firefox_heading Mozilla Firefox
+# Waterfox links folder name
+#define firefox_heading Waterfox
 
 # LOCALIZATION NOTE (firefox_help):
 # link title for https://www.mozilla.org/en-US/firefox/help/
@@ -27,7 +27,7 @@
 
 # LOCALIZATION NOTE (firefox_customize):
 # link title for https://www.mozilla.org/en-US/firefox/customize/
-#define firefox_customize Personalizar Firefox
+#define firefox_customize Personalizar Waterfox
 
 # LOCALIZATION NOTE (firefox_community):
 # link title for https://www.mozilla.org/en-US/contribute/
@@ -38,12 +38,12 @@
 #define firefox_about Tocante a nós
 
 # LOCALIZATION NOTE (nightly_heading):
-# Firefox Nightly links folder name
-#define nightly_heading Recursos de Firefox nightly
+# Waterfox Nightly links folder name
+#define nightly_heading Recursos de Waterfox nightly
 
 # LOCALIZATION NOTE (nightly_blog):
 # Nightly builds only, link title for https://blog.nightly.mozilla.org/
-#define nightly_blog Blogue de Firefox nightly
+#define nightly_blog Blogue de Waterfox nightly
 
 # LOCALIZATION NOTE (bugzilla):
 # Nightly builds only, link title for https://bugzilla.mozilla.org/

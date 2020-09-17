@@ -17,7 +17,7 @@ about-telemetry-next-ping = >>
 about-telemetry-page-title = Isefka n tilisɣelt
 about-telemetry-current-store = Tahanut tamirant:
 about-telemetry-more-information = Tettnadiḍ ugar n telγut?
-about-telemetry-firefox-data-doc = <a data-l10n-name="data-doc-link">Tisemlit n isefka Firefox</a> tegber imniren γef amek ad nseqdec s ifecka n isefka.
+about-telemetry-firefox-data-doc = <a data-l10n-name="data-doc-link">Tisemlit n isefka Waterfox</a> tegber imniren γef amek ad nseqdec s ifecka n isefka.
 about-telemetry-telemetry-client-doc = <a data-l10n-name="client-doc-link">Tisemlit n umsaγ tilisγelt</a>tegber tabadutin yef tiktiwin, API tisemlit akked isefka ittwamlen.
 about-telemetry-telemetry-dashboard = <a data-l10n-name="dashboard-link">Tafelwit n tilisγelt</a> ad k-tsireg akken ad twaliḍ isefka ittwaznen i Mozilla s ttawil n tilispyelt.
 about-telemetry-telemetry-probe-dictionary = <a data-l10n-name="probe-dictionary-link">Amawal n usenqed</a> ittmuddu-d talqayt akked uglam i isenqaden id-telqeḍ tilisɣelt.

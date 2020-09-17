@@ -3,29 +3,29 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 head-title = Tərtibatçı Alətləri Haqqında
-enable-title = Firefox Tərtibatçı Alətlərini Aktivləşdir
-enable-inspect-element-title = Element İnspektorunu işlətmək üçün Firefox Tərtibatçı Alətlərini aktivləşdirin
+enable-title = Waterfox Tərtibatçı Alətlərini Aktivləşdir
+enable-inspect-element-title = Element İnspektorunu işlətmək üçün Waterfox Tərtibatçı Alətlərini aktivləşdirin
 enable-inspect-element-message = Tərtibatçı Alətlərinin İnspektoru ilə HTML və CSS-i yoxlayın və dəyişdirin.
-enable-about-debugging-message = Firefox Tərtibatçı Alətləri ilə WebExtension, web worker, service worker və daha bir çox şeyi tərtib edin və sazlayın.
+enable-about-debugging-message = Waterfox Tərtibatçı Alətləri ilə WebExtension, web worker, service worker və daha bir çox şeyi tərtib edin və sazlayın.
 enable-key-shortcut-message = Tərtibatçı Alətləri qısa yolunu aktivləşdirdiniz. Əgər bu səhvən oldusa, bu vərəqi qapata bilərsiz.
 enable-menu-message = İnspektor və Sazlayıcı kimi alətlərlə saytınızın HTML, CSS və JavaScript-ini mükəmməlləşdirin.
-enable-common-message = İlkin vəziyyətdə səyyahınız üzərində sizə daha çox idarə verə bilmək üçün Firefox Tərtibatçı Alətləri sönülü gəlir.
+enable-common-message = İlkin vəziyyətdə səyyahınız üzərində sizə daha çox idarə verə bilmək üçün Waterfox Tərtibatçı Alətləri sönülü gəlir.
 enable-learn-more-link = Tərtibatçı Alətləri haqqında ətraflı öyrən
 enable-enable-button = Tərtibatçı Alətlərini Aktivləşdir
 enable-close-button = Bu vərəqi qapat
 
-welcome-title = Firefox Tərtibatçı Alətlərinə Xoş Gəldiniz!
-newsletter-title = Mozilla Tərtibatçı Qəzeti
+welcome-title = Waterfox Tərtibatçı Alətlərinə Xoş Gəldiniz!
+newsletter-title = Waterfox Tərtibatçı Qəzeti
 newsletter-message = Tərtibatçı xəbərləri, məsləhət və qaynaqlar birbaşa gələn qutunuza göndərilsin.
 newsletter-email-placeholder =
     .placeholder = E-poçt
-newsletter-privacy-label = Mozillanın bu <a data-l10n-name="privacy-policy">Məxfilik Siyasəti</a>ndə izah edildiyi kimi işlətməsinə razıyam.
+newsletter-privacy-label = Waterfoxnın bu <a data-l10n-name="privacy-policy">Məxfilik Siyasəti</a>ndə izah edildiyi kimi işlətməsinə razıyam.
 newsletter-subscribe-button = Abunə ol
 newsletter-thanks-title = Təşəkkürlər!
 newsletter-thanks-message = Əgər daha öncə Mozilla ilə əlaqəli xəbər lentinə abunəlik təsdiqləməmisinizsə bunu etməyiniz tələb edilir. Lütfən daxil olanlar və ya spam qutunuzu e-poçtumuz üçün yoxlayın.
 
-footer-title = Firefox Developer Edition
-footer-message = Tərtibatçı Alətlərindən daha çoxunu istəyirsiniz? Xüsusilə tərtibatçılar və müasir iş axışları üçün yaradılmış Firefox səyyahını yoxlayın.
+footer-title = Waterfox Developer Edition
+footer-message = Tərtibatçı Alətlərindən daha çoxunu istəyirsiniz? Xüsusilə tərtibatçılar və müasir iş axışları üçün yaradılmış Waterfox səyyahını yoxlayın.
 footer-learn-more-link = Ətraflı öyrən
 
 features-learn-more = Ətraflı öyrən

@@ -122,9 +122,9 @@ search-results-help-link = Angen help? Ewch i <a data-l10n-name="url">Cefnogaeth
 
 startup-header = Cychwyn
 # { -brand-short-name } will be 'Firefox Developer Edition',
-# since this setting is only exposed in Firefox Developer Edition
+# since this setting is only exposed in Waterfox Developer Edition
 separate-profile-mode =
-    .label = Caniatáu i { -brand-short-name } a Firefox redeg ar yr un pryd
+    .label = Caniatáu i { -brand-short-name } a Waterfox redeg ar yr un pryd
 use-firefox-sync = Cyngor: Mae'n defnyddio proffiliau gwahanol. Defnyddiwch { -sync-brand-short-name } i rannu data rhyngddynt.
 get-started-not-logged-in = Mewngofnodi i { -sync-brand-short-name }…
 get-started-configured = Agor dewisiadau { -sync-brand-short-name }
@@ -467,10 +467,10 @@ home-newtabs-mode-label = Tabiau newydd
 home-restore-defaults =
     .label = Adfer gosodiadau
     .accesskey = A
-# "Firefox" should be treated as a brand and kept in English,
+# "Waterfox" should be treated as a brand and kept in English,
 # while "Home" and "(Default)" can be localized.
 home-mode-choice-default =
-    .label = Cartref Firefox (Rhagosodiad)
+    .label = Cartref Waterfox (Rhagosodiad)
 home-mode-choice-custom =
     .label = URLau Cyfaddas...
 home-mode-choice-blank =
@@ -492,10 +492,10 @@ choose-bookmark =
     .label = Defnyddio Nod Tudalen…
     .accesskey = N
 
-## Home Section - Firefox Home Content Customization
+## Home Section - Waterfox Home Content Customization
 
-home-prefs-content-header = Cynnwys Cartref Firefox
-home-prefs-content-description = Dewis pa gynnwys rydych eisiau ar eich sgrin Firefox Cartref.
+home-prefs-content-header = Cynnwys Cartref Waterfox
+home-prefs-content-description = Dewis pa gynnwys rydych eisiau ar eich sgrin Waterfox Cartref.
 home-prefs-search-header =
     .label = Chwilio'r We
 home-prefs-topsites-header =
@@ -619,7 +619,7 @@ containers-preferences-button =
 containers-remove-button =
     .label = Tynnu
 
-## Firefox Account - Signed out. Note that "Sync" and "Firefox Account" are now
+## Waterfox Account - Signed out. Note that "Sync" and "Firefox Account" are now
 ## more discrete ("signed in" no longer means "and sync is connected").
 
 sync-signedout-caption = Mynd â'ch  Gwe gyda Chi
@@ -635,9 +635,9 @@ sync-signedout-account-signin2 =
 #
 # They can be moved within the sentence as needed to adapt
 # to your language, but should not be changed or translated.
-sync-mobile-promo = Llwytho Firefox i lawr ar gyfer <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> neu <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS</a> i gydweddu gyda'ch dyfais symudol.
+sync-mobile-promo = Llwytho Waterfox i lawr ar gyfer <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> neu <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS</a> i gydweddu gyda'ch dyfais symudol.
 
-## Firefox Account - Signed in
+## Waterfox Account - Signed in
 
 sync-profile-picture =
     .tooltiptext = Newid llun proffil
@@ -723,7 +723,7 @@ sync-engine-creditcards =
     .accesskey = r
 sync-engine-addons =
     .label = Ychwanegion
-    .tooltiptext = Estyniadau a themâu ar gyfer Firefox bwrdd gwaith
+    .tooltiptext = Estyniadau a themâu ar gyfer Waterfox bwrdd gwaith
     .accesskey = Y
 sync-engine-prefs =
     .label =
@@ -829,8 +829,8 @@ history-header = Hanes
 # "Firefox will" + "Remember history".
 #
 # If this doesn't work for your language, you can translate this message:
-#   - Simply as "Firefox", moving the verb into each option.
-#     This will result in "Firefox" + "Will remember history", etc.
+#   - Simply as "Waterfox", moving the verb into each option.
+#     This will result in "Waterfox" + "Will remember history", etc.
 #   - As a stand-alone message, for example "Firefox history settings:".
 history-remember-label = Bydd { -brand-short-name } yn
     .accesskey = B

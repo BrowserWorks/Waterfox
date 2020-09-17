@@ -17,11 +17,11 @@ about-debugging-page-title-runtime-page = Buggitaade - Kurmitagol / { $selectedR
 
 # Sidebar strings
 
-# Display name of the runtime for the currently running instance of Firefox. Used in the
+# Display name of the runtime for the currently running instance of Waterfox. Used in the
 # Sidebar and in the Setup page.
 about-debugging-this-firefox-runtime-name = Oo { -brand-shorter-name }
 
-# Sidebar heading for selecting the currently running instance of Firefox
+# Sidebar heading for selecting the currently running instance of Waterfox
 about-debugging-sidebar-this-firefox =
     .name = { about-debugging-this-firefox-runtime-name }
 

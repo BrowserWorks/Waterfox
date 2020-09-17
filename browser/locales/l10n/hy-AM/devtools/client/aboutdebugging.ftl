@@ -17,11 +17,11 @@ about-debugging-page-title-runtime-page = Վրիպազերծում - աշխատ�
 
 # Sidebar strings
 
-# Display name of the runtime for the currently running instance of Firefox. Used in the
+# Display name of the runtime for the currently running instance of Waterfox. Used in the
 # Sidebar and in the Setup page.
 about-debugging-this-firefox-runtime-name = Այս { -brand-shorter-name }-ը
 
-# Sidebar heading for selecting the currently running instance of Firefox
+# Sidebar heading for selecting the currently running instance of Waterfox
 about-debugging-sidebar-this-firefox =
     .name = { about-debugging-this-firefox-runtime-name }
 
@@ -66,8 +66,8 @@ about-debugging-sidebar-item-connect-button-connection-timeout = Կապակցո�
 about-debugging-sidebar-item-connected-label = Կապակցված
 
 # Text displayed in sidebar items for remote devices where a compatible browser (eg
-# Firefox) has not been detected yet. Typically, Android phones connected via USB with
-# USB debugging enabled, but where Firefox is not started.
+# Waterfox) has not been detected yet. Typically, Android phones connected via USB with
+# USB debugging enabled, but where Waterfox is not started.
 about-debugging-sidebar-runtime-item-waiting-for-browser = Սպասում է զննարկիչին...
 
 # Text displayed in sidebar items for remote devices that have been disconnected from the
@@ -103,7 +103,7 @@ about-debugging-setup-title = Տեղակայում
 # Introduction text in the Setup page to explain how to configure remote debugging.
 about-debugging-setup-intro = Կարգավորեք կապի եղանակը, որի միջոցով ցանկանում եք հեռակա կարգաբերել ձեր սարքը։
 
-# Explanatory text in the Setup page about what the 'This Firefox' page is for
+# Explanatory text in the Setup page about what the 'This Waterfox' page is for
 about-debugging-setup-this-firefox2 = Օգտագործել <a>{ about-debugging-this-firefox-runtime-name }</a> վրիպազերծելու ընդլայնումները և ծառայության աշխատողներին { -brand-shorter-name }-ի այս տարբերակի համար։
 
 # Title of the heading Connect section of the Setup page.
@@ -138,7 +138,7 @@ about-debugging-setup-usb-step-enable-dev-menu2 = Միացնել Մշակողի 
 about-debugging-setup-usb-step-enable-debug2 = Միացնել USB վրիպազերծումը Android-ի Մշակողի ցանկում։
 
 # USB section step by step guide
-about-debugging-setup-usb-step-enable-debug-firefox2 = Միացնել USB վրիպազերծումը Android սարքի Firefox-ում։
+about-debugging-setup-usb-step-enable-debug-firefox2 = Միացնել USB վրիպազերծումը Android սարքի Waterfox-ում։
 
 # USB section step by step guide
 about-debugging-setup-usb-step-plug-device = Միացրեք Android սարքը ձեր համակարգչին:
@@ -185,7 +185,7 @@ about-debugging-network-location-form-duplicate = Խնամորդ՝ “{ $host-va
 
 # Below are the titles for the various categories of debug targets that can be found
 # on "runtime" pages of about:debugging.
-# Title of the temporary extensions category (only available for "This Firefox" runtime).
+# Title of the temporary extensions category (only available for "This Waterfox" runtime).
 about-debugging-runtime-temporary-extensions =
     .name = Ժամանակավոր ընդլայնումներ
 # Title of the extensions category.
@@ -219,20 +219,20 @@ about-debugging-runtime-service-workers-not-compatible = Ձեր զննարկչի
 # This string is displayed in the runtime page if the remote browser version is too old.
 # "Troubleshooting" link points to https://developer.mozilla.org/docs/Tools/about:debugging#Troubleshooting
 # { $runtimeVersion } is the version of the remote browser (for instance "67.0a1")
-# { $minVersion } is the minimum version that is compatible with the current Firefox instance (same format)
+# { $minVersion } is the minimum version that is compatible with the current Waterfox instance (same format)
 about-debugging-browser-version-too-old = Միացված զննարկիչը հին տարբերակ ունի  ({ $runtimeVersion })։ Նվազագույն աջակցվող տարբերակը ({ $minVersion }) է։ Սա չաջակցված կայանք է և կարող է DevTools֊ի ձախողման պատճառ դառնալ։ Խնդրում ենք թարմացնել միացված զննարկիչը։ <a>Խնդիրների լուծում</a>
 
 # Dedicated message for a backward compatibility issue that occurs when connecting:
-# from Fx 70+ to the old Firefox for Android (aka Fennec) which uses Fx 68.
-about-debugging-browser-version-too-old-fennec = Firefox-ի այս տարբերակը չի կարող վրիպազերծել Firefox-ը Android-ի համար (68): Թեստավորման համար խորհուրդ ենք տալիս տեղադրել ձեր հեռախոսում Firefox- ը Android-ի համար Nightly-ին: <a> Լրացուցիչ մանրամասներ</a>
+# from Fx 70+ to the old Waterfox for Android (aka Fennec) which uses Fx 68.
+about-debugging-browser-version-too-old-fennec = Waterfox-ի այս տարբերակը չի կարող վրիպազերծել Waterfox-ը Android-ի համար (68): Թեստավորման համար խորհուրդ ենք տալիս տեղադրել ձեր հեռախոսում Waterfox- ը Android-ի համար Nightly-ին: <a> Լրացուցիչ մանրամասներ</a>
 
 # This string is displayed in the runtime page if the remote browser version is too recent.
 # "Troubleshooting" link points to https://developer.mozilla.org/docs/Tools/about:debugging#Troubleshooting
 # { $runtimeID } is the build ID of the remote browser (for instance "20181231", format is yyyyMMdd)
-# { $localID } is the build ID of the current Firefox instance (same format)
+# { $localID } is the build ID of the current Waterfox instance (same format)
 # { $runtimeVersion } is the version of the remote browser (for instance "67.0a1")
 # { $localVersion } is the version of your current browser (same format)
-about-debugging-browser-version-too-recent = Միացված զննարկիչը ավելի նոր է ({ $runtimeVersion }, buildID { $runtimeID }) քան ձեր { -brand-shorter-name } ({ $localVersion }, buildID { $localID })։ Սա չաջակցված կարգավորում է և կարող է հանգեցնել DevTools-ին չստացվել։ Խնդրում ենք թարմացրել Firefox-ը։ <a>Անսարքությունների կարգավորում</a>
+about-debugging-browser-version-too-recent = Միացված զննարկիչը ավելի նոր է ({ $runtimeVersion }, buildID { $runtimeID }) քան ձեր { -brand-shorter-name } ({ $localVersion }, buildID { $localID })։ Սա չաջակցված կարգավորում է և կարող է հանգեցնել DevTools-ին չստացվել։ Խնդրում ենք թարմացրել Waterfox-ը։ <a>Անսարքությունների կարգավորում</a>
 
 # Displayed for runtime info in runtime pages.
 # { $name } is brand name such as "Firefox Nightly"
@@ -270,18 +270,18 @@ about-debugging-debug-target-list-empty = Դեռ ոչինչ։
 # A target can be an addon, a tab, a worker...
 about-debugging-debug-target-inspect-button = Ստուգել
 
-# Text of a button displayed in the "This Firefox" page, in the Temporary Extension
+# Text of a button displayed in the "This Waterfox" page, in the Temporary Extension
 # section. Clicking on the button will open a file picker to load a temporary extension
 about-debugging-tmp-extension-install-button = Բեռնել ժամանակավոր հավելում…
 
-# Text displayed when trying to install a temporary extension in the "This Firefox" page.
+# Text displayed when trying to install a temporary extension in the "This Waterfox" page.
 about-debugging-tmp-extension-install-error = Ժամանակավոր հավելման տեղակայման ժամանակ սխալ տեղի ունեցավ:
 
-# Text of a button displayed for a temporary extension loaded in the "This Firefox" page.
+# Text of a button displayed for a temporary extension loaded in the "This Waterfox" page.
 # Clicking on the button will reload the extension.
 about-debugging-tmp-extension-reload-button = Վերբեռնել
 
-# Text of a button displayed for a temporary extension loaded in the "This Firefox" page.
+# Text of a button displayed for a temporary extension loaded in the "This Waterfox" page.
 # Clicking on the button will uninstall the extension and remove it from the page.
 about-debugging-tmp-extension-remove-button = Հեռացնել
 

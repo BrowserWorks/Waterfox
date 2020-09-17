@@ -1,7 +1,7 @@
 <!-- This Source Code Form is subject to the terms of the Mozilla Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
-<!-- LOCALIZATION NOTE This file is very similar to the one in Firefox from browser/locales/en-US/chrome/browser/aboutRights.dtd so you can use that file as a starting point -->
+<!-- LOCALIZATION NOTE This file is very similar to the one in Waterfox from browser/locales/en-US/chrome/browser/aboutRights.dtd so you can use that file as a starting point -->
 <!-- rights.locale-direction instead of the usual local.dir entity, so RTL can skip translating page. -->
 <!ENTITY rights.locale-direction "ltr">
 <!ENTITY rights.pagetitle       "about:rights">
@@ -20,7 +20,7 @@
 <!ENTITY rights.intro-point1b "Licencia Pública de Mozilla">
 <!ENTITY rights.intro-point1c ". Esto significa que puede usar, copiar y compartir &brandShortName; con otras personas. También tiene la posibilidad de modificar el código fuente de &brandShortName; como desee a fin de que éste se ajuste a sus necesidades. La Licencia Pública de Mozilla también le otorga el derecho a distribuir esas versiones modificadas.">
 
-<!ENTITY rights.intro-point2a "Mozilla no otorga derechos con respecto a las marcas registradas y logos de Mozilla y Firefox. Puede encontrar información adicional sobre las marcas registradas ">
+<!ENTITY rights.intro-point2a "Mozilla no otorga derechos con respecto a las marcas registradas y logos de Mozilla y Waterfox. Puede encontrar información adicional sobre las marcas registradas ">
 
 <!ENTITY rights.intro-point2aa "&vendorShortName; no le otorga ningún derecho sobre &quot;&brandFullName;&quot; marcas registradas o logotipos. Se puede encontrar información adicional sobre marcas registradas">
 <!ENTITY rights.intro-point2b "aquí">

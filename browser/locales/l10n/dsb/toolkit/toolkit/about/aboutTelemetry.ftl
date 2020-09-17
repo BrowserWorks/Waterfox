@@ -17,8 +17,8 @@ about-telemetry-next-ping = >>
 about-telemetry-page-title = Telemetrijne daty
 about-telemetry-current-store = Aktualny wobchod:
 about-telemetry-more-information = Pytaśo dalšne informacije?
-about-telemetry-firefox-data-doc = <a data-l10n-name="data-doc-link">Datowa dokumentacija Firefox</a> rozpokazanja wó źěłanju z našymi datowymi rědami wopśimujo.
-about-telemetry-telemetry-client-doc = <a data-l10n-name="client-doc-link">Klientowa dokumentacija za telemetriju Firefox</a> definicije za koncepty, API-dokumentaciju a datowe reference wopśimujo.
+about-telemetry-firefox-data-doc = <a data-l10n-name="data-doc-link">Datowa dokumentacija Waterfox</a> rozpokazanja wó źěłanju z našymi datowymi rědami wopśimujo.
+about-telemetry-telemetry-client-doc = <a data-l10n-name="client-doc-link">Klientowa dokumentacija za telemetriju Waterfox</a> definicije za koncepty, API-dokumentaciju a datowe reference wopśimujo.
 about-telemetry-telemetry-dashboard = <a data-l10n-name="dashboard-link">Telemetrijowy pśeglěd</a> wam zmóžnja, daty wizualizěrowaś, kótarež Mozilla pśez telemetriju dostawa.
 about-telemetry-telemetry-probe-dictionary = <a data-l10n-name="probe-dictionary-link">Probe Dictionary</a> staja drobnostki a wopisanja za proby k dispoziciji, kótarež su se nagromaźili z telemetriju.
 about-telemetry-show-in-Firefox-json-viewer = W JSON-wobglědowaku wócyniś
@@ -143,7 +143,7 @@ about-telemetry-origin-origin = póchad
 about-telemetry-origin-count = licba
 # Variables:
 #   $telemetryServerOwner (String): the value of the toolkit.telemetry.server_owner preference. Typically "Mozilla"
-about-telemetry-origins-explanation = <a data-l10n-name="origin-doc-link">Telemetrija Origin Firefox</a> daty koděrujo, nježli až se pósćelu, aby { $telemetryServerOwner } mógał wěcy licyś, ale njewě, lěc daty { -brand-product-name } jo k licbje pśinosował. (<a data-l10n-name="prio-blog-link">dalšne informacije</a>)
+about-telemetry-origins-explanation = <a data-l10n-name="origin-doc-link">Telemetrija Origin Waterfox</a> daty koděrujo, nježli až se pósćelu, aby { $telemetryServerOwner } mógał wěcy licyś, ale njewě, lěc daty { -brand-product-name } jo k licbje pśinosował. (<a data-l10n-name="prio-blog-link">dalšne informacije</a>)
 # Variables:
 #  $process (String): type of process in subsection headers ( e.g. "content", "parent" )
 about-telemetry-process = Proces { $process }

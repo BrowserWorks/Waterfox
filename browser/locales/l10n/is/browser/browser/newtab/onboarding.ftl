@@ -42,11 +42,11 @@ onboarding-cards-dismiss =
 
 ## Welcome full page string
 
-## Firefox Sync modal dialog strings.
+## Waterfox Sync modal dialog strings.
 
 onboarding-sync-welcome-header = Taktu { -brand-product-name } með þér
 onboarding-sync-welcome-content = Fáðu bókamerki, sögu, lykilorð og aðrar stillingar á öllum tækjunum þínum.
-onboarding-sync-welcome-learn-more-link = Frekari upplýsingar um Firefox reikninga
+onboarding-sync-welcome-learn-more-link = Frekari upplýsingar um Waterfox reikninga
 
 onboarding-sync-form-input =
     .placeholder = Netfang
@@ -54,7 +54,7 @@ onboarding-sync-form-input =
 onboarding-sync-form-continue-button = Áfram
 onboarding-sync-form-skip-login-button = Sleppa þessu skrefi
 
-## This is part of the line "Enter your email to continue to Firefox Sync"
+## This is part of the line "Enter your email to continue to Waterfox Sync"
 
 onboarding-sync-form-header = Sláðu inn netfangið þitt
 onboarding-sync-form-sub-header = fara áfram á { -sync-brand-name }

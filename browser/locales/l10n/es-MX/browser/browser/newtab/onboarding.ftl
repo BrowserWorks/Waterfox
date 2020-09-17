@@ -77,7 +77,7 @@ onboarding-multistage-theme-description-automatic = Usar tema del sistema
 onboarding-multistage-theme-label-light = Claro
 onboarding-multistage-theme-label-dark = Oscuro
 # "Firefox Alpenglow" here is the name of the theme, and should be kept in English.
-onboarding-multistage-theme-label-alpenglow = Firefox Alpenglow
+onboarding-multistage-theme-label-alpenglow = Waterfox Alpenglow
 
 ## Please make sure to split the content of the title attribute into lines whose
 ## width corresponds to about 40 Latin characters, to ensure that the tooltip
@@ -155,17 +155,17 @@ onboarding-fullpage-welcome-subheader = Comencemos a explorar todo lo que puedes
 onboarding-fullpage-form-email =
     .placeholder = Tu dirección de correo electrónico…
 
-## Firefox Sync modal dialog strings.
+## Waterfox Sync modal dialog strings.
 
 onboarding-sync-welcome-header = Lleva a { -brand-product-name } contigo
 onboarding-sync-welcome-content = Accede a tus marcadores, historial, contraseñas y más ajustes en todos tus dispositivos.
-onboarding-sync-welcome-learn-more-link = Conoce más acerca de Firefox Accounts
+onboarding-sync-welcome-learn-more-link = Conoce más acerca de Waterfox Accounts
 onboarding-sync-form-input =
     .placeholder = Correo electrónico
 onboarding-sync-form-continue-button = Continuar
 onboarding-sync-form-skip-login-button = Saltar este paso
 
-## This is part of the line "Enter your email to continue to Firefox Sync"
+## This is part of the line "Enter your email to continue to Waterfox Sync"
 
 onboarding-sync-form-header = Ingresa tu correo electrónico
 onboarding-sync-form-sub-header = para continuar a { -sync-brand-name }.
@@ -176,7 +176,7 @@ onboarding-sync-form-sub-header = para continuar a { -sync-brand-name }.
 onboarding-benefit-products-text = Termina tus pendientes con una familia de herramientas que respeta tu privacidad a través de tus dispositivos.
 # "Personal Data Promise" is a concept that should be translated consistently
 # across the product. It refers to a concept shown elsewhere to the user: "The
-# Firefox Personal Data Promise is the way we honor your data in everything we
+# Waterfox Personal Data Promise is the way we honor your data in everything we
 # make and do. We take less data. We keep it safe. And we make sure that we are
 # transparent about how we use it."
 onboarding-benefit-privacy-text = Todo lo que hacemos respeta nuestra promesa de datos personales: Tomar menos. Mantenerlo seguro. Sin secretos.

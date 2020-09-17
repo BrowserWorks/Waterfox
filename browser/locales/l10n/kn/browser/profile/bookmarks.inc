@@ -34,7 +34,7 @@
 # LOCALIZATION NOTE (firefox_heading):
 
 
-# Firefox links folder name
+# Waterfox links folder name
 
 
 #define firefox_heading ಮೋಜಿಲ್ಲಾ ಫೈರ್ಫಾಕ್ಸ್
@@ -79,10 +79,10 @@
 # LOCALIZATION NOTE (nightly_heading):
 
 
-# Firefox Nightly links folder name
+# Waterfox Nightly links folder name
 
 
-#define nightly_heading Firefox Nightly Resources
+#define nightly_heading Waterfox Nightly Resources
 
 
 # LOCALIZATION NOTE (nightly_blog):
@@ -91,7 +91,7 @@
 # Nightly builds only, link title for https://blog.nightly.mozilla.org/
 
 
-#define nightly_blog Firefox Nightly blog
+#define nightly_blog Waterfox Nightly blog
 
 
 # LOCALIZATION NOTE (bugzilla):

@@ -4,7 +4,7 @@
 
 
 ## The Enterprise Policies feature is aimed at system administrators
-## who want to deploy these settings across several Firefox installations
+## who want to deploy these settings across several Waterfox installations
 ## all at once. This is traditionally done through the Windows Group Policy
 ## feature, but the system also supports other forms of deployment.
 ## These are short descriptions for individual policies, to be displayed
@@ -42,8 +42,8 @@ policy-DisableFeedbackCommands = Slökkva á "Senda viðbrögð" og "Tilkynna vi
 
 policy-DisableFirefoxAccounts = Slökkva á { -fxaccount-brand-name } tengdri þjónustu, m.a. Sync.
 
-# Firefox Screenshots is the name of the feature, and should not be translated.
-policy-DisableFirefoxScreenshots = Slökkva á viðbótinni Firefox skjámyndir.
+# Waterfox Screenshots is the name of the feature, and should not be translated.
+policy-DisableFirefoxScreenshots = Slökkva á viðbótinni Waterfox skjámyndir.
 
 policy-DisableFirefoxStudies = Hamla aðgang að könnunum frá { -brand-short-name }
 
@@ -69,7 +69,7 @@ policy-DisableSetAsDesktopBackground = Slökkva á valmyndarskipuninni "Velja fo
 
 policy-DisableSystemAddonUpdate = Forða því að vafrinn setji upp og uppfæri kerfisviðbætur.
 
-policy-DisableTelemetry = Slökkva á gagnasöfnun til að bæta Firefox (telemetry)
+policy-DisableTelemetry = Slökkva á gagnasöfnun til að bæta Waterfox (telemetry)
 
 policy-DisplayBookmarksToolbar = Sýna bókamerkjastikuna sjálfgefið.
 
@@ -93,7 +93,7 @@ policy-ExtensionSettings = Stjórna öllum uppsetningarþáttum viðbóta.
 
 policy-ExtensionUpdate = Virkja eða slökkva á sjálfvirkri uppfærslu á viðbótum.
 
-policy-FirefoxHome = Stilla Firefox heimasvæðið.
+policy-FirefoxHome = Stilla Waterfox heimasvæðið.
 
 policy-FlashPlugin = Leyfa eða hafna notkun Flash-viðbótarinnar.
 
@@ -120,7 +120,7 @@ policy-OfferToSaveLogins = Skoðaðu spurningu um að geyma aðgangsupplýsingar
 
 policy-OverrideFirstRunPage = Breyta upphafssíðu. Tómt gildi til að slökkva á opnun síðunnar.
 
-policy-OverridePostUpdatePage = Setja Firefox News síðu - birtist eftir uppfærslu á forritinu. Tómt gildi gerir slökkt á því að opna síðuna.
+policy-OverridePostUpdatePage = Setja Waterfox News síðu - birtist eftir uppfærslu á forritinu. Tómt gildi gerir slökkt á því að opna síðuna.
 
 policy-PopupBlocking = Leyfa tilteknum vefsíðum að birta sprettiglugga að sjálfgefnu.
 

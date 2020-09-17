@@ -41,7 +41,7 @@ onboarding-cards-dismiss =
 
 ## Welcome full page string
 
-## Firefox Sync modal dialog strings.
+## Waterfox Sync modal dialog strings.
 
 onboarding-sync-welcome-header = { -brand-product-name } உடன் எடுத்துச் செல்லுங்கள்
 onboarding-sync-welcome-content = உங்கள் அனைத்துச் சாதனங்களிலும் உள்ள உங்களின் புத்தகக்குறிகள், வரலாறு, கடவுச்சொற்கள் மற்றும் பிற அமைப்புகளைப் பெறுங்கள்.
@@ -53,7 +53,7 @@ onboarding-sync-form-input =
 onboarding-sync-form-continue-button = தொடர்க
 onboarding-sync-form-skip-login-button = இந்த படிநிலையைத் தவிர்
 
-## This is part of the line "Enter your email to continue to Firefox Sync"
+## This is part of the line "Enter your email to continue to Waterfox Sync"
 
 onboarding-sync-form-header = உங்களின் மின்னஞ்சலை உள்ளிடுக
 onboarding-sync-form-sub-header = { -sync-brand-name } ஒத்திசையைத் தொடர.

@@ -15,7 +15,7 @@
 <!ENTITY prefEnableHTTP11Proxy.accesskey     "T">
 <!ENTITY prefPara                            "Sambungan HTTP boleh ditala halus menggunakan pilihan ini untuk meningkatkan prestasi atau keserasian. Sesetengah pelayan proksi, sebagai contoh, diketahui akan meminta HTTP/1.0 (lihat nota keluaran untuk butiran lanjut).">
 <!ENTITY prefUseragent.label                 "String Ejen Pengguna">
-<!ENTITY prefFirefoxCompat.label             "Mengiklankan keserasian Firefox">
+<!ENTITY prefFirefoxCompat.label             "Mengiklankan keserasian Waterfox">
 <!ENTITY prefFirefoxCompat.accesskey         "F">
 <!ENTITY prefLightningShow.label             "Mengiklankan pemasangan Lightning">
 <!ENTITY prefLightningShow.accesskey         "L">

@@ -4,7 +4,7 @@
 
 
 ## The Enterprise Policies feature is aimed at system administrators
-## who want to deploy these settings across several Firefox installations
+## who want to deploy these settings across several Waterfox installations
 ## all at once. This is traditionally done through the Windows Group Policy
 ## feature, but the system also supports other forms of deployment.
 ## These are short descriptions for individual policies, to be displayed
@@ -50,8 +50,8 @@ policy-DisableFeedbackCommands = Көмек мәзірінен кері байл
 
 policy-DisableFirefoxAccounts = { -fxaccount-brand-name } негізіндегі қызметтерді, Синхрондауды қоса, сөндіру.
 
-# Firefox Screenshots is the name of the feature, and should not be translated.
-policy-DisableFirefoxScreenshots = Firefox скриншоттары мүмкіндігін сөндіру.
+# Waterfox Screenshots is the name of the feature, and should not be translated.
+policy-DisableFirefoxScreenshots = Waterfox скриншоттары мүмкіндігін сөндіру.
 
 policy-DisableFirefoxStudies = { -brand-short-name } үшін зерттеулерді орындауға тыйым салу.
 
@@ -108,7 +108,7 @@ policy-ExtensionSettings = Кеңейту орнатылуының барлық 
 
 policy-ExtensionUpdate = Кеңейтулерді автожаңартуды іске қосу немесе сөндіру.
 
-policy-FirefoxHome = Firefox үй парағын баптау.
+policy-FirefoxHome = Waterfox үй парағын баптау.
 
 policy-FlashPlugin = Flash плагинін қолдануды рұқсат ету немесе бұғаттау.
 

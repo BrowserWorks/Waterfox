@@ -29,9 +29,9 @@ graph-week-summary-private-window = Трекеры, заблокированны
 
 protection-report-webpage-title = Панель состояния защиты
 protection-report-page-content-title = Панель состояния защиты
-# This message shows when all privacy protections are turned off, which is why we use the word "can", Firefox is able to protect your privacy, but it is currently not.
+# This message shows when all privacy protections are turned off, which is why we use the word "can", Waterfox is able to protect your privacy, but it is currently not.
 protection-report-page-summary = { -brand-short-name } может незаметно защищать вашу приватность во время пребывания в Интернете. Это персонализированная сводка состояния защиты, включая средства контроля вашей безопасности в Интернете.
-# This message shows when at least some protections are turned on, we are more assertive compared to the message above, Firefox is actively protecting you.
+# This message shows when at least some protections are turned on, we are more assertive compared to the message above, Waterfox is actively protecting you.
 protection-report-page-summary-default = { -brand-short-name } незаметно защищает вашу приватность во время пребывания в Интернете. Это персонализированная сводка состояния защиты, включая средства контроля вашей безопасности в Интернете.
 
 protection-report-settings-link = Управление настройками защиты и приватности

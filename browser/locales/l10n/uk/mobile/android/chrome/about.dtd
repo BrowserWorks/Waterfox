@@ -17,5 +17,5 @@
 <!ENTITY aboutPage.credits.label                "Учасники проекту">
 <!ENTITY aboutPage.license.label                "Ліцензійна інформація">
 
-<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Firefox" being trademarked, that's why we use it, instead of brandShortName. -->
-<!ENTITY aboutPage.logoTrademark                "Firefox та логотипи Firefox є торговими марками Mozilla Foundation.">
+<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Waterfox" being trademarked, that's why we use it, instead of brandShortName. -->
+<!ENTITY aboutPage.logoTrademark                "Firefox та логотипи Waterfox є торговими марками Waterfox Ltd..">

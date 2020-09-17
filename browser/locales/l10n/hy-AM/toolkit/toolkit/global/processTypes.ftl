@@ -10,7 +10,7 @@ process-type-privilegedabout = Արտոնյալի մասին
 
 # process used to run privileged mozilla pages,
 # such as accounts.firefox.com
-process-type-privilegedmozilla = Mozilla-ի արտոնյալ բովանդակություն
+process-type-privilegedmozilla = Waterfox-ի արտոնյալ բովանդակություն
 
 process-type-extension = Ընդլայնում
 

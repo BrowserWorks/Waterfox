@@ -47,7 +47,7 @@ this container is a toolbar. This avoids double-speaking. -->
 <!ENTITY pictureInPictureHideToggle.accesskey "F">
 
 <!-- LOCALIZATION NOTE (fxa.menu) Used to define the different labels
-     for the Firefox Account toolbar menu screen. The `Signed in as` text is
+     for the Waterfox Account toolbar menu screen. The `Signed in as` text is
      followed by the user's email. -->
 <!ENTITY fxa.menu.syncSettings2.label "Rregullime të &syncBrand.shortName.label;">
 <!ENTITY fxa.menu.connectAnotherDevice2.label "Lidhni Tjetër Pajisje…">
@@ -64,7 +64,7 @@ this container is a toolbar. This avoids double-speaking. -->
 <!ENTITY fxa.menu.setupSync.label "Ujdisni &syncBrand.shortName.label;…">
 
 <!-- LOCALIZATION NOTE (fxa.service) Used to define the different FxA services
-     for the Firefox Account toolbar menu screen.  -->
+     for the Waterfox Account toolbar menu screen.  -->
 <!ENTITY fxa.service.sendTab.description "Dërgoni aty për aty një skedë te cilado pajisje në të cilën keni bërë hyrje.">
 
 <!-- LOCALIZATION NOTE (fullscreenWarning.beforeDomain.label,
@@ -171,7 +171,7 @@ this container is a toolbar. This avoids double-speaking. -->
 <!ENTITY appMenuRemoteTabs.tabsnotsyncing.label "Aktivizoni njëkohësim skedash që të shihni një listë skedash nga pajisje tuajat të tjera.">
 <!-- LOCALIZATION NOTE (appMenuRemoteTabs.noclients.subtitle): This is shown
      when Sync is configured but this appears to be the only device attached to
-     the account. We also show links to download Firefox for android/ios. -->
+     the account. We also show links to download Waterfox for android/ios. -->
 <!ENTITY appMenuRemoteTabs.noclients.subtitle "Doni të shihni këtu skedat tuaja nga pajisje të tjera?">
 <!ENTITY appMenuRemoteTabs.opensyncprefs.label "Hapni Parapëlqime Sync-u">
 <!ENTITY appMenuRemoteTabs.welcome.label "Shihni një listë skedash nga pajisje tuajat të tjera.">

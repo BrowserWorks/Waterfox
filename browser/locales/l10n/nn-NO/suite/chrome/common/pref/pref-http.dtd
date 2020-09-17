@@ -15,12 +15,12 @@
 <!ENTITY prefEnableHTTP11Proxy.accesskey     "T">
 <!ENTITY prefPara                            "HTTP-tilkoplingar kan bli finjusterte med desse innstillingane for å betre anten yting eller kompabilitet. Enkelte mellomtenarar, til dømes, treng HTTP/1.0 for å verke (sjå versjonsnotatet for meir informasjon).">
 <!ENTITY prefUseragent.label                 "Brukeragenttekst">
-<!ENTITY prefFirefoxCompat.label             "Annonser kompatibilitet med Firefox">
+<!ENTITY prefFirefoxCompat.label             "Annonser kompatibilitet med Waterfox">
 <!ENTITY prefFirefoxCompat.accesskey         "A">
 <!ENTITY prefLightningShow.label             "Annonser Lightning-installasjon">
 <!ENTITY prefLightningShow.accesskey         "L">
 <!ENTITY prefCompatWarning                   "ÅTVARING: deaktivering av desse innstillingane kan føre til at nettstadar eller tenester ikkje fungerer som dei skal.">
-<!ENTITY prefFirefoxStrict.label             "Identifiser som Firefox">
+<!ENTITY prefFirefoxStrict.label             "Identifiser som Waterfox">
 <!ENTITY prefFirefoxStrict.accesskey         "">
 <!ENTITY prefFirefoxNone.label               "Identifiser som SeaMonkey">
 <!ENTITY prefFirefoxNone.accesskey           "M">

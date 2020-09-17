@@ -452,9 +452,9 @@ addon-permissions-empty = Nitaj si ni'ñanj ekstensiûn nan gà' si 'ngo nuguan 
 recommended-extensions-heading = Nej ekstensiûn ga'ue garasunt
 recommended-themes-heading = Nej temâ ga'ue garasunt
 
-# A recommendation for the Firefox Color theme shown at the bottom of the theme
+# A recommendation for the Waterfox Color theme shown at the bottom of the theme
 # list view. The "Firefox Color" name itself should not be translated.
-recommended-theme-1 = Ûta hua sa ahui ràt ruhuâ raj? <a data-l10n-name="link">Girirà dàj ga si temât ngà Firefox Color.</a>
+recommended-theme-1 = Ûta hua sa ahui ràt ruhuâ raj? <a data-l10n-name="link">Girirà dàj ga si temât ngà Waterfox Color.</a>
 
 ## Page headings
 

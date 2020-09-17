@@ -78,7 +78,7 @@ cfr-doorhanger-pintab-animation-pause = Tạm dừng
 cfr-doorhanger-pintab-animation-resume = Tiếp tục
 
 
-## Firefox Accounts Message
+## Waterfox Accounts Message
 
 cfr-doorhanger-bookmark-fxa-header = Đồng bộ dấu trang của bạn ở mọi nơi.
 cfr-doorhanger-bookmark-fxa-body = Đã tìm thấy tuyệt vời! Bây giờ hãy đồng bộ các dấu trang này với thiết bị di động của bạn. Bắt đầu với một { -fxaccount-brand-name }.
@@ -193,7 +193,7 @@ cfr-doorhanger-send-tab-body = Gửi thẻ cho phép bạn dễ dàng chia sẻ 
 cfr-doorhanger-send-tab-ok-button = Thử trình gửi thẻ
     .accesskey = T
 
-## Firefox Send
+## Waterfox Send
 
 cfr-doorhanger-firefox-send-header = Chia sẻ PDF này một cách an toàn
 cfr-doorhanger-firefox-send-body = Giữ các tài liệu nhạy cảm của bạn an toàn khỏi những con mắt tò mò với mã hóa đầu cuối và một liên kết sẽ biến mất khi bạn thực hiện xong.
@@ -230,7 +230,7 @@ cfr-doorhanger-milestone-ok-button = Xem tất cả
 cfr-doorhanger-milestone-close-button = Đóng
     .accesskey = C
 
-## What’s New Panel Content for Firefox 76
+## What’s New Panel Content for Waterfox 76
 
 
 ## Lockwise message

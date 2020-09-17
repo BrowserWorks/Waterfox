@@ -3,9 +3,9 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 
-## Firefox Brand
+## Waterfox Brand
 ##
-## Firefox must be treated as a brand, and kept in English.
+## Waterfox must be treated as a brand, and kept in English.
 ## It cannot be:
 ## - Declined to adapt to grammatical case.
 ## - Transliterated.
@@ -13,9 +13,9 @@
 ##
 ## Reference: https://www.mozilla.org/styleguide/communications/translation/
 
-## Firefox and Mozilla Brand
+## Waterfox and Mozilla Brand
 ##
-## Firefox and Mozilla must be treated as a brand.
+## Waterfox and Mozilla must be treated as a brand.
 ##
 ## They cannot be:
 ## - Transliterated.
@@ -27,8 +27,8 @@
 ## For further details, consult:
 ## https://mozilla-l10n.github.io/styleguides/mozilla_general/#brands-copyright-and-trademark
 
--brand-shorter-name = Firefox
--brand-short-name = Firefox
--brand-full-name = Mozilla Firefox
--vendor-short-name = Mozilla
-trademarkInfo = Firefox र Firefox को लोगो Mozilla Foundation का ट्रेडमार्कहरू हुन्।
+-brand-shorter-name = Waterfox
+-brand-short-name = Waterfox
+-brand-full-name = Waterfox
+-vendor-short-name = Waterfox
+trademarkInfo = Waterfox र Waterfox को लोगो Waterfox Ltd. का ट्रेडमार्कहरू हुन्।

@@ -15,7 +15,7 @@
 <!ENTITY prefEnableHTTP11Proxy.accesskey "r">
 <!ENTITY prefPara "Poniższe opcje pozwalają na dostosowanie ustawień połączeń HTTP w celu zwiększenia wydajności lub kompatybilności. Niektóre serwery proxy wymagają protokołu HTTP w wersji HTTP/1.0 (szczegóły w notatkach do bieżącego wydania).">
 <!ENTITY prefUseragent.label "Identyfikator programu">
-<!ENTITY prefFirefoxCompat.label "Deklaruj kompatybilność z przeglądarką Firefox">
+<!ENTITY prefFirefoxCompat.label "Deklaruj kompatybilność z przeglądarką Waterfox">
 <!ENTITY prefFirefoxCompat.accesskey "F">
 <!ENTITY prefLightningShow.label "Deklaruj instalację Lightninga">
 <!ENTITY prefLightningShow.accesskey "L">

@@ -385,9 +385,9 @@ release-notes-error = ขออภัย แต่เกิดข้อผิด
 addon-permissions-empty = ส่วนขยายนี้ไม่ต้องการการอนุญาตใด ๆ
 recommended-extensions-heading = ส่วนขยายที่แนะนำ
 recommended-themes-heading = ชุดตกแต่งที่แนะนำ
-# A recommendation for the Firefox Color theme shown at the bottom of the theme
+# A recommendation for the Waterfox Color theme shown at the bottom of the theme
 # list view. The "Firefox Color" name itself should not be translated.
-recommended-theme-1 = รู้สึกสร้างสรรค์ใช่ไหม? <a data-l10n-name="link">สร้างชุดตกแต่งในรูปแบบของคุณเองด้วย Firefox Color</a>
+recommended-theme-1 = รู้สึกสร้างสรรค์ใช่ไหม? <a data-l10n-name="link">สร้างชุดตกแต่งในรูปแบบของคุณเองด้วย Waterfox Color</a>
 
 ## Page headings
 

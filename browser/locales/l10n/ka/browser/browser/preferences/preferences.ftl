@@ -122,9 +122,9 @@ search-results-help-link = გესაჭიროებათ დახმა�
 
 startup-header = ჩართვისას
 # { -brand-short-name } will be 'Firefox Developer Edition',
-# since this setting is only exposed in Firefox Developer Edition
+# since this setting is only exposed in Waterfox Developer Edition
 separate-profile-mode =
-    .label = ნებართვა, რომ { -brand-short-name } და Firefox გაეშვას ერთდროულად
+    .label = ნებართვა, რომ { -brand-short-name } და Waterfox გაეშვას ერთდროულად
 use-firefox-sync = რჩევა: ეს სხვადასხვა პროფილებს იყენებს. მათ შორის მონაცემების გასაზიარებლად { -sync-brand-short-name } გამოიყენეთ.
 get-started-not-logged-in = { -sync-brand-short-name } – შესვლა...
 get-started-configured = { -sync-brand-short-name(case: "gen") } პარამეტრების გახსნა
@@ -455,10 +455,10 @@ home-newtabs-mode-label = ახალი ჩანართები
 home-restore-defaults =
     .label = ნაგულისხმევის აღდგენა
     .accesskey = ნ
-# "Firefox" should be treated as a brand and kept in English,
+# "Waterfox" should be treated as a brand and kept in English,
 # while "Home" and "(Default)" can be localized.
 home-mode-choice-default =
-    .label = Firefox საწყისი გვერდი (ნაგულისხმევი)
+    .label = Waterfox საწყისი გვერდი (ნაგულისხმევი)
 home-mode-choice-custom =
     .label = მითითებული URL-მისამართები...
 home-mode-choice-blank =
@@ -480,10 +480,10 @@ choose-bookmark =
     .label = სანიშნის გამოყენება…
     .accesskey = ს
 
-## Home Section - Firefox Home Content Customization
+## Home Section - Waterfox Home Content Customization
 
-home-prefs-content-header = Firefox საწყისი გვერდი
-home-prefs-content-description = აირჩიეთ, თუ რისი გამოჩენა გსურთ Firefox-ის საწყის გვერდზე.
+home-prefs-content-header = Waterfox საწყისი გვერდი
+home-prefs-content-description = აირჩიეთ, თუ რისი გამოჩენა გსურთ Waterfox-ის საწყის გვერდზე.
 home-prefs-search-header =
     .label = საძიებო ველი
 home-prefs-topsites-header =
@@ -603,7 +603,7 @@ containers-preferences-button =
 containers-remove-button =
     .label = წაშლა
 
-## Firefox Account - Signed out. Note that "Sync" and "Firefox Account" are now
+## Waterfox Account - Signed out. Note that "Sync" and "Firefox Account" are now
 ## more discrete ("signed in" no longer means "and sync is connected").
 
 sync-signedout-caption = წაიყოლეთ თქვენი მონაცემები თან
@@ -619,9 +619,9 @@ sync-signedout-account-signin2 =
 #
 # They can be moved within the sentence as needed to adapt
 # to your language, but should not be changed or translated.
-sync-mobile-promo = Firefox ჩამოტვირთეთ <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android-ისთვის</a> ან <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS-ისთვის</a> თქვენს მობილურ მოწყობილობასთან სინქრონიზაციისთვის.
+sync-mobile-promo = Waterfox ჩამოტვირთეთ <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android-ისთვის</a> ან <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS-ისთვის</a> თქვენს მობილურ მოწყობილობასთან სინქრონიზაციისთვის.
 
-## Firefox Account - Signed in
+## Waterfox Account - Signed in
 
 sync-profile-picture =
     .tooltiptext = პროფილის სურათის შეცვლა
@@ -707,7 +707,7 @@ sync-engine-creditcards =
     .accesskey = კ
 sync-engine-addons =
     .label = დამატებები
-    .tooltiptext = Firefox სამაგიდო ვერსიის გაფართოებები და თემები
+    .tooltiptext = Waterfox სამაგიდო ვერსიის გაფართოებები და თემები
     .accesskey = დ
 sync-engine-prefs =
     .label =
@@ -813,8 +813,8 @@ history-header = ისტორია
 # "Firefox will" + "Remember history".
 #
 # If this doesn't work for your language, you can translate this message:
-#   - Simply as "Firefox", moving the verb into each option.
-#     This will result in "Firefox" + "Will remember history", etc.
+#   - Simply as "Waterfox", moving the verb into each option.
+#     This will result in "Waterfox" + "Will remember history", etc.
 #   - As a stand-alone message, for example "Firefox history settings:".
 history-remember-label = { -brand-short-name } მონაცემებს
     .accesskey = მ

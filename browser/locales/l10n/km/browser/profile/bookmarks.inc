@@ -18,8 +18,8 @@
 #define getting_started ចាប់ផ្ដើម
 
 # LOCALIZATION NOTE (firefox_heading):
-# Firefox links folder name
-#define firefox_heading Mozilla Firefox
+# Waterfox links folder name
+#define firefox_heading Waterfox
 
 # LOCALIZATION NOTE (firefox_help):
 # link title for https://www.mozilla.org/en-US/firefox/help/
@@ -27,7 +27,7 @@
 
 # LOCALIZATION NOTE (firefox_customize):
 # link title for https://www.mozilla.org/en-US/firefox/customize/
-#define firefox_customize ប្ដូរ Firefox តាម​បំណង
+#define firefox_customize ប្ដូរ Waterfox តាម​បំណង
 
 # LOCALIZATION NOTE (firefox_community):
 # link title for https://www.mozilla.org/en-US/contribute/
@@ -38,12 +38,12 @@
 #define firefox_about អំពី​យើង
 
 # LOCALIZATION NOTE (nightly_heading):
-# Firefox Nightly links folder name
-#define nightly_heading ធនធាន Firefox Nightly
+# Waterfox Nightly links folder name
+#define nightly_heading ធនធាន Waterfox Nightly
 
 # LOCALIZATION NOTE (nightly_blog):
 # Nightly builds only, link title for https://blog.nightly.mozilla.org/
-#define nightly_blog កំណត់ហេតុបណ្ដាញ Firefox Nightly
+#define nightly_blog កំណត់ហេតុបណ្ដាញ Waterfox Nightly
 
 # LOCALIZATION NOTE (bugzilla):
 # Nightly builds only, link title for https://bugzilla.mozilla.org/

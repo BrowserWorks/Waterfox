@@ -136,9 +136,9 @@ manifest-loaded-ok = Manifest laddat.
 # load the manifest
 manifest-loaded-error = Det uppstod ett fel när man laddade manifestet:
 
-# Text displayed as an error when there has been a Firefox DevTools error while
+# Text displayed as an error when there has been a Waterfox DevTools error while
 # trying to load the manifest
-manifest-loaded-devtools-error = Fel i Firefox DevTools
+manifest-loaded-devtools-error = Fel i Waterfox DevTools
 
 # Text displayed when the page has no manifest available
 manifest-non-existing = Inget manifest hittades för att inspektera.

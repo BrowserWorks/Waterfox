@@ -46,7 +46,7 @@ import-from-chromium =
     .label = Chromium
     .accesskey = u
 import-from-firefox =
-    .label = Firefox
+    .label = Waterfox
     .accesskey = x
 import-from-360se =
     .label = 360 సురక్షిత విహారిణి
@@ -88,7 +88,7 @@ source-name-chrome = Google Chrome
 source-name-chrome-beta = గూగుల్ క్రోమ్ బీటా
 source-name-chrome-dev = గూగుల్ క్రోమ్ డెవ్
 source-name-chromium = Chromium
-source-name-firefox = Mozilla Firefox
+source-name-firefox = Waterfox
 source-name-360se = 360 సురక్షిత విహారిణి
 
 imported-safari-reading-list = జాబితాను చదువుతోంది (సఫారీ నుండి)

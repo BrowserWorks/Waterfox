@@ -50,7 +50,7 @@ this container is a toolbar. This avoids double-speaking. -->
 <!ENTITY pictureInPictureHideToggle.accesskey "S">
 
 <!-- LOCALIZATION NOTE (fxa.menu) Used to define the different labels
-     for the Firefox Account toolbar menu screen. The `Signed in as` text is
+     for the Waterfox Account toolbar menu screen. The `Signed in as` text is
      followed by the user's email. -->
 <!ENTITY fxa.menu.syncSettings2.label "Nastavenie synchronizácie">
 <!ENTITY fxa.menu.connectAnotherDevice2.label "Pripojiť ďalšie zariadenie…">
@@ -67,7 +67,7 @@ this container is a toolbar. This avoids double-speaking. -->
 <!ENTITY fxa.menu.setupSync.label "Nastaviť službu &syncBrand.shortName.label;…">
 
 <!-- LOCALIZATION NOTE (fxa.service) Used to define the different FxA services
-     for the Firefox Account toolbar menu screen.  -->
+     for the Waterfox Account toolbar menu screen.  -->
 <!ENTITY fxa.service.sendTab.description "Pošle kartu do iného zariadenia, na ktorom ste prihlásení.">
 
 <!-- LOCALIZATION NOTE (fullscreenWarning.beforeDomain.label,
@@ -113,7 +113,7 @@ this container is a toolbar. This avoids double-speaking. -->
 <!ENTITY bookmarksSubview.label             "Záložky">
 <!ENTITY bookmarksMenuButton2.label         "Ponuka záložiek">
 <!ENTITY bookmarksMenuButton.other.label    "Ostatné záložky">
-<!ENTITY bookmarksMenuButton.mobile.label   "Záložky mobilného Firefoxu">
+<!ENTITY bookmarksMenuButton.mobile.label   "Záložky mobilného Waterfoxu">
 <!ENTITY viewBookmarksSidebar2.label        "Zobraziť bočný panel Záložky">
 <!ENTITY hideBookmarksSidebar.label         "Skryť bočný panel Záložky">
 <!ENTITY viewBookmarksToolbar.label         "Zobraziť panel nástrojov Záložky">
@@ -174,7 +174,7 @@ this container is a toolbar. This avoids double-speaking. -->
 <!ENTITY appMenuRemoteTabs.tabsnotsyncing.label "Zapnutím synchronizácie kariet zobrazíte zoznam kariet z vašich ostatných zariadení.">
 <!-- LOCALIZATION NOTE (appMenuRemoteTabs.noclients.subtitle): This is shown
      when Sync is configured but this appears to be the only device attached to
-     the account. We also show links to download Firefox for android/ios. -->
+     the account. We also show links to download Waterfox for android/ios. -->
 <!ENTITY appMenuRemoteTabs.noclients.subtitle "Chceli by ste tu vidieť vaše karty z ostatných zariadení?">
 <!ENTITY appMenuRemoteTabs.opensyncprefs.label "Otvoriť nastavenia synchronizácie">
 <!ENTITY appMenuRemoteTabs.welcome.label "Zobraziť zoznam kariet z ostatných zariadení.">

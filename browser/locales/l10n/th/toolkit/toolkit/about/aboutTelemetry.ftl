@@ -17,8 +17,8 @@ about-telemetry-next-ping = >>
 about-telemetry-page-title = ข้อมูลการวัดและส่งข้อมูลทางไกล
 about-telemetry-current-store = ส่วนจัดเก็บปัจจุบัน:
 about-telemetry-more-information = กำลังมองหาข้อมูลเพิ่มเติม?
-about-telemetry-firefox-data-doc = <a data-l10n-name="data-doc-link">เอกสารข้อมูล Firefox</a> มีคำแนะนำเกี่ยวกับวิธีการทำงานกับเครื่องมือข้อมูลของเรา
-about-telemetry-telemetry-client-doc = <a data-l10n-name="client-doc-link">เอกสารเกี่ยวกับไคลเอนต์การวัดและส่งข้อมูลทางไกลของ Firefox</a> มีคำจำกัดความสำหรับหลักการทำงาน, เอกสาร API และการอ้างอิงข้อมูล
+about-telemetry-firefox-data-doc = <a data-l10n-name="data-doc-link">เอกสารข้อมูล Waterfox</a> มีคำแนะนำเกี่ยวกับวิธีการทำงานกับเครื่องมือข้อมูลของเรา
+about-telemetry-telemetry-client-doc = <a data-l10n-name="client-doc-link">เอกสารเกี่ยวกับไคลเอนต์การวัดและส่งข้อมูลทางไกลของ Waterfox</a> มีคำจำกัดความสำหรับหลักการทำงาน, เอกสาร API และการอ้างอิงข้อมูล
 about-telemetry-telemetry-dashboard = <a data-l10n-name="dashboard-link">แดชบอร์ดการวัดและส่งข้อมูลทางไกล</a>ช่วยให้คุณเห็นภาพข้อมูลที่ Mozilla ได้รับผ่านการวัดและส่งข้อมูลทางไกล
 about-telemetry-telemetry-probe-dictionary = <a data-l10n-name="probe-dictionary-link">Probe Dictionary</a> มีรายละเอียดและคำอธิบายสำหรับโพรบที่รวบรวมโดยการวัดและส่งข้อมูลทางไกล
 about-telemetry-show-in-Firefox-json-viewer = เปิดในตัวดู JSON

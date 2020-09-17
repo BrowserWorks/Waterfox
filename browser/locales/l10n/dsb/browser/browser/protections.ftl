@@ -31,9 +31,9 @@ graph-week-summary-private-window = Pśeslědowaki, kótarež { -brand-short-nam
 
 protection-report-webpage-title = Pśeglěd šćitow
 protection-report-page-content-title = Pśeglěd šćitow
-# This message shows when all privacy protections are turned off, which is why we use the word "can", Firefox is able to protect your privacy, but it is currently not.
+# This message shows when all privacy protections are turned off, which is why we use the word "can", Waterfox is able to protect your privacy, but it is currently not.
 protection-report-page-summary = { -brand-short-name } móžo wašu priwatnosć za kulisami šćitaś, mjaztym až pśeglědujośo. To jo personalizěrowane zespominanje toś tych šćitnych napšawow, mjazy nimi rědy, kótarež wašu wěstotu online kontrolěruju.
-# This message shows when at least some protections are turned on, we are more assertive compared to the message above, Firefox is actively protecting you.
+# This message shows when at least some protections are turned on, we are more assertive compared to the message above, Waterfox is actively protecting you.
 protection-report-page-summary-default = { -brand-short-name } wašu priwatnosć za kulisami šćita, mjaztym až pśeglědujośo. To jo personalizěrowane zespominanje toś tych šćitnych napšawow, mjazy nimi rědy, kótarež wašu wěstotu online kontrolěruju.
 
 protection-report-settings-link = Nastajenja priwatnosći a wěstoty zastojaś

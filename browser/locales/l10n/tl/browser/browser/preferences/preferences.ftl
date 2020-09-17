@@ -118,9 +118,9 @@ search-results-help-link = Kailangan ng tulong? Bisitahin ang <a data-l10n-name=
 
 startup-header = Startup
 # { -brand-short-name } will be 'Firefox Developer Edition',
-# since this setting is only exposed in Firefox Developer Edition
+# since this setting is only exposed in Waterfox Developer Edition
 separate-profile-mode =
-    .label = Payagan ang { -brand-short-name } at Firefox na tumakbo nang sabay
+    .label = Payagan ang { -brand-short-name } at Waterfox na tumakbo nang sabay
 use-firefox-sync = Tip: Gumagamit ito ng mga hiwalay na profile. Gumamit ng { -sync-brand-short-name } upang ibahagi ang data sa pagitan nila.
 get-started-not-logged-in = Mag-sign in sa { -sync-brand-short-name }…
 get-started-configured = Buksan ang mga preference ng { -sync-brand-short-name }
@@ -440,10 +440,10 @@ home-newtabs-mode-label = Mga bagong tab
 home-restore-defaults =
     .label = Ibalik sa dating ayos
     .accesskey = I
-# "Firefox" should be treated as a brand and kept in English,
+# "Waterfox" should be treated as a brand and kept in English,
 # while "Home" and "(Default)" can be localized.
 home-mode-choice-default =
-    .label = Firefox Home (Default)
+    .label = Waterfox Home (Default)
 home-mode-choice-custom =
     .label = Custom URLs...
 home-mode-choice-blank =
@@ -465,10 +465,10 @@ choose-bookmark =
     .label = Gumamit ng Bookmark...
     .accesskey = B
 
-## Home Section - Firefox Home Content Customization
+## Home Section - Waterfox Home Content Customization
 
-home-prefs-content-header = Makikita sa Home ng Firefox
-home-prefs-content-description = Piliin kung anong nilalaman ang gusto mo sa iyong screen ng Home ng Firefox.
+home-prefs-content-header = Makikita sa Home ng Waterfox
+home-prefs-content-description = Piliin kung anong nilalaman ang gusto mo sa iyong screen ng Home ng Waterfox.
 home-prefs-search-header =
     .label = Paghahanap sa Web
 home-prefs-topsites-header =
@@ -585,7 +585,7 @@ containers-preferences-button =
 containers-remove-button =
     .label = Alisin
 
-## Firefox Account - Signed out. Note that "Sync" and "Firefox Account" are now
+## Waterfox Account - Signed out. Note that "Sync" and "Firefox Account" are now
 ## more discrete ("signed in" no longer means "and sync is connected").
 
 sync-signedout-caption = Dalhin Mo Ang Web Kahit Saan
@@ -601,9 +601,9 @@ sync-signedout-account-signin2 =
 #
 # They can be moved within the sentence as needed to adapt
 # to your language, but should not be changed or translated.
-sync-mobile-promo = I-download ang Firefox para sa<img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> o <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS</a> upang i-sync sa iyong mobile device.
+sync-mobile-promo = I-download ang Waterfox para sa<img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> o <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS</a> upang i-sync sa iyong mobile device.
 
-## Firefox Account - Signed in
+## Waterfox Account - Signed in
 
 sync-profile-picture =
     .tooltiptext = Baguhin ang larawan ng profile
@@ -689,7 +689,7 @@ sync-engine-creditcards =
     .accesskey = c
 sync-engine-addons =
     .label = Mga Add-on
-    .tooltiptext = Mga extension at tema para sa Firefox desktop
+    .tooltiptext = Mga extension at tema para sa Waterfox desktop
     .accesskey = A
 sync-engine-prefs =
     .label =
@@ -795,8 +795,8 @@ history-header = Kasaysayan
 # "Firefox will" + "Remember history".
 #
 # If this doesn't work for your language, you can translate this message:
-#   - Simply as "Firefox", moving the verb into each option.
-#     This will result in "Firefox" + "Will remember history", etc.
+#   - Simply as "Waterfox", moving the verb into each option.
+#     This will result in "Waterfox" + "Will remember history", etc.
 #   - As a stand-alone message, for example "Firefox history settings:".
 history-remember-label = Gagawin ng { -brand-short-name } na
     .accesskey = w

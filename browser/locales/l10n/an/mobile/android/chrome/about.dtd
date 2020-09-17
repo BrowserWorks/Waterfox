@@ -16,6 +16,6 @@
 <!ENTITY aboutPage.relNotes.label               "Notas d'a versión">
 <!ENTITY aboutPage.credits.label                "Creditos">
 <!ENTITY aboutPage.license.label                "Información d'a licencia">
-<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Firefox" being trademarked, that's why we use it, instead of brandShortName. -->
+<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Waterfox" being trademarked, that's why we use it, instead of brandShortName. -->
 
-<!ENTITY aboutPage.logoTrademark                "Firefox y os logos de Firefox son marcas rechistradas d'a Fundación Mozilla">
+<!ENTITY aboutPage.logoTrademark                "Firefox y os logos de Waterfox son marcas rechistradas d'a Fundación Mozilla">

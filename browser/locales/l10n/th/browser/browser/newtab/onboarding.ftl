@@ -77,7 +77,7 @@ onboarding-multistage-theme-description-automatic = ใช้ชุดตกแ�
 onboarding-multistage-theme-label-light = สว่าง
 onboarding-multistage-theme-label-dark = มืด
 # "Firefox Alpenglow" here is the name of the theme, and should be kept in English.
-onboarding-multistage-theme-label-alpenglow = Firefox Alpenglow
+onboarding-multistage-theme-label-alpenglow = Waterfox Alpenglow
 
 ## Please make sure to split the content of the title attribute into lines whose
 ## width corresponds to about 40 Latin characters, to ensure that the tooltip
@@ -155,17 +155,17 @@ onboarding-fullpage-welcome-subheader = มาเริ่มสำรวจท�
 onboarding-fullpage-form-email =
     .placeholder = ที่อยู่อีเมลของคุณ…
 
-## Firefox Sync modal dialog strings.
+## Waterfox Sync modal dialog strings.
 
 onboarding-sync-welcome-header = นำ { -brand-product-name } ไปกับคุณ
 onboarding-sync-welcome-content = รับที่คั่นหน้า, ประวัติ, รหัสผ่าน และการตั้งค่าอื่น ๆ ของคุณในอุปกรณ์ทั้งหมดของคุณ
-onboarding-sync-welcome-learn-more-link = เรียนรู้เพิ่มเติมเกี่ยวกับบัญชี Firefox
+onboarding-sync-welcome-learn-more-link = เรียนรู้เพิ่มเติมเกี่ยวกับบัญชี Waterfox
 onboarding-sync-form-input =
     .placeholder = อีเมล
 onboarding-sync-form-continue-button = ดำเนินการต่อ
 onboarding-sync-form-skip-login-button = ข้ามขั้นตอนนี้
 
-## This is part of the line "Enter your email to continue to Firefox Sync"
+## This is part of the line "Enter your email to continue to Waterfox Sync"
 
 onboarding-sync-form-header = ป้อนอีเมลของคุณ
 onboarding-sync-form-sub-header = เพื่อดำเนินการต่อไปยัง { -sync-brand-name }
@@ -176,7 +176,7 @@ onboarding-sync-form-sub-header = เพื่อดำเนินการต�
 onboarding-benefit-products-text = ทำสิ่งต่าง ๆ ให้สำเร็จด้วยเครื่องมือมากมายที่เคารพความเป็นส่วนตัวของคุณบนอุปกรณ์ทุกเครื่องของคุณ
 # "Personal Data Promise" is a concept that should be translated consistently
 # across the product. It refers to a concept shown elsewhere to the user: "The
-# Firefox Personal Data Promise is the way we honor your data in everything we
+# Waterfox Personal Data Promise is the way we honor your data in everything we
 # make and do. We take less data. We keep it safe. And we make sure that we are
 # transparent about how we use it."
 onboarding-benefit-privacy-text = ทุกสิ่งที่เราทำเคารพต่อคำมั่นสัญญาด้านข้อมูลส่วนบุคคลของเรา: เก็บให้น้อย รักษาให้ปลอดภัย ไม่มีความลับ

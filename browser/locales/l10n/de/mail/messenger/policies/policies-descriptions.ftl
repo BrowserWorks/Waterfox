@@ -59,7 +59,7 @@ policy-DisableSecurityBypass = Umgehen einiger Sicherheitswarnungen durch Benutz
 
 policy-DisableSystemAddonUpdate = Installieren und Aktualisieren von System-Add-ons durch { -brand-short-name } deaktivieren
 
-policy-DisableTelemetry = Datenerhebung zur Verbesserung von Firefox (Telemetrie) deaktivieren
+policy-DisableTelemetry = Datenerhebung zur Verbesserung von Waterfox (Telemetrie) deaktivieren
 
 policy-DisplayMenuBar = Menüleiste standardmäßig anzeigen
 

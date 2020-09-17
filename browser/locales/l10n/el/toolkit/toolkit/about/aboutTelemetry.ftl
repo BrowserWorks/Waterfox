@@ -17,8 +17,8 @@ about-telemetry-next-ping = >>
 about-telemetry-page-title = Δεδομένα τηλεμετρίας
 about-telemetry-current-store = Τρέχον αποθετήριο:
 about-telemetry-more-information = Ψάχνετε περισσότερες πληροφορίες;
-about-telemetry-firefox-data-doc = Η <a data-l10n-name="data-doc-link">τεκμηρίωση δεδομένων του Firefox</a> περιέχει οδηγίες σχετικά με το πώς να εργαστείτε με τα εργαλεία δεδομένων μας.
-about-telemetry-telemetry-client-doc = Η <a data-l10n-name="client-doc-link">τεκμηρίωση πελάτη τηλεμετρίας του Firefox</a> περιλαμβάνει ορισμούς για ιδέες, τεκμηρίωση API και αναφορές δεδομένων.
+about-telemetry-firefox-data-doc = Η <a data-l10n-name="data-doc-link">τεκμηρίωση δεδομένων του Waterfox</a> περιέχει οδηγίες σχετικά με το πώς να εργαστείτε με τα εργαλεία δεδομένων μας.
+about-telemetry-telemetry-client-doc = Η <a data-l10n-name="client-doc-link">τεκμηρίωση πελάτη τηλεμετρίας του Waterfox</a> περιλαμβάνει ορισμούς για ιδέες, τεκμηρίωση API και αναφορές δεδομένων.
 about-telemetry-telemetry-dashboard = Οι <a data-l10n-name="dashboard-link">πίνακες τηλεμετρίας</a> σάς επιτρέπουν να βλέπετε τα δεδομένα που λαμβάνει η Mozilla μέσω της τηλεμετρίας.
 about-telemetry-telemetry-probe-dictionary = Το <a data-l10n-name="probe-dictionary-link">λεξικό ερευνών</a> παρέχει λεπτομέρειες και περιγραφές για τις έρευνες που συλλέχθηκαν από την Τηλεμετρία.
 about-telemetry-show-in-Firefox-json-viewer = Άνοιγμα στην προβολή JSON

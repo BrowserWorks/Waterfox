@@ -85,7 +85,7 @@ onboarding-multistage-theme-description-automatic = システムのテーマを�
 onboarding-multistage-theme-label-light = Light
 onboarding-multistage-theme-label-dark = Dark
 # "Firefox Alpenglow" here is the name of the theme, and should be kept in English.
-onboarding-multistage-theme-label-alpenglow = Firefox Alpenglow
+onboarding-multistage-theme-label-alpenglow = Waterfox Alpenglow
 
 ## Please make sure to split the content of the title attribute into lines whose
 ## width corresponds to about 40 Latin characters, to ensure that the tooltip
@@ -150,11 +150,11 @@ onboarding-fullpage-welcome-subheader = できることを探し始めましょ�
 onboarding-fullpage-form-email =
     .placeholder = あなたのメールアドレス...
 
-## Firefox Sync modal dialog strings.
+## Waterfox Sync modal dialog strings.
 
 onboarding-sync-welcome-header = { -brand-product-name } をあなたとともに
 onboarding-sync-welcome-content = すべての端末で、ブックマーク、履歴、パスワード、その他の設定を取得できます。
-onboarding-sync-welcome-learn-more-link = Firefox アカウントに関する詳細情報
+onboarding-sync-welcome-learn-more-link = Waterfox アカウントに関する詳細情報
 
 onboarding-sync-form-input =
     .placeholder = メールアドレス
@@ -162,7 +162,7 @@ onboarding-sync-form-input =
 onboarding-sync-form-continue-button = 続行
 onboarding-sync-form-skip-login-button = この手順をスキップ
 
-## This is part of the line "Enter your email to continue to Firefox Sync"
+## This is part of the line "Enter your email to continue to Waterfox Sync"
 
 onboarding-sync-form-header = メールアドレスを入力してください
 onboarding-sync-form-sub-header = { -sync-brand-name } の利用を続けるために必要です
@@ -175,7 +175,7 @@ onboarding-benefit-products-text = ご使用の端末すべてのプライバシ
 
 # "Personal Data Promise" is a concept that should be translated consistently
 # across the product. It refers to a concept shown elsewhere to the user: "The
-# Firefox Personal Data Promise is the way we honor your data in everything we
+# Waterfox Personal Data Promise is the way we honor your data in everything we
 # make and do. We take less data. We keep it safe. And we make sure that we are
 # transparent about how we use it."
 onboarding-benefit-privacy-text = 私たちが尊重する個人データ保護の約束: 最小限に、安全に。隠し事をしない。

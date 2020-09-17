@@ -5,7 +5,7 @@
 rights-title = あなたの権利について
 rights-intro = { -brand-full-name } は無料のオープンソースソフトウェアであり、世界中の多数のコミュニティによって開発されています。ご利用に際してはいくつか知っておいていただきたいことがあります:
 rights-intro-point-1 = { -brand-short-name } は <a data-l10n-name="mozilla-public-license-link">Mozilla Public License</a> の条項下で提供されます。これにより、あなたは { -brand-short-name } を使用、複製、配布することができます。あなたはまた、{ -brand-short-name } のソースコードを必要に応じて修正することもできます。Mozilla Public License では、あなたが修正したバージョンを配布することも認めています。
-rights-intro-point-2 = Mozilla Foundation とその関係団体の商標およびロゴについては、Firefox の製品名およびロゴを含めこれに限定されず、何らの権利もあなたに与えるものではありません。商標について詳しくは <a data-l10n-name="mozilla-trademarks-link">Mozilla 商標ポリシー</a> をご確認ください。
+rights-intro-point-2 = Waterfox Ltd. とその関係団体の商標およびロゴについては、Firefox の製品名およびロゴを含めこれに限定されず、何らの権利もあなたに与えるものではありません。商標について詳しくは <a data-l10n-name="mozilla-trademarks-link">Mozilla 商標ポリシー</a> をご確認ください。
 rights-intro-point-3 = クラッシュレポーターなど { -brand-short-name } の一部の機能には、{ -vendor-short-name } へフィードバックを送信するオプションがあります。あなたがフィードバックの送信を選択することにより、{ -vendor-short-name } がそのフィードバックを製品の改善および { -vendor-short-name } ウェブサイトでの公開、配布のために使用する許可を { -vendor-short-name } に与えるものとします。
 rights-intro-point-4 = あなたの個人情報と { -brand-short-name } を通して { -vendor-short-name } へ送信されるフィードバックの取り扱いについては <a data-l10n-name="mozilla-privacy-policy-link">{ -brand-short-name } プライバシーポリシー</a> をご確認ください。
 rights-intro-point-4-unbranded = この製品に関する適切なプライバシーポリシーをここに記述すること。

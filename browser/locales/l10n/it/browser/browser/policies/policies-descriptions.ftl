@@ -3,7 +3,7 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 ## The Enterprise Policies feature is aimed at system administrators
-## who want to deploy these settings across several Firefox installations
+## who want to deploy these settings across several Waterfox installations
 ## all at once. This is traditionally done through the Windows Group Policy
 ## feature, but the system also supports other forms of deployment.
 ## These are short descriptions for individual policies, to be displayed
@@ -49,8 +49,8 @@ policy-DisableFeedbackCommands = Disattiva i comandi per inviare feedback dal me
 
 policy-DisableFirefoxAccounts = Disattiva i servizi basati sugli { -fxaccount-brand-name }, incluso Sync.
 
-# Firefox Screenshots is the name of the feature, and should not be translated.
-policy-DisableFirefoxScreenshots = Disattiva Firefox Screenshots.
+# Waterfox Screenshots is the name of the feature, and should not be translated.
+policy-DisableFirefoxScreenshots = Disattiva Waterfox Screenshots.
 
 policy-DisableFirefoxStudies = Impedisci a { -brand-short-name } di condurre studi.
 
@@ -102,7 +102,7 @@ policy-ExtensionSettings = Gestisci tutti gli aspetti connessi all’installazio
 
 policy-ExtensionUpdate = Attiva o disattiva l’aggiornamento automatico delle estensioni.
 
-policy-FirefoxHome = Configura Firefox Home.
+policy-FirefoxHome = Configura Waterfox Home.
 
 policy-FlashPlugin = Consenti o nega l’utilizzo del plugin Flash.
 

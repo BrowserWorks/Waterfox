@@ -40,7 +40,7 @@ screenshots-self-screenshot-error-title = Njemóžeće wobrazowku strony { -scre
 
 screenshots-empty-selection-error-title = Waš wuběr je přemały
 
-screenshots-private-window-error-title = Firefox { -screenshots-brand-name } je w priwatnym modusu znjemóžnjeny
+screenshots-private-window-error-title = Waterfox { -screenshots-brand-name } je w priwatnym modusu znjemóžnjeny
 screenshots-private-window-error-details = Wodajće prošu njepřijomnosće. Dźěłamy na tutej funkciji za přichodne wersije.
 
 screenshots-generic-error-title = Hopla! { -screenshots-brand-name } njefunguje.

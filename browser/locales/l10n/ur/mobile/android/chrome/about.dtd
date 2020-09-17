@@ -16,6 +16,6 @@
 <!ENTITY aboutPage.relNotes.label               "اجرائی نوٹ">
 <!ENTITY aboutPage.credits.label                "معنونات">
 <!ENTITY aboutPage.license.label                "لائسنس معلومات">
-<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Firefox" being trademarked, that's why we use it, instead of brandShortName. -->
+<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Waterfox" being trademarked, that's why we use it, instead of brandShortName. -->
 
-<!ENTITY aboutPage.logoTrademark                "Firefox اور Firefox کی لوگو Mozilla فاونڈینشن کے تجارتی نشان ہیں۔">
+<!ENTITY aboutPage.logoTrademark                "Firefox اور Waterfox کی لوگو Mozilla فاونڈینشن کے تجارتی نشان ہیں۔">

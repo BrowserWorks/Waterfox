@@ -3,13 +3,13 @@
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!-- LOCALIZATION NOTE: For this feature, "installation" is used to mean "this
- discrete download of Firefox" and "version" is used to mean "the specific
- revision number of a given Firefox channel". These terms are not synonymous.
+ discrete download of Waterfox" and "version" is used to mean "the specific
+ revision number of a given Waterfox channel". These terms are not synonymous.
 -->
 
 <!ENTITY window.title "Wichtich nijs">
 <!ENTITY window.style "width: 490px">
-<!ENTITY sync "Om ynformaasje dy't jo al yn Firefox bewarre hawwe mei dizze ynstallaasje fan &brandShortName; te syngronisearjen, melde jo jo oan mei jo &syncBrand.fxAccount.label;.">
+<!ENTITY sync "Om ynformaasje dy't jo al yn Waterfox bewarre hawwe mei dizze ynstallaasje fan &brandShortName; te syngronisearjen, melde jo jo oan mei jo &syncBrand.fxAccount.label;.">
 <!ENTITY continue-button "Trochgean">
 
-<!ENTITY mainText "Dizze ynstallaasje fan &brandShortName; hat in nij profyl. De ynstallaasje dielt gjin blêdwizers, wachtwurden en brûkersfoarkarren mei oare ynstallaasjes fan Firefox (wêrûnder Firefox, Firefox ESR, Firefox Beta, Firefox Developer Edition en Firefox Nightly) op dizze kompjûter.">
+<!ENTITY mainText "Dizze ynstallaasje fan &brandShortName; hat in nij profyl. De ynstallaasje dielt gjin blêdwizers, wachtwurden en brûkersfoarkarren mei oare ynstallaasjes fan Waterfox (wêrûnder Waterfox, Waterfox ESR, Waterfox Beta, Waterfox Developer Edition en Waterfox Nightly) op dizze kompjûter.">

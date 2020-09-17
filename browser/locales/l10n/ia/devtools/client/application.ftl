@@ -136,9 +136,9 @@ manifest-loaded-ok = Manifesto cargate
 # load the manifest
 manifest-loaded-error = Il habeva un error a cargar le manifesto:
 
-# Text displayed as an error when there has been a Firefox DevTools error while
+# Text displayed as an error when there has been a Waterfox DevTools error while
 # trying to load the manifest
-manifest-loaded-devtools-error = Error de Firefox DevTools
+manifest-loaded-devtools-error = Error de Waterfox DevTools
 
 # Text displayed when the page has no manifest available
 manifest-non-existing = Nulle manifestos a inspectar trovate.

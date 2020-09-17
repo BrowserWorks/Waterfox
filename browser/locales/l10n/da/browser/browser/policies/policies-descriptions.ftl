@@ -4,7 +4,7 @@
 
 
 ## The Enterprise Policies feature is aimed at system administrators
-## who want to deploy these settings across several Firefox installations
+## who want to deploy these settings across several Waterfox installations
 ## all at once. This is traditionally done through the Windows Group Policy
 ## feature, but the system also supports other forms of deployment.
 ## These are short descriptions for individual policies, to be displayed
@@ -50,8 +50,8 @@ policy-DisableFeedbackCommands = Deaktiver kommandoer til at indsende feedback f
 
 policy-DisableFirefoxAccounts = Deaktiver tjenester baseret på { -fxaccount-brand-name }, inklusive Sync.
 
-# Firefox Screenshots is the name of the feature, and should not be translated.
-policy-DisableFirefoxScreenshots = Deaktiver funktionen Firefox Screenshots
+# Waterfox Screenshots is the name of the feature, and should not be translated.
+policy-DisableFirefoxScreenshots = Deaktiver funktionen Waterfox Screenshots
 
 policy-DisableFirefoxStudies = Deaktiver afvikling af { -brand-short-name }-undersøgelser.
 
@@ -108,7 +108,7 @@ policy-ExtensionSettings = Håndter alle aspekter af udvidelses-installering.
 
 policy-ExtensionUpdate = Slå automatisk opdatering af udvidelser til eller fra.
 
-policy-FirefoxHome = Indstil Firefox' startside.
+policy-FirefoxHome = Indstil Waterfox' startside.
 
 policy-FlashPlugin = Tillad eller afvis brug af Flash-plugin.
 

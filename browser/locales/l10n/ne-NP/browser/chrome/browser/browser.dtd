@@ -136,7 +136,7 @@ can reach it easily. -->
 <!ENTITY appMenuRemoteTabs.tabsnotsyncing.label "तपाईँको अन्य यन्त्रहरूबाट ट्याबहरूको सूची हेर्न ट्याब Sync सुरु गर्नुहोस्।">
 <!-- LOCALIZATION NOTE (appMenuRemoteTabs.noclients.subtitle): This is shown
      when Sync is configured but this appears to be the only device attached to
-     the account. We also show links to download Firefox for android/ios. -->
+     the account. We also show links to download Waterfox for android/ios. -->
 <!ENTITY appMenuRemoteTabs.noclients.subtitle "अन्य यन्त्रहरूको ट्याबहरू तपाईँ यहाँ हेर्न चाहनुहुन्छ?">
 <!ENTITY appMenuRemoteTabs.opensyncprefs.label "Sync प्राथमिकताहरू खोल्नुहोस्">
 <!ENTITY appMenuRemoteTabs.unverified.label "तपाईँको खाता प्रमाणित गर्न जरुरी छ।">

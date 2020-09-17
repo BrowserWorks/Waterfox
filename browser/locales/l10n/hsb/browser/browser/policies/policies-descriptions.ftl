@@ -4,7 +4,7 @@
 
 
 ## The Enterprise Policies feature is aimed at system administrators
-## who want to deploy these settings across several Firefox installations
+## who want to deploy these settings across several Waterfox installations
 ## all at once. This is traditionally done through the Windows Group Policy
 ## feature, but the system also supports other forms of deployment.
 ## These are short descriptions for individual policies, to be displayed
@@ -30,8 +30,8 @@ policy-DisableDefaultBrowserAgent = Haćće standardny agent wobhladowaka při w
 policy-DisableDeveloperTools = Přistup na wuwiwarske nastroje blokować.
 policy-DisableFeedbackCommands = Přikazy znjemóžnić, kotrež komentary z menija Pomoc sćelu (Posudk pósłać a Wobšudne sydło zdźělić)
 policy-DisableFirefoxAccounts = Słužby na zakładźe { -fxaccount-brand-name } znjemóžnić, inkluziwnje Sync.
-# Firefox Screenshots is the name of the feature, and should not be translated.
-policy-DisableFirefoxScreenshots = Funkciju Firefox Screenshots znjemóžnić.
+# Waterfox Screenshots is the name of the feature, and should not be translated.
+policy-DisableFirefoxScreenshots = Funkciju Waterfox Screenshots znjemóžnić.
 policy-DisableFirefoxStudies = { -brand-short-name } zakazać, studije wuwjesć.
 policy-DisableForgetButton = Přistup na tłóčatko Zabyć zakazać.
 policy-DisableFormHistory = Pytansku a formularnu historiju sej njespomjatkować
@@ -62,7 +62,7 @@ policy-EncryptedMediaExtensions = Encrypted Media Extensions zmóžnić abo znje
 policy-Extensions = Rozšěrjenja instalować, wotinstalować abo zawrěć. Instalaciska opcija ma URL abo šćežki jako parametry. Opciji Wotinstalować a Zawrěć ID wužiwatej.
 policy-ExtensionSettings = Wšě aspekty instalacije rozšěrjenjow rjadować.
 policy-ExtensionUpdate = Awtomatiske aktualizacije rozšěrjenjow zmóžnić abo znjemóžnić.
-policy-FirefoxHome = Firefox Home konfigurować.
+policy-FirefoxHome = Waterfox Home konfigurować.
 policy-FlashPlugin = Wužiwanje tykača Flash dowolić abo zakazać.
 policy-Handlers = Standardne nałoženske předźěłaki konfigurować
 policy-HardwareAcceleration = Jeli njewěrno, hardwarowe pospěšenje znjemóžnić.

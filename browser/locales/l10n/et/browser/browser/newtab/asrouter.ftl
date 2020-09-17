@@ -73,7 +73,7 @@ cfr-doorhanger-pintab-animation-pause = Paus
 cfr-doorhanger-pintab-animation-resume = Jätka
 
 
-## Firefox Accounts Message
+## Waterfox Accounts Message
 
 cfr-doorhanger-bookmark-fxa-header = Järjehoidjate sünkroonimine kõikjal.
 cfr-doorhanger-bookmark-fxa-body = Hea leid! Ära jää nüüd sellest järjehoidjast ilma oma mobiilsel seadmel. Tee algust { -fxaccount-brand-name }ga.
@@ -154,7 +154,7 @@ cfr-doorhanger-send-tab-body = Kaardi saatmise funktsionaalsus võimaldab sul li
 cfr-doorhanger-send-tab-ok-button = Proovi kaardi saatmist
     .accesskey = P
 
-## Firefox Send
+## Waterfox Send
 
 cfr-doorhanger-firefox-send-header = Jaga seda PDFi turvaliselt
 cfr-doorhanger-firefox-send-body = Hoia oma tundlikku infot sisaldavaid dokumente ohutult ning krüptitult, jagades neid lingiga, mis hävineb pärast faili edukat jagamist.
@@ -176,7 +176,7 @@ cfr-doorhanger-cryptominers-description = Sinu privaatsus on oluline. { -brand-s
 
 ## Enhanced Tracking Protection Milestones
 
-## What’s New Panel Content for Firefox 76
+## What’s New Panel Content for Waterfox 76
 
 ## Lockwise message
 

@@ -122,9 +122,9 @@ search-results-help-link = Χρειάζεστε βοήθεια; Επισκεφθ
 
 startup-header = Εκκίνηση
 # { -brand-short-name } will be 'Firefox Developer Edition',
-# since this setting is only exposed in Firefox Developer Edition
+# since this setting is only exposed in Waterfox Developer Edition
 separate-profile-mode =
-    .label = Να επιτρέπεται στο { -brand-short-name } και στο Firefox η ταυτόχρονη εκτέλεση
+    .label = Να επιτρέπεται στο { -brand-short-name } και στο Waterfox η ταυτόχρονη εκτέλεση
 use-firefox-sync = Συμβουλή: Θα γίνεται χρήση ξεχωριστών προφίλ. Χρησιμοποιήστε το { -sync-brand-short-name } για κοινή χρήση δεδομένων.
 get-started-not-logged-in = Σύνδεση στο { -sync-brand-short-name }…
 get-started-configured = Άνοιγμα προτιμήσεων του { -sync-brand-short-name }
@@ -455,10 +455,10 @@ home-newtabs-mode-label = Νέες καρτέλες
 home-restore-defaults =
     .label = Επαναφορά προεπιλογών
     .accesskey = Ε
-# "Firefox" should be treated as a brand and kept in English,
+# "Waterfox" should be treated as a brand and kept in English,
 # while "Home" and "(Default)" can be localized.
 home-mode-choice-default =
-    .label = Αρχική σελίδα Firefox (Προεπιλογή)
+    .label = Αρχική σελίδα Waterfox (Προεπιλογή)
 home-mode-choice-custom =
     .label = Προσαρμοσμένα URLs…
 home-mode-choice-blank =
@@ -480,10 +480,10 @@ choose-bookmark =
     .label = Χρήση σελιδοδείκτη…
     .accesskey = σ
 
-## Home Section - Firefox Home Content Customization
+## Home Section - Waterfox Home Content Customization
 
-home-prefs-content-header = Περιεχόμενο αρχικής σελίδας Firefox
-home-prefs-content-description = Επιλέξτε τι περιεχόμενο θέλετε στην αρχική σελίδα του Firefox σας.
+home-prefs-content-header = Περιεχόμενο αρχικής σελίδας Waterfox
+home-prefs-content-description = Επιλέξτε τι περιεχόμενο θέλετε στην αρχική σελίδα του Waterfox σας.
 home-prefs-search-header =
     .label = Διαδικτυακή αναζήτηση
 home-prefs-topsites-header =
@@ -603,7 +603,7 @@ containers-preferences-button =
 containers-remove-button =
     .label = Αφαίρεση
 
-## Firefox Account - Signed out. Note that "Sync" and "Firefox Account" are now
+## Waterfox Account - Signed out. Note that "Sync" and "Firefox Account" are now
 ## more discrete ("signed in" no longer means "and sync is connected").
 
 sync-signedout-caption = Πάρτε μαζί σας το διαδίκτυο
@@ -619,9 +619,9 @@ sync-signedout-account-signin2 =
 #
 # They can be moved within the sentence as needed to adapt
 # to your language, but should not be changed or translated.
-sync-mobile-promo = Κάντε λήψη του Firefox για <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> ή <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS</a> για συγχρονισμό με την κινητή σας συσκευή.
+sync-mobile-promo = Κάντε λήψη του Waterfox για <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> ή <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS</a> για συγχρονισμό με την κινητή σας συσκευή.
 
-## Firefox Account - Signed in
+## Waterfox Account - Signed in
 
 sync-profile-picture =
     .tooltiptext = Αλλαγή εικόνας προφίλ
@@ -707,7 +707,7 @@ sync-engine-creditcards =
     .accesskey = Π
 sync-engine-addons =
     .label = Πρόσθετα
-    .tooltiptext = Επεκτάσεις και θέματα για το Firefox για υπολογιστές
+    .tooltiptext = Επεκτάσεις και θέματα για το Waterfox για υπολογιστές
     .accesskey = Π
 sync-engine-prefs =
     .label =
@@ -813,8 +813,8 @@ history-header = Ιστορικό
 # "Firefox will" + "Remember history".
 #
 # If this doesn't work for your language, you can translate this message:
-#   - Simply as "Firefox", moving the verb into each option.
-#     This will result in "Firefox" + "Will remember history", etc.
+#   - Simply as "Waterfox", moving the verb into each option.
+#     This will result in "Waterfox" + "Will remember history", etc.
 #   - As a stand-alone message, for example "Firefox history settings:".
 history-remember-label = Το { -brand-short-name }
     .accesskey = ο

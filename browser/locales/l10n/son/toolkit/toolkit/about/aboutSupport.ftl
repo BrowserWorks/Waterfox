@@ -43,7 +43,7 @@ app-basics-performance = Teeyan sahã
 app-basics-service-workers = Service Workers hantumantey
 app-basics-profiles = Alhaaley
 app-basics-multi-process-support = Goyboobo zanfuney
-app-basics-key-mozilla = Mozilla gorodoo goy kufal
+app-basics-key-mozilla = Waterfox gorodoo goy kufal
 app-basics-safe-mode = Saajaw alhaali
 show-dir-label =
     { PLATFORM() ->
@@ -94,7 +94,7 @@ audio-backend = Jinde bendoo
 
 ## Remote Debugging
 ##
-## The Firefox remote protocol provides low-level debugging interfaces
+## The Waterfox remote protocol provides low-level debugging interfaces
 ## used to inspect state and control execution of documents,
 ## browser instrumentation, user interaction simulation,
 ## and for subscribing to browser-internal events.

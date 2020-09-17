@@ -9,7 +9,7 @@
 ## Default Developer Tools section
 
 # The heading
-options-select-default-tools-label = Firefox cinakaw goyjinawey
+options-select-default-tools-label = Waterfox cinakaw goyjinawey
 
 # The label for the explanation of the * marker on a tool which is currently not supported
 # for the target of the toolbox.

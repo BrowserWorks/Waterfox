@@ -10,4 +10,4 @@
 <!ENTITY aboutAccounts.retry.label "Saiatu berriro">
 
 <!ENTITY aboutAccounts.restrictedError.title "Murriztuta">
-<!ENTITY aboutAccounts.restrictedError.description "Ezin dituzu Firefoxeko kontuak kudeatu profil honetatik.">
+<!ENTITY aboutAccounts.restrictedError.description "Ezin dituzu Waterfoxeko kontuak kudeatu profil honetatik.">

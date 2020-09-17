@@ -4,7 +4,7 @@
 
 
 ## The Enterprise Policies feature is aimed at system administrators
-## who want to deploy these settings across several Firefox installations
+## who want to deploy these settings across several Waterfox installations
 ## all at once. This is traditionally done through the Windows Group Policy
 ## feature, but the system also supports other forms of deployment.
 ## These are short descriptions for individual policies, to be displayed
@@ -30,8 +30,8 @@ policy-DisableDefaultBrowserAgent = Empachar l’agent navegador per defaut de r
 policy-DisableDeveloperTools = Blòca l’accès a las aisinas de desvolopament.
 policy-DisableFeedbackCommands = Desactiva las comandas que permeton de mandar de comentaris dins lo menú d’ajuda (Donar vòstre vejaire e senhalar un site enganaire)
 policy-DisableFirefoxAccounts = Desactiva los servicis basats sus { -fxaccount-brand-name }, e tanben Sync.
-# Firefox Screenshots is the name of the feature, and should not be translated.
-policy-DisableFirefoxScreenshots = Desactivar la foncionalitat de presa de capture Firefox Screenshots.
+# Waterfox Screenshots is the name of the feature, and should not be translated.
+policy-DisableFirefoxScreenshots = Desactivar la foncionalitat de presa de capture Waterfox Screenshots.
 policy-DisableFirefoxStudies = Empacha { -brand-short-name } d’executar d’estudis.
 policy-DisableForgetButton = Empacha l’accès al boton d’escafament de las donadas.
 policy-DisableFormHistory = Conservar pas d’istoric de las recèrcas e dels formularis.
@@ -62,7 +62,7 @@ policy-EncryptedMediaExtensions = Activar o desactivar las extensions de mèdias
 policy-Extensions = Installar, desinstallar o verrolhar las extensions. L’opcion d’installacion accepta URL o camins coma arguments. Las opcions Desinstallar o Verrolhar utilizan los identificants de las extensions.
 policy-ExtensionSettings = Gerir totes los aspècte de l’installacion d’extensions.
 policy-ExtensionUpdate = Activar o desactivar la mesa a jorn automatica de las extensions.
-policy-FirefoxHome = Configurar l’acuèlh de Firefox.
+policy-FirefoxHome = Configurar l’acuèlh de Waterfox.
 policy-FlashPlugin = Autoriza o pas l’utilizacion del plugin Flash.
 policy-Handlers = Configurar los gestionaris d’aplicacions per defaut.
 policy-HardwareAcceleration = Se fals, desactiva l’acceleracion materiala.

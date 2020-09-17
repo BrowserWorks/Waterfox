@@ -16,6 +16,6 @@
 <!ENTITY aboutPage.relNotes.label               "Haipyre momaranduha">
 <!ENTITY aboutPage.credits.label                "Jepurupyrã">
 <!ENTITY aboutPage.license.label                "Marandu ñemoneĩete rehegua">
-<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Firefox" being trademarked, that's why we use it, instead of brandShortName. -->
+<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Waterfox" being trademarked, that's why we use it, instead of brandShortName. -->
 
-<!ENTITY aboutPage.logoTrademark                "Firefox ha Firefox ra'ãnga'ikuéra niko ha'e Fundación Mozilla mba'eteéva.">
+<!ENTITY aboutPage.logoTrademark                "Firefox ha Waterfox ra'ãnga'ikuéra niko ha'e Fundación Mozilla mba'eteéva.">

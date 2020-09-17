@@ -10,4 +10,4 @@
 <!ENTITY aboutAccounts.retry.label                 "Proovi uuesti">
 
 <!ENTITY aboutAccounts.restrictedError.title       "Piiratud õigused">
-<!ENTITY aboutAccounts.restrictedError.description "Sul pole võimalik Firefoxi kontosid selle profiili alt hallata.">
+<!ENTITY aboutAccounts.restrictedError.description "Sul pole võimalik Waterfoxi kontosid selle profiili alt hallata.">

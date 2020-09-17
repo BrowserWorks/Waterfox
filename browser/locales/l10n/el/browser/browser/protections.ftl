@@ -27,9 +27,9 @@ graph-week-summary-private-window = Αποκλεισμένοι ιχνηλάτε�
 
 protection-report-webpage-title = Πίνακας προστασίας
 protection-report-page-content-title = Πίνακας προστασίας
-# This message shows when all privacy protections are turned off, which is why we use the word "can", Firefox is able to protect your privacy, but it is currently not.
+# This message shows when all privacy protections are turned off, which is why we use the word "can", Waterfox is able to protect your privacy, but it is currently not.
 protection-report-page-summary = Το { -brand-short-name } μπορεί να προστατεύει το απόρρητό σας στο παρασκήνιο, ενώ περιηγείστε. Ορίστε μια εξατομικευμένη περίληψη αυτών των μεθόδων προστασίας, καθώς και τα εργαλεία για να αποκτήσετε τον έλεγχο της διαδικτυακής σας ασφάλειας.
-# This message shows when at least some protections are turned on, we are more assertive compared to the message above, Firefox is actively protecting you.
+# This message shows when at least some protections are turned on, we are more assertive compared to the message above, Waterfox is actively protecting you.
 protection-report-page-summary-default = Το { -brand-short-name } προστατεύει το απόρρητό σας στο παρασκήνιο, ενώ περιηγείστε. Ορίστε μια εξατομικευμένη περίληψη αυτών των μεθόδων προστασίας, καθώς και τα εργαλεία για να αποκτήσετε τον έλεγχο της διαδικτυακής σας ασφάλειας.
 
 protection-report-settings-link = Διαχείριση ρυθμίσεων απορρήτου και ασφαλείας

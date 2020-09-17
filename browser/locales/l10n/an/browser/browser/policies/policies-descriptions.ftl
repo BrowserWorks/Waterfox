@@ -4,7 +4,7 @@
 
 
 ## The Enterprise Policies feature is aimed at system administrators
-## who want to deploy these settings across several Firefox installations
+## who want to deploy these settings across several Waterfox installations
 ## all at once. This is traditionally done through the Windows Group Policy
 ## feature, but the system also supports other forms of deployment.
 ## These are short descriptions for individual policies, to be displayed
@@ -30,8 +30,8 @@ policy-DisableDefaultBrowserAgent = Priva que l'achent d'o navegador per defecto
 policy-DisableDeveloperTools = Blocar l'acceso a las ferramientas de desenvolvedor.
 policy-DisableFeedbackCommands = Desactiva los comandos de ninviar feedback desde lo menú d'Aduya (Ninviar feedback y reportar puestos enganyosos).
 policy-DisableFirefoxAccounts = Desactivar servicios basaus en { -fxaccount-brand-name }, mesmo Sync.
-# Firefox Screenshots is the name of the feature, and should not be translated.
-policy-DisableFirefoxScreenshots = Desactivar la función Foto de pantalla de Firefox.
+# Waterfox Screenshots is the name of the feature, and should not be translated.
+policy-DisableFirefoxScreenshots = Desactivar la función Foto de pantalla de Waterfox.
 policy-DisableFirefoxStudies = Priva que { -brand-short-name } execute estudios.
 policy-DisableForgetButton = Priva l'acceso a lo botón Oblidar.
 policy-DisableFormHistory = No remerar lo historial de buquedas y formularios.
@@ -62,7 +62,7 @@ policy-EncryptedMediaExtensions = Activar u desactivar las extensions de medios 
 policy-Extensions = Instalar, desinstalar u blocar extensions. La opción d'instalar prene URLs u rutas como parametros. Las opcions de desinstalar y blocar prenen las IDs d'extension.
 policy-ExtensionSettings = Chestionar totz los aspectos de la instalación d'extensions.
 policy-ExtensionUpdate = Activar u desactivar las actualizacións automaticas
-policy-FirefoxHome = Configurar la pachina d'inicio de Firefox.
+policy-FirefoxHome = Configurar la pachina d'inicio de Waterfox.
 policy-FlashPlugin = Permitir u no l'uso d'a extensión de Flash.
 policy-Handlers = Configurar los chestors d'as aplicacions per defecto.
 policy-HardwareAcceleration = Si ye falso, amorta l'acceleración per hardware.

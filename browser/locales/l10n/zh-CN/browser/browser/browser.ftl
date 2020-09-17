@@ -8,8 +8,8 @@
 # These are the default window titles everywhere except macOS. The first two
 # attributes are used when the web content opened has no title:
 #
-# default - "Mozilla Firefox"
-# private - "Mozilla Firefox (Private Browsing)"
+# default - "Waterfox"
+# private - "Waterfox (Private Browsing)"
 #
 # The last two are for use when there *is* a content title.
 # Variables:
@@ -22,8 +22,8 @@ browser-main-window =
 # These are the default window titles on macOS. The first two are for use when
 # there is no content title:
 #
-# "default" - "Mozilla Firefox"
-# "private" - "Mozilla Firefox - (Private Browsing)"
+# "default" - "Waterfox"
+# "private" - "Waterfox - (Private Browsing)"
 #
 # The last two are for use when there *is* a content title.
 # Do not use the brand name in the last two attributes, as we do on non-macOS.
@@ -247,7 +247,7 @@ identity-clear-site-data =
 identity-connection-not-secure-security-view = 您并未安全地连接至此网站。
 identity-connection-verified = 您已安全地连接至此网站。
 identity-ev-owner-label = 证书颁发给：
-identity-description-custom-root = Mozilla 不认识此证书颁发者。它可能是由您的操作系统或管理员身份添加。 <label data-l10n-name="link">详细了解</label>
+identity-description-custom-root = Waterfox 不认识此证书颁发者。它可能是由您的操作系统或管理员身份添加。 <label data-l10n-name="link">详细了解</label>
 identity-remove-cert-exception =
     .label = 移除例外
     .accesskey = R

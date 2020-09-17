@@ -66,7 +66,7 @@ app-basics-remote-processes-count = দূরবর্তী প্রক্র�
 app-basics-enterprise-policies = এন্ট্রারপ্রাইজ নীতিগুলি
 app-basics-location-service-key-google = Google অবস্থান পরিষেবা কী
 app-basics-safebrowsing-key-google = Google নিরাপদ ব্রাউজিং কী
-app-basics-key-mozilla = Mozilla লোকেশন সার্ভিস Key
+app-basics-key-mozilla = Waterfox লোকেশন সার্ভিস Key
 app-basics-safe-mode = সেফ মোড
 show-dir-label =
     { PLATFORM() ->
@@ -151,7 +151,7 @@ intl-regional-prefs = আঞ্চলিক পছন্দসমূহ
 
 ## Remote Debugging
 ##
-## The Firefox remote protocol provides low-level debugging interfaces
+## The Waterfox remote protocol provides low-level debugging interfaces
 ## used to inspect state and control execution of documents,
 ## browser instrumentation, user interaction simulation,
 ## and for subscribing to browser-internal events.

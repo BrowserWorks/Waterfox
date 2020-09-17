@@ -20,10 +20,10 @@
 <!ENTITY prefLightningShow.label             "Lightning დაყენების შესახებ ცნობება">
 <!ENTITY prefLightningShow.accesskey         "ნ">
 <!ENTITY prefCompatWarning                   "გაფრთხილება: ამ პარამეტრების გამორთვის შედეგად, შესაძლოა საიტებმა ან მომსახურებებმა გამართულად ვერ იმუშაოს.">
-<!ENTITY prefFirefoxStrict.label             "ჩანდეს როგორც Firefox">
+<!ENTITY prefFirefoxStrict.label             "ჩანდეს როგორც Waterfox">
 <!ENTITY prefFirefoxStrict.accesskey         "ჩ">
 <!ENTITY prefFirefoxNone.label               "ჩანდეს როგორც SeaMonkey">
 <!ENTITY prefFirefoxNone.accesskey           "M">
-<!ENTITY prefFirefoxCompat2.label            "ჩანდეს როგორც SeaMonkey და Firefox-თან თავსებადი">
+<!ENTITY prefFirefoxCompat2.label            "ჩანდეს როგორც SeaMonkey და Waterfox-თან თავსებადი">
 <!ENTITY prefFirefoxCompat2.accesskey        "F">
 <!ENTITY prefCompatWarning2.desc             "გაფრთხილება: ამ პარამეტრების შეცვლის შედეგად, შესაძლოა საიტებმა ან მომსახურებებმა გამართულად ვერ იმუშაოს.">

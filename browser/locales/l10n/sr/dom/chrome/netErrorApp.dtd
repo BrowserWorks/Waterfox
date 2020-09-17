@@ -6,7 +6,7 @@
      from netError.dtd; Applications which want to do this should override
      this file with their own version of netErrorApp.dtd -->
 
-<!-- An example (from Firefox):
+<!-- An example (from Waterfox):
 
 <!ENTITY securityOverride.linkText "Или можете додати изузетак…">
 <!ENTITY securityOverride.getMeOutOfHereButton "Води ме одавде!">
@@ -22,7 +22,7 @@
 
 -->
 
-<!-- An example (from Firefox):
+<!-- An example (from Waterfox):
 
 <!ENTITY securityOverride.linkText "Or you can add an exception…">
 <!ENTITY securityOverride.getMeOutOfHereButton "Get me out of here!">

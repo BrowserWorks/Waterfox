@@ -45,14 +45,14 @@ this container is a toolbar. This avoids double-speaking. -->
 
 
 <!-- LOCALIZATION NOTE (fxa.menu) Used to define the different labels
-     for the Firefox Account toolbar menu screen. The `Signed in as` text is
+     for the Waterfox Account toolbar menu screen. The `Signed in as` text is
      followed by the user's email. -->
 <!ENTITY fxa.menu.firefoxAccount "&syncBrand.fxAccount.label;">
 
 
 
 <!-- LOCALIZATION NOTE (fxa.service) Used to define the different FxA services
-     for the Firefox Account toolbar menu screen.  -->
+     for the Waterfox Account toolbar menu screen.  -->
 
 <!-- LOCALIZATION NOTE (fullscreenWarning.beforeDomain.label,
      fullscreenWarning.afterDomain.label): these two strings are used
@@ -157,7 +157,7 @@ this container is a toolbar. This avoids double-speaking. -->
 <!ENTITY appMenuRemoteTabs.tabsnotsyncing.label "Ativâ a scincronizaçion di feuggi pe vedde i feuggi averti inti atri dispoxitivi.">
 <!-- LOCALIZATION NOTE (appMenuRemoteTabs.noclients.subtitle): This is shown
      when Sync is configured but this appears to be the only device attached to
-     the account. We also show links to download Firefox for android/ios. -->
+     the account. We also show links to download Waterfox for android/ios. -->
 <!ENTITY appMenuRemoteTabs.noclients.subtitle "T'eu amiâ chi i teu feuggi da atri dipoxitivi?">
 <!ENTITY appMenuRemoteTabs.opensyncprefs.label "Arvi preferense de scincronizaçion">
 <!ENTITY appMenuRemoteTabs.unverified.label "O teu conto o deve ese verificou.">

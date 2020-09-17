@@ -3,9 +3,9 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 
-## Firefox Brand
+## Waterfox Brand
 ##
-## Firefox must be treated as a brand, and kept in English.
+## Waterfox must be treated as a brand, and kept in English.
 ## It cannot be:
 ## - Declined to adapt to grammatical case.
 ## - Transliterated.
@@ -13,9 +13,9 @@
 ##
 ## Reference: https://www.mozilla.org/styleguide/communications/translation/
 
-## Firefox and Mozilla Brand
+## Waterfox and Mozilla Brand
 ##
-## Firefox and Mozilla must be treated as a brand.
+## Waterfox and Mozilla must be treated as a brand.
 ##
 ## They cannot be:
 ## - Transliterated.
@@ -29,44 +29,44 @@
 
 -brand-shorter-name =
     { $case ->
-       *[nominative] Firefox
-        [ablative] Firefoxilta
-        [elative] Firefoxista
-        [genitive] Firefoxin
-        [illative] Firefoxiin
-        [inessive] Firefoxissa
+       *[nominative] Waterfox
+        [ablative] Waterfoxilta
+        [elative] Waterfoxista
+        [genitive] Waterfoxin
+        [illative] Waterfoxiin
+        [inessive] Waterfoxissa
     }
     .case-status = with-cases
 -brand-short-name =
     { $case ->
-       *[nominative] Firefox
-        [ablative] Firefoxilta
-        [elative] Firefoxista
-        [genitive] Firefoxin
-        [illative] Firefoxiin
-        [inessive] Firefoxissa
+       *[nominative] Waterfox
+        [ablative] Waterfoxilta
+        [elative] Waterfoxista
+        [genitive] Waterfoxin
+        [illative] Waterfoxiin
+        [inessive] Waterfoxissa
     }
     .case-status = with-cases
 -brand-full-name =
     { $case ->
-       *[nominative] Mozilla Firefox
-        [ablative] Mozilla Firefoxilta
-        [elative] Mozilla Firefoxista
-        [genitive] Mozilla Firefoxin
-        [illative] Mozilla Firefoxiin
-        [inessive] Mozilla Firefoxissa
+       *[nominative] Waterfox
+        [ablative] Waterfoxilta
+        [elative] Waterfoxista
+        [genitive] Waterfoxin
+        [illative] Waterfoxiin
+        [inessive] Waterfoxissa
     }
     .case-status = with-cases
 # This brand name can be used in messages where the product name needs to
 # remain unchanged across different versions (Nightly, Beta, etc.).
 -brand-product-name =
     { $case ->
-       *[nominative] Firefox
-        [ablative] Firefoxilta
-        [elative] Firefoxista
-        [genitive] Firefoxin
-        [illative] Firefoxiin
-        [inessive] Firefoxissa
+       *[nominative] Waterfox
+        [ablative] Waterfoxilta
+        [elative] Waterfoxista
+        [genitive] Waterfoxin
+        [illative] Waterfoxiin
+        [inessive] Waterfoxissa
     }
     .case-status = with-cases
 -vendor-short-name =
@@ -77,4 +77,4 @@
         [genitive] Mozillan
     }
     .case-status = with-cases
-trademarkInfo = Firefox ja Firefoxin logo ovat Mozilla-säätiön tavaramerkkejä.
+trademarkInfo = Waterfox ja Waterfoxin logo ovat Mozilla-säätiön tavaramerkkejä.

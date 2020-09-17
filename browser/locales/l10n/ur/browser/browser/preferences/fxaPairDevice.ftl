@@ -6,7 +6,7 @@ fxa-pair-device-dialog =
     .title = ایک اور آلہ جوڑیں
     .style = width: 26em; min-height: 35em;
 
-fxa-qrcode-heading-phase1 = 1. اگر آپ کے پاس پہلے سے ہی نہیں ہے تو ، <a data-l10n-name="connect-another-device"> اپنے موبائل آلہ پر Firefox </a> انسٹال کریں۔
+fxa-qrcode-heading-phase1 = 1. اگر آپ کے پاس پہلے سے ہی نہیں ہے تو ، <a data-l10n-name="connect-another-device"> اپنے موبائل آلہ پر Waterfox </a> انسٹال کریں۔
 
 fxa-qrcode-error-title = جوٰڑنے میں ناکام رہا
 

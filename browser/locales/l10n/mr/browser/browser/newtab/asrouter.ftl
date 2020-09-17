@@ -69,7 +69,7 @@ cfr-doorhanger-pintab-animation-pause = स्तब्ध करा
 cfr-doorhanger-pintab-animation-resume = पुन्हा सुरू करा
 
 
-## Firefox Accounts Message
+## Waterfox Accounts Message
 
 cfr-doorhanger-bookmark-fxa-header = आपले बुकमार्क कुठेही सिंक करा.
 cfr-doorhanger-bookmark-fxa-close-btn-tooltip =
@@ -142,7 +142,7 @@ cfr-doorhanger-send-tab-recipe-header = ही कृती स्वयंप�
 cfr-doorhanger-send-tab-ok-button = टॅब पाठवणे वापरून पहा
     .accesskey = T
 
-## Firefox Send
+## Waterfox Send
 
 cfr-doorhanger-firefox-send-ok-button = { -send-brand-name } वापरून पहा
     .accesskey = T
@@ -159,7 +159,7 @@ cfr-doorhanger-socialtracking-close-button = बंद करा
 cfr-doorhanger-milestone-ok-button = सर्व पाहा
     .accesskey = S
 
-## What’s New Panel Content for Firefox 76
+## What’s New Panel Content for Waterfox 76
 
 ## Lockwise message
 

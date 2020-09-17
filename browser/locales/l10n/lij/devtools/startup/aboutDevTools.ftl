@@ -6,7 +6,7 @@ head-title = In sci Strumenti do svilupatô
 enable-title = Abilita Strumenti do svilupatô
 enable-inspect-element-title = Abilita Strumenti do svilupatô pe deuviâ Ispeçionn-a elemento
 enable-inspect-element-message = Ezamina e cangia HTML e CSS con l'ispetô di Strumenti do svilupatô.
-enable-about-debugging-message = Sviluppa e fanni o debug co-e WebExtensions, worker web, worker de serviçioe atro ancon graçie a-i Strumenti do svilupatô de Firefox.
+enable-about-debugging-message = Sviluppa e fanni o debug co-e WebExtensions, worker web, worker de serviçioe atro ancon graçie a-i Strumenti do svilupatô de Waterfox.
 enable-key-shortcut-message = Ti æ ativou o scorsaieu di Strumenti do svilupatô. Se l'é stæto un erô, ti peu serâ sto feuggio.
 enable-menu-message = Crea o teu scito perfetto con HTML, CSS e JavaScript graçie a atressi comme l'Ispetô e-o Debugger.
 enable-common-message = I Strumenti do svilupatô en dizabilitæ comme preinpostaçion pe date ciù contròllo in sciô teu navegatô.
@@ -14,7 +14,7 @@ enable-learn-more-link = Atre informaçioin in sci Strumenti do svilupatô
 enable-enable-button = Abilita Strumenti do svilupatô
 enable-close-button = Særa sto feuggio
 
-welcome-title = Benvegnuo inti Strumenti do svilupatô de Firefox!
+welcome-title = Benvegnuo inti Strumenti do svilupatô de Waterfox!
 newsletter-title = Newsletter di Svilupatoî Mozilla
 newsletter-message = Piggite e notiçie di svilupatoî e risorse mandæ pròprio inta teu cazella de pòsta.
 newsletter-email-placeholder =
@@ -24,8 +24,8 @@ newsletter-subscribe-button = Abon-ite
 newsletter-thanks-title = Graçie!
 newsletter-thanks-message = Se primma no ti æ confermou l'abonamento a-a newsletter in sce Mozilla ti doviesci fâlo. Amîa ben inta teu pòsta in intrâ ò into spam se no ti gh'æ ina email da niâtri.
 
-footer-title = Firefox Developer Edition
-footer-message = Ti çerchi quarcösa de ciù che di Strumenti do svilupatô? Ma aloa amia o navegatô Firefox fæto pe-i svilopatoî e 'n moderno flusso de travaggio.
+footer-title = Waterfox Developer Edition
+footer-message = Ti çerchi quarcösa de ciù che di Strumenti do svilupatô? Ma aloa amia o navegatô Waterfox fæto pe-i svilopatoî e 'n moderno flusso de travaggio.
 footer-learn-more-link = Atre informaçioin
 
 features-learn-more = Atre informaçioin

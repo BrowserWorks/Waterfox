@@ -66,7 +66,7 @@ cfr-doorhanger-pintab-animation-pause = Setja í bið
 cfr-doorhanger-pintab-animation-resume = Halda áfram
 
 
-## Firefox Accounts Message
+## Waterfox Accounts Message
 
 cfr-doorhanger-bookmark-fxa-header = Samstilltu bókamerkin þín alls staðar.
 cfr-doorhanger-bookmark-fxa-body = Frábær fundur! Vertu ekki án þessa bókamerkis á farsímum þínum. Byrjaðu á { -fxaccount-brand-name }.
@@ -93,13 +93,13 @@ cfr-doorhanger-bookmark-fxa-close-btn-tooltip =
 
 ## Send Tab
 
-## Firefox Send
+## Waterfox Send
 
 ## Social Tracking Protection
 
 ## Enhanced Tracking Protection Milestones
 
-## What’s New Panel Content for Firefox 76
+## What’s New Panel Content for Waterfox 76
 
 ## Lockwise message
 

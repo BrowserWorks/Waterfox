@@ -4,7 +4,7 @@
 
 
 ## The Enterprise Policies feature is aimed at system administrators
-## who want to deploy these settings across several Firefox installations
+## who want to deploy these settings across several Waterfox installations
 ## all at once. This is traditionally done through the Windows Group Policy
 ## feature, but the system also supports other forms of deployment.
 ## These are short descriptions for individual policies, to be displayed
@@ -30,8 +30,8 @@ policy-DisableDefaultBrowserAgent = Pigilan ang default browser agent sa kahit a
 policy-DisableDeveloperTools = I-block ang access sa paggamit ng developer tools.
 policy-DisableFeedbackCommands = I-disable ang mga command para magpadala ng feedback mula sa Help menu (Mag-submit ng Feedback at I-report ang Deceptive Site).
 policy-DisableFirefoxAccounts = I-disable ang mga service ng { -fxaccount-brand-name }, kagaya ng Sync.
-# Firefox Screenshots is the name of the feature, and should not be translated.
-policy-DisableFirefoxScreenshots = I-disable ang Firefox Screenshots feature.
+# Waterfox Screenshots is the name of the feature, and should not be translated.
+policy-DisableFirefoxScreenshots = I-disable ang Waterfox Screenshots feature.
 policy-DisableFirefoxStudies = Pigilan ang { -brand-short-name } mula sa pagpapatakbo ng mga pag-aaral.
 policy-DisableForgetButton = hadlangan ang pag access sa Forget button.
 policy-DisableFormHistory = Huwag tandaan ang search at form history.
@@ -60,7 +60,7 @@ policy-EnableTrackingProtection = I-enable o i-disable ang Content Blocking at o
 policy-Extensions = Mag-install, mag-uninstall, o mag-lock ng mga extension. Ang option na Mag-install ay kumukuha ng mga URL o path bilang parameter. Ang option na Mag-uninstall at Mag-lock ay kumukuha ng mga extension ID.
 policy-ExtensionSettings = I-manage ang lahat ng aspeto ng pag-install ng mga extension.
 policy-ExtensionUpdate = I-enable o i-disable ang kusang pag-update ng mga extension.
-policy-FirefoxHome = I-configure ang Firefox Home.
+policy-FirefoxHome = I-configure ang Waterfox Home.
 policy-FlashPlugin = Payagan o pagbawalan ang paggamit ng Flash plugin.
 policy-HardwareAcceleration = Kung false, isara ang hardware acceleration.
 # “lock” means that the user won’t be able to change this setting

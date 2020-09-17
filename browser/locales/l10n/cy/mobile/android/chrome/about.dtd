@@ -16,6 +16,6 @@
 <!ENTITY aboutPage.relNotes.label               "Nodiadau Rhyddhau">
 <!ENTITY aboutPage.credits.label                "Diolchiadau">
 <!ENTITY aboutPage.license.label                "Manylion Trwyddedu">
-<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Firefox" being trademarked, that's why we use it, instead of brandShortName. -->
+<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Waterfox" being trademarked, that's why we use it, instead of brandShortName. -->
 
-<!ENTITY aboutPage.logoTrademark                "Mae Firefox a'r logos Firefox yn nodau masnach y Mozilla Foundation.">
+<!ENTITY aboutPage.logoTrademark                "Mae Waterfox a'r logos Waterfox yn nodau masnach y Waterfox Ltd..">

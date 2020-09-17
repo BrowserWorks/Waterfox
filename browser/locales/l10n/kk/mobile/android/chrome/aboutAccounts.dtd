@@ -10,4 +10,4 @@
 <!ENTITY aboutAccounts.retry.label "Қайтадан көру">
 
 <!ENTITY aboutAccounts.restrictedError.title "Шектелген">
-<!ENTITY aboutAccounts.restrictedError.description "Сіз бұл профильден Firefox тіркелгілерін басқара алмайсыз">
+<!ENTITY aboutAccounts.restrictedError.description "Сіз бұл профильден Waterfox тіркелгілерін басқара алмайсыз">

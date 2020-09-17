@@ -122,9 +122,9 @@ search-results-help-link = Cần trợ giúp? Đi đến <a data-l10n-name="url"
 
 startup-header = Khởi động
 # { -brand-short-name } will be 'Firefox Developer Edition',
-# since this setting is only exposed in Firefox Developer Edition
+# since this setting is only exposed in Waterfox Developer Edition
 separate-profile-mode =
-    .label = Cho phép { -brand-short-name } và Firefox cùng chạy song song
+    .label = Cho phép { -brand-short-name } và Waterfox cùng chạy song song
 use-firefox-sync = Mẹo nhỏ: Việc này sử dụng các hồ sơ độc lập nhau. Bạn có thể dùng { -sync-brand-short-name } để đồng bộ giữa chúng.
 get-started-not-logged-in = Đăng nhập vào { -sync-brand-short-name }…
 get-started-configured = Mở tùy chỉnh của { -sync-brand-short-name }
@@ -443,10 +443,10 @@ home-newtabs-mode-label = Thẻ mới
 home-restore-defaults =
     .label = Khôi phục về mặc định
     .accesskey = R
-# "Firefox" should be treated as a brand and kept in English,
+# "Waterfox" should be treated as a brand and kept in English,
 # while "Home" and "(Default)" can be localized.
 home-mode-choice-default =
-    .label = Trang chủ Firefox (Mặc định)
+    .label = Trang chủ Waterfox (Mặc định)
 home-mode-choice-custom =
     .label = Tùy chỉnh URL...
 home-mode-choice-blank =
@@ -468,10 +468,10 @@ choose-bookmark =
     .label = Sử dụng dấu trang…
     .accesskey = B
 
-## Home Section - Firefox Home Content Customization
+## Home Section - Waterfox Home Content Customization
 
-home-prefs-content-header = Nội dung trang chủ của Firefox
-home-prefs-content-description = Chọn nội dung mà bạn muốn thêm vào trang chủ của Firefox.
+home-prefs-content-header = Nội dung trang chủ của Waterfox
+home-prefs-content-description = Chọn nội dung mà bạn muốn thêm vào trang chủ của Waterfox.
 home-prefs-search-header =
     .label = Tìm kiếm web
 home-prefs-topsites-header =
@@ -587,7 +587,7 @@ containers-preferences-button =
 containers-remove-button =
     .label = Loại bỏ
 
-## Firefox Account - Signed out. Note that "Sync" and "Firefox Account" are now
+## Waterfox Account - Signed out. Note that "Sync" and "Firefox Account" are now
 ## more discrete ("signed in" no longer means "and sync is connected").
 
 sync-signedout-caption = Mang trang web theo bạn
@@ -603,9 +603,9 @@ sync-signedout-account-signin2 =
 #
 # They can be moved within the sentence as needed to adapt
 # to your language, but should not be changed or translated.
-sync-mobile-promo = Tải Firefox cho <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> hoặc <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS</a> để đồng bị với thiết bị di động của bạn.
+sync-mobile-promo = Tải Waterfox cho <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> hoặc <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS</a> để đồng bị với thiết bị di động của bạn.
 
-## Firefox Account - Signed in
+## Waterfox Account - Signed in
 
 sync-profile-picture =
     .tooltiptext = Đổi hình hồ sơ
@@ -691,7 +691,7 @@ sync-engine-creditcards =
     .accesskey = C
 sync-engine-addons =
     .label = Tiện ích
-    .tooltiptext = Tiện ích mở rộng và chủ đề của Firefox dành cho máy tính
+    .tooltiptext = Tiện ích mở rộng và chủ đề của Waterfox dành cho máy tính
     .accesskey = A
 sync-engine-prefs =
     .label =
@@ -797,8 +797,8 @@ history-header = Lịch sử
 # "Firefox will" + "Remember history".
 #
 # If this doesn't work for your language, you can translate this message:
-#   - Simply as "Firefox", moving the verb into each option.
-#     This will result in "Firefox" + "Will remember history", etc.
+#   - Simply as "Waterfox", moving the verb into each option.
+#     This will result in "Waterfox" + "Will remember history", etc.
 #   - As a stand-alone message, for example "Firefox history settings:".
 history-remember-label = { -brand-short-name } sẽ
     .accesskey = w

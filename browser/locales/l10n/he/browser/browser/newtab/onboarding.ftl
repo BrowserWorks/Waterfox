@@ -78,7 +78,7 @@ onboarding-multistage-theme-description-automatic = שימוש בערכת הנו
 onboarding-multistage-theme-label-light = בהיר
 onboarding-multistage-theme-label-dark = כהה
 # "Firefox Alpenglow" here is the name of the theme, and should be kept in English.
-onboarding-multistage-theme-label-alpenglow = Firefox Alpenglow
+onboarding-multistage-theme-label-alpenglow = Waterfox Alpenglow
 
 ## Please make sure to split the content of the title attribute into lines whose
 ## width corresponds to about 40 Latin characters, to ensure that the tooltip
@@ -155,17 +155,17 @@ onboarding-multistage-theme-description-alpenglow =
 onboarding-fullpage-form-email =
     .placeholder = כתובת הדוא״ל שלך…
 
-## Firefox Sync modal dialog strings.
+## Waterfox Sync modal dialog strings.
 
 onboarding-sync-welcome-header = { -brand-product-name } איתך בכל מקום
 onboarding-sync-welcome-content = קבלת המועדפים, ההיסטוריה, הססמאות והגדרות נוספות בכל המכשירים שלך.
-onboarding-sync-welcome-learn-more-link = מידע נוסף על חשבונות Firefox
+onboarding-sync-welcome-learn-more-link = מידע נוסף על חשבונות Waterfox
 onboarding-sync-form-input =
     .placeholder = דוא״ל
 onboarding-sync-form-continue-button = המשך
 onboarding-sync-form-skip-login-button = דילוג על שלב זה
 
-## This is part of the line "Enter your email to continue to Firefox Sync"
+## This is part of the line "Enter your email to continue to Waterfox Sync"
 
 onboarding-sync-form-header = נא להקליד את כתובת הדוא״ל שלך
 onboarding-sync-form-sub-header = כדי להמשיך אל { -sync-brand-name }
@@ -176,7 +176,7 @@ onboarding-sync-form-sub-header = כדי להמשיך אל { -sync-brand-name }
 onboarding-benefit-products-text = לבצע משימות עם משפחת כלים שמכבדת את הפרטיות שלך בכל המכשירים שלך.
 # "Personal Data Promise" is a concept that should be translated consistently
 # across the product. It refers to a concept shown elsewhere to the user: "The
-# Firefox Personal Data Promise is the way we honor your data in everything we
+# Waterfox Personal Data Promise is the way we honor your data in everything we
 # make and do. We take less data. We keep it safe. And we make sure that we are
 # transparent about how we use it."
 onboarding-benefit-privacy-text = כל מה שאנו עושים מכבד את הבטחתנו בנוגע לנתונים אישיים: לקחת פחות. להגן בקפידה. ללא סודות.

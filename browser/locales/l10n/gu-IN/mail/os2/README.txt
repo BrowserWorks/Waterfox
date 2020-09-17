@@ -122,7 +122,7 @@ OS/2 Installation Instructions
 Running multiple versions concurrently
 --------------------------------------
 
-Because various members of the Mozilla family (i.e. Mozilla, Firefox, 
+Because various members of the Mozilla family (i.e. Mozilla, Waterfox, 
 Thunderbird, IBM Web Browser) may use different, incompatible versions of the
 same DLL, some extra steps may be required to run them concurrently.
 

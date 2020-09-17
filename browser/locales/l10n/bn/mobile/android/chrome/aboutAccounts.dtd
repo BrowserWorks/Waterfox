@@ -10,4 +10,4 @@
 <!ENTITY aboutAccounts.retry.label "পুনরায় চেষ্টা করুন">
 
 <!ENTITY aboutAccounts.restrictedError.title "সীমাবদ্ধ">
-<!ENTITY aboutAccounts.restrictedError.description "এই প্রোফাইল থেকে আপনি Firefox Accounts পরিচালনা করতে পারবেন না।">
+<!ENTITY aboutAccounts.restrictedError.description "এই প্রোফাইল থেকে আপনি Waterfox Accounts পরিচালনা করতে পারবেন না।">

@@ -8,8 +8,8 @@
 # These are the default window titles everywhere except macOS. The first two
 # attributes are used when the web content opened has no title:
 #
-# default - "Mozilla Firefox"
-# private - "Mozilla Firefox (Private Browsing)"
+# default - "Waterfox"
+# private - "Waterfox (Private Browsing)"
 #
 # The last two are for use when there *is* a content title.
 # Variables:
@@ -22,8 +22,8 @@ browser-main-window =
 # These are the default window titles on macOS. The first two are for use when
 # there is no content title:
 #
-# "default" - "Mozilla Firefox"
-# "private" - "Mozilla Firefox - (Private Browsing)"
+# "default" - "Waterfox"
+# "private" - "Waterfox - (Private Browsing)"
 #
 # The last two are for use when there *is* a content title.
 # Do not use the brand name in the last two attributes, as we do on non-macOS.
@@ -228,7 +228,7 @@ identity-clear-site-data =
 identity-connection-not-secure-security-view = A seŋaaki kisngol e ndee lowre.
 identity-connection-verified = Aɗa seŋii kisngol e ndee lowre.
 identity-ev-owner-label = Seedamfaagu bayyinaama ngam:
-identity-description-custom-root = Mozilla heftinaani dokkoowo seedamfaagu oo. Haɗum waawi ɓeydeede ummoraade e yuɓɓo maa huuɓnungo walla taw ko jiiloowo yuɓɓo ɓeydi ɗum. <label data-l10n-name="link">Ɓeydu humpito</label>
+identity-description-custom-root = Waterfox heftinaani dokkoowo seedamfaagu oo. Haɗum waawi ɓeydeede ummoraade e yuɓɓo maa huuɓnungo walla taw ko jiiloowo yuɓɓo ɓeydi ɗum. <label data-l10n-name="link">Ɓeydu humpito</label>
 identity-remove-cert-exception =
     .label = Momtu Paltol
     .accesskey = M

@@ -471,9 +471,9 @@ addon-permissions-empty = Ez a kiegészítő nem igényel semmilyen engedélyt
 recommended-extensions-heading = Ajánlott kiegészítők
 recommended-themes-heading = Ajánlott témák
 
-# A recommendation for the Firefox Color theme shown at the bottom of the theme
+# A recommendation for the Waterfox Color theme shown at the bottom of the theme
 # list view. The "Firefox Color" name itself should not be translated.
-recommended-theme-1 = Kreatívnak érzi magát? <a data-l10n-name="link">Állítsa össze a saját témáját a Firefox Color használatával.</a>
+recommended-theme-1 = Kreatívnak érzi magát? <a data-l10n-name="link">Állítsa össze a saját témáját a Waterfox Color használatával.</a>
 
 ## Page headings
 

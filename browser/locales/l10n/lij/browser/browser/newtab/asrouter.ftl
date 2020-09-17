@@ -70,7 +70,7 @@ cfr-doorhanger-pintab-animation-pause = Pösa
 cfr-doorhanger-pintab-animation-resume = Repiggia
 
 
-## Firefox Accounts Message
+## Waterfox Accounts Message
 
 cfr-doorhanger-bookmark-fxa-header = Sincronizza i teu segnalibbri dapertùtto.
 cfr-doorhanger-bookmark-fxa-link-text = Sincronizza i segnalibbri òua…
@@ -124,7 +124,7 @@ cfr-doorhanger-sync-logins-ok-button = Ativa { -sync-brand-short-name }
 cfr-doorhanger-send-tab-header = Lezilo donde t'eu
 cfr-doorhanger-send-tab-recipe-header = Pòrtite sta riçetta in cuxinn-a
 
-## Firefox Send
+## Waterfox Send
 
 cfr-doorhanger-firefox-send-ok-button = Preuva { -send-brand-name }
     .accesskey = P
@@ -145,7 +145,7 @@ cfr-doorhanger-milestone-ok-button = Amia tutto
 cfr-doorhanger-milestone-close-button = Særa
     .accesskey = S
 
-## What’s New Panel Content for Firefox 76
+## What’s New Panel Content for Waterfox 76
 
 
 ## Lockwise message

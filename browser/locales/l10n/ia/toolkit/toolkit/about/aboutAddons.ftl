@@ -457,9 +457,9 @@ addon-permissions-empty = Iste extension non require alcun permission
 recommended-extensions-heading = Extensiones recommendate
 recommended-themes-heading = Themas recommendate
 
-# A recommendation for the Firefox Color theme shown at the bottom of the theme
+# A recommendation for the Waterfox Color theme shown at the bottom of the theme
 # list view. The "Firefox Color" name itself should not be translated.
-recommended-theme-1 = Te senti creative? <a data-l10n-name="link">Crea tu proprie thema con Firefox Color.</a>
+recommended-theme-1 = Te senti creative? <a data-l10n-name="link">Crea tu proprie thema con Waterfox Color.</a>
 
 ## Page headings
 

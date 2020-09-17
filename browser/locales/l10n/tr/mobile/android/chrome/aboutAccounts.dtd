@@ -10,4 +10,4 @@
 <!ENTITY aboutAccounts.retry.label "Yeniden dene">
 
 <!ENTITY aboutAccounts.restrictedError.title "Kısıtlı">
-<!ENTITY aboutAccounts.restrictedError.description "Bu profilden Firefox Hesapları’nı yönetemezsiniz.">
+<!ENTITY aboutAccounts.restrictedError.description "Bu profilden Waterfox Hesapları’nı yönetemezsiniz.">

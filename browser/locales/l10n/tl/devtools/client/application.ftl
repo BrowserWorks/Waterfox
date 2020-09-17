@@ -97,9 +97,9 @@ manifest-loaded-ok = Naiload na ang manifest.
 # Text displayed as a caption when there has been an error while trying to
 # load the manifest
 manifest-loaded-error = Nagkaroon ng problema habang niloload ang manifest.
-# Text displayed as an error when there has been a Firefox DevTools error while
+# Text displayed as an error when there has been a Waterfox DevTools error while
 # trying to load the manifest
-manifest-loaded-devtools-error = May Mali sa Firefox DevTools
+manifest-loaded-devtools-error = May Mali sa Waterfox DevTools
 # Text displayed when the page has no manifest available
 manifest-non-existing = Walang manifest na pwedeng suriin.
 # Text displayed when the page has a manifest embedded in a Data URL and

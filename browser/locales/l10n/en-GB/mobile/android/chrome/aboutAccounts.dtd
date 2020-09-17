@@ -10,4 +10,4 @@
 <!ENTITY aboutAccounts.retry.label "Try again">
 
 <!ENTITY aboutAccounts.restrictedError.title "Restricted">
-<!ENTITY aboutAccounts.restrictedError.description "You cannot manage Firefox Accounts from this profile.">
+<!ENTITY aboutAccounts.restrictedError.description "You cannot manage Waterfox Accounts from this profile.">

@@ -80,7 +80,7 @@ cfr-doorhanger-pintab-animation-pause = અટકાવો
 cfr-doorhanger-pintab-animation-resume = ફરી શરૂ કરો
 
 
-## Firefox Accounts Message
+## Waterfox Accounts Message
 
 cfr-doorhanger-bookmark-fxa-header = દરેક જગ્યાએ તમારા બુકમાર્ક્સ સમન્વયિત કરો.
 cfr-doorhanger-bookmark-fxa-body = મહાન શોધ! હવે તમારા મોબાઇલ ઉપકરણો પર આ બુકમાર્ક વિના છોડી શકાશે નહીં. { -fxaccount-brand-name } થી પ્રારંભ કરો.
@@ -143,7 +143,7 @@ cfr-whatsnew-lockwise-backup-link-text = બેકઅપ ચાલુ કરો
 ## Send Tab
 
 
-## Firefox Send
+## Waterfox Send
 
 
 ## Social Tracking Protection
@@ -152,7 +152,7 @@ cfr-whatsnew-lockwise-backup-link-text = બેકઅપ ચાલુ કરો
 ## Enhanced Tracking Protection Milestones
 
 
-## What’s New Panel Content for Firefox 76
+## What’s New Panel Content for Waterfox 76
 
 
 ## Lockwise message

@@ -16,6 +16,6 @@
 <!ENTITY aboutPage.relNotes.label               "Versjonsnotat">
 <!ENTITY aboutPage.credits.label                "Bidragsytere">
 <!ENTITY aboutPage.license.label                "Lisensinfo">
-<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Firefox" being trademarked, that's why we use it, instead of brandShortName. -->
+<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Waterfox" being trademarked, that's why we use it, instead of brandShortName. -->
 
-<!ENTITY aboutPage.logoTrademark                "Firefox og Firefox-logoene er varemerker som tilhører Mozilla Foundation.">
+<!ENTITY aboutPage.logoTrademark                "Firefox og Waterfox-logoene er varemerker som tilhører Waterfox Ltd..">

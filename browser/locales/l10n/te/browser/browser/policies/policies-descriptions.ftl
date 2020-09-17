@@ -4,7 +4,7 @@
 
 
 ## The Enterprise Policies feature is aimed at system administrators
-## who want to deploy these settings across several Firefox installations
+## who want to deploy these settings across several Waterfox installations
 ## all at once. This is traditionally done through the Windows Group Policy
 ## feature, but the system also supports other forms of deployment.
 ## These are short descriptions for individual policies, to be displayed
@@ -22,8 +22,8 @@ policy-Cookies = వెబ్‌సైట్లు కుకీలను అమ�
 policy-DefaultDownloadDirectory = అప్రమేయ దింపుకోలు సంచయాన్ని అమర్చడం.
 policy-DisableAppUpdate = విహారిణిని తాజాకరించకుండా నివారించడం.
 policy-DisableDeveloperTools = డెవలపర్ పనిముట్లను చూడటాన్ని నిరోధించండి.
-# Firefox Screenshots is the name of the feature, and should not be translated.
-policy-DisableFirefoxScreenshots = Firefox Screenshots సౌలభ్యాన్ని అచేతనించు.
+# Waterfox Screenshots is the name of the feature, and should not be translated.
+policy-DisableFirefoxScreenshots = Waterfox Screenshots సౌలభ్యాన్ని అచేతనించు.
 policy-DisableFirefoxStudies = అధ్యయనాలను నడపడకుండా { -brand-short-name }‌ను నివారించు.
 policy-DisableForgetButton = మర్చిపోయే బొత్తానికి ప్రాప్యతను నిరోధించు.
 policy-DisableFormHistory = వెతుకుడు, ఫారాల చరిత్రను గుర్తుపెట్టుకోవద్దు.

@@ -3,10 +3,10 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 head-title = Acerca de las herramientas de desarrollador
-enable-title = Habilitar las herramientas de desarrollador de Firefox
-enable-inspect-element-title = Habilitar las herramientas de desarrollador de Firefox para usar Inspeccionar elemento
+enable-title = Habilitar las herramientas de desarrollador de Waterfox
+enable-inspect-element-title = Habilitar las herramientas de desarrollador de Waterfox para usar Inspeccionar elemento
 enable-inspect-element-message = Examina y edita HTML y CSS con el inspector de las herramientas de desarrollador
-enable-about-debugging-message = Desarrolla y depura WebExtensions, web workers, service workers y más con las herramientas de desarrollador de Firefox.
+enable-about-debugging-message = Desarrolla y depura WebExtensions, web workers, service workers y más con las herramientas de desarrollador de Waterfox.
 enable-key-shortcut-message = Activaste un atajo de las herramientas de desarrollador. Si eso fue un error, puedes cerrar esta pestaña.
 enable-menu-message = Perfecciona el HTML, CSS y JavaScript de tu sitio web con herramientas como el Inspector y el Depurador.
 enable-common-message = Las herramientas de desarrollador están desactivadas por defecto para darte más control sobre tu navegador.
@@ -14,7 +14,7 @@ enable-learn-more-link = Aprender más sobre las herramientas de desarrollador
 enable-enable-button = Habilitar herramientas de desarrollador
 enable-close-button = Cerrar esta pestaña
 
-welcome-title = ¡Bienvenido a las herramientas de desarrollador de Firefox!
+welcome-title = ¡Bienvenido a las herramientas de desarrollador de Waterfox!
 newsletter-title = Boletín de desarrollador de Mozilla
 newsletter-message = Obtén noticias, trucos y recursos para desarrolladores enviados directo a tu bandeja de entrada.
 newsletter-email-placeholder =
@@ -24,8 +24,8 @@ newsletter-subscribe-button = Suscribirme
 newsletter-thanks-title = ¡Gracias!
 newsletter-thanks-message = Si no has confirmado previamente una suscripción a un boletín relacionado a Mozilla, puede que tengas que hacerlo. Por favor, revisa tu bandeja de entrada o filtro de spam en busca de un email de nosotros.
 
-footer-title = Firefox Developer Edition
-footer-message = ¿Buscas más que unas simples herramientas de desarrollador? Revisa el navegador Firefox que está desarrollado específicamente para desarrolladores y flujos de trabajo modernos.
+footer-title = Waterfox Developer Edition
+footer-message = ¿Buscas más que unas simples herramientas de desarrollador? Revisa el navegador Waterfox que está desarrollado específicamente para desarrolladores y flujos de trabajo modernos.
 footer-learn-more-link = Aprender más
 
 features-learn-more = Aprender más

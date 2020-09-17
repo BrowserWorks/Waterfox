@@ -34,10 +34,10 @@
 # LOCALIZATION NOTE (firefox_heading):
 
 
-# Firefox links folder name
+# Waterfox links folder name
 
 
-#define firefox_heading Mozilla Firefox
+#define firefox_heading Waterfox
 
 
 # LOCALIZATION NOTE (firefox_help):
@@ -55,7 +55,7 @@
 # link title for https://www.mozilla.org/en-US/firefox/customize/
 
 
-#define firefox_customize Firefox தனிப்பயனாக்கம்
+#define firefox_customize Waterfox தனிப்பயனாக்கம்
 
 
 # LOCALIZATION NOTE (firefox_community):
@@ -79,7 +79,7 @@
 # LOCALIZATION NOTE (nightly_heading):
 
 
-# Firefox Nightly links folder name
+# Waterfox Nightly links folder name
 
 
 #define nightly_heading இராக் கால பயர்பாக்ஸ் வளங்கள்

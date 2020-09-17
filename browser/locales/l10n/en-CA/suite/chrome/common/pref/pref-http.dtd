@@ -15,7 +15,7 @@
 <!ENTITY prefEnableHTTP11Proxy.accesskey     "T">
 <!ENTITY prefPara                            "HTTP connections may be fine-tuned using these options to enhance either performance or compatibility. Some proxy servers, for example, are known to require HTTP/1.0 (see the release notes for details).">
 <!ENTITY prefUseragent.label                 "User Agent String">
-<!ENTITY prefFirefoxCompat.label             "Advertise Firefox compatibility">
+<!ENTITY prefFirefoxCompat.label             "Advertise Waterfox compatibility">
 <!ENTITY prefFirefoxCompat.accesskey         "F">
 <!ENTITY prefLightningShow.label             "Advertise Lightning installation">
 <!ENTITY prefLightningShow.accesskey         "L">

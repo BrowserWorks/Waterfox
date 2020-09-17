@@ -3,7 +3,7 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 
-### Firefox Home / New Tab strings for about:home / about:newtab.
+### Waterfox Home / New Tab strings for about:home / about:newtab.
 
 newtab-page-title = نیا ٹیب
 newtab-settings-button =

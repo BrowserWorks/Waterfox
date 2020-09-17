@@ -17,5 +17,5 @@
 <!ENTITY aboutPage.credits.label                "Crèdits">
 <!ENTITY aboutPage.license.label                "Informació de la llicència">
 
-<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Firefox" being trademarked, that's why we use it, instead of brandShortName. -->
-<!ENTITY aboutPage.logoTrademark                "El Firefox i els logotips del Firefox són marques registrades de la Mozilla Foundation.">
+<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Waterfox" being trademarked, that's why we use it, instead of brandShortName. -->
+<!ENTITY aboutPage.logoTrademark                "El Waterfox i els logotips del Waterfox són marques registrades de la Waterfox Ltd..">

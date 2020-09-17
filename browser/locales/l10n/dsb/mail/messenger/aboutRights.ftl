@@ -7,7 +7,7 @@ rights-intro = { -brand-full-name } jo dermotna softwara wótwórjonego žrědł
 rights-intro-point-1 = { -brand-short-name } staja se k dispoziciji pód wuměnjenjami <a data-l10n-name="mozilla-public-license-link">licence Mozilla Public License</a>. To co se groniś, až móžośo { -brand-short-name } wužywaś a kopěrowaś a jen na drugich rozdźěliś. Wóstanjo wam pśewóstajone, žrědłowy kode { -brand-short-name } pó wašom dobrozdaśu změniś, aby wón wašym pótrjebam wótpowědował. Licenca Mozilla Public License teke wam dajo pšawo, waše změnjone wersije rozdźěliś.
 rights-intro-point-2 =
     Njegarantěruju wam žedne pšawa na wikowańskich znamjenjach abo licence na wikowańskich znamjenjach
-    załožby Mozilla Foundation abo někakeje drugego boka, bźez wobgranicowanja
+    załožby Waterfox Ltd. abo někakeje drugego boka, bźez wobgranicowanja
     na mě abo logo Thunderbird. Pśidatne informacije wó wikowańskich znamjenjach namakajośo
     <a data-l10n-name="mozilla-trademarks-link">how</a>.
 rights-intro-point-3 = Někotare funkcije w { -brand-short-name }, na pś. pśizjawjanje wowalenjow, dawaju wam móžnosć, waše pósudki na { -vendor-short-name } pósłaś. Gaž wótpósćełaśo waše pósudki, dajośo { -vendor-short-name } dowólenje, pósudki wužywaś, jogo produkty pólěpšyś, pósudki na jogo websedłach wózjawiś a pósudki rozdźěliś.

@@ -34,7 +34,7 @@
 # LOCALIZATION NOTE (firefox_heading):
 
 
-# Firefox links folder name
+# Waterfox links folder name
 
 
 #define firefox_heading موزیلا فایرفاکس
@@ -79,7 +79,7 @@
 # LOCALIZATION NOTE (nightly_heading):
 
 
-# Firefox Nightly links folder name
+# Waterfox Nightly links folder name
 
 
 #define nightly_heading منابع فایرفاکس نایتلی

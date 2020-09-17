@@ -137,7 +137,7 @@ can reach it easily. -->
 <!ENTITY appMenuRemoteTabs.tabsnotsyncing.label "Mengaktifkan sync tab untuk papar senarai tab dari peranti anda yang lain.">
 <!-- LOCALIZATION NOTE (appMenuRemoteTabs.noclients.subtitle): This is shown
      when Sync is configured but this appears to be the only device attached to
-     the account. We also show links to download Firefox for android/ios. -->
+     the account. We also show links to download Waterfox for android/ios. -->
 <!ENTITY appMenuRemoteTabs.noclients.subtitle "Mahu melihat tab anda daripada peranti lain di sini?">
 <!ENTITY appMenuRemoteTabs.opensyncprefs.label "Buka Keutamaan Sync">
 <!ENTITY appMenuRemoteTabs.unverified.label "Akaun anda perlu disahkan.">

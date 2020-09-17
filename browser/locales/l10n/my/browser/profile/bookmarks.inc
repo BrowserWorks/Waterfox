@@ -18,8 +18,8 @@
 #define getting_started စတင်အသုံးပြုခြင်း
 
 # LOCALIZATION NOTE (firefox_heading):
-# Firefox links folder name
-#define firefox_heading Mozilla Firefox
+# Waterfox links folder name
+#define firefox_heading Waterfox
 
 # LOCALIZATION NOTE (firefox_help):
 # link title for https://www.mozilla.org/en-US/firefox/help/
@@ -27,7 +27,7 @@
 
 # LOCALIZATION NOTE (firefox_customize):
 # link title for https://www.mozilla.org/en-US/firefox/customize/
-#define firefox_customize Firefox ကို စိတ်ကြိုက်ပြုပြင်ရန်
+#define firefox_customize Waterfox ကို စိတ်ကြိုက်ပြုပြင်ရန်
 
 # LOCALIZATION NOTE (firefox_community):
 # link title for https://www.mozilla.org/en-US/contribute/
@@ -38,12 +38,12 @@
 #define firefox_about ကျွန်ုပ်တို့အကြောင်း
 
 # LOCALIZATION NOTE (nightly_heading):
-# Firefox Nightly links folder name
-#define nightly_heading Firefox Nightly ရင်းမြစ်များ
+# Waterfox Nightly links folder name
+#define nightly_heading Waterfox Nightly ရင်းမြစ်များ
 
 # LOCALIZATION NOTE (nightly_blog):
 # Nightly builds only, link title for https://blog.nightly.mozilla.org/
-#define nightly_blog Firefox Nightly ဘလောဂ့်
+#define nightly_blog Waterfox Nightly ဘလောဂ့်
 
 # LOCALIZATION NOTE (bugzilla):
 # Nightly builds only, link title for https://bugzilla.mozilla.org/

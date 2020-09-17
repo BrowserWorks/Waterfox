@@ -3,18 +3,18 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 head-title = Әзірлеуші құралдары жөнінде
-enable-title = Firefox әзірлеуші құралдарын іске қосу
-enable-inspect-element-title = Элементті бақылаушыны қолдану үшін Firefox Әзірлеуші құралдарын іске қосыңыз
+enable-title = Waterfox әзірлеуші құралдарын іске қосу
+enable-inspect-element-title = Элементті бақылаушыны қолдану үшін Waterfox Әзірлеуші құралдарын іске қосыңыз
 enable-inspect-element-message = Әзірлеуші құралдарының Бақылаушысы көмегімен HTML мен CSS зерттеу және түзету.
-enable-about-debugging-message = Firefox Әзірлеуші құралдары көмегімен WebExtensions, Web workers, Service workers және көптеген т.б. әзірлеу және жөндеу.
+enable-about-debugging-message = Waterfox Әзірлеуші құралдары көмегімен WebExtensions, Web workers, Service workers және көптеген т.б. әзірлеу және жөндеу.
 enable-key-shortcut-message = Сіз Әзірлеуші құралдар жарлығын белсендірдіңіз. Бұл әрекет қате болса, бұл бетті жаба аласыз.
 enable-menu-message = Бақылаушы және Жөндеуші сияқты құралдармен веб-сайтыңыздың HTML, CSS және JavaScript кодтарын жақсартыңыз.
-enable-common-message = Firefox Әзірлеуші құралдары үнсіз келісім бойынша сөндірілген, ол сізге браузерді жақсырақ басқаруға мүмкіндік береді.
+enable-common-message = Waterfox Әзірлеуші құралдары үнсіз келісім бойынша сөндірілген, ол сізге браузерді жақсырақ басқаруға мүмкіндік береді.
 enable-learn-more-link = Әзірлеуші құралдары туралы көбірек білу
 enable-enable-button = Әзірлеуші құралдарын іске қосу
 enable-close-button = Бұл бетті жабу
 
-welcome-title = Firefox әзірлеуші құралдарына қош келдіңіз!
+welcome-title = Waterfox әзірлеуші құралдарына қош келдіңіз!
 newsletter-title = Әзірлеушілерге арналған Mozilla жаңалықтар таратуы
 newsletter-message = Әзірлеушілер жаңалықтары, кеңестері және ресурстарды тікелей кіріс бумаңызға алыңыз.
 newsletter-email-placeholder =
@@ -22,10 +22,10 @@ newsletter-email-placeholder =
 newsletter-privacy-label = Мен Mozilla-ның менің ақпаратымды мына <a data-l10n-name="privacy-policy">Құпиялылық саясатында</a> көрсетілгендей өңдейтінімен келісемін.
 newsletter-subscribe-button = Жазылу
 newsletter-thanks-title = Рахмет!
-newsletter-thanks-message = Mozilla-ға байланысты жаңалықтар таспасына жазылуды осыған дейін растамаған болсаңыз, оны жасауыңыз керек болуы мүмкін. Поштаңыздың кіріс және спам бумаларынан бізден хатты іздеңіз.
+newsletter-thanks-message = Waterfox-ға байланысты жаңалықтар таспасына жазылуды осыған дейін растамаған болсаңыз, оны жасауыңыз керек болуы мүмкін. Поштаңыздың кіріс және спам бумаларынан бізден хатты іздеңіз.
 
-footer-title = Firefox Developer Edition
-footer-message = Әзірлеуші құралдарынан көбірек бірнәрсе іздедіңіз бе? Әзірлеушілер және заманауи жұмыс тәртібі үшін арнайы жасалған Firefox браузерін қолданып көріңіз.
+footer-title = Waterfox Developer Edition
+footer-message = Әзірлеуші құралдарынан көбірек бірнәрсе іздедіңіз бе? Әзірлеушілер және заманауи жұмыс тәртібі үшін арнайы жасалған Waterfox браузерін қолданып көріңіз.
 footer-learn-more-link = Көбірек білу
 
 features-learn-more = Көбірек білу

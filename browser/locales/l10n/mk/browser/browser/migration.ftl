@@ -34,7 +34,7 @@ import-from-chromium =
     .label = Chromium
     .accesskey = u
 import-from-firefox =
-    .label = Firefox
+    .label = Waterfox
     .accesskey = x
 import-from-360se =
     .label = 360 Secure Browser
@@ -70,7 +70,7 @@ imported-bookmarks-source = Од { $source }
 source-name-ie = Internet Explorer
 source-name-safari = Safari
 source-name-chrome = Google Chrome
-source-name-firefox = Mozilla Firefox
+source-name-firefox = Waterfox
 
 imported-safari-reading-list = Список за читање (од Safari)
 

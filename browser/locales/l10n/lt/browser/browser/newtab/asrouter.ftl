@@ -71,7 +71,7 @@ cfr-doorhanger-pintab-step3 = Jeigu svetainė atsinaujino, ant įsegtos kortelė
 cfr-doorhanger-pintab-animation-pause = Pristabdyti
 cfr-doorhanger-pintab-animation-resume = Tęsti
 
-## Firefox Accounts Message
+## Waterfox Accounts Message
 
 cfr-doorhanger-bookmark-fxa-header = Sinchronizuokite adresyną visuose įrenginiuose.
 cfr-doorhanger-bookmark-fxa-body = Puikus radinys! O kad nepasigestumėte šio įrašo kituose įrenginiuose, susikurkite „{ -fxaccount-brand-name }“.
@@ -181,7 +181,7 @@ cfr-doorhanger-send-tab-body = Kortelių persiuntimas leidžia lengvai perduoti 
 cfr-doorhanger-send-tab-ok-button = Išbandyti  kortelių persiuntimą
     .accesskey = b
 
-## Firefox Send
+## Waterfox Send
 
 cfr-doorhanger-firefox-send-header = Dalintis šiuo PDF saugiai
 cfr-doorhanger-firefox-send-body = Laikykite savo svarbius failus saugiai, naudodamiesi ištisiniu šifravimu ir gaudami saitą, kuris išnyksta po nustato laiko.
@@ -219,7 +219,7 @@ cfr-doorhanger-milestone-ok-button = Rodyti viską
 cfr-doorhanger-milestone-close-button = Užverti
     .accesskey = v
 
-## What’s New Panel Content for Firefox 76
+## What’s New Panel Content for Waterfox 76
 
 
 ## Lockwise message

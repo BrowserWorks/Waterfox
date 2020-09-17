@@ -4,7 +4,7 @@
 
 
 ## The Enterprise Policies feature is aimed at system administrators
-## who want to deploy these settings across several Firefox installations
+## who want to deploy these settings across several Waterfox installations
 ## all at once. This is traditionally done through the Windows Group Policy
 ## feature, but the system also supports other forms of deployment.
 ## These are short descriptions for individual policies, to be displayed
@@ -30,8 +30,8 @@ policy-DisableDefaultBrowserAgent = Evitar que o axente do navegador predetermin
 policy-DisableDeveloperTools = Bloquea o acceso ás ferramentas de desenvolvemento.
 policy-DisableFeedbackCommands = Desactiva as ordes para enviar opinións dende o menú Axuda (Enviar opinión e Informar de sitio enganoso).
 policy-DisableFirefoxAccounts = Desactiva os servizos baseados en { -fxaccount-brand-name }, incluído Sync.
-# Firefox Screenshots is the name of the feature, and should not be translated.
-policy-DisableFirefoxScreenshots = Desactiva a funcionalidade Firefox Screenshots.
+# Waterfox Screenshots is the name of the feature, and should not be translated.
+policy-DisableFirefoxScreenshots = Desactiva a funcionalidade Waterfox Screenshots.
 policy-DisableFirefoxStudies = Evita que { -brand-short-name } execute os estudios.
 policy-DisableForgetButton = Evita o acceso ao botón Esquecer.
 policy-DisableFormHistory = Non lembra o historial de formularios e buscas.
@@ -62,7 +62,7 @@ policy-EncryptedMediaExtensions = Activar ou desactivar Extensións de Medios Ci
 policy-Extensions = Instala, desinstala ou bloquea extensións. A opción de instalar usa URL ou rutas como parámetros. As opcións para desinstalar e bloquear usan os ID das extensións.
 policy-ExtensionSettings = Xestionar todos os aspectos da instalación de extensións.
 policy-ExtensionUpdate = Activar ou desactivar as actualizacións automáticas de extensións.
-policy-FirefoxHome = Configurar o Firefox Home.
+policy-FirefoxHome = Configurar o Waterfox Home.
 policy-FlashPlugin = Permite ou denega o uso do engadido Flash.
 policy-Handlers = Configurar os manipuladores de aplicativos predeterminados.
 policy-HardwareAcceleration = Se é falso, desactiva a aceleración por hardware.

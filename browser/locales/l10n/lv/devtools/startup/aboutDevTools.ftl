@@ -3,10 +3,10 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 head-title = Par izstrādātāju rīkiem
-enable-title = Aktivēt Firefox izstrādātāju rīkus
-enable-inspect-element-title = Aktivēt Firefox izstrādātāju rīkus ,lai izmantotu elementu izmeklēšanu
+enable-title = Aktivēt Waterfox izstrādātāju rīkus
+enable-inspect-element-title = Aktivēt Waterfox izstrādātāju rīkus ,lai izmantotu elementu izmeklēšanu
 enable-inspect-element-message = Pārbaudiet un rediģējiet HTML un CSS ar izstrādātāju rīku inspektoru.
-enable-about-debugging-message = Develop and debug WebExtensions, web workers, service workers and more with Firefox Developer Tools.
+enable-about-debugging-message = Develop and debug WebExtensions, web workers, service workers and more with Waterfox Developer Tools.
 enable-key-shortcut-message = Ir aktivēta izstrādātāju rīku saīsne. Ja tā tika aktivēta kļūdas pēc, aizveriet šo cilni.
 enable-menu-message = Uzlabojiet savas lapas HTML, CSS un JavaScript ar tādiem rīkiem kā Inspektors un Atkļūdotājs.
 enable-common-message = Pēc noklusējuma izstrādātāju rīki ir deaktivēti, lai jums būtu lielāka kontrole pār jūsu pārlūku.
@@ -14,8 +14,8 @@ enable-learn-more-link = Uzzināt vairāk par izstrādātāju rīkiem
 enable-enable-button = Aktivēt izstrādātāju rīkus
 enable-close-button = Aizvērt šo cilni
 
-welcome-title = Laipni lūgti Firefox izstrādātāju rīkos!
-newsletter-title = Mozilla izstrādātāju tīkls
+welcome-title = Laipni lūgti Waterfox izstrādātāju rīkos!
+newsletter-title = Waterfox izstrādātāju tīkls
 newsletter-message = Saņemiet izstrādātāju ziņas, padomus un dažādas noderīgas lietas savā pasta kastē.
 newsletter-email-placeholder =
     .placeholder = Epasts
@@ -24,8 +24,8 @@ newsletter-subscribe-button = Pierakstīties
 newsletter-thanks-title = Paldies!
 newsletter-thanks-message = Ja neesat iepriekš apstiprinājuši pierakstīšanos uz Mozilla jaunumiem jums to būs jāizdara tagad. Lūdzu, pārbaudiet savu pasta kasti, surogātpasta filtrus un mēstuļu kasti.
 
-footer-title = Firefox izstrādātāju versija
-footer-message = Meklē vairāk nekā tikai izstrādātāju rīkus? Apskati Firefox versiju, kas ir īpaši būvēta izstrādātājiem un mūsdienu darba plūsmām.
+footer-title = Waterfox izstrādātāju versija
+footer-message = Meklē vairāk nekā tikai izstrādātāju rīkus? Apskati Waterfox versiju, kas ir īpaši būvēta izstrādātājiem un mūsdienu darba plūsmām.
 footer-learn-more-link = Uzzināt vairāk
 
 features-learn-more = Uzzināt vairāk

@@ -17,11 +17,11 @@ about-debugging-page-title-runtime-page = ডিবাগিং - রানট�
 
 # Sidebar strings
 
-# Display name of the runtime for the currently running instance of Firefox. Used in the
+# Display name of the runtime for the currently running instance of Waterfox. Used in the
 # Sidebar and in the Setup page.
 about-debugging-this-firefox-runtime-name = এই { -brand-shorter-name }
 
-# Sidebar heading for selecting the currently running instance of Firefox
+# Sidebar heading for selecting the currently running instance of Waterfox
 about-debugging-sidebar-this-firefox =
     .name = { about-debugging-this-firefox-runtime-name }
 
@@ -66,8 +66,8 @@ about-debugging-sidebar-item-connect-button-connection-timeout = সংযোগ
 about-debugging-sidebar-item-connected-label = সংযুক্ত হয়েছে
 
 # Text displayed in sidebar items for remote devices where a compatible browser (eg
-# Firefox) has not been detected yet. Typically, Android phones connected via USB with
-# USB debugging enabled, but where Firefox is not started.
+# Waterfox) has not been detected yet. Typically, Android phones connected via USB with
+# USB debugging enabled, but where Waterfox is not started.
 about-debugging-sidebar-runtime-item-waiting-for-browser = ব্রাউজার এর জন্য অপেক্ষা করা হচ্ছে…
 
 # Text displayed in sidebar items for remote devices that have been disconnected from the
@@ -103,7 +103,7 @@ about-debugging-setup-title = সেটআপ
 # Introduction text in the Setup page to explain how to configure remote debugging.
 about-debugging-setup-intro = আপনি যে সংযোগ পদ্ধতিতে ডিভাইসটি রিমোটলি ডিবাগ করতে চান তা কনফিগার করুন।
 
-# Explanatory text in the Setup page about what the 'This Firefox' page is for
+# Explanatory text in the Setup page about what the 'This Waterfox' page is for
 about-debugging-setup-this-firefox2 = এক্সটেনশন এবং পরিষেবা কর্মীদের ডিবাগ করতে <a>{ about-debugging-this-firefox-runtime-name }</a>ব্যবহার করুন, { -brand-shorter-name }এই সংস্করণে।
 
 # Title of the heading Connect section of the Setup page.
@@ -138,7 +138,7 @@ about-debugging-setup-usb-step-enable-dev-menu2 = আপনার অ্যা�
 about-debugging-setup-usb-step-enable-debug2 = অ্যান্ড্রয়েড ডেভেলপার মেনুতে ইউএসবি ডিবাগিং সক্রিয় করুন।
 
 # USB section step by step guide
-about-debugging-setup-usb-step-enable-debug-firefox2 = অ্যান্ড্রয়েড ডিভাইসে Firefox এ ইউএসবি ডিবাগিং সক্রিয় করুন।
+about-debugging-setup-usb-step-enable-debug-firefox2 = অ্যান্ড্রয়েড ডিভাইসে Waterfox এ ইউএসবি ডিবাগিং সক্রিয় করুন।
 
 # USB section step by step guide
 about-debugging-setup-usb-step-plug-device = Android ডিভাইসটিকে আপনার কম্পিউটারে সংযুক্ত করুন।
@@ -185,7 +185,7 @@ about-debugging-network-location-form-duplicate = হোস্ট "{ $host-value
 
 # Below are the titles for the various categories of debug targets that can be found
 # on "runtime" pages of about:debugging.
-# Title of the temporary extensions category (only available for "This Firefox" runtime).
+# Title of the temporary extensions category (only available for "This Waterfox" runtime).
 about-debugging-runtime-temporary-extensions =
     .name = অস্থায়ী এক্সটেনশন
 # Title of the extensions category.
@@ -219,16 +219,16 @@ about-debugging-runtime-service-workers-not-compatible = আপনার ব্�
 # This string is displayed in the runtime page if the remote browser version is too old.
 # "Troubleshooting" link points to https://developer.mozilla.org/docs/Tools/about:debugging#Troubleshooting
 # { $runtimeVersion } is the version of the remote browser (for instance "67.0a1")
-# { $minVersion } is the minimum version that is compatible with the current Firefox instance (same format)
+# { $minVersion } is the minimum version that is compatible with the current Waterfox instance (same format)
 about-debugging-browser-version-too-old = সংযুক্ত ব্রাউজারটির একটু পুরানো সংস্করণ ({ $runtimeVersion }) রয়েছে। সর্বনিম্ন সমর্থিত সংস্করণ হলো ({ $minVersion })। এই অসমর্থিত সেটআপ DevTools কে বিকল করে দেয়ার জন্য দায়ি হতে পারে। অনুগ্রহ করে সংযুক্ত ব্রাউজার হালনাগাদ করুন। <a>সমস্যার সমাধান</a>
 
 # This string is displayed in the runtime page if the remote browser version is too recent.
 # "Troubleshooting" link points to https://developer.mozilla.org/docs/Tools/about:debugging#Troubleshooting
 # { $runtimeID } is the build ID of the remote browser (for instance "20181231", format is yyyyMMdd)
-# { $localID } is the build ID of the current Firefox instance (same format)
+# { $localID } is the build ID of the current Waterfox instance (same format)
 # { $runtimeVersion } is the version of the remote browser (for instance "67.0a1")
 # { $localVersion } is the version of your current browser (same format)
-about-debugging-browser-version-too-recent = সংযুক্ত ব্রাউজারটি ({ $runtimeVersion }, buildID { $runtimeID }) আপনার { -brand-shorter-name } ({ $localVersion }, buildID { $localID }) এর তুলনায় অধিক নতুন। এটি একটি অসমর্থিত সেটআপ এবং DevTools কে বিকল করে দিতে পারে। অনুগ্রহ করে Firefox হালনাগাদ করুন। <a>সমস্যা সমাধান</a>
+about-debugging-browser-version-too-recent = সংযুক্ত ব্রাউজারটি ({ $runtimeVersion }, buildID { $runtimeID }) আপনার { -brand-shorter-name } ({ $localVersion }, buildID { $localID }) এর তুলনায় অধিক নতুন। এটি একটি অসমর্থিত সেটআপ এবং DevTools কে বিকল করে দিতে পারে। অনুগ্রহ করে Waterfox হালনাগাদ করুন। <a>সমস্যা সমাধান</a>
 
 # Displayed for runtime info in runtime pages.
 # { $name } is brand name such as "Firefox Nightly"
@@ -266,18 +266,18 @@ about-debugging-debug-target-list-empty = এখনো কিছু না।
 # A target can be an addon, a tab, a worker...
 about-debugging-debug-target-inspect-button = পরীক্ষা
 
-# Text of a button displayed in the "This Firefox" page, in the Temporary Extension
+# Text of a button displayed in the "This Waterfox" page, in the Temporary Extension
 # section. Clicking on the button will open a file picker to load a temporary extension
 about-debugging-tmp-extension-install-button = অস্থায়ী অ্যাড-অন লোড করুন…
 
-# Text displayed when trying to install a temporary extension in the "This Firefox" page.
+# Text displayed when trying to install a temporary extension in the "This Waterfox" page.
 about-debugging-tmp-extension-install-error = অস্থায়ী অ্যাড-অন ইনস্টলেশনের সময় একটি ত্রুটি হয়েছিল।
 
-# Text of a button displayed for a temporary extension loaded in the "This Firefox" page.
+# Text of a button displayed for a temporary extension loaded in the "This Waterfox" page.
 # Clicking on the button will reload the extension.
 about-debugging-tmp-extension-reload-button = পুনরায় লোড
 
-# Text of a button displayed for a temporary extension loaded in the "This Firefox" page.
+# Text of a button displayed for a temporary extension loaded in the "This Waterfox" page.
 # Clicking on the button will uninstall the extension and remove it from the page.
 about-debugging-tmp-extension-remove-button = অপসারণ
 

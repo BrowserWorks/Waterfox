@@ -37,10 +37,10 @@ can reach it easily. -->
 
 
 <!-- LOCALIZATION NOTE (fxa.signin) Used to define the different labels
-     for the Firefox Account toolbar signin menu screen. -->
+     for the Waterfox Account toolbar signin menu screen. -->
 
  <!-- LOCALIZATION NOTE (fxa.menu) Used to define the different labels
-     for the Firefox Account toolbart menu screen. The `Signed in as` text is
+     for the Waterfox Account toolbart menu screen. The `Signed in as` text is
      followed by the user's email. -->
 
 <!-- LOCALIZATION NOTE (fullscreenWarning.beforeDomain.label,
@@ -146,7 +146,7 @@ can reach it easily. -->
 <!ENTITY appMenuRemoteTabs.tabsnotsyncing.label "તમારા અન્ય ઉપકરણોમાંથી ટેબ્સની સૂચિ જોવા માટે ટેબ સમન્વયન ચાલુ કરો.">
 <!-- LOCALIZATION NOTE (appMenuRemoteTabs.noclients.subtitle): This is shown
      when Sync is configured but this appears to be the only device attached to
-     the account. We also show links to download Firefox for android/ios. -->
+     the account. We also show links to download Waterfox for android/ios. -->
 <!ENTITY appMenuRemoteTabs.noclients.subtitle "અહીં અન્ય ઉપકરણોથી તમારા ટેબ્સ જોવા માંગો છો?">
 <!ENTITY appMenuRemoteTabs.opensyncprefs.label "સમન્વયન પસંદગીઓ ખોલો">
 <!ENTITY appMenuRemoteTabs.unverified.label "તમારા એકાઉન્ટને ચકાસવાની જરૂર છે.">

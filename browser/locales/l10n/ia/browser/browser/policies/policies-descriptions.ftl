@@ -4,7 +4,7 @@
 
 
 ## The Enterprise Policies feature is aimed at system administrators
-## who want to deploy these settings across several Firefox installations
+## who want to deploy these settings across several Waterfox installations
 ## all at once. This is traditionally done through the Windows Group Policy
 ## feature, but the system also supports other forms of deployment.
 ## These are short descriptions for individual policies, to be displayed
@@ -30,8 +30,8 @@ policy-DisableDefaultBrowserAgent = Impedir que le agente de navigator predefini
 policy-DisableDeveloperTools = Blocar le accesso al instrumentos del disveloppamento.
 policy-DisableFeedbackCommands = Disactivar le commandos pro submitter tu commentarios in le menu Adjuta (Submitter tu opinion e Denunciar sito fraudulente).
 policy-DisableFirefoxAccounts = Disactivar le servicios basate sur { -fxaccount-brand-name }, comprendite Sync.
-# Firefox Screenshots is the name of the feature, and should not be translated.
-policy-DisableFirefoxScreenshots = Disactivar le function Firefox Screenshots.
+# Waterfox Screenshots is the name of the feature, and should not be translated.
+policy-DisableFirefoxScreenshots = Disactivar le function Waterfox Screenshots.
 policy-DisableFirefoxStudies = Impedir a { -brand-short-name } de exequer studios.
 policy-DisableForgetButton = Impedir accesso al button Oblidar.
 policy-DisableFormHistory = Non rememorar le chronologia de recercas e formularios.
@@ -62,7 +62,7 @@ policy-EncryptedMediaExtensions = Activar o disactivar le extensiones de medios 
 policy-Extensions = Installar, disinstallar o blocar le extensiones. Le option Installar require URLs o percursos como parametros. Le optiones Disinstallar e Blocate require le extension IDs.
 policy-ExtensionSettings = Gerer tote le aspectos del installation de extensiones.
 policy-ExtensionUpdate = Activar o disactivar le actualisation automatic de extensiones.
-policy-FirefoxHome = Configura Firefox Home.
+policy-FirefoxHome = Configura Waterfox Home.
 policy-FlashPlugin = Permitter o refusar le uso del plug-in Flash.
 policy-Handlers = Configurar gestores de application predefinite.
 policy-HardwareAcceleration = Si false, disactivar le acceleration hardware.

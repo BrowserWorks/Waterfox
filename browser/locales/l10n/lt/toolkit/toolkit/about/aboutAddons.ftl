@@ -390,7 +390,7 @@ release-notes-error = Atsiprašome, bet įkeliant laidos apžvalgą įvyko klaid
 addon-permissions-empty = Šis priedas nereikalauja jokių leidimų
 recommended-extensions-heading = Rekomenduojami priedai
 recommended-themes-heading = Rekomenduojami grafiniai apvalkalai
-# A recommendation for the Firefox Color theme shown at the bottom of the theme
+# A recommendation for the Waterfox Color theme shown at the bottom of the theme
 # list view. The "Firefox Color" name itself should not be translated.
 recommended-theme-1 = Jaučiatės kūrybiškai? <a data-l10n-name="link">Sukurkite savo grafinį apvalkalą su „Firefox Color“.</a>
 

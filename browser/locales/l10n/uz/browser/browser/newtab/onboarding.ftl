@@ -58,11 +58,11 @@ onboarding-fullpage-welcome-subheader = Qoʻlingizdan nima kelishini sinab koʻr
 onboarding-fullpage-form-email =
     .placeholder = E-pochta manzilingiz
 
-## Firefox Sync modal dialog strings.
+## Waterfox Sync modal dialog strings.
 
 onboarding-sync-welcome-header = { -brand-product-name }ni oʻzingiz bilan olib yuring
 onboarding-sync-welcome-content = Xatchoʻp, tarix, parol va boshqa turli sozlamalarni barcha qurilmalaringizga sinxronlang.
-onboarding-sync-welcome-learn-more-link = Firefox hisoblari haqida batafsil maʼlumot oling
+onboarding-sync-welcome-learn-more-link = Waterfox hisoblari haqida batafsil maʼlumot oling
 
 onboarding-sync-form-input =
     .placeholder = E-pochta
@@ -70,7 +70,7 @@ onboarding-sync-form-input =
 onboarding-sync-form-continue-button = Davom etish
 onboarding-sync-form-skip-login-button = Ushbu bosqichni oʻtkazib yuboring
 
-## This is part of the line "Enter your email to continue to Firefox Sync"
+## This is part of the line "Enter your email to continue to Waterfox Sync"
 
 onboarding-sync-form-header = E-pochtangizni kiriting
 onboarding-sync-form-sub-header = { -sync-brand-name } bilan ishlashda davom etish uchun
@@ -83,7 +83,7 @@ onboarding-benefit-products-text = Barcha qurilmalarda maxfiyligingizni taʼminl
 
 # "Personal Data Promise" is a concept that should be translated consistently
 # across the product. It refers to a concept shown elsewhere to the user: "The
-# Firefox Personal Data Promise is the way we honor your data in everything we
+# Waterfox Personal Data Promise is the way we honor your data in everything we
 # make and do. We take less data. We keep it safe. And we make sure that we are
 # transparent about how we use it."
 onboarding-benefit-privacy-text = Shaxsiy maʼlumotlar haqidagi vaʼdamizda turamiz: Kam maʼlumot olamiz. Xavfsiz saqlaymiz. Hech qanday sir boʻlmaydi.

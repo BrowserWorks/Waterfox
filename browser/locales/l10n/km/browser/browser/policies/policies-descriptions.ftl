@@ -4,7 +4,7 @@
 
 
 ## The Enterprise Policies feature is aimed at system administrators
-## who want to deploy these settings across several Firefox installations
+## who want to deploy these settings across several Waterfox installations
 ## all at once. This is traditionally done through the Windows Group Policy
 ## feature, but the system also supports other forms of deployment.
 ## These are short descriptions for individual policies, to be displayed
@@ -28,8 +28,8 @@ policy-DisableBuiltinPDFViewer = បិទដំណើរការឯកសា�
 
 policy-DisableDeveloperTools = ទប់ស្កាត់​ការ​ចូល​ទៅ​ឧបករណ៍​អភិវឌ្ឍន៍។
 
-# Firefox Screenshots is the name of the feature, and should not be translated.
-policy-DisableFirefoxScreenshots = បិទ​មុខងារ​រូបថត​អេក្រង់​របស់ Firefox ។
+# Waterfox Screenshots is the name of the feature, and should not be translated.
+policy-DisableFirefoxScreenshots = បិទ​មុខងារ​រូបថត​អេក្រង់​របស់ Waterfox ។
 
 policy-DisableForgetButton = រារាំង​ការ​ចូល​ប្រើ​ប៊ូតុង​រំលង។
 

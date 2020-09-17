@@ -80,7 +80,7 @@ cfr-doorhanger-pintab-animation-pause = Szünet
 cfr-doorhanger-pintab-animation-resume = Folytatás
 
 
-## Firefox Accounts Message
+## Waterfox Accounts Message
 
 cfr-doorhanger-bookmark-fxa-header = Szinkronizálja a könyvjelzőit mindenhol.
 cfr-doorhanger-bookmark-fxa-body = Nagyszerű találat! Ne maradjon könyvjelzők nélkül a mobileszközein sem. Kezdjen egy { -fxaccount-brand-name }kal.
@@ -195,7 +195,7 @@ cfr-doorhanger-send-tab-body = A Lap küldése segítségével könnyedén megos
 cfr-doorhanger-send-tab-ok-button = Próbálja ki a Lap küldését
     .accesskey = P
 
-## Firefox Send
+## Waterfox Send
 
 cfr-doorhanger-firefox-send-header = Ossza meg biztonságosan ezt a PDF-fájlt
 cfr-doorhanger-firefox-send-body = Tartsa biztonságban a bizalmas dokumentumait a kíváncsi szemek elől a végpontok közötti titkosítással, és a hivatkozással, amely eltűnik, ha végzett.
@@ -233,7 +233,7 @@ cfr-doorhanger-milestone-ok-button = Összes megjelenítése
 cfr-doorhanger-milestone-close-button = Bezárás
     .accesskey = B
 
-## What’s New Panel Content for Firefox 76
+## What’s New Panel Content for Waterfox 76
 
 
 ## Lockwise message

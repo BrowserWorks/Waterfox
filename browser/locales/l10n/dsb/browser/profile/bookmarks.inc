@@ -34,10 +34,10 @@
 # LOCALIZATION NOTE (firefox_heading):
 
 
-# Firefox links folder name
+# Waterfox links folder name
 
 
-#define firefox_heading Mozilla Firefox
+#define firefox_heading Waterfox
 
 
 # LOCALIZATION NOTE (firefox_help):
@@ -55,7 +55,7 @@
 # link title for https://www.mozilla.org/en-US/firefox/customize/
 
 
-#define firefox_customize Firefox pśiměriś
+#define firefox_customize Waterfox pśiměriś
 
 
 # LOCALIZATION NOTE (firefox_community):
@@ -79,10 +79,10 @@
 # LOCALIZATION NOTE (nightly_heading):
 
 
-# Firefox Nightly links folder name
+# Waterfox Nightly links folder name
 
 
-#define nightly_heading Resurse Firefox Nightly
+#define nightly_heading Resurse Waterfox Nightly
 
 
 # LOCALIZATION NOTE (nightly_blog):
@@ -91,7 +91,7 @@
 # Nightly builds only, link title for https://blog.nightly.mozilla.org/
 
 
-#define nightly_blog Blog Firefox Nightly
+#define nightly_blog Blog Waterfox Nightly
 
 
 # LOCALIZATION NOTE (bugzilla):

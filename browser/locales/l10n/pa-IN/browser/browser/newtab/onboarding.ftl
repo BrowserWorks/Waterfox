@@ -77,7 +77,7 @@ onboarding-multistage-theme-description-automatic = ਸਿਸਟਮ ਥੀਮ �
 onboarding-multistage-theme-label-light = ਹਲਕਾ
 onboarding-multistage-theme-label-dark = ਗੂੜ੍ਹਾ
 # "Firefox Alpenglow" here is the name of the theme, and should be kept in English.
-onboarding-multistage-theme-label-alpenglow = Firefox Alpenglow
+onboarding-multistage-theme-label-alpenglow = Waterfox Alpenglow
 
 ## Please make sure to split the content of the title attribute into lines whose
 ## width corresponds to about 40 Latin characters, to ensure that the tooltip
@@ -155,7 +155,7 @@ onboarding-fullpage-welcome-subheader = ਆਓ ਹਰ ਚੀਜ਼ ਦੀ ਛਾਣ
 onboarding-fullpage-form-email =
     .placeholder = ਤੁਹਾਡਾ ਈਮੇਲ ਸਿਰਨਾਵਾਂ…
 
-## Firefox Sync modal dialog strings.
+## Waterfox Sync modal dialog strings.
 
 onboarding-sync-welcome-header = { -brand-product-name } ਨੂੰ ਆਪਣੇ ਨਾਲ ਲੈ ਜਾਓ
 onboarding-sync-welcome-content = ਆਪਣੇ ਬੁੱਕਮਾਰਕ, ਅਤੀਤ, ਪਾਸਵਰਡ ਅਤੇ ਹੋਰ ਸੈਟਿੰਗਾਂ ਨੂੰ ਆਪਣੇ ਹੋਰ ਡਿਵਾਈਸਾਂ ਉੱਤੇ ਲਵੋ।
@@ -165,7 +165,7 @@ onboarding-sync-form-input =
 onboarding-sync-form-continue-button = ਜਾਰੀ ਰੱਖੋ
 onboarding-sync-form-skip-login-button = ਇਹ ਪਗ਼ ਛੱਡੋ
 
-## This is part of the line "Enter your email to continue to Firefox Sync"
+## This is part of the line "Enter your email to continue to Waterfox Sync"
 
 onboarding-sync-form-header = ਆਪਣਾ ਈਮੇਲ ਦਿਓ
 onboarding-sync-form-sub-header = { -sync-brand-name } ਨਾਲ ਜਾਰੀ ਰੱਖੋ
@@ -176,7 +176,7 @@ onboarding-sync-form-sub-header = { -sync-brand-name } ਨਾਲ ਜਾਰੀ �
 onboarding-benefit-products-text = ਸੰਦਾਂ ਦੇ ਸਮੂਹ ਨਾਲ ਕੰਮ ਕਰੋ, ਜੋ ਕਿ ਤੁਹਾਡੇ ਡਿਵਾਈਸਾਂ ਉੱਤੇ ਤੁਹਾਡੀ ਪਰਦੇਦਾਰੀ ਦਾ ਸਨਮਾਣ ਕਰਦੇ ਹਨ।
 # "Personal Data Promise" is a concept that should be translated consistently
 # across the product. It refers to a concept shown elsewhere to the user: "The
-# Firefox Personal Data Promise is the way we honor your data in everything we
+# Waterfox Personal Data Promise is the way we honor your data in everything we
 # make and do. We take less data. We keep it safe. And we make sure that we are
 # transparent about how we use it."
 onboarding-benefit-privacy-text = ਜੋ ਵੀ ਅਸੀਂ ਕਰਦੇ ਹਨ, ਉਹ ਸਾਡੀ ਨਿੱਜੀ ਡਾਟੇ ਦੇ ਵਾਅਦੇ ਦਾ ਸਨਮਾਣ ਕਰਦੀ ਹੈ: ਘੱਟ ਲਵੋ। ਸੁਰੱਖਿਅਤ ਰੱਖੋ। ਕੋਈ ਭੇਤ ਨਹੀਂ।

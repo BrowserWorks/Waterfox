@@ -29,9 +29,9 @@ graph-week-summary-private-window = Пратиоци које је { -brand-shor
 
 protection-report-webpage-title = Сигурносна командна табла
 protection-report-page-content-title = Сигурносна командна табла
-# This message shows when all privacy protections are turned off, which is why we use the word "can", Firefox is able to protect your privacy, but it is currently not.
+# This message shows when all privacy protections are turned off, which is why we use the word "can", Waterfox is able to protect your privacy, but it is currently not.
 protection-report-page-summary = { -brand-short-name } може заштитити вашу приватност у позадини док прегледате. Ево персонализованог сажетка ових заштита, са алаткама за преузимање контроле над вашом безбедношћу на мрежи.
-# This message shows when at least some protections are turned on, we are more assertive compared to the message above, Firefox is actively protecting you.
+# This message shows when at least some protections are turned on, we are more assertive compared to the message above, Waterfox is actively protecting you.
 protection-report-page-summary-default = { -brand-short-name } може заштитити вашу приватност у позадини док прегледате. Ево персонализованог сажетка ових заштита, са алаткама за преузимање контроле над вашом безбедношћу на мрежи.
 
 protection-report-settings-link = Управљајте подешавањима приватности и сигурности

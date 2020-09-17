@@ -8,8 +8,8 @@
 # These are the default window titles everywhere except macOS. The first two
 # attributes are used when the web content opened has no title:
 #
-# default - "Mozilla Firefox"
-# private - "Mozilla Firefox (Private Browsing)"
+# default - "Waterfox"
+# private - "Waterfox (Private Browsing)"
 #
 # The last two are for use when there *is* a content title.
 # Variables:
@@ -22,8 +22,8 @@ browser-main-window =
 # These are the default window titles on macOS. The first two are for use when
 # there is no content title:
 #
-# "default" - "Mozilla Firefox"
-# "private" - "Mozilla Firefox - (Private Browsing)"
+# "default" - "Waterfox"
+# "private" - "Waterfox - (Private Browsing)"
 #
 # The last two are for use when there *is* a content title.
 # Do not use the brand name in the last two attributes, as we do on non-macOS.
@@ -239,7 +239,7 @@ identity-clear-site-data =
 identity-connection-not-secure-security-view = Pripojenie k tejto stránke nie je zabezpečené.
 identity-connection-verified = Pripojenie k tejto stránke je zabezpečené.
 identity-ev-owner-label = Certifikát bol vydaný pre:
-identity-description-custom-root = Mozilla tohto vydavateľa certifikátov nepozná. Mohol byť pridaný operačným systémom alebo správcom vášho počítača. <label data-l10n-name="link">Ďalšie informácie</label>
+identity-description-custom-root = Waterfox tohto vydavateľa certifikátov nepozná. Mohol byť pridaný operačným systémom alebo správcom vášho počítača. <label data-l10n-name="link">Ďalšie informácie</label>
 identity-remove-cert-exception =
     .label = Odstrániť výnimku
     .accesskey = d

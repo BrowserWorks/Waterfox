@@ -4,7 +4,7 @@
 
 
 ## The Enterprise Policies feature is aimed at system administrators
-## who want to deploy these settings across several Firefox installations
+## who want to deploy these settings across several Waterfox installations
 ## all at once. This is traditionally done through the Windows Group Policy
 ## feature, but the system also supports other forms of deployment.
 ## These are short descriptions for individual policies, to be displayed
@@ -30,8 +30,8 @@ policy-DisableDefaultBrowserAgent = Prevent the default browser agent from takin
 policy-DisableDeveloperTools = Block access to the developer tools.
 policy-DisableFeedbackCommands = Disable commands to send feedback from the Help menu (Submit Feedback and Report Deceptive Site).
 policy-DisableFirefoxAccounts = Disable { -fxaccount-brand-name } based services, including Sync.
-# Firefox Screenshots is the name of the feature, and should not be translated.
-policy-DisableFirefoxScreenshots = Disable the Firefox Screenshots feature.
+# Waterfox Screenshots is the name of the feature, and should not be translated.
+policy-DisableFirefoxScreenshots = Disable the Waterfox Screenshots feature.
 policy-DisableFirefoxStudies = Prevent { -brand-short-name } from running studies.
 policy-DisableForgetButton = Prevent access to the Forget button.
 policy-DisableFormHistory = Don’t remember search and form history.
@@ -62,7 +62,7 @@ policy-EncryptedMediaExtensions = Enable or disable Encrypted Media Extensions a
 policy-Extensions = Install, uninstall or lock extensions. The Install option takes URLs or paths as parameters. The Uninstall and Locked options take extension IDs.
 policy-ExtensionSettings = Manage all aspects of extension installation.
 policy-ExtensionUpdate = Enable or disable automatic extension updates.
-policy-FirefoxHome = Configure Firefox Home.
+policy-FirefoxHome = Configure Waterfox Home.
 policy-FlashPlugin = Allow or deny usage of the Flash plugin.
 policy-Handlers = Configure default application handlers.
 policy-HardwareAcceleration = If false, turn off hardware acceleration.

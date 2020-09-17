@@ -27,9 +27,9 @@ graph-week-summary-private-window = Elements de seguiments que el { -brand-short
 
 protection-report-webpage-title = Tauler de proteccions
 protection-report-page-content-title = Tauler de proteccions
-# This message shows when all privacy protections are turned off, which is why we use the word "can", Firefox is able to protect your privacy, but it is currently not.
+# This message shows when all privacy protections are turned off, which is why we use the word "can", Waterfox is able to protect your privacy, but it is currently not.
 protection-report-page-summary = El { -brand-short-name } pot protegir la vostra privadesa de forma transparent mentre navegueu. Aquest és un resum personalitzat de les proteccions, amb eines per tenir el control de la vostra seguretat a Internet.
-# This message shows when at least some protections are turned on, we are more assertive compared to the message above, Firefox is actively protecting you.
+# This message shows when at least some protections are turned on, we are more assertive compared to the message above, Waterfox is actively protecting you.
 protection-report-page-summary-default = El { -brand-short-name } protegeix la vostra privadesa de forma transparent mentre navegueu. Aquest és un resum personalitzat de les proteccions, amb eines per tenir el control de la vostra seguretat a Internet.
 
 protection-report-settings-link = Gestiona els paràmetres de privadesa i seguretat

@@ -136,9 +136,9 @@ manifest-loaded-ok = Manifest wedi'i lwytho.
 # load the manifest
 manifest-loaded-error = Bu gwall wrth lwytho'r maniffest:
 
-# Text displayed as an error when there has been a Firefox DevTools error while
+# Text displayed as an error when there has been a Waterfox DevTools error while
 # trying to load the manifest
-manifest-loaded-devtools-error = Gwall Firefox DevTools
+manifest-loaded-devtools-error = Gwall Waterfox DevTools
 
 # Text displayed when the page has no manifest available
 manifest-non-existing = Heb ganfod maniffest i'w arolygu

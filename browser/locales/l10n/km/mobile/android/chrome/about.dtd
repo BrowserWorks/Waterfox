@@ -16,6 +16,6 @@
 <!ENTITY aboutPage.relNotes.label               "ឯកសារ​ចេញផ្សាយ">
 <!ENTITY aboutPage.credits.label                "អ្នក​ចូលរួម">
 <!ENTITY aboutPage.license.label                "ព័ត៌មាន​អាជ្ញាប័ណ្ណ">
-<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Firefox" being trademarked, that's why we use it, instead of brandShortName. -->
+<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Waterfox" being trademarked, that's why we use it, instead of brandShortName. -->
 
-<!ENTITY aboutPage.logoTrademark                "Firefox និង​រូប​សញ្ញា Firefox គឺជា​និក្ខិត្កសញ្ញា​របស់​មូលនិធិ Mozilla ។">
+<!ENTITY aboutPage.logoTrademark                "Firefox និង​រូប​សញ្ញា Waterfox គឺជា​និក្ខិត្កសញ្ញា​របស់​មូលនិធិ Mozilla ។">

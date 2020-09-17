@@ -63,7 +63,7 @@ cfr-doorhanger-pintab-animation-pause = Cuir ar Sos
 cfr-doorhanger-pintab-animation-resume = Atosaigh
 
 
-## Firefox Accounts Message
+## Waterfox Accounts Message
 
 cfr-doorhanger-bookmark-fxa-link-text = Sioncronaigh leabharmharcanna anois…
 
@@ -135,7 +135,7 @@ cfr-doorhanger-sync-logins-ok-button = Cuir { -sync-brand-short-name } ar siúl
 ## Send Tab
 
 
-## Firefox Send
+## Waterfox Send
 
 cfr-doorhanger-firefox-send-ok-button = Bain triail as { -send-brand-name }
     .accesskey = t
@@ -166,7 +166,7 @@ cfr-doorhanger-milestone-heading =
 cfr-doorhanger-milestone-ok-button = Féach Uile
     .accesskey = F
 
-## What’s New Panel Content for Firefox 76
+## What’s New Panel Content for Waterfox 76
 
 ## Lockwise message
 

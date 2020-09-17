@@ -2,7 +2,7 @@
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
-<!ENTITY aboutAccounts.connected.title "Cunntasan Firefox">
+<!ENTITY aboutAccounts.connected.title "Cunntasan Waterfox">
 <!ENTITY aboutAccounts.connected.description "Tha thu co-cheangailte ris mar">
 <!ENTITY aboutAccounts.syncPreferences.label "Thoir gnogag an-seo a thoirt sùil air roghainnean an t-sioncronachaidh">
 
@@ -10,4 +10,4 @@
 <!ENTITY aboutAccounts.retry.label "Feuch ris a-rithist">
 
 <!ENTITY aboutAccounts.restrictedError.title "Cuingichte">
-<!ENTITY aboutAccounts.restrictedError.description "Chan urrainn dhut cunntasan Firefox a stiùireadh on phròifil seo.">
+<!ENTITY aboutAccounts.restrictedError.description "Chan urrainn dhut cunntasan Waterfox a stiùireadh on phròifil seo.">

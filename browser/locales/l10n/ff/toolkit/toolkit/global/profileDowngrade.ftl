@@ -3,7 +3,7 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 profiledowngrade-window =
-    .title = A hurminii yamre Firefox ɓurnde hiiɗɗude { -brand-product-name }
+    .title = A hurminii yamre Waterfox ɓurnde hiiɗɗude { -brand-product-name }
     .style = width: 490px;
 
 profiledowngrade-window-create =

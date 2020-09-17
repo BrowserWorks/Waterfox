@@ -122,9 +122,9 @@ search-results-help-link = Ju duhet ndihmë? Vizitoni <a data-l10n-name="url">As
 
 startup-header = Nisje
 # { -brand-short-name } will be 'Firefox Developer Edition',
-# since this setting is only exposed in Firefox Developer Edition
+# since this setting is only exposed in Waterfox Developer Edition
 separate-profile-mode =
-    .label = Lejojeni { -brand-short-name }-in dhe Firefox-in të xhirojnë në të njëjtën kohë
+    .label = Lejojeni { -brand-short-name }-in dhe Waterfox-in të xhirojnë në të njëjtën kohë
 use-firefox-sync = Ndihmëz: Kjo përdor profile ndaras. Për ndarje të dhënash mes tyre përdorni { -sync-brand-short-name }-n.
 get-started-not-logged-in = Hyni te { -sync-brand-short-name }-u…
 get-started-configured = Hap parapëlqimet mbi { -sync-brand-short-name }
@@ -455,10 +455,10 @@ home-newtabs-mode-label = Skeda të reja
 home-restore-defaults =
     .label = Rikthe Parazgjedhjet
     .accesskey = R
-# "Firefox" should be treated as a brand and kept in English,
+# "Waterfox" should be treated as a brand and kept in English,
 # while "Home" and "(Default)" can be localized.
 home-mode-choice-default =
-    .label = Kreu i Firefox-it (Parazgjedhje)
+    .label = Kreu i Waterfox-it (Parazgjedhje)
 home-mode-choice-custom =
     .label = URL Vetjake…
 home-mode-choice-blank =
@@ -480,10 +480,10 @@ choose-bookmark =
     .label = Përdorni Faqerojtës…
     .accesskey = F
 
-## Home Section - Firefox Home Content Customization
+## Home Section - Waterfox Home Content Customization
 
-home-prefs-content-header = Lëndë Firefox Home
-home-prefs-content-description = Zgjidhni ç’lëndë doni në skenën tuaj Firefox.
+home-prefs-content-header = Lëndë Waterfox Home
+home-prefs-content-description = Zgjidhni ç’lëndë doni në skenën tuaj Waterfox.
 home-prefs-search-header =
     .label = Kërkim Web
 home-prefs-topsites-header =
@@ -603,7 +603,7 @@ containers-preferences-button =
 containers-remove-button =
     .label = Hiqe
 
-## Firefox Account - Signed out. Note that "Sync" and "Firefox Account" are now
+## Waterfox Account - Signed out. Note that "Sync" and "Firefox Account" are now
 ## more discrete ("signed in" no longer means "and sync is connected").
 
 sync-signedout-caption = Merreni Web-in me vete
@@ -619,9 +619,9 @@ sync-signedout-account-signin2 =
 #
 # They can be moved within the sentence as needed to adapt
 # to your language, but should not be changed or translated.
-sync-mobile-promo = Shkarkoni Firefox-in për <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> ose <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS</a> që të kryeni njëkohësim te pajisja juaj celulare.
+sync-mobile-promo = Shkarkoni Waterfox-in për <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> ose <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS</a> që të kryeni njëkohësim te pajisja juaj celulare.
 
-## Firefox Account - Signed in
+## Waterfox Account - Signed in
 
 sync-profile-picture =
     .tooltiptext = Ndryshoni foto profili
@@ -707,7 +707,7 @@ sync-engine-creditcards =
     .accesskey = K
 sync-engine-addons =
     .label = Shtesat e Mia
-    .tooltiptext = Zgjerime dhe tema për Firefox Desktop
+    .tooltiptext = Zgjerime dhe tema për Waterfox Desktop
     .accesskey = t
 sync-engine-prefs =
     .label =
@@ -813,8 +813,8 @@ history-header = Historik
 # "Firefox will" + "Remember history".
 #
 # If this doesn't work for your language, you can translate this message:
-#   - Simply as "Firefox", moving the verb into each option.
-#     This will result in "Firefox" + "Will remember history", etc.
+#   - Simply as "Waterfox", moving the verb into each option.
+#     This will result in "Waterfox" + "Will remember history", etc.
 #   - As a stand-alone message, for example "Firefox history settings:".
 history-remember-label = { -brand-short-name }-i
     .accesskey = F

@@ -29,5 +29,5 @@ Entities below were automatically added by compare-locales,
 -->
 
 <!ENTITY prefUseragent.label "User Agent String">
-<!ENTITY prefFirefoxCompat.label "Advertise Firefox compatibility">
+<!ENTITY prefFirefoxCompat.label "Advertise Waterfox compatibility">
 <!ENTITY prefFirefoxCompat.accesskey "F">

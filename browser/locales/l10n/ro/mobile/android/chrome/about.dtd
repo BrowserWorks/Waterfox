@@ -17,5 +17,5 @@
 <!ENTITY aboutPage.credits.label                "Merite">
 <!ENTITY aboutPage.license.label                "Informații privind licențierea">
 
-<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Firefox" being trademarked, that's why we use it, instead of brandShortName. -->
-<!ENTITY aboutPage.logoTrademark                "Firefox și logourile Firefox sunt mărci înregistrate ale Mozilla Foundation.">
+<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Waterfox" being trademarked, that's why we use it, instead of brandShortName. -->
+<!ENTITY aboutPage.logoTrademark                "Firefox și logourile Waterfox sunt mărci înregistrate ale Waterfox Ltd..">

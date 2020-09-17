@@ -3,14 +3,14 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 head-title = Ikom Gitic pa Ludiro
-enable-title = Cak Gitic pa Ludiro me Firefox
+enable-title = Cak Gitic pa Ludiro me Waterfox
 enable-key-shortcut-message = I cako yoo ma cek me Gitic pa Ludiro. Kacce obedo bal, itwero loro Dirica matidi man.
-enable-common-message = Kijuko woko pire kene Gitic pa Ludiro me Firefox me miini loc makato ikom layeny mamegi.
+enable-common-message = Kijuko woko pire kene Gitic pa Ludiro me Waterfox me miini loc makato ikom layeny mamegi.
 enable-learn-more-link = Nong ngec mapol ikom Gitic pa Ludiro
 enable-enable-button = Cak Gitic pa Ludiro
 enable-close-button = Lor dirica matidi man
 
-welcome-title = Wajoli i Gitic pa Ludiro me Firefox!
+welcome-title = Wajoli i Gitic pa Ludiro me Waterfox!
 newsletter-title = Waraga lok angeya pa Ludiro me Mozilla
 newsletter-message = Wek ki cwal lok angeya pa ludiro, ngec ki jami tic atir i canduk mamegi.
 newsletter-email-placeholder =
@@ -19,8 +19,8 @@ newsletter-privacy-label = Atye agonya ki Mozilla me loono ngec mamega kit ma ki
 newsletter-subscribe-button = Coone
 newsletter-thanks-title = Pwoc!
 
-footer-title = Firefox Developer Edition
-footer-message = Itye ka yenyo gin makato Gitic pa Ludiro? Nen layeny me Firefox ma ki yubo atika ne pi ludiro ki tic me kare ma nyen.
+footer-title = Waterfox Developer Edition
+footer-message = Itye ka yenyo gin makato Gitic pa Ludiro? Nen layeny me Waterfox ma ki yubo atika ne pi ludiro ki tic me kare ma nyen.
 footer-learn-more-link = Nong ngec mapol
 
 features-learn-more = Nong ngec mapol

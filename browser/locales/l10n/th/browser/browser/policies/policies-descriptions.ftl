@@ -4,7 +4,7 @@
 
 
 ## The Enterprise Policies feature is aimed at system administrators
-## who want to deploy these settings across several Firefox installations
+## who want to deploy these settings across several Waterfox installations
 ## all at once. This is traditionally done through the Windows Group Policy
 ## feature, but the system also supports other forms of deployment.
 ## These are short descriptions for individual policies, to be displayed
@@ -50,8 +50,8 @@ policy-DisableFeedbackCommands = ปิดใช้งานคำสั่ง�
 
 policy-DisableFirefoxAccounts = ปิดใช้งานบริการที่ใช้ { -fxaccount-brand-name } รวมถึง Sync ด้วย
 
-# Firefox Screenshots is the name of the feature, and should not be translated.
-policy-DisableFirefoxScreenshots = ปิดใช้งานคุณลักษณะ Firefox Screenshots
+# Waterfox Screenshots is the name of the feature, and should not be translated.
+policy-DisableFirefoxScreenshots = ปิดใช้งานคุณลักษณะ Waterfox Screenshots
 
 policy-DisableFirefoxStudies = ป้องกันไม่ให้ { -brand-short-name } เรียกใช้การศึกษา
 
@@ -108,7 +108,7 @@ policy-ExtensionSettings = จัดการการติดตั้งส�
 
 policy-ExtensionUpdate = เปิดใช้งานหรือปิดใช้งานการอัปเดตส่วนขยายอัตโนมัติ
 
-policy-FirefoxHome = กำหนดค่า Firefox Home
+policy-FirefoxHome = กำหนดค่า Waterfox Home
 
 policy-FlashPlugin = อนุญาตหรือปฏิเสธการใช้ปลั๊กอิน Flash
 

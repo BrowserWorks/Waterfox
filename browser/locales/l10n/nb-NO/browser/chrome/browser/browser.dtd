@@ -47,7 +47,7 @@ this container is a toolbar. This avoids double-speaking. -->
 <!ENTITY pictureInPictureHideToggle.accesskey "S">
 
 <!-- LOCALIZATION NOTE (fxa.menu) Used to define the different labels
-     for the Firefox Account toolbar menu screen. The `Signed in as` text is
+     for the Waterfox Account toolbar menu screen. The `Signed in as` text is
      followed by the user's email. -->
 <!ENTITY fxa.menu.syncSettings2.label "&syncBrand.shortName.label;-innstillinger">
 <!ENTITY fxa.menu.connectAnotherDevice2.label "Koble til en annen enhet…">
@@ -64,7 +64,7 @@ this container is a toolbar. This avoids double-speaking. -->
 <!ENTITY fxa.menu.setupSync.label "Konfigurer &syncBrand.shortName.label;…">
 
 <!-- LOCALIZATION NOTE (fxa.service) Used to define the different FxA services
-     for the Firefox Account toolbar menu screen.  -->
+     for the Waterfox Account toolbar menu screen.  -->
 <!ENTITY fxa.service.sendTab.description "Send en fane øyeblikkelig til alle enheter du er logget inn på.">
 
 <!-- LOCALIZATION NOTE (fullscreenWarning.beforeDomain.label,
@@ -170,7 +170,7 @@ this container is a toolbar. This avoids double-speaking. -->
 <!ENTITY appMenuRemoteTabs.tabsnotsyncing.label "Skru på fane-synkronisering for å se en liste over faner fra de andre enhetene dine.">
 <!-- LOCALIZATION NOTE (appMenuRemoteTabs.noclients.subtitle): This is shown
      when Sync is configured but this appears to be the only device attached to
-     the account. We also show links to download Firefox for android/ios. -->
+     the account. We also show links to download Waterfox for android/ios. -->
 <!ENTITY appMenuRemoteTabs.noclients.subtitle "Vil du se faner fra de andre enhetene dine her?">
 <!ENTITY appMenuRemoteTabs.opensyncprefs.label "Åpne synkroniseringinnstillinger">
 <!ENTITY appMenuRemoteTabs.welcome.label "Vis en liste over faner fra andre enheter.">

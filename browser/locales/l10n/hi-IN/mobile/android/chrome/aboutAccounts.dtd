@@ -10,4 +10,4 @@
 <!ENTITY aboutAccounts.retry.label "फिर कोशिश करें">
 
 <!ENTITY aboutAccounts.restrictedError.title "सीमित">
-<!ENTITY aboutAccounts.restrictedError.description "आप इस प्रोफाइल से Firefox खाते प्रबंधित नहीं कर सकते हैं.">
+<!ENTITY aboutAccounts.restrictedError.description "आप इस प्रोफाइल से Waterfox खाते प्रबंधित नहीं कर सकते हैं.">

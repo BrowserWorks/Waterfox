@@ -122,9 +122,9 @@ search-results-help-link = Butuh bantuan? Kunjungi <a data-l10n-name="url">Dukun
 
 startup-header = Memulai
 # { -brand-short-name } will be 'Firefox Developer Edition',
-# since this setting is only exposed in Firefox Developer Edition
+# since this setting is only exposed in Waterfox Developer Edition
 separate-profile-mode =
-    .label = Izinkan { -brand-short-name } dan Firefox untuk dijalankan pada saat yang bersamaan
+    .label = Izinkan { -brand-short-name } dan Waterfox untuk dijalankan pada saat yang bersamaan
 use-firefox-sync = Kiat: Fitur ini menggunakan data profil yang berbeda. Gunakan fitur { -sync-brand-short-name } untuk berbagi data antar-profil tersebut.
 get-started-not-logged-in = Masuk ke { -sync-brand-short-name }…
 get-started-configured = Buka preferensi { -sync-brand-short-name }
@@ -443,10 +443,10 @@ home-newtabs-mode-label = Tab baru
 home-restore-defaults =
     .label = Pulihkan Bawaan
     .accesskey = B
-# "Firefox" should be treated as a brand and kept in English,
+# "Waterfox" should be treated as a brand and kept in English,
 # while "Home" and "(Default)" can be localized.
 home-mode-choice-default =
-    .label = Beranda Firefox (Baku)
+    .label = Beranda Waterfox (Baku)
 home-mode-choice-custom =
     .label = URL Ubahsuai…
 home-mode-choice-blank =
@@ -468,10 +468,10 @@ choose-bookmark =
     .label = Gunakan Markah…
     .accesskey = h
 
-## Home Section - Firefox Home Content Customization
+## Home Section - Waterfox Home Content Customization
 
-home-prefs-content-header = Konten Beranda Firefox
-home-prefs-content-description = Pilih konten yang ingin Anda tampilkan dalam Beranda Firefox.
+home-prefs-content-header = Konten Beranda Waterfox
+home-prefs-content-description = Pilih konten yang ingin Anda tampilkan dalam Beranda Waterfox.
 home-prefs-search-header =
     .label = Pencarian Web
 home-prefs-topsites-header =
@@ -587,7 +587,7 @@ containers-preferences-button =
 containers-remove-button =
     .label = Hapus
 
-## Firefox Account - Signed out. Note that "Sync" and "Firefox Account" are now
+## Waterfox Account - Signed out. Note that "Sync" and "Firefox Account" are now
 ## more discrete ("signed in" no longer means "and sync is connected").
 
 sync-signedout-caption = Bawalah Web bersama Anda
@@ -603,9 +603,9 @@ sync-signedout-account-signin2 =
 #
 # They can be moved within the sentence as needed to adapt
 # to your language, but should not be changed or translated.
-sync-mobile-promo = Unduh Firefox untuk <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> atau <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS</a> untuk menyinkronkan dengan peranti seluler Anda.
+sync-mobile-promo = Unduh Waterfox untuk <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> atau <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS</a> untuk menyinkronkan dengan peranti seluler Anda.
 
-## Firefox Account - Signed in
+## Waterfox Account - Signed in
 
 sync-profile-picture =
     .tooltiptext = Ubah gambar profil
@@ -691,7 +691,7 @@ sync-engine-creditcards =
     .accesskey = K
 sync-engine-addons =
     .label = Pengaya
-    .tooltiptext = Ekstensi dan tema untuk Firefox desktop
+    .tooltiptext = Ekstensi dan tema untuk Waterfox desktop
     .accesskey = y
 sync-engine-prefs =
     .label =
@@ -797,8 +797,8 @@ history-header = Riwayat
 # "Firefox will" + "Remember history".
 #
 # If this doesn't work for your language, you can translate this message:
-#   - Simply as "Firefox", moving the verb into each option.
-#     This will result in "Firefox" + "Will remember history", etc.
+#   - Simply as "Waterfox", moving the verb into each option.
+#     This will result in "Waterfox" + "Will remember history", etc.
 #   - As a stand-alone message, for example "Firefox history settings:".
 history-remember-label = { -brand-short-name }
     .accesskey = i

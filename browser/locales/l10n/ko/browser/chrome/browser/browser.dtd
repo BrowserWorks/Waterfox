@@ -46,7 +46,7 @@ this container is a toolbar. This avoids double-speaking. -->
 <!ENTITY pictureInPictureHideToggle.accesskey "H">
 
 <!-- LOCALIZATION NOTE (fxa.menu) Used to define the different labels
-     for the Firefox Account toolbar menu screen. The `Signed in as` text is
+     for the Waterfox Account toolbar menu screen. The `Signed in as` text is
      followed by the user's email. -->
 <!ENTITY fxa.menu.syncSettings2.label "&syncBrand.shortName.label; 설정">
 <!ENTITY fxa.menu.connectAnotherDevice2.label "다른 기기 연결…">
@@ -62,7 +62,7 @@ this container is a toolbar. This avoids double-speaking. -->
 <!ENTITY fxa.menu.setupSync.label "&syncBrand.shortName.label; 설정…">
 
 <!-- LOCALIZATION NOTE (fxa.service) Used to define the different FxA services
-     for the Firefox Account toolbar menu screen.  -->
+     for the Waterfox Account toolbar menu screen.  -->
 <!ENTITY fxa.service.sendTab.description "로그인한 모든 기기로 즉시 탭을 보냅니다.">
 
 <!-- LOCALIZATION NOTE (fullscreenWarning.beforeDomain.label,
@@ -168,7 +168,7 @@ this container is a toolbar. This avoids double-speaking. -->
 <!ENTITY appMenuRemoteTabs.tabsnotsyncing.label "다른 기기의 탭 목록을 보려면 탭 동기화를 켜세요.">
 <!-- LOCALIZATION NOTE (appMenuRemoteTabs.noclients.subtitle): This is shown
      when Sync is configured but this appears to be the only device attached to
-     the account. We also show links to download Firefox for android/ios. -->
+     the account. We also show links to download Waterfox for android/ios. -->
 <!ENTITY appMenuRemoteTabs.noclients.subtitle "다른 기기에서도 여기에서 열린 탭을 사용하시겠습니까?">
 <!ENTITY appMenuRemoteTabs.opensyncprefs.label "Sync 설정 열기">
 <!ENTITY appMenuRemoteTabs.welcome.label "다른 기기의 탭 목록을 봅니다.">

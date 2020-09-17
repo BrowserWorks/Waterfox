@@ -15,15 +15,15 @@
 <!ENTITY prefEnableHTTP11Proxy.accesskey     "з">
 <!ENTITY prefPara                            "С помощью этих параметров можно настроить HTTP-соединения так, чтобы увеличить их скорость и/или совместимость с серверами. Например, некоторые прокси-серверы требуют использования HTTP 1.0 (см. примечания к версии).">
 <!ENTITY prefUseragent.label                 "Строка User Agent">
-<!ENTITY prefFirefoxCompat.label             "Сообщать о совместимости с Firefox">
+<!ENTITY prefFirefoxCompat.label             "Сообщать о совместимости с Waterfox">
 <!ENTITY prefFirefoxCompat.accesskey         "м">
 <!ENTITY prefLightningShow.label             "Сообщать об установленном Lightning">
 <!ENTITY prefLightningShow.accesskey         "о">
 <!ENTITY prefCompatWarning                   "ПРЕДУПРЕЖДЕНИЕ: отключение этих параметров может привести к некорректной работе веб-сайтов или служб.">
-<!ENTITY prefFirefoxStrict.label             "Представляться как Firefox">
+<!ENTITY prefFirefoxStrict.label             "Представляться как Waterfox">
 <!ENTITY prefFirefoxStrict.accesskey         "е">
 <!ENTITY prefFirefoxNone.label               "Представляться как SeaMonkey">
 <!ENTITY prefFirefoxNone.accesskey           "я">
-<!ENTITY prefFirefoxCompat2.label            "Представляться как SeaMonkey и сообщать о совместимости с Firefox">
+<!ENTITY prefFirefoxCompat2.label            "Представляться как SeaMonkey и сообщать о совместимости с Waterfox">
 <!ENTITY prefFirefoxCompat2.accesskey        "ь">
 <!ENTITY prefCompatWarning2.desc             "ПРЕДУПРЕЖДЕНИЕ: изменение этого параметра может привести к неправильной работе веб-сайтов или служб.">

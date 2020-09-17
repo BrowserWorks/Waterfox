@@ -27,9 +27,9 @@ graph-week-summary-private-window = Elemente zur Aktivitätenverfolgung, die { -
 
 protection-report-webpage-title = Schutzmaßnahmen-Übersicht
 protection-report-page-content-title = Schutzmaßnahmen-Übersicht
-# This message shows when all privacy protections are turned off, which is why we use the word "can", Firefox is able to protect your privacy, but it is currently not.
+# This message shows when all privacy protections are turned off, which is why we use the word "can", Waterfox is able to protect your privacy, but it is currently not.
 protection-report-page-summary = { -brand-short-name } kann Ihre Privatsphäre im Hintergrund schützen, während Sie im Internet surfen. Dies ist eine personalisierte Zusammenfassung dieser Schutzmaßnahmen und enthält auch Funktionen, mit denen Sie die Kontrolle über Ihre Online-Sicherheit übernehmen können.
-# This message shows when at least some protections are turned on, we are more assertive compared to the message above, Firefox is actively protecting you.
+# This message shows when at least some protections are turned on, we are more assertive compared to the message above, Waterfox is actively protecting you.
 protection-report-page-summary-default = { -brand-short-name } schützt Ihre Privatsphäre im Hintergrund, während Sie im Internet surfen. Dies ist eine personalisierte Zusammenfassung dieser Schutzmaßnahmen und enthält auch Funktionen, mit denen Sie die Kontrolle über Ihre Online-Sicherheit übernehmen können.
 
 protection-report-settings-link = Datenschutz- und Sicherheitseinstellungen verwalten

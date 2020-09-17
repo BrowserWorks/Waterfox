@@ -33,11 +33,11 @@ onboarding-cards-dismiss =
 
 ## Welcome full page string
 
-## Firefox Sync modal dialog strings.
+## Waterfox Sync modal dialog strings.
 
 onboarding-sync-welcome-header = { -brand-product-name }-u özünüzlə gəzdirin
 onboarding-sync-welcome-content = Əlfəcin, tarixçə, parol və digər tənzimləmələrinizi bütün cihazlarınızda əldə edin.
-onboarding-sync-welcome-learn-more-link = Firefox Hesabları haqqında ətraflı öyrənin
+onboarding-sync-welcome-learn-more-link = Waterfox Hesabları haqqında ətraflı öyrənin
 
 onboarding-sync-form-input =
     .placeholder = E-poçt
@@ -45,7 +45,7 @@ onboarding-sync-form-input =
 onboarding-sync-form-continue-button = Davam et
 onboarding-sync-form-skip-login-button = Bu addımı keç
 
-## This is part of the line "Enter your email to continue to Firefox Sync"
+## This is part of the line "Enter your email to continue to Waterfox Sync"
 
 onboarding-sync-form-header = E-poçtunuzu daxil edin
 onboarding-sync-form-sub-header = və { -sync-brand-name } ilə davam edin.

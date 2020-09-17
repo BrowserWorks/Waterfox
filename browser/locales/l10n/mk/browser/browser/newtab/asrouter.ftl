@@ -51,7 +51,7 @@ cfr-doorhanger-pintab-animation-pause = Паузирај
 cfr-doorhanger-pintab-animation-resume = Продолжи
 
 
-## Firefox Accounts Message
+## Waterfox Accounts Message
 
 cfr-doorhanger-bookmark-fxa-header = Синхронизирајте ги вашите обележувачи насекаде.
 cfr-doorhanger-bookmark-fxa-link-text = Синхронизирај обележувачи сега...
@@ -77,13 +77,13 @@ cfr-doorhanger-bookmark-fxa-close-btn-tooltip =
 
 ## Send Tab
 
-## Firefox Send
+## Waterfox Send
 
 ## Social Tracking Protection
 
 ## Enhanced Tracking Protection Milestones
 
-## What’s New Panel Content for Firefox 76
+## What’s New Panel Content for Waterfox 76
 
 ## Lockwise message
 

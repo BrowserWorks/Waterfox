@@ -3,18 +3,18 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 head-title = Rreth Mjeteve të Zhvilluesit
-enable-title = Aktivizoni Mjete Zhvilluesi Firefox
-enable-inspect-element-title = Që të përdorni Inspekto Element, aktivizoni Mjete Zhvilluesi Firefox
+enable-title = Aktivizoni Mjete Zhvilluesi Waterfox
+enable-inspect-element-title = Që të përdorni Inspekto Element, aktivizoni Mjete Zhvilluesi Waterfox
 enable-inspect-element-message = Ekzaminoni dhe përpunoni HTML dhe CSS me mbikëqërysin e Mjeteve të Zhvilluesit.
-enable-about-debugging-message = Zhvilloni dhe diagnostikoni WebExtensions, web workers, service workers, etj me Mjete Zhvilluesi Firefox.
+enable-about-debugging-message = Zhvilloni dhe diagnostikoni WebExtensions, web workers, service workers, etj me Mjete Zhvilluesi Waterfox.
 enable-key-shortcut-message = Aktivizuat një shkurtore Mjetesh Zhvilluesi. Nëse kjo qe gabim, mund ta mbyllni këtë Skedë.
 enable-menu-message = Përsosni HTML-në, CSS-në, dhe JavaScript-in e sajtit tuaj me mjete si Mbikëqyrësi dhe Diagnostikuesi.
-enable-common-message = Mjetet e Zhvilluesit Firefox, si parazgjedhje, janë të çaktivizuara, për t’ju dhënë më tepër kontroll mbi shfletuesin tuaj.
+enable-common-message = Mjetet e Zhvilluesit Waterfox, si parazgjedhje, janë të çaktivizuara, për t’ju dhënë më tepër kontroll mbi shfletuesin tuaj.
 enable-learn-more-link = Mësoni më tepër rreth Mjetesh Zhvilluesi
 enable-enable-button = Aktivizoni Mjete Zhvilluesi
 enable-close-button = Mbylle këtë Skedë
 
-welcome-title = Mirë se vini te Mjete Zhvilluesi Firefox!
+welcome-title = Mirë se vini te Mjete Zhvilluesi Waterfox!
 newsletter-title = Buletini i Zhvilluesve Mozilla
 newsletter-message = Merrni lajme, marifete dhe burime zhvilluesish drejt e te email-i juaj.
 newsletter-email-placeholder =
@@ -24,8 +24,8 @@ newsletter-subscribe-button = Pajtohuni
 newsletter-thanks-title = Faleminderit!
 newsletter-thanks-message = Nëse s’e keni ripohuar më parë pajtimin te një buletin i Mozilla-s, mund t’ju duhet ta bëni. Ju lutemi, kontrolloni email-et e marrë ose filtrin tuaj për mesazhe të padëshiruar për një email prej nesh.
 
-footer-title = Firefox Developer Edition
-footer-message = Po kërkoni për më tepër se thjesht Mjete Zhvilluesi? Shihni shfletuesin tonë Firefox të ndërtuar posaçërisht për zhvillues dhe rrjedha pune moderne.
+footer-title = Waterfox Developer Edition
+footer-message = Po kërkoni për më tepër se thjesht Mjete Zhvilluesi? Shihni shfletuesin tonë Waterfox të ndërtuar posaçërisht për zhvillues dhe rrjedha pune moderne.
 footer-learn-more-link = Mësoni më tepër
 
 features-learn-more = Mësoni më tepër

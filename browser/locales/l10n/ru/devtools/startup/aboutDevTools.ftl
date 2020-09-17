@@ -24,8 +24,8 @@ newsletter-subscribe-button = Подписаться
 newsletter-thanks-title = Спасибо!
 newsletter-thanks-message = Если вы ранее не подтверждали подписку на новостные рассылки Mozilla, то вам может понадобится сделать это. Пожалуйста, проверьте вашу папку "Входящие" или "Спам" на наличие письма от нас.
 
-footer-title = Firefox Developer Edition
-footer-message = Ищете не только Инструменты разработчика? Испытайте браузер Firefox, построенный специально для разработчиков и современных рабочих процессов.
+footer-title = Waterfox Developer Edition
+footer-message = Ищете не только Инструменты разработчика? Испытайте браузер Waterfox, построенный специально для разработчиков и современных рабочих процессов.
 footer-learn-more-link = Подробнее
 
 features-learn-more = Подробнее

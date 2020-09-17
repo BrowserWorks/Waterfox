@@ -130,9 +130,9 @@ search-results-help-link = Kömək lazımdır? <a data-l10n-name="url">{ -brand-
 startup-header = Başlanğıc
 
 # { -brand-short-name } will be 'Firefox Developer Edition',
-# since this setting is only exposed in Firefox Developer Edition
+# since this setting is only exposed in Waterfox Developer Edition
 separate-profile-mode =
-    .label = { -brand-short-name } və Firefox-un eyni anda işləməsinə icazə ver
+    .label = { -brand-short-name } və Waterfox-un eyni anda işləməsinə icazə ver
 use-firefox-sync = Məsləhət: Bu fərqli profillər işlədir. Aralarında məlumatları paylaşmaq üçün { -sync-brand-short-name } işlət.
 get-started-not-logged-in = { -sync-brand-short-name } üçün daxil ol…
 get-started-configured = { -sync-brand-short-name } nizamlamalarını aç
@@ -495,10 +495,10 @@ home-restore-defaults =
     .label = İlkin Seçənəkləri Bərpa et
     .accesskey = R
 
-# "Firefox" should be treated as a brand and kept in English,
+# "Waterfox" should be treated as a brand and kept in English,
 # while "Home" and "(Default)" can be localized.
 home-mode-choice-default =
-    .label = Firefox Ana Səhifə (İlkin)
+    .label = Waterfox Ana Səhifə (İlkin)
 
 home-mode-choice-custom =
     .label = Fərdi Ünvanlar…
@@ -525,10 +525,10 @@ choose-bookmark =
     .label = Əlfəcin istifadə et…
     .accesskey = Ə
 
-## Home Section - Firefox Home Content Customization
+## Home Section - Waterfox Home Content Customization
 
-home-prefs-content-header = Firefox Ev Məzmunu
-home-prefs-content-description = Firefox Evdə hansı məzmunları görmək istədiyinizi seçin.
+home-prefs-content-header = Waterfox Ev Məzmunu
+home-prefs-content-description = Waterfox Evdə hansı məzmunları görmək istədiyinizi seçin.
 
 home-prefs-search-header =
     .label = Web Axtarış
@@ -645,7 +645,7 @@ containers-remove-button =
 ## Sync Section - Signed out
 
 
-## Firefox Account - Signed out. Note that "Sync" and "Firefox Account" are now
+## Waterfox Account - Signed out. Note that "Sync" and "Firefox Account" are now
 ## more discrete ("signed in" no longer means "and sync is connected").
 
 sync-signedout-caption = Web-inizi özünüzlə gəzdirin
@@ -659,12 +659,12 @@ sync-signedout-description = Əlfəçin, keçmiş, vərəq, parol, əlavə və n
 #
 # They can be moved within the sentence as needed to adapt
 # to your language, but should not be changed or translated.
-sync-mobile-promo = Mobil cihazınızda sinronlaşdırmaq istəyirsinizsə <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> və ya <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS</a> üçün Firefox endirin.
+sync-mobile-promo = Mobil cihazınızda sinronlaşdırmaq istəyirsinizsə <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> və ya <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS</a> üçün Waterfox endirin.
 
 ## Sync Section - Signed in
 
 
-## Firefox Account - Signed in
+## Waterfox Account - Signed in
 
 sync-profile-picture =
     .tooltiptext = Profil şəklini dəyiş
@@ -720,7 +720,7 @@ sync-engine-creditcards =
 
 sync-engine-addons =
     .label = Əlavələr
-    .tooltiptext = Firefox masaüstü üçün uzantı və mövzular
+    .tooltiptext = Waterfox masaüstü üçün uzantı və mövzular
     .accesskey = Ə
 
 sync-engine-prefs =
@@ -797,8 +797,8 @@ history-header = Tarixçə
 # "Firefox will" + "Remember history".
 #
 # If this doesn't work for your language, you can translate this message:
-#   - Simply as "Firefox", moving the verb into each option.
-#     This will result in "Firefox" + "Will remember history", etc.
+#   - Simply as "Waterfox", moving the verb into each option.
+#     This will result in "Waterfox" + "Will remember history", etc.
 #   - As a stand-alone message, for example "Firefox history settings:".
 history-remember-label = { -brand-short-name } səyyahı
     .accesskey = s

@@ -134,9 +134,9 @@ manifest-loaded-ok = マニフェストを読み込みました。
 # load the manifest
 manifest-loaded-error = マニフェストの読み込み中にエラーが発生しました:
 
-# Text displayed as an error when there has been a Firefox DevTools error while
+# Text displayed as an error when there has been a Waterfox DevTools error while
 # trying to load the manifest
-manifest-loaded-devtools-error = Firefox 開発ツールエラー
+manifest-loaded-devtools-error = Waterfox 開発ツールエラー
 
 # Text displayed when the page has no manifest available
 manifest-non-existing = マニフェストが見つからないため検査できませんでした。

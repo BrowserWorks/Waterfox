@@ -4,7 +4,7 @@
 
 
 ## The Enterprise Policies feature is aimed at system administrators
-## who want to deploy these settings across several Firefox installations
+## who want to deploy these settings across several Waterfox installations
 ## all at once. This is traditionally done through the Windows Group Policy
 ## feature, but the system also supports other forms of deployment.
 ## These are short descriptions for individual policies, to be displayed
@@ -30,8 +30,8 @@ policy-DisableDefaultBrowserAgent = Не допускати будь-яких д
 policy-DisableDeveloperTools = Заблокувати доступ до інструментів розробника.
 policy-DisableFeedbackCommands = Вимкнути команди меню Довідка для елементів "Надіслати відгук..." та "Повідомити про шахрайський сайт...".
 policy-DisableFirefoxAccounts = Вимкнути сервіси, пов'язані з { -fxaccount-brand-name(case: "abl") }, включаючи Синхронізацію.
-# Firefox Screenshots is the name of the feature, and should not be translated.
-policy-DisableFirefoxScreenshots = Вимкнути функцію Firefox Screenshots.
+# Waterfox Screenshots is the name of the feature, and should not be translated.
+policy-DisableFirefoxScreenshots = Вимкнути функцію Waterfox Screenshots.
 policy-DisableFirefoxStudies = Не дозволяти { -brand-short-name } виконувати дослідження.
 policy-DisableForgetButton = Не дозволяти доступ до кнопки Забути.
 policy-DisableFormHistory = Не пам'ятати історію пошуку та форм.
@@ -62,7 +62,7 @@ policy-EncryptedMediaExtensions = Увімкнути або вимкнути з�
 policy-Extensions = Встановлювати, видаляти чи блокувати розширення. Функція встановлення використовує в якості параметрів URL-адреси або шляхи. Функції видалення і блокування використовують ID.
 policy-ExtensionSettings = Керувати всіма аспектами встановлення розширень.
 policy-ExtensionUpdate = Увімкнути чи вимкнути автоматичне оновлення розширень.
-policy-FirefoxHome = Налаштувати Домівку Firefox
+policy-FirefoxHome = Налаштувати Домівку Waterfox
 policy-FlashPlugin = Дозволити або заборонити використання плагіна Flash.
 policy-Handlers = Налаштувати стандартні обробники програм.
 policy-HardwareAcceleration = Значення false вимикає апаратне прискорення.

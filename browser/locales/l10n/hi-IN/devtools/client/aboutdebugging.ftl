@@ -17,11 +17,11 @@ about-debugging-page-title-runtime-page = डिबगिंग - रनटा�
 
 # Sidebar strings
 
-# Display name of the runtime for the currently running instance of Firefox. Used in the
+# Display name of the runtime for the currently running instance of Waterfox. Used in the
 # Sidebar and in the Setup page.
 about-debugging-this-firefox-runtime-name = यह { -brand-shorter-name }
 
-# Sidebar heading for selecting the currently running instance of Firefox
+# Sidebar heading for selecting the currently running instance of Waterfox
 about-debugging-sidebar-this-firefox =
     .name = { about-debugging-this-firefox-runtime-name }
 
@@ -66,8 +66,8 @@ about-debugging-sidebar-item-connect-button-connection-timeout = कनेक्
 about-debugging-sidebar-item-connected-label = कनेक्ट किया गया
 
 # Text displayed in sidebar items for remote devices where a compatible browser (eg
-# Firefox) has not been detected yet. Typically, Android phones connected via USB with
-# USB debugging enabled, but where Firefox is not started.
+# Waterfox) has not been detected yet. Typically, Android phones connected via USB with
+# USB debugging enabled, but where Waterfox is not started.
 about-debugging-sidebar-runtime-item-waiting-for-browser = ब्राउज़र की प्रतीक्षा...
 
 # Title for runtime sidebar items that are related to a specific device (USB, WiFi).
@@ -125,7 +125,7 @@ about-debugging-setup-usb-step-enable-dev-menu2 = अपने Android उपक
 about-debugging-setup-usb-step-enable-debug2 = Android डेवलपर मेन्यू में USB डिबगिंग सक्रिय करें।
 
 # USB section step by step guide
-about-debugging-setup-usb-step-enable-debug-firefox2 = Android उपकरण पर Firefox में USB डिबगिंग सक्रिय करें।
+about-debugging-setup-usb-step-enable-debug-firefox2 = Android उपकरण पर Waterfox में USB डिबगिंग सक्रिय करें।
 
 # USB section step by step guide
 about-debugging-setup-usb-step-plug-device = Android उपकरण को अपने कंप्यूटर से कनेक्ट करें।
@@ -188,11 +188,11 @@ about-debugging-debug-target-list-empty = अभी तक कुछ नही�
 # A target can be an addon, a tab, a worker...
 about-debugging-debug-target-inspect-button = जाँचें
 
-# Text of a button displayed for a temporary extension loaded in the "This Firefox" page.
+# Text of a button displayed for a temporary extension loaded in the "This Waterfox" page.
 # Clicking on the button will reload the extension.
 about-debugging-tmp-extension-reload-button = पुनः लोड करें
 
-# Text of a button displayed for a temporary extension loaded in the "This Firefox" page.
+# Text of a button displayed for a temporary extension loaded in the "This Waterfox" page.
 # Clicking on the button will uninstall the extension and remove it from the page.
 about-debugging-tmp-extension-remove-button = हटाएं
 

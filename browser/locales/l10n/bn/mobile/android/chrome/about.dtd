@@ -16,6 +16,6 @@
 <!ENTITY aboutPage.relNotes.label               "রিলিজ নোট">
 <!ENTITY aboutPage.credits.label                "স্বীকৃতি">
 <!ENTITY aboutPage.license.label                "লাইসেন্সিং তথ্য">
-<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Firefox" being trademarked, that's why we use it, instead of brandShortName. -->
+<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Waterfox" being trademarked, that's why we use it, instead of brandShortName. -->
 
-<!ENTITY aboutPage.logoTrademark                "Firefox এবং Firefox লোগোসমূহ Mozilla Foundation এর নিবন্ধনকৃত ট্রেডমার্ক।">
+<!ENTITY aboutPage.logoTrademark                "Firefox এবং Waterfox লোগোসমূহ Waterfox Ltd. এর নিবন্ধনকৃত ট্রেডমার্ক।">

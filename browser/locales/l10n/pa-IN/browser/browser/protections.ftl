@@ -27,9 +27,9 @@ graph-week-summary-private-window = ਇਸ ਹਫ਼ਤੇ { -brand-short-name }
 
 protection-report-webpage-title = ਸੁਰੱਖਿਆ ਡੈਸ਼ਬੋਰਡ
 protection-report-page-content-title = ਸੁਰੱਖਿਆ ਡੈਸ਼ਬੋਰਡ
-# This message shows when all privacy protections are turned off, which is why we use the word "can", Firefox is able to protect your privacy, but it is currently not.
+# This message shows when all privacy protections are turned off, which is why we use the word "can", Waterfox is able to protect your privacy, but it is currently not.
 protection-report-page-summary = { -brand-short-name } ਤੁਹਾਡੇ ਵਲੋਂ ਬਰਾਊਜ਼ ਕਰਨ ਦੇ ਦੌਰਾਨ ਪਰਦੇ ਪਿੱਛੇ ਤੁਹਾਡੀ ਪਰਦੇਦਾਰੀ ਨੂੰ ਸੁਰੱਖਿਅਤ ਕਰਦਾ ਹੈ। ਇਹ ਉਹਨਾਂ ਸੁਰੱਖਿਆਵਾਂ ਦੀ ਨਿੱਜੀ ਬਣਾਈ ਸੰਖੇਪ ਜਾਣਕਾਰੀ ਹੈ, ਜਿਸ ਵਿੱਚ ਤੁਹਾਡੀ ਆਨਲਾਈਨ ਸੁਰੱਖਿਆ ਨੂੰ ਕੰਟਰੋਲ ਕਰਨ ਲਈ ਟੂਲ ਸ਼ਾਮਲ ਹਨ।
-# This message shows when at least some protections are turned on, we are more assertive compared to the message above, Firefox is actively protecting you.
+# This message shows when at least some protections are turned on, we are more assertive compared to the message above, Waterfox is actively protecting you.
 protection-report-page-summary-default = { -brand-short-name } ਤੁਹਾਡੇ ਵਲੋਂ ਬਰਾਊਜ਼ ਕਰਨ ਦੇ ਦੌਰਾਨ ਪਰਦੇ ਪਿੱਛੇ ਤੁਹਾਡੀ ਪਰਦੇਦਾਰੀ ਨੂੰ ਸੁਰੱਖਿਅਤ ਕਰ ਸਕਦਾ ਹੈ। ਇਹ ਉਹਨਾਂ ਸੁਰੱਖਿਆਵਾਂ ਦੀ ਨਿੱਜੀ ਬਣਾਈ ਸੰਖੇਪ ਜਾਣਕਾਰੀ ਹੈ, ਜਿਸ ਵਿੱਚ ਤੁਹਾਡੀ ਆਨਲਾਈਨ ਸੁਰੱਖਿਆ ਨੂੰ ਕੰਟਰੋਲ ਕਰਨ ਲਈ ਟੂਲ ਸ਼ਾਮਲ ਹਨ।
 
 protection-report-settings-link = ਆਪਣੀ ਪਰਦੇਦਾਰੀ ਅਤੇ ਸੁਰੱਖਿਆ ਸੈਟਿੰਗਾਂ ਦਾ ਇੰਤਜ਼ਾਮ ਕਰੋ

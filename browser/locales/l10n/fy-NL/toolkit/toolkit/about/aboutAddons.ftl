@@ -387,9 +387,9 @@ release-notes-error = Sorry, mar der wie in flater mei it laden fan de útjefteo
 addon-permissions-empty = Foar dizze útwreiding binne gjin tastimmingen fereaske
 recommended-extensions-heading = Oanrekommandearre útwreidingen
 recommended-themes-heading = Oanrekommandearre tema's
-# A recommendation for the Firefox Color theme shown at the bottom of the theme
+# A recommendation for the Waterfox Color theme shown at the bottom of the theme
 # list view. The "Firefox Color" name itself should not be translated.
-recommended-theme-1 = Fiele jo jo kreätyf? <a data-l10n-name="link"> Bou jo eigen tema mei Firefox Color.</a>
+recommended-theme-1 = Fiele jo jo kreätyf? <a data-l10n-name="link"> Bou jo eigen tema mei Waterfox Color.</a>
 
 ## Page headings
 

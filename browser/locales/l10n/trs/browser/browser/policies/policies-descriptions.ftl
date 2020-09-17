@@ -4,7 +4,7 @@
 
 
 ## The Enterprise Policies feature is aimed at system administrators
-## who want to deploy these settings across several Firefox installations
+## who want to deploy these settings across several Waterfox installations
 ## all at once. This is traditionally done through the Windows Group Policy
 ## feature, but the system also supports other forms of deployment.
 ## These are short descriptions for individual policies, to be displayed
@@ -44,7 +44,7 @@ policy-DisableFeedbackCommands = duyichin' si sun nej komandô da' si ga'nïn nu
 
 policy-DisableFirefoxAccounts = Duyichin' nej sun hua riña { -fxaccount-brand-name }, nda Sync nej.
 
-# Firefox Screenshots is the name of the feature, and should not be translated.
+# Waterfox Screenshots is the name of the feature, and should not be translated.
 policy-DisableFirefoxScreenshots = Duyichin' sun nari ñadu'ua Pantâya.
 
 policy-DisableFirefoxStudies = Si ga'nïnjt riña { -brand-short-name } nadi'ñunj.
@@ -95,7 +95,7 @@ policy-ExtensionSettings = Gachinj daran' nej sa hua da' ga'nïn' nej ekstensiû
 
 policy-ExtensionUpdate = Nachrun asi duna'àj sa nagi'iaj nakà man'an nej ekstensiûn.
 
-policy-FirefoxHome = Gi'iaj konfigurandô Firefox Home.
+policy-FirefoxHome = Gi'iaj konfigurandô Waterfox Home.
 
 policy-FlashPlugin = Ga'nïn asi si ga'nïnjt gi'iaj sun sa nata' riña Flash.
 

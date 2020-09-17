@@ -17,5 +17,5 @@
 <!ENTITY aboutPage.credits.label                "O avtorjih">
 <!ENTITY aboutPage.license.label                "Podatki o dovoljenjih">
 
-<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Firefox" being trademarked, that's why we use it, instead of brandShortName. -->
-<!ENTITY aboutPage.logoTrademark                "Firefox in logotip Firefoxa sta blagovni znamki Mozilla Foundation.">
+<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Waterfox" being trademarked, that's why we use it, instead of brandShortName. -->
+<!ENTITY aboutPage.logoTrademark                "Firefox in logotip Waterfoxa sta blagovni znamki Waterfox Ltd..">

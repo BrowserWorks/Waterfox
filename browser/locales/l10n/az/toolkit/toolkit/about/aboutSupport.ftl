@@ -51,7 +51,7 @@ app-basics-profiles = Profillər
 app-basics-launcher-process-status = Başladıcı Prosesi
 app-basics-multi-process-support = Çox əməliyyatlı Pəncərələr
 app-basics-enterprise-policies = Sahibkarlıq Siyasəti
-app-basics-key-mozilla = Mozilla Mövqe Xidməti Açarı
+app-basics-key-mozilla = Waterfox Mövqe Xidməti Açarı
 app-basics-safe-mode = Təhlükəsiz Rejim
 show-dir-label =
     { PLATFORM() ->
@@ -131,7 +131,7 @@ intl-regional-prefs = Regional Nizamlamalar
 
 ## Remote Debugging
 ##
-## The Firefox remote protocol provides low-level debugging interfaces
+## The Waterfox remote protocol provides low-level debugging interfaces
 ## used to inspect state and control execution of documents,
 ## browser instrumentation, user interaction simulation,
 ## and for subscribing to browser-internal events.

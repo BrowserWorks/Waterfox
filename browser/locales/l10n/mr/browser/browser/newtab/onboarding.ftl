@@ -52,11 +52,11 @@ onboarding-cards-dismiss =
 onboarding-fullpage-form-email =
     .placeholder = आपला ईमेल पत्ता…
 
-## Firefox Sync modal dialog strings.
+## Waterfox Sync modal dialog strings.
 
 onboarding-sync-welcome-header = { -brand-product-name } सोबत न्या
 onboarding-sync-welcome-content = आपले बुकमार्क्स, इतिहास, पासवर्ड आणि इतर सेटिंग आपल्या सर्व उपकरणांवर मिळवा.
-onboarding-sync-welcome-learn-more-link = Firefox खात्यांविषयी अधिक जाणून घ्या
+onboarding-sync-welcome-learn-more-link = Waterfox खात्यांविषयी अधिक जाणून घ्या
 
 onboarding-sync-form-input =
     .placeholder = ईमेल
@@ -64,7 +64,7 @@ onboarding-sync-form-input =
 onboarding-sync-form-continue-button = पुढे चला
 onboarding-sync-form-skip-login-button = ही पायरी वगळा
 
-## This is part of the line "Enter your email to continue to Firefox Sync"
+## This is part of the line "Enter your email to continue to Waterfox Sync"
 
 onboarding-sync-form-header = ईमेल प्रविष्ट करा
 onboarding-sync-form-sub-header = { -sync-brand-name } वर सुरू ठेवण्यासाठी

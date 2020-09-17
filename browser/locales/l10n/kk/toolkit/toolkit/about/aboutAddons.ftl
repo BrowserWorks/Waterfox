@@ -461,7 +461,7 @@ addon-permissions-empty = Бұл кеңейту ешқандай рұқсатт�
 recommended-extensions-heading = Ұсынылатын кеңейтулер
 recommended-themes-heading = Ұсынылатын темалар
 
-# A recommendation for the Firefox Color theme shown at the bottom of the theme
+# A recommendation for the Waterfox Color theme shown at the bottom of the theme
 # list view. The "Firefox Color" name itself should not be translated.
 recommended-theme-1 = Шабытты сезіп тұрсыз ба? <a data-l10n-name="link">Firefox Color көмегімен өз темаңызды жасаңыз.</a>
 

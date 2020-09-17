@@ -27,9 +27,9 @@ graph-week-summary-private-window = רכיבי מעקב ש־{ -brand-short-name 
 
 protection-report-webpage-title = לוח הגנות
 protection-report-page-content-title = לוח הגנות
-# This message shows when all privacy protections are turned off, which is why we use the word "can", Firefox is able to protect your privacy, but it is currently not.
+# This message shows when all privacy protections are turned off, which is why we use the word "can", Waterfox is able to protect your privacy, but it is currently not.
 protection-report-page-summary = ‏{ -brand-short-name } יכול להגן על הפרטיות שלך מאחורי הקלעים בזמן הגלישה. להלן תקציר מותאם אישית של הגנות אלה, לרבות כלים המאפשרים להיות בשליטה על האבטחה המקוונת שלך.
-# This message shows when at least some protections are turned on, we are more assertive compared to the message above, Firefox is actively protecting you.
+# This message shows when at least some protections are turned on, we are more assertive compared to the message above, Waterfox is actively protecting you.
 protection-report-page-summary-default = ‏{ -brand-short-name } מגן על הפרטיות שלך מאחורי הקלעים בזמן הגלישה. להלן תקציר מותאם אישית של הגנות אלה, לרבות כלים המאפשרים להיות בשליטה על האבטחה המקוונת שלך.
 
 protection-report-settings-link = ניהול הגדרות הפרטיות והאבטחה שלך

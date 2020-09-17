@@ -3,29 +3,29 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 head-title = વિકાસકર્તા સાધનો વિશે
-enable-title = Firefox વિકાસકર્તા સાધનોને સક્ષમ કરો
-enable-inspect-element-title = એલિમેન્ટ તપાસ કરવા માટે Firefox ડેવલપર Tools સક્ષમ કરો
+enable-title = Waterfox વિકાસકર્તા સાધનોને સક્ષમ કરો
+enable-inspect-element-title = એલિમેન્ટ તપાસ કરવા માટે Waterfox ડેવલપર Tools સક્ષમ કરો
 enable-inspect-element-message = વિકાસકર્તા સાધનોના નિરીક્ષક સાથે HTML અને CSS ને પરીક્ષણ અને સંપાદિત કરો.
-enable-about-debugging-message = Firefox ડેવલપર ટૂલ્સ સાથે WebExtensions, વેબ વર્કર્સ, સર્વિસ વર્કર અને વધુ વિકાસ અને ડીબગ કરો.
+enable-about-debugging-message = Waterfox ડેવલપર ટૂલ્સ સાથે WebExtensions, વેબ વર્કર્સ, સર્વિસ વર્કર અને વધુ વિકાસ અને ડીબગ કરો.
 enable-key-shortcut-message = તમે વિકાસકર્તા સાધનો શોર્ટકટને સક્રિય કર્યું છે. જો તે ભૂલ હતી, તો તમે આ ટૅબને બંધ કરી શકો છો.
 enable-menu-message = ઇન્સ્પેક્ટર અને ડિબગર જેવા સાધનો સાથે તમારી વેબસાઇટનું HTML, CSS, અને JavaScript પૂર્ણ કરો.
-enable-common-message = Firefox ડેવલોપર ટૂલ્સ તમારા બ્રાઉઝર પર વધુ નિયંત્રણ આપવા માટે ડિફૉલ્ટ રૂપે અક્ષમ કરેલ છે.
+enable-common-message = Waterfox ડેવલોપર ટૂલ્સ તમારા બ્રાઉઝર પર વધુ નિયંત્રણ આપવા માટે ડિફૉલ્ટ રૂપે અક્ષમ કરેલ છે.
 enable-learn-more-link = વિકાસકર્તા સાધનો વિશે વધુ શીખો
 enable-enable-button = વિકાસકર્તા સાધનોને સક્ષમ કરો
 enable-close-button = આ ટૅબ બંધ કરો
 
-welcome-title = Firefox ડેવલોપર સાધનોમાં આપનું સ્વાગત છે!
-newsletter-title = Mozilla વિકાસકર્તા ન્યૂઝલેટર
+welcome-title = Waterfox ડેવલોપર સાધનોમાં આપનું સ્વાગત છે!
+newsletter-title = Waterfox વિકાસકર્તા ન્યૂઝલેટર
 newsletter-message = તમારા ઇનબૉક્સ પર સીધા જ વિકાસકર્તા સમાચાર, યુક્તિઓ અને સંસાધનો મોકલો.
 newsletter-email-placeholder =
     .placeholder = ઇમેઇલ
-newsletter-privacy-label = Mozilla સાથે મારી માહિતી સંભાળવાથી હું સમંત છું, આ <a data-l10n-name="privacy-policy">ગોપનીયતા નીતિ</a>માં વર્ણવ્યા પ્રમાણે.
+newsletter-privacy-label = Waterfox સાથે મારી માહિતી સંભાળવાથી હું સમંત છું, આ <a data-l10n-name="privacy-policy">ગોપનીયતા નીતિ</a>માં વર્ણવ્યા પ્રમાણે.
 newsletter-subscribe-button = ઉમેદવારી નોંધાવો
 newsletter-thanks-title = આભાર!
 newsletter-thanks-message = જો તમે અગાઉ કોઈ Mozilla-સંબંધિત ન્યૂઝલેટરમાં ઉમેદવારીની પુષ્ટિ કરી નથી, તો તમારે આમ કરવું પડશે. કૃપા કરીને અમારા તરફથી ઇમેઇલ માટે તમારા ઇનબૉક્સ અથવા તમારા સ્પામ ફિલ્ટરની તપાસ કરો.
 
-footer-title = Firefox વિકાસકર્તા આવૃત્તિ
-footer-message = ફક્ત વિકાસકર્તા સાધનો કરતાં વધુ જોઈએ છીએ? Firefox બ્રાઉઝર તપાસો જે ખાસ કરીને વિકાસકર્તાઓ અને આધુનિક કાર્ય પ્રવાહ માટે બનાવવામાં આવેલ છે.
+footer-title = Waterfox વિકાસકર્તા આવૃત્તિ
+footer-message = ફક્ત વિકાસકર્તા સાધનો કરતાં વધુ જોઈએ છીએ? Waterfox બ્રાઉઝર તપાસો જે ખાસ કરીને વિકાસકર્તાઓ અને આધુનિક કાર્ય પ્રવાહ માટે બનાવવામાં આવેલ છે.
 footer-learn-more-link = વધુ શીખો
 
 features-learn-more = વધુ શીખો

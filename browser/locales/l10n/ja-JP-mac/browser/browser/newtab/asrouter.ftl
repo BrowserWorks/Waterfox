@@ -70,7 +70,7 @@ cfr-doorhanger-pintab-animation-pause = 停止
 cfr-doorhanger-pintab-animation-resume = 再生
 
 
-## Firefox Accounts Message
+## Waterfox Accounts Message
 
 cfr-doorhanger-bookmark-fxa-header = どこからでもブックマークを同期します。
 cfr-doorhanger-bookmark-fxa-body = 見つかっちゃった。ブックマークをこの端末だけに残しておかないで同期して。{ -fxaccount-brand-name } を始めましょう。
@@ -181,7 +181,7 @@ cfr-doorhanger-send-tab-body = タブ送信でこのリンクを { -brand-produc
 cfr-doorhanger-send-tab-ok-button = タブ送信を試してみる
   .accesskey = T
 
-## Firefox Send
+## Waterfox Send
 
 cfr-doorhanger-firefox-send-header = この PDF を安全に共有する
 cfr-doorhanger-firefox-send-body = エンドツーエンド暗号化と自動消滅リンクで、機密文書を安全に共有できます。
@@ -218,7 +218,7 @@ cfr-doorhanger-milestone-ok-button = 確認
 cfr-doorhanger-milestone-close-button = 閉じる
   .accesskey = C
 
-## What’s New Panel Content for Firefox 76
+## What’s New Panel Content for Waterfox 76
 
 ## Lockwise message
 

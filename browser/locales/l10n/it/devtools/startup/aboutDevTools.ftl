@@ -3,18 +3,18 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 head-title = Informazioni sugli strumenti di sviluppo
-enable-title = Attivazione strumenti di sviluppo di Firefox
-enable-inspect-element-title = Attiva gli strumenti di sviluppo di Firefox per utilizzare “Analizza elemento”
+enable-title = Attivazione strumenti di sviluppo di Waterfox
+enable-inspect-element-title = Attiva gli strumenti di sviluppo di Waterfox per utilizzare “Analizza elemento”
 enable-inspect-element-message = Analizza e modifica HTML e CSS con Analisi pagina.
-enable-about-debugging-message = Sviluppa ed effettua il debug di WebExtension, web worker, service worker e altro ancora con gli strumenti di sviluppo di Firefox.
+enable-about-debugging-message = Sviluppa ed effettua il debug di WebExtension, web worker, service worker e altro ancora con gli strumenti di sviluppo di Waterfox.
 enable-key-shortcut-message = È stata attivata una scorciatoia da tastiera degli strumenti di sviluppo. È possibile chiudere questa scheda se si è trattato soltanto di un errore.
 enable-menu-message = Perfeziona HTML, CSS e JavaScript nei tuoi siti con strumenti come Analisi pagina e Debugger.
-enable-common-message = Gli strumenti di sviluppo di Firefox sono disattivati per impostazione predefinita, garantendo agli utenti il pieno controllo del proprio browser.
+enable-common-message = Gli strumenti di sviluppo di Waterfox sono disattivati per impostazione predefinita, garantendo agli utenti il pieno controllo del proprio browser.
 enable-learn-more-link = Ulteriori informazioni sugli strumenti di sviluppo
 enable-enable-button = Attiva strumenti di sviluppo
 enable-close-button = Chiudi questa scheda
 
-welcome-title = Benvenuto negli strumenti di sviluppo di Firefox
+welcome-title = Benvenuto negli strumenti di sviluppo di Waterfox
 newsletter-title = Newsletter Mozilla dedicata agli sviluppatori
 newsletter-message = Ricevi notizie, suggerimenti e risorse sullo sviluppo web direttamente nella tua casella di posta.
 newsletter-email-placeholder =
@@ -24,8 +24,8 @@ newsletter-subscribe-button = Iscrivimi
 newsletter-thanks-title = Grazie!
 newsletter-thanks-message = Potrebbe essere necessario confermare l’iscrizione se non sei già iscritto a una newsletter Mozilla. Verifica se c’è un nostro messaggio nella posta in arrivo o nello spam.
 
-footer-title = Firefox Developer Edition
-footer-message = Hai bisogno di qualcosa in più rispetto ai soli strumenti di sviluppo? Dai un’occhiata alla versione di Firefox realizzata appositamente per sviluppatori e flussi di lavoro all’avanguardia.
+footer-title = Waterfox Developer Edition
+footer-message = Hai bisogno di qualcosa in più rispetto ai soli strumenti di sviluppo? Dai un’occhiata alla versione di Waterfox realizzata appositamente per sviluppatori e flussi di lavoro all’avanguardia.
 footer-learn-more-link = Ulteriori informazioni
 
 features-learn-more = Ulteriori informazioni

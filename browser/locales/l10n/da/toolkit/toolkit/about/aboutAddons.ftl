@@ -391,9 +391,9 @@ release-notes-error = Der opstod en fejl under indlæsning af udgivelsesnoterne.
 addon-permissions-empty = Denne udvidelse kræver ingen tilladelser
 recommended-extensions-heading = Anbefalede udvidelser
 recommended-themes-heading = Anbefalede temaer
-# A recommendation for the Firefox Color theme shown at the bottom of the theme
+# A recommendation for the Waterfox Color theme shown at the bottom of the theme
 # list view. The "Firefox Color" name itself should not be translated.
-recommended-theme-1 = Er du i det kreative hjørne? <a data-l10n-name="link">Byg dit eget tema med Firefox Color.</a>
+recommended-theme-1 = Er du i det kreative hjørne? <a data-l10n-name="link">Byg dit eget tema med Waterfox Color.</a>
 
 ## Page headings
 

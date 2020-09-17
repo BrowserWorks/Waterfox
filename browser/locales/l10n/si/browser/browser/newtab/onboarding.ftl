@@ -33,9 +33,9 @@ onboarding-cards-dismiss =
 
 ## Welcome full page string
 
-## Firefox Sync modal dialog strings.
+## Waterfox Sync modal dialog strings.
 
-onboarding-sync-welcome-learn-more-link = Firefox ගිණුම් ගැන වැඩි දුර දැනගන්න
+onboarding-sync-welcome-learn-more-link = Waterfox ගිණුම් ගැන වැඩි දුර දැනගන්න
 
 onboarding-sync-form-input =
     .placeholder = විද්‍යුත් තැපෑල
@@ -43,7 +43,7 @@ onboarding-sync-form-input =
 onboarding-sync-form-continue-button = ඉදිරියට
 onboarding-sync-form-skip-login-button = මෙම පියවර මගහරින්න
 
-## This is part of the line "Enter your email to continue to Firefox Sync"
+## This is part of the line "Enter your email to continue to Waterfox Sync"
 
 onboarding-sync-form-header = ඔබගේ විද්‍යුත් තැපැල් ලිපිනය ඇතුලත් කරන්න
 

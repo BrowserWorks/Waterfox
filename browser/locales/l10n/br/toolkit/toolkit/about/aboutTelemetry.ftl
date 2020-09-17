@@ -15,8 +15,8 @@ about-telemetry-previous-ping = <<
 about-telemetry-next-ping = >>
 about-telemetry-page-title = Roadennoù Telemetry
 about-telemetry-more-information = O klask muioc'h a ditouroù?
-about-telemetry-firefox-data-doc = <a data-l10n-name="data-doc-link">Teuliadur roadennoù Firefox</a> a ginnig sturlevrioù evit kompren penaos implij hor ostilhoù roadennoù.
-about-telemetry-telemetry-client-doc = <a data-l10n-name="client-doc-link">Teuliadur arval pellventerezh Firefox</a> a enkorf despizadurioù evit meizadoù, teuliadurioù API ha daveennoù roadennoù.
+about-telemetry-firefox-data-doc = <a data-l10n-name="data-doc-link">Teuliadur roadennoù Waterfox</a> a ginnig sturlevrioù evit kompren penaos implij hor ostilhoù roadennoù.
+about-telemetry-telemetry-client-doc = <a data-l10n-name="client-doc-link">Teuliadur arval pellventerezh Waterfox</a> a enkorf despizadurioù evit meizadoù, teuliadurioù API ha daveennoù roadennoù.
 about-telemetry-telemetry-dashboard = Gant an <a data-l10n-name="dashboard-link">daolenn bellventerezh</a> e c'hallit gwelet ar roadennoù resevet gant Mozilla dre ar pellventerezh.
 about-telemetry-telemetry-probe-dictionary = Ar <a data-l10n-name="probe-dictionary-link">geriadur standilhonoù</a> a ro munudoù ha deskrivadurioù evit ar standilhonoù dastumet gant Telemetry.
 about-telemetry-show-in-Firefox-json-viewer = Digeriñ er gweler JSON

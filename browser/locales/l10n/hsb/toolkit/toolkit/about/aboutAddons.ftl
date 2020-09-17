@@ -465,9 +465,9 @@ addon-permissions-empty = Tute rozšěrjenje sej prawa njewužaduje
 recommended-extensions-heading = Doporučene rozšěrjenja
 recommended-themes-heading = Doporučene drasty
 
-# A recommendation for the Firefox Color theme shown at the bottom of the theme
+# A recommendation for the Waterfox Color theme shown at the bottom of the theme
 # list view. The "Firefox Color" name itself should not be translated.
-recommended-theme-1 = Čujeće so kreatiwny? <a data-l10n-name="link">Wutworće swójsku drastu z Firefox Color.</a>
+recommended-theme-1 = Čujeće so kreatiwny? <a data-l10n-name="link">Wutworće swójsku drastu z Waterfox Color.</a>
 
 ## Page headings
 

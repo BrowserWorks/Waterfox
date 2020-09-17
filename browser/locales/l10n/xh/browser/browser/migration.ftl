@@ -34,7 +34,7 @@ import-from-chromium =
     .label = Chromium
     .accesskey = u
 import-from-firefox =
-    .label = Firefox
+    .label = Waterfox
     .accesskey = x
 import-from-360se =
     .label = I-360 ibhrawuza ekhuselekileyo
@@ -73,7 +73,7 @@ source-name-safari = I-Safari
 source-name-canary = Google Chrome Canary
 source-name-chrome = I-Google Chrome
 source-name-chromium = Chromium
-source-name-firefox = Mozilla Firefox
+source-name-firefox = Waterfox
 source-name-360se = I-360 ibhrawuza ekhuselekileyo
 
 imported-safari-reading-list = Uludwe lokufunda (ukusuka kwiSafari)

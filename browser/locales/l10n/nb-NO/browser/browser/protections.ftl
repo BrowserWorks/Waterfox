@@ -27,9 +27,9 @@ graph-week-summary-private-window = Sporere { -brand-short-name } blokkerte denn
 
 protection-report-webpage-title = Sikkerhetsoversikt
 protection-report-page-content-title = Sikkerhetsoversikt
-# This message shows when all privacy protections are turned off, which is why we use the word "can", Firefox is able to protect your privacy, but it is currently not.
+# This message shows when all privacy protections are turned off, which is why we use the word "can", Waterfox is able to protect your privacy, but it is currently not.
 protection-report-page-summary = { -brand-short-name } kan beskytte personvernet ditt bak kulissene mens du surfer. Dette er en personlig oppsummering av de beskyttelsene, inkludert verktøy for å ta kontroll over din sikkerhet på nettet.
-# This message shows when at least some protections are turned on, we are more assertive compared to the message above, Firefox is actively protecting you.
+# This message shows when at least some protections are turned on, we are more assertive compared to the message above, Waterfox is actively protecting you.
 protection-report-page-summary-default = { -brand-short-name } beskytter personvernet ditt bak kulissene mens du surfer. Dette er en personlig oppsummering av de beskyttelsene, inkludert verktøy for å ta kontroll over din sikkerhet på nettet.
 
 protection-report-settings-link = Behandle personvern- og sikkerhetsinnstillinger

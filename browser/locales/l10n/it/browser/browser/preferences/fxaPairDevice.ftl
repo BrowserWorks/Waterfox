@@ -10,7 +10,7 @@ fxa-qrcode-heading-phase1 = 1. Assicurati di aver installato <a data-l10n-name="
 fxa-qrcode-heading-phase2 = 2. Accedi a { -sync-brand-short-name } oppure effettua la scansione del codice di associazione direttamente dalle impostazioni di { -sync-brand-short-name } su Android.
 
 fxa-qrcode-heading-step1 = 1. Assicurati di aver installato <a data-l10n-name="connect-another-device">Firefox sul tuo dispositivo mobile</a>.
-fxa-qrcode-heading-step2 = 2. Apri Firefox sul tuo dispositivo mobile.
+fxa-qrcode-heading-step2 = 2. Apri Waterfox sul tuo dispositivo mobile.
 fxa-qrcode-heading-step3 = 3. Apri il <b>menu</b> (<img data-l10n-name="ios-menu-icon"/> o <img data-l10n-name="android-menu-icon"/>), tocca <img data-l10n-name="settings-icon"/> <b>Impostazioni</b> e seleziona <b>Attiva Sync</b>
 fxa-qrcode-heading-step4 = 4. Effettua la scansione di questo codice:
 

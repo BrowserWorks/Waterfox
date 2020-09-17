@@ -122,9 +122,9 @@ search-results-help-link = ¿Eokitevẽpa pytyvõ? Eoke <a data-l10n-name="url">
 
 startup-header = Ñepyrũha
 # { -brand-short-name } will be 'Firefox Developer Edition',
-# since this setting is only exposed in Firefox Developer Edition
+# since this setting is only exposed in Waterfox Developer Edition
 separate-profile-mode =
-    .label = Emoneĩ { -brand-short-name } ha Firefox-pe ojepurúvo oñondivete
+    .label = Emoneĩ { -brand-short-name } ha Waterfox-pe ojepurúvo oñondivete
 use-firefox-sync = Ñe’ẽkuaa: Kóva oipuru rechaukaha ipa’ũva. Oipuru { -sync-brand-short-name } omoherakuã hag̃ua mba’ekuaarã oñondivekuéra.
 get-started-not-logged-in = Eñemboheguapy { -sync-brand-short-name }…
 get-started-configured = Eike { -sync-brand-short-name } eguerohoryvévape
@@ -455,10 +455,10 @@ home-newtabs-mode-label = tendayke pyahu
 home-restore-defaults =
     .label = mbopyahujey techa mboyvegua
     .accesskey = m
-# "Firefox" should be treated as a brand and kept in English,
+# "Waterfox" should be treated as a brand and kept in English,
 # while "Home" and "(Default)" can be localized.
 home-mode-choice-default =
-    .label = Firefox ñepyrũ (Ypykuegua)
+    .label = Waterfox ñepyrũ (Ypykuegua)
 home-mode-choice-custom =
     .label = URLs ñemomba’e…
 home-mode-choice-blank =
@@ -480,10 +480,10 @@ choose-bookmark =
     .label = Techaukaha puru…
     .accesskey = B
 
-## Home Section - Firefox Home Content Customization
+## Home Section - Waterfox Home Content Customization
 
-home-prefs-content-header = Kuatiarogue retepy Firefox ñepyrũháme
-home-prefs-content-description = Eiporavo mba’e retepýpa eipota Firefox mba’erechaha ñepyrũháme.
+home-prefs-content-header = Kuatiarogue retepy Waterfox ñepyrũháme
+home-prefs-content-description = Eiporavo mba’e retepýpa eipota Waterfox mba’erechaha ñepyrũháme.
 home-prefs-search-header =
     .label = Ñandutípe jeheka
 home-prefs-topsites-header =
@@ -603,7 +603,7 @@ containers-preferences-button =
 containers-remove-button =
     .label = Mboguete
 
-## Firefox Account - Signed out. Note that "Sync" and "Firefox Account" are now
+## Waterfox Account - Signed out. Note that "Sync" and "Firefox Account" are now
 ## more discrete ("signed in" no longer means "and sync is connected").
 
 sync-signedout-caption = Egueraha neñanduti nendive
@@ -621,7 +621,7 @@ sync-signedout-account-signin2 =
 # to your language, but should not be changed or translated.
 sync-mobile-promo = Emboguejy Aguaratata kóvape g̃uarã:<img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> térã <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS</a> embojuehe hag̃ua nemba’e’oka oku’éva rehe.
 
-## Firefox Account - Signed in
+## Waterfox Account - Signed in
 
 sync-profile-picture =
     .tooltiptext = Emoambue nera’ãnga nemba’ete pegua
@@ -707,7 +707,7 @@ sync-engine-creditcards =
     .accesskey = C
 sync-engine-addons =
     .label = Moĩmbaha
-    .tooltiptext = Firefox mohendahápe g̃uarã Moĩmbaha ha Jeguaha
+    .tooltiptext = Waterfox mohendahápe g̃uarã Moĩmbaha ha Jeguaha
     .accesskey = A
 sync-engine-prefs =
     .label =
@@ -813,8 +813,8 @@ history-header = Tembiasakue
 # "Firefox will" + "Remember history".
 #
 # If this doesn't work for your language, you can translate this message:
-#   - Simply as "Firefox", moving the verb into each option.
-#     This will result in "Firefox" + "Will remember history", etc.
+#   - Simply as "Waterfox", moving the verb into each option.
+#     This will result in "Waterfox" + "Will remember history", etc.
 #   - As a stand-alone message, for example "Firefox history settings:".
 history-remember-label = { -brand-short-name } ikatútapa
     .accesskey = w

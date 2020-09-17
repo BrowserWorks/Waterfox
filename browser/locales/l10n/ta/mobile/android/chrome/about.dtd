@@ -16,6 +16,6 @@
 <!ENTITY aboutPage.relNotes.label               "வெளியீட்டு குறிப்புகள்">
 <!ENTITY aboutPage.credits.label                "புகழ்கள்">
 <!ENTITY aboutPage.license.label                "உரிமம் பற்றிய தகவல்">
-<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Firefox" being trademarked, that's why we use it, instead of brandShortName. -->
+<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Waterfox" being trademarked, that's why we use it, instead of brandShortName. -->
 
 <!ENTITY aboutPage.logoTrademark                "Firefox மற்றும் அதன் சின்னங்கள் Mozilla அறக்கட்டளையின் வர்த்தக முத்திரைகளாகும்.">

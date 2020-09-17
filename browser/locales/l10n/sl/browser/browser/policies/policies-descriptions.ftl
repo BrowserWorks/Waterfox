@@ -4,7 +4,7 @@
 
 
 ## The Enterprise Policies feature is aimed at system administrators
-## who want to deploy these settings across several Firefox installations
+## who want to deploy these settings across several Waterfox installations
 ## all at once. This is traditionally done through the Windows Group Policy
 ## feature, but the system also supports other forms of deployment.
 ## These are short descriptions for individual policies, to be displayed
@@ -50,8 +50,8 @@ policy-DisableFeedbackCommands = Onemogoči ukaze v meniju Pomoč za pošiljanje
 
 policy-DisableFirefoxAccounts = Onemogoči storitve na osnovi { -fxaccount-brand-name }ov, na primer Sync.
 
-# Firefox Screenshots is the name of the feature, and should not be translated.
-policy-DisableFirefoxScreenshots = Onemogoči možnost Firefox Screenshots.
+# Waterfox Screenshots is the name of the feature, and should not be translated.
+policy-DisableFirefoxScreenshots = Onemogoči možnost Waterfox Screenshots.
 
 policy-DisableFirefoxStudies = { -brand-short-name }u prepreči izvajanje raziskav.
 
@@ -108,7 +108,7 @@ policy-ExtensionSettings = Upravljaj vse vidike namestitve razširitve.
 
 policy-ExtensionUpdate = Omogoči ali onemogoči samodejno posodabljanje razširitev.
 
-policy-FirefoxHome = Nastavi Firefoxovo domačo stran.
+policy-FirefoxHome = Nastavi Waterfoxovo domačo stran.
 
 policy-FlashPlugin = Dovoli ali zavrni uporabo vtičnika Flash.
 

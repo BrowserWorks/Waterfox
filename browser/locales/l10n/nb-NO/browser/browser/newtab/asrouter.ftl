@@ -80,7 +80,7 @@ cfr-doorhanger-pintab-animation-pause = Pause
 cfr-doorhanger-pintab-animation-resume = Fortsett
 
 
-## Firefox Accounts Message
+## Waterfox Accounts Message
 
 cfr-doorhanger-bookmark-fxa-header = Synkroniser bokmerkene dine overalt.
 cfr-doorhanger-bookmark-fxa-body = Bra funn! Mangler du bokmerket på dine mobile enheter. Få en { -fxaccount-brand-name }.
@@ -197,7 +197,7 @@ cfr-doorhanger-send-tab-body = Send fane lar deg enkelt dele denne lenken til te
 cfr-doorhanger-send-tab-ok-button = Prøv send fane
     .accesskey = P
 
-## Firefox Send
+## Waterfox Send
 
 cfr-doorhanger-firefox-send-header = Del denne PDF-filen sikkert
 cfr-doorhanger-firefox-send-body = Hold de sensitive dokumentene dine trygge mot nysgjerrige øyne med ende-til-ende-kryptering og en lenke som forsvinner når du er ferdig.
@@ -234,7 +234,7 @@ cfr-doorhanger-milestone-ok-button = Vis alle
 cfr-doorhanger-milestone-close-button = Lukk
     .accesskey = L
 
-## What’s New Panel Content for Firefox 76
+## What’s New Panel Content for Waterfox 76
 
 
 ## Lockwise message

@@ -32,7 +32,7 @@
 <!ENTITY netInterrupt.longDesc "<p>Pārlūks veiksmīgi pieslēdzās, taču savienojums tika pārtraukts datu pārraides laikā. Lūdzu mēģiniet vēlreiz.</p><ul><li>Vai jums ir problēmas arī ar citu lapu aplūkošanu? Pārbaudiet sava datora tīkla savienojumu.</li><li>Joprojām ir problēmas? Lūdziet palīdzību savam tīkla administratoram vai Interneta pakalpojuma sniedzējam.</li></ul>">
 
 <!ENTITY notCached.title "Dokumenta derīguma termiņš beidzies">
-<!ENTITY notCached.longDesc "<p>Pieprasītais dokuments vairs nav pieejams Firefox kešatmiņā.</p><ul><li>Drošības apsvērumu dēļ, Firefox neveic sensitīvu dokumentu automātisku atkārtotu pieprasīšanu.</li><li>Klikšķiniet uz Mēģināt vēlreiz, lai atkārtoti pieprasītu šo dokumentu no mājas lapas.</li></ul>">
+<!ENTITY notCached.longDesc "<p>Pieprasītais dokuments vairs nav pieejams Waterfox kešatmiņā.</p><ul><li>Drošības apsvērumu dēļ, Waterfox neveic sensitīvu dokumentu automātisku atkārtotu pieprasīšanu.</li><li>Klikšķiniet uz Mēģināt vēlreiz, lai atkārtoti pieprasītu šo dokumentu no mājas lapas.</li></ul>">
 
 <!ENTITY netOffline.title "Nesaistes režīms">
 <!ENTITY netOffline.longDesc2 "<p>Pārlūks darbojas nesaistes režīmā un nevar pieslēgties pieprasītajai vietai.</p><ul><li>Vai dators ir pieslēgts aktīvam tīkla savienojumam?</li><li>Nospiediet &quot;Mēģināt vēlreiz&quot; lai pārslēgtos uz tiešsaistes režīmu un pārlādētu lapu.</li></ul>">

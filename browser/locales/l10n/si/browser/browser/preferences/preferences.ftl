@@ -110,9 +110,9 @@ search-results-help-link = උදව් ඇවැසිද? <a data-l10n-name="u
 startup-header = ආරම්භය
 
 # { -brand-short-name } will be 'Firefox Developer Edition',
-# since this setting is only exposed in Firefox Developer Edition
+# since this setting is only exposed in Waterfox Developer Edition
 separate-profile-mode =
-    .label = { -brand-short-name } හා Firefox එකම මොහොතේ ධාවනය වීමට ඉඩ දෙන්න
+    .label = { -brand-short-name } හා Waterfox එකම මොහොතේ ධාවනය වීමට ඉඩ දෙන්න
 use-firefox-sync = ඉඟිය: මෙය වෙන් වූ පැතිකඩ භාවිත කරයි. ඒවා අතර දත්ත බෙදාගැනීමට { -sync-brand-short-name } භාවිත කරන්න.
 get-started-not-logged-in = { -sync-brand-short-name } වෙත පිවිසෙන්න…
 get-started-configured = { -sync-brand-short-name } අභිප්‍රේත විවෘත කරන්න
@@ -423,10 +423,10 @@ home-restore-defaults =
     .label = පෙරනිමි නැවත පිහිටුවන්න
     .accesskey = R
 
-# "Firefox" should be treated as a brand and kept in English,
+# "Waterfox" should be treated as a brand and kept in English,
 # while "Home" and "(Default)" can be localized.
 home-mode-choice-default =
-    .label = Firefox මුල් පිටුව (පෙරනිමි)
+    .label = Waterfox මුල් පිටුව (පෙරනිමි)
 
 home-mode-choice-blank =
     .label = හිස් පිටුව
@@ -447,10 +447,10 @@ choose-bookmark =
     .label = පිටු සලකුණු භාවිතා කරන්න…
     .accesskey = B
 
-## Home Section - Firefox Home Content Customization
+## Home Section - Waterfox Home Content Customization
 
-home-prefs-content-header = Firefox මුල්පිටු අන්තර්ගතය
-home-prefs-content-description = Firefox මුල් පිටුවෙහි ඔබට අවැසි වන්නේ කුමන අන්තර්ගතයදැයි තෝරන්න.
+home-prefs-content-header = Waterfox මුල්පිටු අන්තර්ගතය
+home-prefs-content-description = Waterfox මුල් පිටුවෙහි ඔබට අවැසි වන්නේ කුමන අන්තර්ගතයදැයි තෝරන්න.
 
 home-prefs-search-header =
     .label = ජාල සෙවුම
@@ -545,7 +545,7 @@ containers-remove-button =
 ## Sync Section - Signed out
 
 
-## Firefox Account - Signed out. Note that "Sync" and "Firefox Account" are now
+## Waterfox Account - Signed out. Note that "Sync" and "Firefox Account" are now
 ## more discrete ("signed in" no longer means "and sync is connected").
 
 sync-signedout-caption = ඔබේ ජාලය ඔබ සමඟ ගෙනයන්න
@@ -558,12 +558,12 @@ sync-signedout-caption = ඔබේ ජාලය ඔබ සමඟ ගෙනයන
 #
 # They can be moved within the sentence as needed to adapt
 # to your language, but should not be changed or translated.
-sync-mobile-promo = මෙය සඳහා Firefox බාගත කරන්න <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> or <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS</a> ඔබගේ ජංගම උපාංගය සමඟ සමමුහුර්ත කිරීමට.
+sync-mobile-promo = මෙය සඳහා Waterfox බාගත කරන්න <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> or <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS</a> ඔබගේ ජංගම උපාංගය සමඟ සමමුහුර්ත කිරීමට.
 
 ## Sync Section - Signed in
 
 
-## Firefox Account - Signed in
+## Waterfox Account - Signed in
 
 sync-profile-picture =
     .tooltiptext = පැතිකඩ පින්තූරය වෙනස් කරන්න

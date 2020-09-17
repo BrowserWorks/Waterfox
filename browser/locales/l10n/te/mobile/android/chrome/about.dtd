@@ -17,5 +17,5 @@
 <!ENTITY aboutPage.credits.label                "పరపతులు">
 <!ENTITY aboutPage.license.label                "లైసెన్సింగ్ సమాచారం">
 
-<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Firefox" being trademarked, that's why we use it, instead of brandShortName. -->
-<!ENTITY aboutPage.logoTrademark                "Firefox మరియు Firefox చిహ్నాలు Mozilla సంస్థ యొక్క వ్యాపారగుర్తులు.">
+<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Waterfox" being trademarked, that's why we use it, instead of brandShortName. -->
+<!ENTITY aboutPage.logoTrademark                "Firefox మరియు Waterfox చిహ్నాలు Mozilla సంస్థ యొక్క వ్యాపారగుర్తులు.">

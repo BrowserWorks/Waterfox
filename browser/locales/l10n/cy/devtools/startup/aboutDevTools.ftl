@@ -3,19 +3,19 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 head-title = Ynghylch Developer Tools
-enable-title = Galluogi Firefox Developer Tools
-enable-inspect-element-title = Galluogi Firefox Developer Tools i ddefnyddio Inspect Element
+enable-title = Galluogi Waterfox Developer Tools
+enable-inspect-element-title = Galluogi Waterfox Developer Tools i ddefnyddio Inspect Element
 enable-inspect-element-message = Archwilio a golygu HTML a CSS gyda'r Archwiliwr Developer Tools.
-enable-about-debugging-message = Datblygu a dadfygio WebExtensions, gweithwyr gwe, gweithwyr gwasanaeth a mwy gyda Firefox Developer Tools.
+enable-about-debugging-message = Datblygu a dadfygio WebExtensions, gweithwyr gwe, gweithwyr gwasanaeth a mwy gyda Waterfox Developer Tools.
 enable-key-shortcut-message = Rydych wedi cychwyn llwybr byr Developer Tools. Os oedd hynny'n gamgymeriad, gallwch gau'r tab hwn.
 enable-menu-message = Perffeithio HTML, CSS, a JavaScript eich gwefan gydag offer fel yr Archwiliwr a'r Dadfygiwr.
-enable-common-message = Mae'r Firefox Developer Tools wedi ei analluogi yn rhagosodedig i roi mwy o reolaeth i chi dros eich porwr.
+enable-common-message = Mae'r Waterfox Developer Tools wedi ei analluogi yn rhagosodedig i roi mwy o reolaeth i chi dros eich porwr.
 enable-learn-more-link = Dysgu rhagor am Developer Tools
 enable-enable-button = Galluogi Developer Tools
 enable-close-button = Cau'r Tab hwn
 
-welcome-title = Croeso i Firefox Developer Tools!
-newsletter-title = Mozilla Developer Newsletter
+welcome-title = Croeso i Waterfox Developer Tools!
+newsletter-title = Waterfox Developer Newsletter
 newsletter-message = Derbyn newyddion, triciau ac adnoddau ar gyfer datblygwyr yn syth i'ch blwch derbyn.
 newsletter-email-placeholder =
     .placeholder = E-bost
@@ -24,8 +24,8 @@ newsletter-subscribe-button = Tanysgrifio
 newsletter-thanks-title = Diolch!
 newsletter-thanks-message = Os nad ydych eisoes wedi cadarnhau tanysgrifiad i gylchlythyr yn perthyn i Mozilla, mae'n bosib y bydd yn rhaid i chi wneud hynny. Gwiriwch eich blwch derbyn neu eich hidl sbam am e-bost gennym ni.
 
-footer-title = Firefox Developer Edition
-footer-message = Chwilio am fwy na dim ond Developer Tools? Edrychwch ar y porwr Firefox sydd wedi ei adeiladu yn benodol ar gyfer datblygwyr a'r llif gwaith modern.
+footer-title = Waterfox Developer Edition
+footer-message = Chwilio am fwy na dim ond Developer Tools? Edrychwch ar y porwr Waterfox sydd wedi ei adeiladu yn benodol ar gyfer datblygwyr a'r llif gwaith modern.
 footer-learn-more-link = Dysgu rhagor
 
 features-learn-more = Dysgu rhagor

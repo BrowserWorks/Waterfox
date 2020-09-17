@@ -122,9 +122,9 @@ search-results-help-link = Benötigen Sie Hilfe? Dann besuchen Sie die <a data-l
 
 startup-header = Start
 # { -brand-short-name } will be 'Firefox Developer Edition',
-# since this setting is only exposed in Firefox Developer Edition
+# since this setting is only exposed in Waterfox Developer Edition
 separate-profile-mode =
-    .label = Gleichzeitiges Ausführen von { -brand-short-name } und Firefox erlauben
+    .label = Gleichzeitiges Ausführen von { -brand-short-name } und Waterfox erlauben
 use-firefox-sync = Tipp: Dabei werden getrennte Profile verwendet. Verwenden Sie { -sync-brand-short-name }, um Daten zwischen diesen zu synchronisieren.
 get-started-not-logged-in = Bei { -sync-brand-short-name } anmelden…
 get-started-configured = { -sync-brand-short-name }-Einstellungen öffnen
@@ -398,7 +398,7 @@ performance-allow-hw-accel =
 performance-limit-content-process-option = Maximale Anzahl an Inhaltsprozessen
     .accesskey = M
 performance-limit-content-process-enabled-desc = Mehr Inhaltsprozesse verbessern die Leistung bei Verwendung mehrerer Tabs, aber nutzen auch mehr Arbeitsspeicher.
-performance-limit-content-process-blocked-desc = Das Ändern der Anzahl der Inhaltsprozesse ist nur in { -brand-short-name } mit mehreren Prozessen möglich. <a data-l10n-name="learn-more">Wie Sie herausfinden, ob Firefox mit mehreren Prozessen ausgeführt wird</a>
+performance-limit-content-process-blocked-desc = Das Ändern der Anzahl der Inhaltsprozesse ist nur in { -brand-short-name } mit mehreren Prozessen möglich. <a data-l10n-name="learn-more">Wie Sie herausfinden, ob Waterfox mit mehreren Prozessen ausgeführt wird</a>
 # Variables:
 #   $num - default value of the `dom.ipc.processCount` pref.
 performance-default-content-process-count =
@@ -455,10 +455,10 @@ home-newtabs-mode-label = Neue Tabs
 home-restore-defaults =
     .label = Standard wiederherstellen
     .accesskey = w
-# "Firefox" should be treated as a brand and kept in English,
+# "Waterfox" should be treated as a brand and kept in English,
 # while "Home" and "(Default)" can be localized.
 home-mode-choice-default =
-    .label = Firefox-Startseite (Standard)
+    .label = Waterfox-Startseite (Standard)
 home-mode-choice-custom =
     .label = Benutzerdefinierte Adressen…
 home-mode-choice-blank =
@@ -480,10 +480,10 @@ choose-bookmark =
     .label = Lesezeichen verwenden…
     .accesskey = L
 
-## Home Section - Firefox Home Content Customization
+## Home Section - Waterfox Home Content Customization
 
-home-prefs-content-header = Inhalte des Firefox-Startbildschirms
-home-prefs-content-description = Wählen Sie, welche Inhalte auf Ihrem Firefox-Startbildschirm angezeigt werden sollen.
+home-prefs-content-header = Inhalte des Waterfox-Startbildschirms
+home-prefs-content-description = Wählen Sie, welche Inhalte auf Ihrem Waterfox-Startbildschirm angezeigt werden sollen.
 home-prefs-search-header =
     .label = Internetsuche
 home-prefs-topsites-header =
@@ -603,7 +603,7 @@ containers-preferences-button =
 containers-remove-button =
     .label = Löschen
 
-## Firefox Account - Signed out. Note that "Sync" and "Firefox Account" are now
+## Waterfox Account - Signed out. Note that "Sync" and "Firefox Account" are now
 ## more discrete ("signed in" no longer means "and sync is connected").
 
 sync-signedout-caption = So haben Sie das Web überall dabei.
@@ -619,9 +619,9 @@ sync-signedout-account-signin2 =
 #
 # They can be moved within the sentence as needed to adapt
 # to your language, but should not be changed or translated.
-sync-mobile-promo = Firefox für <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> oder <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS</a> herunterladen, um mit Ihrem Handy zu synchronisieren.
+sync-mobile-promo = Waterfox für <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> oder <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS</a> herunterladen, um mit Ihrem Handy zu synchronisieren.
 
-## Firefox Account - Signed in
+## Waterfox Account - Signed in
 
 sync-profile-picture =
     .tooltiptext = Profilbild ändern
@@ -707,7 +707,7 @@ sync-engine-creditcards =
     .accesskey = K
 sync-engine-addons =
     .label = Add-ons
-    .tooltiptext = Erweiterungen und Themes für Firefox für Desktops
+    .tooltiptext = Erweiterungen und Themes für Waterfox für Desktops
     .accesskey = A
 sync-engine-prefs =
     .label =
@@ -813,8 +813,8 @@ history-header = Chronik
 # "Firefox will" + "Remember history".
 #
 # If this doesn't work for your language, you can translate this message:
-#   - Simply as "Firefox", moving the verb into each option.
-#     This will result in "Firefox" + "Will remember history", etc.
+#   - Simply as "Waterfox", moving the verb into each option.
+#     This will result in "Waterfox" + "Will remember history", etc.
 #   - As a stand-alone message, for example "Firefox history settings:".
 history-remember-label = { -brand-short-name } wird eine Chronik
     .accesskey = F
@@ -1028,7 +1028,7 @@ permissions-addon-exceptions =
     .label = Ausnahmen…
     .accesskey = A
 permissions-a11y-privacy-checkbox =
-    .label = Externen Anwendungen den Zugriff auf den Dienst für Barrierefreiheit in Firefox verweigern
+    .label = Externen Anwendungen den Zugriff auf den Dienst für Barrierefreiheit in Waterfox verweigern
     .accesskey = B
 permissions-a11y-privacy-link = Weitere Informationen
 

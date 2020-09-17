@@ -10,4 +10,4 @@
 <!ENTITY aboutAccounts.retry.label "Erneut versuchen">
 
 <!ENTITY aboutAccounts.restrictedError.title "Eingeschränktes Profil">
-<!ENTITY aboutAccounts.restrictedError.description "Auf Firefox-Konten kann von diesem Profil aus nicht zugegriffen werden.">
+<!ENTITY aboutAccounts.restrictedError.description "Auf Waterfox-Konten kann von diesem Profil aus nicht zugegriffen werden.">

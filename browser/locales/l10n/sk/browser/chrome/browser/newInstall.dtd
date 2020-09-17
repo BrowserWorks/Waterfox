@@ -3,13 +3,13 @@
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!-- LOCALIZATION NOTE: For this feature, "installation" is used to mean "this
- discrete download of Firefox" and "version" is used to mean "the specific
- revision number of a given Firefox channel". These terms are not synonymous.
+ discrete download of Waterfox" and "version" is used to mean "the specific
+ revision number of a given Waterfox channel". These terms are not synonymous.
 -->
 
 <!ENTITY window.title "Dôležité novinky">
 <!ENTITY window.style "width: 490px">
-<!ENTITY sync "Ak chcete synchronizovať údaje, ktoré už máte v tejto inštalácii aplikácie &brandShortName; uložené, prosím, prihláste sa ku svoju účtu Firefox.">
+<!ENTITY sync "Ak chcete synchronizovať údaje, ktoré už máte v tejto inštalácii aplikácie &brandShortName; uložené, prosím, prihláste sa ku svoju účtu Waterfox.">
 <!ENTITY continue-button "Pokračovať">
 
-<!ENTITY mainText "Táto inštalácia aplikácie &brandShortName; má nový profil. To znamená, že už automaticky nezdieľa záložky, heslá a vaše nastavenia s ostatnými inštaláciami Firefoxu (vrátane bežnej verzie Firefoxu, Firefoxu ESR, Firefoxu Beta, Firefoxu Developer Edition a Firefoxu Nightly) na tomto počítači.">
+<!ENTITY mainText "Táto inštalácia aplikácie &brandShortName; má nový profil. To znamená, že už automaticky nezdieľa záložky, heslá a vaše nastavenia s ostatnými inštaláciami Waterfoxu (vrátane bežnej verzie Waterfoxu, Waterfoxu ESR, Waterfoxu Beta, Waterfoxu Developer Edition a Waterfoxu Nightly) na tomto počítači.">

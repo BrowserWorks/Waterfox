@@ -122,9 +122,9 @@ search-results-help-link = Segítségre van szüksége? Látogasson el ide: <a d
 
 startup-header = Indítás
 # { -brand-short-name } will be 'Firefox Developer Edition',
-# since this setting is only exposed in Firefox Developer Edition
+# since this setting is only exposed in Waterfox Developer Edition
 separate-profile-mode =
-    .label = A { -brand-short-name } és a Firefox futhat egyszerre
+    .label = A { -brand-short-name } és a Waterfox futhat egyszerre
 use-firefox-sync = Tipp: Ez külön profilokat használ. A { -sync-brand-short-name } segítségével adatokat oszthat meg közöttük.
 get-started-not-logged-in = Bejelentkezés a { -sync-brand-short-name }be
 get-started-configured = A { -sync-brand-short-name } beállításainak megnyitása
@@ -455,10 +455,10 @@ home-newtabs-mode-label = Új lapok
 home-restore-defaults =
     .label = Alapértelmezések visszaállítása
     .accesskey = A
-# "Firefox" should be treated as a brand and kept in English,
+# "Waterfox" should be treated as a brand and kept in English,
 # while "Home" and "(Default)" can be localized.
 home-mode-choice-default =
-    .label = Firefox kezdőlap (alapértelmezett)
+    .label = Waterfox kezdőlap (alapértelmezett)
 home-mode-choice-custom =
     .label = Egyéni URL-ek…
 home-mode-choice-blank =
@@ -480,10 +480,10 @@ choose-bookmark =
     .label = Könyvjelző használata…
     .accesskey = n
 
-## Home Section - Firefox Home Content Customization
+## Home Section - Waterfox Home Content Customization
 
-home-prefs-content-header = Firefox kezdőlap tartalma
-home-prefs-content-description = Válassza ki milyen tartalmat szeretne a Firefox kezdőlapon.
+home-prefs-content-header = Waterfox kezdőlap tartalma
+home-prefs-content-description = Válassza ki milyen tartalmat szeretne a Waterfox kezdőlapon.
 home-prefs-search-header =
     .label = Webes keresés
 home-prefs-topsites-header =
@@ -603,7 +603,7 @@ containers-preferences-button =
 containers-remove-button =
     .label = Eltávolítás
 
-## Firefox Account - Signed out. Note that "Sync" and "Firefox Account" are now
+## Waterfox Account - Signed out. Note that "Sync" and "Firefox Account" are now
 ## more discrete ("signed in" no longer means "and sync is connected").
 
 sync-signedout-caption = Vigye magával a webet
@@ -619,9 +619,9 @@ sync-signedout-account-signin2 =
 #
 # They can be moved within the sentence as needed to adapt
 # to your language, but should not be changed or translated.
-sync-mobile-promo = Töltse le a Firefox for <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> vagy <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS</a> appot a mobileszközével való szinkronizáláshoz.
+sync-mobile-promo = Töltse le a Waterfox for <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> vagy <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS</a> appot a mobileszközével való szinkronizáláshoz.
 
-## Firefox Account - Signed in
+## Waterfox Account - Signed in
 
 sync-profile-picture =
     .tooltiptext = Profilkép módosítása
@@ -707,7 +707,7 @@ sync-engine-creditcards =
     .accesskey = B
 sync-engine-addons =
     .label = Kiegészítők
-    .tooltiptext = Kiegészítők és témák az asztali Firefoxhoz
+    .tooltiptext = Kiegészítők és témák az asztali Waterfoxhoz
     .accesskey = K
 sync-engine-prefs =
     .label =
@@ -813,8 +813,8 @@ history-header = Előzmények
 # "Firefox will" + "Remember history".
 #
 # If this doesn't work for your language, you can translate this message:
-#   - Simply as "Firefox", moving the verb into each option.
-#     This will result in "Firefox" + "Will remember history", etc.
+#   - Simply as "Waterfox", moving the verb into each option.
+#     This will result in "Waterfox" + "Will remember history", etc.
 #   - As a stand-alone message, for example "Firefox history settings:".
 history-remember-label = A { -brand-short-name }
     .accesskey = A

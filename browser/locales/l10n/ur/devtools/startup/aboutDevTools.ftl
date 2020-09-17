@@ -3,22 +3,22 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 head-title = تخلیق کار ٹول کے بارے میں
-enable-title = Firefox تخلیق کار ٹول کو فعال بناۓ
-enable-inspect-element-title = عنصر کو معائنہ کرنے کیلئے Firefox ڈویلپر ٹولز کو فاعال بنائیں
+enable-title = Waterfox تخلیق کار ٹول کو فعال بناۓ
+enable-inspect-element-title = عنصر کو معائنہ کرنے کیلئے Waterfox ڈویلپر ٹولز کو فاعال بنائیں
 enable-inspect-element-message = ڈیولپر ٹولز ’انسپکٹر کے ساتھ ایچ ٹی ایم ایل اور سی ایس ایس کی جانچ اور تدوین کریں۔
 enable-learn-more-link = ڈیولپر ٹولز کے بارے میں مزید سیکھیں
 enable-enable-button = ڈیولپر ٹولز کو فعال کریں
 enable-close-button = یہ ٹیب بند کریں
 
-welcome-title = Firefox ڈویلپر ٹولز میں خوش آمدید!
-newsletter-title = Mozilla ڈویلپر نیوز لیٹر
+welcome-title = Waterfox ڈویلپر ٹولز میں خوش آمدید!
+newsletter-title = Waterfox ڈویلپر نیوز لیٹر
 newsletter-email-placeholder =
     .placeholder = ای میل
 newsletter-subscribe-button = رکن بنیں
 newsletter-thanks-title = شکریہ!
 newsletter-thanks-message = اگر آپ نے پہلے Mozilla-related نیوز لیٹر کی رکنیت کی تصدیق نھیں کی تو ھو سکتا ھے اپکو کرنی پڑے۔ براہ مہربانی اپنے آمد خانہ کی پڑتال کریں یا ھماری طرف سے ایک ای میل کو اپنے سپیم فلٹر میں۔
 
-footer-title = Firefox Developer Edition
+footer-title = Waterfox Developer Edition
 footer-learn-more-link = مزید سیکھیں
 
 features-learn-more = مزید سیکھیں

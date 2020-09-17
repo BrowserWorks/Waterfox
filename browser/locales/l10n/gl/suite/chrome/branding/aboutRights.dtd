@@ -1,4 +1,4 @@
-<!-- LOCALIZATION NOTE This file is very similar to the one in Firefox from browser/locales/en-US/chrome/browser/aboutRights.dtd so you can use that file as a starting point -->
+<!-- LOCALIZATION NOTE This file is very similar to the one in Waterfox from browser/locales/en-US/chrome/browser/aboutRights.dtd so you can use that file as a starting point -->
 <!-- rights.locale-direction instead of the usual local.dir entity, so RTL can skip translating page. -->
 <!ENTITY rights.locale-direction "ltr">
 <!ENTITY rights.pagetitle       "about:rights">

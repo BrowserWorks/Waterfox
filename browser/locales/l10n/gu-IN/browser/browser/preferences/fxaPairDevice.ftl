@@ -6,7 +6,7 @@ fxa-pair-device-dialog =
     .title = બીજા ઉપકરણ સાથે જોડાણ કરો
     .style = width: 26em; min-height: 35em;
 
-fxa-qrcode-heading-phase1 = 1. જો તમારી પાસે પહેલાથી નથી, તો <a data-l10n-name="connect-another-device"> તમારા મોબાઇલ ઉપકરણ પર Firefox </a> ઇન્સ્ટોલ કરો.
+fxa-qrcode-heading-phase1 = 1. જો તમારી પાસે પહેલાથી નથી, તો <a data-l10n-name="connect-another-device"> તમારા મોબાઇલ ઉપકરણ પર Waterfox </a> ઇન્સ્ટોલ કરો.
 
 fxa-qrcode-heading-phase2 = 2. પછી { -sync-brand-short-name } માં સાઇન ઇન કરો, અથવા Android પર { -sync-brand-short-name } સેટિંગ્સની અંદરથી જોડી બનાવવાનો કોડ સ્કેન કરો.
 

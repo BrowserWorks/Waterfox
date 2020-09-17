@@ -1,4 +1,4 @@
-This is Ukrainian spelling dictionary for Firefox and Thunderbird,
+This is Ukrainian spelling dictionary for Waterfox and Thunderbird,
 that use hunspell as spelling engine and it is based on 
 dictionary of dict_uk project https://github.com/brown-uk/dict_uk
 

@@ -80,7 +80,7 @@ onboarding-multistage-theme-description-automatic = వ్యవస్థ అల
 onboarding-multistage-theme-label-light = తెల్లని
 onboarding-multistage-theme-label-dark = నల్లని
 # "Firefox Alpenglow" here is the name of the theme, and should be kept in English.
-onboarding-multistage-theme-label-alpenglow = Firefox Alpenglow
+onboarding-multistage-theme-label-alpenglow = Waterfox Alpenglow
 
 ## Please make sure to split the content of the title attribute into lines whose
 ## width corresponds to about 40 Latin characters, to ensure that the tooltip
@@ -93,11 +93,11 @@ onboarding-multistage-theme-label-alpenglow = Firefox Alpenglow
 onboarding-fullpage-form-email =
     .placeholder = మీ ఈమెయిలు చిరునామా…
 
-## Firefox Sync modal dialog strings.
+## Waterfox Sync modal dialog strings.
 
 onboarding-sync-welcome-header = { -brand-product-name }ను మీతో తీసుకెళ్ళండి
 onboarding-sync-welcome-content = మీ ఇష్టాంశాలను, చరిత్రను, సంకేతపదాలను, ఇతర అమరికలను మీ పరికరాలన్నింటిలో పొందండి.
-onboarding-sync-welcome-learn-more-link = Firefox ఖాతాల గురించి మరింత తెలుసుకోండి
+onboarding-sync-welcome-learn-more-link = Waterfox ఖాతాల గురించి మరింత తెలుసుకోండి
 
 onboarding-sync-form-input =
     .placeholder = ఈమెయిలు
@@ -105,7 +105,7 @@ onboarding-sync-form-input =
 onboarding-sync-form-continue-button = కొనసాగు
 onboarding-sync-form-skip-login-button = ఈ అంచెను దాటవేయి
 
-## This is part of the line "Enter your email to continue to Firefox Sync"
+## This is part of the line "Enter your email to continue to Waterfox Sync"
 
 onboarding-sync-form-header = మీ ఈమెయిలును ఇవ్వండి
 onboarding-sync-form-sub-header = { -sync-brand-name }కి కొనసాగడానికి

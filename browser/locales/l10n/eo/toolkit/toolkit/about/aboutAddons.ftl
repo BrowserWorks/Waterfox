@@ -457,9 +457,9 @@ addon-permissions-empty = Tiu ĉi etendaĵo postulas neniun permeson
 recommended-extensions-heading = Rekomenditaj etendaĵoj
 recommended-themes-heading = Rekomenditaj etosoj
 
-# A recommendation for the Firefox Color theme shown at the bottom of the theme
+# A recommendation for the Waterfox Color theme shown at the bottom of the theme
 # list view. The "Firefox Color" name itself should not be translated.
-recommended-theme-1 = Ĉu vi kreemas? <a data-l10n-name="link">Kreu vian propran etoson per Firefox Color.</a>
+recommended-theme-1 = Ĉu vi kreemas? <a data-l10n-name="link">Kreu vian propran etoson per Waterfox Color.</a>
 
 ## Page headings
 

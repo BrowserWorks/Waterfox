@@ -51,7 +51,7 @@ onboarding-cards-dismiss =
 ## Welcome full page string
 
 
-## Firefox Sync modal dialog strings.
+## Waterfox Sync modal dialog strings.
 
 onboarding-sync-welcome-header = { -brand-product-name } را همراه خود داشته باشید
 onboarding-sync-welcome-content = نشانک‌ها، تاریخچه، گذرواژه‌ها و تنظیمات دیگر خود را بر روی تمام دستگاه‌های خود همراه خود داشته باشید.
@@ -63,7 +63,7 @@ onboarding-sync-form-input =
 onboarding-sync-form-continue-button = ادامه
 onboarding-sync-form-skip-login-button = پرش از این مرحله
 
-## This is part of the line "Enter your email to continue to Firefox Sync"
+## This is part of the line "Enter your email to continue to Waterfox Sync"
 
 onboarding-sync-form-header = پست‌الکترونیکی خود را وارد کنید
 onboarding-sync-form-sub-header = برای ادامه به { -sync-brand-name }.
@@ -76,7 +76,7 @@ onboarding-benefit-products-text = به کمک گروهی از ابزارها ک
 
 # "Personal Data Promise" is a concept that should be translated consistently
 # across the product. It refers to a concept shown elsewhere to the user: "The
-# Firefox Personal Data Promise is the way we honor your data in everything we
+# Waterfox Personal Data Promise is the way we honor your data in everything we
 # make and do. We take less data. We keep it safe. And we make sure that we are
 # transparent about how we use it."
 onboarding-benefit-privacy-text = هرکاری که ما انجام می‌دهیم به تعهد ما در مورد اطلاعات شخصی وفادار است: چیزهای کمتری بگیر، امن نگهداری کن، مخفی کاری وجود ندارد.

@@ -80,7 +80,7 @@ cfr-doorhanger-pintab-animation-pause = Asteɛfu
 cfr-doorhanger-pintab-animation-resume = Kemmel
 
 
-## Firefox Accounts Message
+## Waterfox Accounts Message
 
 cfr-doorhanger-bookmark-fxa-header = Mtawi ticraḍ n yisebter ar wanida tebɣiḍ.
 cfr-doorhanger-bookmark-fxa-body = Tufiḍ tiwizet! Tura, af-d tacreḍt n usebter ɣef yibenkan-ik izirazen, d lawan ad tesqedceḍ { -fxaccount-brand-name }.
@@ -191,7 +191,7 @@ cfr-doorhanger-send-tab-body = "Azen Iccer" ad k-yeǧǧ ad siwḍeḍ s wudem af
 cfr-doorhanger-send-tab-ok-button = Ɛreḍ tuzna n yiccer
     .accesskey = Ɛ
 
-## Firefox Send
+## Waterfox Send
 
 cfr-doorhanger-firefox-send-header = Bḍu afaylu-a PDF s wudem aɣelsan
 cfr-doorhanger-firefox-send-body = Mmesten arratent-ik ibadniyen seg yir tamuɣli s uwgelhen si ṭṭerf ɣer ṭṭerf akken useɣwen ara yemmten ticki tfukkeḍ.
@@ -229,7 +229,7 @@ cfr-doorhanger-milestone-ok-button = Wali akk
 cfr-doorhanger-milestone-close-button = Mdel
     .accesskey = C
 
-## What’s New Panel Content for Firefox 76
+## What’s New Panel Content for Waterfox 76
 
 
 ## Lockwise message

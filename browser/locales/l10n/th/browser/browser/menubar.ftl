@@ -22,7 +22,7 @@ menu-file-new-private-window =
     .accesskey = ส
 # "Open Location" is only displayed on macOS, and only on windows
 # that aren't main browser windows, or when there are no windows
-# but Firefox is still running.
+# but Waterfox is still running.
 menu-file-open-location =
     .label = เปิดตำแหน่งที่ตั้ง…
 menu-file-open-file =

@@ -119,9 +119,9 @@ search-results-help-link = Օգնությու՞ն է պետք: Այցելեք <a
 
 startup-header = Մեկնարկը
 # { -brand-short-name } will be 'Firefox Developer Edition',
-# since this setting is only exposed in Firefox Developer Edition
+# since this setting is only exposed in Waterfox Developer Edition
 separate-profile-mode =
-    .label = Թույլատրել, որ { -brand-short-name }-ը և Firefox-ը մեկնարկեն միաժամանակ
+    .label = Թույլատրել, որ { -brand-short-name }-ը և Waterfox-ը մեկնարկեն միաժամանակ
 use-firefox-sync = Խորհուրդ․ Օգտագործում են առանձին հատկագրեր։ Օգտագործեք { -sync-brand-short-name }-ը տվյալերը դրանց մեջ տարծելու համար։
 get-started-not-logged-in = Մուտք գործել { -sync-brand-short-name }...
 get-started-configured = Բացել { -sync-brand-short-name }-ի կարգավորումները
@@ -452,10 +452,10 @@ home-newtabs-mode-label = Նոր Ներդիրներ
 home-restore-defaults =
     .label = Վերականգնել ծրագրայինը
     .accesskey = R
-# "Firefox" should be treated as a brand and kept in English,
+# "Waterfox" should be treated as a brand and kept in English,
 # while "Home" and "(Default)" can be localized.
 home-mode-choice-default =
-    .label = Firefox-ի Տնային էջը
+    .label = Waterfox-ի Տնային էջը
 home-mode-choice-custom =
     .label = Հարմարեցված URL-ներ...
 home-mode-choice-blank =
@@ -477,10 +477,10 @@ choose-bookmark =
     .label = Օգտագործել էջանիշ...
     .accesskey = է
 
-## Home Section - Firefox Home Content Customization
+## Home Section - Waterfox Home Content Customization
 
-home-prefs-content-header = Firefox-ի սկզբնական պարունակությունը
-home-prefs-content-description = Ընտրեք, թե ինչ բովանդակություն կցնականաք ձեր Firefox-ի սկզբնական էկրանին։
+home-prefs-content-header = Waterfox-ի սկզբնական պարունակությունը
+home-prefs-content-description = Ընտրեք, թե ինչ բովանդակություն կցնականաք ձեր Waterfox-ի սկզբնական էկրանին։
 home-prefs-search-header =
     .label = Վեբ որոնում
 home-prefs-topsites-header =
@@ -597,7 +597,7 @@ containers-preferences-button =
 containers-remove-button =
     .label = Հեռացնել
 
-## Firefox Account - Signed out. Note that "Sync" and "Firefox Account" are now
+## Waterfox Account - Signed out. Note that "Sync" and "Firefox Account" are now
 ## more discrete ("signed in" no longer means "and sync is connected").
 
 sync-signedout-caption = Ձեր վեբը Ձեզ հետ է
@@ -613,9 +613,9 @@ sync-signedout-account-signin2 =
 #
 # They can be moved within the sentence as needed to adapt
 # to your language, but should not be changed or translated.
-sync-mobile-promo = Ներբեռնել Firefox-ը <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> կամ <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS</a>-ի համար՝ համաժամեցնելու բջջային սարքի հետ:
+sync-mobile-promo = Ներբեռնել Waterfox-ը <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> կամ <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS</a>-ի համար՝ համաժամեցնելու բջջային սարքի հետ:
 
-## Firefox Account - Signed in
+## Waterfox Account - Signed in
 
 sync-profile-picture =
     .tooltiptext = Փոխել պրոֆիլի նկարը
@@ -701,7 +701,7 @@ sync-engine-creditcards =
     .accesskey = C
 sync-engine-addons =
     .label = Հավելումները
-    .tooltiptext = Ընդլայնումներ և ոճեր Firefox-ի համար
+    .tooltiptext = Ընդլայնումներ և ոճեր Waterfox-ի համար
     .accesskey = Հ
 sync-engine-prefs =
     .label =
@@ -802,8 +802,8 @@ history-header = Պատմություն
 # "Firefox will" + "Remember history".
 #
 # If this doesn't work for your language, you can translate this message:
-#   - Simply as "Firefox", moving the verb into each option.
-#     This will result in "Firefox" + "Will remember history", etc.
+#   - Simply as "Waterfox", moving the verb into each option.
+#     This will result in "Waterfox" + "Will remember history", etc.
 #   - As a stand-alone message, for example "Firefox history settings:".
 history-remember-label = { -brand-short-name }-ը կսկսի`
     .accesskey = կ

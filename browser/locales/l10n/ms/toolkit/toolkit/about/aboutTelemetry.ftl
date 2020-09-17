@@ -15,7 +15,7 @@ about-telemetry-previous-ping = <<
 about-telemetry-next-ping = >>
 about-telemetry-page-title = Data Telemetri
 about-telemetry-more-information = Mahu mencari maklumat selanjutnya?
-about-telemetry-firefox-data-doc = <a data-l10n-name="data-doc-link">Dokumentasi Data Firefox</a> mengandungkan panduan perihal cara menggunakan alatan data kami.
+about-telemetry-firefox-data-doc = <a data-l10n-name="data-doc-link">Dokumentasi Data Waterfox</a> mengandungkan panduan perihal cara menggunakan alatan data kami.
 about-telemetry-telemetry-client-doc = <a data-l10n-name="client-doc-link">Firefox Telemetry klien dokumentasi</a> menjelaskan takrif konsep, dokumentasi API dan rujukan data.
 about-telemetry-telemetry-dashboard = <a data-l10n-name="dashboard-link">Papan pemuka Telemetri</a> membolehkan anda menggambarkan data yang diterima oleh Mozilla melalui Telemetri.
 about-telemetry-telemetry-probe-dictionary = <a data-l10n-name="probe-dictionary-link">Probe Dictionary</a> menyediakan butiran dan penjelasan untuk masalah yang dikumpulkan oleh Telemetry.

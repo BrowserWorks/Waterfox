@@ -80,7 +80,7 @@ cfr-doorhanger-pintab-animation-pause = Tauko
 cfr-doorhanger-pintab-animation-resume = Jatka
 
 
-## Firefox Accounts Message
+## Waterfox Accounts Message
 
 cfr-doorhanger-bookmark-fxa-header = Synkronoi kirjanmerkkisi kaikkialla.
 cfr-doorhanger-bookmark-fxa-body = Hyvä löytö! Älä jää ilman tätä kirjanmerkkiä mobiililaitteillasi. Aloita { -fxaccount-brand-name(case: "genitive") } käyttö.
@@ -197,7 +197,7 @@ cfr-doorhanger-send-tab-body = Lähettämällä välilehden voit jakaa linkin he
 cfr-doorhanger-send-tab-ok-button = Kokeile välilehden lähettämistä
     .accesskey = K
 
-## Firefox Send
+## Waterfox Send
 
 cfr-doorhanger-firefox-send-header = Jaa tämä PDF turvallisesti
 cfr-doorhanger-firefox-send-body = Pidä arkaluonteiset asiakirjasi turvassa uteliailta silmiltä käyttämällä läpisalausta ja automaattisesti vanhenevaa linkkiä.
@@ -234,7 +234,7 @@ cfr-doorhanger-milestone-ok-button = Näytä kaikki
 cfr-doorhanger-milestone-close-button = Sulje
     .accesskey = S
 
-## What’s New Panel Content for Firefox 76
+## What’s New Panel Content for Waterfox 76
 
 
 ## Lockwise message

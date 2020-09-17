@@ -107,9 +107,9 @@ manifest-loaded-ok = Manifest učitan.
 # load the manifest
 manifest-loaded-error = Došlo je do greške prilikom učitavanja manifesta:
 
-# Text displayed as an error when there has been a Firefox DevTools error while
+# Text displayed as an error when there has been a Waterfox DevTools error while
 # trying to load the manifest
-manifest-loaded-devtools-error = Greška Firefoxovih razvojnih alata
+manifest-loaded-devtools-error = Greška Waterfoxovih razvojnih alata
 
 # Text displayed when the page has no manifest available
 manifest-non-existing = Nije pronađen nijedan manifest za provjeru.

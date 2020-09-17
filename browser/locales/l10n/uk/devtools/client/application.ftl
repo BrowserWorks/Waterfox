@@ -136,9 +136,9 @@ manifest-loaded-ok = Маніфест завантажено.
 # load the manifest
 manifest-loaded-error = Під час завантаження маніфесту сталася помилка:
 
-# Text displayed as an error when there has been a Firefox DevTools error while
+# Text displayed as an error when there has been a Waterfox DevTools error while
 # trying to load the manifest
-manifest-loaded-devtools-error = Помилка Firefox DevTools
+manifest-loaded-devtools-error = Помилка Waterfox DevTools
 
 # Text displayed when the page has no manifest available
 manifest-non-existing = Не знайдено жодного маніфесту для перевірки.

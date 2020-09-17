@@ -46,7 +46,7 @@ import-from-chromium =
     .label = Chromium
     .accesskey = u
 import-from-firefox =
-    .label = Firefox
+    .label = Waterfox
     .accesskey = x
 import-from-360se =
     .label = Merdeer diogel 360
@@ -88,7 +88,7 @@ source-name-chrome = Google Chrome
 source-name-chrome-beta = Google Chrome Beta
 source-name-chrome-dev = Google Chrome Dev
 source-name-chromium = Chromium
-source-name-firefox = Mozilla Firefox
+source-name-firefox = Waterfox
 source-name-360se = Merdeer diogel 360
 
 imported-safari-reading-list = Roll al lennadurioù (diouzh Safari)

@@ -3,19 +3,19 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 head-title = Davart ils utensils per sviluppaders
-enable-title = Activar ils utensils per sviluppaders da Firefox
-enable-inspect-element-title = Activar ils utensils per sviluppaders da Firefox per utilisar «Inspectar l'element»
+enable-title = Activar ils utensils per sviluppaders da Waterfox
+enable-inspect-element-title = Activar ils utensils per sviluppaders da Waterfox per utilisar «Inspectar l'element»
 enable-inspect-element-message = Examinar e modifitgar HTML e CSS cun l'inspectur dals utensils per sviluppaders.
-enable-about-debugging-message = Sviluppar e debugar WebExtensions, web workers, service workers e dapli cun ils utensils per sviluppaders da Firefox.
+enable-about-debugging-message = Sviluppar e debugar WebExtensions, web workers, service workers e dapli cun ils utensils per sviluppaders da Waterfox.
 enable-key-shortcut-message = Ti has activà ina scursanida da tasta dals utensils per sviluppaders. Sche quai è capità per sbagl, pos ti serrar quest tab.
 enable-menu-message = Perfecziunescha HTML, CSS e JavaScript da tia website cun utensils sco l'inspectur u il debugadi.
-enable-common-message = Ils utensils per sviluppaders da Firefox èn deactivads tenor standard per che ti possias controllar meglier tes navigatur.
+enable-common-message = Ils utensils per sviluppaders da Waterfox èn deactivads tenor standard per che ti possias controllar meglier tes navigatur.
 enable-learn-more-link = Vegnir a savair dapli davart ils utensils per sviluppaders
 enable-enable-button = Activar ils utensils per sviluppaders
 enable-close-button = Serrar quest tab
 
-welcome-title = Bainvegni tar ils utensils per sviluppaders da Firefox!
-newsletter-title = Mozilla Developer Newsletter
+welcome-title = Bainvegni tar ils utensils per sviluppaders da Waterfox!
+newsletter-title = Waterfox Developer Newsletter
 newsletter-message = Retschaiva novitads per sviluppaders, trics e resursas directamain en tia chascha da posta entrada dad e-mail.
 newsletter-email-placeholder =
     .placeholder = E-mail
@@ -24,8 +24,8 @@ newsletter-subscribe-button = Abunar
 newsletter-thanks-title = Grazia!
 newsletter-thanks-message = Sche ti n'has anc mai abunà in newsletter da Mozilla, stos ti confermar l'abunament. Controllescha per plaschair sche tia posta entrada u tes filter da posta nungiavischada cuntegnia in e-mail da nus.
 
-footer-title = Firefox Developer Edition
-footer-message = Tschertgas ti dapli che mo ils utensils per sviluppaders? Emprova il navigatur da Firefox creà aposta per sviluppaders e process da lavur moderns.
+footer-title = Waterfox Developer Edition
+footer-message = Tschertgas ti dapli che mo ils utensils per sviluppaders? Emprova il navigatur da Waterfox creà aposta per sviluppaders e process da lavur moderns.
 footer-learn-more-link = Ulteriuras infurmaziuns
 
 features-learn-more = Ulteriuras infurmaziuns

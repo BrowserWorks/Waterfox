@@ -10,7 +10,7 @@ process-type-privilegedabout = about-Seite mit zusätzlichen Rechten
 
 # process used to run privileged mozilla pages,
 # such as accounts.firefox.com
-process-type-privilegedmozilla = Mozilla-Inhalt mit zusätzlichen Rechten
+process-type-privilegedmozilla = Waterfox-Inhalt mit zusätzlichen Rechten
 
 process-type-extension = Erweiterung
 

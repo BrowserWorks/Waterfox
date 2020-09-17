@@ -11,11 +11,11 @@
 
 # Sidebar strings
 
-# Display name of the runtime for the currently running instance of Firefox. Used in the
+# Display name of the runtime for the currently running instance of Waterfox. Used in the
 # Sidebar and in the Setup page.
 about-debugging-this-firefox-runtime-name = Този { -brand-shorter-name }
 
-# Sidebar heading for selecting the currently running instance of Firefox
+# Sidebar heading for selecting the currently running instance of Waterfox
 about-debugging-sidebar-this-firefox =
     .name = { about-debugging-this-firefox-runtime-name }
 
@@ -115,7 +115,7 @@ about-debugging-network-locations-remove-button = Премахване
 
 # Below are the titles for the various categories of debug targets that can be found
 # on "runtime" pages of about:debugging.
-# Title of the temporary extensions category (only available for "This Firefox" runtime).
+# Title of the temporary extensions category (only available for "This Waterfox" runtime).
 about-debugging-runtime-temporary-extensions =
     .name = Временни разширения
 # Title of the extensions category.
@@ -145,7 +145,7 @@ about-debugging-runtime-service-workers-not-compatible = Настройките 
 # This string is displayed in the runtime page if the remote browser version is too old.
 # "Troubleshooting" link points to https://developer.mozilla.org/docs/Tools/about:debugging#Troubleshooting
 # { $runtimeVersion } is the version of the remote browser (for instance "67.0a1")
-# { $minVersion } is the minimum version that is compatible with the current Firefox instance (same format)
+# { $minVersion } is the minimum version that is compatible with the current Waterfox instance (same format)
 about-debugging-browser-version-too-old = Свързаният браузър е стара версия ({ $runtimeVersion }). Минимално поддържаната версия е ({ $minVersion }). Настройките по-долу не се поддържат и могат да доведат до неуспех на DevTools. Моля, актуализирайте свързания браузър. <a>Отстраняване</a>
 
 # Displayed for runtime info in runtime pages.
@@ -163,11 +163,11 @@ about-debugging-runtime-disconnect-button = Прекъсване на връзк
 # show. Debug targets depend on the category (extensions, tabs, workers...).
 about-debugging-debug-target-list-empty = Все още нищо.
 
-# Text of a button displayed for a temporary extension loaded in the "This Firefox" page.
+# Text of a button displayed for a temporary extension loaded in the "This Waterfox" page.
 # Clicking on the button will reload the extension.
 about-debugging-tmp-extension-reload-button = Презареждане
 
-# Text of a button displayed for a temporary extension loaded in the "This Firefox" page.
+# Text of a button displayed for a temporary extension loaded in the "This Waterfox" page.
 # Clicking on the button will uninstall the extension and remove it from the page.
 about-debugging-tmp-extension-remove-button = Премахване
 

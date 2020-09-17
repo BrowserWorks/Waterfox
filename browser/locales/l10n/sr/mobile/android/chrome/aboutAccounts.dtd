@@ -10,4 +10,4 @@
 <!ENTITY aboutAccounts.retry.label "Покушај поново">
 
 <!ENTITY aboutAccounts.restrictedError.title "Ограничено">
-<!ENTITY aboutAccounts.restrictedError.description "Не можете да управљате Firefox налозима са овог профила.">
+<!ENTITY aboutAccounts.restrictedError.description "Не можете да управљате Waterfox налозима са овог профила.">

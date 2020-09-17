@@ -68,7 +68,7 @@ onboarding-multistage-theme-description-automatic = سسٹم تھیم استعم
 onboarding-multistage-theme-label-light = ہلکا
 onboarding-multistage-theme-label-dark = گہرا
 # "Firefox Alpenglow" here is the name of the theme, and should be kept in English.
-onboarding-multistage-theme-label-alpenglow = Firefox الپینگلو
+onboarding-multistage-theme-label-alpenglow = Waterfox الپینگلو
 
 ## Please make sure to split the content of the title attribute into lines whose
 ## width corresponds to about 40 Latin characters, to ensure that the tooltip
@@ -82,11 +82,11 @@ onboarding-fullpage-welcome-subheader = آئیے آپ جو کچھ بھی کر س
 onboarding-fullpage-form-email =
     .placeholder = آپکا ای میل ایڈرس…
 
-## Firefox Sync modal dialog strings.
+## Waterfox Sync modal dialog strings.
 
 onboarding-sync-welcome-header = { -brand-product-name }کو  اپنے ساتھ جائے
 onboarding-sync-welcome-content = اپنے تمام آلات پر اپنی نشانیاں ، سابقات ، پاس ورڈ اور دیگر سیٹنگز حاصل کریں۔
-onboarding-sync-welcome-learn-more-link = Firefox اکاؤنٹس کے بارے میں مزید سیکھیں
+onboarding-sync-welcome-learn-more-link = Waterfox اکاؤنٹس کے بارے میں مزید سیکھیں
 
 onboarding-sync-form-input =
     .placeholder = ای میل
@@ -94,7 +94,7 @@ onboarding-sync-form-input =
 onboarding-sync-form-continue-button = جاری رکھیں
 onboarding-sync-form-skip-login-button = اس مرحلے کو چھوڑیں
 
-## This is part of the line "Enter your email to continue to Firefox Sync"
+## This is part of the line "Enter your email to continue to Waterfox Sync"
 
 onboarding-sync-form-header = اپنی ای میل داخل کریں
 onboarding-sync-form-sub-header = { -sync-brand-name } کو جاری رکھنے کے  لیے
@@ -105,7 +105,7 @@ onboarding-sync-form-sub-header = { -sync-brand-name } کو جاری رکھنے 
 
 # "Personal Data Promise" is a concept that should be translated consistently
 # across the product. It refers to a concept shown elsewhere to the user: "The
-# Firefox Personal Data Promise is the way we honor your data in everything we
+# Waterfox Personal Data Promise is the way we honor your data in everything we
 # make and do. We take less data. We keep it safe. And we make sure that we are
 # transparent about how we use it."
 onboarding-benefit-privacy-text = ہم جو بھی کام کرتے ہیں وہ ہمارے ذاتی ڈیٹا کے وعدے کی قدر کرتا ہے: کم لیں۔ اسے محفوظ رکھیں۔ کوئی راز نہیں۔

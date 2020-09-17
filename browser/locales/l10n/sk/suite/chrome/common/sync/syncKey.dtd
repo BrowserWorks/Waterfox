@@ -2,7 +2,7 @@
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
-<!ENTITY syncKey.page.title               "Váš Synchronizačný kľúč Firefoxu">
+<!ENTITY syncKey.page.title               "Váš Synchronizačný kľúč Waterfoxu">
 <!ENTITY syncKey.page.description         "Tento kľúč sa používa na dekódovanie údajov na účte služby &syncBrand.fullName.label;. Budete ho musieť zadať zakaždým, keď budete nastavovať službu &syncBrand.fullName.label; na novom počítači alebo zariadení.">
 <!ENTITY syncKey.keepItSecret.heading     "Nikomu ho nehovorte">
 <!ENTITY syncKey.keepItSecret.description "Údaje na vašom účte služby &syncBrand.fullName.label; sú zašifrované kvôli vašej ochrane. Bez tohto kľúča by trvalo roky dekódovať vaše osobné údaje. Vy ste jedinou osobou, ktorá pozná tento kľúč. To znamená, že ste jediná osoba, ktorá môže pristupovať k údajom na účte služby &syncBrand.fullName.label;.">

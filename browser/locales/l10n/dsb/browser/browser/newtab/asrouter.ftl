@@ -84,7 +84,7 @@ cfr-doorhanger-pintab-animation-pause = Pawza
 cfr-doorhanger-pintab-animation-resume = Pókšacowaś
 
 
-## Firefox Accounts Message
+## Waterfox Accounts Message
 
 cfr-doorhanger-bookmark-fxa-header = Synchronizěrujśo swóje cytańske znamjenja wšuźi.
 cfr-doorhanger-bookmark-fxa-body = Wjelicna namakanka! Njewóstawajśo bźez toś togo cytańskego znamjenja na swójich mobilnych rědach. Zachopśo z { -fxaccount-brand-name }.
@@ -201,7 +201,7 @@ cfr-doorhanger-send-tab-body = Send Tab wam zmóžnja, toś ten wótkaz lažko z
 cfr-doorhanger-send-tab-ok-button = Send Tab wopytaś
     .accesskey = T
 
-## Firefox Send
+## Waterfox Send
 
 cfr-doorhanger-firefox-send-header = Źělśo toś ten PDF wěsće
 cfr-doorhanger-firefox-send-body = Šćitajśo swóje sensibelne dokumenty pśed narskimi póglědnjenjami z koděrowanim kóńc do kóńca a z wótkazom, kótaryž se zgubijo, gaž sćo gótowy.
@@ -241,7 +241,7 @@ cfr-doorhanger-milestone-ok-button = Wšykne pokazaś
 cfr-doorhanger-milestone-close-button = Zacyniś
     .accesskey = Z
 
-## What’s New Panel Content for Firefox 76
+## What’s New Panel Content for Waterfox 76
 
 
 ## Lockwise message

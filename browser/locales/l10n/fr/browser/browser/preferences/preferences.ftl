@@ -122,9 +122,9 @@ search-results-help-link = Besoin d’aide ? Consultez <a data-l10n-name="url">
 
 startup-header = Démarrage
 # { -brand-short-name } will be 'Firefox Developer Edition',
-# since this setting is only exposed in Firefox Developer Edition
+# since this setting is only exposed in Waterfox Developer Edition
 separate-profile-mode =
-    .label = Autoriser { -brand-short-name } et Firefox à s’exécuter en parallèle
+    .label = Autoriser { -brand-short-name } et Waterfox à s’exécuter en parallèle
 use-firefox-sync = Astuce : Des profils distincts sont utilisés. Vous pouvez tirer parti de { -sync-brand-short-name } pour partager vos données entre eux.
 get-started-not-logged-in = Se connecter à { -sync-brand-short-name }…
 get-started-configured = Ouvrir les préférences de { -sync-brand-short-name }
@@ -455,10 +455,10 @@ home-newtabs-mode-label = Nouveaux onglets
 home-restore-defaults =
     .label = Configuration par défaut
     .accesskey = C
-# "Firefox" should be treated as a brand and kept in English,
+# "Waterfox" should be treated as a brand and kept in English,
 # while "Home" and "(Default)" can be localized.
 home-mode-choice-default =
-    .label = Page d’accueil de Firefox (par défaut)
+    .label = Page d’accueil de Waterfox (par défaut)
 home-mode-choice-custom =
     .label = Adresses web personnalisées…
 home-mode-choice-blank =
@@ -480,10 +480,10 @@ choose-bookmark =
     .label = Marque-page…
     .accesskey = m
 
-## Home Section - Firefox Home Content Customization
+## Home Section - Waterfox Home Content Customization
 
-home-prefs-content-header = Contenu de la page d’accueil de Firefox
-home-prefs-content-description = Choisissez le contenu que vous souhaitez pour la page d’accueil de Firefox.
+home-prefs-content-header = Contenu de la page d’accueil de Waterfox
+home-prefs-content-description = Choisissez le contenu que vous souhaitez pour la page d’accueil de Waterfox.
 home-prefs-search-header =
     .label = Recherche web
 home-prefs-topsites-header =
@@ -603,7 +603,7 @@ containers-preferences-button =
 containers-remove-button =
     .label = Supprimer
 
-## Firefox Account - Signed out. Note that "Sync" and "Firefox Account" are now
+## Waterfox Account - Signed out. Note that "Sync" and "Firefox Account" are now
 ## more discrete ("signed in" no longer means "and sync is connected").
 
 sync-signedout-caption = Emportez votre Web partout avec vous
@@ -619,9 +619,9 @@ sync-signedout-account-signin2 =
 #
 # They can be moved within the sentence as needed to adapt
 # to your language, but should not be changed or translated.
-sync-mobile-promo = Téléchargez Firefox pour <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> ou <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS</a> afin de synchroniser vos données avec votre appareil mobile.
+sync-mobile-promo = Téléchargez Waterfox pour <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> ou <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS</a> afin de synchroniser vos données avec votre appareil mobile.
 
-## Firefox Account - Signed in
+## Waterfox Account - Signed in
 
 sync-profile-picture =
     .tooltiptext = Changer la photo de profil
@@ -707,7 +707,7 @@ sync-engine-creditcards =
     .accesskey = C
 sync-engine-addons =
     .label = Modules complémentaires
-    .tooltiptext = Extensions et thèmes pour Firefox sur ordinateur
+    .tooltiptext = Extensions et thèmes pour Waterfox sur ordinateur
     .accesskey = u
 sync-engine-prefs =
     .label =
@@ -813,8 +813,8 @@ history-header = Historique
 # "Firefox will" + "Remember history".
 #
 # If this doesn't work for your language, you can translate this message:
-#   - Simply as "Firefox", moving the verb into each option.
-#     This will result in "Firefox" + "Will remember history", etc.
+#   - Simply as "Waterfox", moving the verb into each option.
+#     This will result in "Waterfox" + "Will remember history", etc.
 #   - As a stand-alone message, for example "Firefox history settings:".
 history-remember-label = Règles de conservation
     .accesskey = R

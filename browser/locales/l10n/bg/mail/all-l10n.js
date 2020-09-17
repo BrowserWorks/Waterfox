@@ -11,7 +11,7 @@
 # for the specific language governing rights and limitations under the
 # License.
 #
-# The Original Code is the Firefox browser.
+# The Original Code is the Waterfox browser.
 #
 # The Initial Developer of the Original Code is
 # Benjamin Smedberg <bsmedberg@covad.net>

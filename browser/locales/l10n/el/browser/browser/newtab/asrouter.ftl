@@ -80,7 +80,7 @@ cfr-doorhanger-pintab-animation-pause = Παύση
 cfr-doorhanger-pintab-animation-resume = Συνέχιση
 
 
-## Firefox Accounts Message
+## Waterfox Accounts Message
 
 cfr-doorhanger-bookmark-fxa-header = Συγχρονίστε παντού τους σελιδοδείκτες σας.
 cfr-doorhanger-bookmark-fxa-body = Εξαιρετική ανακάλυψη! Μην ξεχάσετε να αποθηκεύσετε αυτό το σελιδοδείκτη στις κινητές συσκευές σας. Ξεκινήστε με ένα { -fxaccount-brand-name }.
@@ -197,7 +197,7 @@ cfr-doorhanger-send-tab-body = Η Αποστολή καρτέλας σας επ�
 cfr-doorhanger-send-tab-ok-button = Δοκιμάστε την καρτέλα "Αποστολή"
     .accesskey = Δ
 
-## Firefox Send
+## Waterfox Send
 
 cfr-doorhanger-firefox-send-header = Μοιραστείτε αυτό το PDF με ασφάλεια
 cfr-doorhanger-firefox-send-body = Προστατεύστε τα ευαίσθητα έγγραφά σας από αδιάκριτα μάτια με κρυπτογράφηση από άκρο σε άκρο και ένα σύνδεσμο που εξαφανίζεται όταν τελειώσετε.
@@ -234,7 +234,7 @@ cfr-doorhanger-milestone-ok-button = Προβολή όλων
 cfr-doorhanger-milestone-close-button = Κλείσιμο
     .accesskey = Κ
 
-## What’s New Panel Content for Firefox 76
+## What’s New Panel Content for Waterfox 76
 
 
 ## Lockwise message

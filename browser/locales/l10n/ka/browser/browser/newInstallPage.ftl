@@ -4,21 +4,21 @@
 
 
 ### For this feature, "installation" is used to mean "this discrete download of
-### Firefox" and "version" is used to mean "the specific revision number of a
-### given Firefox channel". These terms are not synonymous.
+### Waterfox" and "version" is used to mean "the specific revision number of a
+### given Waterfox channel". These terms are not synonymous.
 
 title = მნიშვნელოვანი სიახლეები
 heading = ცვლილებები თქვენს { -brand-short-name }-პროფილთან დაკავშირებით
 
 changed-title = რა შეიცვალა?
-changed-desc-profiles = ეს ახლად დაყენებული { -brand-short-name } ახალი პროფილითაა. პროფილი წარმოადგენს ფაილების კრებულს, სადაც Firefox ინახავს ისეთ მონაცემებს, როგორიცაა სანიშნები, პაროლები და მომხმარებლის პარამეტრები.
-changed-desc-dedicated = Firefox-ის სხვადასხვა დაყენებულ ვერსიებს შორის (როგორიცაა Firefox, Firefox ESR, Firefox Beta, Firefox Developer Edition და Firefox Nightly) მარტივად და უსაფრთხოდ გადასართავად, მოცემული ვერსია ახლა უკვე განცალკევებულ პროფილს იყენებს. იგი თქვენ მიერ შენახულ მონაცემებს, Firefox-ის დანარჩენ დაყენებულ ვერსიებთან არ გააზიარებს.
+changed-desc-profiles = ეს ახლად დაყენებული { -brand-short-name } ახალი პროფილითაა. პროფილი წარმოადგენს ფაილების კრებულს, სადაც Waterfox ინახავს ისეთ მონაცემებს, როგორიცაა სანიშნები, პაროლები და მომხმარებლის პარამეტრები.
+changed-desc-dedicated = Waterfox-ის სხვადასხვა დაყენებულ ვერსიებს შორის (როგორიცაა Waterfox, Waterfox ESR, Waterfox Beta, Waterfox Developer Edition და Waterfox Nightly) მარტივად და უსაფრთხოდ გადასართავად, მოცემული ვერსია ახლა უკვე განცალკევებულ პროფილს იყენებს. იგი თქვენ მიერ შენახულ მონაცემებს, Waterfox-ის დანარჩენ დაყენებულ ვერსიებთან არ გააზიარებს.
 
-lost = <b>პირადი მონაცემები და მორგებული პარამეტრები არ დაიკარგება.</b> თუ უკვე გაქვთ შენახული ინფორმაცია Firefox-ში ამ კომპიუტერზე, იგი ისევ ხელმისაწვდომი იქნება Firefox-ის სხვა დაყენებულ ვერსიაზე.
+lost = <b>პირადი მონაცემები და მორგებული პარამეტრები არ დაიკარგება.</b> თუ უკვე გაქვთ შენახული ინფორმაცია Waterfox-ში ამ კომპიუტერზე, იგი ისევ ხელმისაწვდომი იქნება Waterfox-ის სხვა დაყენებულ ვერსიაზე.
 
 options-title = რა არჩევანია?
-options-do-nothing = თუ არაფერს მოიმოქმედებთ, თქვენი პროფილის მონაცემები, რომელსაც { -brand-short-name } იყენებს, განსხვავებული იქნება Firefox-ის სხვა დაყენებული ვერსიების პროფილებისგან.
-options-use-sync = თუ გსურთ, ყველა თქვენი პროფილის მონაცემები ერთი და იგივე იყოს Firefox-ის სხვადასხვა დაყენებულ ვერსიებზე, შეგიძლიათ გამოიყენოთ { -fxaccount-brand-name }, დასინქრონებისთვის.
+options-do-nothing = თუ არაფერს მოიმოქმედებთ, თქვენი პროფილის მონაცემები, რომელსაც { -brand-short-name } იყენებს, განსხვავებული იქნება Waterfox-ის სხვა დაყენებული ვერსიების პროფილებისგან.
+options-use-sync = თუ გსურთ, ყველა თქვენი პროფილის მონაცემები ერთი და იგივე იყოს Waterfox-ის სხვადასხვა დაყენებულ ვერსიებზე, შეგიძლიათ გამოიყენოთ { -fxaccount-brand-name }, დასინქრონებისთვის.
 
 resources = მასალები:
 support-link = პროფილის მმართველის გამოყენება – მხარდაჭერის სტატია
@@ -29,5 +29,5 @@ sync-input =
     .placeholder = ელფოსტა
 sync-button = გაგრძელება
 sync-terms = თუ განაგრძობთ, თქვენ ეთანხმებით <a data-l10n-name="terms">მომსახურების პირობებსა</a> და <a data-l10n-name="privacy">პირადი მონაცემების დაცვის განაცხადს</a>.
-sync-first = აქამდე არ გამოგიყენებიათ { -sync-brand-name }? მონაცემების დასინქრონებისთვის, Firefox-ის ყველა დაყენებული ვერსიიდან უნდა შეხვიდეთ ანგარიშზე.
+sync-first = აქამდე არ გამოგიყენებიათ { -sync-brand-name }? მონაცემების დასინქრონებისთვის, Waterfox-ის ყველა დაყენებული ვერსიიდან უნდა შეხვიდეთ ანგარიშზე.
 sync-learn = იხილეთ ვრცლად

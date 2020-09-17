@@ -80,7 +80,7 @@ cfr-doorhanger-pintab-animation-pause = Pausatu
 cfr-doorhanger-pintab-animation-resume = Berrekin
 
 
-## Firefox Accounts Message
+## Waterfox Accounts Message
 
 cfr-doorhanger-bookmark-fxa-header = Sinkronizatu laster-markak edonon.
 cfr-doorhanger-bookmark-fxa-body = Ondo ikusia! Orain ez galdu laster-marka hau zure gailu mugikorretan. Hasi { -fxaccount-brand-name } erabiltzen.
@@ -191,7 +191,7 @@ cfr-doorhanger-send-tab-body = Fitxa bidaltzeko aukeraren bitartez lotura hau zu
 cfr-doorhanger-send-tab-ok-button = Probatu fitxa bidaltzeko aukera
     .accesskey = P
 
-## Firefox Send
+## Waterfox Send
 
 cfr-doorhanger-firefox-send-header = Partekatu PDF hau modu seguruan
 cfr-doorhanger-firefox-send-body = Mantendu zure dokumentu sentikorrak kuxkuxeroengandik seguru muturretik muturrerako zifraketarekin eta erabili ondoren desagertzen den lotura batekin.
@@ -229,7 +229,7 @@ cfr-doorhanger-milestone-ok-button = Ikusi guztiak
 cfr-doorhanger-milestone-close-button = Itxi
     .accesskey = x
 
-## What’s New Panel Content for Firefox 76
+## What’s New Panel Content for Waterfox 76
 
 
 ## Lockwise message

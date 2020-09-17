@@ -17,11 +17,11 @@ about-debugging-page-title-runtime-page = Diagnostikim - Runtime / { $selectedRu
 
 # Sidebar strings
 
-# Display name of the runtime for the currently running instance of Firefox. Used in the
+# Display name of the runtime for the currently running instance of Waterfox. Used in the
 # Sidebar and in the Setup page.
 about-debugging-this-firefox-runtime-name = Ky { -brand-shorter-name }
 
-# Sidebar heading for selecting the currently running instance of Firefox
+# Sidebar heading for selecting the currently running instance of Waterfox
 about-debugging-sidebar-this-firefox =
     .name = { about-debugging-this-firefox-runtime-name }
 
@@ -66,8 +66,8 @@ about-debugging-sidebar-item-connect-button-connection-timeout = Lidhjes i mbaro
 about-debugging-sidebar-item-connected-label = I lidhur
 
 # Text displayed in sidebar items for remote devices where a compatible browser (eg
-# Firefox) has not been detected yet. Typically, Android phones connected via USB with
-# USB debugging enabled, but where Firefox is not started.
+# Waterfox) has not been detected yet. Typically, Android phones connected via USB with
+# USB debugging enabled, but where Waterfox is not started.
 about-debugging-sidebar-runtime-item-waiting-for-browser = Po pritet për shfletues…
 
 # Text displayed in sidebar items for remote devices that have been disconnected from the
@@ -103,7 +103,7 @@ about-debugging-setup-title = Rregullim
 # Introduction text in the Setup page to explain how to configure remote debugging.
 about-debugging-setup-intro = Formësoni metodë lidhjeje që doni për diagnostikim të largët të pajisjes tuaj.
 
-# Explanatory text in the Setup page about what the 'This Firefox' page is for
+# Explanatory text in the Setup page about what the 'This Waterfox' page is for
 about-debugging-setup-this-firefox2 = Përdorni <a>{ about-debugging-this-firefox-runtime-name }</a> që të diagnostikoni zgjerime dhe <em>service workers</em> në këtë version të { -brand-shorter-name }.
 
 # Title of the heading Connect section of the Setup page.
@@ -138,7 +138,7 @@ about-debugging-setup-usb-step-enable-dev-menu2 = Aktivizoni menu Zhvilluesi te 
 about-debugging-setup-usb-step-enable-debug2 = Aktivizoni Diagnostikim USB te Menuja Zhvillues e Android-it.
 
 # USB section step by step guide
-about-debugging-setup-usb-step-enable-debug-firefox2 = Aktivizoni Diagnostikim USB te Firefox-i në pajisjen Android.
+about-debugging-setup-usb-step-enable-debug-firefox2 = Aktivizoni Diagnostikim USB te Waterfox-i në pajisjen Android.
 
 # USB section step by step guide
 about-debugging-setup-usb-step-plug-device = Lidheni pajisjen Android me kompjuterin tuaj.
@@ -185,7 +185,7 @@ about-debugging-network-location-form-duplicate = Streha “{ $host-value }” �
 
 # Below are the titles for the various categories of debug targets that can be found
 # on "runtime" pages of about:debugging.
-# Title of the temporary extensions category (only available for "This Firefox" runtime).
+# Title of the temporary extensions category (only available for "This Waterfox" runtime).
 about-debugging-runtime-temporary-extensions =
     .name = Zgjerime të Përkohshme
 # Title of the extensions category.
@@ -219,22 +219,22 @@ about-debugging-runtime-service-workers-not-compatible = Formësimi i shfletuesi
 # This string is displayed in the runtime page if the remote browser version is too old.
 # "Troubleshooting" link points to https://developer.mozilla.org/docs/Tools/about:debugging#Troubleshooting
 # { $runtimeVersion } is the version of the remote browser (for instance "67.0a1")
-# { $minVersion } is the minimum version that is compatible with the current Firefox instance (same format)
+# { $minVersion } is the minimum version that is compatible with the current Waterfox instance (same format)
 about-debugging-browser-version-too-old =
     Shfletuesi i lidhur ka një version të vjetër ({ $runtimeVersion }). Versioni minimum që mbulohet është ({ $minVersion }). Ky është formësim i pambuluar dhe mund të bëjë që DevTools të mos funksionojnë. Ju lutemi, përditësoni shfletuesin.
     <a>Diagnostikim</a>
 
 # Dedicated message for a backward compatibility issue that occurs when connecting:
-# from Fx 70+ to the old Firefox for Android (aka Fennec) which uses Fx 68.
-about-debugging-browser-version-too-old-fennec = Ky version i Firefox-it s’mund të diagnostikojë Firefox-in për Android (68). Rekomandojmë që për testime në telefonin tuaj të instaloni Firefox-in për Android Nightly. <a>Më tepër hollësi</a>
+# from Fx 70+ to the old Waterfox for Android (aka Fennec) which uses Fx 68.
+about-debugging-browser-version-too-old-fennec = Ky version i Waterfox-it s’mund të diagnostikojë Waterfox-in për Android (68). Rekomandojmë që për testime në telefonin tuaj të instaloni Waterfox-in për Android Nightly. <a>Më tepër hollësi</a>
 
 # This string is displayed in the runtime page if the remote browser version is too recent.
 # "Troubleshooting" link points to https://developer.mozilla.org/docs/Tools/about:debugging#Troubleshooting
 # { $runtimeID } is the build ID of the remote browser (for instance "20181231", format is yyyyMMdd)
-# { $localID } is the build ID of the current Firefox instance (same format)
+# { $localID } is the build ID of the current Waterfox instance (same format)
 # { $runtimeVersion } is the version of the remote browser (for instance "67.0a1")
 # { $localVersion } is the version of your current browser (same format)
-about-debugging-browser-version-too-recent = Shfletuesi i lidhur është më i freskët ({ $runtimeVersion }, buildID { $runtimeID }) se sa i juaji { -brand-shorter-name } ({ $localVersion }, buildID { $localID }). Ky është një rast që nuk mbulohet dhe mund të bëjë që DevTools të dështojnë. Ju lutemi, përditësoni Firefox-in. <a>Diagnostikim</a>
+about-debugging-browser-version-too-recent = Shfletuesi i lidhur është më i freskët ({ $runtimeVersion }, buildID { $runtimeID }) se sa i juaji { -brand-shorter-name } ({ $localVersion }, buildID { $localID }). Ky është një rast që nuk mbulohet dhe mund të bëjë që DevTools të dështojnë. Ju lutemi, përditësoni Waterfox-in. <a>Diagnostikim</a>
 
 # Displayed for runtime info in runtime pages.
 # { $name } is brand name such as "Firefox Nightly"
@@ -272,18 +272,18 @@ about-debugging-debug-target-list-empty = Ende pa gjë.
 # A target can be an addon, a tab, a worker...
 about-debugging-debug-target-inspect-button = Shqyrtoje
 
-# Text of a button displayed in the "This Firefox" page, in the Temporary Extension
+# Text of a button displayed in the "This Waterfox" page, in the Temporary Extension
 # section. Clicking on the button will open a file picker to load a temporary extension
 about-debugging-tmp-extension-install-button = Ngarko Shtesën e Përkohshme…
 
-# Text displayed when trying to install a temporary extension in the "This Firefox" page.
+# Text displayed when trying to install a temporary extension in the "This Waterfox" page.
 about-debugging-tmp-extension-install-error = Pati një gabim gjatë instalimit të shtesës së përkohshme.
 
-# Text of a button displayed for a temporary extension loaded in the "This Firefox" page.
+# Text of a button displayed for a temporary extension loaded in the "This Waterfox" page.
 # Clicking on the button will reload the extension.
 about-debugging-tmp-extension-reload-button = Ringarkoje
 
-# Text of a button displayed for a temporary extension loaded in the "This Firefox" page.
+# Text of a button displayed for a temporary extension loaded in the "This Waterfox" page.
 # Clicking on the button will uninstall the extension and remove it from the page.
 about-debugging-tmp-extension-remove-button = Hiqe
 

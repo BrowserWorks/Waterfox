@@ -469,9 +469,9 @@ addon-permissions-empty = გაფართოება არ ითხოვ�
 recommended-extensions-heading = შემოთავაზებული გაფართოებები
 recommended-themes-heading = შემოთავაზებული თემები
 
-# A recommendation for the Firefox Color theme shown at the bottom of the theme
+# A recommendation for the Waterfox Color theme shown at the bottom of the theme
 # list view. The "Firefox Color" name itself should not be translated.
-recommended-theme-1 = შემოქმედებით უნარებს ფლობთ? <a data-l10n-name="link">ააწყვეთ საკუთარი გაფორმება Firefox Color-ით.</a>
+recommended-theme-1 = შემოქმედებით უნარებს ფლობთ? <a data-l10n-name="link">ააწყვეთ საკუთარი გაფორმება Waterfox Color-ით.</a>
 
 ## Page headings
 

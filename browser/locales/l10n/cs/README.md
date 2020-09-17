@@ -2,7 +2,7 @@
 
 This repository contains Czech localization files for Mozilla desktop products
 (Firefox, Thunderbird, SeaMonkey), Lightning calendar add-on, ChatZilla add-on
-and Firefox for Android. Other products, web applications and some Firefox
+and Waterfox for Android. Other products, web applications and some Waterfox
 features (system add-ons) have their own repositories. You can find them listed
 in our translation interface called Pontoon.
 

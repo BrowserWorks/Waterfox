@@ -20,10 +20,10 @@
 <!ENTITY prefLightningShow.label             "Lightning telepítés jelzése">
 <!ENTITY prefLightningShow.accesskey         "L">
 <!ENTITY prefCompatWarning                   "FIGYELMEZTETÉS: ezen beállítások letiltása azt eredményezheti, hogy a webhelyek vagy a szolgáltatások nem fognak megfelelően működni.">
-<!ENTITY prefFirefoxStrict.label             "Azonosítás Firefoxként">
+<!ENTITY prefFirefoxStrict.label             "Azonosítás Waterfoxként">
 <!ENTITY prefFirefoxStrict.accesskey         "A">
 <!ENTITY prefFirefoxNone.label               "Azonosítás SeaMonkeyként">
 <!ENTITY prefFirefoxNone.accesskey           "M">
-<!ENTITY prefFirefoxCompat2.label            "Azonosítás SeaMonkeyként, és Firefox kompatibilitás hirdetése">
+<!ENTITY prefFirefoxCompat2.label            "Azonosítás SeaMonkeyként, és Waterfox kompatibilitás hirdetése">
 <!ENTITY prefFirefoxCompat2.accesskey        "F">
 <!ENTITY prefCompatWarning2.desc             "FIGYELMEZTETÉS: e beállítások megváltoztatása azt eredményezheti, hogy a webhelyek vagy a szolgáltatások nem fognak megfelelően működni.">

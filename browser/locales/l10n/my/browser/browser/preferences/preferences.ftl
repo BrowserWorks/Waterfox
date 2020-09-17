@@ -101,9 +101,9 @@ search-results-help-link = အကူအညီ လိုပါသလား။ <a 
 
 startup-header = စတင်ခြင်း
 # { -brand-short-name } will be 'Firefox Developer Edition',
-# since this setting is only exposed in Firefox Developer Edition
+# since this setting is only exposed in Waterfox Developer Edition
 separate-profile-mode =
-    .label = { -brand-short-name } နှင့် Firefox တို့ကို တစ်ချိန်တည်းတွင် လုပ်ငန်းဆောင်ရွက်ခွင့် ပြုပါ
+    .label = { -brand-short-name } နှင့် Waterfox တို့ကို တစ်ချိန်တည်းတွင် လုပ်ငန်းဆောင်ရွက်ခွင့် ပြုပါ
 use-firefox-sync = အရိပ်အမြွက်၊ မတူညီသည့် ပရိုဖိုင်းများကို အသုံးပြုပါသည်။ ထိုပရိုဖိုင်းများကြား အချက်အလက်မျှဝေရန် { -sync-brand-short-name } ကို အသုံးပြုပါ။
 get-started-not-logged-in = { -sync-brand-short-name } သို့ ဝင်ပါ…
 get-started-configured = { -sync-brand-short-name } ၏ အပြင်အဆင်များကို ဖွင့်ပါ
@@ -365,10 +365,10 @@ home-newtabs-mode-label = တပ်ဗ်အသစ်များ
 home-restore-defaults =
     .label = မူလအတိုင်း ပြန်ထားပါ
     .accesskey = R
-# "Firefox" should be treated as a brand and kept in English,
+# "Waterfox" should be treated as a brand and kept in English,
 # while "Home" and "(Default)" can be localized.
 home-mode-choice-default =
-    .label = Firefox အဖွင့်စာမျက်နှာ (မူသေ)
+    .label = Waterfox အဖွင့်စာမျက်နှာ (မူသေ)
 home-mode-choice-custom =
     .label = စိတ်ကြိုက် URL များ...
 home-mode-choice-blank =
@@ -390,7 +390,7 @@ choose-bookmark =
     .label = စာမှတ်ကို အသုံးပြုပါ…
     .accesskey = B
 
-## Home Section - Firefox Home Content Customization
+## Home Section - Waterfox Home Content Customization
 
 home-prefs-topsites-header =
     .label = ထိပ်တန်းဝဘ်ဆိုက်များ
@@ -481,7 +481,7 @@ containers-preferences-button =
 containers-remove-button =
     .label = ဖယ်ရှားပါ
 
-## Firefox Account - Signed out. Note that "Sync" and "Firefox Account" are now
+## Waterfox Account - Signed out. Note that "Sync" and "Firefox Account" are now
 ## more discrete ("signed in" no longer means "and sync is connected").
 
 sync-signedout-caption = ဝဘ်ကို သင့်နဲ့အတူ ခေါ်ဆောင်သွားပါ
@@ -496,7 +496,7 @@ sync-signedout-description = သင့်ကိရိယာအားလုံး
 # to your language, but should not be changed or translated.
 sync-mobile-promo = ထိုစနစ်အတွက် မီးမြေခွေးကို ဆွဲယူကူးပါ၊ <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> သို့မဟုတ် <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS</a> သင့်မိုဘိုင်းလ်ကိရိယာများကို တစ်ပြေးညီဖြစ်စေရန်
 
-## Firefox Account - Signed in
+## Waterfox Account - Signed in
 
 sync-profile-picture =
     .tooltiptext = ပရိုဖိုင်းရုပ်ပုံကို ပြောင်းလဲရန်
@@ -551,7 +551,7 @@ sync-engine-creditcards =
     .accesskey = C
 sync-engine-addons =
     .label = အတ်အွန်များ
-    .tooltiptext = Firefox ဒက်စတော့အတွက် ပေါင်းထည့်ဆော့ဖ်ဝဲများနှင့် အခင်းအကျင်းများ
+    .tooltiptext = Waterfox ဒက်စတော့အတွက် ပေါင်းထည့်ဆော့ဖ်ဝဲများနှင့် အခင်းအကျင်းများ
     .accesskey = A
 sync-engine-prefs =
     .label =
@@ -619,8 +619,8 @@ history-header = မှတ်တမ်း
 # "Firefox will" + "Remember history".
 #
 # If this doesn't work for your language, you can translate this message:
-#   - Simply as "Firefox", moving the verb into each option.
-#     This will result in "Firefox" + "Will remember history", etc.
+#   - Simply as "Waterfox", moving the verb into each option.
+#     This will result in "Waterfox" + "Will remember history", etc.
 #   - As a stand-alone message, for example "Firefox history settings:".
 history-remember-label = { -brand-short-name } သည်
     .accesskey = w

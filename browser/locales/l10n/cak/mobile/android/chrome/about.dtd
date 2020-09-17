@@ -16,6 +16,6 @@
 <!ENTITY aboutPage.relNotes.label               "Ruch'utitzijol taluxïk">
 <!ENTITY aboutPage.credits.label                "Kib'i' to'onela'">
 <!ENTITY aboutPage.license.label                "Na’oj chi rij ya'öl q’ij">
-<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Firefox" being trademarked, that's why we use it, instead of brandShortName. -->
+<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Waterfox" being trademarked, that's why we use it, instead of brandShortName. -->
 
-<!ENTITY aboutPage.logoTrademark                "Firefox chuqa' ri taq ruwachib'al rub'i' Firefox, etz'ib'an pa rub'i' ri Mozilla Moloj.">
+<!ENTITY aboutPage.logoTrademark                "Firefox chuqa' ri taq ruwachib'al rub'i' Waterfox, etz'ib'an pa rub'i' ri Mozilla Moloj.">

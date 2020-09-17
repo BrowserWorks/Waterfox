@@ -40,7 +40,7 @@ can reach it easily. -->
 
 <!-- LOCALIZATION NOTE (pageSourceCmd.SafariCommandKey should match the
 Option+Command keyboard shortcut letter that Safari and Chrome use for "View
-Source" on macOS. pageSourceCmd.commandkey above is Firefox's official keyboard
+Source" on macOS. pageSourceCmd.commandkey above is Waterfox's official keyboard
 shortcut shown in the GUI. SafariCommandKey is an alias provided for the
 convenience of Safari and Chrome users on macOS. See bug 1398988. -->
 
@@ -149,7 +149,7 @@ convenience of Safari and Chrome users on macOS. See bug 1398988. -->
 <!ENTITY appMenuRemoteTabs.tabsnotsyncing.label "Вклучете синхронизација на јазичиња за да видите листа на јазичињата од вашите други уреди.">
 <!-- LOCALIZATION NOTE (appMenuRemoteTabs.noclients.subtitle): This is shown
      when Sync is configured but this appears to be the only device attached to
-     the account. We also show links to download Firefox for android/ios. -->
+     the account. We also show links to download Waterfox for android/ios. -->
 <!ENTITY appMenuRemoteTabs.noclients.subtitle "Сакате да ги видите вашите јазичиња од други уреди овде?">
 <!ENTITY appMenuRemoteTabs.managedevices.label "Менаџирај уреди…">
 <!ENTITY appMenuRemoteTabs.sidebar.label "Прикажи синхронизирани јазичиња во странична лента">

@@ -3,13 +3,13 @@
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!-- LOCALIZATION NOTE: For this feature, "installation" is used to mean "this
- discrete download of Firefox" and "version" is used to mean "the specific
- revision number of a given Firefox channel". These terms are not synonymous.
+ discrete download of Waterfox" and "version" is used to mean "the specific
+ revision number of a given Waterfox channel". These terms are not synonymous.
 -->
 
 <!ENTITY window.title "Pomembne novice">
 <!ENTITY window.style "width: 490px">
-<!ENTITY sync "Če želite sinhronizirati podatke, ki ste jih že shranili v Firefox s to namestitvijo &brandShortName;a, se prijavite s svojim &syncBrand.fxAccount.label;om.">
+<!ENTITY sync "Če želite sinhronizirati podatke, ki ste jih že shranili v Waterfox s to namestitvijo &brandShortName;a, se prijavite s svojim &syncBrand.fxAccount.label;om.">
 <!ENTITY continue-button "Nadaljuj">
 
-<!ENTITY mainText "Ta namestitev &brandShortName;a ima nov profil. Na tem računalniku ne deli zaznamkov, gesel in uporabniških nastavitev z drugimi namestitvami Firefoxa (velja za Firefox, Firefox ESR, Firefox Beta, Firefox Developer Edition in Firefox Nightly).">
+<!ENTITY mainText "Ta namestitev &brandShortName;a ima nov profil. Na tem računalniku ne deli zaznamkov, gesel in uporabniških nastavitev z drugimi namestitvami Waterfoxa (velja za Waterfox, Waterfox ESR, Waterfox Beta, Waterfox Developer Edition in Waterfox Nightly).">

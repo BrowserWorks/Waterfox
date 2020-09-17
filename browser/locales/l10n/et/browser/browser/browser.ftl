@@ -8,8 +8,8 @@
 # These are the default window titles everywhere except macOS. The first two
 # attributes are used when the web content opened has no title:
 #
-# default - "Mozilla Firefox"
-# private - "Mozilla Firefox (Private Browsing)"
+# default - "Waterfox"
+# private - "Waterfox (Private Browsing)"
 #
 # The last two are for use when there *is* a content title.
 # Variables:
@@ -22,8 +22,8 @@ browser-main-window =
 # These are the default window titles on macOS. The first two are for use when
 # there is no content title:
 #
-# "default" - "Mozilla Firefox"
-# "private" - "Mozilla Firefox - (Private Browsing)"
+# "default" - "Waterfox"
+# "private" - "Waterfox - (Private Browsing)"
 #
 # The last two are for use when there *is* a content title.
 # Do not use the brand name in the last two attributes, as we do on non-macOS.
@@ -214,7 +214,7 @@ identity-clear-site-data =
 identity-connection-not-secure-security-view = Ühendus selle saidiga pole turvaline.
 identity-connection-verified = Ühendus selle saidiga on turvaline.
 identity-ev-owner-label = Serdi omanik:
-identity-description-custom-root = Mozilla ei tea seda serdi väljaandjat. Selle võis lisada operatsioonisüsteem või süsteemiadministraator. <label data-l10n-name="link">Rohkem teavet</label>
+identity-description-custom-root = Waterfox ei tea seda serdi väljaandjat. Selle võis lisada operatsioonisüsteem või süsteemiadministraator. <label data-l10n-name="link">Rohkem teavet</label>
 identity-remove-cert-exception =
     .label = Eemalda erand
     .accesskey = E

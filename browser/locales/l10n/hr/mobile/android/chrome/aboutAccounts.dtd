@@ -10,4 +10,4 @@
 <!ENTITY aboutAccounts.retry.label "Pokušaj ponovno">
 
 <!ENTITY aboutAccounts.restrictedError.title "Ograničeno">
-<!ENTITY aboutAccounts.restrictedError.description "Ne možete upravljati Firefox računima s ovog profila.">
+<!ENTITY aboutAccounts.restrictedError.description "Ne možete upravljati Waterfox računima s ovog profila.">

@@ -5,7 +5,7 @@
      file, all messages that likely don't need to tie into app-specific UI
      should go into netError.dtd -->
 
-<!-- An example (from Firefox):
+<!-- An example (from Waterfox):
 <!ENTITY securityOverride.linkText "Ou você pode adicionar uma exceção…">
 <!ENTITY securityOverride.warningContent "<p>Você não deve adicionar uma exceção se estiver usando uma conexão com a internet que não confie totalmente ou se você não costumava ver um alerta para este servidor.</p>
 <p>Caso ainda deseje adicionar uma exceção para este site, pode fazê-lo nas configurações avançadas de criptografia.</p>">
@@ -16,7 +16,7 @@
      from netError.dtd; Applications which want to do this should override
      this file with their own version of netErrorApp.dtd -->
 
-<!-- An example (from Firefox):
+<!-- An example (from Waterfox):
 
 <!ENTITY securityOverride.linkText "Or you can add an exception…">
 <!ENTITY securityOverride.getMeOutOfHereButton "Get me out of here!">

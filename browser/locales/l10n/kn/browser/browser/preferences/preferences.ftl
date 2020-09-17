@@ -84,9 +84,9 @@ search-results-help-link = ಸಹಾಯ ಬೇಕೆ? ಭೇಟಿ ಮಾಡಿ 
 startup-header = ಆರಂಭಿಕ
 
 # { -brand-short-name } will be 'Firefox Developer Edition',
-# since this setting is only exposed in Firefox Developer Edition
+# since this setting is only exposed in Waterfox Developer Edition
 separate-profile-mode =
-    .label = { -brand-short-name } ಅನ್ನು ಮತ್ತು Firefox ಅನ್ನು ಏಕಕಾಲಕ್ಕೆ ಚಲಾಯಿತಗೊಳ್ಳಲು ಅನುಮತಿಸಿ
+    .label = { -brand-short-name } ಅನ್ನು ಮತ್ತು Waterfox ಅನ್ನು ಏಕಕಾಲಕ್ಕೆ ಚಲಾಯಿತಗೊಳ್ಳಲು ಅನುಮತಿಸಿ
 use-firefox-sync = ಸೂಚನೆ: ಇದು ಪ್ರತ್ಯೇಕ ಪ್ರೊಫೈಲ್‌ಗಳನ್ನು ಬಳಸುತ್ತದೆ. ಅವುಗಳ ನಡುವೆ ದತ್ತಾಂಶವನ್ನು ಹಂಚಿಕೊಳ್ಳಲು { -sync-brand-short-name } ಬಳಸಿ.
 get-started-not-logged-in = { -sync-brand-short-name }ಗೆ ಸೈನ್-ಇನ್ ಆಗು…
 get-started-configured = { -sync-brand-short-name } ಆದ್ಯತೆಗಳನ್ನು ತೆರೆ
@@ -398,7 +398,7 @@ choose-bookmark =
     .label = ಪುಟಗುರುತನ್ನು ಬಳಸು…
     .accesskey = B
 
-## Home Section - Firefox Home Content Customization
+## Home Section - Waterfox Home Content Customization
 
 home-prefs-content-header = ಫೈರ್ಫಾಕ್ಸ್ ಮುಖಪುಟದ ವಿಷಯ
 
@@ -491,7 +491,7 @@ containers-remove-button =
 ## Sync Section - Signed out
 
 
-## Firefox Account - Signed out. Note that "Sync" and "Firefox Account" are now
+## Waterfox Account - Signed out. Note that "Sync" and "Firefox Account" are now
 ## more discrete ("signed in" no longer means "and sync is connected").
 
 sync-signedout-caption = ಜಾಲವನ್ನು ನಿಮ್ಮೊಂದಿಗೆ ಒಯ್ಯಿರಿ
@@ -505,12 +505,12 @@ sync-signedout-description = ನಿಮ್ಮ ಎಲ್ಲಾ ಸಾಧನಗಳ 
 #
 # They can be moved within the sentence as needed to adapt
 # to your language, but should not be changed or translated.
-sync-mobile-promo = Firefox ಡೌನ್‌ಲೋಡ್ ಮಾಡಿ<img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> ಅಥವ <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS</a> ನಿಮ್ಮ ಮೊಬೈಲ್ ಸಾಧನದ ಜೊತೆ ಸಿಂಕ್ ಮಾಡಲು.
+sync-mobile-promo = Waterfox ಡೌನ್‌ಲೋಡ್ ಮಾಡಿ<img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> ಅಥವ <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS</a> ನಿಮ್ಮ ಮೊಬೈಲ್ ಸಾಧನದ ಜೊತೆ ಸಿಂಕ್ ಮಾಡಲು.
 
 ## Sync Section - Signed in
 
 
-## Firefox Account - Signed in
+## Waterfox Account - Signed in
 
 sync-profile-picture =
     .tooltiptext = ಪ್ರೊಫೈಲ್ ಚಿತ್ರವನ್ನು ಬದಲಾಯಿಸು
@@ -605,8 +605,8 @@ history-header = ಇತಿಹಾಸ
 # "Firefox will" + "Remember history".
 #
 # If this doesn't work for your language, you can translate this message:
-#   - Simply as "Firefox", moving the verb into each option.
-#     This will result in "Firefox" + "Will remember history", etc.
+#   - Simply as "Waterfox", moving the verb into each option.
+#     This will result in "Waterfox" + "Will remember history", etc.
 #   - As a stand-alone message, for example "Firefox history settings:".
 history-remember-label = { -brand-short-name } ವು
     .accesskey = w

@@ -46,7 +46,7 @@ this container is a toolbar. This avoids double-speaking. -->
 <!ENTITY pictureInPictureHideToggle.accesskey "H">
 
 <!-- LOCALIZATION NOTE (fxa.menu) Used to define the different labels
-     for the Firefox Account toolbar menu screen. The `Signed in as` text is
+     for the Waterfox Account toolbar menu screen. The `Signed in as` text is
      followed by the user's email. -->
 <!ENTITY fxa.menu.syncSettings2.label "&syncBrand.shortName.label; सेटिंग">
 <!ENTITY fxa.menu.connectAnotherDevice2.label "दूसरा डिवाइस जोड़ें…">
@@ -63,7 +63,7 @@ this container is a toolbar. This avoids double-speaking. -->
 <!ENTITY fxa.menu.setupSync.label "&syncBrand.shortName.label; सेट अप करें…">
 
 <!-- LOCALIZATION NOTE (fxa.service) Used to define the different FxA services
-     for the Firefox Account toolbar menu screen.  -->
+     for the Waterfox Account toolbar menu screen.  -->
 
 <!-- LOCALIZATION NOTE (fullscreenWarning.beforeDomain.label,
      fullscreenWarning.afterDomain.label): these two strings are used
@@ -168,7 +168,7 @@ this container is a toolbar. This avoids double-speaking. -->
 <!ENTITY appMenuRemoteTabs.tabsnotsyncing.label "टैब्स की सूची देखने के लिए अपने दुसरे उपकरणों से टैब संकलन खोले.">
 <!-- LOCALIZATION NOTE (appMenuRemoteTabs.noclients.subtitle): This is shown
      when Sync is configured but this appears to be the only device attached to
-     the account. We also show links to download Firefox for android/ios. -->
+     the account. We also show links to download Waterfox for android/ios. -->
 <!ENTITY appMenuRemoteTabs.noclients.subtitle "यहाँ अन्य डिवाइस से अपना टैब देखना चाहते हैं?">
 <!ENTITY appMenuRemoteTabs.opensyncprefs.label "सिंक प्राथमिकतायें खोलें">
 <!ENTITY appMenuRemoteTabs.welcome.label "अपने अन्य उपकरणों से टैब की एक सूची दिखाएं।">

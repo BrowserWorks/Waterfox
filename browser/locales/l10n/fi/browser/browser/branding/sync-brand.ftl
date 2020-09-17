@@ -14,16 +14,16 @@
     }
 # “Sync” can be localized, “Firefox” must be treated as a brand,
 # and kept in English.
--sync-brand-name = Firefox Sync
+-sync-brand-name = Waterfox Sync
 # “Account” can be localized, “Firefox” must be treated as a brand,
 # and kept in English.
 -fxaccount-brand-name =
     { $case ->
-        [ablative] Firefox-tililtä
-        [adessive] Firefox-tilillä
-        [allative] Firefox-tilille
-        [genitive] Firefox-tilin
-        [illative] Firefox-tiliin
-        [partitive] Firefox-tiliä
-       *[nominative] Firefox-tili
+        [ablative] Waterfox-tililtä
+        [adessive] Waterfox-tilillä
+        [allative] Waterfox-tilille
+        [genitive] Waterfox-tilin
+        [illative] Waterfox-tiliin
+        [partitive] Waterfox-tiliä
+       *[nominative] Waterfox-tili
     }

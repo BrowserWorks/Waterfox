@@ -458,7 +458,7 @@ addon-permissions-empty = এই এক্সটেনশনের জন্য 
 recommended-extensions-heading = প্রস্তাবিত এক্সটেনশনগুলি
 recommended-themes-heading = প্রস্তাবিত থিমস
 
-# A recommendation for the Firefox Color theme shown at the bottom of the theme
+# A recommendation for the Waterfox Color theme shown at the bottom of the theme
 # list view. The "Firefox Color" name itself should not be translated.
 recommended-theme-1 = সৃজনশীল মনে হচ্ছে? <a data-l10n-name="link">Firefox Color দিয়ে নিজের থিম তৈরি করুন।</a>
 

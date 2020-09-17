@@ -3,29 +3,29 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 head-title = Geliştirici Araçları Hakkında
-enable-title = Firefox Geliştirici Araçları’nı etkinleştir
-enable-inspect-element-title = Öğeyi incele özelliğini kullanmak için Firefox Geliştirici Araçları’nı etkinleştirin
+enable-title = Waterfox Geliştirici Araçları’nı etkinleştir
+enable-inspect-element-title = Öğeyi incele özelliğini kullanmak için Waterfox Geliştirici Araçları’nı etkinleştirin
 enable-inspect-element-message = Geliştirici Araçları’ndaki Denetçi ile HTML ve CSS kodlarını inceleyip düzenleyin.
-enable-about-debugging-message = Firefox Geliştirici Araçları ile WebExtension’ları, web worker’ları, service worker’ları ve daha fazlasını geliştirip hatalarını ayıklayın.
+enable-about-debugging-message = Waterfox Geliştirici Araçları ile WebExtension’ları, web worker’ları, service worker’ları ve daha fazlasını geliştirip hatalarını ayıklayın.
 enable-key-shortcut-message = Bir Geliştirici Araçları kısayolunu etkinleştirdiniz. Yanlışlıkla olduysa bu sekmeyi kapatabilirsiniz.
 enable-menu-message = Denetçi ve Hata Ayıklayıcı gibi araçlarımızla web sitenizin HTML, CSS ve JavaScript kodlarını mükemmelleştirin.
-enable-common-message = Tarayıcınızı daha rahat kullanabilmeniz için Firefox Geliştirici araçları varsayılan olarak kapalı gelir.
+enable-common-message = Tarayıcınızı daha rahat kullanabilmeniz için Waterfox Geliştirici araçları varsayılan olarak kapalı gelir.
 enable-learn-more-link = Geliştirici Araçları hakkında daha fazla bilgi al
 enable-enable-button = Geliştiri Araçları’nı etkinleştir
 enable-close-button = Bu sekmeyi kapat
 
-welcome-title = Firefox Geliştirici Araçları’na hoş geldiniz!
-newsletter-title = Mozilla Geliştirici Bülteni
+welcome-title = Waterfox Geliştirici Araçları’na hoş geldiniz!
+newsletter-title = Waterfox Geliştirici Bülteni
 newsletter-message = Geliştiricilere yönelik haberler, ipuçları ve kaynaklar e-posta adresinize gelsin.
 newsletter-email-placeholder =
     .placeholder = E-posta
-newsletter-privacy-label = Mozilla’nın bilgilerimi bu <a data-l10n-name="privacy-policy">gizlilik politikasında</a> açıklandığı şekilde kullanmasına onay veriyorum.
+newsletter-privacy-label = Waterfox’nın bilgilerimi bu <a data-l10n-name="privacy-policy">gizlilik politikasında</a> açıklandığı şekilde kullanmasına onay veriyorum.
 newsletter-subscribe-button = Abone ol
 newsletter-thanks-title = Teşekkürler!
 newsletter-thanks-message = Daha önce bir Mozilla bültenine abone olmadıysanız aboneliğinizi onaylamanız gerekebilir. Lütfen gelen kutunuzu veya spam klasörünüzü kontrol edin.
 
-footer-title = Firefox Developer Edition
-footer-message = Geliştirici Araçları’ndan daha fazlasını mı istiyorsunuz? Geliştiriciler ve çağdaş iş akışları için özel olarak hazırladığımız Firefox tarayıcısını deneyin.
+footer-title = Waterfox Developer Edition
+footer-message = Geliştirici Araçları’ndan daha fazlasını mı istiyorsunuz? Geliştiriciler ve çağdaş iş akışları için özel olarak hazırladığımız Waterfox tarayıcısını deneyin.
 footer-learn-more-link = Daha fazla bilgi al
 
 features-learn-more = Daha fazla bilgi al

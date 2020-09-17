@@ -78,7 +78,7 @@ onboarding-multistage-theme-label-automatic = Automatico
 # System refers to the operating system
 onboarding-multistage-theme-label-light = Chiaro
 onboarding-multistage-theme-label-dark = Scuro
-onboarding-multistage-theme-label-alpenglow = Firefox Alpenglow
+onboarding-multistage-theme-label-alpenglow = Waterfox Alpenglow
 
 ## Please make sure to split the content of the title attribute into lines whose
 ## width corresponds to about 40 Latin characters, to ensure that the tooltip
@@ -159,17 +159,17 @@ onboarding-fullpage-welcome-subheader = Esploriamo insieme tutto ciò che puoi f
 onboarding-fullpage-form-email =
     .placeholder = Il tuo indirizzo email…
 
-## Firefox Sync modal dialog strings.
+## Waterfox Sync modal dialog strings.
 
 onboarding-sync-welcome-header = Porta { -brand-product-name } con te
 onboarding-sync-welcome-content = Ritrova segnalibri, cronologia, password e altre impostazioni su tutti i tuoi dispositivi.
-onboarding-sync-welcome-learn-more-link = Ulteriori informazioni sull’account Firefox
+onboarding-sync-welcome-learn-more-link = Ulteriori informazioni sull’account Waterfox
 onboarding-sync-form-input =
     .placeholder = Email
 onboarding-sync-form-continue-button = Continua
 onboarding-sync-form-skip-login-button = Ignora questo passaggio
 
-## This is part of the line "Enter your email to continue to Firefox Sync"
+## This is part of the line "Enter your email to continue to Waterfox Sync"
 
 onboarding-sync-form-header = Inserisci la tua email
 onboarding-sync-form-sub-header = per utilizzare { -sync-brand-name }.

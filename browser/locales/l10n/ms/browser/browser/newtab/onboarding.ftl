@@ -33,11 +33,11 @@ onboarding-cards-dismiss =
 
 ## Welcome full page string
 
-## Firefox Sync modal dialog strings.
+## Waterfox Sync modal dialog strings.
 
 onboarding-sync-welcome-header = Bawa { -brand-product-name } bersama Anda
 onboarding-sync-welcome-content = Dapatkan tandabuku, sejarah, kata laluan dan tetapan lain dalam semua peranti anda.
-onboarding-sync-welcome-learn-more-link = Ketahui selanjutnya perihal Akaun Firefox
+onboarding-sync-welcome-learn-more-link = Ketahui selanjutnya perihal Akaun Waterfox
 
 onboarding-sync-form-input =
     .placeholder = E-mel
@@ -45,7 +45,7 @@ onboarding-sync-form-input =
 onboarding-sync-form-continue-button = Teruskan
 onboarding-sync-form-skip-login-button = Langkau langkah ini
 
-## This is part of the line "Enter your email to continue to Firefox Sync"
+## This is part of the line "Enter your email to continue to Waterfox Sync"
 
 onboarding-sync-form-header = Masukkan e-mel anda
 onboarding-sync-form-sub-header = untuk ke { -sync-brand-name }

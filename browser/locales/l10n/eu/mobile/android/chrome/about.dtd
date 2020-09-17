@@ -16,6 +16,6 @@
 <!ENTITY aboutPage.relNotes.label               "Bertsio-oharrak">
 <!ENTITY aboutPage.credits.label                "Kredituak">
 <!ENTITY aboutPage.license.label                "Lizentziaren informazioa">
-<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Firefox" being trademarked, that's why we use it, instead of brandShortName. -->
+<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Waterfox" being trademarked, that's why we use it, instead of brandShortName. -->
 
-<!ENTITY aboutPage.logoTrademark                "Firefox eta Firefoxen logoak Mozilla Fundazioaren marka erregistratuak dira.">
+<!ENTITY aboutPage.logoTrademark                "Firefox eta Waterfoxen logoak Mozilla Fundazioaren marka erregistratuak dira.">

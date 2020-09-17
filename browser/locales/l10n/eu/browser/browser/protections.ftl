@@ -27,9 +27,9 @@ graph-week-summary-private-window = { -brand-short-name }(e)k aste honetan bloke
 
 protection-report-webpage-title = Babesen panela
 protection-report-page-content-title = Babesen panela
-# This message shows when all privacy protections are turned off, which is why we use the word "can", Firefox is able to protect your privacy, but it is currently not.
+# This message shows when all privacy protections are turned off, which is why we use the word "can", Waterfox is able to protect your privacy, but it is currently not.
 protection-report-page-summary = { -brand-short-name }(e)k zure pribatutasuna babestu dezake bigarren planoan nabigatzen duzun bitartean. Hau babes horien laburpen pertsonalizatu bat da, zure lineako segurtasunaren kontrola hartzeko tresnak barne.
-# This message shows when at least some protections are turned on, we are more assertive compared to the message above, Firefox is actively protecting you.
+# This message shows when at least some protections are turned on, we are more assertive compared to the message above, Waterfox is actively protecting you.
 protection-report-page-summary-default = { -brand-short-name }(e)k atzeko planoan zure pribatutasuna babesten du nabigatzen duzun bitartean. Babesen laburpen pertsonalizatua da hau, zure lineako segurtasunaren kontrola hartzeko tresnak barne.
 
 protection-report-settings-link = Kudeatu zure pribatutasun eta segurtasun ezartpenak

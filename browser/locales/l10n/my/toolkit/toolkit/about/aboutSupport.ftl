@@ -43,7 +43,7 @@ app-basics-performance = လုပ်ဆောင်မှု
 app-basics-service-workers = စာရင်းပြုထားသည့် Service Workers
 app-basics-profiles = ပရိုဖိုင်များ
 app-basics-multi-process-support = တစ်ပြိုင်နက်လုပ်ဆောင်ချက် ဝင်းဒိုးများ
-app-basics-key-mozilla = Mozilla Location Service Key
+app-basics-key-mozilla = Waterfox Location Service Key
 app-basics-safe-mode = အန္တရာယ်ကင်း စနစ်
 show-dir-label =
     { PLATFORM() ->
@@ -98,7 +98,7 @@ audio-backend = အသံနောက်ကွယ်
 
 ## Remote Debugging
 ##
-## The Firefox remote protocol provides low-level debugging interfaces
+## The Waterfox remote protocol provides low-level debugging interfaces
 ## used to inspect state and control execution of documents,
 ## browser instrumentation, user interaction simulation,
 ## and for subscribing to browser-internal events.

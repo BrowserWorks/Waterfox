@@ -49,11 +49,11 @@ onboarding-cards-dismiss =
 
 ## Welcome full page string
 
-## Firefox Sync modal dialog strings.
+## Waterfox Sync modal dialog strings.
 
 onboarding-sync-welcome-header = Võta { -brand-product-name } endaga kaasa
 onboarding-sync-welcome-content = Kasuta järjehoidjaid, ajalugu, paroole ja muid sätteid kõigil enda seadmetel.
-onboarding-sync-welcome-learn-more-link = Rohkem teavet Firefoxi kontost
+onboarding-sync-welcome-learn-more-link = Rohkem teavet Waterfoxi kontost
 
 onboarding-sync-form-input =
     .placeholder = E-post
@@ -61,7 +61,7 @@ onboarding-sync-form-input =
 onboarding-sync-form-continue-button = Jätka
 onboarding-sync-form-skip-login-button = Jäta see samm vahele
 
-## This is part of the line "Enter your email to continue to Firefox Sync"
+## This is part of the line "Enter your email to continue to Waterfox Sync"
 
 onboarding-sync-form-header = Sisesta enda e-posti aadress
 onboarding-sync-form-sub-header = { -sync-brand-name }iga jätkamiseks
@@ -74,7 +74,7 @@ onboarding-benefit-products-text = Aja kõik asjad korda meie Mozilla tööriist
 
 # "Personal Data Promise" is a concept that should be translated consistently
 # across the product. It refers to a concept shown elsewhere to the user: "The
-# Firefox Personal Data Promise is the way we honor your data in everything we
+# Waterfox Personal Data Promise is the way we honor your data in everything we
 # make and do. We take less data. We keep it safe. And we make sure that we are
 # transparent about how we use it."
 onboarding-benefit-privacy-text = Kõik, mida me teeme, austab meie antud isiklike andmete lubadust: küsime vähem andmeid, hoiame neid turvaliselt, käitleme neid läbipaistvalt.

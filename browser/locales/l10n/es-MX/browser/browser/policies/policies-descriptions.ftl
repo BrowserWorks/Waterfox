@@ -4,7 +4,7 @@
 
 
 ## The Enterprise Policies feature is aimed at system administrators
-## who want to deploy these settings across several Firefox installations
+## who want to deploy these settings across several Waterfox installations
 ## all at once. This is traditionally done through the Windows Group Policy
 ## feature, but the system also supports other forms of deployment.
 ## These are short descriptions for individual policies, to be displayed
@@ -30,8 +30,8 @@ policy-DisableDefaultBrowserAgent = Previene que el agente de navegación predet
 policy-DisableDeveloperTools = Bloquear acceso a las herramientas de desarrollador.
 policy-DisableFeedbackCommands = Deshabilitar comandos para enviar comentarios desde el menú Ayuda (Enviar comentario y reportar sitios engañosos).
 policy-DisableFirefoxAccounts = Deshabilitar los servicios basados en { -fxaccount-brand-name }, incluido Sync.
-# Firefox Screenshots is the name of the feature, and should not be translated.
-policy-DisableFirefoxScreenshots = Deshabilitar la función de Firefox Screenshots.
+# Waterfox Screenshots is the name of the feature, and should not be translated.
+policy-DisableFirefoxScreenshots = Deshabilitar la función de Waterfox Screenshots.
 policy-DisableFirefoxStudies = Evitar que { -brand-short-name } ejecute estudios.
 policy-DisableForgetButton = Evitar el acceso al botón Olvidar.
 policy-DisableFormHistory = No recordar la búsqueda y el historial de formularios.
@@ -62,7 +62,7 @@ policy-EncryptedMediaExtensions = Habilitar o deshabilitar extensiones de medios
 policy-Extensions = Instalar, desinstalar o bloquear extensiones. La opción Instalar toma direcciones URL o rutas como parámetros. Las opciones desinstalar y bloquear toman ID de extensión.
 policy-ExtensionSettings = Administra todos los aspectos de la instalación de extensiones
 policy-ExtensionUpdate = Habilitar o deshabilitar actualizaciones automáticas de extensiones.
-policy-FirefoxHome = Configura Firefox Home.
+policy-FirefoxHome = Configura Waterfox Home.
 policy-FlashPlugin = Permitir o denegar el uso del complemento Flash.
 policy-Handlers = Configurar gestores de aplicación predeterminados.
 policy-HardwareAcceleration = Si es "false", desactivar aceleración de hardware.

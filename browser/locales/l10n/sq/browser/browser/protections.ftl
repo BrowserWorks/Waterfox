@@ -27,9 +27,9 @@ graph-week-summary-private-window = Gjurmues që { -brand-short-name } bllokoi k
 
 protection-report-webpage-title = Pult Mbrojtjesh
 protection-report-page-content-title = Pult Mbrojtjesh
-# This message shows when all privacy protections are turned off, which is why we use the word "can", Firefox is able to protect your privacy, but it is currently not.
+# This message shows when all privacy protections are turned off, which is why we use the word "can", Waterfox is able to protect your privacy, but it is currently not.
 protection-report-page-summary = { -brand-short-name }-i mund të mbrojë privatësinë tuaj në prapaskenë, teksa shfletoni. Kjo është një përmbledhje e personalizuar e këtyre mbrojtjeve, përfshi mjete për të marrë kontrollin e sigurisë tuaj internetore.
-# This message shows when at least some protections are turned on, we are more assertive compared to the message above, Firefox is actively protecting you.
+# This message shows when at least some protections are turned on, we are more assertive compared to the message above, Waterfox is actively protecting you.
 protection-report-page-summary-default = { -brand-short-name }-i mbron privatësinë tuaj në prapaskenë, teksa shfletoni. Kjo është një përmbledhje e personalizuar e këtyre mbrojtjeve, përfshi mjete për të marrë kontrollin e sigurisë tuaj internetore.
 
 protection-report-settings-link = Administroni rregullime tuajat të privatësisë dhe sigurisë

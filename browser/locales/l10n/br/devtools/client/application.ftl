@@ -107,9 +107,9 @@ manifest-loaded-ok = Manifest loaded.
 # load the manifest
 manifest-loaded-error = There was an error while loading the manifest:
 
-# Text displayed as an error when there has been a Firefox DevTools error while
+# Text displayed as an error when there has been a Waterfox DevTools error while
 # trying to load the manifest
-manifest-loaded-devtools-error = Firefox DevTools error
+manifest-loaded-devtools-error = Waterfox DevTools error
 
 # Text displayed when the page has no manifest available
 manifest-non-existing = No manifest found to inspect.

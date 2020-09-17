@@ -464,9 +464,9 @@ addon-permissions-empty = Asiɣzef-agi ur yesra ara tisirag
 recommended-extensions-heading = Isiɣzaf ihulen
 recommended-themes-heading = Isental ihulen
 
-# A recommendation for the Firefox Color theme shown at the bottom of the theme
+# A recommendation for the Waterfox Color theme shown at the bottom of the theme
 # list view. The "Firefox Color" name itself should not be translated.
-recommended-theme-1 = Tḥulfaḍ iman-ik tesnulfuyeḍ? <a data-l10n-name="link">Rnu asentel-ik s Firefox Color.</a>
+recommended-theme-1 = Tḥulfaḍ iman-ik tesnulfuyeḍ? <a data-l10n-name="link">Rnu asentel-ik s Waterfox Color.</a>
 
 ## Page headings
 

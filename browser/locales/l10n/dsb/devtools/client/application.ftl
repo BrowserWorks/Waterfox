@@ -136,9 +136,9 @@ manifest-loaded-ok = Manifest jo se zacytał.
 # load the manifest
 manifest-loaded-error = Pśi cytanju manifesta jo zmólka nastała.
 
-# Text displayed as an error when there has been a Firefox DevTools error while
+# Text displayed as an error when there has been a Waterfox DevTools error while
 # trying to load the manifest
-manifest-loaded-devtools-error = Zmólka wuwijaŕskich rědow Firefox
+manifest-loaded-devtools-error = Zmólka wuwijaŕskich rědow Waterfox
 
 # Text displayed when the page has no manifest available
 manifest-non-existing = Žeden manifest namakany.

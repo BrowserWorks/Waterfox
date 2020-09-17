@@ -80,7 +80,7 @@ cfr-doorhanger-pintab-animation-pause = Paŭzigi
 cfr-doorhanger-pintab-animation-resume = Daŭrigi
 
 
-## Firefox Accounts Message
+## Waterfox Accounts Message
 
 cfr-doorhanger-bookmark-fxa-header = Spegulu viajn legosignojn ĉie.
 cfr-doorhanger-bookmark-fxa-body = Bona trovaĵo! Nun, retrovu tiun ĉi legosignon en viaj poŝaparatoj. Komencu per { -fxaccount-brand-name }.
@@ -197,7 +197,7 @@ cfr-doorhanger-send-tab-body = "Sendi langeton" permesas al vi facile sendi tiun
 cfr-doorhanger-send-tab-ok-button = Provu la sendon de langeto
     .accesskey = P
 
-## Firefox Send
+## Waterfox Send
 
 cfr-doorhanger-firefox-send-header = Sekure dividi tiun ĉi PDF
 cfr-doorhanger-firefox-send-body = Gardu viajn konfidecajn dokumentojn sekure kaj for de trudaj rigardoj per ĉifrado interklienta kaj ligiloj kiuj malaperas kiam vi finas.
@@ -234,7 +234,7 @@ cfr-doorhanger-milestone-ok-button = Vidi ĉiujn
 cfr-doorhanger-milestone-close-button = Fermi
     .accesskey = F
 
-## What’s New Panel Content for Firefox 76
+## What’s New Panel Content for Waterfox 76
 
 
 ## Lockwise message

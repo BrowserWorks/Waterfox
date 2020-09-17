@@ -40,7 +40,7 @@ screenshots-self-screenshot-error-title = Njamóžośo wobrazowku boka { -screen
 
 screenshots-empty-selection-error-title = Waš wuběrk jo pśemały
 
-screenshots-private-window-error-title = Firefox { -screenshots-brand-name } jo w priwatnem modusu znjemóžnjony
+screenshots-private-window-error-title = Waterfox { -screenshots-brand-name } jo w priwatnem modusu znjemóžnjony
 screenshots-private-window-error-details = Wódajśo pšosym wobuznosći. Źěłamy na toś tej funkciji za pśichodne wersije.
 
 screenshots-generic-error-title = Hopla! { -screenshots-brand-name } njeźěła.

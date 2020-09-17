@@ -50,7 +50,7 @@ this container is a toolbar. This avoids double-speaking. -->
 <!ENTITY pictureInPictureHideToggle.accesskey "L">
 
 <!-- LOCALIZATION NOTE (fxa.menu) Used to define the different labels
-     for the Firefox Account toolbar menu screen. The `Signed in as` text is
+     for the Waterfox Account toolbar menu screen. The `Signed in as` text is
      followed by the user's email. -->
 <!ENTITY fxa.menu.syncSettings2.label "Gosodiadau &syncBrand.shortName.label;">
 <!ENTITY fxa.menu.connectAnotherDevice2.label "Cysylltu Dyfais Arall…">
@@ -67,7 +67,7 @@ this container is a toolbar. This avoids double-speaking. -->
 <!ENTITY fxa.menu.setupSync.label "Gosod &syncBrand.shortName.label;…">
 
 <!-- LOCALIZATION NOTE (fxa.service) Used to define the different FxA services
-     for the Firefox Account toolbar menu screen.  -->
+     for the Waterfox Account toolbar menu screen.  -->
 <!ENTITY fxa.service.sendTab.description "Anfon tab ar unwaith i unrhyw ddyfais rydych wedi mewngofnodi arni.">
 
 <!-- LOCALIZATION NOTE (fullscreenWarning.beforeDomain.label,
@@ -174,7 +174,7 @@ this container is a toolbar. This avoids double-speaking. -->
 <!ENTITY appMenuRemoteTabs.tabsnotsyncing.label "Cychwynnwch gydweddu tabiau er mwyn gweld rhestr o dabiau o'ch dyfeisiau eraill.">
 <!-- LOCALIZATION NOTE (appMenuRemoteTabs.noclients.subtitle): This is shown
      when Sync is configured but this appears to be the only device attached to
-     the account. We also show links to download Firefox for android/ios. -->
+     the account. We also show links to download Waterfox for android/ios. -->
 <!ENTITY appMenuRemoteTabs.noclients.subtitle "Hoffech chi weld eich tabiau o ddyfeisiau eraill yma?">
 <!ENTITY appMenuRemoteTabs.opensyncprefs.label "Agor Dewisiadau Sync">
 <!ENTITY appMenuRemoteTabs.welcome.label "Gweld rhestr o dabiau o'ch dyfeisiau eraill.">

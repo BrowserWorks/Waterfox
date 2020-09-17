@@ -77,7 +77,7 @@ onboarding-multistage-theme-description-automatic = Seqdec asentel n unagraw
 onboarding-multistage-theme-label-light = Aceɛlal
 onboarding-multistage-theme-label-dark = Aberkan
 # "Firefox Alpenglow" here is the name of the theme, and should be kept in English.
-onboarding-multistage-theme-label-alpenglow = Firefox Alpenglow
+onboarding-multistage-theme-label-alpenglow = Waterfox Alpenglow
 
 ## Please make sure to split the content of the title attribute into lines whose
 ## width corresponds to about 40 Latin characters, to ensure that the tooltip
@@ -155,17 +155,17 @@ onboarding-fullpage-welcome-subheader = Iyya-d ad nesnirem ayen akk i tzemreḍ 
 onboarding-fullpage-form-email =
     .placeholder = Tansa yinek imayl…
 
-## Firefox Sync modal dialog strings.
+## Waterfox Sync modal dialog strings.
 
 onboarding-sync-welcome-header = Awi { -brand-product-name } yid-k
 onboarding-sync-welcome-content = Awi ticraḍ-ik n yisebtar, azray-ik, awalen-ik uffiren d yiɣewwaṛen-nniḍen ɣef ibenkan-ik meṛṛa.
-onboarding-sync-welcome-learn-more-link = Issin ugar ɣef Firefox Accounts
+onboarding-sync-welcome-learn-more-link = Issin ugar ɣef Waterfox Accounts
 onboarding-sync-form-input =
     .placeholder = Imayl
 onboarding-sync-form-continue-button = Kemmel
 onboarding-sync-form-skip-login-button = Zgel amecwaṛ-agi
 
-## This is part of the line "Enter your email to continue to Firefox Sync"
+## This is part of the line "Enter your email to continue to Waterfox Sync"
 
 onboarding-sync-form-header = Sekcem imayl inek
 onboarding-sync-form-sub-header = akken ad tkemleḍ akked { -sync-brand-name }
@@ -176,7 +176,7 @@ onboarding-sync-form-sub-header = akken ad tkemleḍ akked { -sync-brand-name }
 onboarding-benefit-products-text = Snerni tiffursa s useqdec n tegrumma n yifecka yettqadaṛen tudert-ik tusligt deg yibenkan-ik meṛṛa.
 # "Personal Data Promise" is a concept that should be translated consistently
 # across the product. It refers to a concept shown elsewhere to the user: "The
-# Firefox Personal Data Promise is the way we honor your data in everything we
+# Waterfox Personal Data Promise is the way we honor your data in everything we
 # make and do. We take less data. We keep it safe. And we make sure that we are
 # transparent about how we use it."
 onboarding-benefit-privacy-text = S kra n wayen i nxeddemn yettqadaṛ ṭmana-nneɣ ɣef yisefka udmawanen: Lqeḍ drus n yisefka, mmesten-iten. Ulac tufra.

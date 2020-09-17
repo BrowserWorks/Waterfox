@@ -22,9 +22,9 @@ graph-private-window = { -brand-short-name } tiếp tục  chặn trình theo d�
 graph-week-summary-private-window = Trình theo dõi mà { -brand-short-name } đã chặn trong tuần này
 protection-report-webpage-title = Bảng điều khiển bảo vệ
 protection-report-page-content-title = Bảng điều khiển bảo vệ
-# This message shows when all privacy protections are turned off, which is why we use the word "can", Firefox is able to protect your privacy, but it is currently not.
+# This message shows when all privacy protections are turned off, which is why we use the word "can", Waterfox is able to protect your privacy, but it is currently not.
 protection-report-page-summary = { -brand-short-name } có thể bảo vệ quyền riêng tư của bạn đằng sau hậu trường trong khi bạn duyệt. Đây là bản tóm tắt được cá nhân hóa về các biện pháp bảo vệ đó, bao gồm các công cụ để kiểm soát an ninh trực tuyến của bạn.
-# This message shows when at least some protections are turned on, we are more assertive compared to the message above, Firefox is actively protecting you.
+# This message shows when at least some protections are turned on, we are more assertive compared to the message above, Waterfox is actively protecting you.
 protection-report-page-summary-default = { -brand-short-name } có thể bảo vệ quyền riêng tư của bạn đằng sau hậu trường trong khi bạn duyệt. Đây là bản tóm tắt được cá nhân hóa về các biện pháp bảo vệ đó, bao gồm các công cụ để kiểm soát an ninh trực tuyến của bạn.
 protection-report-settings-link = Quản lý cài đặt bảo mật và quyền riêng tư của bạn
 etp-card-title-always = Trình chống theo dõi nâng cao: Luôn bật

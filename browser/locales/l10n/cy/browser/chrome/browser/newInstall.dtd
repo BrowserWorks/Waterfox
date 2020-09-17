@@ -3,13 +3,13 @@
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!-- LOCALIZATION NOTE: For this feature, "installation" is used to mean "this
- discrete download of Firefox" and "version" is used to mean "the specific
- revision number of a given Firefox channel". These terms are not synonymous.
+ discrete download of Waterfox" and "version" is used to mean "the specific
+ revision number of a given Waterfox channel". These terms are not synonymous.
 -->
 
 <!ENTITY window.title "Newyddion Pwysig">
 <!ENTITY window.style "width: 490px">
-<!ENTITY sync "I gydweddu gwybodaeth rydych chi eisoes wedi'i gadw i Firefox gyda'r gosodiad hwn o &brandShortName;, mewngofnodwch gyda'ch &syncBrand.fxAccount.label;.">
+<!ENTITY sync "I gydweddu gwybodaeth rydych chi eisoes wedi'i gadw i Waterfox gyda'r gosodiad hwn o &brandShortName;, mewngofnodwch gyda'ch &syncBrand.fxAccount.label;.">
 <!ENTITY continue-button "Parhau">
 
-<!ENTITY mainText "Mae gan y gosodiad hwn o &brandShortName; broffil newydd. Nid yw'n rhannu nodau tudalen, cyfrineiriau a dewisiadau defnyddwyr gyda gosodiadau eraill o Firefox (gan gynnwys Firefox, Firefox ESR, Firefox Beta, Firefox Developer Edition, a Firefox Nightly) ar y cyfrifiadur hwn.">
+<!ENTITY mainText "Mae gan y gosodiad hwn o &brandShortName; broffil newydd. Nid yw'n rhannu nodau tudalen, cyfrineiriau a dewisiadau defnyddwyr gyda gosodiadau eraill o Waterfox (gan gynnwys Waterfox, Waterfox ESR, Waterfox Beta, Waterfox Developer Edition, a Waterfox Nightly) ar y cyfrifiadur hwn.">

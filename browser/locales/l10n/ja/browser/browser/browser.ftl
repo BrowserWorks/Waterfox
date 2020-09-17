@@ -8,8 +8,8 @@
 # These are the default window titles everywhere except macOS. The first two
 # attributes are used when the web content opened has no title:
 #
-# default - "Mozilla Firefox"
-# private - "Mozilla Firefox (Private Browsing)"
+# default - "Waterfox"
+# private - "Waterfox (Private Browsing)"
 #
 # The last two are for use when there *is* a content title.
 # Variables:
@@ -22,8 +22,8 @@ browser-main-window =
 # These are the default window titles on macOS. The first two are for use when
 # there is no content title:
 #
-# "default" - "Mozilla Firefox"
-# "private" - "Mozilla Firefox - (Private Browsing)"
+# "default" - "Waterfox"
+# "private" - "Waterfox - (Private Browsing)"
 #
 # The last two are for use when there *is* a content title.
 # Do not use the brand name in the last two attributes, as we do on non-macOS.
@@ -233,7 +233,7 @@ identity-connection-internal = このページは { -brand-short-name } の安�
 identity-connection-file = これはあなたのコンピューターに保存されているページです。
 identity-extension-page = このページは拡張機能から読み込まれています。
 identity-active-blocked = このページの一部が安全でないため { -brand-short-name } がブロックしました。
-identity-custom-root = Mozilla が承認していない発行者の証明書で検証された接続です。
+identity-custom-root = Waterfox が承認していない発行者の証明書で検証された接続です。
 identity-passive-loaded = このページの一部 (画像など) は安全ではありません。
 identity-active-loaded = このページでの保護は無効に設定されています。
 identity-weak-encryption = このページは脆弱な暗号を使用しています。
@@ -247,7 +247,7 @@ identity-clear-site-data =
 identity-connection-not-secure-security-view = このサイトとの接続は安全ではありません。
 identity-connection-verified = このサイトとの接続は安全です。
 identity-ev-owner-label = 証明書の発行先:
-identity-description-custom-root = Mozilla はこの証明書の発行者を承認していません。OS またはシステム管理者により追加された可能性があります。 <label data-l10n-name="link">詳細情報</label>
+identity-description-custom-root = Waterfox はこの証明書の発行者を承認していません。OS またはシステム管理者により追加された可能性があります。 <label data-l10n-name="link">詳細情報</label>
 identity-remove-cert-exception =
     .label = 例外から削除
     .accesskey = R

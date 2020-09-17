@@ -453,9 +453,9 @@ addon-permissions-empty = See laiendus ei nõua eriõigusi
 recommended-extensions-heading = Soovitatavad laiendused
 recommended-themes-heading = Soovitatavad teemad
 
-# A recommendation for the Firefox Color theme shown at the bottom of the theme
+# A recommendation for the Waterfox Color theme shown at the bottom of the theme
 # list view. The "Firefox Color" name itself should not be translated.
-recommended-theme-1 = Tunned end loomingulisena? <a data-l10n-name="link">Loo endale oma teema Firefox Coloriga.</a>
+recommended-theme-1 = Tunned end loomingulisena? <a data-l10n-name="link">Loo endale oma teema Waterfox Coloriga.</a>
 
 ## Page headings
 

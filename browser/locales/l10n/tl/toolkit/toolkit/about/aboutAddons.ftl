@@ -457,9 +457,9 @@ addon-permissions-empty = Ang extension na ito ay hindi nangangailangan ng kahit
 recommended-extensions-heading = Mga Inirerekomendang Extension
 recommended-themes-heading = Mga Inirerekomendang Tema
 
-# A recommendation for the Firefox Color theme shown at the bottom of the theme
+# A recommendation for the Waterfox Color theme shown at the bottom of the theme
 # list view. The "Firefox Color" name itself should not be translated.
-recommended-theme-1 = May pagkamalikhain? <a data-l10n-name="link">Bumuo ng sarili mong tema gamit ang Firefox Color.</a>
+recommended-theme-1 = May pagkamalikhain? <a data-l10n-name="link">Bumuo ng sarili mong tema gamit ang Waterfox Color.</a>
 
 ## Page headings
 

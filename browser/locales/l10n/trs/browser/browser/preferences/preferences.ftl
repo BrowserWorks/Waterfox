@@ -134,9 +134,9 @@ search-results-help-link = Ni'ñanj sa rugujñu'unj so' aj? huij ñuna <a data-l
 startup-header = Gayi'ì
 
 # { -brand-short-name } will be 'Firefox Developer Edition',
-# since this setting is only exposed in Firefox Developer Edition
+# since this setting is only exposed in Waterfox Developer Edition
 separate-profile-mode =
-    .label = Ga'nì' da' ni { -brand-short-name } 'ngà Firefox gi'iaj sun nugua'ān
+    .label = Ga'nì' da' ni { -brand-short-name } 'ngà Waterfox gi'iaj sun nugua'ān
 use-firefox-sync = 'Ngò chrej e: nitaj si 'iaj sun nugua'ān ma. Garasun { -sync-brand-short-name } da' duguchint datos.
 get-started-not-logged-in = Gaui'i' sesión riña { -sync-brand-short-name }…
 get-started-configured = Na'nïn' preferensia { -sync-brand-short-name }
@@ -538,10 +538,10 @@ home-restore-defaults =
     .label = Nagi'io' ru'ua nìanj
     .accesskey = R
 
-# "Firefox" should be treated as a brand and kept in English,
+# "Waterfox" should be treated as a brand and kept in English,
 # while "Home" and "(Default)" can be localized.
 home-mode-choice-default =
-    .label = Riña ayi'i Firefox (ru'uaj 'naj)
+    .label = Riña ayi'i Waterfox (ru'uaj 'naj)
 
 home-mode-choice-custom =
     .label = Nagi'iaj mu'ù nej URL...
@@ -568,10 +568,10 @@ choose-bookmark =
     .label = garasun' markadır...
     .accesskey = B
 
-## Home Section - Firefox Home Content Customization
+## Home Section - Waterfox Home Content Customization
 
-home-prefs-content-header = Sa nū riña pagina ayi'ì Firefox
-home-prefs-content-description = Gini'iaj ahuin si ruat gini'iaj riña Firefox.
+home-prefs-content-header = Sa nū riña pagina ayi'ì Waterfox
+home-prefs-content-description = Gini'iaj ahuin si ruat gini'iaj riña Waterfox.
 
 home-prefs-search-header =
     .label = Nana'uì' web
@@ -700,7 +700,7 @@ containers-remove-button =
 ## Sync Section - Signed out
 
 
-## Firefox Account - Signed out. Note that "Sync" and "Firefox Account" are now
+## Waterfox Account - Signed out. Note that "Sync" and "Firefox Account" are now
 ## more discrete ("signed in" no longer means "and sync is connected").
 
 sync-signedout-caption = Ganikaj web ga'ant
@@ -718,12 +718,12 @@ sync-signedout-account-signin2 =
 #
 # They can be moved within the sentence as needed to adapt
 # to your language, but should not be changed or translated.
-sync-mobile-promo = Naduni' Firefox guenda <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> guenda <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS</a> da' gi'iaj sun ma 'ngà si agat.
+sync-mobile-promo = Naduni' Waterfox guenda <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> guenda <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS</a> da' gi'iaj sun ma 'ngà si agat.
 
 ## Sync Section - Signed in
 
 
-## Firefox Account - Signed in
+## Waterfox Account - Signed in
 
 sync-profile-picture =
     .tooltiptext = Nadunā ña du'uat
@@ -828,7 +828,7 @@ sync-engine-creditcards =
 
 sync-engine-addons =
     .label = Sa ga'ue nutò'
-    .tooltiptext = Nej sa nuto' guenda Firefox escritório
+    .tooltiptext = Nej sa nuto' guenda Waterfox escritório
     .accesskey = A
 
 sync-engine-prefs =
@@ -917,8 +917,8 @@ history-header = Daran sa gahuin
 # "Firefox will" + "Remember history".
 #
 # If this doesn't work for your language, you can translate this message:
-#   - Simply as "Firefox", moving the verb into each option.
-#     This will result in "Firefox" + "Will remember history", etc.
+#   - Simply as "Waterfox", moving the verb into each option.
+#     This will result in "Waterfox" + "Will remember history", etc.
 #   - As a stand-alone message, for example "Firefox history settings:".
 history-remember-label = { -brand-short-name } ga'ue
     .accesskey = W

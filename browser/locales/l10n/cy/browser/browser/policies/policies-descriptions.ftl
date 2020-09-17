@@ -4,7 +4,7 @@
 
 
 ## The Enterprise Policies feature is aimed at system administrators
-## who want to deploy these settings across several Firefox installations
+## who want to deploy these settings across several Waterfox installations
 ## all at once. This is traditionally done through the Windows Group Policy
 ## feature, but the system also supports other forms of deployment.
 ## These are short descriptions for individual policies, to be displayed
@@ -30,8 +30,8 @@ policy-DisableDefaultBrowserAgent = Atal asiant y porwr rhagosodedig rhag cymryd
 policy-DisableDeveloperTools = Rhwystro mynediad i'r offer datblygwr.
 policy-DisableFeedbackCommands = Analluogi gorchmynion rhag anfon adborth o'r ddewislen Cymorth (Cyflwyno Adborth ac Adrodd ar Wefan Dwyllodrus).
 policy-DisableFirefoxAccounts = Analluogi gwasanaethau'n seiliedig ar { -fxaccount-brand-name }, gan gynnwys Sync.
-# Firefox Screenshots is the name of the feature, and should not be translated.
-policy-DisableFirefoxScreenshots = Analluogi nodwedd Firefox Screenshots.
+# Waterfox Screenshots is the name of the feature, and should not be translated.
+policy-DisableFirefoxScreenshots = Analluogi nodwedd Waterfox Screenshots.
 policy-DisableFirefoxStudies = Rhwystro { -brand-short-name } rhag rhedeg astudiaethau.
 policy-DisableForgetButton = Rhwystro mynediad i'r botwm Anghofio.
 policy-DisableFormHistory = Peidio cofio chwilio a hanes ffurflenni.
@@ -62,7 +62,7 @@ policy-EncryptedMediaExtensions = Galluogi neu Analluogi Estyniadau Cyfryngau Am
 policy-Extensions = Gosod, dadosod neu gloi estyniadau. Mae'r dewis gosod yn cymryd URL neu lwybrau fel paramedrau. Mae'r dewisiadau Dadosod a Chloi yn cymryd dynodiad estyniadau.
 policy-ExtensionSettings = Rheoli pob agwedd o osod estyniad.
 policy-ExtensionUpdate = Galluogi neu analluogi diweddaru estyniadau'n awtomatig.
-policy-FirefoxHome = Ffurfweddu Firefox Home.
+policy-FirefoxHome = Ffurfweddu Waterfox Home.
 policy-FlashPlugin = Caniatáu neu wrthod defnydd o'r ychwanegyn Flash.
 policy-Handlers = Ffurfweddu trinwyr rhaglenni rhagosodedig.
 policy-HardwareAcceleration = Os gau, diffodd cyflymu caledwedd.

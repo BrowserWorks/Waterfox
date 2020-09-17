@@ -15,15 +15,15 @@
 <!ENTITY prefEnableHTTP11Proxy.accesskey     "T">
 <!ENTITY prefPara                            "Las conexiones HTTP pueden ser calibradas usando estas opciones para mejorar tanto el rendimiento como la compatibilidad. Algunos servidores proxy, por ejemplo, pueden necesitar HTTP/1.0 (vea las notas de la versión para más detalles).">
 <!ENTITY prefUseragent.label                 "Cadena de agente de usuario">
-<!ENTITY prefFirefoxCompat.label             "Publicitar compatibilidad de Firefox">
+<!ENTITY prefFirefoxCompat.label             "Publicitar compatibilidad de Waterfox">
 <!ENTITY prefFirefoxCompat.accesskey         "F">
 <!ENTITY prefLightningShow.label             "Anunciar instalación de Lightning">
 <!ENTITY prefLightningShow.accesskey         "L">
 <!ENTITY prefCompatWarning                   "ADVERTENCIA: deshabilitar estas opciones puede hacer que sitios web o servicios no funcionen correctamente.">
-<!ENTITY prefFirefoxStrict.label             "Identificar como Firefox">
+<!ENTITY prefFirefoxStrict.label             "Identificar como Waterfox">
 <!ENTITY prefFirefoxStrict.accesskey         "I">
 <!ENTITY prefFirefoxNone.label               "Identificar como SeaMonkey">
 <!ENTITY prefFirefoxNone.accesskey           "M">
-<!ENTITY prefFirefoxCompat2.label            "Identifcar como SeaMonkey y anunciar la compatibilidad de Firefox">
+<!ENTITY prefFirefoxCompat2.label            "Identifcar como SeaMonkey y anunciar la compatibilidad de Waterfox">
 <!ENTITY prefFirefoxCompat2.accesskey        "F">
 <!ENTITY prefCompatWarning2.desc             "ADVERTENCIA: deshabilitar estas opciones puede hacer que sitios web o servicios no funcionen correctamente.">

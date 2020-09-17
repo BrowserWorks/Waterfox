@@ -19,5 +19,5 @@
 <!ENTITY prefPara                            "As conexións HTTP poden afinarse usando estas opcións para mellorar o rendemento ou a compatibilidade. Algúns servidores proxy, por exemplo, requiren HTTP/1.0 (vexa as notas da versión para obter máis detalles).">
 <!ENTITY prefPipeWarning                     "AVISO: o pipelining é unha característica experimental, deseñada para mellorar o rendemento da carga de páxinas, que desafortunadamente ten problemas de compatibilidade con algúns servidores web e proxy.">
 <!ENTITY prefUseragent.label                 "Cadea do axente do usuario">
-<!ENTITY prefFirefoxCompat.label             "Anunciar compatibilidade co Firefox">
+<!ENTITY prefFirefoxCompat.label             "Anunciar compatibilidade co Waterfox">
 <!ENTITY prefFirefoxCompat.accesskey         "F">

@@ -15,11 +15,11 @@
 
 # LOCALIZATION NOTE (getting_started):
 # link title for http://en-US.www.mozilla.com/en-US/firefox/central/
-#define getting_started I gang med Firefox
+#define getting_started I gang med Waterfox
 
 # LOCALIZATION NOTE (firefox_heading):
-# Firefox links folder name
-#define firefox_heading Mozilla Firefox
+# Waterfox links folder name
+#define firefox_heading Waterfox
 
 # LOCALIZATION NOTE (firefox_help):
 # link title for http://en-US.www.mozilla.com/en-US/firefox/help/
@@ -27,7 +27,7 @@
 
 # LOCALIZATION NOTE (firefox_customize):
 # link title for http://en-US.www.mozilla.com/en-US/firefox/customize/
-#define firefox_customize Tilpas Firefox
+#define firefox_customize Tilpas Waterfox
 
 # LOCALIZATION NOTE (firefox_community):
 # link title for http://en-US.www.mozilla.com/en-US/firefox/community/
@@ -38,12 +38,12 @@
 #define firefox_about Om os
 
 # LOCALIZATION NOTE (nightly_heading):
-# Firefox Nightly links folder name
-#define nightly_heading Om Firefox Nightly
+# Waterfox Nightly links folder name
+#define nightly_heading Om Waterfox Nightly
 
 # LOCALIZATION NOTE (nightly_blog):
 # Nightly builds only, link title for https://blog.nightly.mozilla.org/
-#define nightly_blog Firefox Nightly blog
+#define nightly_blog Waterfox Nightly blog
 
 # LOCALIZATION NOTE (bugzilla):
 # Nightly builds only, link title for https://bugzilla.mozilla.org/

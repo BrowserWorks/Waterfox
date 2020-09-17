@@ -122,7 +122,7 @@ search-results-help-link = أتحتاج للمساعدة؟ زُر <a data-l10n-n
 
 startup-header = البدء
 # { -brand-short-name } will be 'Firefox Developer Edition',
-# since this setting is only exposed in Firefox Developer Edition
+# since this setting is only exposed in Waterfox Developer Edition
 separate-profile-mode =
     .label = اسمح بتشغيل { -brand-short-name } و Firefox في نفس الوقت
 use-firefox-sync = فائدة: يستخدم هذا ملفات إعدادات مستقلة. استخدم { -sync-brand-short-name } لمشاركة البيانات بينهما.
@@ -464,10 +464,10 @@ home-newtabs-mode-label = الألسنة الجديدة
 home-restore-defaults =
     .label = استعد المبدئيات
     .accesskey = س
-# "Firefox" should be treated as a brand and kept in English,
+# "Waterfox" should be treated as a brand and kept in English,
 # while "Home" and "(Default)" can be localized.
 home-mode-choice-default =
-    .label = صفحة بداية Firefox (المبدئية)
+    .label = صفحة بداية Waterfox (المبدئية)
 home-mode-choice-custom =
     .label = عناوين مخصصة…
 home-mode-choice-blank =
@@ -489,10 +489,10 @@ choose-bookmark =
     .label = استخدم علامة…
     .accesskey = ع
 
-## Home Section - Firefox Home Content Customization
+## Home Section - Waterfox Home Content Customization
 
-home-prefs-content-header = محتوى Firefox الرئيسي
-home-prefs-content-description = اختر المحتوى الذي تريد عرضه في شاشة بداية Firefox.
+home-prefs-content-header = محتوى Waterfox الرئيسي
+home-prefs-content-description = اختر المحتوى الذي تريد عرضه في شاشة بداية Waterfox.
 home-prefs-search-header =
     .label = ابحث في الوِب
 home-prefs-topsites-header =
@@ -615,7 +615,7 @@ containers-preferences-button =
 containers-remove-button =
     .label = أزِل
 
-## Firefox Account - Signed out. Note that "Sync" and "Firefox Account" are now
+## Waterfox Account - Signed out. Note that "Sync" and "Firefox Account" are now
 ## more discrete ("signed in" no longer means "and sync is connected").
 
 sync-signedout-caption = خُذ الوِب معك
@@ -631,9 +631,9 @@ sync-signedout-account-signin2 =
 #
 # They can be moved within the sentence as needed to adapt
 # to your language, but should not be changed or translated.
-sync-mobile-promo = نزّل Firefox لنظامي <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">أندرويد</a> أو <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">آي أو إس</a> للمزامنة مع هاتفك المحمول.
+sync-mobile-promo = نزّل Waterfox لنظامي <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">أندرويد</a> أو <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">آي أو إس</a> للمزامنة مع هاتفك المحمول.
 
-## Firefox Account - Signed in
+## Waterfox Account - Signed in
 
 sync-profile-picture =
     .tooltiptext = غيّر صورة الحساب
@@ -825,8 +825,8 @@ history-header = التأريخ
 # "Firefox will" + "Remember history".
 #
 # If this doesn't work for your language, you can translate this message:
-#   - Simply as "Firefox", moving the verb into each option.
-#     This will result in "Firefox" + "Will remember history", etc.
+#   - Simply as "Waterfox", moving the verb into each option.
+#     This will result in "Waterfox" + "Will remember history", etc.
 #   - As a stand-alone message, for example "Firefox history settings:".
 history-remember-label = { -brand-short-name } سوف
     .accesskey = س

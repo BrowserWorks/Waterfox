@@ -122,9 +122,9 @@ search-results-help-link = Tarvitsetko apua? Avaa <a data-l10n-name="url">{ -bra
 
 startup-header = Käynnistys
 # { -brand-short-name } will be 'Firefox Developer Edition',
-# since this setting is only exposed in Firefox Developer Edition
+# since this setting is only exposed in Waterfox Developer Edition
 separate-profile-mode =
-    .label = Salli { -brand-short-name }in ja Firefoxin olla käynnissä samaan aikaan
+    .label = Salli { -brand-short-name }in ja Waterfoxin olla käynnissä samaan aikaan
 use-firefox-sync = Vinkki: Tämä vaatii erilliset käyttäjäprofiilit. Synkronoi profiilien tiedot { -sync-brand-short-name }-palvelulla.
 get-started-not-logged-in = Kirjaudu { -sync-brand-short-name }-palveluun…
 get-started-configured = Avaa { -sync-brand-short-name }-asetukset
@@ -455,10 +455,10 @@ home-newtabs-mode-label = Uudet välilehdet
 home-restore-defaults =
     .label = Palauta oletukset
     .accesskey = P
-# "Firefox" should be treated as a brand and kept in English,
+# "Waterfox" should be treated as a brand and kept in English,
 # while "Home" and "(Default)" can be localized.
 home-mode-choice-default =
-    .label = Firefox-aloitussivu (oletus)
+    .label = Waterfox-aloitussivu (oletus)
 home-mode-choice-custom =
     .label = Omat osoitteet…
 home-mode-choice-blank =
@@ -480,10 +480,10 @@ choose-bookmark =
     .label = Käytä kirjanmerkkiä…
     .accesskey = m
 
-## Home Section - Firefox Home Content Customization
+## Home Section - Waterfox Home Content Customization
 
-home-prefs-content-header = Firefox-aloitussivun sisältö
-home-prefs-content-description = Valitse Firefox-aloitussivulle haluamasi sisältö.
+home-prefs-content-header = Waterfox-aloitussivun sisältö
+home-prefs-content-description = Valitse Waterfox-aloitussivulle haluamasi sisältö.
 home-prefs-search-header =
     .label = Verkkohaku
 home-prefs-topsites-header =
@@ -603,7 +603,7 @@ containers-preferences-button =
 containers-remove-button =
     .label = Poista
 
-## Firefox Account - Signed out. Note that "Sync" and "Firefox Account" are now
+## Waterfox Account - Signed out. Note that "Sync" and "Firefox Account" are now
 ## more discrete ("signed in" no longer means "and sync is connected").
 
 sync-signedout-caption = Pidä oma selain aina mukanasi
@@ -619,9 +619,9 @@ sync-signedout-account-signin2 =
 #
 # They can be moved within the sentence as needed to adapt
 # to your language, but should not be changed or translated.
-sync-mobile-promo = Lataa Firefox <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Androidille</a> tai <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS:lle</a> ja synkronoi tietosi kannettavalle laitteellesi.
+sync-mobile-promo = Lataa Waterfox <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Androidille</a> tai <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS:lle</a> ja synkronoi tietosi kannettavalle laitteellesi.
 
-## Firefox Account - Signed in
+## Waterfox Account - Signed in
 
 sync-profile-picture =
     .tooltiptext = Vaihda kuva
@@ -699,15 +699,15 @@ sync-engine-logins-passwords =
     .accesskey = u
 sync-engine-addresses =
     .label = Osoitteet
-    .tooltiptext = Tallentamasi postiosoitteet (vain Firefoxin työpöytäversiossa)
+    .tooltiptext = Tallentamasi postiosoitteet (vain Waterfoxin työpöytäversiossa)
     .accesskey = O
 sync-engine-creditcards =
     .label = Luottokortit
-    .tooltiptext = Nimet, numerot ja vanheneminen (vain Firefoxin työpöytäversiossa)
+    .tooltiptext = Nimet, numerot ja vanheneminen (vain Waterfoxin työpöytäversiossa)
     .accesskey = u
 sync-engine-addons =
     .label = Lisäosat
-    .tooltiptext = Firefoxin työpöytäversion laajennukset ja teemat
+    .tooltiptext = Waterfoxin työpöytäversion laajennukset ja teemat
     .accesskey = i
 sync-engine-prefs =
     .label =
@@ -813,8 +813,8 @@ history-header = Historiatiedot
 # "Firefox will" + "Remember history".
 #
 # If this doesn't work for your language, you can translate this message:
-#   - Simply as "Firefox", moving the verb into each option.
-#     This will result in "Firefox" + "Will remember history", etc.
+#   - Simply as "Waterfox", moving the verb into each option.
+#     This will result in "Waterfox" + "Will remember history", etc.
 #   - As a stand-alone message, for example "Firefox history settings:".
 history-remember-label = { -brand-short-name } säilyttää
     .accesskey = F

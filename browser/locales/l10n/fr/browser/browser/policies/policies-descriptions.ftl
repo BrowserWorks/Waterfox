@@ -4,7 +4,7 @@
 
 
 ## The Enterprise Policies feature is aimed at system administrators
-## who want to deploy these settings across several Firefox installations
+## who want to deploy these settings across several Waterfox installations
 ## all at once. This is traditionally done through the Windows Group Policy
 ## feature, but the system also supports other forms of deployment.
 ## These are short descriptions for individual policies, to be displayed
@@ -30,8 +30,8 @@ policy-DisableDefaultBrowserAgent = Empêcher l’agent de navigateur par défau
 policy-DisableDeveloperTools = Bloquer l’accès aux outils de développement.
 policy-DisableFeedbackCommands = Désactiver les commandes permettant d’envoyer des commentaires dans le menu d’aide (Donner votre avis et Signaler un site trompeur).
 policy-DisableFirefoxAccounts = Désactiver les services basés sur un { -fxaccount-brand-name }, y compris la synchronisation.
-# Firefox Screenshots is the name of the feature, and should not be translated.
-policy-DisableFirefoxScreenshots = Désactiver la fonctionnalité Firefox Screenshots.
+# Waterfox Screenshots is the name of the feature, and should not be translated.
+policy-DisableFirefoxScreenshots = Désactiver la fonctionnalité Waterfox Screenshots.
 policy-DisableFirefoxStudies = Empêcher { -brand-short-name } d’exécuter des études.
 policy-DisableForgetButton = Empêcher l’accès au bouton d’effacement des données.
 policy-DisableFormHistory = Désactiver la conservation de l’historique des recherches et des formulaires.
@@ -62,7 +62,7 @@ policy-EncryptedMediaExtensions = Activer ou désactiver les extensions de médi
 policy-Extensions = Installer, désinstaller ou verrouiller les extensions. L’option d’installation accepte des URL ou des chemins comme paramètres. Les options Désinstaller et Verrouiller utilisent les identifiants des extensions.
 policy-ExtensionSettings = Gérer tous les aspects de l’installation d’extensions.
 policy-ExtensionUpdate = Activer ou désactiver la mise à jour automatique des extensions.
-policy-FirefoxHome = Configurer l’accueil de Firefox.
+policy-FirefoxHome = Configurer l’accueil de Waterfox.
 policy-FlashPlugin = Autoriser ou non l’utilisation du plugin Flash.
 policy-Handlers = Configurer les gestionnaires d’applications par défaut.
 policy-HardwareAcceleration = Positionner à false pour désactiver l’accélération matérielle.

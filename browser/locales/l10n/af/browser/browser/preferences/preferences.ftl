@@ -70,9 +70,9 @@ search-results-empty-message =
 startup-header = Begin
 
 # { -brand-short-name } will be 'Firefox Developer Edition',
-# since this setting is only exposed in Firefox Developer Edition
+# since this setting is only exposed in Waterfox Developer Edition
 separate-profile-mode =
-    .label = Laat { -brand-short-name } en Firefox toe om gelyktydig te loop
+    .label = Laat { -brand-short-name } en Waterfox toe om gelyktydig te loop
 use-firefox-sync = Wenk: Dit gebruik aparte profiele. Gebruik { -sync-brand-short-name } om data tussen hulle te deel.
 get-started-not-logged-in = Meld aan by { -sync-brand-short-name }…
 get-started-configured = Open { -sync-brand-short-name }-voorkeure
@@ -418,7 +418,7 @@ choose-bookmark =
     .label = Gebruik boekmerk…
     .accesskey = b
 
-## Home Section - Firefox Home Content Customization
+## Home Section - Waterfox Home Content Customization
 
 home-prefs-search-header =
     .label = Web soektog
@@ -496,7 +496,7 @@ containers-remove-button =
 ## Sync Section - Signed out
 
 
-## Firefox Account - Signed out. Note that "Sync" and "Firefox Account" are now
+## Waterfox Account - Signed out. Note that "Sync" and "Firefox Account" are now
 ## more discrete ("signed in" no longer means "and sync is connected").
 
 sync-signedout-caption = Neem die Web saam
@@ -510,12 +510,12 @@ sync-signedout-description = Sinkroniseer boekmerke, geskiedenis, oortjies, wagw
 #
 # They can be moved within the sentence as needed to adapt
 # to your language, but should not be changed or translated.
-sync-mobile-promo = Laai Firefox af vir <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> of <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS</a> om met 'n selfoon te sinkroniseer.
+sync-mobile-promo = Laai Waterfox af vir <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> of <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS</a> om met 'n selfoon te sinkroniseer.
 
 ## Sync Section - Signed in
 
 
-## Firefox Account - Signed in
+## Waterfox Account - Signed in
 
 sync-profile-picture =
     .tooltiptext = Verander profielprent
@@ -629,8 +629,8 @@ history-header = Geskiedenis
 # "Firefox will" + "Remember history".
 #
 # If this doesn't work for your language, you can translate this message:
-#   - Simply as "Firefox", moving the verb into each option.
-#     This will result in "Firefox" + "Will remember history", etc.
+#   - Simply as "Waterfox", moving the verb into each option.
+#     This will result in "Waterfox" + "Will remember history", etc.
 #   - As a stand-alone message, for example "Firefox history settings:".
 history-remember-label = { -brand-short-name } sal
     .accesskey = s

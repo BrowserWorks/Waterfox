@@ -85,7 +85,7 @@ about-debugging-setup-usb-step-enable-dev-menu2 = Attiva il menu “Opzioni svil
 
 about-debugging-setup-usb-step-enable-debug2 = Attiva “Debug USB” nel menu “Opzioni sviluppatori” sul dispositivo Android.
 
-about-debugging-setup-usb-step-enable-debug-firefox2 = Attiva USB Debugging in Firefox sul dispositivo Android.
+about-debugging-setup-usb-step-enable-debug-firefox2 = Attiva USB Debugging in Waterfox sul dispositivo Android.
 
 about-debugging-setup-usb-step-plug-device = Connetti il dispositivo Android al computer.
 
@@ -131,9 +131,9 @@ about-debugging-runtime-service-workers-not-compatible = La configurazione del b
 
 about-debugging-browser-version-too-old = Il browser connesso utilizza una versione obsoleta ({ $runtimeVersion }). La versione minima compatibile è ({ $minVersion }). Questa configurazione non è supportata e potrebbe impedire il corretto funzionamento degli strumenti di sviluppo. Aggiornare il browser connesso. <a>Risoluzione dei problemi</a>
 
-about-debugging-browser-version-too-old-fennec = Non è possibile utilizzare questa versione di Firefox per eseguire il debug di Firefox per Android (68). Per effettuare test è consigliato installare Firefox per Android Nightly sul telefono. <a>Ulteriori informazioni</a>
+about-debugging-browser-version-too-old-fennec = Non è possibile utilizzare questa versione di Waterfox per eseguire il debug di Waterfox per Android (68). Per effettuare test è consigliato installare Waterfox per Android Nightly sul telefono. <a>Ulteriori informazioni</a>
 
-about-debugging-browser-version-too-recent = Il browser connesso ({ $runtimeVersion }, buildID { $runtimeID }) è più recente di quello in uso in { -brand-shorter-name } ({ $localVersion }, buildID { $localID }). Questa configurazione non è supportata e potrebbe impedire il corretto funzionamento degli strumenti di sviluppo. Aggiornare Firefox. <a>Risoluzione dei problemi</a>
+about-debugging-browser-version-too-recent = Il browser connesso ({ $runtimeVersion }, buildID { $runtimeID }) è più recente di quello in uso in { -brand-shorter-name } ({ $localVersion }, buildID { $localID }). Questa configurazione non è supportata e potrebbe impedire il corretto funzionamento degli strumenti di sviluppo. Aggiornare Waterfox. <a>Risoluzione dei problemi</a>
 
 about-debugging-runtime-name = { $name } ({ $version })
 

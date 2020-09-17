@@ -136,9 +136,9 @@ manifest-loaded-ok = 매니페스트가 로드되었습니다.
 # load the manifest
 manifest-loaded-error = 매니페스트를 로드하는 동안 오류가 발생했습니다:
 
-# Text displayed as an error when there has been a Firefox DevTools error while
+# Text displayed as an error when there has been a Waterfox DevTools error while
 # trying to load the manifest
-manifest-loaded-devtools-error = Firefox DevTools 오류
+manifest-loaded-devtools-error = Waterfox DevTools 오류
 
 # Text displayed when the page has no manifest available
 manifest-non-existing = 검사할 매니페스트가 없습니다.

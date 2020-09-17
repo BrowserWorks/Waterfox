@@ -88,7 +88,7 @@ source-name-chrome = Google Chrome
 source-name-chrome-beta = Google Chrome بیٹا
 source-name-chrome-dev = Google Chrome ڈیو
 source-name-chromium = کرومیم
-source-name-firefox = Mozilla Firefox
+source-name-firefox = Waterfox
 source-name-360se = 360 قابل بھروسا براؤزر
 
 imported-safari-reading-list = فہرست پڑھ رہا ہے (سفاری سے)

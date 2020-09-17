@@ -381,9 +381,9 @@ release-notes-error = Došlo je do greške pri učitavanju napomena o izdanju.
 addon-permissions-empty = Ovaj dodatak ne zahtjeva nikakve dozvole.
 recommended-extensions-heading = Preporučeni dodatci
 recommended-themes-heading = Preporučeni motivi
-# A recommendation for the Firefox Color theme shown at the bottom of the theme
+# A recommendation for the Waterfox Color theme shown at the bottom of the theme
 # list view. The "Firefox Color" name itself should not be translated.
-recommended-theme-1 = Osjećate li se kreativno? <a data-l10n-name="link">Izradite vlastiti motiv s Firefox Color.</a>
+recommended-theme-1 = Osjećate li se kreativno? <a data-l10n-name="link">Izradite vlastiti motiv s Waterfox Color.</a>
 
 ## Page headings
 

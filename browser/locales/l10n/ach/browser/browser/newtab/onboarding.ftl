@@ -57,11 +57,11 @@ onboarding-fullpage-welcome-subheader = Wa cak neno jami weng ma itwero timo.
 onboarding-fullpage-form-email =
     .placeholder = Kanonge ni me email…
 
-## Firefox Sync modal dialog strings.
+## Waterfox Sync modal dialog strings.
 
 onboarding-sync-welcome-header = Wot ki { -brand-product-name }
 onboarding-sync-welcome-content = Nong alamabuk mamegi, gin mukato, mung me donyo ki ter mukene i nyonyo ni weng.
-onboarding-sync-welcome-learn-more-link = Nong ngec mapol ikom Akaunt me Firefox
+onboarding-sync-welcome-learn-more-link = Nong ngec mapol ikom Akaunt me Waterfox
 
 onboarding-sync-form-input =
     .placeholder = Email
@@ -69,7 +69,7 @@ onboarding-sync-form-input =
 onboarding-sync-form-continue-button = Mede
 onboarding-sync-form-skip-login-button = Kal citep man
 
-## This is part of the line "Enter your email to continue to Firefox Sync"
+## This is part of the line "Enter your email to continue to Waterfox Sync"
 
 onboarding-sync-form-header = Ket email mamegi
 onboarding-sync-form-sub-header = me mede i { -sync-brand-name }

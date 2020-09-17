@@ -141,7 +141,7 @@ about-telemetry-origin-origin = oarsprong
 about-telemetry-origin-count = oantal
 # Variables:
 #   $telemetryServerOwner (String): the value of the toolkit.telemetry.server_owner preference. Typically "Mozilla"
-about-telemetry-origins-explanation = <a data-l10n-name="origin-doc-link">Origin-telemetry yn Firefox</a> kodearret gegevens eardat se ferstjoerd wurde, sadat { $telemetryServerOwner } dingen telle kin, mar net witte kin of in bepaalde { -brand-product-name } wol of net oan dat oantal bydroegen hat. (<a data-l10n-name="prio-blog-link">mear ynfo</a>)
+about-telemetry-origins-explanation = <a data-l10n-name="origin-doc-link">Origin-telemetry yn Waterfox</a> kodearret gegevens eardat se ferstjoerd wurde, sadat { $telemetryServerOwner } dingen telle kin, mar net witte kin of in bepaalde { -brand-product-name } wol of net oan dat oantal bydroegen hat. (<a data-l10n-name="prio-blog-link">mear ynfo</a>)
 # Variables:
 #  $process (String): type of process in subsection headers ( e.g. "content", "parent" )
 about-telemetry-process = { $process }-proses

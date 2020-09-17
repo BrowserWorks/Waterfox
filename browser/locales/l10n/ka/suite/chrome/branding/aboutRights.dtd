@@ -1,7 +1,7 @@
 <!-- This Source Code Form is subject to the terms of the Mozilla Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
-<!-- LOCALIZATION NOTE This file is very similar to the one in Firefox from browser/locales/en-US/chrome/browser/aboutRights.dtd so you can use that file as a starting point -->
+<!-- LOCALIZATION NOTE This file is very similar to the one in Waterfox from browser/locales/en-US/chrome/browser/aboutRights.dtd so you can use that file as a starting point -->
 <!-- rights.locale-direction instead of the usual local.dir entity, so RTL can skip translating page. -->
 <!ENTITY rights.locale-direction "ltr">
 <!ENTITY rights.pagetitle       "about:rights">
@@ -20,7 +20,7 @@
 <!ENTITY rights.intro-point1b "Mozilla საზოგადო ლიცენზიით">
 <!ENTITY rights.intro-point1c ". ეს ნიშნავს, რომ შეგიძლიათ &brandShortName; გამოიყენოთ, გაამრავლოთ და გაავრცელოთ.  ასევე, შეგიძლიათ შეცვალოთ პირველწყარო კოდი, რომლითაც შექმნილია &brandShortName;, თქვენი მოთხოვნების შესაბამისად. Mozilla-ს საზოგადობრივი ლიცენზია ასევე გაძლევთ უფლებას გაავრცელოთ თქვენი სახეცვლილი ვერსიები.">
 
-<!ENTITY rights.intro-point2a "Mozilla არ გაძლევთ რაიმე უფლებას ისარგებლოთ Mozilla და Firefox სავაჭრო ნიშნებით ან ლოგოთი. დამატებითი ინფორმაცია სავაჭრო ნიშნებზე შეგიძლიათ მოიძიოთ ">
+<!ENTITY rights.intro-point2a "Mozilla არ გაძლევთ რაიმე უფლებას ისარგებლოთ Mozilla და Waterfox სავაჭრო ნიშნებით ან ლოგოთი. დამატებითი ინფორმაცია სავაჭრო ნიშნებზე შეგიძლიათ მოიძიოთ ">
 
 <!ENTITY rights.intro-point2aa "&vendorShortName; არ გაძლევთ რაიმე უფლებას ისარგებლოთ &quot;&brandFullName;&quot; სავაჭრო ნიშნებით ან ლოგოთი. დამატებითი ინფორმაცია სავაჭრო ნიშნებზე შეგიძლიათ მოიძიოთ ">
 <!ENTITY rights.intro-point2b "ამ საიტზე">

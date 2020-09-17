@@ -444,9 +444,9 @@ addon-permissions-empty = לתוספת זו לא נדרשות הרשאות
 recommended-extensions-heading = הרחבות מומלצות
 recommended-themes-heading = ערכות נושא מומלצות
 
-# A recommendation for the Firefox Color theme shown at the bottom of the theme
+# A recommendation for the Waterfox Color theme shown at the bottom of the theme
 # list view. The "Firefox Color" name itself should not be translated.
-recommended-theme-1 = גל של יצירתיות שוטף אותך? <a data-l10n-name="link">ניתן ליצור ערכת נושא משלך בעזרת Firefox Color.</a>
+recommended-theme-1 = גל של יצירתיות שוטף אותך? <a data-l10n-name="link">ניתן ליצור ערכת נושא משלך בעזרת Waterfox Color.</a>
 
 ## Page headings
 

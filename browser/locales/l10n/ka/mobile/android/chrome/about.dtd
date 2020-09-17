@@ -17,5 +17,5 @@
 <!ENTITY aboutPage.credits.label                "პროექტის მონაწილეები">
 <!ENTITY aboutPage.license.label                "ლიცენზიის შესახებ">
 
-<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Firefox" being trademarked, that's why we use it, instead of brandShortName. -->
-<!ENTITY aboutPage.logoTrademark                "Firefox და Firefox ლოგოები Mozilla-ს ფონდის სავაჭრო ნიშნებია. ყველა უფლება დაცულია.">
+<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Waterfox" being trademarked, that's why we use it, instead of brandShortName. -->
+<!ENTITY aboutPage.logoTrademark                "Firefox და Waterfox ლოგოები Mozilla-ს ფონდის სავაჭრო ნიშნებია. ყველა უფლება დაცულია.">

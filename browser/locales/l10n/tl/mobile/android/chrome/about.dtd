@@ -17,5 +17,5 @@
 <!ENTITY aboutPage.credits.label                "Mga credit">
 <!ENTITY aboutPage.license.label                "Impormasyon sa pag-License">
 
-<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Firefox" being trademarked, that's why we use it, instead of brandShortName. -->
-<!ENTITY aboutPage.logoTrademark                "Ang Firefox at mga logo ng Firefox ay tatak-pangkalakal ng Mozilla Foundation.">
+<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Waterfox" being trademarked, that's why we use it, instead of brandShortName. -->
+<!ENTITY aboutPage.logoTrademark                "Ang Waterfox at mga logo ng Waterfox ay tatak-pangkalakal ng Waterfox Ltd..">

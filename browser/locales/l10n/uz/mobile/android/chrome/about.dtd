@@ -16,6 +16,6 @@
 <!ENTITY aboutPage.relNotes.label               "Ushbu versiya ma’lumotlari">
 <!ENTITY aboutPage.credits.label                "Qarzdorlar">
 <!ENTITY aboutPage.license.label                "Litsenziya ma`lumotlari">
-<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Firefox" being trademarked, that's why we use it, instead of brandShortName. -->
+<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Waterfox" being trademarked, that's why we use it, instead of brandShortName. -->
 
-<!ENTITY aboutPage.logoTrademark                "Firefox va Firefox emblemalari Mozilla Foundation savdo belgilaridir.">
+<!ENTITY aboutPage.logoTrademark                "Firefox va Waterfox emblemalari Waterfox Ltd. savdo belgilaridir.">

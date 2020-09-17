@@ -46,9 +46,9 @@ serviceworker-empty-intro-link = अधिक जानें
 # Header for the Errors and Warnings section of Manifest inspection displayed in the application panel.
 manifest-item-warnings = त्रुटियां तथा चेतावनीयां
 
-# Text displayed as an error when there has been a Firefox DevTools error while
+# Text displayed as an error when there has been a Waterfox DevTools error while
 # trying to load the manifest
-manifest-loaded-devtools-error = Firefox DevTools त्रुटि
+manifest-loaded-devtools-error = Waterfox DevTools त्रुटि
 
 # Text displayed at manifest icons to label their purpose, as declared
 # in the manifest.

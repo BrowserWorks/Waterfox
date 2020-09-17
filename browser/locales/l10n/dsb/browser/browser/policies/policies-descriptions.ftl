@@ -4,7 +4,7 @@
 
 
 ## The Enterprise Policies feature is aimed at system administrators
-## who want to deploy these settings across several Firefox installations
+## who want to deploy these settings across several Waterfox installations
 ## all at once. This is traditionally done through the Windows Group Policy
 ## feature, but the system also supports other forms of deployment.
 ## These are short descriptions for individual policies, to be displayed
@@ -30,8 +30,8 @@ policy-DisableDefaultBrowserAgent = Zawoborajśo standardnemu agentoju wobglědo
 policy-DisableDeveloperTools = Pśistup k wuwijaŕskim rědam blokěrowaś.
 policy-DisableFeedbackCommands = Pśikaze znjemóžniś, kótarež komentary z menija Pomoc sćelu (Pósudk pósłaś a Wobšudnikojske sedło k wěsći daś)
 policy-DisableFirefoxAccounts = Słužby na zakłaźe { -fxaccount-brand-name } znjemóžniś, inkluziwnje Sync.
-# Firefox Screenshots is the name of the feature, and should not be translated.
-policy-DisableFirefoxScreenshots = Funkciju Firefox Screenshots znjemóžniś.
+# Waterfox Screenshots is the name of the feature, and should not be translated.
+policy-DisableFirefoxScreenshots = Funkciju Waterfox Screenshots znjemóžniś.
 policy-DisableFirefoxStudies = { -brand-short-name } zakazaś, studije wuwjasć.
 policy-DisableForgetButton = Pśistup k tłocaškoju Zabyś zakazaś.
 policy-DisableFormHistory = Pytańsku a formularnu historiju se njespomnjeś.
@@ -62,7 +62,7 @@ policy-EncryptedMediaExtensions = Encrypted Media Extension zmóžniś abo znjem
 policy-Extensions = Rozšyrjenja instalěrowaś, wótinstalěrowaś abo zastajiś. Instalaciska opcija ma URL abo sćažki ako parametry. Opciji Wótinstalěrowaś a Zastajiś ID wužywatej.
 policy-ExtensionSettings = Wšykne aspekty instalacije rozšyrjenjow zastojaś.
 policy-ExtensionUpdate = Awtomatiske aktualizacije rozšyrjenjow zmóžniś abo znjemóžniś.
-policy-FirefoxHome = Firefox Home konfigurěrowaś.
+policy-FirefoxHome = Waterfox Home konfigurěrowaś.
 policy-FlashPlugin = Wužywanje tykaca Flash dowóliś abo zakazaś.
 policy-Handlers = Standardne nałožeńske pśeźěłaki konfigurěrowaś
 policy-HardwareAcceleration = Jolic njewěrno, hardwarowe póspěšenje znjemóžniś.

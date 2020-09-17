@@ -3,18 +3,18 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 head-title = O programerskim alatima
-enable-title = Omogući programerske alate Firefoxa
-enable-inspect-element-title = Omogući programerske alate Firefoxa za korištenje alata „Ispitaj element”
+enable-title = Omogući programerske alate Waterfoxa
+enable-inspect-element-title = Omogući programerske alate Waterfoxa za korištenje alata „Ispitaj element”
 enable-inspect-element-message = Istraži i uredi HTML i CSS pomoću Inspektora u programerskim alatima.
-enable-about-debugging-message = Razvijaj i ispravljaj greške Web proširenja, internetske radne procese, radne procese usluga i još mnogo toga pomoću Firefoxovih programerskih alata.
+enable-about-debugging-message = Razvijaj i ispravljaj greške Web proširenja, internetske radne procese, radne procese usluga i još mnogo toga pomoću Waterfoxovih programerskih alata.
 enable-key-shortcut-message = Aktivirao/la si prečac programerskih alata. Ako je to bila greška, možeš zatvoriti ovu karticu.
 enable-menu-message = Usavrši HTML, CSS i JavaScript tvoje web stranice pomoću alata poput Inspektora i Debagera.
-enable-common-message = Programerski alati Firefoxa su standardno onemogućeni, jer to povećava kontrolu nad preglednikom.
+enable-common-message = Programerski alati Waterfoxa su standardno onemogućeni, jer to povećava kontrolu nad preglednikom.
 enable-learn-more-link = Saznaj više o programerskim alatima
 enable-enable-button = Omogući programerske alate
 enable-close-button = Zatvori ovu karticu
 
-welcome-title = Pozdravljamo te u programerskim alatima Firefoxa!
+welcome-title = Pozdravljamo te u programerskim alatima Waterfoxa!
 newsletter-title = Mozillin bilten za programere
 newsletter-message = Dobij vijesti, trikove i resurse programera direktno u tvoj poštanski sandučić.
 newsletter-email-placeholder =
@@ -24,8 +24,8 @@ newsletter-subscribe-button = Pretplati se
 newsletter-thanks-title = Hvala!
 newsletter-thanks-message = Ako prethodno nisi potvrdio/la prijavu na neki Mozilla bilten, možda to moraš učiniti. Potraži našu e-poruku u svom ulaznom poštanskom pretincu ili u filtru za neželjenu poštu.
 
-footer-title = Firefox izdanje za programere
-footer-message = Tražiš više od običnih programerskih alata? Provjeri Firefox preglednik koji je izgrađen izričito za programere i moderan radni proces.
+footer-title = Waterfox izdanje za programere
+footer-message = Tražiš više od običnih programerskih alata? Provjeri Waterfox preglednik koji je izgrađen izričito za programere i moderan radni proces.
 footer-learn-more-link = Saznaj više
 
 features-learn-more = Saznaj više

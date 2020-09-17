@@ -468,9 +468,9 @@ addon-permissions-empty = Tiện ích mở rộng này không yêu cầu bất k
 recommended-extensions-heading = Tiện ích mở rộng được đề xuất
 recommended-themes-heading = Chủ đề được đề xuất
 
-# A recommendation for the Firefox Color theme shown at the bottom of the theme
+# A recommendation for the Waterfox Color theme shown at the bottom of the theme
 # list view. The "Firefox Color" name itself should not be translated.
-recommended-theme-1 = Cảm thấy muốn sáng tạo? <a data-l10n-name="link">Xây dựng chủ đề của riêng bạn với Firefox Color.</a>
+recommended-theme-1 = Cảm thấy muốn sáng tạo? <a data-l10n-name="link">Xây dựng chủ đề của riêng bạn với Waterfox Color.</a>
 
 ## Page headings
 

@@ -42,7 +42,7 @@ onboarding-cards-dismiss =
 
 ## Welcome full page string
 
-## Firefox Sync modal dialog strings.
+## Waterfox Sync modal dialog strings.
 
 onboarding-sync-welcome-header = તમારી સાથે { -brand-product-name } લો
 onboarding-sync-welcome-content = તમારા બધા ઉપકરણો પર તમારા બુકમાર્ક્સ, ઇતિહાસ, પાસવર્ડ્સ અને અન્ય સેટિંગ્સ મેળવો.
@@ -54,7 +54,7 @@ onboarding-sync-form-input =
 onboarding-sync-form-continue-button = ચાલુ રાખો
 onboarding-sync-form-skip-login-button = આ પગલું છોડી દો
 
-## This is part of the line "Enter your email to continue to Firefox Sync"
+## This is part of the line "Enter your email to continue to Waterfox Sync"
 
 onboarding-sync-form-header = તમારા ઇમેઇલ દાખલ કરો
 onboarding-sync-form-sub-header = { -sync-brand-name } ચાલુ રાખવા માટે

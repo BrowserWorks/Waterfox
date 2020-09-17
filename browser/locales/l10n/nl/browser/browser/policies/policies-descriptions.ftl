@@ -4,7 +4,7 @@
 
 
 ## The Enterprise Policies feature is aimed at system administrators
-## who want to deploy these settings across several Firefox installations
+## who want to deploy these settings across several Waterfox installations
 ## all at once. This is traditionally done through the Windows Group Policy
 ## feature, but the system also supports other forms of deployment.
 ## These are short descriptions for individual policies, to be displayed
@@ -30,8 +30,8 @@ policy-DisableDefaultBrowserAgent = Voorkomen dat de standaard browseragent enig
 policy-DisableDeveloperTools = Toegang tot de ontwikkelaarshulpmiddelen blokkeren.
 policy-DisableFeedbackCommands = Opdrachten voor het verzenden van feedback vanuit het menu Help uitschakelen (Feedback verzenden en Misleidende website rapporteren).
 policy-DisableFirefoxAccounts = Op { -fxaccount-brand-name } gebaseerde services uitschakelen, waaronder Sync.
-# Firefox Screenshots is the name of the feature, and should not be translated.
-policy-DisableFirefoxScreenshots = De Firefox Screenshots-functie uitschakelen.
+# Waterfox Screenshots is the name of the feature, and should not be translated.
+policy-DisableFirefoxScreenshots = De Waterfox Screenshots-functie uitschakelen.
 policy-DisableFirefoxStudies = Voorkomen dat { -brand-short-name } onderzoeken uitvoert.
 policy-DisableForgetButton = Toegang tot de knop Vergeten voorkomen.
 policy-DisableFormHistory = Geen zoek- en formuliergeschiedenis onthouden.
@@ -62,7 +62,7 @@ policy-EncryptedMediaExtensions = Versleutelde media-extensies in- of uitschakel
 policy-Extensions = Extensies installeren, de-installeren of vergrendelen. De optie voor installeren gebruikt URL’s of paden als parameters. De opties voor de-installeren en vergrendelen gebruiken extensie-ID’s.
 policy-ExtensionSettings = Alle aspecten van installatie van extensies beheren.
 policy-ExtensionUpdate = Automatische extensie-updates inschakelen of uitschakelen.
-policy-FirefoxHome = De startpagina van Firefox instellen.
+policy-FirefoxHome = De startpagina van Waterfox instellen.
 policy-FlashPlugin = Gebruik van de Flash-plug-in toestaan of weigeren.
 policy-Handlers = Standaard toepassinghandlers configureren
 policy-HardwareAcceleration = Wanneer false, hardwareversnelling uitschakelen.

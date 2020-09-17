@@ -3,13 +3,13 @@
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <!-- LOCALIZATION NOTE: For this feature, "installation" is used to mean "this
- discrete download of Firefox" and "version" is used to mean "the specific
- revision number of a given Firefox channel". These terms are not synonymous.
+ discrete download of Waterfox" and "version" is used to mean "the specific
+ revision number of a given Waterfox channel". These terms are not synonymous.
 -->
 
 <!ENTITY window.title "Naidheachdan cudromach">
 <!ENTITY window.style "width: 490px">
-<!ENTITY sync "Airson fiosrachadh a shioncronachadh a shàbhail thu ann am Firefox leis an stàladh seo de &brandShortName;, clàraich a-steach leis a’ &syncBrand.fxAccount.label; agad.">
+<!ENTITY sync "Airson fiosrachadh a shioncronachadh a shàbhail thu ann am Waterfox leis an stàladh seo de &brandShortName;, clàraich a-steach leis a’ &syncBrand.fxAccount.label; agad.">
 <!ENTITY continue-button "Lean air adhart">
 
-<!ENTITY mainText "Tha pròifil ùr aig an stàladh seo de &brandShortName;. Cha cho-roinn e comharran-lìn, faclan-faire no roghainnean a’ chleachdaiche le stàlaidhean eile de Firefox (a’ gabhail a-staigh Firefox, Firefox ESR, Firefox Beta, Firefox Developer Edition agus Firefox Nightly) air a’ choimpiutair seo.">
+<!ENTITY mainText "Tha pròifil ùr aig an stàladh seo de &brandShortName;. Cha cho-roinn e comharran-lìn, faclan-faire no roghainnean a’ chleachdaiche le stàlaidhean eile de Waterfox (a’ gabhail a-staigh Waterfox, Waterfox ESR, Waterfox Beta, Waterfox Developer Edition agus Waterfox Nightly) air a’ choimpiutair seo.">

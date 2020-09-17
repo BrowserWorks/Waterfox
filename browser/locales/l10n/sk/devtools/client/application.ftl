@@ -107,7 +107,7 @@ manifest-loaded-ok = Manifest bol načítaný.
 # load the manifest
 manifest-loaded-error = Pri načítaní manifestu nastala chyba:
 
-# Text displayed as an error when there has been a Firefox DevTools error while
+# Text displayed as an error when there has been a Waterfox DevTools error while
 # trying to load the manifest
 manifest-loaded-devtools-error = Chyba vo vývojárskych nástrojoch
 

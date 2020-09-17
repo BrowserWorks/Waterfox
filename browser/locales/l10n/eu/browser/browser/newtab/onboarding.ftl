@@ -60,11 +60,11 @@ onboarding-fullpage-welcome-subheader = Has gaitezen arakatzen egin dezakezun gu
 onboarding-fullpage-form-email =
     .placeholder = Zure helbide elektronikoa…
 
-## Firefox Sync modal dialog strings.
+## Waterfox Sync modal dialog strings.
 
 onboarding-sync-welcome-header = Eraman { -brand-product-name } aldean
 onboarding-sync-welcome-content = Izan laster-markak, historia, pasahitzak eta beste ezarpenak eskura zure gailu guztietan.
-onboarding-sync-welcome-learn-more-link = Firefox kontuei buruzko argibide gehiago
+onboarding-sync-welcome-learn-more-link = Waterfox kontuei buruzko argibide gehiago
 
 onboarding-sync-form-input =
     .placeholder = Helbide elektronikoa
@@ -72,7 +72,7 @@ onboarding-sync-form-input =
 onboarding-sync-form-continue-button = Jarraitu
 onboarding-sync-form-skip-login-button = Saltatu urrats hau
 
-## This is part of the line "Enter your email to continue to Firefox Sync"
+## This is part of the line "Enter your email to continue to Waterfox Sync"
 
 onboarding-sync-form-header = Idatzi zure helbide elektronikoa
 onboarding-sync-form-sub-header = { -sync-brand-name }-ekin jarraitzeko.
@@ -85,7 +85,7 @@ onboarding-benefit-products-text = Burutu atazak zure gailuen artean pribatutasu
 
 # "Personal Data Promise" is a concept that should be translated consistently
 # across the product. It refers to a concept shown elsewhere to the user: "The
-# Firefox Personal Data Promise is the way we honor your data in everything we
+# Waterfox Personal Data Promise is the way we honor your data in everything we
 # make and do. We take less data. We keep it safe. And we make sure that we are
 # transparent about how we use it."
 onboarding-benefit-privacy-text = Egiten dugun guztia gure Datu Pertsonalen Zin-egitearekin bat dator: Gutxiago hartu. Seguru mantendu. Sekreturik ez.

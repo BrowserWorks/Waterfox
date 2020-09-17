@@ -5,7 +5,7 @@
 rights-title = Sa ta'uej yì'i ma
 rights-intro = { -brand-full-name } huin ngo sa 'iaj sun ni'nínj, sa nagi'iaj ga'î nej dugui' ma da'ua ngë yumi guii. Na hui da'aj nej sa da'uit gini'int:
 rights-intro-point-1 = { -brand-short-name } sa da'uit ganikaj ni'ñanjt huin <a data-l10n-name="mozilla-public-license-link">Si nuguan' Mozilla</a>. Sa gatâ huin si ga'ue garasunt ni duguchint { -brand-short-name } riña a'ngo dugui'. Ga'ue ganadunat daj ga si kodigo  { -brand-short-name } daj gani ruat. Si nuguan' Mozilla huin si ga'ué garasut sa nagi'iaj ma'ant.
-rights-intro-point-2 = Si ga'ue riki Fundasión Mozilla nej sa huin si'iaj ma huenda nagi'iaj si'iat, daj run' si da'nga' Firefox. NI a'ngô nej sa ma na.<a data-l10n-name="mozilla-trademarks-link">ñuna</a>.
+rights-intro-point-2 = Si ga'ue riki Fundasión Mozilla nej sa huin si'iaj ma huenda nagi'iaj si'iat, daj run' si da'nga' Waterfox. NI a'ngô nej sa ma na.<a data-l10n-name="mozilla-trademarks-link">ñuna</a>.
 rights-intro-point-3 = Da'aj nej sa 'iaj sun nga { -brand-short-name }, daj run' sa nata' si gire' ma, ni ga'ue duguchinj nuguan'an riña { -vendor-short-name }. Ngà ga'nit si nuguant, ni gatà ruaj si raj yinat si { -vendor-short-name } duyi'ngaj si nuguant riña nej si sitiô Web da' nahuin hue'e ma.
 rights-intro-point-4 = Dânaj garasun ñunj nej nuguan' ganit riña { -vendor-short-name } asij riña { -brand-short-name } nataj daj hua ma.<a data-l10n-name="mozilla-privacy-policy-link">{ -brand-short-name } Nuguan' 'iaj ran yi'i ma</a>.
 rights-intro-point-4-unbranded = Daran' nuguan' 'iaj ran yi'i rasun na ni ñuna ga'ue ni'iajt.

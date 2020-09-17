@@ -67,7 +67,7 @@ cfr-doorhanger-pintab-step3 = 사이트에 업데이트가 있으면 고정된 �
 cfr-doorhanger-pintab-animation-pause = 일시 중지
 cfr-doorhanger-pintab-animation-resume = 계속
 
-## Firefox Accounts Message
+## Waterfox Accounts Message
 
 cfr-doorhanger-bookmark-fxa-header = 어디서나 북마크 동기화
 cfr-doorhanger-bookmark-fxa-body = 멋진 발견! 이제 다른 휴대 기기에서도 이 북마크를 사용해 보세요. { -fxaccount-brand-name }로 시작해 보세요.
@@ -167,7 +167,7 @@ cfr-doorhanger-send-tab-body = 탭 보내기를 사용하면 이 링크를 휴�
 cfr-doorhanger-send-tab-ok-button = 탭 보내기 사용해보기
     .accesskey = T
 
-## Firefox Send
+## Waterfox Send
 
 cfr-doorhanger-firefox-send-header = 이 PDF를 안전하게 공유하세요
 cfr-doorhanger-firefox-send-body = 종단 간 암호화와 완료시 사라지는 링크를 사용하여 중요한 문서를 안전하게 보관할 수 있습니다.
@@ -203,7 +203,7 @@ cfr-doorhanger-milestone-ok-button = 모두 보기
 cfr-doorhanger-milestone-close-button = 닫기
     .accesskey = C
 
-## What’s New Panel Content for Firefox 76
+## What’s New Panel Content for Waterfox 76
 
 
 ## Lockwise message

@@ -4,7 +4,7 @@
 
 
 ## The Enterprise Policies feature is aimed at system administrators
-## who want to deploy these settings across several Firefox installations
+## who want to deploy these settings across several Waterfox installations
 ## all at once. This is traditionally done through the Windows Group Policy
 ## feature, but the system also supports other forms of deployment.
 ## These are short descriptions for individual policies, to be displayed
@@ -30,8 +30,8 @@ policy-DisableDefaultBrowserAgent = Omboyke pe kundahára ijypyguáva oñepyrũv
 policy-DisableDeveloperTools = Ejoko ñangarekohára rembipurúpe jeike.
 policy-DisableFeedbackCommands = Eipe’a mbohapeha emondo hag̃ua neñe’ẽ pytyvõha poravorã guive (Emondo neñe’ẽ ha emomarandu tenda imarãva).
 policy-DisableFirefoxAccounts = Eipe’a mba’epytyvõrã { -fxaccount-brand-name } pegua, oĩhápe avei Sync.
-# Firefox Screenshots is the name of the feature, and should not be translated.
-policy-DisableFirefoxScreenshots = Eipe’a Firefox Screenshots rembiapoite.
+# Waterfox Screenshots is the name of the feature, and should not be translated.
+policy-DisableFirefoxScreenshots = Eipe’a Waterfox Screenshots rembiapoite.
 policy-DisableFirefoxStudies = Ani eheja { -brand-short-name } omomba’apo ñembokatupyry.
 policy-DisableForgetButton = Ani eheja votõ Tesaráipe jeike.
 policy-DisableFormHistory = Ani nemandu’a jeheka ha tembiasakue myanyhẽha rehe.
@@ -62,7 +62,7 @@ policy-EncryptedMediaExtensions = Emyandy térã embogue Jepysokue papapypyréva
 policy-Extensions = Emboguejy, eipe’a térã ejoko jepysokue. Pe poravopyrã Ñemohenda ojapyhy URL kundaharape térã tape hechapyrãva. Umi poravopyrã pe’a ha joko oguereko jepysokue ID.
 policy-ExtensionSettings = Eñangareko opaite mba’e jepysokue ñemohendáre.
 policy-ExtensionUpdate = Embojuruja térã eipe’a ñembohekopyahu ijeheguíva jepysokue rehegua.
-policy-FirefoxHome = Emboheko Firefox ñepyrũ.
+policy-FirefoxHome = Emboheko Waterfox ñepyrũ.
 policy-FlashPlugin = Emoneĩ térã embotove mboguejyrã’i Flash jepuru.
 policy-Handlers = Emboheko tembipuru’i ñangarekoha ypykuegua.
 policy-HardwareAcceleration = Japúramo, eipe’a hardware mbopya’eha.

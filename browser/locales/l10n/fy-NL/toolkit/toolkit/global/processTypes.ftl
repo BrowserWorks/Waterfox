@@ -10,7 +10,7 @@ process-type-privilegedabout = Oer Mei privileezjes
 
 # process used to run privileged mozilla pages,
 # such as accounts.firefox.com
-process-type-privilegedmozilla = Mozilla-ynhâld mei privileezjes
+process-type-privilegedmozilla = Waterfox-ynhâld mei privileezjes
 
 process-type-extension = Utwreiding
 

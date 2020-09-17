@@ -17,7 +17,7 @@
 
 <!-- LOCALIZATION NOTE (performanceUI.disabledRealTime.disabledE10S): This string
   -  is displayed as a message for why the real time overview graph is disabled
-  -  when running on a build that can run multiprocess Firefox, but just is not enabled. -->
+  -  when running on a build that can run multiprocess Waterfox, but just is not enabled. -->
 <!ENTITY performanceUI.disabledRealTime.disabledE10S "Włącz obsługę wielu procesów w ustawieniach, aby dane były przedstawiane w czasie rzeczywistym.">
 
 <!-- LOCALIZATION NOTE (performanceUI.bufferStatusFull): This string

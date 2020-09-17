@@ -18,7 +18,7 @@ about-telemetry-page-title = Data Telemetri
 about-telemetry-current-store = Penyimpanan Saat Ini:
 about-telemetry-more-information = Butuh informasi lebih lanjut?
 about-telemetry-firefox-data-doc = <a data-l10n-name="data-doc-link">Firefox Data Documentation</a> berisi panduan tentang bagaimana bekerja dengan alat data kami.
-about-telemetry-telemetry-client-doc = <a data-l10n-name="client-doc-link">Dokumentasi klien Firefox Telemetry</a> termasuk definisi untuk konsep, dokumentasi API, dan referensi data.
+about-telemetry-telemetry-client-doc = <a data-l10n-name="client-doc-link">Dokumentasi klien Waterfox Telemetry</a> termasuk definisi untuk konsep, dokumentasi API, dan referensi data.
 about-telemetry-telemetry-dashboard = <a data-l10n-name="dashboard-link">Dasbor Telemetry</a> mengizinkan Anda memvisualkan data yang diterima Mozilla via Telemetry.
 about-telemetry-telemetry-probe-dictionary = <a data-l10n-name="probe-dictionary-link">Probe Dictionary</a> menyediakan rincian dan deskripsi tentang data-data pemeriksaan yang dikumpulkan oleh Telemetry.
 about-telemetry-show-in-Firefox-json-viewer = Buka di penampil JSON

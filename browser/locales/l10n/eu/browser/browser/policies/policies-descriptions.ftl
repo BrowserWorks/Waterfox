@@ -4,7 +4,7 @@
 
 
 ## The Enterprise Policies feature is aimed at system administrators
-## who want to deploy these settings across several Firefox installations
+## who want to deploy these settings across several Waterfox installations
 ## all at once. This is traditionally done through the Windows Group Policy
 ## feature, but the system also supports other forms of deployment.
 ## These are short descriptions for individual policies, to be displayed
@@ -50,8 +50,8 @@ policy-DisableFeedbackCommands = Desgaitu iritzia bidaltzeko komandoak 'Laguntza
 
 policy-DisableFirefoxAccounts = Desgaitu { -fxaccount-brand-name }(r)en oinarritutako zerbitzuak, Sync barne.
 
-# Firefox Screenshots is the name of the feature, and should not be translated.
-policy-DisableFirefoxScreenshots = Desgaitu Firefoxen pantaila-argazkien eginbidea.
+# Waterfox Screenshots is the name of the feature, and should not be translated.
+policy-DisableFirefoxScreenshots = Desgaitu Waterfoxen pantaila-argazkien eginbidea.
 
 policy-DisableFirefoxStudies = Eragotzi { -brand-short-name }(r)i esperimentuak exekutatzea.
 
@@ -106,7 +106,7 @@ policy-ExtensionSettings = Kudeatu hedapenen instalazioko arlo guztiak.
 
 policy-ExtensionUpdate = Gaitu edo desgaitu hedapenen eguneraketa automatikoa.
 
-policy-FirefoxHome = Konfiguratu Firefox Home.
+policy-FirefoxHome = Konfiguratu Waterfox Home.
 
 policy-FlashPlugin = Baimendu edo ukatu Flash plugina erabiltzea.
 

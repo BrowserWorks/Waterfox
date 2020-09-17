@@ -13,4 +13,4 @@
 ## Reference: https://www.mozilla.org/styleguide/communications/translation/
 
 -brand-short-name = Thunderbird
--vendor-short-name = Mozilla
+-vendor-short-name = Waterfox

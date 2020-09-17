@@ -58,11 +58,11 @@ onboarding-fullpage-welcome-subheader = Gayi'ì' gini'ioj daran' sa ga'ue gi'iá
 onboarding-fullpage-form-email =
     .placeholder = Si korreô rè'…
 
-## Firefox Sync modal dialog strings.
+## Waterfox Sync modal dialog strings.
 
 onboarding-sync-welcome-header = Garasun { -brand-product-name } guendâ gachē nunt
 onboarding-sync-welcome-content = Gatu riña si markadot, riña gaché nut ni riña nagi'iát si ata't.
-onboarding-sync-welcome-learn-more-link = Doj nuguan’ huā rayi’î nej si kuendâ Firefox
+onboarding-sync-welcome-learn-more-link = Doj nuguan’ huā rayi’î nej si kuendâ Waterfox
 
 onboarding-sync-form-input =
     .placeholder = Korrêo
@@ -70,7 +70,7 @@ onboarding-sync-form-input =
 onboarding-sync-form-continue-button = Gun' ne' ñaan
 onboarding-sync-form-skip-login-button = Gūej yichrá chrēj nan
 
-## This is part of the line "Enter your email to continue to Firefox Sync"
+## This is part of the line "Enter your email to continue to Waterfox Sync"
 
 onboarding-sync-form-header = Gachrūn si korreot
 onboarding-sync-form-sub-header = da' gatut riña { -sync-brand-name }
@@ -83,7 +83,7 @@ onboarding-benefit-products-text = Garasun 'ngo yi'nïn rasun nikaj ni'ñanj ng�
 
 # "Personal Data Promise" is a concept that should be translated consistently
 # across the product. It refers to a concept shown elsewhere to the user: "The
-# Firefox Personal Data Promise is the way we honor your data in everything we
+# Waterfox Personal Data Promise is the way we honor your data in everything we
 # make and do. We take less data. We keep it safe. And we make sure that we are
 # transparent about how we use it."
 onboarding-benefit-privacy-text = Daran' sa hua ni diguminj nuguan' hua rayi'ît: Doj garasunt. Dugumi man. Nitaj nuguan' achrij hùij.

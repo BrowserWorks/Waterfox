@@ -83,7 +83,7 @@ cfr-doorhanger-pintab-animation-pause = Duyichin' akuan'
 cfr-doorhanger-pintab-animation-resume = Gun ne' ñaa
 
 
-## Firefox Accounts Message
+## Waterfox Accounts Message
 
 cfr-doorhanger-bookmark-fxa-header = Nagi'iaj guña si markadôt daran' hiuj u.
 cfr-doorhanger-bookmark-fxa-body = Dugunàj hua sa narî't! Da'uît ga'nïnjt markadô nan riña nej si aga't atât. Gayi'ì ngà 'ngo { -fxaccount-brand-name }.
@@ -173,7 +173,7 @@ cfr-doorhanger-send-tab-body = Rakïj ñanj taj Ga'nïnj gan'an a'nïnj da' duyi
 cfr-doorhanger-send-tab-ok-button = Garahuè dàj 'iaj sun Ga'nïnj Rakïj ñanj
     .accesskey = T
 
-## Firefox Send
+## Waterfox Send
 
 cfr-doorhanger-firefox-send-header = Duyinga' PDF nan
 cfr-doorhanger-firefox-send-body = Nga sifradô ekstremo nda ekstremo ga'ue gimàn sà' nej ñanj màn 'iát riña nej duguî' yi'ìi dadin' nare' link ngà gisîj 'iaj sunt.
@@ -208,7 +208,7 @@ cfr-doorhanger-milestone-heading =
 cfr-doorhanger-milestone-ok-button = Ni'iaj daran'anj
     .accesskey = S
 
-## What’s New Panel Content for Firefox 76
+## What’s New Panel Content for Waterfox 76
 
 ## Lockwise message
 

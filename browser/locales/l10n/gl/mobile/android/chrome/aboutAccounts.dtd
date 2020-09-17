@@ -2,7 +2,7 @@
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
-<!ENTITY aboutAccounts.connected.title "Contas Firefox">
+<!ENTITY aboutAccounts.connected.title "Contas Waterfox">
 <!ENTITY aboutAccounts.connected.description "Está conectado como">
 <!ENTITY aboutAccounts.syncPreferences.label "Prema aquí para comprobar os axustes de Sync">
 
@@ -10,4 +10,4 @@
 <!ENTITY aboutAccounts.retry.label "Tentar de novo">
 
 <!ENTITY aboutAccounts.restrictedError.title "Restrinxido">
-<!ENTITY aboutAccounts.restrictedError.description "Non é posíbel xestionar contas Firefox dende este perfil.">
+<!ENTITY aboutAccounts.restrictedError.description "Non é posíbel xestionar contas Waterfox dende este perfil.">

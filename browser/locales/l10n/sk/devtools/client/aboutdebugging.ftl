@@ -17,11 +17,11 @@ about-debugging-page-title-runtime-page = Ladenie - Runtime / { $selectedRuntime
 
 # Sidebar strings
 
-# Display name of the runtime for the currently running instance of Firefox. Used in the
+# Display name of the runtime for the currently running instance of Waterfox. Used in the
 # Sidebar and in the Setup page.
 about-debugging-this-firefox-runtime-name = Tento { -brand-shorter-name }
 
-# Sidebar heading for selecting the currently running instance of Firefox
+# Sidebar heading for selecting the currently running instance of Waterfox
 about-debugging-sidebar-this-firefox =
     .name = { about-debugging-this-firefox-runtime-name }
 
@@ -66,8 +66,8 @@ about-debugging-sidebar-item-connect-button-connection-timeout = Čas pripojenia
 about-debugging-sidebar-item-connected-label = Pripojené
 
 # Text displayed in sidebar items for remote devices where a compatible browser (eg
-# Firefox) has not been detected yet. Typically, Android phones connected via USB with
-# USB debugging enabled, but where Firefox is not started.
+# Waterfox) has not been detected yet. Typically, Android phones connected via USB with
+# USB debugging enabled, but where Waterfox is not started.
 about-debugging-sidebar-runtime-item-waiting-for-browser = Čakám na prehliadač…
 
 # Text displayed in sidebar items for remote devices that have been disconnected from the
@@ -160,7 +160,7 @@ about-debugging-network-location-form-duplicate = Server „{ $host-value }“ j
 
 # Below are the titles for the various categories of debug targets that can be found
 # on "runtime" pages of about:debugging.
-# Title of the temporary extensions category (only available for "This Firefox" runtime).
+# Title of the temporary extensions category (only available for "This Waterfox" runtime).
 about-debugging-runtime-temporary-extensions =
     .name = Dočasné rozšírenia
 # Title of the extensions category.
@@ -188,8 +188,8 @@ about-debugging-runtime-processes =
 about-debugging-runtime-service-workers-not-compatible = Konfigurácia vášho prehliadača nie je kompatibilná so službou Service Workers. <a>Ďalšie informácie</a>
 
 # Dedicated message for a backward compatibility issue that occurs when connecting:
-# from Fx 70+ to the old Firefox for Android (aka Fennec) which uses Fx 68.
-about-debugging-browser-version-too-old-fennec = Táto verzia Firefoxu nemôže ladiť Firefox pre Android (68). Odporúčame vám nainštalovať Firefox pre Android Nightly. <a>Viac podrobností</a>
+# from Fx 70+ to the old Waterfox for Android (aka Fennec) which uses Fx 68.
+about-debugging-browser-version-too-old-fennec = Táto verzia Waterfoxu nemôže ladiť Waterfox pre Android (68). Odporúčame vám nainštalovať Waterfox pre Android Nightly. <a>Viac podrobností</a>
 
 # Displayed for runtime info in runtime pages.
 # { $name } is brand name such as "Firefox Nightly"
@@ -219,18 +219,18 @@ about-debugging-debug-target-list-empty = Zatiaľ žiadne.
 # A target can be an addon, a tab, a worker...
 about-debugging-debug-target-inspect-button = Preskúmať
 
-# Text of a button displayed in the "This Firefox" page, in the Temporary Extension
+# Text of a button displayed in the "This Waterfox" page, in the Temporary Extension
 # section. Clicking on the button will open a file picker to load a temporary extension
 about-debugging-tmp-extension-install-button = Načítať dočasný doplnok…
 
-# Text displayed when trying to install a temporary extension in the "This Firefox" page.
+# Text displayed when trying to install a temporary extension in the "This Waterfox" page.
 about-debugging-tmp-extension-install-error = Pri inštalácii dočasného doplnku došlo k chybe.
 
-# Text of a button displayed for a temporary extension loaded in the "This Firefox" page.
+# Text of a button displayed for a temporary extension loaded in the "This Waterfox" page.
 # Clicking on the button will reload the extension.
 about-debugging-tmp-extension-reload-button = Obnoviť
 
-# Text of a button displayed for a temporary extension loaded in the "This Firefox" page.
+# Text of a button displayed for a temporary extension loaded in the "This Waterfox" page.
 # Clicking on the button will uninstall the extension and remove it from the page.
 about-debugging-tmp-extension-remove-button = Odstrániť
 

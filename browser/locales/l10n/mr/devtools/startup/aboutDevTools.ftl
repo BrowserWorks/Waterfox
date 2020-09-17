@@ -3,13 +3,13 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 head-title = डेव्हलपर साधनांबद्दल
-enable-title = Firefox डेव्हलपर साधने कार्यान्वयीत करा
+enable-title = Waterfox डेव्हलपर साधने कार्यान्वयीत करा
 enable-learn-more-link = विकसक साधनांनबद्दल अधिक जाणून घ्या
 enable-enable-button = डेव्हलपर साधने कार्यान्वयीत करा
 enable-close-button = हा टॅब बंद करा
 
-welcome-title = Firefox डेव्हलपर साधनामध्ये आपले स्वागत आहे!
-newsletter-title = Mozilla डेव्हलपर बातमीपत्र
+welcome-title = Waterfox डेव्हलपर साधनामध्ये आपले स्वागत आहे!
+newsletter-title = Waterfox डेव्हलपर बातमीपत्र
 newsletter-message = डेवलपर्स बातम्या, युक्ति व संसाधने मिळवा थेट आपल्या इनबॉक्समध्ये.
 newsletter-email-placeholder =
     .placeholder = ईमेल
@@ -17,7 +17,7 @@ newsletter-subscribe-button = सभासद व्हा
 newsletter-thanks-title = धन्यवाद!
 newsletter-thanks-message = आपण जर याआधी Mozilla संबंधित बातमीपत्राचे सभासदत्व नक्की केले नसेल तर आपल्याला ते करावे लागेल. आपला इनबॉक्स किंवा स्पॅम वर्गिक्रूत मेल्स मध्ये क्रुपया आमचा ई-मेल तपासा.
 
-footer-title = Firefox डेव्हलपर आवृत्ती
+footer-title = Waterfox डेव्हलपर आवृत्ती
 footer-learn-more-link = आणखी जाणा
 
 features-learn-more = आणखी जाणा

@@ -136,9 +136,9 @@ manifest-loaded-ok = Đã tải manifest.
 # load the manifest
 manifest-loaded-error = Có lỗi trong khi tải tập tin kê khai:
 
-# Text displayed as an error when there has been a Firefox DevTools error while
+# Text displayed as an error when there has been a Waterfox DevTools error while
 # trying to load the manifest
-manifest-loaded-devtools-error = Lỗi Firefox DevTools
+manifest-loaded-devtools-error = Lỗi Waterfox DevTools
 
 # Text displayed when the page has no manifest available
 manifest-non-existing = Không tìm thấy bảng kê khai để kiểm tra.

@@ -16,6 +16,6 @@
 <!ENTITY aboutPage.relNotes.label               "Թողարկման նշումները">
 <!ENTITY aboutPage.credits.label                "Հեղինակներ">
 <!ENTITY aboutPage.license.label                "Արտոնագրի մասին">
-<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Firefox" being trademarked, that's why we use it, instead of brandShortName. -->
+<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Waterfox" being trademarked, that's why we use it, instead of brandShortName. -->
 
-<!ENTITY aboutPage.logoTrademark                "Firefox-ը և Firefox-ի լոգոները Mozilla Foundation-ի ապրանքանիշներն են:">
+<!ENTITY aboutPage.logoTrademark                "Firefox-ը և Waterfox-ի լոգոները Waterfox Ltd.-ի ապրանքանիշներն են:">

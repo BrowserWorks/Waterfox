@@ -471,9 +471,9 @@ addon-permissions-empty = Это расширение не требует доп
 recommended-extensions-heading = Рекомендуемые расширения
 recommended-themes-heading = Рекомендуемые темы
 
-# A recommendation for the Firefox Color theme shown at the bottom of the theme
+# A recommendation for the Waterfox Color theme shown at the bottom of the theme
 # list view. The "Firefox Color" name itself should not be translated.
-recommended-theme-1 = Чувствуете прилив вдохновения? <a data-l10n-name="link">Создайте свою собственную тему с помощью Firefox Color.</a>
+recommended-theme-1 = Чувствуете прилив вдохновения? <a data-l10n-name="link">Создайте свою собственную тему с помощью Waterfox Color.</a>
 
 ## Page headings
 

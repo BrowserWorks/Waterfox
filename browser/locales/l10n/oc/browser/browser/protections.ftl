@@ -27,9 +27,9 @@ graph-week-summary-private-window = Traçadors blocats per { -brand-short-name }
 
 protection-report-webpage-title = Taula de bòrd de las proteccions
 protection-report-page-content-title = Taula de bòrd de las proteccions
-# This message shows when all privacy protections are turned off, which is why we use the word "can", Firefox is able to protect your privacy, but it is currently not.
+# This message shows when all privacy protections are turned off, which is why we use the word "can", Waterfox is able to protect your privacy, but it is currently not.
 protection-report-page-summary = { -brand-short-name } pòt protegir vòstra vida privada en colissa pendent que navegatz. Vaquí un resumit d’aquelas proteccions, que conten d’aisinas per contrarotlar vòstre seguretat en linha.
-# This message shows when at least some protections are turned on, we are more assertive compared to the message above, Firefox is actively protecting you.
+# This message shows when at least some protections are turned on, we are more assertive compared to the message above, Waterfox is actively protecting you.
 protection-report-page-summary-default = { -brand-short-name } protegís vòstra vida privada en colissa pendent que navegatz. Vaquí un resumit d’aquelas proteccions, que conten d’aisinas per contrarotlar vòstre seguretat en linha.
 
 protection-report-settings-link = Gerir los paramètres de vida privada e de seguretat

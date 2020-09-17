@@ -3,18 +3,18 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 head-title = Pri la iloj por programistoj
-enable-title = Aktivigi la ilojn de Firefox por programistoj
-enable-inspect-element-title = Aktivigi la ilojn de Firefox por programistoj por uzi «Inspekti elementon»
+enable-title = Aktivigi la ilojn de Waterfox por programistoj
+enable-inspect-element-title = Aktivigi la ilojn de Waterfox por programistoj por uzi «Inspekti elementon»
 enable-inspect-element-message = Esplori kaj redakti HTML kaj CSS per la inspektilo de la iloj por programistoj.
-enable-about-debugging-message = Programi kaj senerarigi WebExtensions, web workers, service workers kaj pli, per la iloj por programistoj de Firefox.
+enable-about-debugging-message = Programi kaj senerarigi WebExtensions, web workers, service workers kaj pli, per la iloj por programistoj de Waterfox.
 enable-key-shortcut-message = Vi aktivigis ŝparvojon de la iloj por programistoj. Se tio estis eraro, vi povas fermi tiun ĉi langeton.
 enable-menu-message = Perfektigi la HTML, CSS kaj JavaScript de via retejo per iloj kiel Inspektilo kaj Erarserĉilo.
-enable-common-message = La iloj por programistoj de Firefox estas norme malaktivaj por doni al vi pli da regado super via retumilo.
+enable-common-message = La iloj por programistoj de Waterfox estas norme malaktivaj por doni al vi pli da regado super via retumilo.
 enable-learn-more-link = Pli da informo pri la iloj por programistoj
 enable-enable-button = Aktivigi la ilojn por programistoj
 enable-close-button = Fermi tiun ĉi langeton
 
-welcome-title = Bonvenon al la iloj de Firefox por programistoj!
+welcome-title = Bonvenon al la iloj de Waterfox por programistoj!
 newsletter-title = Novaĵletero de Mozilla por programistoj
 newsletter-message = Ricevu novaĵojn por programistoj, trukojn kaj rimedojn rekte en via enirkesto.
 newsletter-email-placeholder =
@@ -24,8 +24,8 @@ newsletter-subscribe-button = Aboni
 newsletter-thanks-title = Dankon!
 newsletter-thanks-message = Se vi antaŭe ne konfirmis abonon al novaĵletero de Mozilla, vi eble devos tion fari. Bonvolu kontroli ĉu estas retpoŝto nia en via retpoŝta enirkesto aŭ trudmesaĝujo.
 
-footer-title = Firefox Developer Edition
-footer-message = Ĉu vi volas pli ol nur la iloj por programistoj? Kontrolu la retumilon de Firefox, kiu estis farita specife por programistoj kaj modernaj laborfluoj.
+footer-title = Waterfox Developer Edition
+footer-message = Ĉu vi volas pli ol nur la iloj por programistoj? Kontrolu la retumilon de Waterfox, kiu estis farita specife por programistoj kaj modernaj laborfluoj.
 footer-learn-more-link = Pli da informo
 
 features-learn-more = Pli da informo

@@ -171,7 +171,7 @@ Halo Pak Benitius,
 
 Perkenalkan saya Romi. Saya sedang mengalihbahasakan firefox ke Bahasa
 Indonesia. Saya menyertakan berkas affix untuk bahasa indonesia pada
-fitur pengecek ejaan Firefox. Oleh karena lisensinya GPL saya rasa
+fitur pengecek ejaan Waterfox. Oleh karena lisensinya GPL saya rasa
 tidak jadi masalah kan kalau saya sertakan dalam distribusi firefox?
 
 O ya, karena firefox bahasa Indonesia masih belum "official", saya
@@ -223,7 +223,7 @@ Damai!
 Saudara tercinta,
 
 memang, saya samasekali tidak keberatan berkas affix Indonesia
-diikutsertakan dalam distribusi Firefox.  Pada waktu saya susun file itu
+diikutsertakan dalam distribusi Waterfox.  Pada waktu saya susun file itu
 masih ada lisensi GPL saja.  Maka saya setuju dengan dipergunakannya
 lisensi GPL 2 dan GPL 3 untuk file-file itu.
 
@@ -235,7 +235,7 @@ On Fri, 2008-02-01 at 10:00 +0100, Romi Hardiyanto wrote:
 > 
 > Perkenalkan saya Romi. Saya sedang mengalihbahasakan firefox ke Bahasa
 > Indonesia. Saya menyertakan berkas affix untuk bahasa indonesia pada
-> fitur pengecek ejaan Firefox. Oleh karena lisensinya GPL saya rasa
+> fitur pengecek ejaan Waterfox. Oleh karena lisensinya GPL saya rasa
 > tidak jadi masalah kan kalau saya sertakan dalam distribusi firefox?
 > 
 > O ya, karena firefox bahasa Indonesia masih belum "official", saya
@@ -289,7 +289,7 @@ Pada tanggal 01/02/08, Benitius Brevoort
 > Saudara tercinta,
 >
 > memang, saya samasekali tidak keberatan berkas affix Indonesia
-> diikutsertakan dalam distribusi Firefox.  Pada waktu saya susun file itu
+> diikutsertakan dalam distribusi Waterfox.  Pada waktu saya susun file itu
 > masih ada lisensi GPL saja.  Maka saya setuju dengan dipergunakannya
 > lisensi GPL 2 dan GPL 3 untuk file-file itu.
 >
@@ -301,7 +301,7 @@ Pada tanggal 01/02/08, Benitius Brevoort
 > >
 > > Perkenalkan saya Romi. Saya sedang mengalihbahasakan firefox ke Bahasa
 > > Indonesia. Saya menyertakan berkas affix untuk bahasa indonesia pada
-> > fitur pengecek ejaan Firefox. Oleh karena lisensinya GPL saya rasa
+> > fitur pengecek ejaan Waterfox. Oleh karena lisensinya GPL saya rasa
 > > tidak jadi masalah kan kalau saya sertakan dalam distribusi firefox?
 > >
 > > O ya, karena firefox bahasa Indonesia masih belum "official", saya
@@ -383,7 +383,7 @@ On Mon, 2008-02-04 at 03:31 +0100, Romi Hardiyanto wrote:
 > > Saudara tercinta,
 > >
 > > memang, saya samasekali tidak keberatan berkas affix Indonesia
-> > diikutsertakan dalam distribusi Firefox.  Pada waktu saya susun file itu
+> > diikutsertakan dalam distribusi Waterfox.  Pada waktu saya susun file itu
 > > masih ada lisensi GPL saja.  Maka saya setuju dengan dipergunakannya
 > > lisensi GPL 2 dan GPL 3 untuk file-file itu.
 > >
@@ -395,7 +395,7 @@ On Mon, 2008-02-04 at 03:31 +0100, Romi Hardiyanto wrote:
 > > >
 > > > Perkenalkan saya Romi. Saya sedang mengalihbahasakan firefox ke Bahasa
 > > > Indonesia. Saya menyertakan berkas affix untuk bahasa indonesia pada
-> > > fitur pengecek ejaan Firefox. Oleh karena lisensinya GPL saya rasa
+> > > fitur pengecek ejaan Waterfox. Oleh karena lisensinya GPL saya rasa
 > > > tidak jadi masalah kan kalau saya sertakan dalam distribusi firefox?
 > > >
 > > > O ya, karena firefox bahasa Indonesia masih belum "official", saya

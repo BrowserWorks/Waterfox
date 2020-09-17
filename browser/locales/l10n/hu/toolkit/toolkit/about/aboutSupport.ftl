@@ -69,7 +69,7 @@ app-basics-remote-processes-count = Távoli folyamatok
 app-basics-enterprise-policies = Vállalati házirendek
 app-basics-location-service-key-google = Google helymeghatározási szolgáltatás kulcs
 app-basics-safebrowsing-key-google = Google Safebrowsing kulcs
-app-basics-key-mozilla = Mozilla helymeghatározási szolgáltatás kulcs
+app-basics-key-mozilla = Waterfox helymeghatározási szolgáltatás kulcs
 app-basics-safe-mode = Csökkentett mód
 show-dir-label =
     { PLATFORM() ->
@@ -168,7 +168,7 @@ intl-regional-prefs = Területi beállítások
 
 ## Remote Debugging
 ##
-## The Firefox remote protocol provides low-level debugging interfaces
+## The Waterfox remote protocol provides low-level debugging interfaces
 ## used to inspect state and control execution of documents,
 ## browser instrumentation, user interaction simulation,
 ## and for subscribing to browser-internal events.

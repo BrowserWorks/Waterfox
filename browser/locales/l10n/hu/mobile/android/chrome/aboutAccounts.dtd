@@ -10,4 +10,4 @@
 <!ENTITY aboutAccounts.retry.label "Újra">
 
 <!ENTITY aboutAccounts.restrictedError.title "Korlátozott">
-<!ENTITY aboutAccounts.restrictedError.description "Ebből a profilból nem kezelheti a Firefox fiókokat.">
+<!ENTITY aboutAccounts.restrictedError.description "Ebből a profilból nem kezelheti a Waterfox fiókokat.">

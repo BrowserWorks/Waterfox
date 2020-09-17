@@ -27,9 +27,9 @@ graph-week-summary-private-window = Trackers dy't { -brand-short-name } dizze wi
 
 protection-report-webpage-title = Befeiligingsdashboerd
 protection-report-page-content-title = Befeiligingsdashboerd
-# This message shows when all privacy protections are turned off, which is why we use the word "can", Firefox is able to protect your privacy, but it is currently not.
+# This message shows when all privacy protections are turned off, which is why we use the word "can", Waterfox is able to protect your privacy, but it is currently not.
 protection-report-page-summary = { -brand-short-name } kin efter de skermen jo privacy beskermje wylst jo sneupe. Dit is in personalisearre gearfetting fan dy beskerming, ynklusyf helpmiddelen om fet te krijen op jo online befeiliging.
-# This message shows when at least some protections are turned on, we are more assertive compared to the message above, Firefox is actively protecting you.
+# This message shows when at least some protections are turned on, we are more assertive compared to the message above, Waterfox is actively protecting you.
 protection-report-page-summary-default = { -brand-short-name } beskermet efter de skermen jo privacy wylst jo sneupe. Dit is in personalisearre gearfetting fan dy beskerming, ynklusyf helpmiddelen om fet te krijen op jo online befeiliging.
 
 protection-report-settings-link = Jo privacy- en befeiligingsynstellingen beheare

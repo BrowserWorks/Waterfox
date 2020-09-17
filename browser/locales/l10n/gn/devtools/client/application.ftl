@@ -136,9 +136,9 @@ manifest-loaded-ok = Je’epyre ñemyanyhẽpyre.
 # load the manifest
 manifest-loaded-error = Ojavy ehupikuévo pe je’epyre:
 
-# Text displayed as an error when there has been a Firefox DevTools error while
+# Text displayed as an error when there has been a Waterfox DevTools error while
 # trying to load the manifest
-manifest-loaded-devtools-error = Firefox DevTools jejavy
+manifest-loaded-devtools-error = Waterfox DevTools jejavy
 
 # Text displayed when the page has no manifest available
 manifest-non-existing = Ndojejuhúi je’epyre ojehechajey hag̃ua.

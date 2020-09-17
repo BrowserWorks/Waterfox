@@ -100,7 +100,7 @@ search-results-help-link = உதவி தேவையா? <a data-l10n-name="u
 
 startup-header = துவக்கம்
 # { -brand-short-name } will be 'Firefox Developer Edition',
-# since this setting is only exposed in Firefox Developer Edition
+# since this setting is only exposed in Waterfox Developer Edition
 separate-profile-mode =
     .label = பயர்பாக்ஸ்சும் { -brand-short-name } ம் ஒரே நேரத்தில் இயங்க அனுமதி
 use-firefox-sync = குறிப்பு: தனித்தனி சுயவிவரங்களைப் பயன்படுத்துகிறது. அவைகளுக்கிடையே தரவை பகிர { -sync-brand-short-name } பயன்படுத்தவும்.
@@ -379,7 +379,7 @@ home-newtabs-mode-label = புதிய கீற்றுகள்
 home-restore-defaults =
     .label = முன்னிருப்புக்கு மீட்டமை
     .accesskey = R
-# "Firefox" should be treated as a brand and kept in English,
+# "Waterfox" should be treated as a brand and kept in English,
 # while "Home" and "(Default)" can be localized.
 home-mode-choice-default =
     .label = பயர்பாக்ஸ் முகப்பு (இயல்புநிலை)
@@ -404,9 +404,9 @@ choose-bookmark =
     .label = புத்தககுறியை பயன்படுத்தவும்...
     .accesskey = ப
 
-## Home Section - Firefox Home Content Customization
+## Home Section - Waterfox Home Content Customization
 
-home-prefs-content-header = Firefox முகப்பு உள்ளடக்கம்
+home-prefs-content-header = Waterfox முகப்பு உள்ளடக்கம்
 home-prefs-content-description = உங்கள் பயர்பாக்ஸ் முகப்புத் திரையில் என்ன உள்ளடக்கம் வேண்டுமென்று தேர்ந்தெடு.
 home-prefs-search-header =
     .label = வலை தேடல்
@@ -500,7 +500,7 @@ containers-preferences-button =
 containers-remove-button =
     .label = நீக்கு
 
-## Firefox Account - Signed out. Note that "Sync" and "Firefox Account" are now
+## Waterfox Account - Signed out. Note that "Sync" and "Firefox Account" are now
 ## more discrete ("signed in" no longer means "and sync is connected").
 
 sync-signedout-caption = இணைத்தை உங்களுடன் வைத்திருங்கள்
@@ -515,7 +515,7 @@ sync-signedout-description = புத்தகக்குறிகள், வ�
 # to your language, but should not be changed or translated.
 sync-mobile-promo = பயர்பாக்சை <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">ஆண்ட்ராய்டு</a> (அ) <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS</a> இயங்குதளங்களுக்குப் பதிவிறக்கி கைபேசியுடன் ஒத்திசையுங்கள்.
 
-## Firefox Account - Signed in
+## Waterfox Account - Signed in
 
 sync-profile-picture =
     .tooltiptext = சுயவிவரப் படத்தை மாற்று
@@ -625,8 +625,8 @@ history-header = வரலாறு
 # "Firefox will" + "Remember history".
 #
 # If this doesn't work for your language, you can translate this message:
-#   - Simply as "Firefox", moving the verb into each option.
-#     This will result in "Firefox" + "Will remember history", etc.
+#   - Simply as "Waterfox", moving the verb into each option.
+#     This will result in "Waterfox" + "Will remember history", etc.
 #   - As a stand-alone message, for example "Firefox history settings:".
 history-remember-label = { -brand-short-name }
     .accesskey = w

@@ -4,7 +4,7 @@
 
 
 ## The Enterprise Policies feature is aimed at system administrators
-## who want to deploy these settings across several Firefox installations
+## who want to deploy these settings across several Waterfox installations
 ## all at once. This is traditionally done through the Windows Group Policy
 ## feature, but the system also supports other forms of deployment.
 ## These are short descriptions for individual policies, to be displayed
@@ -30,7 +30,7 @@ policy-DisableDefaultBrowserAgent = Neleisti numatytajam naršyklės agentui atl
 policy-DisableDeveloperTools = Blokuoti prieigą prie programuotojų priemonių.
 policy-DisableFeedbackCommands = Išjungti komandas, skirtas siųsti atsiliepimus iš „Žinyno“ meniu („Siųsti atsiliepimą“ ir „Pranešti apie apgaulingą svetainę“).
 policy-DisableFirefoxAccounts = Išjungti „{ -fxaccount-brand-name }“ paremtas paslaugas, įskaitant „Sync“.
-# Firefox Screenshots is the name of the feature, and should not be translated.
+# Waterfox Screenshots is the name of the feature, and should not be translated.
 policy-DisableFirefoxScreenshots = Išjungti „Firefox“ ekrano nuotraukų funkcionalumą.
 policy-DisableFirefoxStudies = Neleisti „{ -brand-short-name }“ vykdyti tyrimų.
 policy-DisableForgetButton = Blokuoti prieigą prie mygtuką „Pamiršti“.

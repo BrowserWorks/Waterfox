@@ -50,7 +50,7 @@ manifest-item-presentation = ਪੇਸ਼ਕਾਰੀ
 # Header for the Icon section of Manifest inspection displayed in the application panel.
 manifest-item-icons = ਆਈਕਨ
 
-# Text displayed as an error when there has been a Firefox DevTools error while
+# Text displayed as an error when there has been a Waterfox DevTools error while
 # trying to load the manifest
 manifest-loaded-devtools-error = ਫਾਇਰਫਾਕਸ DevTools ਗਲਤੀ
 

@@ -29,9 +29,9 @@ graph-week-summary-private-window = Elementy śledzące zablokowane przez przegl
 
 protection-report-webpage-title = Panel ochrony
 protection-report-page-content-title = Panel ochrony
-# This message shows when all privacy protections are turned off, which is why we use the word "can", Firefox is able to protect your privacy, but it is currently not.
+# This message shows when all privacy protections are turned off, which is why we use the word "can", Waterfox is able to protect your privacy, but it is currently not.
 protection-report-page-summary = { -brand-short-name } może po cichu chronić Twoją prywatność, kiedy Ty przeglądasz Internet. Poniżej znajduje się spersonalizowane podsumowanie ochrony, a także narzędzia do przejęcia kontroli nad własnym bezpieczeństwem w sieci.
-# This message shows when at least some protections are turned on, we are more assertive compared to the message above, Firefox is actively protecting you.
+# This message shows when at least some protections are turned on, we are more assertive compared to the message above, Waterfox is actively protecting you.
 protection-report-page-summary-default = { -brand-short-name } po cichu chroni Twoją prywatność, kiedy Ty przeglądasz Internet. Poniżej znajduje się spersonalizowane podsumowanie ochrony, a także narzędzia do przejęcia kontroli nad własnym bezpieczeństwem w sieci.
 
 protection-report-settings-link = Otwórz ustawienia prywatności i bezpieczeństwa

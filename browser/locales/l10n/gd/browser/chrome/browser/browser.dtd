@@ -40,7 +40,7 @@ can reach it easily. -->
 
 
 <!-- LOCALIZATION NOTE (fxa.service) Used to define the different FxA services
-     for the Firefox Account toolbar menu screen.  -->
+     for the Waterfox Account toolbar menu screen.  -->
 
 <!-- LOCALIZATION NOTE (fullscreenWarning.beforeDomain.label,
      fullscreenWarning.afterDomain.label): these two strings are used
@@ -145,7 +145,7 @@ can reach it easily. -->
 <!ENTITY appMenuRemoteTabs.tabsnotsyncing.label "Cuir air sioncronachadh nan tabaichean airson cothrom fhaighinn air na tabaichean agad o uidheaman eile.">
 <!-- LOCALIZATION NOTE (appMenuRemoteTabs.noclients.subtitle): This is shown
      when Sync is configured but this appears to be the only device attached to
-     the account. We also show links to download Firefox for android/ios. -->
+     the account. We also show links to download Waterfox for android/ios. -->
 <!ENTITY appMenuRemoteTabs.noclients.subtitle "A bheil thu airson na tabaichean a tha agad air uidheaman eile fhaicinn an-seo?">
 <!ENTITY appMenuRemoteTabs.opensyncprefs.label "Fosgail roghainnean an t-sioncronachaidh">
 <!ENTITY appMenuRemoteTabs.unverified.label "Tha an cunntas agad feumach air dearbhadh.">

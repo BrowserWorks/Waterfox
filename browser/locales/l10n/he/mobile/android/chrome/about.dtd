@@ -17,5 +17,5 @@
 <!ENTITY aboutPage.credits.label                "תודות">
 <!ENTITY aboutPage.license.label                "מידע רישוי">
 
-<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Firefox" being trademarked, that's why we use it, instead of brandShortName. -->
-<!ENTITY aboutPage.logoTrademark                "Firefox והסמלים של Firefox הם סימנים מסחריים של Mozilla Foundation.">
+<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Waterfox" being trademarked, that's why we use it, instead of brandShortName. -->
+<!ENTITY aboutPage.logoTrademark                "Firefox והסמלים של Waterfox הם סימנים מסחריים של Waterfox Ltd..">

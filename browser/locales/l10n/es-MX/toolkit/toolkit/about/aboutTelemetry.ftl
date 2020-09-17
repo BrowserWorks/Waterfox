@@ -17,8 +17,8 @@ about-telemetry-next-ping = >>
 about-telemetry-page-title = Datos de Telemetry
 about-telemetry-current-store = Almacenamiento actual:
 about-telemetry-more-information = ¿Buscas más información?
-about-telemetry-firefox-data-doc = La <a data-l10n-name="data-doc-link">documentación de datos de Firefox</a> contiene guías sobre cómo trabajar con tus herramientas de datos.
-about-telemetry-telemetry-client-doc = La <a data-l10n-name="client-doc-link">documentación de cliente de Firefox Telemetry</a> incluye definiciones para conceptos, documentación de API y referencias de datos.
+about-telemetry-firefox-data-doc = La <a data-l10n-name="data-doc-link">documentación de datos de Waterfox</a> contiene guías sobre cómo trabajar con tus herramientas de datos.
+about-telemetry-telemetry-client-doc = La <a data-l10n-name="client-doc-link">documentación de cliente de Waterfox Telemetry</a> incluye definiciones para conceptos, documentación de API y referencias de datos.
 about-telemetry-telemetry-dashboard = Los <a data-l10n-name="dashboard-link">tableros de Telemetry</a> te permiten visualizar los datos que Mozilla recibe a través de Telemetry.
 about-telemetry-telemetry-probe-dictionary = El <a data-l10n-name="probe-dictionary-link">diccionario de sondeos</a> proporciona detalles y descripciones de los sondeos recopilados por Telemetry.
 about-telemetry-show-in-Firefox-json-viewer = Abrir en el visor de JSON
@@ -141,7 +141,7 @@ about-telemetry-origin-origin = origen
 about-telemetry-origin-count = recuento
 # Variables:
 #   $telemetryServerOwner (String): the value of the toolkit.telemetry.server_owner preference. Typically "Mozilla"
-about-telemetry-origins-explanation = <a data-l10n-name="origin-doc-link">La Telemetría de origen de Firefox</a> codifica los datos antes de enviarlos para que { $telemetryServerOwner } pueda contar las cosas, pero no sepa cual fue el { -brand-product-name } que contributó a ese conteo. (<a data-l10n-name="prio-blog-link">Saber más</a>)
+about-telemetry-origins-explanation = <a data-l10n-name="origin-doc-link">La Telemetría de origen de Waterfox</a> codifica los datos antes de enviarlos para que { $telemetryServerOwner } pueda contar las cosas, pero no sepa cual fue el { -brand-product-name } que contributó a ese conteo. (<a data-l10n-name="prio-blog-link">Saber más</a>)
 # Variables:
 #  $process (String): type of process in subsection headers ( e.g. "content", "parent" )
 about-telemetry-process = Proceso de { $process }

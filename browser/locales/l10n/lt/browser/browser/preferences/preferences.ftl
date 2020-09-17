@@ -122,7 +122,7 @@ search-results-help-link = Reikia pagalbos? Aplankykite <a data-l10n-name="url">
 
 startup-header = Paleistis
 # { -brand-short-name } will be 'Firefox Developer Edition',
-# since this setting is only exposed in Firefox Developer Edition
+# since this setting is only exposed in Waterfox Developer Edition
 separate-profile-mode =
     .label = Leisti „{ -brand-short-name }“ veikti tuo pačiu metu kaip ir „Firefox“
 use-firefox-sync = Patarimas: tai naudoja atskirus profilius. Bendrinti duomenis tarp jų galite naudodami „{ -sync-brand-short-name }“.
@@ -458,7 +458,7 @@ home-newtabs-mode-label = Naujos kortelės
 home-restore-defaults =
     .label = Atstatyti numatytąsias
     .accesskey = A
-# "Firefox" should be treated as a brand and kept in English,
+# "Waterfox" should be treated as a brand and kept in English,
 # while "Home" and "(Default)" can be localized.
 home-mode-choice-default =
     .label = „Firefox“ pradžia (numatytoji)
@@ -483,7 +483,7 @@ choose-bookmark =
     .label = Tinklalapis iš adresyno…
     .accesskey = T
 
-## Home Section - Firefox Home Content Customization
+## Home Section - Waterfox Home Content Customization
 
 home-prefs-content-header = „Firefox“ pradžios turinys
 home-prefs-content-description = Pasirinkite, kokį turinį norite matyti „Firefox“ pradžios ekrane
@@ -607,7 +607,7 @@ containers-preferences-button =
 containers-remove-button =
     .label = Pašalinti
 
-## Firefox Account - Signed out. Note that "Sync" and "Firefox Account" are now
+## Waterfox Account - Signed out. Note that "Sync" and "Firefox Account" are now
 ## more discrete ("signed in" no longer means "and sync is connected").
 
 sync-signedout-caption = Pasiimkite savo saityną kartu
@@ -625,7 +625,7 @@ sync-signedout-account-signin2 =
 # to your language, but should not be changed or translated.
 sync-mobile-promo = Parsisiųskite „Firefox“, skirtą <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">„Android“</a> arba <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">„iOS“</a>, norėdami sinchronizuoti savo mobiliajame įrenginyje.
 
-## Firefox Account - Signed in
+## Waterfox Account - Signed in
 
 sync-profile-picture =
     .tooltiptext = Keisti profilio nuotrauką
@@ -817,8 +817,8 @@ history-header = Žurnalas
 # "Firefox will" + "Remember history".
 #
 # If this doesn't work for your language, you can translate this message:
-#   - Simply as "Firefox", moving the verb into each option.
-#     This will result in "Firefox" + "Will remember history", etc.
+#   - Simply as "Waterfox", moving the verb into each option.
+#     This will result in "Waterfox" + "Will remember history", etc.
 #   - As a stand-alone message, for example "Firefox history settings:".
 history-remember-label = „{ -brand-short-name }“ privalo
     .accesskey = p

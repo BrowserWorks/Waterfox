@@ -134,9 +134,9 @@ search-results-help-link = Vantar þig hjálp? Kíktu á <a data-l10n-name="url"
 startup-header = Ræsing
 
 # { -brand-short-name } will be 'Firefox Developer Edition',
-# since this setting is only exposed in Firefox Developer Edition
+# since this setting is only exposed in Waterfox Developer Edition
 separate-profile-mode =
-    .label = Leyfa { -brand-short-name } og Firefox að keyra á sama tíma
+    .label = Leyfa { -brand-short-name } og Waterfox að keyra á sama tíma
 use-firefox-sync = Ábending: Þetta notar aðskilda reikninga. Notaðu { -sync-brand-short-name } til að deila gögnum á milli þeirra.
 get-started-not-logged-in = Skráðu þig inn í { -sync-brand-short-name }…
 get-started-configured = Opna { -sync-brand-short-name } stillingar
@@ -518,10 +518,10 @@ home-restore-defaults =
     .label = Endurheimta sjálfgildi
     .accesskey = r
 
-# "Firefox" should be treated as a brand and kept in English,
+# "Waterfox" should be treated as a brand and kept in English,
 # while "Home" and "(Default)" can be localized.
 home-mode-choice-default =
-    .label = Firefox Home (Sjálfgefið)
+    .label = Waterfox Home (Sjálfgefið)
 
 home-mode-choice-custom =
     .label = Sérsniðin URL…
@@ -548,10 +548,10 @@ choose-bookmark =
     .label = Nota bókamerki…
     .accesskey = b
 
-## Home Section - Firefox Home Content Customization
+## Home Section - Waterfox Home Content Customization
 
-home-prefs-content-header = Upphafssíða Firefox
-home-prefs-content-description = Veldu hvaða efni þú vilt á Firefox heimaskjánum þínum.
+home-prefs-content-header = Upphafssíða Waterfox
+home-prefs-content-description = Veldu hvaða efni þú vilt á Waterfox heimaskjánum þínum.
 
 home-prefs-search-header =
     .label = Vefleit
@@ -668,7 +668,7 @@ containers-remove-button =
 ## Sync Section - Signed out
 
 
-## Firefox Account - Signed out. Note that "Sync" and "Firefox Account" are now
+## Waterfox Account - Signed out. Note that "Sync" and "Firefox Account" are now
 ## more discrete ("signed in" no longer means "and sync is connected").
 
 sync-signedout-caption = Taktu vefinn með þér
@@ -682,12 +682,12 @@ sync-signedout-description = Samstilltu bókamerki, feril, flipa, lykilorð, vi�
 #
 # They can be moved within the sentence as needed to adapt
 # to your language, but should not be changed or translated.
-sync-mobile-promo = Hala niður Firefox fyrir <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> eða <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS</a> til að samstilla með farsímanum.
+sync-mobile-promo = Hala niður Waterfox fyrir <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> eða <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS</a> til að samstilla með farsímanum.
 
 ## Sync Section - Signed in
 
 
-## Firefox Account - Signed in
+## Waterfox Account - Signed in
 
 sync-profile-picture =
     .tooltiptext = Breyta notandamynd
@@ -743,7 +743,7 @@ sync-engine-creditcards =
 
 sync-engine-addons =
     .label = Viðbætur
-    .tooltiptext = Viðbætur og þema fyrir Firefox á borðtölvu
+    .tooltiptext = Viðbætur og þema fyrir Waterfox á borðtölvu
     .accesskey = æ
 
 sync-engine-prefs =
@@ -824,8 +824,8 @@ history-header = Ferill
 # "Firefox will" + "Remember history".
 #
 # If this doesn't work for your language, you can translate this message:
-#   - Simply as "Firefox", moving the verb into each option.
-#     This will result in "Firefox" + "Will remember history", etc.
+#   - Simply as "Waterfox", moving the verb into each option.
+#     This will result in "Waterfox" + "Will remember history", etc.
 #   - As a stand-alone message, for example "Firefox history settings:".
 history-remember-label = { -brand-short-name } mun
     .accesskey = m

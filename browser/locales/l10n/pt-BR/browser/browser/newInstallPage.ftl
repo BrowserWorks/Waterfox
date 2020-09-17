@@ -4,21 +4,21 @@
 
 
 ### For this feature, "installation" is used to mean "this discrete download of
-### Firefox" and "version" is used to mean "the specific revision number of a
-### given Firefox channel". These terms are not synonymous.
+### Waterfox" and "version" is used to mean "the specific revision number of a
+### given Waterfox channel". These terms are not synonymous.
 
 title = Notícias importantes
 heading = Mudanças no seu perfil do { -brand-short-name }
 
 changed-title = O que mudou?
-changed-desc-profiles = Esta instalação do { -brand-short-name } tem um novo perfil. Um perfil é um conjunto de arquivos onde o Firefox salva informações como favoritos, senhas e preferências do usuário.
-changed-desc-dedicated = Para tornar mais fácil e seguro alternar entre instalações do Firefox (incluindo Firefox, Firefox ESR, Firefox Beta, Firefox Developer Edition e Firefox Nightly), esta instalação agora tem um perfil dedicado. Ele não compartilha automaticamente suas informações salvas com outras instalações do Firefox.
+changed-desc-profiles = Esta instalação do { -brand-short-name } tem um novo perfil. Um perfil é um conjunto de arquivos onde o Waterfox salva informações como favoritos, senhas e preferências do usuário.
+changed-desc-dedicated = Para tornar mais fácil e seguro alternar entre instalações do Waterfox (incluindo Waterfox, Waterfox ESR, Waterfox Beta, Waterfox Developer Edition e Waterfox Nightly), esta instalação agora tem um perfil dedicado. Ele não compartilha automaticamente suas informações salvas com outras instalações do Waterfox.
 
-lost = <b>Você não perdeu nenhum dado pessoal nem personalização.</b> Se você já tiver salvo informações no Firefox neste computador, elas ainda estão disponíveis em outra instalação do Firefox.
+lost = <b>Você não perdeu nenhum dado pessoal nem personalização.</b> Se você já tiver salvo informações no Waterfox neste computador, elas ainda estão disponíveis em outra instalação do Waterfox.
 
 options-title = Quais são minhas opções?
-options-do-nothing = Se não fizer nada, seus dados de perfil no { -brand-short-name } serão diferentes dos dados de perfil em outras instalações do Firefox.
-options-use-sync = Se quiser que todos os seus dados de perfil sejam os mesmos em todas as instalações do Firefox, pode usar uma { -fxaccount-brand-name } para mantê-los sincronizados.
+options-do-nothing = Se não fizer nada, seus dados de perfil no { -brand-short-name } serão diferentes dos dados de perfil em outras instalações do Waterfox.
+options-use-sync = Se quiser que todos os seus dados de perfil sejam os mesmos em todas as instalações do Waterfox, pode usar uma { -fxaccount-brand-name } para mantê-los sincronizados.
 
 resources = Recursos:
 support-link = Como usar o gerenciador de perfis (artigo de suporte)
@@ -29,5 +29,5 @@ sync-input =
     .placeholder = E-mail
 sync-button = Continuar
 sync-terms = Ao continuar, você concorda com os <a data-l10n-name="terms">Termos do serviço</a> e o <a data-l10n-name="privacy">Aviso de privacidade</a>.
-sync-first = Primeira vez usando o { -sync-brand-name }? Você precisa se identificar em cada instalação do Firefox para sincronizar suas informações.
+sync-first = Primeira vez usando o { -sync-brand-name }? Você precisa se identificar em cada instalação do Waterfox para sincronizar suas informações.
 sync-learn = Saiba mais

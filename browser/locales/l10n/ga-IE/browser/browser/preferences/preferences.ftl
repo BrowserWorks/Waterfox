@@ -78,9 +78,9 @@ search-results-empty-message =
 startup-header = Tosú
 
 # { -brand-short-name } will be 'Firefox Developer Edition',
-# since this setting is only exposed in Firefox Developer Edition
+# since this setting is only exposed in Waterfox Developer Edition
 separate-profile-mode =
-    .label = Lig do { -brand-short-name } agus Firefox a bheith ar siúl san am céanna
+    .label = Lig do { -brand-short-name } agus Waterfox a bheith ar siúl san am céanna
 use-firefox-sync = Leid: Úsáideann sé seo dhá phróifíl ar leith. Úsáid { -sync-brand-short-name } le sonraí a chomhroinnt eatarthu.
 get-started-not-logged-in = Logáil isteach i { -sync-brand-short-name }…
 get-started-configured = Oscail sainroghanna { -sync-brand-short-name }
@@ -447,7 +447,7 @@ choose-bookmark =
     .label = Úsáid Leabharmharc…
     .accesskey = L
 
-## Home Section - Firefox Home Content Customization
+## Home Section - Waterfox Home Content Customization
 
 home-prefs-topsites-header =
     .label = Barrshuímh
@@ -530,7 +530,7 @@ containers-remove-button =
 ## Sync Section - Signed out
 
 
-## Firefox Account - Signed out. Note that "Sync" and "Firefox Account" are now
+## Waterfox Account - Signed out. Note that "Sync" and "Firefox Account" are now
 ## more discrete ("signed in" no longer means "and sync is connected").
 
 sync-signedout-caption = Beir do Ghréasán féin leat
@@ -544,12 +544,12 @@ sync-signedout-description = Siocrónaigh do chuid leabharmharcanna, stair, clua
 #
 # They can be moved within the sentence as needed to adapt
 # to your language, but should not be changed or translated.
-sync-mobile-promo = Íoslódáil Firefox ar <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> nó <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS</a> chun sioncronú le do ghléas soghluaiste.
+sync-mobile-promo = Íoslódáil Waterfox ar <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> nó <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS</a> chun sioncronú le do ghléas soghluaiste.
 
 ## Sync Section - Signed in
 
 
-## Firefox Account - Signed in
+## Waterfox Account - Signed in
 
 sync-profile-picture =
     .tooltiptext = Athraigh an pictiúr próifíle
@@ -645,8 +645,8 @@ history-header = Stair
 # "Firefox will" + "Remember history".
 #
 # If this doesn't work for your language, you can translate this message:
-#   - Simply as "Firefox", moving the verb into each option.
-#     This will result in "Firefox" + "Will remember history", etc.
+#   - Simply as "Waterfox", moving the verb into each option.
+#     This will result in "Waterfox" + "Will remember history", etc.
 #   - As a stand-alone message, for example "Firefox history settings:".
 history-remember-label = Cad is mian leat { -brand-short-name } a dhéanamh?
     .accesskey = C

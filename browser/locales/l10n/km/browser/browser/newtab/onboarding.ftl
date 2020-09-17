@@ -34,11 +34,11 @@ onboarding-cards-dismiss =
 ## Welcome full page string
 
 
-## Firefox Sync modal dialog strings.
+## Waterfox Sync modal dialog strings.
 
 onboarding-sync-welcome-header = យក { -brand-product-name } ជាមួយអ្នក
 onboarding-sync-welcome-content = ទទួលយកចំណាំ ប្រវត្តិ ពាក្យសម្ងាត់និងការកំណត់ផ្សេងទៀតរបស់អ្នកលើឧបករណ៍ទាំងអស់របស់អ្នក។
-onboarding-sync-welcome-learn-more-link = ស្វែងយល់បន្ថែមអំពីគណនី Firefox
+onboarding-sync-welcome-learn-more-link = ស្វែងយល់បន្ថែមអំពីគណនី Waterfox
 
 onboarding-sync-form-input =
     .placeholder = អ៊ីមែល
@@ -46,7 +46,7 @@ onboarding-sync-form-input =
 onboarding-sync-form-continue-button = បន្ត
 onboarding-sync-form-skip-login-button = រំលងជំហាននេះ
 
-## This is part of the line "Enter your email to continue to Firefox Sync"
+## This is part of the line "Enter your email to continue to Waterfox Sync"
 
 onboarding-sync-form-header = បញ្ចូល​អ៊ីមែល​របស់​អ្នក
 onboarding-sync-form-sub-header = ដើម្បីបន្តទៅ { -sync-brand-name }

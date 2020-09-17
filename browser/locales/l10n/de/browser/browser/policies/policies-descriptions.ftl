@@ -4,7 +4,7 @@
 
 
 ## The Enterprise Policies feature is aimed at system administrators
-## who want to deploy these settings across several Firefox installations
+## who want to deploy these settings across several Waterfox installations
 ## all at once. This is traditionally done through the Windows Group Policy
 ## feature, but the system also supports other forms of deployment.
 ## These are short descriptions for individual policies, to be displayed
@@ -30,7 +30,7 @@ policy-DisableDefaultBrowserAgent = Aktionen des Programms zur Erkennung des Sta
 policy-DisableDeveloperTools = Zugriff auf Entwicklerwerkzeuge deaktivieren
 policy-DisableFeedbackCommands = Feedback senden über "Hilfe"-Menü deaktivieren ("Feedback senden…" und "Betrügerische Website melden…")
 policy-DisableFirefoxAccounts = { -fxaccount-brand-name }-basierte Dienste (z.B. Sync) deaktivieren
-# Firefox Screenshots is the name of the feature, and should not be translated.
+# Waterfox Screenshots is the name of the feature, and should not be translated.
 policy-DisableFirefoxScreenshots = "Firefox Screenshots"-Funktion deaktivieren
 policy-DisableFirefoxStudies = { -brand-short-name } keine Studien durchführen lassen
 policy-DisableForgetButton = Zugriff auf "Vergessen"-Schaltfläche verhindern
@@ -46,7 +46,7 @@ policy-DisableSafeMode = Neustart in den Abgesicherten Modus deaktivieren. Hinwe
 policy-DisableSecurityBypass = Umgehen einiger Sicherheitswarnungen durch Benutzer deaktivieren
 policy-DisableSetAsDesktopBackground = "Als Hintergrundbild einrichten"-Menüeintrag deaktivieren
 policy-DisableSystemAddonUpdate = Installieren und Aktualisieren von System-Add-ons durch den Browser deaktivieren
-policy-DisableTelemetry = Datenerhebung zur Verbesserung von Firefox (Telemetrie) deaktivieren
+policy-DisableTelemetry = Datenerhebung zur Verbesserung von Waterfox (Telemetrie) deaktivieren
 policy-DisplayBookmarksToolbar = Lesezeichen-Symbolleiste standardmäßig anzeigen
 policy-DisplayMenuBar = Menüleiste standardmäßig anzeigen
 policy-DNSOverHTTPS = DNS über HTTPS einrichten
@@ -62,7 +62,7 @@ policy-EncryptedMediaExtensions = Encrypted Media Extensions (Module zur Wiederg
 policy-Extensions = Installieren, Deinstallieren oder Fixieren von Erweiterungen. Die Install-Option akzeptiert Adressen und Pfade als Werte. Die Uninstall- und Locked-Optionen erfordern Erweiterungs-IDs.
 policy-ExtensionSettings = Alle Einstellungen für die Erweiterungsinstallation verwalten
 policy-ExtensionUpdate = Automatische Add-on-Updates aktivieren oder deaktivieren
-policy-FirefoxHome = Firefox-Startseite konfigurieren
+policy-FirefoxHome = Waterfox-Startseite konfigurieren
 policy-FlashPlugin = Flash-Plugin-Verwendung erlauben oder verbieten
 policy-Handlers = Standardanwendungen für das Öffnen von Dateien, Protokollen und MIME-Typen festlegen
 policy-HardwareAcceleration = Hardwarebeschleunigung deaktiviert, falls false
@@ -88,7 +88,7 @@ policy-NoDefaultBookmarks = Standardlesezeichen von { -brand-short-name } und In
 policy-OfferToSaveLogins = Frage zum Speichern von Zugangsdaten durch { -brand-short-name } anzeigen. Die Werte true und false werden akzeptiert.
 policy-OfferToSaveLoginsDefault = Standardwert, ob Nachfrage zum Speichern von Zugangsdaten und Passwörtern in { -brand-short-name } angezeigt werden soll. Sowohl true als auch false sind gültige Werte.
 policy-OverrideFirstRunPage = Einmalig geöffnete Einführungsseite beim Starten eines neuen Profils festlegen. Ein leerer Wert deaktiviert das Öffnen der Seite.
-policy-OverridePostUpdatePage = Firefox-Neuigkeiten-Seite - angezeigt nach Programmaktualisierung - festlegen. Ein leerer Wert deaktiviert das Öffnen der Seite.
+policy-OverridePostUpdatePage = Waterfox-Neuigkeiten-Seite - angezeigt nach Programmaktualisierung - festlegen. Ein leerer Wert deaktiviert das Öffnen der Seite.
 policy-PasswordManagerEnabled = Speichern von Passwörtern in der Passwortverwaltung aktivieren
 # PDF.js and PDF should not be translated
 policy-PDFjs = Eingebauten PDF-Betrachter von { -brand-short-name } (PDF.js) deaktivieren oder konfigurieren

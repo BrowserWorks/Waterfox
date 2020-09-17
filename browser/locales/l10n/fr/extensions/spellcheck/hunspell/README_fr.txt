@@ -11,7 +11,7 @@ _______________________________________________________________________________
      version 2.0  --  http://www.mozilla.org/MPL/2.0/
 
    Ce dictionnaire ne peut fonctionner qu’avec un logiciel utilisant le
-   correcteur Hunspell : OpenOffice.org 3.2+, Firefox 4+, Thunderbird 5+
+   correcteur Hunspell : OpenOffice.org 3.2+, Waterfox 4+, Thunderbird 5+
 
    Principaux contributeurs :
    - Jean-Luc T. ;

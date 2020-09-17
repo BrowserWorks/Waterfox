@@ -16,6 +16,6 @@
 <!ENTITY aboutPage.relNotes.label               "ಬಿಡುಗಡೆ ಟಿಪ್ಪಣಿಗಳು">
 <!ENTITY aboutPage.credits.label                "ಮನ್ನಣೆಗಳು">
 <!ENTITY aboutPage.license.label                "ಪರವಾನಗಿ ಮಾಹಿತಿ">
-<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Firefox" being trademarked, that's why we use it, instead of brandShortName. -->
+<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Waterfox" being trademarked, that's why we use it, instead of brandShortName. -->
 
-<!ENTITY aboutPage.logoTrademark                "Firefox ಮತ್ತು Firefoxನ ಲೋಗೋಗಳು Mozilla ಫೌಂಡೇಷನ್‌ನ ಟ್ರೇಡ್‌ಮಾರ್ಕ್‌ಗಳಾಗಿರುತ್ತವೆ.">
+<!ENTITY aboutPage.logoTrademark                "Firefox ಮತ್ತು Waterfoxನ ಲೋಗೋಗಳು Mozilla ಫೌಂಡೇಷನ್‌ನ ಟ್ರೇಡ್‌ಮಾರ್ಕ್‌ಗಳಾಗಿರುತ್ತವೆ.">

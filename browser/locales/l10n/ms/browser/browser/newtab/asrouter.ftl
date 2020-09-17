@@ -55,7 +55,7 @@ cfr-doorhanger-extension-total-users =
 ## These messages are steps on how to use the feature and are shown together.
 
 
-## Firefox Accounts Message
+## Waterfox Accounts Message
 
 ## Protections panel
 
@@ -75,13 +75,13 @@ cfr-doorhanger-extension-total-users =
 
 ## Send Tab
 
-## Firefox Send
+## Waterfox Send
 
 ## Social Tracking Protection
 
 ## Enhanced Tracking Protection Milestones
 
-## What’s New Panel Content for Firefox 76
+## What’s New Panel Content for Waterfox 76
 
 ## Lockwise message
 

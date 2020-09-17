@@ -3,19 +3,19 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 head-title = Oer ûntwikkelersark
-enable-title = Firefox-ûntwikkelersark ynskeakelje
-enable-inspect-element-title = Skeakel Firefox-ûntwikkelersark yn om Elemint ynspektearje te brûken
+enable-title = Waterfox-ûntwikkelersark ynskeakelje
+enable-inspect-element-title = Skeakel Waterfox-ûntwikkelersark yn om Elemint ynspektearje te brûken
 enable-inspect-element-message = Bestudearje en bewurkje HTML en CSS mei de Inspector fan it ûntwikkelersark.
-enable-about-debugging-message = Untwikkel en debug WebExtensions, web workers, service workers en mear mei it Firefox-ûntwikkelersark.
+enable-about-debugging-message = Untwikkel en debug WebExtensions, web workers, service workers en mear mei it Waterfox-ûntwikkelersark.
 enable-key-shortcut-message = Jo hawwe in fluchkeppeling fan it ûntwikkelersark aktivearre. As dat net de bedoeling wie, kinne jo dit ljepblêd slute.
 enable-menu-message = Optimalisearje HTML, CSS en JavaScript fan jo website mei ark lykas de Inspector en Debugger.
-enable-common-message = Firefox-ûntwikkelersark is standert útskeakele, sadat jo mear kontrôle hawwe oer jo browser.
+enable-common-message = Waterfox-ûntwikkelersark is standert útskeakele, sadat jo mear kontrôle hawwe oer jo browser.
 enable-learn-more-link = Lês mear oer Untwikkelersark
 enable-enable-button = Untwikkelersark ynskeakelje
 enable-close-button = Dit ljepblêd slute
 
-welcome-title = Wolkom by Firefox Developer Tools!
-newsletter-title = Mozilla Developer nijsbrief
+welcome-title = Wolkom by Waterfox Developer Tools!
+newsletter-title = Waterfox Developer nijsbrief
 newsletter-message = Untfang ûntwikkelersnijs, trúks en helpboarnen streekrjocht yn jo Postfek YN.
 newsletter-email-placeholder =
     .placeholder = E-mailadres
@@ -24,8 +24,8 @@ newsletter-subscribe-button = Abonnearje
 newsletter-thanks-title = Tank!
 newsletter-thanks-message = As jo noch net earder in ynskriuwing foar in Mozilla-relatearre nijsbrief befêstige hawwe, moatte jo dit mooglik dwaan. Kontrolearje jo Postfek YN of jo spamfilter foar in e-mail fan ús.
 
-footer-title = Firefox Developer Edition
-footer-message = Sykje jo mear as allinnich ûntwikkelersark? Probearje de Firefox-browser dy't spesifyk boud is foar ûntwikkelers en moderne wurkstreamen.
+footer-title = Waterfox Developer Edition
+footer-message = Sykje jo mear as allinnich ûntwikkelersark? Probearje de Waterfox-browser dy't spesifyk boud is foar ûntwikkelers en moderne wurkstreamen.
 footer-learn-more-link = Mear ynfo
 
 features-learn-more = Mear ynfo

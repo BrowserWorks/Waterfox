@@ -122,9 +122,9 @@ search-results-help-link = Trenger du hjelp? Gå til <a data-l10n-name="url">{ -
 
 startup-header = Startside
 # { -brand-short-name } will be 'Firefox Developer Edition',
-# since this setting is only exposed in Firefox Developer Edition
+# since this setting is only exposed in Waterfox Developer Edition
 separate-profile-mode =
-    .label = Tillat { -brand-short-name } og Firefox å kjøre samtidig
+    .label = Tillat { -brand-short-name } og Waterfox å kjøre samtidig
 use-firefox-sync = Tips: Dette bruker egne profiler. Bruk { -sync-brand-short-name } for å dele data mellom dem.
 get-started-not-logged-in = Logg inn på { -sync-brand-short-name }…
 get-started-configured = Åpne innstillinger for { -sync-brand-short-name }
@@ -455,10 +455,10 @@ home-newtabs-mode-label = Nye faner
 home-restore-defaults =
     .label = Bruk standard
     .accesskey = r
-# "Firefox" should be treated as a brand and kept in English,
+# "Waterfox" should be treated as a brand and kept in English,
 # while "Home" and "(Default)" can be localized.
 home-mode-choice-default =
-    .label = Firefox-startside (standard)
+    .label = Waterfox-startside (standard)
 home-mode-choice-custom =
     .label = Tilpassede nettadresser…
 home-mode-choice-blank =
@@ -480,10 +480,10 @@ choose-bookmark =
     .label = Bruk bokmerke …
     .accesskey = u
 
-## Home Section - Firefox Home Content Customization
+## Home Section - Waterfox Home Content Customization
 
-home-prefs-content-header = Innhold Firefox-startside
-home-prefs-content-description = Velg hvilket innhold som du vil ha på din Firefox-startside.
+home-prefs-content-header = Innhold Waterfox-startside
+home-prefs-content-description = Velg hvilket innhold som du vil ha på din Waterfox-startside.
 home-prefs-search-header =
     .label = Nettsøk
 home-prefs-topsites-header =
@@ -603,7 +603,7 @@ containers-preferences-button =
 containers-remove-button =
     .label = Fjern
 
-## Firefox Account - Signed out. Note that "Sync" and "Firefox Account" are now
+## Waterfox Account - Signed out. Note that "Sync" and "Firefox Account" are now
 ## more discrete ("signed in" no longer means "and sync is connected").
 
 sync-signedout-caption = Ta med deg webben
@@ -619,9 +619,9 @@ sync-signedout-account-signin2 =
 #
 # They can be moved within the sentence as needed to adapt
 # to your language, but should not be changed or translated.
-sync-mobile-promo = Last ned Firefox for <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> eller <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS</a> for å synkronisere med dine mobile enheter.
+sync-mobile-promo = Last ned Waterfox for <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> eller <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS</a> for å synkronisere med dine mobile enheter.
 
-## Firefox Account - Signed in
+## Waterfox Account - Signed in
 
 sync-profile-picture =
     .tooltiptext = Endre profilbilde
@@ -707,7 +707,7 @@ sync-engine-creditcards =
     .accesskey = K
 sync-engine-addons =
     .label = Utvidelser
-    .tooltiptext = Utvidelser og temaer for Firefox for datamaskin
+    .tooltiptext = Utvidelser og temaer for Waterfox for datamaskin
     .accesskey = U
 sync-engine-prefs =
     .label =
@@ -813,8 +813,8 @@ history-header = Historikk
 # "Firefox will" + "Remember history".
 #
 # If this doesn't work for your language, you can translate this message:
-#   - Simply as "Firefox", moving the verb into each option.
-#     This will result in "Firefox" + "Will remember history", etc.
+#   - Simply as "Waterfox", moving the verb into each option.
+#     This will result in "Waterfox" + "Will remember history", etc.
 #   - As a stand-alone message, for example "Firefox history settings:".
 history-remember-label = { -brand-short-name } vil
     .accesskey = v

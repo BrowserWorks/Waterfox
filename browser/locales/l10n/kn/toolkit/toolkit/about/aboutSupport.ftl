@@ -43,7 +43,7 @@ app-basics-performance = ಕಾರ್ಯಕ್ಷಮತೆ
 app-basics-service-workers = ನೊಂದಾಯಿಸಿಕೊಂಡ ಸೇವಾ ಕೆಲಸಗಾರರು
 app-basics-profiles = ಪ್ರೊಫೈಲ್‌ಗಳು
 app-basics-multi-process-support = ಬಹುಪ್ರಕ್ರಿಯೆ ಕಿಟಕಿಗಳು
-app-basics-key-mozilla = Mozilla ಸ್ಥಳ ಸೇವೆ ಕೀ
+app-basics-key-mozilla = Waterfox ಸ್ಥಳ ಸೇವೆ ಕೀ
 app-basics-safe-mode = ಸುರಕ್ಷಾ ಸ್ಥಿತಿ
 show-dir-label =
     { PLATFORM() ->
@@ -105,7 +105,7 @@ media-device-latency = ತಡ
 
 ## Remote Debugging
 ##
-## The Firefox remote protocol provides low-level debugging interfaces
+## The Waterfox remote protocol provides low-level debugging interfaces
 ## used to inspect state and control execution of documents,
 ## browser instrumentation, user interaction simulation,
 ## and for subscribing to browser-internal events.

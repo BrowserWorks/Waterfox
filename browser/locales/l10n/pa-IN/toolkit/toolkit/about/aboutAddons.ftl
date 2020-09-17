@@ -383,7 +383,7 @@ release-notes-error = ਅਫਸੋਸ, ਪਰ ਰੀਲਿਜ਼ ਨੋਟਿਸ
 addon-permissions-empty = ਇਸ ਇਕਸਟੈਨਸ਼ਨ ਲਈ ਕਿਸੇ ਇਜਾਜ਼ਤ ਦੀ ਲੋੜ ਨਹੀਂ ਹੈ
 recommended-extensions-heading = ਸਿਫਾਰਸ਼ੀ ਇਕਟੈਨਸ਼ਨਾਂ
 recommended-themes-heading = ਸਿਫਾਰਸ਼ੀ ਥੀਮ
-# A recommendation for the Firefox Color theme shown at the bottom of the theme
+# A recommendation for the Waterfox Color theme shown at the bottom of the theme
 # list view. The "Firefox Color" name itself should not be translated.
 recommended-theme-1 = ਕਲਾ ਜਾਗਦੀ ਹੈ?<a data-l10n-name="link">ਫਾਇਰਫਾਕਸ ਰੰਗ ਨਾਲ ਆਪਣਾ ਖੁਦ ਦਾ ਥੀਮ ਬਣਾਓ।</a>
 

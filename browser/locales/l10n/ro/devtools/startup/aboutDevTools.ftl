@@ -3,18 +3,18 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 head-title = Despre instrumentele de dezvoltare
-enable-title = Activează instrumentele de dezvoltare Firefox
-enable-inspect-element-title = Activează instrumentele de dezvoltare Firefox pentru a folosi Inspectează elementul
+enable-title = Activează instrumentele de dezvoltare Waterfox
+enable-inspect-element-title = Activează instrumentele de dezvoltare Waterfox pentru a folosi Inspectează elementul
 enable-inspect-element-message = Examinează și editează HTML și CSS cu inspectorul din uneltele de dezvoltare.
-enable-about-debugging-message = Dezvoltă și depanează WebExtensions, workeri web, service workeri și multe altele cu uneltele de dezvoltare din Firefox.
+enable-about-debugging-message = Dezvoltă și depanează WebExtensions, workeri web, service workeri și multe altele cu uneltele de dezvoltare din Waterfox.
 enable-key-shortcut-message = Ai activat o comandă rapidă pentru uneltele de dezvoltare. Dacă a fost din greșeală, poți închide această filă.
 enable-menu-message = Perfecționează conținutul HTML, CSS și JavaScript de pe site cu unelte cum sunt inspectorul și depanatorul.
-enable-common-message = Uneltele de dezvoltare din Firefox sunt dezactivate implicit pentru a-ți da mai mult control asupra browserului.
+enable-common-message = Uneltele de dezvoltare din Waterfox sunt dezactivate implicit pentru a-ți da mai mult control asupra browserului.
 enable-learn-more-link = Află mai multe despre instrumentele de dezvoltare
 enable-enable-button = Activează instrumentele de dezvoltare
 enable-close-button = Închide această filă
 
-welcome-title = Bine ai venit la instrumentele de dezvoltare Firefox!
+welcome-title = Bine ai venit la instrumentele de dezvoltare Waterfox!
 newsletter-title = Buletinul informativ Mozilla pentru dezvoltatori
 newsletter-message = Primește știri pentru dezvoltatori, trucuri și resurse direct în căsuța poștală.
 newsletter-email-placeholder =
@@ -24,8 +24,8 @@ newsletter-subscribe-button = Abonează-te
 newsletter-thanks-title = Îți mulțumim!
 newsletter-thanks-message = Dacă nu ai confirmat anterior o abonare la un buletin informativ în legătură cu Mozilla, este posibil să fie nevoie să o faci. Te rugăm să verifici mesajele primite sau dosarul spam pentru mesaje de e-mail de la noi.
 
-footer-title = Firefox Developer Edition
-footer-message = Cauți mai mult decât instrumente de dezvoltare? Aruncă o privire asupra browserului Firefox care este construit special pentru dezvoltatori și fluxuri de lucru moderne.
+footer-title = Waterfox Developer Edition
+footer-message = Cauți mai mult decât instrumente de dezvoltare? Aruncă o privire asupra browserului Waterfox care este construit special pentru dezvoltatori și fluxuri de lucru moderne.
 footer-learn-more-link = Află mai multe
 
 features-learn-more = Află mai multe

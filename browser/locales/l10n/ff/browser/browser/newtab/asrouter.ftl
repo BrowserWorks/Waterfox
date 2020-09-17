@@ -81,7 +81,7 @@ cfr-doorhanger-pintab-animation-pause = Sabbo
 cfr-doorhanger-pintab-animation-resume = Fuɗɗito
 
 
-## Firefox Accounts Message
+## Waterfox Accounts Message
 
 cfr-doorhanger-bookmark-fxa-header = Jokkondir maantore maa kala nokku.
 cfr-doorhanger-bookmark-fxa-link-text = Jokkondir maantore jooni…
@@ -172,7 +172,7 @@ cfr-doorhanger-send-tab-body = Tabbere Neldude ina weeɓnan-maa lollinde ngol jo
 cfr-doorhanger-send-tab-ok-button = Eto neldude tabbere
     .accesskey = E
 
-## Firefox Send
+## Waterfox Send
 
 cfr-doorhanger-firefox-send-header = Lollin oo PDF e kisal
 cfr-doorhanger-firefox-send-ok-button = Eto { -send-brand-name }
@@ -200,7 +200,7 @@ cfr-doorhanger-milestone-heading =
 cfr-doorhanger-milestone-ok-button = Yiy fof
     .accesskey = Y
 
-## What’s New Panel Content for Firefox 76
+## What’s New Panel Content for Waterfox 76
 
 
 ## Lockwise message

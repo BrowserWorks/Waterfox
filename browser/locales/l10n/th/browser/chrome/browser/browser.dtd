@@ -47,7 +47,7 @@ this container is a toolbar. This avoids double-speaking. -->
 <!ENTITY pictureInPictureHideToggle.accesskey "อ">
 
 <!-- LOCALIZATION NOTE (fxa.menu) Used to define the different labels
-     for the Firefox Account toolbar menu screen. The `Signed in as` text is
+     for the Waterfox Account toolbar menu screen. The `Signed in as` text is
      followed by the user's email. -->
 <!ENTITY fxa.menu.syncSettings2.label "การตั้งค่า &syncBrand.shortName.label;">
 <!ENTITY fxa.menu.connectAnotherDevice2.label "เชื่อมต่ออุปกรณ์อื่น…">
@@ -64,7 +64,7 @@ this container is a toolbar. This avoids double-speaking. -->
 <!ENTITY fxa.menu.setupSync.label "ตั้งค่า &syncBrand.shortName.label;…">
 
 <!-- LOCALIZATION NOTE (fxa.service) Used to define the different FxA services
-     for the Firefox Account toolbar menu screen.  -->
+     for the Waterfox Account toolbar menu screen.  -->
 <!ENTITY fxa.service.sendTab.description "ส่งแท็บทันทีไปยังอุปกรณ์ใด ๆ ที่คุณลงชื่อเข้าใช้">
 
 <!-- LOCALIZATION NOTE (fullscreenWarning.beforeDomain.label,
@@ -170,7 +170,7 @@ this container is a toolbar. This avoids double-speaking. -->
 <!ENTITY appMenuRemoteTabs.tabsnotsyncing.label "เปิดการซิงค์แท็บเพื่อดูรายการแท็บจากอุปกรณ์อื่น ๆ ของคุณ">
 <!-- LOCALIZATION NOTE (appMenuRemoteTabs.noclients.subtitle): This is shown
      when Sync is configured but this appears to be the only device attached to
-     the account. We also show links to download Firefox for android/ios. -->
+     the account. We also show links to download Waterfox for android/ios. -->
 <!ENTITY appMenuRemoteTabs.noclients.subtitle "ต้องการเห็นแท็บของคุณจากอุปกรณ์อื่น ๆ ที่นี่?">
 <!ENTITY appMenuRemoteTabs.opensyncprefs.label "เปิดค่ากำหนด Sync">
 <!ENTITY appMenuRemoteTabs.welcome.label "ดูรายการแท็บจากอุปกรณ์อื่น ๆ ของคุณ">

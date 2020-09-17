@@ -18,8 +18,8 @@
 #define getting_started ਸ਼ੁਰੂ ਕਰੋ
 
 # LOCALIZATION NOTE (firefox_heading):
-# Firefox links folder name
-#define firefox_heading Mozilla Firefox
+# Waterfox links folder name
+#define firefox_heading Waterfox
 
 # LOCALIZATION NOTE (firefox_help):
 # link title for https://www.mozilla.org/en-US/firefox/help/
@@ -38,7 +38,7 @@
 #define firefox_about ਸਾਡੇ ਬਾਰੇ
 
 # LOCALIZATION NOTE (nightly_heading):
-# Firefox Nightly links folder name
+# Waterfox Nightly links folder name
 #define nightly_heading ਫਾਇਰਫਾਕਸ ਨਾਈਟਲੀ ਸਰੋਤ
 
 # LOCALIZATION NOTE (nightly_blog):

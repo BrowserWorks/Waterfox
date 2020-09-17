@@ -6,7 +6,7 @@ fxa-pair-device-dialog =
     .title = Yhdistä toinen laite
     .style = width: 26em; min-height: 35em;
 
-fxa-qrcode-heading-phase1 = 1. Jos et ole vielä asentanut Firefoxia mobiililaitteellesi, <a data-l10n-name="connect-another-device">tee se ensin</a>.
+fxa-qrcode-heading-phase1 = 1. Jos et ole vielä asentanut Waterfoxia mobiililaitteellesi, <a data-l10n-name="connect-another-device">tee se ensin</a>.
 
 fxa-qrcode-heading-phase2 = 2. Kirjaudu sitten { -sync-brand-short-name }-palveluun, tai Android-laitteella skannaa parituskoodi { -sync-brand-short-name }-asetuksista.
 

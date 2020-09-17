@@ -3,18 +3,18 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 head-title = A prepaus de las aisinas de desvolopament
-enable-title = Activar las aisinas de desvolopament de Firefox
+enable-title = Activar las aisinas de desvolopament de Waterfox
 enable-inspect-element-title = Activatz las aisinas de desvolopament per utilizar Examinar l’element
 enable-inspect-element-message = Examinatz e modificatz lo contengut HTML e CSS amb l’inspector de las aisinas de desvolopament.
 enable-about-debugging-message = Desvolopatz e desbugatz de WebExtensions, web workers, servicis workers e mai amb las aisinas de desvolopament de Firfox.
 enable-key-shortcut-message = Avètz activat un acorchi cap a las aisinas de desvolopament. Se’s una error, podètz tampar aqueste onglet.
 enable-menu-message = Perfeccionatz l’HTML, CSS e JavaScript de vòstre site amb d’aisinas coma l’inspector e lo desbugador.
-enable-common-message = Las aisinas de desvolopament de Firefox son desactivadas per defaut per dire de vos permetre de contrarotlar mai vòstre navegador.
+enable-common-message = Las aisinas de desvolopament de Waterfox son desactivadas per defaut per dire de vos permetre de contrarotlar mai vòstre navegador.
 enable-learn-more-link = Ne saber mai sus las aisinas pels devolopaires
 enable-enable-button = Activar las aisinas pels desvolopaires
 enable-close-button = Tampar aqueste onglet
 
-welcome-title = Benvenguda a las aisinas de desvolopament de Firefox !
+welcome-title = Benvenguda a las aisinas de desvolopament de Waterfox !
 newsletter-title = Letra de ligason de Mozilla pels desvolopaires
 newsletter-message = Recebètz de novetats, d’astúcias e de resorgas pels desvolopaires, dirèctament per corrièl.
 newsletter-email-placeholder =
@@ -24,8 +24,8 @@ newsletter-subscribe-button = Se marcar
 newsletter-thanks-title = Mercés plan !
 newsletter-thanks-message = S’avètz pas ja confirmat un abonament a una letra de ligason de Mozilla, benlèu que o vos cal far. Verificatz vòstra bóstia de recepcion o corrièls pas desirables e cercatz un messatge nòstre.
 
-footer-title = Firefox Developer Edition
-footer-message = Cercatz mai que d’aisinas de desvolopament ? Descobrissètz lo navegador Firefox fach especialament pels desvolopaires e los flux laborals del monde modèrn.
+footer-title = Waterfox Developer Edition
+footer-message = Cercatz mai que d’aisinas de desvolopament ? Descobrissètz lo navegador Waterfox fach especialament pels desvolopaires e los flux laborals del monde modèrn.
 footer-learn-more-link = Ne saber mai
 
 features-learn-more = Ne saber mai

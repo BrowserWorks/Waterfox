@@ -12,7 +12,7 @@ blocklist-accept =
 blocklist-label-summary = { -brand-short-name } a determinat que los moduls complementaris seguents son coneguts per provocar d'insestabilitat o de problèmas de seguretat :
 blocklist-soft-and-hard = Los moduls complementaris presentan un grand risc d'instabilitat e de seguretat e son estats blocats. Los autres son mens riscats mas es fòrtament recomandat de los desactivar e de reaviar.
 blocklist-hard-blocked = Aquestes moduls complementaris presentan un grand risc d'instabilitat e de seguretat e son estats blocats, mas una reaviada es necessària per los desactivar completament.
-blocklist-soft-blocked = Per vos protegir, vos recomandam de desactivar aqueles moduls puèi de tornar aviar Firefox.
+blocklist-soft-blocked = Per vos protegir, vos recomandam de desactivar aqueles moduls puèi de tornar aviar Waterfox.
 blocklist-more-information =
     .value = Mai d'entresenhas
 

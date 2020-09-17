@@ -3,18 +3,18 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 head-title = Chi rij Taq Rusamajib'al Nuk'unel
-enable-title = Ketzij ri Firefox Kisamajib'al B'anonela'
-enable-inspect-element-title = Ketzij ri taq Rusamajib'al Rub'anonel Firefox richin nokisäx ri Nik'onel Ch'akulal
+enable-title = Ketzij ri Waterfox Kisamajib'al B'anonela'
+enable-inspect-element-title = Ketzij ri taq Rusamajib'al Rub'anonel Waterfox richin nokisäx ri Nik'onel Ch'akulal
 enable-inspect-element-message = Kenik'öx chuqa' kenuk' HTML chuqa' CSS rik'in ri Runik'onel Rusamajib'al B'anonel.
-enable-about-debugging-message = Keb'anon chuqa' kechojmirisäx taq WebExtensions, web workers, service workers chuqa' ch'aqa' chik rik'in ri Kisamajib'al Kib'anonel Firefox.
+enable-about-debugging-message = Keb'anon chuqa' kechojmirisäx taq WebExtensions, web workers, service workers chuqa' ch'aqa' chik rik'in ri Kisamajib'al Kib'anonel Waterfox.
 enable-key-shortcut-message = Xatzïj jun ruq'a' rokem ri Kisamajib'al B'anonela'. We xa ta xasach, yatikïr natz'apij re ruwi' re'.
 enable-menu-message = Ke'awutzilaj ri HTML, CSS chuqa' JavaScript richin ri ruxaq ak'amaya'l rik'in taq samajib'al achi'el ri Nik'onel chuqa' Chojmirisanel.
-enable-common-message = B'anon chi e chupül ri Kisamajib'al kiB'anonel Firefox richin niya' chajinïk pan aq'a' pa ruwi' ri awokik'amaya'l.
+enable-common-message = B'anon chi e chupül ri Kisamajib'al kiB'anonel Waterfox richin niya' chajinïk pan aq'a' pa ruwi' ri awokik'amaya'l.
 enable-learn-more-link = Tetamäx ch'aqa' chik chi kij ri taqKisamajib'al B'anonela'
 enable-enable-button = Ketzij ri taq Kisamajib'al B'anonela'
 enable-close-button = Titz'apïx re Ruwi' re'
 
-welcome-title = ¡Ütz apetik pa Firefox Developer Tools!
+welcome-title = ¡Ütz apetik pa Waterfox Developer Tools!
 newsletter-title = Ko'öl Kiwuj Kib'anonela' Mozilla
 newsletter-message = Ke'ak'ulu' taq kitzijol b'anonela', taq q'oloj chuqa' taq tob'äl ri nitaq pan ataqob'äl.
 newsletter-email-placeholder =
@@ -24,8 +24,8 @@ newsletter-subscribe-button = Tz'ib'anïk b'i'aj
 newsletter-thanks-title = ¡Matyox!
 newsletter-thanks-message = We man ajikib'an ta rutz'ib'axik ab'i' pa jun rutzijol ko'öl na'oj pa ruwi' ri Mozilla rik'in jub'a' k'o chi nab'än. Tab'ana' utzil tanik'oj ri ataqob'al o ri ruchayub'al itzel taq taqoya'l richin jun rutzijol jun taqoya'l.
 
-footer-title = Firefox Developer Edition
-footer-message = ¿La nakanoj jujun relik taq rusamajib'al b'anonel? Tanik'oj ri Firefox Okik'amaya'l nuk'un kichin ri b'anonela' chuqa' k'ak'a' kiq'axik taq samaj.
+footer-title = Waterfox Developer Edition
+footer-message = ¿La nakanoj jujun relik taq rusamajib'al b'anonel? Tanik'oj ri Waterfox Okik'amaya'l nuk'un kichin ri b'anonela' chuqa' k'ak'a' kiq'axik taq samaj.
 footer-learn-more-link = Tetamäx ch'aqa' chik
 
 features-learn-more = Tetamäx ch'aqa' chik

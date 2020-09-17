@@ -63,7 +63,7 @@ cfr-doorhanger-pintab-animation-pause = இடைநிறுத்து
 cfr-doorhanger-pintab-animation-resume = தொடரவும்
 
 
-## Firefox Accounts Message
+## Waterfox Accounts Message
 
 cfr-doorhanger-bookmark-fxa-header = உங்கள் புத்தககுறிகளை எல்லா இடங்களிலும் ஒத்திசைக்கவும்.
 cfr-doorhanger-bookmark-fxa-link-text = புத்தககுறிகளை இப்போது ஒத்திசை…
@@ -99,13 +99,13 @@ cfr-whatsnew-panel-header = புதியவை என்ன
 ## Send Tab
 
 
-## Firefox Send
+## Waterfox Send
 
 ## Social Tracking Protection
 
 ## Enhanced Tracking Protection Milestones
 
-## What’s New Panel Content for Firefox 76
+## What’s New Panel Content for Waterfox 76
 
 ## Lockwise message
 

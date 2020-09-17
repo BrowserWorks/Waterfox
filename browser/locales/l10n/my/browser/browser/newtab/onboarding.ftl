@@ -33,10 +33,10 @@ onboarding-cards-dismiss =
 
 ## Welcome full page string
 
-## Firefox Sync modal dialog strings.
+## Waterfox Sync modal dialog strings.
 
 onboarding-sync-welcome-header = { -brand-product-name } ကို သင်နှင့်အတူ ခေါ်ဆောင်ပါ
-onboarding-sync-welcome-learn-more-link = Firefox အကောင့်များအကြောင်း ပိုမိုလေ့လာရန်
+onboarding-sync-welcome-learn-more-link = Waterfox အကောင့်များအကြောင်း ပိုမိုလေ့လာရန်
 
 onboarding-sync-form-input =
     .placeholder = အီးမေးလ်
@@ -44,7 +44,7 @@ onboarding-sync-form-input =
 onboarding-sync-form-continue-button = ဆက်၍
 onboarding-sync-form-skip-login-button = ဒီအဆင့်ကို ကျော်ပါ
 
-## This is part of the line "Enter your email to continue to Firefox Sync"
+## This is part of the line "Enter your email to continue to Waterfox Sync"
 
 onboarding-sync-form-header = သင့်အီးမေလ်းအားထည့်ပါ
 

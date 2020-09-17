@@ -7,7 +7,7 @@ rights-intro = { -brand-full-name } er programvare basert på fri og open kjelde
 rights-intro-point-1 = { -brand-short-name } er gjort tilgjengeleg for deg under vilkåra i <a data-l10n-name="mozilla-public-license-link">Mozilla Public License</a>. Dette tyder at du kan bruke, kopiere og distribuere { -brand-short-name } til andre. Du kan også endre kjeldekoden til { -brand-short-name } som du vil, for å passe til dine behov. Mozilla Public License gjev deg også rett til å distribuere endra versjonar.
 rights-intro-point-2 =
     Du vert ikkje gitt varemerkerettar eller lisensar til varemerke som tilhøyrer
-    Mozilla Foundation eller andre, noko som også gjeld Thunderbird-namnet og -logoen.
+    Waterfox Ltd. eller andre, noko som også gjeld Thunderbird-namnet og -logoen.
     Meir informasjon om varemerke finn du
     <a data-l10n-name="mozilla-trademarks-link">her</a>.
 rights-intro-point-3 = Nokre funksjonar i { -brand-short-name }, som til dømes krasjrapporteraren, gjev deg høve til å gje tilbakemelding til { -vendor-short-name }. Ved å sende tilbakemelding gjev du { -vendor-short-name } løyve til å bruke tilbakemeldingane for å forbetre produkta sine, publisere tilbakemeldingane på nettstadane sine, og å distribuere tilbakemeldingane.

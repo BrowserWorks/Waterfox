@@ -128,9 +128,9 @@ search-results-help-link = ¿Necesites ayuda? Visita <a data-l10n-name="url">Ayu
 startup-header = Aniciu
 
 # { -brand-short-name } will be 'Firefox Developer Edition',
-# since this setting is only exposed in Firefox Developer Edition
+# since this setting is only exposed in Waterfox Developer Edition
 separate-profile-mode =
-    .label = Permitir a { -brand-short-name } y Firefox executase al empar
+    .label = Permitir a { -brand-short-name } y Waterfox executase al empar
 use-firefox-sync = Conseyu: esto usa perfiles separtaos. Usa { -sync-brand-short-name } pa compartir datos ente ellos.
 get-started-not-logged-in = Coneutase a { -sync-brand-short-name }…
 get-started-configured = Abrir preferencies de { -sync-brand-short-name }
@@ -505,10 +505,10 @@ home-restore-defaults =
     .label = Restaurar axustes predeterminaos
     .accesskey = R
 
-# "Firefox" should be treated as a brand and kept in English,
+# "Waterfox" should be treated as a brand and kept in English,
 # while "Home" and "(Default)" can be localized.
 home-mode-choice-default =
-    .label = Aniciu de Firefox (predetermináu)
+    .label = Aniciu de Waterfox (predetermináu)
 
 home-mode-choice-custom =
     .label = URLs personalizaes...
@@ -535,7 +535,7 @@ choose-bookmark =
     .label = Usar marcador…
     .accesskey = m
 
-## Home Section - Firefox Home Content Customization
+## Home Section - Waterfox Home Content Customization
 
 home-prefs-topsites-header =
     .label = Más visitaos
@@ -641,7 +641,7 @@ containers-remove-button =
 ## Sync Section - Signed out
 
 
-## Firefox Account - Signed out. Note that "Sync" and "Firefox Account" are now
+## Waterfox Account - Signed out. Note that "Sync" and "Firefox Account" are now
 ## more discrete ("signed in" no longer means "and sync is connected").
 
 sync-signedout-caption = Lleva la web contigo
@@ -655,12 +655,12 @@ sync-signedout-description = Sincroniza los tos marcadores, historial, llingüet
 #
 # They can be moved within the sentence as needed to adapt
 # to your language, but should not be changed or translated.
-sync-mobile-promo = Baxa Firefox pa <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> o <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS</a> pa sincronizar col to preséu móvil.
+sync-mobile-promo = Baxa Waterfox pa <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> o <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS</a> pa sincronizar col to preséu móvil.
 
 ## Sync Section - Signed in
 
 
-## Firefox Account - Signed in
+## Waterfox Account - Signed in
 
 sync-profile-picture =
     .tooltiptext = Camudar semeya de perfil
@@ -716,7 +716,7 @@ sync-engine-creditcards =
 
 sync-engine-addons =
     .label = Complementos
-    .tooltiptext = Estensiones y temes pa Firefox d'escritoriu
+    .tooltiptext = Estensiones y temes pa Waterfox d'escritoriu
     .accesskey = C
 
 sync-engine-prefs =
@@ -791,8 +791,8 @@ history-header = Historial
 # "Firefox will" + "Remember history".
 #
 # If this doesn't work for your language, you can translate this message:
-#   - Simply as "Firefox", moving the verb into each option.
-#     This will result in "Firefox" + "Will remember history", etc.
+#   - Simply as "Waterfox", moving the verb into each option.
+#     This will result in "Waterfox" + "Will remember history", etc.
 #   - As a stand-alone message, for example "Firefox history settings:".
 history-remember-label = { -brand-short-name } podrá:
     .accesskey = o

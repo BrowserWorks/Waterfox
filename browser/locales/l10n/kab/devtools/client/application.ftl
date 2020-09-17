@@ -136,9 +136,9 @@ manifest-loaded-ok = Ameskan yuli-d.
 # load the manifest
 manifest-loaded-error = Teḍra-d tuccḍa deg usali n umeskan:
 
-# Text displayed as an error when there has been a Firefox DevTools error while
+# Text displayed as an error when there has been a Waterfox DevTools error while
 # trying to load the manifest
-manifest-loaded-devtools-error = Tuccḍa n Firefox DevTools
+manifest-loaded-devtools-error = Tuccḍa n Waterfox DevTools
 
 # Text displayed when the page has no manifest available
 manifest-non-existing = Ulac ameskan yettwafen i uswaḍ.

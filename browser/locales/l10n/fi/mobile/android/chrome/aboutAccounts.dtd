@@ -10,4 +10,4 @@
 <!ENTITY aboutAccounts.retry.label "Yritä uudestaan">
 
 <!ENTITY aboutAccounts.restrictedError.title "Rajoitettu">
-<!ENTITY aboutAccounts.restrictedError.description "Et voi muokata Firefox-tiliä tästä profiilista.">
+<!ENTITY aboutAccounts.restrictedError.description "Et voi muokata Waterfox-tiliä tästä profiilista.">

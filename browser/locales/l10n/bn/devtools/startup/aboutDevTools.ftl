@@ -3,23 +3,23 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 head-title = ডেভেলপার টুল সম্বন্ধে
-enable-title = Firefox Developer Tools সক্রিয় করুন
-enable-inspect-element-title = উপাদান পরিদর্শন করার জন্য Firefox Developer Tools কে সক্রিয় করুন
+enable-title = Waterfox Developer Tools সক্রিয় করুন
+enable-inspect-element-title = উপাদান পরিদর্শন করার জন্য Waterfox Developer Tools কে সক্রিয় করুন
 enable-inspect-element-message = ডেভেলোপার টুলস’ ইনসপেক্টর দিয়ে HTML ও CSS পরীক্ষা এবং সম্পাদনা করুন।
-enable-about-debugging-message = Firefox Developer Tools এর মাধ্যমে WebExtensions, এবং ওয়েব ওয়ার্কার্স, সার্ভিস ওয়ার্কার্স ডেভেলপ এবং ডিবাগ করুন।
+enable-about-debugging-message = Waterfox Developer Tools এর মাধ্যমে WebExtensions, এবং ওয়েব ওয়ার্কার্স, সার্ভিস ওয়ার্কার্স ডেভেলপ এবং ডিবাগ করুন।
 enable-key-shortcut-message = আপনি শর্টকাট  Developer Tools সক্রিয় করেছেন। যদি এটি কোনও ভুল হয়ে থাকে, তবে আপনি এই ট্যাবটি বন্ধ করতে পারেন।
 enable-learn-more-link = ডেভেলোপার টুল সম্পর্কে আরও জানুন
 enable-enable-button = ডেভেলপার টুল সক্রিয় করুন
 enable-close-button = এই ট্যাব বন্ধ করুন
 
-welcome-title = Firefox ডেভেলপার টুলে স্বাগতম!
-newsletter-title = Mozilla ডেভেলপার নিউজলেটার
+welcome-title = Waterfox ডেভেলপার টুলে স্বাগতম!
+newsletter-title = Waterfox ডেভেলপার নিউজলেটার
 newsletter-email-placeholder =
     .placeholder = ইমেইল
 newsletter-subscribe-button = সাবস্ক্রাইব
 newsletter-thanks-title = ধন্যবাদ!
 
-footer-title = Firefox Developer Edition
+footer-title = Waterfox Developer Edition
 footer-learn-more-link = আরও জানুন
 
 features-learn-more = আরও জানুন

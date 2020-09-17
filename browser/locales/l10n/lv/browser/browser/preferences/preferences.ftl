@@ -126,9 +126,9 @@ search-results-help-link = Vajadzīga palīdzība? Apmeklējiet <a data-l10n-nam
 startup-header = Palaišana
 
 # { -brand-short-name } will be 'Firefox Developer Edition',
-# since this setting is only exposed in Firefox Developer Edition
+# since this setting is only exposed in Waterfox Developer Edition
 separate-profile-mode =
-    .label = Ļaut { -brand-short-name } un Firefox darboties vienlaicīgi
+    .label = Ļaut { -brand-short-name } un Waterfox darboties vienlaicīgi
 use-firefox-sync = Padoms: Šis izmanto atsevišķu profilu. Izmantojiet { -sync-brand-short-name }, lai apmainītos ar datiem, starp šiem profiliem.
 get-started-not-logged-in = Pierakstīties { -sync-brand-short-name }…
 get-started-configured = Atvērt { -sync-brand-short-name } iestatījumus
@@ -494,10 +494,10 @@ home-restore-defaults =
     .label = Atjaunot sākotnējos
     .accesskey = t
 
-# "Firefox" should be treated as a brand and kept in English,
+# "Waterfox" should be treated as a brand and kept in English,
 # while "Home" and "(Default)" can be localized.
 home-mode-choice-default =
-    .label = Firefox sākuma lapu (noklusējuma)
+    .label = Waterfox sākuma lapu (noklusējuma)
 
 home-mode-choice-custom =
     .label = Pielāgotas adreses...
@@ -524,10 +524,10 @@ choose-bookmark =
     .label = Lietot grāmatzīmi…
     .accesskey = g
 
-## Home Section - Firefox Home Content Customization
+## Home Section - Waterfox Home Content Customization
 
-home-prefs-content-header = Firefox sākuma saturs
-home-prefs-content-description = Izvēlieties, ko redzēt Firefox sākuma lapā.
+home-prefs-content-header = Waterfox sākuma saturs
+home-prefs-content-description = Izvēlieties, ko redzēt Waterfox sākuma lapā.
 
 home-prefs-search-header =
     .label = Tīmekļa meklēšana
@@ -645,7 +645,7 @@ containers-remove-button =
 ## Sync Section - Signed out
 
 
-## Firefox Account - Signed out. Note that "Sync" and "Firefox Account" are now
+## Waterfox Account - Signed out. Note that "Sync" and "Firefox Account" are now
 ## more discrete ("signed in" no longer means "and sync is connected").
 
 sync-signedout-caption = Paņem tīmekli sev līdz
@@ -659,12 +659,12 @@ sync-signedout-description = Sinhronizējiet vēsturi, grāmatzīmes, paroles, p
 #
 # They can be moved within the sentence as needed to adapt
 # to your language, but should not be changed or translated.
-sync-mobile-promo = Lejupielādēt Firefox <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> vai <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS</a> lai sinhronizētos ar mobilajām ierīcēm.
+sync-mobile-promo = Lejupielādēt Waterfox <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> vai <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS</a> lai sinhronizētos ar mobilajām ierīcēm.
 
 ## Sync Section - Signed in
 
 
-## Firefox Account - Signed in
+## Waterfox Account - Signed in
 
 sync-profile-picture =
     .tooltiptext = Mainīt profila attēlu
@@ -720,7 +720,7 @@ sync-engine-creditcards =
 
 sync-engine-addons =
     .label = Papildinājumus
-    .tooltiptext = Firefox datoru versijas paplašinājumi un tēmas
+    .tooltiptext = Waterfox datoru versijas paplašinājumi un tēmas
     .accesskey = a
 
 sync-engine-prefs =
@@ -795,8 +795,8 @@ history-header = Vēsture
 # "Firefox will" + "Remember history".
 #
 # If this doesn't work for your language, you can translate this message:
-#   - Simply as "Firefox", moving the verb into each option.
-#     This will result in "Firefox" + "Will remember history", etc.
+#   - Simply as "Waterfox", moving the verb into each option.
+#     This will result in "Waterfox" + "Will remember history", etc.
 #   - As a stand-alone message, for example "Firefox history settings:".
 history-remember-label = { -brand-short-name }
     .accesskey = v

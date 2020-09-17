@@ -16,6 +16,6 @@
 <!ENTITY aboutPage.relNotes.label               "Nòtaichean sgaoilidh">
 <!ENTITY aboutPage.credits.label                "Creideisean">
 <!ENTITY aboutPage.license.label                "Fiosrachadh ceadachais">
-<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Firefox" being trademarked, that's why we use it, instead of brandShortName. -->
+<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Waterfox" being trademarked, that's why we use it, instead of brandShortName. -->
 
-<!ENTITY aboutPage.logoTrademark                "'S e comharran-malairt aig Fonndas Mozilla a tha ann am Firefox agus sna suaicheantasan Firefox.">
+<!ENTITY aboutPage.logoTrademark                "'S e comharran-malairt aig Fonndas Mozilla a tha ann am Waterfox agus sna suaicheantasan Waterfox.">

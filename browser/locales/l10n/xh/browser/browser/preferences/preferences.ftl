@@ -68,7 +68,7 @@ search-results-empty-message =
 startup-header = Qalisa
 
 # { -brand-short-name } will be 'Firefox Developer Edition',
-# since this setting is only exposed in Firefox Developer Edition
+# since this setting is only exposed in Waterfox Developer Edition
 separate-profile-mode =
     .label = Vumela i-{ -brand-short-name } kunye ne-Firefox ukuba zisebenze ngaxeshanye
 use-firefox-sync = Ingcebiso: Le isebenzisa iiprofayile eyahlukeneyo. Sebenzisa ungqamaniso ukwabelana ngenkcukacha phakathi kwazo.
@@ -384,7 +384,7 @@ choose-bookmark =
     .label = Sebenzisa iBhukhmakhi…
     .accesskey = B
 
-## Home Section - Firefox Home Content Customization
+## Home Section - Waterfox Home Content Customization
 
 
 ## Variables:
@@ -436,7 +436,7 @@ containers-add-button =
 ## Sync Section - Signed out
 
 
-## Firefox Account - Signed out. Note that "Sync" and "Firefox Account" are now
+## Waterfox Account - Signed out. Note that "Sync" and "Firefox Account" are now
 ## more discrete ("signed in" no longer means "and sync is connected").
 
 sync-signedout-caption = Phatha iWebhu Yakho Apho Ukhoyo
@@ -455,7 +455,7 @@ sync-mobile-promo = Dawnlowuda iFirefox ye<img data-l10n-name="android-icon"/> <
 ## Sync Section - Signed in
 
 
-## Firefox Account - Signed in
+## Waterfox Account - Signed in
 
 sync-profile-picture =
     .tooltiptext = Tshintsha umfanekiso weprofayili
@@ -537,8 +537,8 @@ history-header = Imbali
 # "Firefox will" + "Remember history".
 #
 # If this doesn't work for your language, you can translate this message:
-#   - Simply as "Firefox", moving the verb into each option.
-#     This will result in "Firefox" + "Will remember history", etc.
+#   - Simply as "Waterfox", moving the verb into each option.
+#     This will result in "Waterfox" + "Will remember history", etc.
 #   - As a stand-alone message, for example "Firefox history settings:".
 history-remember-label = I-{ -brand-short-name } iya
     .accesskey = i

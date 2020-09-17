@@ -2,7 +2,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-about-mozilla-title-6-27 = Mozilla könyve, 6:27
+about-mozilla-title-6-27 = Waterfox könyve, 6:27
 about-mozilla-quote-6-27 =
     A Fenevad megújult <em>Fókusszal</em> folytatta tanulmányait, nagyszerű <em>Referenciamunkákat</em>
     készítve és új <em>Valóságokat</em> fontolgatva. A Fenevad előhozta követőit és

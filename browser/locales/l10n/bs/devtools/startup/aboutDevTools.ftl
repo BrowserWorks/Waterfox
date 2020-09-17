@@ -3,19 +3,19 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 head-title = O razvojnim alatima
-enable-title = Omogući Firefox razvojne alate
-enable-inspect-element-title = Omogući Firefox razvojnim alatima da koriste inspekciju elementa
+enable-title = Omogući Waterfox razvojne alate
+enable-inspect-element-title = Omogući Waterfox razvojnim alatima da koriste inspekciju elementa
 enable-inspect-element-message = Istražite i uredite HTML i CSS pomoću Inspektora iz Razvojnih alata.
-enable-about-debugging-message = Razvijajte i debagirajte Web ekstenzije, web workere, service workere i još mnogo toga pomoću Firefox razvojnih alata.
+enable-about-debugging-message = Razvijajte i debagirajte Web ekstenzije, web workere, service workere i još mnogo toga pomoću Waterfox razvojnih alata.
 enable-key-shortcut-message = Aktivirali ste kraticu Razvojnih alata. Ako je to bilo greškom, možete zatvoriti ovaj tab.
 enable-menu-message = Usavršite HTML, CSS i JavaScript kod vaše web stranice pomoću alata poput Inspektora i Debagera.
-enable-common-message = Firefox razvojni alati su izvorno onemogućeni kako bi vam dali više kontrole nad vašim browserom.
+enable-common-message = Waterfox razvojni alati su izvorno onemogućeni kako bi vam dali više kontrole nad vašim browserom.
 enable-learn-more-link = Saznajte više o Razvojnim alatima
 enable-enable-button = Omogući Razvojne alate
 enable-close-button = Zatvori ovaj tab
 
-welcome-title = Dobrodošli u Firefox razvojne alate!
-newsletter-title = Mozilla Developer Newsletter
+welcome-title = Dobrodošli u Waterfox razvojne alate!
+newsletter-title = Waterfox Developer Newsletter
 newsletter-message = Neka vijesti, trikovi i resursi za developere stignu direktno u vaš inbox.
 newsletter-email-placeholder =
     .placeholder = E-mail
@@ -24,8 +24,8 @@ newsletter-subscribe-button = Pretplati
 newsletter-thanks-title = Hvala!
 newsletter-thanks-message = Ako niste ranije potvrdili pretplatu na Mozillin newsletter, možda ćete ipak morati. Molimo provjerite vaš inbox ili vaše spam filtere za e-mail od nas.
 
-footer-title = Firefox Developer Edition
-footer-message = Tražite više od običnih Razvojnih alata? Predstavljamo vam Firefox browser koji je izgrađen specifično za developere i moderan workflow.
+footer-title = Waterfox Developer Edition
+footer-message = Tražite više od običnih Razvojnih alata? Predstavljamo vam Waterfox browser koji je izgrađen specifično za developere i moderan workflow.
 footer-learn-more-link = Saznajte više
 
 features-learn-more = Saznajte više

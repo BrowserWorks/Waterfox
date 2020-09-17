@@ -4,8 +4,8 @@
 
 
 ### For this feature, "installation" is used to mean "this discrete download of
-### Firefox" and "version" is used to mean "the specific revision number of a
-### given Firefox channel". These terms are not synonymous.
+### Waterfox" and "version" is used to mean "the specific revision number of a
+### given Waterfox channel". These terms are not synonymous.
 
 title = ਅਹਿਮ ਖ਼ਬਰਾਂ
 heading = ਆਪਣੇ { -brand-short-name } ਪਰੋਫਾਇਲ ਲਈ ਬਦਲੋ

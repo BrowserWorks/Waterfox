@@ -18,7 +18,7 @@ appmenuitem-zoom-enlarge =
 appmenuitem-zoom-reduce =
     .label = छोटा करें
 
-## Firefox Account toolbar button and Sync panel in App menu.
+## Waterfox Account toolbar button and Sync panel in App menu.
 
 fxa-toolbar-sync-now =
     .label = अब तुल्यकालित करें

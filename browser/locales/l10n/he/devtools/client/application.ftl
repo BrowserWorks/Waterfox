@@ -83,9 +83,9 @@ manifest-item-identity = זהות
 # Header for the Icon section of Manifest inspection displayed in the application panel.
 manifest-item-icons = סמלים
 
-# Text displayed as an error when there has been a Firefox DevTools error while
+# Text displayed as an error when there has been a Waterfox DevTools error while
 # trying to load the manifest
-manifest-loaded-devtools-error = שגיאת כלי הפיתוח של Firefox
+manifest-loaded-devtools-error = שגיאת כלי הפיתוח של Waterfox
 
 # Text displayed at manifest icons to label their purpose, as declared
 # in the manifest.

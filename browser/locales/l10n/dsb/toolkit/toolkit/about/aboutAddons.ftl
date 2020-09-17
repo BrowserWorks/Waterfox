@@ -465,9 +465,9 @@ addon-permissions-empty = Toś to rozšyrjenje se pšawa njepomina
 recommended-extensions-heading = Dopórucone rozšyrjenja
 recommended-themes-heading = Dopórucone drastwy
 
-# A recommendation for the Firefox Color theme shown at the bottom of the theme
+# A recommendation for the Waterfox Color theme shown at the bottom of the theme
 # list view. The "Firefox Color" name itself should not be translated.
-recommended-theme-1 = Cujośo se kreatiwny? <a data-l10n-name="link">Napórajśo swójsku drastwu z Firefox Color.</a>
+recommended-theme-1 = Cujośo se kreatiwny? <a data-l10n-name="link">Napórajśo swójsku drastwu z Waterfox Color.</a>
 
 ## Page headings
 

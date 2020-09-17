@@ -3,18 +3,18 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 head-title = Perihal Alatan Pembangun
-enable-title = Dayakan Alatan Pembangun Firefox
-enable-inspect-element-title = Dayakan Alatan Pembangun Firefox untuk menggunakan Elemen Periksa
+enable-title = Dayakan Alatan Pembangun Waterfox
+enable-inspect-element-title = Dayakan Alatan Pembangun Waterfox untuk menggunakan Elemen Periksa
 enable-inspect-element-message = Periksa dan edit HTML dan CSS dengan Pemeriksa Alatan Pembangun.
-enable-about-debugging-message = Bangunkan dan nyahpepijat WebExtensions, web workers, service workers dan banyak lagi dengan Alatan Pembangun Firefox.
+enable-about-debugging-message = Bangunkan dan nyahpepijat WebExtensions, web workers, service workers dan banyak lagi dengan Alatan Pembangun Waterfox.
 enable-key-shortcut-message = Anda telah mengaktifkan pintasan Alatan Pembangun. Jika ini adalah kerana kesilapan, anda boleh tutup tab ini.
 enable-menu-message = Sempurnakan HTML, CSS dan JavaScript laman web anda dengan alatan seperti Pemeriksa dan Penyahpepijat.
-enable-common-message = Alatan Pembangun Firefox dinyahdayakan secara piawai untuk memberikan anda lebih banyak kawalan ke atas pelayar anda.
+enable-common-message = Alatan Pembangun Waterfox dinyahdayakan secara piawai untuk memberikan anda lebih banyak kawalan ke atas pelayar anda.
 enable-learn-more-link = Ketahui selanjutnya perihal Alatan Pembangun
 enable-enable-button = Dayakan Alatan Pembangun
 enable-close-button = Tutup Tab ini
 
-welcome-title = Selamat datang ke Alatan Pembangun Firefox!
+welcome-title = Selamat datang ke Alatan Pembangun Waterfox!
 newsletter-title = Surat Berita Pembangun Mozilla
 newsletter-message = Dapatkan berita. helah dan sumber yang dihantar terus ke peti masuk anda.
 newsletter-email-placeholder =
@@ -24,8 +24,8 @@ newsletter-subscribe-button = Langgan
 newsletter-thanks-title = Terima kasih!
 newsletter-thanks-message = Jika anda belum pernah mengesahkan langganan surat berita yang berkaitan dengan Mozilla, anda mungkin perlu untuk berbuat demikian. Sila semak peti masuk anda atau penapis spam anda untuk dapatkan e-mel daripada kami.
 
-footer-title = Firefox Developer Edition
-footer-message = Mencari sesuatu yang lebih daripada sekadar Alatan Pembangun? Semak pelayar Firefox yang dibina khusus untuk aliran kerja pembangun dan moden.
+footer-title = Waterfox Developer Edition
+footer-message = Mencari sesuatu yang lebih daripada sekadar Alatan Pembangun? Semak pelayar Waterfox yang dibina khusus untuk aliran kerja pembangun dan moden.
 footer-learn-more-link = Ketahui selanjutnya
 
 features-learn-more = Ketahui selanjutnya

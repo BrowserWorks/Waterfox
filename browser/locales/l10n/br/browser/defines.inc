@@ -3,7 +3,7 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #filter emptyLines
 
-#define MOZ_LANGPACK_CREATOR Firefox Breton Team
+#define MOZ_LANGPACK_CREATOR Waterfox Breton Team
 
 # If non-English locales wish to credit multiple contributors, uncomment this
 

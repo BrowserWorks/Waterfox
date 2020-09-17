@@ -77,7 +77,7 @@ onboarding-multistage-theme-description-automatic = Eipuru téma apopyvusugua
 onboarding-multistage-theme-label-light = Vevúi
 onboarding-multistage-theme-label-dark = Ypytũ
 # "Firefox Alpenglow" here is the name of the theme, and should be kept in English.
-onboarding-multistage-theme-label-alpenglow = Firefox Alpenglow
+onboarding-multistage-theme-label-alpenglow = Waterfox Alpenglow
 
 ## Please make sure to split the content of the title attribute into lines whose
 ## width corresponds to about 40 Latin characters, to ensure that the tooltip
@@ -155,17 +155,17 @@ onboarding-fullpage-welcome-subheader = Eñepyrũ ehapereka opaite ejapokuaáva.
 onboarding-fullpage-form-email =
     .placeholder = Ne ñanduti veve…
 
-## Firefox Sync modal dialog strings.
+## Waterfox Sync modal dialog strings.
 
 onboarding-sync-welcome-header = Egueraha { -brand-product-name } nendive
 onboarding-sync-welcome-content = Eike nde techaukaha, tembiasakue, ñe’ẽñemi ha ambueve ñemoĩporã opaite nde mba’e’okápe.
-onboarding-sync-welcome-learn-more-link = Eikuaave Firefox Accounts rehegua
+onboarding-sync-welcome-learn-more-link = Eikuaave Waterfox Accounts rehegua
 onboarding-sync-form-input =
     .placeholder = Ñandutiveve
 onboarding-sync-form-continue-button = Eku’ejey
 onboarding-sync-form-skip-login-button = Ehejánte kóva
 
-## This is part of the line "Enter your email to continue to Firefox Sync"
+## This is part of the line "Enter your email to continue to Waterfox Sync"
 
 onboarding-sync-form-header = Emoinge ne ñandutiveve
 onboarding-sync-form-sub-header = eike hag̃ua { -sync-brand-name }-pe.
@@ -176,7 +176,7 @@ onboarding-sync-form-sub-header = eike hag̃ua { -sync-brand-name }-pe.
 onboarding-benefit-products-text = Ejapo mba’e tembipuru aty ndive omomba’éva iñemigua opaite imba’e’okápe.
 # "Personal Data Promise" is a concept that should be translated consistently
 # across the product. It refers to a concept shown elsewhere to the user: "The
-# Firefox Personal Data Promise is the way we honor your data in everything we
+# Waterfox Personal Data Promise is the way we honor your data in everything we
 # make and do. We take less data. We keep it safe. And we make sure that we are
 # transparent about how we use it."
 onboarding-benefit-privacy-text = Rojapóva guive omomba’e mba’ekuaarã nemba’éva: E’u’ive. Eguereko tekorosãme. Kañygua’ỹre.

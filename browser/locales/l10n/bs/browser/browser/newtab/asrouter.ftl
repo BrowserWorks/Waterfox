@@ -17,7 +17,7 @@
 ## These messages are steps on how to use the feature and are shown together.
 
 
-## Firefox Accounts Message
+## Waterfox Accounts Message
 
 
 ## Protections panel
@@ -48,7 +48,7 @@ cfr-doorhanger-sync-logins-body = Sigurno pohranite i sinhronizujte vaše lozink
 ## Send Tab
 
 
-## Firefox Send
+## Waterfox Send
 
 
 ## Social Tracking Protection
@@ -57,7 +57,7 @@ cfr-doorhanger-sync-logins-body = Sigurno pohranite i sinhronizujte vaše lozink
 ## Enhanced Tracking Protection Milestones
 
 
-## What’s New Panel Content for Firefox 76
+## What’s New Panel Content for Waterfox 76
 
 
 ## Lockwise message

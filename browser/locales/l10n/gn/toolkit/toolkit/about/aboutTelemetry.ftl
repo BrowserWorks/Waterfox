@@ -18,7 +18,7 @@ about-telemetry-page-title = Telemetría mba’ekuaarã
 about-telemetry-current-store = Ñembyatyha ag̃agua:
 about-telemetry-more-information = ¿Ehekavépa marandu?
 about-telemetry-firefox-data-doc = <a data-l10n-name="data-doc-link">Firefox mba’ekuaarã kuatia</a> oreko guataha mba’éichapa emba’apóta mba’ekuaarã rembipurúre.
-about-telemetry-telemetry-client-doc = <a data-l10n-name="client-doc-link">Telemetry Firefox mba’éva kuatiatee</a> ogueroike mba’e ñemyesakã, API kuatiatee ha mba’ekuaarã rehegua.
+about-telemetry-telemetry-client-doc = <a data-l10n-name="client-doc-link">Telemetry Waterfox mba’éva kuatiatee</a> ogueroike mba’e ñemyesakã, API kuatiatee ha mba’ekuaarã rehegua.
 about-telemetry-telemetry-dashboard = Umi <a data-l10n-name="dashboard-link">Telemetry rechaha</a> ohechauka ndéve Mozilla mba’ekuaarã og̃uahẽva Telemetry rupive.
 about-telemetry-telemetry-probe-dictionary = Pe <a data-l10n-name="probe-dictionary-link">Probe Dictionary</a> ome’ẽ mba’emimi ha ñemoha’anga Telemetry ombyatyva’ekue sónda.
 about-telemetry-show-in-Firefox-json-viewer = Eike JSON hechahápe

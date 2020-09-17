@@ -140,9 +140,9 @@ search-results-help-link = Potrebujete pomoc? Navštívte <a data-l10n-name="url
 startup-header = Spustenie
 
 # { -brand-short-name } will be 'Firefox Developer Edition',
-# since this setting is only exposed in Firefox Developer Edition
+# since this setting is only exposed in Waterfox Developer Edition
 separate-profile-mode =
-    .label = Umožniť, aby { -brand-short-name } a Firefox mohli byť spustené v rovnakom čase
+    .label = Umožniť, aby { -brand-short-name } a Waterfox mohli byť spustené v rovnakom čase
 use-firefox-sync = Tip: použijú sa oddelené používateľské profily. Ak chcete medzi nimi zdieľať údaje, môžete využiť službu { -sync-brand-short-name }.
 get-started-not-logged-in = Prihlásiť sa do služby { -sync-brand-short-name }…
 get-started-configured = Otvoriť nastavenia služby { -sync-brand-short-name }
@@ -581,10 +581,10 @@ home-restore-defaults =
     .label = Obnoviť predvolené
     .accesskey = r
 
-# "Firefox" should be treated as a brand and kept in English,
+# "Waterfox" should be treated as a brand and kept in English,
 # while "Home" and "(Default)" can be localized.
 home-mode-choice-default =
-    .label = Predvolená domovská stránka Firefoxu
+    .label = Predvolená domovská stránka Waterfoxu
 
 home-mode-choice-custom =
     .label = Vlastné URL adresy…
@@ -611,10 +611,10 @@ choose-bookmark =
     .label = Použiť záložku…
     .accesskey = z
 
-## Home Section - Firefox Home Content Customization
+## Home Section - Waterfox Home Content Customization
 
-home-prefs-content-header = Obsah domovskej stránky Firefoxu
-home-prefs-content-description = Vyberte si obsah, ktorý chcete mať na domovskej stránke svojho Firefoxu.
+home-prefs-content-header = Obsah domovskej stránky Waterfoxu
+home-prefs-content-description = Vyberte si obsah, ktorý chcete mať na domovskej stránke svojho Waterfoxu.
 
 home-prefs-search-header =
     .label = Vyhľadávanie na webe
@@ -755,7 +755,7 @@ containers-remove-button =
 ## Sync Section - Signed out
 
 
-## Firefox Account - Signed out. Note that "Sync" and "Firefox Account" are now
+## Waterfox Account - Signed out. Note that "Sync" and "Firefox Account" are now
 ## more discrete ("signed in" no longer means "and sync is connected").
 
 sync-signedout-caption = Vezmite si svoj web so sebou
@@ -773,12 +773,12 @@ sync-signedout-account-signin2 =
 #
 # They can be moved within the sentence as needed to adapt
 # to your language, but should not be changed or translated.
-sync-mobile-promo = Prevezmite si Firefox pre <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> alebo <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS</a> pre synchronizáciu s vaším mobilným zariadením.
+sync-mobile-promo = Prevezmite si Waterfox pre <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> alebo <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS</a> pre synchronizáciu s vaším mobilným zariadením.
 
 ## Sync Section - Signed in
 
 
-## Firefox Account - Signed in
+## Waterfox Account - Signed in
 
 sync-profile-picture =
     .tooltiptext = Zmeniť obrázok profilu
@@ -883,7 +883,7 @@ sync-engine-creditcards =
 
 sync-engine-addons =
     .label = Doplnky
-    .tooltiptext = Rozšírenia a témy vzhľadu pre Firefox pre počítače
+    .tooltiptext = Rozšírenia a témy vzhľadu pre Waterfox pre počítače
     .accesskey = D
 
 sync-engine-prefs =
@@ -1004,8 +1004,8 @@ history-header = História
 # "Firefox will" + "Remember history".
 #
 # If this doesn't work for your language, you can translate this message:
-#   - Simply as "Firefox", moving the verb into each option.
-#     This will result in "Firefox" + "Will remember history", etc.
+#   - Simply as "Waterfox", moving the verb into each option.
+#     This will result in "Waterfox" + "Will remember history", etc.
 #   - As a stand-alone message, for example "Firefox history settings:".
 history-remember-label = Uchovávanie histórie:
     .accesskey = h

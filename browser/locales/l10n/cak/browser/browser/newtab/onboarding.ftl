@@ -77,7 +77,7 @@ onboarding-multistage-theme-description-automatic = Tokisäx ruwachinel q'inoj
 onboarding-multistage-theme-label-light = Saqsöj
 onboarding-multistage-theme-label-dark = Q'eqq'öj
 # "Firefox Alpenglow" here is the name of the theme, and should be kept in English.
-onboarding-multistage-theme-label-alpenglow = Firefox Alpenglow
+onboarding-multistage-theme-label-alpenglow = Waterfox Alpenglow
 
 ## Please make sure to split the content of the title attribute into lines whose
 ## width corresponds to about 40 Latin characters, to ensure that the tooltip
@@ -155,17 +155,17 @@ onboarding-fullpage-welcome-subheader = Tiqachapa' rutz'etik ronojel ri yatikïr
 onboarding-fullpage-form-email =
     .placeholder = Rochochib'al ataqoya'l…
 
-## Firefox Sync modal dialog strings.
+## Waterfox Sync modal dialog strings.
 
 onboarding-sync-welcome-header = Tak'waj ri { -brand-product-name } Awik'in
 onboarding-sync-welcome-content = Ke'ak'waj ri taq yaketal, natab'äl, ewan taq tzij chuqa' ch'aqa' chik taq nuk'ulem pa ronojel taq awokisaxel.
-onboarding-sync-welcome-learn-more-link = Tawetamaj ch'aqa' chik pa ruwi' ri Firefox Taqoya'l
+onboarding-sync-welcome-learn-more-link = Tawetamaj ch'aqa' chik pa ruwi' ri Waterfox Taqoya'l
 onboarding-sync-form-input =
     .placeholder = Taqoya'l
 onboarding-sync-form-continue-button = Titikïr chik el
 onboarding-sync-form-skip-login-button = Tixakalüx re jun ruxak re'
 
-## This is part of the line "Enter your email to continue to Firefox Sync"
+## This is part of the line "Enter your email to continue to Waterfox Sync"
 
 onboarding-sync-form-header = Tatz'ib'aj ataqoya'l
 onboarding-sync-form-sub-header = richin yatok pa { -sync-brand-name }.
@@ -176,7 +176,7 @@ onboarding-sync-form-sub-header = richin yatok pa { -sync-brand-name }.
 onboarding-benefit-products-text = Kasamäj rik'in jun molaj samajib'äl, ri nukamelaj ri awichinanem pa ronojel awokisab'al.
 # "Personal Data Promise" is a concept that should be translated consistently
 # across the product. It refers to a concept shown elsewhere to the user: "The
-# Firefox Personal Data Promise is the way we honor your data in everything we
+# Waterfox Personal Data Promise is the way we honor your data in everything we
 # make and do. We take less data. We keep it safe. And we make sure that we are
 # transparent about how we use it."
 onboarding-benefit-privacy-text = Ronojel ri niqab'än, nukamelaj ri Rusujik Tzij chi rij Qatzij: Jub'a' etamab'äl nuk'äm. Nujikib'a'. Majun ewäl ta.

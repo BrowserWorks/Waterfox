@@ -34,7 +34,7 @@ import-from-chromium =
     .label = Chromium
     .accesskey = u
 import-from-firefox =
-    .label = Firefox
+    .label = Waterfox
     .accesskey = x
 import-from-360se =
     .label = Brabhsálaí Slán 360
@@ -73,7 +73,7 @@ source-name-safari = Safari
 source-name-canary = Google Chrome Canary
 source-name-chrome = Google Chrome
 source-name-chromium = Chromium
-source-name-firefox = Mozilla Firefox
+source-name-firefox = Waterfox
 source-name-360se = Brabhsálaí Slán 360
 
 imported-safari-reading-list = Liosta Léitheoireachta (ó Safari)

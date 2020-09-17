@@ -17,8 +17,8 @@ about-telemetry-next-ping = >>
 about-telemetry-page-title = Дадзеныя тэлеметрыі
 about-telemetry-current-store = Цяперашняе сховішча:
 about-telemetry-more-information = Шукаеце больш інфармацыі?
-about-telemetry-firefox-data-doc = <a data-l10n-name="data-doc-link">Дакументацыя дадзеных Firefox</a> змяшчае кіраўніцтва па працы з нашымі інструментамі збору дадзеных.
-about-telemetry-telemetry-client-doc = <a data-l10n-name="client-doc-link">Дакументацыя кліента тэлеметрыі Firefox</a> змяшчае вызначэнні канцэпцый, дакументацыю па API і даведку па дадзеных.
+about-telemetry-firefox-data-doc = <a data-l10n-name="data-doc-link">Дакументацыя дадзеных Waterfox</a> змяшчае кіраўніцтва па працы з нашымі інструментамі збору дадзеных.
+about-telemetry-telemetry-client-doc = <a data-l10n-name="client-doc-link">Дакументацыя кліента тэлеметрыі Waterfox</a> змяшчае вызначэнні канцэпцый, дакументацыю па API і даведку па дадзеных.
 about-telemetry-telemetry-dashboard = <a data-l10n-name="dashboard-link">Панэлі Тэлеметрыі</a> дазваляюць вам візуалізаваць дадзеныя, атрыманыя Mozilla праз тэлеметрыю.
 about-telemetry-telemetry-probe-dictionary = <a data-l10n-name="probe-dictionary-link">Probe Dictionary</a> утрымлівае падрабязнасці і апісанні зондаў, сабраныя тэлеметрыяй.
 about-telemetry-show-in-Firefox-json-viewer = Адкрыць у праглядальніку JSON
@@ -142,7 +142,7 @@ about-telemetry-origin-origin = крыніца
 about-telemetry-origin-count = колькасць
 # Variables:
 #   $telemetryServerOwner (String): the value of the toolkit.telemetry.server_owner preference. Typically "Mozilla"
-about-telemetry-origins-explanation = <a data-l10n-name="origin-doc-link">Тэлеметрыя крыніц Firefox</a> кадуе звесткі перад перадачай, таму { $telemetryServerOwner } можа палічыць рэчы, не ведаючы, ці зрабіў пэўны { -brand-product-name } унёсак у гэту лічбу. (<a data-l10n-name="prio-blog-link">даведацца больш</a>)
+about-telemetry-origins-explanation = <a data-l10n-name="origin-doc-link">Тэлеметрыя крыніц Waterfox</a> кадуе звесткі перад перадачай, таму { $telemetryServerOwner } можа палічыць рэчы, не ведаючы, ці зрабіў пэўны { -brand-product-name } унёсак у гэту лічбу. (<a data-l10n-name="prio-blog-link">даведацца больш</a>)
 # Variables:
 #  $process (String): type of process in subsection headers ( e.g. "content", "parent" )
 about-telemetry-process = Працэс { $process }

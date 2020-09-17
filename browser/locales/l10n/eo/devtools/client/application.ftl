@@ -136,9 +136,9 @@ manifest-loaded-ok = Manifesto ŝargita.
 # load the manifest
 manifest-loaded-error = Okazis eraro dum ŝargado de manifesto:
 
-# Text displayed as an error when there has been a Firefox DevTools error while
+# Text displayed as an error when there has been a Waterfox DevTools error while
 # trying to load the manifest
-manifest-loaded-devtools-error = Eraro en Iloj de Firefox por programistoj
+manifest-loaded-devtools-error = Eraro en Iloj de Waterfox por programistoj
 
 # Text displayed when the page has no manifest available
 manifest-non-existing = Neniu manifesto trovita por inspekti.

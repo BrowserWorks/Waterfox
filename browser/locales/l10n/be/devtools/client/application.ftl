@@ -104,9 +104,9 @@ manifest-loaded-ok = Маніфест зацягнуты.
 # Text displayed as a caption when there has been an error while trying to
 # load the manifest
 manifest-loaded-error = Пры зацягванні маніфеста ўзнікла памылка:
-# Text displayed as an error when there has been a Firefox DevTools error while
+# Text displayed as an error when there has been a Waterfox DevTools error while
 # trying to load the manifest
-manifest-loaded-devtools-error = Памылка прылад распрацоўшчыка Firefox
+manifest-loaded-devtools-error = Памылка прылад распрацоўшчыка Waterfox
 # Text displayed when the page has no manifest available
 manifest-non-existing = Маніфест для даследавання не знойдзены.
 # Text displayed when the page has a manifest embedded in a Data URL and

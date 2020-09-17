@@ -31,9 +31,9 @@ graph-week-summary-private-window = Sledilci, ki jih je { -brand-short-name } za
 
 protection-report-webpage-title = Nadzorna plošča zaščit
 protection-report-page-content-title = Nadzorna plošča zaščit
-# This message shows when all privacy protections are turned off, which is why we use the word "can", Firefox is able to protect your privacy, but it is currently not.
+# This message shows when all privacy protections are turned off, which is why we use the word "can", Waterfox is able to protect your privacy, but it is currently not.
 protection-report-page-summary = { -brand-short-name } lahko med brskanjem neopazno ščiti vašo zasebnost. To je prilagojen povzetek zaščit, vključno z orodji za nadzor nad vašo spletno varnostjo.
-# This message shows when at least some protections are turned on, we are more assertive compared to the message above, Firefox is actively protecting you.
+# This message shows when at least some protections are turned on, we are more assertive compared to the message above, Waterfox is actively protecting you.
 protection-report-page-summary-default = { -brand-short-name } med brskanjem neopazno ščiti vašo zasebnost. To je prilagojen povzetek zaščit, vključno z orodji za nadzor nad vašo spletno varnostjo.
 
 protection-report-settings-link = Upravljaj nastavitve zasebnosti in varnosti

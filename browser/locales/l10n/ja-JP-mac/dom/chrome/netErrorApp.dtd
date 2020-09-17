@@ -6,7 +6,7 @@
      from netError.dtd; Applications which want to do this should override
      this file with their own version of netErrorApp.dtd -->
 
-<!-- An example (from Firefox):
+<!-- An example (from Waterfox):
 
 <!ENTITY securityOverride.linkText		"例外として扱うこともできます...">
 <!ENTITY securityOverride.getMeOutOfHereButton	"スタートページに戻る">

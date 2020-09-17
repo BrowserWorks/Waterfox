@@ -40,7 +40,7 @@ screenshots-self-screenshot-error-title = ¡No puedes tomar una captura de una p
 
 screenshots-empty-selection-error-title = Tu selección es muy pequeña
 
-screenshots-private-window-error-title = Firefox { -screenshots-brand-name } está desactivado en el modo de navegación privada
+screenshots-private-window-error-title = Waterfox { -screenshots-brand-name } está desactivado en el modo de navegación privada
 screenshots-private-window-error-details = Disculpa las molestias. Estamos trabajando en esta función para una futura versión.
 
 screenshots-generic-error-title = ¡Guau! { -screenshots-brand-name } se copetió.

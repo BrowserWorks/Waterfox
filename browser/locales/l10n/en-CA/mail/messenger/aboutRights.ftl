@@ -7,7 +7,7 @@ rights-intro = { -brand-full-name } is free and open source software, built by a
 rights-intro-point-1 = { -brand-short-name } is made available to you under the terms of the <a data-l10n-name="mozilla-public-license-link">Mozilla Public Licence</a>. This means you may use, copy and distribute { -brand-short-name } to others.  You are also welcome to modify the source code of { -brand-short-name } as you want to meet your needs. The Mozilla Public Licence also gives you the right to distribute your modified versions.
 rights-intro-point-2 =
     You are not granted any trademark rights or licenses to the trademarks of
-    the Mozilla Foundation or any party, including without limitation the
+    the Waterfox Ltd. or any party, including without limitation the
     Thunderbird name or logo. Additional information on trademarks may be found
     <a data-l10n-name="mozilla-trademarks-link">here</a>.
 rights-intro-point-3 = Some features in { -brand-short-name }, such as the Crash Reporter, give you the option to provide feedback to { -vendor-short-name }. By choosing to submit feedback, you give { -vendor-short-name } permission to use the feedback to improve its products, to publish the feedback on its websites, and to distribute the feedback.

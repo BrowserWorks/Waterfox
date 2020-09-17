@@ -134,7 +134,7 @@ search-results-help-link = সাহায্য প্রয়োজন? <a data-
 startup-header = শুরুতে
 
 # { -brand-short-name } will be 'Firefox Developer Edition',
-# since this setting is only exposed in Firefox Developer Edition
+# since this setting is only exposed in Waterfox Developer Edition
 separate-profile-mode =
     .label = অনুমতি দিন { -brand-short-name } এবং ফায়ারফক্স একই সময়ে চালানোর জন্য
 use-firefox-sync = টিপ: এটি পৃথক প্রোফাইল ব্যাবহার করে। তাদের মধ্যে তথ্য শেয়ার করার জন্য { -sync-brand-short-name } ব্যবহার করুন।
@@ -541,10 +541,10 @@ home-restore-defaults =
     .label = ডিফল্ট মান পুনরায় স্থাপন
     .accesskey = R
 
-# "Firefox" should be treated as a brand and kept in English,
+# "Waterfox" should be treated as a brand and kept in English,
 # while "Home" and "(Default)" can be localized.
 home-mode-choice-default =
-    .label = Firefox Home (ডিফল্ট)
+    .label = Waterfox Home (ডিফল্ট)
 
 home-mode-choice-custom =
     .label = কাস্টম URLs…
@@ -571,10 +571,10 @@ choose-bookmark =
     .label = বুকমার্ক ব্যবহার করুন
     .accesskey = B
 
-## Home Section - Firefox Home Content Customization
+## Home Section - Waterfox Home Content Customization
 
-home-prefs-content-header = Firefox Home কনটেন্ট
-home-prefs-content-description = আপনার Firefox Home স্ক্রিনে যেসব কনটেন্ট রাখতে চান তা পছন্দ করুন।
+home-prefs-content-header = Waterfox Home কনটেন্ট
+home-prefs-content-description = আপনার Waterfox Home স্ক্রিনে যেসব কনটেন্ট রাখতে চান তা পছন্দ করুন।
 
 home-prefs-search-header =
     .label = ওয়েব অনুসন্ধান
@@ -709,7 +709,7 @@ containers-remove-button =
 ## Sync Section - Signed out
 
 
-## Firefox Account - Signed out. Note that "Sync" and "Firefox Account" are now
+## Waterfox Account - Signed out. Note that "Sync" and "Firefox Account" are now
 ## more discrete ("signed in" no longer means "and sync is connected").
 
 sync-signedout-caption = আপনার ওয়েব আপনার সঙ্গে নিন
@@ -723,12 +723,12 @@ sync-signedout-description = আপনার সকল ডিভাইস জু
 #
 # They can be moved within the sentence as needed to adapt
 # to your language, but should not be changed or translated.
-sync-mobile-promo = Firefox ডাউনলোড <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> অথবা <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS</a> আপনার মোবাইল ডিভাইসের সাথে সিঙ্ক করতে।
+sync-mobile-promo = Waterfox ডাউনলোড <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> অথবা <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS</a> আপনার মোবাইল ডিভাইসের সাথে সিঙ্ক করতে।
 
 ## Sync Section - Signed in
 
 
-## Firefox Account - Signed in
+## Waterfox Account - Signed in
 
 sync-profile-picture =
     .tooltiptext = প্রোফাইলের ছবি পরিবর্তন করুন
@@ -833,7 +833,7 @@ sync-engine-creditcards =
 
 sync-engine-addons =
     .label = অ্যাড-অন
-    .tooltiptext = Firefox ডেস্কটপের জন্য এক্সটেনশন ও থিম
+    .tooltiptext = Waterfox ডেস্কটপের জন্য এক্সটেনশন ও থিম
     .accesskey = A
 
 sync-engine-prefs =
@@ -922,8 +922,8 @@ history-header = ইতিহাস
 # "Firefox will" + "Remember history".
 #
 # If this doesn't work for your language, you can translate this message:
-#   - Simply as "Firefox", moving the verb into each option.
-#     This will result in "Firefox" + "Will remember history", etc.
+#   - Simply as "Waterfox", moving the verb into each option.
+#     This will result in "Waterfox" + "Will remember history", etc.
 #   - As a stand-alone message, for example "Firefox history settings:".
 history-remember-label = { -brand-short-name } হবে
     .accesskey = w

@@ -143,7 +143,7 @@ in "Search through tabs". -->
 <!ENTITY appMenuRemoteTabs.tabsnotsyncing.label " වෙනත් උපාංගයන්ගේ සිට ටැබ් ලැයිස්තුව බැලිමට ටැබ් සම්මුහුර්ථය අරින්න (Turn on).">
 <!-- LOCALIZATION NOTE (appMenuRemoteTabs.noclients.subtitle): This is shown
      when Sync is configured but this appears to be the only device attached to
-     the account. We also show links to download Firefox for android/ios. -->
+     the account. We also show links to download Waterfox for android/ios. -->
 <!ENTITY appMenuRemoteTabs.noclients.subtitle "වෙනත් උපාංගයක සිට ඔබේ මෙම ටැබ් බැලීමට අවශ්‍යද?">
 <!ENTITY appMenuRemoteTabs.opensyncprefs.label "සම්මුහුර්ත අභිප්‍රේතයන් විවෘත කරන්න">
 <!ENTITY appMenuRemoteTabs.unverified.label "ඔබේ ගිනුම තහවුරු කල යුතුයි.">

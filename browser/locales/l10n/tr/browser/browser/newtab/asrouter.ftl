@@ -80,7 +80,7 @@ cfr-doorhanger-pintab-animation-pause = Duraklat
 cfr-doorhanger-pintab-animation-resume = Devam et
 
 
-## Firefox Accounts Message
+## Waterfox Accounts Message
 
 cfr-doorhanger-bookmark-fxa-header = Yer imlerinize her yerden ulaşın.
 cfr-doorhanger-bookmark-fxa-body = Bu yer imine mobil cihazlarınızdan da ulaşmak istemez miydiniz? Hemen { -fxaccount-brand-name } açın.
@@ -191,7 +191,7 @@ cfr-doorhanger-send-tab-body = Sekme Gönder özelliğiyle bu bağlantıyı kola
 cfr-doorhanger-send-tab-ok-button = Sekme göndermeyi dene
     .accesskey = S
 
-## Firefox Send
+## Waterfox Send
 
 cfr-doorhanger-firefox-send-header = Bu PDF’i güvenle paylaşın
 cfr-doorhanger-firefox-send-body = Uçtan uca şifreleme ve işiniz bittiğinde kaybolan bir bağlantıyla hassas belgelerinizi meraklı gözlerden koruyun.
@@ -229,7 +229,7 @@ cfr-doorhanger-milestone-ok-button = Tümünü göster
 cfr-doorhanger-milestone-close-button = Kapat
     .accesskey = K
 
-## What’s New Panel Content for Firefox 76
+## What’s New Panel Content for Waterfox 76
 
 
 ## Lockwise message

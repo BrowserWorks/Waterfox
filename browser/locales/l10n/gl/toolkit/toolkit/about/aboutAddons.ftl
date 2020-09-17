@@ -388,9 +388,9 @@ release-notes-error = Sentímolo, pero produciuse un erro ao cargar as notas do 
 addon-permissions-empty = Esta extensión non require ningún permiso
 recommended-extensions-heading = Extensións recomendadas
 recommended-themes-heading = Temas recomendados
-# A recommendation for the Firefox Color theme shown at the bottom of the theme
+# A recommendation for the Waterfox Color theme shown at the bottom of the theme
 # list view. The "Firefox Color" name itself should not be translated.
-recommended-theme-1 = Séntese creativo? <a data-l10n-name="link">Cree o seu propio tema con Firefox Color.</a>
+recommended-theme-1 = Séntese creativo? <a data-l10n-name="link">Cree o seu propio tema con Waterfox Color.</a>
 
 ## Page headings
 

@@ -11,10 +11,10 @@
 
 # Sidebar strings
 
-# Display name of the runtime for the currently running instance of Firefox. Used in the
+# Display name of the runtime for the currently running instance of Waterfox. Used in the
 # Sidebar and in the Setup page.
 about-debugging-this-firefox-runtime-name = ఈ { -brand-shorter-name }
-# Sidebar heading for selecting the currently running instance of Firefox
+# Sidebar heading for selecting the currently running instance of Waterfox
 about-debugging-sidebar-this-firefox =
     .name = { about-debugging-this-firefox-runtime-name }
 # Connection status (connected) for runtime items in the sidebar
@@ -53,7 +53,7 @@ about-debugging-network-locations-remove-button = తొలగించు
 
 # Below are the titles for the various categories of debug targets that can be found
 # on "runtime" pages of about:debugging.
-# Title of the temporary extensions category (only available for "This Firefox" runtime).
+# Title of the temporary extensions category (only available for "This Waterfox" runtime).
 about-debugging-runtime-temporary-extensions =
     .name = తాత్కాలిక పొడగింతలు
 # Title of the extensions category.
@@ -75,7 +75,7 @@ about-debugging-runtime-name = { $name } ({ $version })
 # Displayed in the categories of "runtime" pages that don't have any debug target to
 # show. Debug targets depend on the category (extensions, tabs, workers...).
 about-debugging-debug-target-list-empty = ఇంకా ఏమీలేదు.
-# Text of a button displayed for a temporary extension loaded in the "This Firefox" page.
+# Text of a button displayed for a temporary extension loaded in the "This Waterfox" page.
 # Clicking on the button will uninstall the extension and remove it from the page.
 about-debugging-tmp-extension-remove-button = తొలగించు
 # Text displayed for extensions (temporary extensions only) in "runtime" pages, before

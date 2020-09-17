@@ -17,8 +17,8 @@ about-telemetry-next-ping = >>
 about-telemetry-page-title = Данні телеметрії
 about-telemetry-current-store = Поточне сховище:
 about-telemetry-more-information = Шукаєте додаткову інформацію?
-about-telemetry-firefox-data-doc = <a data-l10n-name="data-doc-link">Документація даних Firefox</a> містить настанови про те, як працювати з нашими інструментами даних.
-about-telemetry-telemetry-client-doc = <a data-l10n-name="client-doc-link">Документація клієнта телеметрії Firefox</a> містить визначення для концептів, документацію API та посилання на дані.
+about-telemetry-firefox-data-doc = <a data-l10n-name="data-doc-link">Документація даних Waterfox</a> містить настанови про те, як працювати з нашими інструментами даних.
+about-telemetry-telemetry-client-doc = <a data-l10n-name="client-doc-link">Документація клієнта телеметрії Waterfox</a> містить визначення для концептів, документацію API та посилання на дані.
 about-telemetry-telemetry-dashboard = <a data-l10n-name="dashboard-link">Панелі огляду телеметрії</a> дозволяють вам візуалізувати дані, які Mozilla отримує через телеметрію.
 about-telemetry-telemetry-probe-dictionary = <a data-l10n-name="probe-dictionary-link">Словник вимірювань</a> містить подробиці та описи вимірювань, що збираються Телеметрією.
 about-telemetry-show-in-Firefox-json-viewer = Відкрити в засобі перегляду JSON
@@ -142,7 +142,7 @@ about-telemetry-origin-origin = джерело
 about-telemetry-origin-count = кількість
 # Variables:
 #   $telemetryServerOwner (String): the value of the toolkit.telemetry.server_owner preference. Typically "Mozilla"
-about-telemetry-origins-explanation = <a data-l10n-name="origin-doc-link">Телеметрія джерела Firefox</a> кодує дані перед їх надсиланням, щоб в { $telemetryServerOwner } мали змогу їх проаналізувати, але не дізналися про будь-який { -brand-product-name }, що надав свої дані для аналізу. (<a data-l10n-name="prio-blog-link">Докладніше</a>)
+about-telemetry-origins-explanation = <a data-l10n-name="origin-doc-link">Телеметрія джерела Waterfox</a> кодує дані перед їх надсиланням, щоб в { $telemetryServerOwner } мали змогу їх проаналізувати, але не дізналися про будь-який { -brand-product-name }, що надав свої дані для аналізу. (<a data-l10n-name="prio-blog-link">Докладніше</a>)
 # Variables:
 #  $process (String): type of process in subsection headers ( e.g. "content", "parent" )
 about-telemetry-process = Процес { $process }

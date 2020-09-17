@@ -17,8 +17,8 @@ about-telemetry-next-ping = >>
 about-telemetry-page-title = Dữ liệu từ xa
 about-telemetry-current-store = Cửa hàng hiện tại:
 about-telemetry-more-information = Tìm kiếm thêm thông tin?
-about-telemetry-firefox-data-doc = <a data-l10n-name="data-doc-link">Tài liệu dữ liệu Firefox</a> chứa các hướng dẫn về cách làm việc với các công cụ dữ liệu của chúng tôi.
-about-telemetry-telemetry-client-doc = <a data-l10n-name="client-doc-link">Tài liệu ứng dụng khách từ xa của Firefox</a> bao gồm các định nghĩa cho các khái niệm, tài liệu API và tham chiếu dữ liệu.
+about-telemetry-firefox-data-doc = <a data-l10n-name="data-doc-link">Tài liệu dữ liệu Waterfox</a> chứa các hướng dẫn về cách làm việc với các công cụ dữ liệu của chúng tôi.
+about-telemetry-telemetry-client-doc = <a data-l10n-name="client-doc-link">Tài liệu ứng dụng khách từ xa của Waterfox</a> bao gồm các định nghĩa cho các khái niệm, tài liệu API và tham chiếu dữ liệu.
 about-telemetry-telemetry-dashboard = <a data-l10n-name="dashboard-link">Bảng điều khiển từ xa</a> cho phép bạn trực quan hóa dữ liệu Mozilla nhận được thông qua từ xa.
 about-telemetry-telemetry-probe-dictionary = <a data-l10n-name="probe-dictionary-link">Từ điển thăm dò</a> cung cấp chi tiết và mô tả cho các thăm dò được thu thập bởi Telemetry.
 about-telemetry-show-in-Firefox-json-viewer = Mở trong trình xem JSON

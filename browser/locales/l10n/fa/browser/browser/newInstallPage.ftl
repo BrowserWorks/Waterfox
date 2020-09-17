@@ -4,15 +4,15 @@
 
 
 ### For this feature, "installation" is used to mean "this discrete download of
-### Firefox" and "version" is used to mean "the specific revision number of a
-### given Firefox channel". These terms are not synonymous.
+### Waterfox" and "version" is used to mean "the specific revision number of a
+### given Waterfox channel". These terms are not synonymous.
 
 title = خبرهای مهم
 heading = تغییرات در نمایهٔ { -brand-short-name } شما
 
 changed-title = چه چیزی تغییر کرده؟
 changed-desc-profiles = نصب { -brand-short-name } یک نمایه جدید دارد. نمایه مجموعه‌ای از فایل‌هاست که فایرفاکس اطلاعاتی مانند نشانک‌ها، گذرواژه‌ها و اطلاعات کاربری را در آن ذخیره می‌کند.
-changed-desc-dedicated = به خاطر آنکه جابجا شدن بین نصب‌های مختلف فایرفاکس (شامل Firefox Developer Edition، Firefox Beta، Firefox ESR، Firefox و Firefox Nightly) ساده‌تر و امن‌تر باشد، این نصب یک نمایه اختصاصی دارد. این نصب به صورت اتوماتیک، اطلاعات ذخیره شده شما را با سایر نصب‌های فایرفاکس به اشتراک نمی‌گذارد.
+changed-desc-dedicated = به خاطر آنکه جابجا شدن بین نصب‌های مختلف فایرفاکس (شامل Waterfox Developer Edition، Waterfox Beta، Waterfox ESR، Waterfox و Waterfox Nightly) ساده‌تر و امن‌تر باشد، این نصب یک نمایه اختصاصی دارد. این نصب به صورت اتوماتیک، اطلاعات ذخیره شده شما را با سایر نصب‌های فایرفاکس به اشتراک نمی‌گذارد.
 
 lost = <b>شما هیچ کدام از اطلاعات یا تنظیمات شخصی خود را از دست نخواهید داد</b> اگر شما هم اکنون در یک فایرفاکس بر روی این کامپیوتر اطلاعات ذخیره شده‌ای دارید، همچنان در آن نصب‌ها قابل دسترس هستند.
 

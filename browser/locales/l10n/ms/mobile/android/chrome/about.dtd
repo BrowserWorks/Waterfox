@@ -17,5 +17,5 @@
 <!ENTITY aboutPage.credits.label                "Kredit">
 <!ENTITY aboutPage.license.label                "Maklumat Perlesenan">
 
-<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Firefox" being trademarked, that's why we use it, instead of brandShortName. -->
-<!ENTITY aboutPage.logoTrademark                "Firefox dan logo Firefox adalah cap dagangan Mozilla Foundation.">
+<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Waterfox" being trademarked, that's why we use it, instead of brandShortName. -->
+<!ENTITY aboutPage.logoTrademark                "Firefox dan logo Waterfox adalah cap dagangan Waterfox Ltd..">

@@ -4,7 +4,7 @@
 
 
 ## The Enterprise Policies feature is aimed at system administrators
-## who want to deploy these settings across several Firefox installations
+## who want to deploy these settings across several Waterfox installations
 ## all at once. This is traditionally done through the Windows Group Policy
 ## feature, but the system also supports other forms of deployment.
 ## These are short descriptions for individual policies, to be displayed
@@ -30,8 +30,8 @@ policy-DisableDefaultBrowserAgent = Прадухіліць любыя дзеян
 policy-DisableDeveloperTools = Забараніць доступ да прылад распрацоўшчыка.
 policy-DisableFeedbackCommands = Адключыць каманды для адпраўкі зваротнай сувязі праз меню Даведкі («Падаць водгук» і «Паведаміць аб падробленым сайце»).
 policy-DisableFirefoxAccounts = Адключыць сэрвісы, заснаваныя на { -fxaccount-brand-name }, у тым ліку Сінхранізацыю.
-# Firefox Screenshots is the name of the feature, and should not be translated.
-policy-DisableFirefoxScreenshots = Адключыць функцыю Firefox Screenshots.
+# Waterfox Screenshots is the name of the feature, and should not be translated.
+policy-DisableFirefoxScreenshots = Адключыць функцыю Waterfox Screenshots.
 policy-DisableFirefoxStudies = Прадухіляць запуск даследаванняў у { -brand-short-name }.
 policy-DisableForgetButton = Прадухіліць доступ да кнопкі «Забыць».
 policy-DisableFormHistory = Не запамінаць гісторыю пошуку і запаўнення формаў.
@@ -62,7 +62,7 @@ policy-EncryptedMediaExtensions = Уключыць або выключыць п�
 policy-Extensions = Усталёўваць, выдаляць і забараняць змены пашырэнняў. Функцыя ўсталявання прымае URL-адрас або шлях у якасці параметраў. Выдаленне і забарона зменаў прымаюць ідэнтыфікатары пашырэнняў.
 policy-ExtensionSettings = Кіраваць усімі аспектамі ўсталёўкі пашырэння.
 policy-ExtensionUpdate = Уключае або выключае аўтаматычнае абнаўленне пашырэнняў.
-policy-FirefoxHome = Наладзіць хатнюю старонку Firefox.
+policy-FirefoxHome = Наладзіць хатнюю старонку Waterfox.
 policy-FlashPlugin = Дазволіць або забараніць выкарыстанне плагіна Flash.
 policy-Handlers = Наладзіць прадвызначаныя апрацоўшчыкі праграм.
 policy-HardwareAcceleration = Калі false, адключыць апаратнае паскарэнне.

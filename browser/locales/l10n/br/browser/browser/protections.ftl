@@ -33,9 +33,9 @@ graph-week-summary-private-window = Heulierien stanket gant { -brand-short-name 
 
 protection-report-webpage-title = Taolenn-stur ar gwarezioù
 protection-report-page-content-title = Taolenn-stur ar gwarezioù
-# This message shows when all privacy protections are turned off, which is why we use the word "can", Firefox is able to protect your privacy, but it is currently not.
+# This message shows when all privacy protections are turned off, which is why we use the word "can", Waterfox is able to protect your privacy, but it is currently not.
 protection-report-page-summary = { -brand-short-name } a c'hall gwareziñ ho puhez prevez diouzh an drekleur p'emaoc'h o verdeiñ. Un diverradenn personelaet deus ar gwarezioù-se eo, gant binviji evit kontrollañ ho surentez enlinenn.
-# This message shows when at least some protections are turned on, we are more assertive compared to the message above, Firefox is actively protecting you.
+# This message shows when at least some protections are turned on, we are more assertive compared to the message above, Waterfox is actively protecting you.
 protection-report-page-summary-default = { -brand-short-name } a warez ho puhez prevez diouzh an drekleur p'emaoc'h o verdeiñ. Un diverradenn personelaet deus ar gwarezioù-se eo, gant binviji evit kontrollañ ho surentez enlinenn.
 
 protection-report-settings-link = Merañ hoc’h arventennoù prevezded ha surentez

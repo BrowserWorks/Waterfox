@@ -461,9 +461,9 @@ addon-permissions-empty = Această extensie nu necesită nicio permisiune
 recommended-extensions-heading = Extensii recomandate
 recommended-themes-heading = Teme recomandate
 
-# A recommendation for the Firefox Color theme shown at the bottom of the theme
+# A recommendation for the Waterfox Color theme shown at the bottom of the theme
 # list view. The "Firefox Color" name itself should not be translated.
-recommended-theme-1 = Te simți creativ? <a data-l10n-name="link">Construiește-ți propria temă cu Firefox Color.</a>
+recommended-theme-1 = Te simți creativ? <a data-l10n-name="link">Construiește-ți propria temă cu Waterfox Color.</a>
 
 ## Page headings
 

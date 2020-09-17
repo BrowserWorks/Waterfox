@@ -33,11 +33,11 @@ onboarding-cards-dismiss =
 
 ## Welcome full page string
 
-## Firefox Sync modal dialog strings.
+## Waterfox Sync modal dialog strings.
 
 onboarding-sync-welcome-header = Paņemiet { -brand-product-name } sev līdz
 onboarding-sync-welcome-content = Izmantojiet grāmatzīmes, vēsturi, saglabātās paroles un citus iestatījumus visās savās ierīcēs.
-onboarding-sync-welcome-learn-more-link = Uzzini vairāk par Firefox kontiem
+onboarding-sync-welcome-learn-more-link = Uzzini vairāk par Waterfox kontiem
 
 onboarding-sync-form-input =
     .placeholder = Epasts
@@ -45,7 +45,7 @@ onboarding-sync-form-input =
 onboarding-sync-form-continue-button = Turpināt
 onboarding-sync-form-skip-login-button = Izlaist šo soli
 
-## This is part of the line "Enter your email to continue to Firefox Sync"
+## This is part of the line "Enter your email to continue to Waterfox Sync"
 
 onboarding-sync-form-header = Ievadiet savu epastu
 onboarding-sync-form-sub-header = lai turpinātu { -sync-brand-name }.

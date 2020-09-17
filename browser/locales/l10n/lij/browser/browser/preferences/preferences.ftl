@@ -132,9 +132,9 @@ search-results-help-link = Serve agiutto? Vixita <a data-l10n-name="url">Sopòrt
 startup-header = Iniçio
 
 # { -brand-short-name } will be 'Firefox Developer Edition',
-# since this setting is only exposed in Firefox Developer Edition
+# since this setting is only exposed in Waterfox Developer Edition
 separate-profile-mode =
-    .label = Consenti l’ezegoçion de { -brand-short-name } e Firefox a-o mæximo tenpo
+    .label = Consenti l’ezegoçion de { -brand-short-name } e Waterfox a-o mæximo tenpo
 use-firefox-sync = Conseggio: coscì ti devi adeuviâ di profî diversci. Ti peu adeuviâ { -sync-brand-short-name } pe-a scincronizaçion di dæti.
 get-started-not-logged-in = Intra in{ -sync-brand-short-name }…
 get-started-configured = Arvi e inpostaçioin de { -sync-brand-short-name }
@@ -505,7 +505,7 @@ home-restore-defaults =
     .label = Repiggia predefinii
     .accesskey = R
 
-# "Firefox" should be treated as a brand and kept in English,
+# "Waterfox" should be treated as a brand and kept in English,
 # while "Home" and "(Default)" can be localized.
 home-mode-choice-default =
     .label = Pagina prinçipâ (Predefinia)
@@ -535,10 +535,10 @@ choose-bookmark =
     .label = Adeuvia o segnalibbro…
     .accesskey = s
 
-## Home Section - Firefox Home Content Customization
+## Home Section - Waterfox Home Content Customization
 
-home-prefs-content-header = Pagina iniçiâ de Firefox
-home-prefs-content-description = Çerni i contegnui che ti veu vedde inta pagina iniçiâ de Firefox.
+home-prefs-content-header = Pagina iniçiâ de Waterfox
+home-prefs-content-description = Çerni i contegnui che ti veu vedde inta pagina iniçiâ de Waterfox.
 
 home-prefs-search-header =
     .label = Çerca into Web
@@ -655,7 +655,7 @@ containers-remove-button =
 ## Sync Section - Signed out
 
 
-## Firefox Account - Signed out. Note that "Sync" and "Firefox Account" are now
+## Waterfox Account - Signed out. Note that "Sync" and "Firefox Account" are now
 ## more discrete ("signed in" no longer means "and sync is connected").
 
 sync-signedout-caption = A teu Ræ, de longo con ti
@@ -669,12 +669,12 @@ sync-signedout-description = Scincronizza segnalibbri, stöia, feuggi, paròlle 
 #
 # They can be moved within the sentence as needed to adapt
 # to your language, but should not be changed or translated.
-sync-mobile-promo = Descarega Firefox pe <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> ò <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS</a> pe scincronizate con i dispoxitivi mòbili.
+sync-mobile-promo = Descarega Waterfox pe <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> ò <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS</a> pe scincronizate con i dispoxitivi mòbili.
 
 ## Sync Section - Signed in
 
 
-## Firefox Account - Signed in
+## Waterfox Account - Signed in
 
 sync-profile-picture =
     .tooltiptext = Cangia l’inmagine do profî
@@ -730,7 +730,7 @@ sync-engine-creditcards =
 
 sync-engine-addons =
     .label = Conponenti azonti
-    .tooltiptext = Estenscioin e temi pe Firefox desktop
+    .tooltiptext = Estenscioin e temi pe Waterfox desktop
     .accesskey = a
 
 sync-engine-prefs =
@@ -807,8 +807,8 @@ history-header = Stöia
 # "Firefox will" + "Remember history".
 #
 # If this doesn't work for your language, you can translate this message:
-#   - Simply as "Firefox", moving the verb into each option.
-#     This will result in "Firefox" + "Will remember history", etc.
+#   - Simply as "Waterfox", moving the verb into each option.
+#     This will result in "Waterfox" + "Will remember history", etc.
 #   - As a stand-alone message, for example "Firefox history settings:".
 history-remember-label = { -brand-short-name } o se
     .accesskey = o

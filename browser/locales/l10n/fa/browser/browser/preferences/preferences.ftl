@@ -134,7 +134,7 @@ search-results-help-link = نیاز به راهنمایی دارید؟ از <a d
 startup-header = راه‌اندازی
 
 # { -brand-short-name } will be 'Firefox Developer Edition',
-# since this setting is only exposed in Firefox Developer Edition
+# since this setting is only exposed in Waterfox Developer Edition
 separate-profile-mode =
     .label = اجازه بده تا { -brand-short-name } و فایرفاکس همزمان اجرا شوند
 use-firefox-sync = نکته: این از یک نمایه جدا استفاده میکند. از { -sync-brand-short-name } برای اشتراک‌گذاری اطلاعات بین آنها استفاده کنید.
@@ -540,7 +540,7 @@ home-restore-defaults =
     .label = بازنشانی پیش‌فرض‌ها
     .accesskey = R
 
-# "Firefox" should be treated as a brand and kept in English,
+# "Waterfox" should be treated as a brand and kept in English,
 # while "Home" and "(Default)" can be localized.
 home-mode-choice-default =
     .label = خانهٔ فایرفاکس (پیش‌فرض)
@@ -570,7 +570,7 @@ choose-bookmark =
     .label = استفاده از نشانک…
     .accesskey = ن
 
-## Home Section - Firefox Home Content Customization
+## Home Section - Waterfox Home Content Customization
 
 home-prefs-content-header = محتوای صفحه خانگی فایرفاکس
 home-prefs-content-description = انتخاب کنید که چه محتوایی می‌خواهید در صفحه خانگیِ فایرفاکس خود ببینید.
@@ -697,7 +697,7 @@ containers-remove-button =
 ## Sync Section - Signed out
 
 
-## Firefox Account - Signed out. Note that "Sync" and "Firefox Account" are now
+## Waterfox Account - Signed out. Note that "Sync" and "Firefox Account" are now
 ## more discrete ("signed in" no longer means "and sync is connected").
 
 sync-signedout-caption = وب را با خودتان همراه کنید
@@ -716,7 +716,7 @@ sync-mobile-promo = بارگیری فایرفاکس برای <img data-l10n-name
 ## Sync Section - Signed in
 
 
-## Firefox Account - Signed in
+## Waterfox Account - Signed in
 
 sync-profile-picture =
     .tooltiptext = تغییرتصویر نمایه
@@ -906,8 +906,8 @@ history-header = تاریخچه
 # "Firefox will" + "Remember history".
 #
 # If this doesn't work for your language, you can translate this message:
-#   - Simply as "Firefox", moving the verb into each option.
-#     This will result in "Firefox" + "Will remember history", etc.
+#   - Simply as "Waterfox", moving the verb into each option.
+#     This will result in "Waterfox" + "Will remember history", etc.
 #   - As a stand-alone message, for example "Firefox history settings:".
 history-remember-label = { -brand-short-name } will
     .accesskey = w

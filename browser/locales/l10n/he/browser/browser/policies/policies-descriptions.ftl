@@ -4,7 +4,7 @@
 
 
 ## The Enterprise Policies feature is aimed at system administrators
-## who want to deploy these settings across several Firefox installations
+## who want to deploy these settings across several Waterfox installations
 ## all at once. This is traditionally done through the Windows Group Policy
 ## feature, but the system also supports other forms of deployment.
 ## These are short descriptions for individual policies, to be displayed
@@ -50,8 +50,8 @@ policy-DisableFeedbackCommands = השבתת פקודות לשליחת משוב �
 
 policy-DisableFirefoxAccounts = השבתת שירותים מבוססי { -fxaccount-brand-name }, לרבות Sync.
 
-# Firefox Screenshots is the name of the feature, and should not be translated.
-policy-DisableFirefoxScreenshots = השבתת התכונה Firefox Screenshots.
+# Waterfox Screenshots is the name of the feature, and should not be translated.
+policy-DisableFirefoxScreenshots = השבתת התכונה Waterfox Screenshots.
 
 policy-DisableFirefoxStudies = למנוע מ־{ -brand-short-name } להריץ מחקרים.
 
@@ -108,7 +108,7 @@ policy-ExtensionSettings = ניהול כל ההיבטים של התקנת הרח
 
 policy-ExtensionUpdate = הפעלה או השבתה של עדכונים אוטומטיים להרחבות.
 
-policy-FirefoxHome = הגדרת תצורה של מסך הבית של Firefox.
+policy-FirefoxHome = הגדרת תצורה של מסך הבית של Waterfox.
 
 policy-FlashPlugin = לאפשר או לדחות את השימוש בתוסף החיצוני Flash.
 

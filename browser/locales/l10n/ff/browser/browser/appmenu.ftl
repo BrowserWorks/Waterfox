@@ -15,7 +15,7 @@ appmenuitem-zoom-enlarge =
 appmenuitem-zoom-reduce =
     .label = Lonngo woɗɗa
 
-## Firefox Account toolbar button and Sync panel in App menu.
+## Waterfox Account toolbar button and Sync panel in App menu.
 
 fxa-toolbar-sync-now =
     .label = Sanngoɗin Jooni

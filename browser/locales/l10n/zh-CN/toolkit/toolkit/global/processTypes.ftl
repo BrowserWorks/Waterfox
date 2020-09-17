@@ -10,7 +10,7 @@ process-type-privilegedabout = About 特权页
 
 # process used to run privileged mozilla pages,
 # such as accounts.firefox.com
-process-type-privilegedmozilla = Mozilla 特权内容
+process-type-privilegedmozilla = Waterfox 特权内容
 
 process-type-extension = 扩展
 

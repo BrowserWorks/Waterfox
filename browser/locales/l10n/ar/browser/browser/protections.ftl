@@ -32,9 +32,9 @@ graph-private-window = يحجب { -brand-short-name } المتعقّبات في 
 graph-week-summary-private-window = المُتعقّبات التي حجبها { -brand-short-name } هذا الأسبوع
 protection-report-webpage-title = لوحة معلومات الحماية
 protection-report-page-content-title = لوحة معلومات الحماية
-# This message shows when all privacy protections are turned off, which is why we use the word "can", Firefox is able to protect your privacy, but it is currently not.
+# This message shows when all privacy protections are turned off, which is why we use the word "can", Waterfox is able to protect your privacy, but it is currently not.
 protection-report-page-summary = يمكنه { -brand-short-name } حماية خصوصيتك وأنت تتصفّح خفيةً. إليك ملخّصًا عن معلومات الحماية أُعدّ لك خصيصًا. يشمل الملخص ما يلزم لتتحكّم بأمنك على الشبكة.
-# This message shows when at least some protections are turned on, we are more assertive compared to the message above, Firefox is actively protecting you.
+# This message shows when at least some protections are turned on, we are more assertive compared to the message above, Waterfox is actively protecting you.
 protection-report-page-summary-default = يحمي { -brand-short-name } خصوصيتك وأنت تتصفّح خفيةً. إليك ملخّصًا عن معلومات الحماية أُعدّ لك خصيصًا. يشمل الملخص ما يلزم لتتحكّم بأمنك على الشبكة.
 protection-report-settings-link = أدِر إعدادات خصوصيتك وأمنك
 etp-card-title-always = الحماية الموسّعة من التعقب: تعمل دومًا

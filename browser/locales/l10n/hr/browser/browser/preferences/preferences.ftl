@@ -118,9 +118,9 @@ search-results-help-link = Trebate pomoć? Posjetite <a data-l10n-name="url">{ -
 
 startup-header = Pokretanje
 # { -brand-short-name } will be 'Firefox Developer Edition',
-# since this setting is only exposed in Firefox Developer Edition
+# since this setting is only exposed in Waterfox Developer Edition
 separate-profile-mode =
-    .label = Dozvoli da se { -brand-short-name } i Firefox pokrenu istovremeno
+    .label = Dozvoli da se { -brand-short-name } i Waterfox pokrenu istovremeno
 use-firefox-sync = Savjet: Ovo koristi odvojene profile. Koristi { -sync-brand-short-name } za dijeljenje podataka između njih.
 get-started-not-logged-in = Prijavi se u { -sync-brand-short-name }…
 get-started-configured = Otvori { -sync-brand-short-name } postavke
@@ -454,10 +454,10 @@ home-newtabs-mode-label = Nove kartice
 home-restore-defaults =
     .label = Vrati standardne vrijednosti
     .accesskey = r
-# "Firefox" should be treated as a brand and kept in English,
+# "Waterfox" should be treated as a brand and kept in English,
 # while "Home" and "(Default)" can be localized.
 home-mode-choice-default =
-    .label = Početna Firefox stranica (standardno)
+    .label = Početna Waterfox stranica (standardno)
 home-mode-choice-custom =
     .label = Prilagođeni URL-ovi…
 home-mode-choice-blank =
@@ -479,10 +479,10 @@ choose-bookmark =
     .label = Koristi zabilješku…
     .accesskey = š
 
-## Home Section - Firefox Home Content Customization
+## Home Section - Waterfox Home Content Customization
 
-home-prefs-content-header = Firefox početni sadržaj
-home-prefs-content-description = Odaberi sadržaj koji želiš na početnoj stranici Firefoxa.
+home-prefs-content-header = Waterfox početni sadržaj
+home-prefs-content-description = Odaberi sadržaj koji želiš na početnoj stranici Waterfoxa.
 home-prefs-search-header =
     .label = Web pretraga
 home-prefs-topsites-header =
@@ -599,7 +599,7 @@ containers-preferences-button =
 containers-remove-button =
     .label = Ukloni
 
-## Firefox Account - Signed out. Note that "Sync" and "Firefox Account" are now
+## Waterfox Account - Signed out. Note that "Sync" and "Firefox Account" are now
 ## more discrete ("signed in" no longer means "and sync is connected").
 
 sync-signedout-caption = Ponesi svoj web sa sobom
@@ -615,9 +615,9 @@ sync-signedout-account-signin2 =
 #
 # They can be moved within the sentence as needed to adapt
 # to your language, but should not be changed or translated.
-sync-mobile-promo = Preuzmi Firefox za <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> ili <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS</a> za sinkroniziranje s tvojim mobilnim uređajem.
+sync-mobile-promo = Preuzmi Waterfox za <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> ili <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS</a> za sinkroniziranje s tvojim mobilnim uređajem.
 
-## Firefox Account - Signed in
+## Waterfox Account - Signed in
 
 sync-profile-picture =
     .tooltiptext = Primijeni sliku profila
@@ -703,7 +703,7 @@ sync-engine-creditcards =
     .accesskey = c
 sync-engine-addons =
     .label = Dodaci
-    .tooltiptext = Dodaci i teme za Firefox na radnoj površini
+    .tooltiptext = Dodaci i teme za Waterfox na radnoj površini
     .accesskey = a
 sync-engine-prefs =
     .label =
@@ -799,8 +799,8 @@ history-header = Povijest
 # "Firefox will" + "Remember history".
 #
 # If this doesn't work for your language, you can translate this message:
-#   - Simply as "Firefox", moving the verb into each option.
-#     This will result in "Firefox" + "Will remember history", etc.
+#   - Simply as "Waterfox", moving the verb into each option.
+#     This will result in "Waterfox" + "Will remember history", etc.
 #   - As a stand-alone message, for example "Firefox history settings:".
 history-remember-label = { -brand-short-name } će
     .accesskey = e

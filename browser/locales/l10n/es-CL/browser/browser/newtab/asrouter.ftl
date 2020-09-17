@@ -80,7 +80,7 @@ cfr-doorhanger-pintab-animation-pause = Pausar
 cfr-doorhanger-pintab-animation-resume = Continuar
 
 
-## Firefox Accounts Message
+## Waterfox Accounts Message
 
 cfr-doorhanger-bookmark-fxa-header = Sincroniza tus marcadores en cualquier lugar.
 cfr-doorhanger-bookmark-fxa-body = ¡Gran hallazgo! Ahora no se quedes sin este marcador en tus dispositivos móviles. Empieza con una { -fxaccount-brand-name }.
@@ -193,7 +193,7 @@ cfr-doorhanger-send-tab-body = Send Tab te permite compartir fácilmente este en
 cfr-doorhanger-send-tab-ok-button = Probar Send Tab
     .accesskey = T
 
-## Firefox Send
+## Waterfox Send
 
 cfr-doorhanger-firefox-send-header = Comparte este PDF de forma segura
 cfr-doorhanger-firefox-send-body = Mantén tus documentos sensibles lejos de miradas intrusas con cifrado de extremo a extremo y un enlace que desaparece cuando estés listo.
@@ -230,7 +230,7 @@ cfr-doorhanger-milestone-ok-button = Ver todos
 cfr-doorhanger-milestone-close-button = Cerrar
     .accesskey = C
 
-## What’s New Panel Content for Firefox 76
+## What’s New Panel Content for Waterfox 76
 
 
 ## Lockwise message

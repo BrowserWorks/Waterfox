@@ -385,9 +385,9 @@ release-notes-error = Takuyu' qamak, xa xk'ulwachitäj jun sachoj toq nok pa ch'
 addon-permissions-empty = Majun ya'oj q'ij nrajo re k'amal re'
 recommended-extensions-heading = Chilab'en taq K'amal
 recommended-themes-heading = Chilab'en taq Wachinel
-# A recommendation for the Firefox Color theme shown at the bottom of the theme
+# A recommendation for the Waterfox Color theme shown at the bottom of the theme
 # list view. The "Firefox Color" name itself should not be translated.
-recommended-theme-1 = ¿La at na'owinäq? <a data-l10n-name="link">Tatz'uku' awachinel rik'in ri Firefox Color.</a>
+recommended-theme-1 = ¿La at na'owinäq? <a data-l10n-name="link">Tatz'uku' awachinel rik'in ri Waterfox Color.</a>
 
 ## Page headings
 

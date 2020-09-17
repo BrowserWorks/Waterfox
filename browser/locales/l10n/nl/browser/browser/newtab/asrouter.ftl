@@ -80,7 +80,7 @@ cfr-doorhanger-pintab-animation-pause = Pauzeren
 cfr-doorhanger-pintab-animation-resume = Hervatten
 
 
-## Firefox Accounts Message
+## Waterfox Accounts Message
 
 cfr-doorhanger-bookmark-fxa-header = Synchroniseer uw bladwijzers overal.
 cfr-doorhanger-bookmark-fxa-body = Goed gevonden! Zorg er nu voor dat u niet zonder bladwijzers zit op uw mobiele apparaten. Ga van start met { -fxaccount-brand-name }.
@@ -197,7 +197,7 @@ cfr-doorhanger-send-tab-body = Met Send Tab kunt u eenvoudig deze koppeling met 
 cfr-doorhanger-send-tab-ok-button = Send Tab proberen
     .accesskey = p
 
-## Firefox Send
+## Waterfox Send
 
 cfr-doorhanger-firefox-send-header = Dit pdf-document veilig delen
 cfr-doorhanger-firefox-send-body = Houd uw gevoelige documenten weg bij nieuwsgierige blikken met end-to-end-versleuteling en een koppeling die verdwijnt als u klaar bent.
@@ -235,7 +235,7 @@ cfr-doorhanger-milestone-ok-button = Alles bekijken
 cfr-doorhanger-milestone-close-button = Sluiten
     .accesskey = S
 
-## What’s New Panel Content for Firefox 76
+## What’s New Panel Content for Waterfox 76
 
 
 ## Lockwise message

@@ -48,8 +48,8 @@ about-debugging-sidebar-item-connect-button-connection-timeout = S'ha esgotat el
 about-debugging-sidebar-item-connected-label = Connectat
 
 # Text displayed in sidebar items for remote devices where a compatible browser (eg
-# Firefox) has not been detected yet. Typically, Android phones connected via USB with
-# USB debugging enabled, but where Firefox is not started.
+# Waterfox) has not been detected yet. Typically, Android phones connected via USB with
+# USB debugging enabled, but where Waterfox is not started.
 about-debugging-sidebar-runtime-item-waiting-for-browser = S'està esperant el navegador…
 
 # Text displayed in sidebar items for remote devices that have been disconnected from the
@@ -114,7 +114,7 @@ about-debugging-setup-usb-step-enable-dev-menu2 = Activeu el menú «Opcions per
 about-debugging-setup-usb-step-enable-debug2 = Activeu la «Depuració USB» en el menú «Opcions per a desenvolupadors» de l'Android.
 
 # USB section step by step guide
-about-debugging-setup-usb-step-enable-debug-firefox2 = Activeu la depuració USB en el Firefox en el dispositiu Android.
+about-debugging-setup-usb-step-enable-debug-firefox2 = Activeu la depuració USB en el Waterfox en el dispositiu Android.
 
 # USB section step by step guide
 about-debugging-setup-usb-step-plug-device = Connecteu el dispositiu Android a l'ordinador.
@@ -151,7 +151,7 @@ about-debugging-network-locations-remove-button = Elimina
 
 # Below are the titles for the various categories of debug targets that can be found
 # on "runtime" pages of about:debugging.
-# Title of the temporary extensions category (only available for "This Firefox" runtime).
+# Title of the temporary extensions category (only available for "This Waterfox" runtime).
 about-debugging-runtime-temporary-extensions =
     .name = Extensions temporals
 # Title of the extensions category.
@@ -210,15 +210,15 @@ about-debugging-debug-target-list-empty = De moment, cap.
 # A target can be an addon, a tab, a worker...
 about-debugging-debug-target-inspect-button = Inspecciona
 
-# Text of a button displayed in the "This Firefox" page, in the Temporary Extension
+# Text of a button displayed in the "This Waterfox" page, in the Temporary Extension
 # section. Clicking on the button will open a file picker to load a temporary extension
 about-debugging-tmp-extension-install-button = Carrega un complement temporal…
 
-# Text of a button displayed for a temporary extension loaded in the "This Firefox" page.
+# Text of a button displayed for a temporary extension loaded in the "This Waterfox" page.
 # Clicking on the button will reload the extension.
 about-debugging-tmp-extension-reload-button = Torna a carregar
 
-# Text of a button displayed for a temporary extension loaded in the "This Firefox" page.
+# Text of a button displayed for a temporary extension loaded in the "This Waterfox" page.
 # Clicking on the button will uninstall the extension and remove it from the page.
 about-debugging-tmp-extension-remove-button = Elimina
 

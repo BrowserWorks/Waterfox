@@ -10,4 +10,4 @@
 <!ENTITY aboutAccounts.retry.label "Կրկին փորձել">
 
 <!ENTITY aboutAccounts.restrictedError.title "Սահմանափակված">
-<!ENTITY aboutAccounts.restrictedError.description "Չեք կարող կառավարել Firefox-ի հաշիվները այս պրոֆիլից:">
+<!ENTITY aboutAccounts.restrictedError.description "Չեք կարող կառավարել Waterfox-ի հաշիվները այս պրոֆիլից:">

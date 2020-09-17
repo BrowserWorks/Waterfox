@@ -10,4 +10,4 @@
 <!ENTITY aboutAccounts.retry.label "再試行">
 
 <!ENTITY aboutAccounts.restrictedError.title "制限されています">
-<!ENTITY aboutAccounts.restrictedError.description "このプロファイルからは Firefox アカウントを管理できません。">
+<!ENTITY aboutAccounts.restrictedError.description "このプロファイルからは Waterfox アカウントを管理できません。">

@@ -15,15 +15,15 @@
 <!ENTITY prefEnableHTTP11Proxy.accesskey     "T">
 <!ENTITY prefPara                            "Nastavenia spojení HTTP môžu byť zmenené pomocou týchto volieb a tým môže byť zvýšená rýchlosť alebo kompatibilita. Napríklad niektoré servery proxy vyžadujú HTTP/1.0 (ďalšie informácie nájdete v poznámkach k vydaniu).">
 <!ENTITY prefUseragent.label                 "Reťazec User Agent">
-<!ENTITY prefFirefoxCompat.label             "Indikovať kompatibilitu s prehliadačom Firefox">
+<!ENTITY prefFirefoxCompat.label             "Indikovať kompatibilitu s prehliadačom Waterfox">
 <!ENTITY prefFirefoxCompat.accesskey         "F">
 <!ENTITY prefLightningShow.label             "Odporúčať inštaláciu doplnku Lightning">
 <!ENTITY prefLightningShow.accesskey         "L">
 <!ENTITY prefCompatWarning                   "UPOZORNENIE: vypnutie týchto nastavení môže spôsobiť, že webové stránky alebo služby nebudú pracovať správne.">
-<!ENTITY prefFirefoxStrict.label             "Identifikovať ako Firefox">
+<!ENTITY prefFirefoxStrict.label             "Identifikovať ako Waterfox">
 <!ENTITY prefFirefoxStrict.accesskey         "I">
 <!ENTITY prefFirefoxNone.label               "Identifikovať ako SeaMonkey">
 <!ENTITY prefFirefoxNone.accesskey           "M">
-<!ENTITY prefFirefoxCompat2.label            "Identifikovať ako SeaMonkey a indikovať kompatibilitu s Firefoxom">
+<!ENTITY prefFirefoxCompat2.label            "Identifikovať ako SeaMonkey a indikovať kompatibilitu s Waterfoxom">
 <!ENTITY prefFirefoxCompat2.accesskey        "F">
 <!ENTITY prefCompatWarning2.desc             "UPOZORNENIE: zmena tohto nastavenia môže spôsobiť, že webové stránky alebo služby nebudú pracovať správne.">

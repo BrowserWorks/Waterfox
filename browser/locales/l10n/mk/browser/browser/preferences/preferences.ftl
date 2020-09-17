@@ -53,9 +53,9 @@ cancel-no-restart-button = Откажи
 startup-header = Стартување
 
 # { -brand-short-name } will be 'Firefox Developer Edition',
-# since this setting is only exposed in Firefox Developer Edition
+# since this setting is only exposed in Waterfox Developer Edition
 separate-profile-mode =
-    .label = Дозволи { -brand-short-name } и Firefox да работат во исто време
+    .label = Дозволи { -brand-short-name } и Waterfox да работат во исто време
 
 is-default = { -brand-short-name } е вашиот основен прелистувач
 is-not-default = { -brand-short-name } не е вашиот основен прелистувач
@@ -265,7 +265,7 @@ choose-bookmark =
     .label = Користи обележувач...
     .accesskey = б
 
-## Home Section - Firefox Home Content Customization
+## Home Section - Waterfox Home Content Customization
 
 home-prefs-topsites-header =
     .label = Популарни мрежни места
@@ -345,14 +345,14 @@ containers-remove-button =
 ## Sync Section - Signed out
 
 
-## Firefox Account - Signed out. Note that "Sync" and "Firefox Account" are now
+## Waterfox Account - Signed out. Note that "Sync" and "Firefox Account" are now
 ## more discrete ("signed in" no longer means "and sync is connected").
 
 
 ## Sync Section - Signed in
 
 
-## Firefox Account - Signed in
+## Waterfox Account - Signed in
 
 
 ## Sync section - enabling or disabling sync.

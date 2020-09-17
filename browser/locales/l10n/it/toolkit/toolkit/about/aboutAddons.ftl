@@ -454,7 +454,7 @@ addon-permissions-empty = Questa estensione non richiede alcun permesso
 recommended-extensions-heading = Estensioni consigliate
 recommended-themes-heading = Temi consigliati
 
-recommended-theme-1 = Ti senti creativo? <a data-l10n-name="link">Disegna il tuo tema con Firefox Color</a>.
+recommended-theme-1 = Ti senti creativo? <a data-l10n-name="link">Disegna il tuo tema con Waterfox Color</a>.
 
 ## Page headings
 

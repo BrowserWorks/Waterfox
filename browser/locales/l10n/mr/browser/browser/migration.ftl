@@ -40,7 +40,7 @@ import-from-chromium =
     .label = Chromium
     .accesskey = u
 import-from-firefox =
-    .label = Firefox
+    .label = Waterfox
     .accesskey = x
 import-from-360se =
     .label = 360 सुरक्षित ब्राउझर
@@ -81,7 +81,7 @@ source-name-chrome = गूगल क्रोम
 source-name-chrome-beta = Google Chrome बीटा
 source-name-chrome-dev = Google Chrome Dev
 source-name-chromium = Chromium
-source-name-firefox = Mozilla Firefox
+source-name-firefox = Waterfox
 source-name-360se = 360 सुरक्षित ब्राउझर
 
 imported-safari-reading-list = सूची वाचत आहे (सफारीपासून)

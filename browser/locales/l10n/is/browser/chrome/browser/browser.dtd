@@ -142,7 +142,7 @@ can reach it easily. -->
 <!ENTITY appMenuRemoteTabs.tabsnotsyncing.label "Kveiktu á samstillingu flipa til að skoða lista af flipum frá öðrum tækjum.">
 <!-- LOCALIZATION NOTE (appMenuRemoteTabs.noclients.subtitle): This is shown
      when Sync is configured but this appears to be the only device attached to
-     the account. We also show links to download Firefox for android/ios. -->
+     the account. We also show links to download Waterfox for android/ios. -->
 <!ENTITY appMenuRemoteTabs.noclients.subtitle "Viltu sjá hérna þína flipa frá öðrum tækjum?">
 <!ENTITY appMenuRemoteTabs.opensyncprefs.label "Opna Sync stillingar">
 <!ENTITY appMenuRemoteTabs.unverified.label "Nauðsynlegt er að staðfesta reikning.">

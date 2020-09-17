@@ -44,23 +44,23 @@ this container is a toolbar. This avoids double-speaking. -->
 
 
 <!-- LOCALIZATION NOTE (fxa.signin) Used to define the different labels
-     for the Firefox Account toolbar signin menu screen. -->
+     for the Waterfox Account toolbar signin menu screen. -->
 
 <!-- LOCALIZATION NOTE (fxa.unverified) Used to define the different labels
-     for the Firefox Account toolbar unverified menu screen. -->
+     for the Waterfox Account toolbar unverified menu screen. -->
 
 <!-- LOCALIZATION NOTE (fxa.menu) Used to define the different labels
-     for the Firefox Account toolbart menu screen. The `Signed in as` text is
+     for the Waterfox Account toolbart menu screen. The `Signed in as` text is
      followed by the user's email. -->
 
 
 <!-- LOCALIZATION NOTE (fxa.menu) Used to define the different labels
-     for the Firefox Account toolbar menu screen. The `Signed in as` text is
+     for the Waterfox Account toolbar menu screen. The `Signed in as` text is
      followed by the user's email. -->
 
 
 <!-- LOCALIZATION NOTE (fxa.service) Used to define the different FxA services
-     for the Firefox Account toolbar menu screen.  -->
+     for the Waterfox Account toolbar menu screen.  -->
 
 <!-- LOCALIZATION NOTE (fullscreenWarning.beforeDomain.label,
      fullscreenWarning.afterDomain.label): these two strings are used
@@ -168,7 +168,7 @@ this container is a toolbar. This avoids double-speaking. -->
 <!ENTITY appMenuRemoteTabs.tabsnotsyncing.label "បើកសមកាលកម្មផ្ទាំងដើម្បីបង្ហាញបញ្ជីនៃផ្ទាំងពីឧបករណ៍ផ្សេងទៀតរបស់អ្នក ។">
 <!-- LOCALIZATION NOTE (appMenuRemoteTabs.noclients.subtitle): This is shown
      when Sync is configured but this appears to be the only device attached to
-     the account. We also show links to download Firefox for android/ios. -->
+     the account. We also show links to download Waterfox for android/ios. -->
 <!ENTITY appMenuRemoteTabs.noclients.subtitle "ចង់​មើល​ផ្ទាំង​របស់​អ្នក​ពី​ឧបករណ៍​ផ្សេង​នៅ​ទីនេះ​មែន​ទេ?">
 <!ENTITY appMenuRemoteTabs.opensyncprefs.label "បើកចំណូលចិត្តសមកាលកម្ម">
 <!ENTITY appMenuRemoteTabs.unverified.label "គណនី​របស់​អ្នក​ត្រូវធ្វើការ​​ផ្ទៀងផ្ទាត់។">

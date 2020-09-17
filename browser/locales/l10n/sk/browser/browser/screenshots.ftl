@@ -40,7 +40,7 @@ screenshots-self-screenshot-error-title = Nemôžete vytvoriť snímku obrazovky
 
 screenshots-empty-selection-error-title = Váš výber je príliš malý
 
-screenshots-private-window-error-title = Služba Firefox { -screenshots-brand-name } je v režime Súkromné prehliadanie zakázaná
+screenshots-private-window-error-title = Služba Waterfox { -screenshots-brand-name } je v režime Súkromné prehliadanie zakázaná
 screenshots-private-window-error-details = Ospravedlňujeme sa za spôsobené nepríjemnosti. Pracujeme na vylepšení tejto funkcie v budúcich verziách.
 
 screenshots-generic-error-title = Ups! Služba { -screenshots-brand-name } prestala pracovať.

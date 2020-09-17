@@ -3,19 +3,19 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 head-title = डेवलपर उपकरणों के बारे में
-enable-title = Firefox डेवलपर उपकरणों को सक्षम करें
-enable-inspect-element-title = इंस्पेक्ट एलिमेंट का उपयोग करने हेतु Firefox डेवलपर उपकरणों को सक्षम करें
+enable-title = Waterfox डेवलपर उपकरणों को सक्षम करें
+enable-inspect-element-title = इंस्पेक्ट एलिमेंट का उपयोग करने हेतु Waterfox डेवलपर उपकरणों को सक्षम करें
 enable-inspect-element-message = HTML और CSS को डेवलपर उपकरणों के साथ जांचें तथा सम्पादित करें’ इंस्पेक्टर.
-enable-about-debugging-message = Firefox डेवलपर उपकरणों के साथ WebExtensions, वेब कर्ता , सेवा कर्ता  तथा अधिक चीजों को विकसित करें तथा पुनर्निरक्षण करें.
+enable-about-debugging-message = Waterfox डेवलपर उपकरणों के साथ WebExtensions, वेब कर्ता , सेवा कर्ता  तथा अधिक चीजों को विकसित करें तथा पुनर्निरक्षण करें.
 enable-key-shortcut-message = आपने डेवलपर उपकरणों के एक शार्टकट को सक्रीय किया है. यदि यह एक गलती थी, तो आप इस टैब को बंद कर सकते हैं.
 enable-menu-message = इंस्पेक्टर तथा डीबगर जैसे उपकरणों के साथ अपने वेबसाइट के HTML, CSS, और JavaScript की सुधार करें.
-enable-common-message = आपके ब्राउज़र के ऊपर आपको अधिक नियंत्रण देने के लिए Firefox डेवलपर उपकरण डिफ़ॉल्ट रूप से अक्षम है.
+enable-common-message = आपके ब्राउज़र के ऊपर आपको अधिक नियंत्रण देने के लिए Waterfox डेवलपर उपकरण डिफ़ॉल्ट रूप से अक्षम है.
 enable-learn-more-link = डेवलपर उपकरणों के बारे में और जानें
 enable-enable-button = डेवलपर उपकरण सक्षम करें
 enable-close-button = इस टैब को बन्द करें
 
-welcome-title = Firefox डेवलपर उपकरण में आपका स्वागत है!
-newsletter-title = Mozilla डेवलपर संवादपत्र
+welcome-title = Waterfox डेवलपर उपकरण में आपका स्वागत है!
+newsletter-title = Waterfox डेवलपर संवादपत्र
 newsletter-message = डेवलपर समाचार, तरकीबें और संसाधन सीधे अपने इनबॉक्स में पहुँचा हुआ पाएँ.
 newsletter-email-placeholder =
     .placeholder = ईमेल
@@ -24,8 +24,8 @@ newsletter-subscribe-button = सदस्यता लें
 newsletter-thanks-title = धन्यवाद!
 newsletter-thanks-message = अगर आपने पिछले किसी Mozilla संबंधित समाचार की सदस्यता पुष्टि नहीं की है, तो आपको करनी पड़ सकती है. कृपया अपने इनबॉक्स या अवांछनीय ई-मेल फ़िल्टर में हमारे द्वारा भेजी गयी ईमेल की जांच करें.
 
-footer-title = Firefox डेवलपर संस्करण
-footer-message = सिर्फ डेवलपर उपकरण से ज्यादा की तलाश में हैं? Firefox ब्राउज़र को जाँचें जो कि विशेष रूप से डेवलपरों और आधुनिक कार्यप्रवाहों के लिए बनाया गया है.
+footer-title = Waterfox डेवलपर संस्करण
+footer-message = सिर्फ डेवलपर उपकरण से ज्यादा की तलाश में हैं? Waterfox ब्राउज़र को जाँचें जो कि विशेष रूप से डेवलपरों और आधुनिक कार्यप्रवाहों के लिए बनाया गया है.
 footer-learn-more-link = अधिक जानें
 
 features-learn-more = अधिक जानें

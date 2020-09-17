@@ -16,6 +16,6 @@
 <!ENTITY aboutPage.relNotes.label               "Nótaí Eisiúna">
 <!ENTITY aboutPage.credits.label                "Admhálacha">
 <!ENTITY aboutPage.license.label                "Maidir leis an gCeadúnas">
-<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Firefox" being trademarked, that's why we use it, instead of brandShortName. -->
+<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Waterfox" being trademarked, that's why we use it, instead of brandShortName. -->
 
-<!ENTITY aboutPage.logoTrademark                "Is trádmharcanna de chuid Fondúireacht Mozilla iad Firefox agus suaitheantais Firefox.">
+<!ENTITY aboutPage.logoTrademark                "Is trádmharcanna de chuid Fondúireacht Mozilla iad Waterfox agus suaitheantais Waterfox.">

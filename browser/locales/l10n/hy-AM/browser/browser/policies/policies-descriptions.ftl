@@ -4,7 +4,7 @@
 
 
 ## The Enterprise Policies feature is aimed at system administrators
-## who want to deploy these settings across several Firefox installations
+## who want to deploy these settings across several Waterfox installations
 ## all at once. This is traditionally done through the Windows Group Policy
 ## feature, but the system also supports other forms of deployment.
 ## These are short descriptions for individual policies, to be displayed
@@ -30,8 +30,8 @@ policy-DisableDefaultBrowserAgent = Կանխեք զննարկչի կանխադր
 policy-DisableDeveloperTools = Արգելափակել մատչումը Մշակողի գործիքներին:
 policy-DisableFeedbackCommands = Անջատել հրամանները արձագանք ուղարկելու համար օգնության ցանկից (Հաստատել արձագանքը և զեկույցել անարդար կայքի մասին)։
 policy-DisableFirefoxAccounts = Անջատել { -fxaccount-brand-name } հիմնված ծառայությունները, համաժամեցումը ներառյալ։
-# Firefox Screenshots is the name of the feature, and should not be translated.
-policy-DisableFirefoxScreenshots = Անջատել Firefox-ի էկրանի հանույթների հատկությունը։
+# Waterfox Screenshots is the name of the feature, and should not be translated.
+policy-DisableFirefoxScreenshots = Անջատել Waterfox-ի էկրանի հանույթների հատկությունը։
 policy-DisableFirefoxStudies = Կանխարգելել { -brand-short-name }֊-ը բեռնվող ուսումնասիրություններից։
 policy-DisableForgetButton = Կանխարգելել մուտքը Մոռացման կոճակով։
 policy-DisableFormHistory = Չհիշել որոնումները պատմության միջից։
@@ -62,7 +62,7 @@ policy-EncryptedMediaExtensions = Միացնել կամ անջատել գաղտ�
 policy-Extensions = Տեղադրել, ապատեղադրել կամ կողպել ընդլայնումները։ Տեղակադրան ընտրանքը վերցնում է URL-ը կամ ուղիները որպես հարաչափեր։ Ապատեղադրված և կողպված ընտրանքները վերցնում են ընդլայնման ID-ները։
 policy-ExtensionSettings = Կառավարել ընդլայնման տեղակադրան բոլոր կողմերը։
 policy-ExtensionUpdate = Միացնել կամ անջատել ընդլայումների ինքնաթարմացումները։
-policy-FirefoxHome = Կազմաձևել Firefox-ի տնէջը:
+policy-FirefoxHome = Կազմաձևել Waterfox-ի տնէջը:
 policy-FlashPlugin = Ընդունել կամ մերժել Flash բաղադրիչի գործածումը։
 policy-Handlers = Կարգավորել սկզբնադիր հավելվածների մշակիչները:
 policy-HardwareAcceleration = Եթե կեղծ է՝ անջատել սարքի արագացումը։

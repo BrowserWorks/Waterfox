@@ -69,7 +69,7 @@ cfr-doorhanger-pintab-step3 = సైటులో తాజాకరణ ఉంట
 cfr-doorhanger-pintab-animation-pause = నిలుపు
 cfr-doorhanger-pintab-animation-resume = కొనసాగించు
 
-## Firefox Accounts Message
+## Waterfox Accounts Message
 
 cfr-doorhanger-bookmark-fxa-header = మీ ఇష్టాంశాలను ప్రతిచోటా సింక్రనించుకోండి.
 cfr-doorhanger-bookmark-fxa-body = భలే కనుక్కొన్నారు! ఇప్పుడు మీ చరవాణి పరికరాల్లో ఈ ఇష్టాంశం లేకుండా ఉండకండి. { -fxaccount-brand-name } మొదలుపెట్టండి.
@@ -164,7 +164,7 @@ cfr-doorhanger-send-tab-recipe-header = ఈ రెసిపీని వంట�
 cfr-doorhanger-send-tab-ok-button = ట్యాబు పంపడాన్ని ప్రయత్నించండి
     .accesskey = T
 
-## Firefox Send
+## Waterfox Send
 
 cfr-doorhanger-firefox-send-header = ఈ PDFని సురక్షితంగా పంచుకోండి
 cfr-doorhanger-firefox-send-ok-button = { -send-brand-name }ని ప్రయత్నించండి
@@ -197,7 +197,7 @@ cfr-doorhanger-milestone-ok-button = అన్నింటినీ చూడం
 cfr-doorhanger-milestone-close-button = మూసివేయి
     .accesskey = C
 
-## What’s New Panel Content for Firefox 76
+## What’s New Panel Content for Waterfox 76
 
 
 ## Lockwise message

@@ -44,11 +44,11 @@ onboarding-cards-dismiss =
 ## Welcome full page string
 
 
-## Firefox Sync modal dialog strings.
+## Waterfox Sync modal dialog strings.
 
 onboarding-sync-welcome-header = Pòrta { -brand-product-name } con ti
 onboarding-sync-welcome-content = Repiggia i teu segnalibbri, stöia, poule segrete e atre inpostaçioin in sce tutti i teu dispoxitivi.
-onboarding-sync-welcome-learn-more-link = Saccine de ciù in sciô conto Firefox
+onboarding-sync-welcome-learn-more-link = Saccine de ciù in sciô conto Waterfox
 
 onboarding-sync-form-input =
     .placeholder = Email
@@ -56,7 +56,7 @@ onboarding-sync-form-input =
 onboarding-sync-form-continue-button = Continoa
 onboarding-sync-form-skip-login-button = Sata sto passo
 
-## This is part of the line "Enter your email to continue to Firefox Sync"
+## This is part of the line "Enter your email to continue to Waterfox Sync"
 
 onboarding-sync-form-header = Scrivi a teu email
 onboarding-sync-form-sub-header = pe continoâ con { -sync-brand-name }.

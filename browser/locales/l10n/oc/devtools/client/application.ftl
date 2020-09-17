@@ -136,9 +136,9 @@ manifest-loaded-ok = Manifèst cargat.
 # load the manifest
 manifest-loaded-error = S’es producha una error en cargant lo manifèst :
 
-# Text displayed as an error when there has been a Firefox DevTools error while
+# Text displayed as an error when there has been a Waterfox DevTools error while
 # trying to load the manifest
-manifest-loaded-devtools-error = Error de las aisinas de desvolopament de Firefox
+manifest-loaded-devtools-error = Error de las aisinas de desvolopament de Waterfox
 
 # Text displayed when the page has no manifest available
 manifest-non-existing = Cap de manifèst pas trobat a inspectar.

@@ -136,9 +136,9 @@ search-results-help-link = Ezhomm sikour? Gweladenniñ <a data-l10n-name="url">S
 startup-header = Loc'hañ
 
 # { -brand-short-name } will be 'Firefox Developer Edition',
-# since this setting is only exposed in Firefox Developer Edition
+# since this setting is only exposed in Waterfox Developer Edition
 separate-profile-mode =
-    .label = Aotren { -brand-short-name } ha Firefox da erounit war un dro
+    .label = Aotren { -brand-short-name } ha Waterfox da erounit war un dro
 use-firefox-sync = Tun : arveret e vo aeladoù disheñvel. Arverit { -sync-brand-short-name } evit rannañ roadennoù etrezo.
 get-started-not-logged-in = Kennaskañ ouzh { -sync-brand-short-name }…
 get-started-configured = Digeriñ gwellvezioù { -sync-brand-short-name }
@@ -570,10 +570,10 @@ home-restore-defaults =
     .label = Assav an arventennoù dre ziouer
     .accesskey = A
 
-# "Firefox" should be treated as a brand and kept in English,
+# "Waterfox" should be treated as a brand and kept in English,
 # while "Home" and "(Default)" can be localized.
 home-mode-choice-default =
-    .label = Pennbajenn Firefox (Dre ziouer)
+    .label = Pennbajenn Waterfox (Dre ziouer)
 
 home-mode-choice-custom =
     .label = URLoù personelaet...
@@ -600,10 +600,10 @@ choose-bookmark =
     .label = Arverañ ur sined…
     .accesskey = r
 
-## Home Section - Firefox Home Content Customization
+## Home Section - Waterfox Home Content Customization
 
-home-prefs-content-header = Endalc'had Degemer Firefox
-home-prefs-content-description = Dibabit peseurt endalc'had a fell deoc'h kaout war ho skramm Firefox Degemer.
+home-prefs-content-header = Endalc'had Degemer Waterfox
+home-prefs-content-description = Dibabit peseurt endalc'had a fell deoc'h kaout war ho skramm Waterfox Degemer.
 
 home-prefs-search-header =
     .label = Klask web
@@ -743,7 +743,7 @@ containers-remove-button =
 ## Sync Section - Signed out
 
 
-## Firefox Account - Signed out. Note that "Sync" and "Firefox Account" are now
+## Waterfox Account - Signed out. Note that "Sync" and "Firefox Account" are now
 ## more discrete ("signed in" no longer means "and sync is connected").
 
 sync-signedout-caption = Kemerit ho web ganeoc'h
@@ -761,12 +761,12 @@ sync-signedout-account-signin2 =
 #
 # They can be moved within the sentence as needed to adapt
 # to your language, but should not be changed or translated.
-sync-mobile-promo = Pellgargañ Firefox evit <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> pe <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS</a> evit goubredañ gant ho trevnad hezoug.
+sync-mobile-promo = Pellgargañ Waterfox evit <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> pe <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS</a> evit goubredañ gant ho trevnad hezoug.
 
 ## Sync Section - Signed in
 
 
-## Firefox Account - Signed in
+## Waterfox Account - Signed in
 
 sync-profile-picture =
     .tooltiptext = Kemmañ ar skeudenn aelad
@@ -871,7 +871,7 @@ sync-engine-creditcards =
 
 sync-engine-addons =
     .label = Askouezhioù
-    .tooltiptext = Askouezhioù ha neuzioù evit Firefox war burev
+    .tooltiptext = Askouezhioù ha neuzioù evit Waterfox war burev
     .accesskey = A
 
 sync-engine-prefs =
@@ -966,8 +966,8 @@ history-header = Roll istor
 # "Firefox will" + "Remember history".
 #
 # If this doesn't work for your language, you can translate this message:
-#   - Simply as "Firefox", moving the verb into each option.
-#     This will result in "Firefox" + "Will remember history", etc.
+#   - Simply as "Waterfox", moving the verb into each option.
+#     This will result in "Waterfox" + "Will remember history", etc.
 #   - As a stand-alone message, for example "Firefox history settings:".
 history-remember-label = Gant { -brand-short-name } e vo:
     .accesskey = G

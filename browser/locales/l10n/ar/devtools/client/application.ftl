@@ -83,7 +83,7 @@ manifest-loaded-ok = حُمّل البيان.
 # load the manifest
 manifest-loaded-error = حدث خطأ أثناء تحميل البيان:
 
-# Text displayed as an error when there has been a Firefox DevTools error while
+# Text displayed as an error when there has been a Waterfox DevTools error while
 # trying to load the manifest
 manifest-loaded-devtools-error = خطأ في أدوات فَيَرفُكس للمطوّرين
 

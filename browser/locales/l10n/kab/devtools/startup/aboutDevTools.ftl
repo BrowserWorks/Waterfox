@@ -3,18 +3,18 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 head-title = Γef Ifecka n tneflit
-enable-title = Rmed ifecka n tneflit n Firefox
-enable-inspect-element-title = Rmed ifecka n uneflay Firefox akken ad tesqedceḍ asweḍ n uferdis
+enable-title = Rmed ifecka n tneflit n Waterfox
+enable-inspect-element-title = Rmed ifecka n uneflay Waterfox akken ad tesqedceḍ asweḍ n uferdis
 enable-inspect-element-message = Sekyed sakin ẓreg HTML akked CSS s umaswaḍ n ifecka n tneflit.
-enable-about-debugging-message = Snefli udiɣ seɣti s WebExtensions, Web workers, imeẓla workers d wayen nniḍen s useqdec n yifecka n tneflit n Firefox.
+enable-about-debugging-message = Snefli udiɣ seɣti s WebExtensions, Web workers, imeẓla workers d wayen nniḍen s useqdec n yifecka n tneflit n Waterfox.
 enable-key-shortcut-message = Tremdeḍ anegzum ifecka n uneflay. ma tella tucḍa, tzemreḍ ad tmedleḍ iccer-agi.
 enable-menu-message = Qaεed asmel inek web HTML,CSS, akked JavaScript s ufecku am nspector akked Debugger.
-enable-common-message = Ifecka n uneflay Firefox nsan s wudem amezwer akken ad tizmireḍ i usenqed n iminig inek.
+enable-common-message = Ifecka n uneflay Waterfox nsan s wudem amezwer akken ad tizmireḍ i usenqed n iminig inek.
 enable-learn-more-link = Issin ugar γef Ifecka n tneflit
 enable-enable-button = Rmed ifecka n tneflit
 enable-close-button = Mdel iccer-a
 
-welcome-title = Ansuf yis-k γer Ifecka Firefox Developer!
+welcome-title = Ansuf yis-k γer Ifecka Waterfox Developer!
 newsletter-title = Aγmis n ineflayen n Mozilla
 newsletter-message = Rmes-d isallen, tixbula akked tiɣbula i yineflayen srid di tnaka-ik n urmas.
 newsletter-email-placeholder =
@@ -24,8 +24,8 @@ newsletter-subscribe-button = Jerred
 newsletter-thanks-title = Tanemmirt!
 newsletter-thanks-message = Ma yella ur tsentmeḍ ara ajerred inek ar tebratt n isallen icudden ar Mozilla, ahat tzemreḍ akka tura. Ma ulac aɣilif, wali ma yella yimayl di tebwaṭ inek n imaylen neɣ ula deg ispamen.
 
-footer-title = Firefox Developer Edition
-footer-message = Tettnadiḍ ugar n ifecka n uneflay? Senqed iminig Firefox ittwabnan i lmend i yineflayen akked leqdic amaynut.
+footer-title = Waterfox Developer Edition
+footer-message = Tettnadiḍ ugar n ifecka n uneflay? Senqed iminig Waterfox ittwabnan i lmend i yineflayen akked leqdic amaynut.
 footer-learn-more-link = Issin ugar
 
 features-learn-more = Issin ugar

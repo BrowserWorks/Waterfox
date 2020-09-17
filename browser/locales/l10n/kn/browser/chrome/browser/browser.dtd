@@ -141,7 +141,7 @@ can reach it easily. -->
 <!ENTITY appMenuRemoteTabs.tabsnotsyncing.label "ನಿಮ್ಮ ಇತರೆ ಸಾಧನಗಳಿಂದ ಟ್ಯಾಬ್‌ಗಳ ಪಟ್ಟಿಯನ್ನು ನೋಡಲು ಟ್ಯಾಬ್‌ ಸಿಂಕ್ ಮಾಡುವಿಕೆಯನ್ನು ಸಕ್ರಿಯಗೊಳಿಸಿ.">
 <!-- LOCALIZATION NOTE (appMenuRemoteTabs.noclients.subtitle): This is shown
      when Sync is configured but this appears to be the only device attached to
-     the account. We also show links to download Firefox for android/ios. -->
+     the account. We also show links to download Waterfox for android/ios. -->
 <!ENTITY appMenuRemoteTabs.noclients.subtitle "ಇತರೆ ಸಾಧನಗಳಲ್ಲಿನ ನಿಮ್ಮ ಟ್ಯಾಬ್‌ಗಳನ್ನು ಇಲ್ಲಿ ನೋಡಬೇಕೆ?">
 <!ENTITY appMenuRemoteTabs.opensyncprefs.label "ಸಿಂಕ್‌ನ ಆದ್ಯತೆಗಳನ್ನು ತೆರೆಯಿರಿ">
 <!ENTITY appMenuRemoteTabs.unverified.label "ನಿಮ್ಮ ಖಾತೆಯನ್ನು ಪರಿಶೀಲಿಸಬೇಕಾಗಿದೆ.">

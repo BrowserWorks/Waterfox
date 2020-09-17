@@ -17,5 +17,5 @@
 <!ENTITY aboutPage.credits.label                "Falënderime">
 <!ENTITY aboutPage.license.label                "Të dhëna Licencimi">
 
-<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Firefox" being trademarked, that's why we use it, instead of brandShortName. -->
-<!ENTITY aboutPage.logoTrademark                "Firefox-i dhe stemat e Firefox-it janë shenja tregtare të Mozilla Foundation-it.">
+<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Waterfox" being trademarked, that's why we use it, instead of brandShortName. -->
+<!ENTITY aboutPage.logoTrademark                "Firefox-i dhe stemat e Waterfox-it janë shenja tregtare të Waterfox Ltd.-it.">

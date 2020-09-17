@@ -458,9 +458,9 @@ addon-permissions-empty = Hedapen honek ez du baimenik behar
 recommended-extensions-heading = Gomendatutako hedapenak
 recommended-themes-heading = Gomendatutako itxurak
 
-# A recommendation for the Firefox Color theme shown at the bottom of the theme
+# A recommendation for the Waterfox Color theme shown at the bottom of the theme
 # list view. The "Firefox Color" name itself should not be translated.
-recommended-theme-1 = Sortzaile izan nahi? <a data-l10n-name="link">Egizu zure itxura propioa Firefox Color erabiliz.</a>
+recommended-theme-1 = Sortzaile izan nahi? <a data-l10n-name="link">Egizu zure itxura propioa Waterfox Color erabiliz.</a>
 
 ## Page headings
 

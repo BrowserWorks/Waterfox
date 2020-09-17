@@ -27,9 +27,9 @@ graph-week-summary-private-window = Tapykuehoha { -brand-short-name } ojejokóva
 
 protection-report-webpage-title = Ñemo’ãha renda
 protection-report-page-content-title = Ñemo’ãha renda
-# This message shows when all privacy protections are turned off, which is why we use the word "can", Firefox is able to protect your privacy, but it is currently not.
+# This message shows when all privacy protections are turned off, which is why we use the word "can", Waterfox is able to protect your privacy, but it is currently not.
 protection-report-page-summary = { -brand-short-name } omo’ãkuaa ne ñemigua heta pa’ũme eikundaha aja. Kóva ha’e momichĩmbyre umi ñemo’ã rehegua, oikehápe avei umi tembipuru eñangarekokuaa hag̃ua ne tekorosã ñandutípe.
-# This message shows when at least some protections are turned on, we are more assertive compared to the message above, Firefox is actively protecting you.
+# This message shows when at least some protections are turned on, we are more assertive compared to the message above, Waterfox is actively protecting you.
 protection-report-page-summary-default = { -brand-short-name } omo’ãkuaa ne ñemigua heta pa’ũme eikundaha aja. Kóva ha’e momichĩmbyre umi ñemo’ã rehegua, oikehápe avei umi tembipuru eñangarekokuaa hag̃ua ne tekorosã ñandutípe.
 
 protection-report-settings-link = Eñangareko ne ñemigua ha tekorosã ñembohekóre

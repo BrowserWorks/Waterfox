@@ -8,7 +8,7 @@ process-type-web = Webinhoud
 process-type-privilegedabout = Over Met privileges
 # process used to run privileged mozilla pages,
 # such as accounts.firefox.com
-process-type-privilegedmozilla = Mozilla-inhoud met privileges
+process-type-privilegedmozilla = Waterfox-inhoud met privileges
 process-type-extension = Extensie
 # process used to open file:// URLs
 process-type-file = Lokaal bestand

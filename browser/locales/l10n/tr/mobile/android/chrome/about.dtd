@@ -17,5 +17,5 @@
 <!ENTITY aboutPage.credits.label                "Destekleyenler">
 <!ENTITY aboutPage.license.label                "Lisans bilgileri">
 
-<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Firefox" being trademarked, that's why we use it, instead of brandShortName. -->
-<!ENTITY aboutPage.logoTrademark                "Firefox adı ve Firefox logoları, Mozilla Vakfı’nın tescilli markalarıdır.">
+<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Waterfox" being trademarked, that's why we use it, instead of brandShortName. -->
+<!ENTITY aboutPage.logoTrademark                "Firefox adı ve Waterfox logoları, Mozilla Vakfı’nın tescilli markalarıdır.">

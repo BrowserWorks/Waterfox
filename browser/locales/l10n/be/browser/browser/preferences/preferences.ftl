@@ -122,9 +122,9 @@ search-results-help-link = Патрэбна дапамога? Наведайце
 
 startup-header = Запуск
 # { -brand-short-name } will be 'Firefox Developer Edition',
-# since this setting is only exposed in Firefox Developer Edition
+# since this setting is only exposed in Waterfox Developer Edition
 separate-profile-mode =
-    .label = Дазволіць { -brand-short-name } і Firefox выконвацца адначасова
+    .label = Дазволіць { -brand-short-name } і Waterfox выконвацца адначасова
 use-firefox-sync = Падказка: для гэтага выкарыстоўваюцца асобныя профілі. Карыстайцеся { -sync-brand-short-name } для абмену дадзенымі паміж імі.
 get-started-not-logged-in = Увайсці ў { -sync-brand-short-name }…
 get-started-configured = Адкрыць налады { -sync-brand-short-name }
@@ -458,10 +458,10 @@ home-newtabs-mode-label = Новыя карткі
 home-restore-defaults =
     .label = Аднавіць прадвызначэнні
     .accesskey = А
-# "Firefox" should be treated as a brand and kept in English,
+# "Waterfox" should be treated as a brand and kept in English,
 # while "Home" and "(Default)" can be localized.
 home-mode-choice-default =
-    .label = Хатняя Firefox (прадвызначана)
+    .label = Хатняя Waterfox (прадвызначана)
 home-mode-choice-custom =
     .label = Свае URL-ы…
 home-mode-choice-blank =
@@ -483,10 +483,10 @@ choose-bookmark =
     .label = Ужыць закладку…
     .accesskey = з
 
-## Home Section - Firefox Home Content Customization
+## Home Section - Waterfox Home Content Customization
 
-home-prefs-content-header = Хатні экран Firefox
-home-prefs-content-description = Выберыце пажаданае змесціва для хатняга экрана Firefox.
+home-prefs-content-header = Хатні экран Waterfox
+home-prefs-content-description = Выберыце пажаданае змесціва для хатняга экрана Waterfox.
 home-prefs-search-header =
     .label = Пошук у сеціве
 home-prefs-topsites-header =
@@ -607,7 +607,7 @@ containers-preferences-button =
 containers-remove-button =
     .label = Выдаліць
 
-## Firefox Account - Signed out. Note that "Sync" and "Firefox Account" are now
+## Waterfox Account - Signed out. Note that "Sync" and "Firefox Account" are now
 ## more discrete ("signed in" no longer means "and sync is connected").
 
 sync-signedout-caption = Вазьміце сваё Сеціва з сабой
@@ -623,9 +623,9 @@ sync-signedout-account-signin2 =
 #
 # They can be moved within the sentence as needed to adapt
 # to your language, but should not be changed or translated.
-sync-mobile-promo = Сцягнуць Firefox для <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> або <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS</a> каб сінхранізавацца са сваёй мабільнай прыладай.
+sync-mobile-promo = Сцягнуць Waterfox для <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> або <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS</a> каб сінхранізавацца са сваёй мабільнай прыладай.
 
-## Firefox Account - Signed in
+## Waterfox Account - Signed in
 
 sync-profile-picture =
     .tooltiptext = Змяніць профільную выяву
@@ -711,7 +711,7 @@ sync-engine-creditcards =
     .accesskey = К
 sync-engine-addons =
     .label = Дадаткі
-    .tooltiptext = Пашырэнні і тэмы для настольнага Firefox
+    .tooltiptext = Пашырэнні і тэмы для настольнага Waterfox
     .accesskey = Д
 sync-engine-prefs =
     .label =
@@ -817,8 +817,8 @@ history-header = Гісторыя
 # "Firefox will" + "Remember history".
 #
 # If this doesn't work for your language, you can translate this message:
-#   - Simply as "Firefox", moving the verb into each option.
-#     This will result in "Firefox" + "Will remember history", etc.
+#   - Simply as "Waterfox", moving the verb into each option.
+#     This will result in "Waterfox" + "Will remember history", etc.
 #   - As a stand-alone message, for example "Firefox history settings:".
 history-remember-label = { -brand-short-name } будзе
     .accesskey = б

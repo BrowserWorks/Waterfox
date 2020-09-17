@@ -17,5 +17,5 @@
 <!ENTITY aboutPage.credits.label                "ဂုဏ်ပြုမှတ်တမ်းများ">
 <!ENTITY aboutPage.license.label                "လိုင်စင်အကြောင်းသိကောင်းစရာ">
 
-<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Firefox" being trademarked, that's why we use it, instead of brandShortName. -->
-<!ENTITY aboutPage.logoTrademark                "Firefox နှင့် Firefox လိုဂိုများသည် Mozilla Foundation ၏ အမှတ်တံဆိပ်များဖြစ်သည်။">
+<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Waterfox" being trademarked, that's why we use it, instead of brandShortName. -->
+<!ENTITY aboutPage.logoTrademark                "Firefox နှင့် Waterfox လိုဂိုများသည် Waterfox Ltd. ၏ အမှတ်တံဆိပ်များဖြစ်သည်။">

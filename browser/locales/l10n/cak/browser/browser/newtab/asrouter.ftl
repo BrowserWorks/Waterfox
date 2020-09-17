@@ -80,7 +80,7 @@ cfr-doorhanger-pintab-animation-pause = Tiq'at
 cfr-doorhanger-pintab-animation-resume = Titikïr chik el
 
 
-## Firefox Accounts Message
+## Waterfox Accounts Message
 
 cfr-doorhanger-bookmark-fxa-header = Xab'akuchi' Ke'axima' ri taq ayaketal.
 cfr-doorhanger-bookmark-fxa-body = ¡Nïm ri xilitäj! Wakami man xa xe tarayij re yaketal re' pan taq awokisab'al. Tatikirisaj rik'in jun { -fxaccount-brand-name }.
@@ -197,7 +197,7 @@ cfr-doorhanger-send-tab-body = Send Tab anin nuya' q'ij chawe nakomonij re ximö
 cfr-doorhanger-send-tab-ok-button = Tatojtob'ej Send Tab
     .accesskey = t
 
-## Firefox Send
+## Waterfox Send
 
 cfr-doorhanger-firefox-send-header = Ütz tikomonïx re PDF re'
 cfr-doorhanger-firefox-send-body = Ke'akolo' ri nïm taq awuj chuwäch itzel kitz'etik winaqi' rik'in chijun ewan rusik'ixik chuqa' rik'in jun ximonel, ri nisach el toq nik'is.
@@ -235,7 +235,7 @@ cfr-doorhanger-milestone-ok-button = Titzet Ronojel
 cfr-doorhanger-milestone-close-button = Titz'apïx
     .accesskey = t
 
-## What’s New Panel Content for Firefox 76
+## What’s New Panel Content for Waterfox 76
 
 
 ## Lockwise message

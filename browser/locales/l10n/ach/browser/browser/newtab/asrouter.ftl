@@ -42,7 +42,7 @@ cfr-doorhanger-pintab-animation-pause = Juki
 cfr-doorhanger-pintab-animation-resume = Mede
 
 
-## Firefox Accounts Message
+## Waterfox Accounts Message
 
 
 ## Protections panel
@@ -110,7 +110,7 @@ cfr-doorhanger-send-tab-body = Send Tab weko inywako mayot kakube man ki cim mam
 cfr-doorhanger-send-tab-ok-button = Tem Send Tab
     .accesskey = T
 
-## Firefox Send
+## Waterfox Send
 
 cfr-doorhanger-firefox-send-header = Nywak PDF man ki ber bedo
 cfr-doorhanger-firefox-send-ok-button = Tem { -send-brand-name }
@@ -137,7 +137,7 @@ cfr-doorhanger-milestone-heading =
 cfr-doorhanger-milestone-ok-button = Nen Weng
     .accesskey = N
 
-## What’s New Panel Content for Firefox 76
+## What’s New Panel Content for Waterfox 76
 
 ## Lockwise message
 

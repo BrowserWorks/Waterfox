@@ -71,7 +71,7 @@ cfr-doorhanger-pintab-step3 = Dacă site-ul are o actualizare, vei vedea un punc
 cfr-doorhanger-pintab-animation-pause = Pauză
 cfr-doorhanger-pintab-animation-resume = Continuă
 
-## Firefox Accounts Message
+## Waterfox Accounts Message
 
 cfr-doorhanger-bookmark-fxa-header = Sincronizează-ți marcajele oriunde ai fi
 cfr-doorhanger-bookmark-fxa-body = Descoperire grozavă! Acum, ca să nu rămâi fără acest marcaj pe dispozitivele tale mobile, începe să folosești un { -fxaccount-brand-name }.
@@ -175,7 +175,7 @@ cfr-doorhanger-send-tab-body = Send Tabs îți permite să partajezi ușor acest
 cfr-doorhanger-send-tab-ok-button = Încearcă Send Tab
     .accesskey = T
 
-## Firefox Send
+## Waterfox Send
 
 cfr-doorhanger-firefox-send-header = Partajează în siguranță acest PDF
 cfr-doorhanger-firefox-send-body = Păstrează-ți documentele sensibile în siguranță și protejate de ochii indiscreți cu o criptare end-to-end și un link ce dispare când ai terminat.
@@ -213,7 +213,7 @@ cfr-doorhanger-milestone-ok-button = Afișează tot
 cfr-doorhanger-milestone-close-button = Închide
     .accesskey = C
 
-## What’s New Panel Content for Firefox 76
+## What’s New Panel Content for Waterfox 76
 
 
 ## Lockwise message

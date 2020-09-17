@@ -122,9 +122,9 @@ search-results-help-link = Dovras agid? Consultescha las paginas <a data-l10n-na
 
 startup-header = Aviar
 # { -brand-short-name } will be 'Firefox Developer Edition',
-# since this setting is only exposed in Firefox Developer Edition
+# since this setting is only exposed in Waterfox Developer Edition
 separate-profile-mode =
-    .label = Permetter che { -brand-short-name } e Firefox èn activs a medem temp
+    .label = Permetter che { -brand-short-name } e Waterfox èn activs a medem temp
 use-firefox-sync = Tip: Quai funcziunescha cun profils separads. Utilisescha { -sync-brand-short-name } per sincronisar las datas tranter quels.
 get-started-not-logged-in = S'annunziar tar { -sync-brand-short-name }…
 get-started-configured = Avrir las preferenzas da { -sync-brand-short-name }
@@ -455,10 +455,10 @@ home-newtabs-mode-label = Novs tabs
 home-restore-defaults =
     .label = Restaurar il standard
     .accesskey = R
-# "Firefox" should be treated as a brand and kept in English,
+# "Waterfox" should be treated as a brand and kept in English,
 # while "Home" and "(Default)" can be localized.
 home-mode-choice-default =
-    .label = Pagina da partenza da Firefox (predefinì)
+    .label = Pagina da partenza da Waterfox (predefinì)
 home-mode-choice-custom =
     .label = Adressas d'internet persunalisadas…
 home-mode-choice-blank =
@@ -480,10 +480,10 @@ choose-bookmark =
     .label = Utilisar segnapaginas…
     .accesskey = l
 
-## Home Section - Firefox Home Content Customization
+## Home Section - Waterfox Home Content Customization
 
-home-prefs-content-header = Cuntegn da la pagina da partenza da Firefox
-home-prefs-content-description = Tscherna il cuntegn che ti vuls vesair sin la pagina da partenza da Firefox.
+home-prefs-content-header = Cuntegn da la pagina da partenza da Waterfox
+home-prefs-content-description = Tscherna il cuntegn che ti vuls vesair sin la pagina da partenza da Waterfox.
 home-prefs-search-header =
     .label = Tschertga web
 home-prefs-topsites-header =
@@ -603,7 +603,7 @@ containers-preferences-button =
 containers-remove-button =
     .label = Allontanar
 
-## Firefox Account - Signed out. Note that "Sync" and "Firefox Account" are now
+## Waterfox Account - Signed out. Note that "Sync" and "Firefox Account" are now
 ## more discrete ("signed in" no longer means "and sync is connected").
 
 sync-signedout-caption = Prenda tes web cun tai
@@ -619,9 +619,9 @@ sync-signedout-account-signin2 =
 #
 # They can be moved within the sentence as needed to adapt
 # to your language, but should not be changed or translated.
-sync-mobile-promo = Telechargiar Firefox per <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> u <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS</a> per sincronisar cun tes apparat mobil.
+sync-mobile-promo = Telechargiar Waterfox per <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> u <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS</a> per sincronisar cun tes apparat mobil.
 
-## Firefox Account - Signed in
+## Waterfox Account - Signed in
 
 sync-profile-picture =
     .tooltiptext = Midar il maletg da profil
@@ -707,7 +707,7 @@ sync-engine-creditcards =
     .accesskey = C
 sync-engine-addons =
     .label = ils supplements
-    .tooltiptext = Supplements e designs per Firefox per computers
+    .tooltiptext = Supplements e designs per Waterfox per computers
     .accesskey = S
 sync-engine-prefs =
     .label =
@@ -809,8 +809,8 @@ history-header = Cronologia
 # "Firefox will" + "Remember history".
 #
 # If this doesn't work for your language, you can translate this message:
-#   - Simply as "Firefox", moving the verb into each option.
-#     This will result in "Firefox" + "Will remember history", etc.
+#   - Simply as "Waterfox", moving the verb into each option.
+#     This will result in "Waterfox" + "Will remember history", etc.
 #   - As a stand-alone message, for example "Firefox history settings:".
 history-remember-label = { -brand-short-name } vegn a
     .accesskey = v

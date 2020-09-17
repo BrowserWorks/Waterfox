@@ -27,9 +27,9 @@ graph-week-summary-private-window = Fastizaders che { -brand-short-name } ha blo
 
 protection-report-webpage-title = Armaturas da protecziun
 protection-report-page-content-title = Armaturas da protecziun
-# This message shows when all privacy protections are turned off, which is why we use the word "can", Firefox is able to protect your privacy, but it is currently not.
+# This message shows when all privacy protections are turned off, which is why we use the word "can", Waterfox is able to protect your privacy, but it is currently not.
 protection-report-page-summary = { -brand-short-name } po proteger davos las culissas tias datas privatas durant che ti navigheschas. Quai è ina resumaziun persunalisada da questas protecziuns, inclus utensils per garantir la segirezza online.
-# This message shows when at least some protections are turned on, we are more assertive compared to the message above, Firefox is actively protecting you.
+# This message shows when at least some protections are turned on, we are more assertive compared to the message above, Waterfox is actively protecting you.
 protection-report-page-summary-default = { -brand-short-name } protegia tias datas privatas davos las culissas durant che ti navigheschas. Quai è ina resumaziun persunalisada da questas protecziuns, inclus utensils che garanteschan tia segirezza online.
 
 protection-report-settings-link = Administrescha tes parameters da protecziun da datas e da segirezza

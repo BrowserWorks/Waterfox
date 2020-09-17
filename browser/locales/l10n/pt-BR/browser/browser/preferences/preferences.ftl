@@ -122,9 +122,9 @@ search-results-help-link = Precisa de ajuda? Visite o <a data-l10n-name="url">Su
 
 startup-header = Iniciar
 # { -brand-short-name } will be 'Firefox Developer Edition',
-# since this setting is only exposed in Firefox Developer Edition
+# since this setting is only exposed in Waterfox Developer Edition
 separate-profile-mode =
-    .label = Permitir que o { -brand-short-name } e o Firefox funcionem ao mesmo tempo
+    .label = Permitir que o { -brand-short-name } e o Waterfox funcionem ao mesmo tempo
 use-firefox-sync = Dica: São usados perfis separados. Use o { -sync-brand-short-name } para compartilhar dados entre eles.
 get-started-not-logged-in = Entrar no { -sync-brand-short-name }…
 get-started-configured = Abrir preferências { -sync-brand-short-name }
@@ -455,10 +455,10 @@ home-newtabs-mode-label = Novas abas
 home-restore-defaults =
     .label = Restaurar padrão
     .accesskey = R
-# "Firefox" should be treated as a brand and kept in English,
+# "Waterfox" should be treated as a brand and kept in English,
 # while "Home" and "(Default)" can be localized.
 home-mode-choice-default =
-    .label = Página inicial do Firefox (padrão)
+    .label = Página inicial do Waterfox (padrão)
 home-mode-choice-custom =
     .label = URLs personalizadas...
 home-mode-choice-blank =
@@ -480,10 +480,10 @@ choose-bookmark =
     .label = Usar favorito…
     .accesskey = f
 
-## Home Section - Firefox Home Content Customization
+## Home Section - Waterfox Home Content Customization
 
-home-prefs-content-header = Conteúdo inicial do Firefox
-home-prefs-content-description = Escolha que conteúdo você quer na tela inicial do Firefox.
+home-prefs-content-header = Conteúdo inicial do Waterfox
+home-prefs-content-description = Escolha que conteúdo você quer na tela inicial do Waterfox.
 home-prefs-search-header =
     .label = Pesquisar na web
 home-prefs-topsites-header =
@@ -603,7 +603,7 @@ containers-preferences-button =
 containers-remove-button =
     .label = Remover
 
-## Firefox Account - Signed out. Note that "Sync" and "Firefox Account" are now
+## Waterfox Account - Signed out. Note that "Sync" and "Firefox Account" are now
 ## more discrete ("signed in" no longer means "and sync is connected").
 
 sync-signedout-caption = Leve a web com você
@@ -619,9 +619,9 @@ sync-signedout-account-signin2 =
 #
 # They can be moved within the sentence as needed to adapt
 # to your language, but should not be changed or translated.
-sync-mobile-promo = Instale o Firefox no <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> ou <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS</a> para sincronizar com seu dispositivo móvel.
+sync-mobile-promo = Instale o Waterfox no <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> ou <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS</a> para sincronizar com seu dispositivo móvel.
 
-## Firefox Account - Signed in
+## Waterfox Account - Signed in
 
 sync-profile-picture =
     .tooltiptext = Alterar imagem do perfil
@@ -707,7 +707,7 @@ sync-engine-creditcards =
     .accesskey = C
 sync-engine-addons =
     .label = Extensões
-    .tooltiptext = Extensões e temas para o Firefox no computador
+    .tooltiptext = Extensões e temas para o Waterfox no computador
     .accesskey = x
 sync-engine-prefs =
     .label =
@@ -813,8 +813,8 @@ history-header = Histórico
 # "Firefox will" + "Remember history".
 #
 # If this doesn't work for your language, you can translate this message:
-#   - Simply as "Firefox", moving the verb into each option.
-#     This will result in "Firefox" + "Will remember history", etc.
+#   - Simply as "Waterfox", moving the verb into each option.
+#     This will result in "Waterfox" + "Will remember history", etc.
 #   - As a stand-alone message, for example "Firefox history settings:".
 history-remember-label = O { -brand-short-name } irá
     .accesskey = i

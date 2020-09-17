@@ -28,7 +28,7 @@ graph-week-summary-private-window = Sporings-mekanismer, { -brand-short-name } b
 protection-report-webpage-title = Oversigt over beskyttelse
 protection-report-page-content-title = Oversigt over beskyttelse
 protection-report-page-summary = { -brand-short-name } kan beskytte dit privatliv, mens du bruger nettet. Dette viser dit personlige resume over, hvordan du er beskyttet - samt værktøj til at tage kontrol over din online identitet.
-# This message shows when at least some protections are turned on, we are more assertive compared to the message above, Firefox is actively protecting you.
+# This message shows when at least some protections are turned on, we are more assertive compared to the message above, Waterfox is actively protecting you.
 protection-report-page-summary-default = { -brand-short-name } beskytter dit privatliv på nettet. Denne side viser dit personlige resume over, hvordan du er beskyttet - samt værktøj til at tage kontrol over din online identitet. 
 
 protection-report-settings-link = Håndter dine indstillinger for sikkerhed og privatlivs-beskyttelse

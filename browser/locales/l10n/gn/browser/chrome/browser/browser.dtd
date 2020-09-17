@@ -47,7 +47,7 @@ this container is a toolbar. This avoids double-speaking. -->
 <!ENTITY pictureInPictureHideToggle.accesskey "H">
 
 <!-- LOCALIZATION NOTE (fxa.menu) Used to define the different labels
-     for the Firefox Account toolbar menu screen. The `Signed in as` text is
+     for the Waterfox Account toolbar menu screen. The `Signed in as` text is
      followed by the user's email. -->
 <!ENTITY fxa.menu.syncSettings2.label "&syncBrand.shortName.label; Ñemboheko">
 <!ENTITY fxa.menu.connectAnotherDevice2.label "Embojuaju ambue mba’e’oka…">
@@ -64,7 +64,7 @@ this container is a toolbar. This avoids double-speaking. -->
 <!ENTITY fxa.menu.setupSync.label "Emboheko &syncBrand.shortName.label;…">
 
 <!-- LOCALIZATION NOTE (fxa.service) Used to define the different FxA services
-     for the Firefox Account toolbar menu screen.  -->
+     for the Waterfox Account toolbar menu screen.  -->
 <!ENTITY fxa.service.sendTab.description "Emondo tendayke oimeraẽva mba’e’oka emoñepyrũ haguépe tembiapo.">
 
 <!-- LOCALIZATION NOTE (fullscreenWarning.beforeDomain.label,
@@ -170,7 +170,7 @@ this container is a toolbar. This avoids double-speaking. -->
 <!ENTITY appMenuRemoteTabs.tabsnotsyncing.label "Emyendy tendayke mbojueheha ehecha hag̃ua peteĩ tendayke rysýi ambue ne mba’e’oka peguáva.">
 <!-- LOCALIZATION NOTE (appMenuRemoteTabs.noclients.subtitle): This is shown
      when Sync is configured but this appears to be the only device attached to
-     the account. We also show links to download Firefox for android/ios. -->
+     the account. We also show links to download Waterfox for android/ios. -->
 <!ENTITY appMenuRemoteTabs.noclients.subtitle "Ehechasépa tendaykekuéra ambue mba’e’okaguáva ko’ápe?">
 <!ENTITY appMenuRemoteTabs.opensyncprefs.label "Eike Sync jerohoryvévape">
 <!ENTITY appMenuRemoteTabs.welcome.label "Ehecha tendayke rysýi ambue ne mba’e’okagua.">

@@ -72,7 +72,7 @@ app-basics-remote-processes-count = 远程进程
 app-basics-enterprise-policies = 企业策略
 app-basics-location-service-key-google = Google 位置服务密钥
 app-basics-safebrowsing-key-google = Google 安全浏览密钥
-app-basics-key-mozilla = Mozilla 位置服务密钥
+app-basics-key-mozilla = Waterfox 位置服务密钥
 app-basics-safe-mode = 安全模式
 show-dir-label =
     { PLATFORM() ->

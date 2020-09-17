@@ -4,7 +4,7 @@
 
 
 ## The Enterprise Policies feature is aimed at system administrators
-## who want to deploy these settings across several Firefox installations
+## who want to deploy these settings across several Waterfox installations
 ## all at once. This is traditionally done through the Windows Group Policy
 ## feature, but the system also supports other forms of deployment.
 ## These are short descriptions for individual policies, to be displayed
@@ -30,8 +30,8 @@ policy-DisableDefaultBrowserAgent = Impedir que o agente padrão do navegador ex
 policy-DisableDeveloperTools = Bloquear acesso às ferramentas de desenvolvimento.
 policy-DisableFeedbackCommands = Desativar comandos de envio de comentários no menu Ajuda (Enviar opinião e Denunciar site enganoso).
 policy-DisableFirefoxAccounts = Desativar serviços baseados em { -fxaccount-brand-name }, incluindo o Sync.
-# Firefox Screenshots is the name of the feature, and should not be translated.
-policy-DisableFirefoxScreenshots = Desativar o recurso de captura de tela do Firefox.
+# Waterfox Screenshots is the name of the feature, and should not be translated.
+policy-DisableFirefoxScreenshots = Desativar o recurso de captura de tela do Waterfox.
 policy-DisableFirefoxStudies = Impedir que o { -brand-short-name } execute estudos.
 policy-DisableForgetButton = Impedir acesso ao botão "Esquecer".
 policy-DisableFormHistory = Não recordar o histórico de pesquisas e formulários.
@@ -62,7 +62,7 @@ policy-EncryptedMediaExtensions = Ativar ou desativar Extensões de Mídias Crip
 policy-Extensions = Instalar, desinstalar e bloquear extensões. A opção “Instalar” recebe URLs ou caminhos como parâmetros. As opções “Desinstalar” e "Bloqueado" usam IDs de extensões.
 policy-ExtensionSettings = Gerenciar todos os aspectos da instalação de extensões.
 policy-ExtensionUpdate = Ativar ou desativar atualizações automáticas de extensões.
-policy-FirefoxHome = Configurar a página inicial do Firefox.
+policy-FirefoxHome = Configurar a página inicial do Waterfox.
 policy-FlashPlugin = Permitir ou negar o uso do plugin Flash.
 policy-Handlers = Configurar manipuladores de aplicativos padrão.
 policy-HardwareAcceleration = Caso definido como "false", desativar a aceleração de hardware.

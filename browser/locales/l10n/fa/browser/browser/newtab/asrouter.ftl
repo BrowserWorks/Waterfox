@@ -80,7 +80,7 @@ cfr-doorhanger-pintab-animation-pause = توقف
 cfr-doorhanger-pintab-animation-resume = راه اندازی
 
 
-## Firefox Accounts Message
+## Waterfox Accounts Message
 
 cfr-doorhanger-bookmark-fxa-header = نشانک‌های خود را در هر جایی همگام کنید.
 cfr-doorhanger-bookmark-fxa-body = یک یافته فوق العاده! اکنون بدون این نشانک در دستگاه‌های تلفن همراه خود نماند. با یک { -fxaccount-brand-name } شروع کنید.
@@ -176,7 +176,7 @@ cfr-doorhanger-send-tab-recipe-header = این دستورالعمل را به آ
 cfr-doorhanger-send-tab-ok-button = ارسال زبانه را امتحان کنید
     .accesskey = T
 
-## Firefox Send
+## Waterfox Send
 
 cfr-doorhanger-firefox-send-header = این PDF را به شکل امن به اشتراک بگذارید
 cfr-doorhanger-firefox-send-ok-button = { -send-brand-name } را امتحان کنید
@@ -202,7 +202,7 @@ cfr-doorhanger-cryptominers-description = حریم‌خصوصی شما اهمی�
 cfr-doorhanger-milestone-ok-button = نمایش همه
     .accesskey = ن
 
-## What’s New Panel Content for Firefox 76
+## What’s New Panel Content for Waterfox 76
 
 
 ## Lockwise message

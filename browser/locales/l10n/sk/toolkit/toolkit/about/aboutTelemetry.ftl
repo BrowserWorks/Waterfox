@@ -16,8 +16,8 @@ about-telemetry-previous-ping = <<
 about-telemetry-next-ping = >>
 about-telemetry-page-title = Údaje telemetrie
 about-telemetry-more-information = Hľadáte viac informácií?
-about-telemetry-firefox-data-doc = <a data-l10n-name="data-doc-link">Dokumentácia údajov Firefoxu</a> obsahuje návody pre prácu s našimi nástrojmi.
-about-telemetry-telemetry-client-doc = <a data-l10n-name="client-doc-link">Dokumentácia klienta telemetrie Firefoxu</a> obsahuje definície pojmov, dokumentáciu API a popisy údajov.
+about-telemetry-firefox-data-doc = <a data-l10n-name="data-doc-link">Dokumentácia údajov Waterfoxu</a> obsahuje návody pre prácu s našimi nástrojmi.
+about-telemetry-telemetry-client-doc = <a data-l10n-name="client-doc-link">Dokumentácia klienta telemetrie Waterfoxu</a> obsahuje definície pojmov, dokumentáciu API a popisy údajov.
 about-telemetry-telemetry-dashboard = <a data-l10n-name="dashboard-link">Nástenky telemetrie</a> vám umožňujú zobrazovať údaje, ktoré Mozilla získava z telemetrie.
 about-telemetry-telemetry-probe-dictionary = <a data-l10n-name="probe-dictionary-link">Zoznam sond</a> poskytuje podrobnosti a popisy sond, ktoré telemetria zbiera.
 about-telemetry-show-in-Firefox-json-viewer = Otvoriť v zobrazení JSON

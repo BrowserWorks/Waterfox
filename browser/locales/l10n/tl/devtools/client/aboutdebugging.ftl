@@ -17,11 +17,11 @@ about-debugging-page-title-runtime-page = Debugging - Runtime / { $selectedRunti
 
 # Sidebar strings
 
-# Display name of the runtime for the currently running instance of Firefox. Used in the
+# Display name of the runtime for the currently running instance of Waterfox. Used in the
 # Sidebar and in the Setup page.
 about-debugging-this-firefox-runtime-name = Ang { -brand-shorter-name } na ito
 
-# Sidebar heading for selecting the currently running instance of Firefox
+# Sidebar heading for selecting the currently running instance of Waterfox
 about-debugging-sidebar-this-firefox =
     .name = { about-debugging-this-firefox-runtime-name }
 
@@ -66,8 +66,8 @@ about-debugging-sidebar-item-connect-button-connection-timeout = Nag-time out an
 about-debugging-sidebar-item-connected-label = Konektado
 
 # Text displayed in sidebar items for remote devices where a compatible browser (eg
-# Firefox) has not been detected yet. Typically, Android phones connected via USB with
-# USB debugging enabled, but where Firefox is not started.
+# Waterfox) has not been detected yet. Typically, Android phones connected via USB with
+# USB debugging enabled, but where Waterfox is not started.
 about-debugging-sidebar-runtime-item-waiting-for-browser = Hinihintay ang browser...
 
 # Text displayed in sidebar items for remote devices that have been disconnected from the
@@ -103,7 +103,7 @@ about-debugging-setup-title = Setup
 # Introduction text in the Setup page to explain how to configure remote debugging.
 about-debugging-setup-intro = I-configure ang connection method na nais mong ipang-remote debug sa device mo.
 
-# Explanatory text in the Setup page about what the 'This Firefox' page is for
+# Explanatory text in the Setup page about what the 'This Waterfox' page is for
 about-debugging-setup-this-firefox2 = Gamitin ang <a>{ about-debugging-this-firefox-runtime-name }</a> para makapag-debug ng mga extension at service worker sa bersyong ito ng { -brand-shorter-name }.
 
 # Title of the heading Connect section of the Setup page.
@@ -138,7 +138,7 @@ about-debugging-setup-usb-step-enable-dev-menu2 = I-enable ang Developer menu sa
 about-debugging-setup-usb-step-enable-debug2 = I-enable ang USB Debugging sa Android Developer Menu.
 
 # USB section step by step guide
-about-debugging-setup-usb-step-enable-debug-firefox2 = I-enable ang USB Debugging sa Firefox sa Android device.
+about-debugging-setup-usb-step-enable-debug-firefox2 = I-enable ang USB Debugging sa Waterfox sa Android device.
 
 # USB section step by step guide
 about-debugging-setup-usb-step-plug-device = I-connect ang Android device sa iyong computer.
@@ -185,7 +185,7 @@ about-debugging-network-location-form-duplicate = Ang host na “{ $host-value }
 
 # Below are the titles for the various categories of debug targets that can be found
 # on "runtime" pages of about:debugging.
-# Title of the temporary extensions category (only available for "This Firefox" runtime).
+# Title of the temporary extensions category (only available for "This Waterfox" runtime).
 about-debugging-runtime-temporary-extensions =
     .name = Mga Pansamantalang Extension
 # Title of the extensions category.
@@ -219,20 +219,20 @@ about-debugging-runtime-service-workers-not-compatible = Ang iyong browser confi
 # This string is displayed in the runtime page if the remote browser version is too old.
 # "Troubleshooting" link points to https://developer.mozilla.org/docs/Tools/about:debugging#Troubleshooting
 # { $runtimeVersion } is the version of the remote browser (for instance "67.0a1")
-# { $minVersion } is the minimum version that is compatible with the current Firefox instance (same format)
+# { $minVersion } is the minimum version that is compatible with the current Waterfox instance (same format)
 about-debugging-browser-version-too-old = Ang naka-connect na browser ay may lumang version ({ $runtimeVersion }). Ang minimum na suportadong version ay ({ $minVersion }). Ito ay isang hindi suportadong setup at maaaring ikasira ng DevTools. Paki-update ang konektadong browser. <a>Pag-troubleshoot</a>
 
 # Dedicated message for a backward compatibility issue that occurs when connecting:
-# from Fx 70+ to the old Firefox for Android (aka Fennec) which uses Fx 68.
-about-debugging-browser-version-too-old-fennec = Ang bersyon na ito ng Firefox ay hindi maaaring mag-debug ng Firefox for Android (68). Inirerekomenda naming mag-install ng Firefox for Android Nightly sa iyong telepono para makapag-test. <a>Karagdagang detalye</a>
+# from Fx 70+ to the old Waterfox for Android (aka Fennec) which uses Fx 68.
+about-debugging-browser-version-too-old-fennec = Ang bersyon na ito ng Waterfox ay hindi maaaring mag-debug ng Waterfox for Android (68). Inirerekomenda naming mag-install ng Waterfox for Android Nightly sa iyong telepono para makapag-test. <a>Karagdagang detalye</a>
 
 # This string is displayed in the runtime page if the remote browser version is too recent.
 # "Troubleshooting" link points to https://developer.mozilla.org/docs/Tools/about:debugging#Troubleshooting
 # { $runtimeID } is the build ID of the remote browser (for instance "20181231", format is yyyyMMdd)
-# { $localID } is the build ID of the current Firefox instance (same format)
+# { $localID } is the build ID of the current Waterfox instance (same format)
 # { $runtimeVersion } is the version of the remote browser (for instance "67.0a1")
 # { $localVersion } is the version of your current browser (same format)
-about-debugging-browser-version-too-recent = Ang nakakonektang browser ay mas bago ({ $runtimeVersion }, buildID { $runtimeID }) kaysa sa iyong { -brand-shorter-name } ({ $localVersion }, buildID { $localID }). Hindi ito suportadong setup at maaaring makasira sa DevTools. Paki-update ang Firefox. <a>Pag-troubleshoot</a>
+about-debugging-browser-version-too-recent = Ang nakakonektang browser ay mas bago ({ $runtimeVersion }, buildID { $runtimeID }) kaysa sa iyong { -brand-shorter-name } ({ $localVersion }, buildID { $localID }). Hindi ito suportadong setup at maaaring makasira sa DevTools. Paki-update ang Waterfox. <a>Pag-troubleshoot</a>
 
 # Displayed for runtime info in runtime pages.
 # { $name } is brand name such as "Firefox Nightly"
@@ -270,18 +270,18 @@ about-debugging-debug-target-list-empty = Wala pa.
 # A target can be an addon, a tab, a worker...
 about-debugging-debug-target-inspect-button = I-inspect
 
-# Text of a button displayed in the "This Firefox" page, in the Temporary Extension
+# Text of a button displayed in the "This Waterfox" page, in the Temporary Extension
 # section. Clicking on the button will open a file picker to load a temporary extension
 about-debugging-tmp-extension-install-button = Mag-load ng Pansamantalang Add-on...
 
-# Text displayed when trying to install a temporary extension in the "This Firefox" page.
+# Text displayed when trying to install a temporary extension in the "This Waterfox" page.
 about-debugging-tmp-extension-install-error = Nagkaproblema sa pag-install ng pansamantalang add-on.
 
-# Text of a button displayed for a temporary extension loaded in the "This Firefox" page.
+# Text of a button displayed for a temporary extension loaded in the "This Waterfox" page.
 # Clicking on the button will reload the extension.
 about-debugging-tmp-extension-reload-button = i-Reload
 
-# Text of a button displayed for a temporary extension loaded in the "This Firefox" page.
+# Text of a button displayed for a temporary extension loaded in the "This Waterfox" page.
 # Clicking on the button will uninstall the extension and remove it from the page.
 about-debugging-tmp-extension-remove-button = Tanggalin
 

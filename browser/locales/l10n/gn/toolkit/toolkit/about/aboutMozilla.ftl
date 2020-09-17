@@ -2,7 +2,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-about-mozilla-title-6-27 = Mozilla aranduka, 6:27
+about-mozilla-title-6-27 = Waterfox aranduka, 6:27
 about-mozilla-quote-6-27 =
     Pe Bestia oñembokatupyryve ipyahuvéva <em>Focus</em> ndive, ojapóvo tembiapo tuicháva <em>Reference</em>-pe
     ha ohechávo ipyahúva <em>Realities</em>. Pe Bestia omyakã hapykuerigua ha

@@ -60,11 +60,11 @@ onboarding-fullpage-welcome-subheader = Եկեք սկսենք ուսումնաս
 onboarding-fullpage-form-email =
     .placeholder = Ձեր էլ֊փոստի հասցեն…
 
-## Firefox Sync modal dialog strings.
+## Waterfox Sync modal dialog strings.
 
 onboarding-sync-welcome-header = Վերցրեք { -brand-product-name } ձեզ հետ
 onboarding-sync-welcome-content = Ստացեք ձեր էջանիծերը, պատմությունը, գաղտնաբառերը և այլ կարգավորումներ ձեր բոլոր սարքերում:
-onboarding-sync-welcome-learn-more-link = Իմանալ ավելին Firefox Հաշիվների մասին
+onboarding-sync-welcome-learn-more-link = Իմանալ ավելին Waterfox Հաշիվների մասին
 
 onboarding-sync-form-input =
     .placeholder = Էլ. փոստ
@@ -72,7 +72,7 @@ onboarding-sync-form-input =
 onboarding-sync-form-continue-button = Շարունակել
 onboarding-sync-form-skip-login-button = Բաց թողնել այս քայլը
 
-## This is part of the line "Enter your email to continue to Firefox Sync"
+## This is part of the line "Enter your email to continue to Waterfox Sync"
 
 onboarding-sync-form-header = Մուտքագրեք ձեր էլ․ փոստը
 onboarding-sync-form-sub-header = շարունակել { -sync-brand-name }
@@ -85,7 +85,7 @@ onboarding-benefit-products-text = Ավարտեք գործերը օգտագոր�
 
 # "Personal Data Promise" is a concept that should be translated consistently
 # across the product. It refers to a concept shown elsewhere to the user: "The
-# Firefox Personal Data Promise is the way we honor your data in everything we
+# Waterfox Personal Data Promise is the way we honor your data in everything we
 # make and do. We take less data. We keep it safe. And we make sure that we are
 # transparent about how we use it."
 onboarding-benefit-privacy-text = Այն ամենը, ինչ մենք անում ենք, հարգում է մեր անձնական տվյալների խոստումը. Քիչ վերցրեք: Ապահով պահեք: Ոչ մի գաղտնիք:

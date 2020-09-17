@@ -377,7 +377,7 @@ release-notes-error = 죄송합니다. 출시 정보를 불러오는 중에 오�
 addon-permissions-empty = 이 확장 기능은 권한이 필요하지 않습니다.
 recommended-extensions-heading = 추천 확장 기능
 recommended-themes-heading = 추천 테마
-# A recommendation for the Firefox Color theme shown at the bottom of the theme
+# A recommendation for the Waterfox Color theme shown at the bottom of the theme
 # list view. The "Firefox Color" name itself should not be translated.
 recommended-theme-1 = 창의적인 느낌이 떠오르십니까? <a data-l10n-name="link">Firefox Color로 나만의 테마를 만들어 보세요.</a>
 

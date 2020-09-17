@@ -4,7 +4,7 @@
 
 
 ## The Enterprise Policies feature is aimed at system administrators
-## who want to deploy these settings across several Firefox installations
+## who want to deploy these settings across several Waterfox installations
 ## all at once. This is traditionally done through the Windows Group Policy
 ## feature, but the system also supports other forms of deployment.
 ## These are short descriptions for individual policies, to be displayed
@@ -36,8 +36,8 @@ policy-DisableDefaultBrowserAgent = Zabraňte „výchozímu agentovi prohlíže
 policy-DisableDeveloperTools = Blokování přístupu k nástrojům pro vývojáře.
 policy-DisableFeedbackCommands = Blokování odeslání zpětné vazby z nabídky Nápověda (volby Odeslat zpětnou vazbu a Nahlásit klamavou stránku).
 policy-DisableFirefoxAccounts = Vypnutí služeb používajících { -fxaccount-brand-name(case: "acc", capitalization: "lower") }, včetně Syncu.
-# Firefox Screenshots is the name of the feature, and should not be translated.
-policy-DisableFirefoxScreenshots = Vypnutí funkce Firefox Screenshots.
+# Waterfox Screenshots is the name of the feature, and should not be translated.
+policy-DisableFirefoxScreenshots = Vypnutí funkce Waterfox Screenshots.
 policy-DisableFirefoxStudies =
     Zablokování spouštění studií { -brand-short-name.gender ->
         [masculine] { -brand-short-name(case: "gen") }

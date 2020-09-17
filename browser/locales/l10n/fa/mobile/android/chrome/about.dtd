@@ -16,6 +16,6 @@
 <!ENTITY aboutPage.relNotes.label               "یادداشت‌های انتشار">
 <!ENTITY aboutPage.credits.label                "دست‌اندرکاران">
 <!ENTITY aboutPage.license.label                "اطلاعات مجوز">
-<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Firefox" being trademarked, that's why we use it, instead of brandShortName. -->
+<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Waterfox" being trademarked, that's why we use it, instead of brandShortName. -->
 
 <!ENTITY aboutPage.logoTrademark                "فایرفاکس و نشان‌های فایرفاکس، علائم تجاری بنیاد موزیلا محسوب می‌شوند.">

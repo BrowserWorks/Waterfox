@@ -16,6 +16,6 @@
 <!ENTITY aboutPage.relNotes.label               "Notennoù an handelv">
 <!ENTITY aboutPage.credits.label                "Perzhidi">
 <!ENTITY aboutPage.license.label                "Titouroù a-fet lañvaz">
-<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Firefox" being trademarked, that's why we use it, instead of brandShortName. -->
+<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Waterfox" being trademarked, that's why we use it, instead of brandShortName. -->
 
-<!ENTITY aboutPage.logoTrademark                "Merkoù marilhet eus Diazezadenn Mozilla eo Firefox ha sielloù Firefox.">
+<!ENTITY aboutPage.logoTrademark                "Merkoù marilhet eus Diazezadenn Mozilla eo Waterfox ha sielloù Waterfox.">

@@ -3,9 +3,9 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 
-## Firefox Brand
+## Waterfox Brand
 ##
-## Firefox must be treated as a brand, and kept in English.
+## Waterfox must be treated as a brand, and kept in English.
 ## It cannot be:
 ## - Declined to adapt to grammatical case.
 ## - Transliterated.
@@ -13,9 +13,9 @@
 ##
 ## Reference: https://www.mozilla.org/styleguide/communications/translation/
 
-## Firefox and Mozilla Brand
+## Waterfox and Mozilla Brand
 ##
-## Firefox and Mozilla must be treated as a brand.
+## Waterfox and Mozilla must be treated as a brand.
 ##
 ## They cannot be:
 ## - Transliterated.
@@ -29,38 +29,38 @@
 
 -brand-shorter-name =
     { $case ->
-       *[nom] Firefox
-        [gen] Firefoxu
-        [dat] Firefoxu
-        [acc] Firefox
-        [voc] Firefoxe
-        [loc] Firefoxu
-        [ins] Firefoxem
+       *[nom] Waterfox
+        [gen] Waterfoxu
+        [dat] Waterfoxu
+        [acc] Waterfox
+        [voc] Waterfoxe
+        [loc] Waterfoxu
+        [ins] Waterfoxem
     }
     .gender = masculine
 -brand-short-name =
     { $case ->
-       *[nom] Firefox
-        [gen] Firefoxu
-        [dat] Firefoxu
-        [acc] Firefox
-        [voc] Firefoxe
-        [loc] Firefoxu
-        [ins] Firefoxem
+       *[nom] Waterfox
+        [gen] Waterfoxu
+        [dat] Waterfoxu
+        [acc] Waterfox
+        [voc] Waterfoxe
+        [loc] Waterfoxu
+        [ins] Waterfoxem
     }
     .gender = masculine
--brand-full-name = Mozilla Firefox
+-brand-full-name = Waterfox
 # This brand name can be used in messages where the product name needs to
 # remain unchanged across different versions (Nightly, Beta, etc.).
 -brand-product-name =
     { $case ->
-       *[nom] Firefox
-        [gen] Firefoxu
-        [dat] Firefoxu
-        [acc] Firefox
-        [voc] Firefoxe
-        [loc] Firefoxu
-        [ins] Firefoxem
+       *[nom] Waterfox
+        [gen] Waterfoxu
+        [dat] Waterfoxu
+        [acc] Waterfox
+        [voc] Waterfoxe
+        [loc] Waterfoxu
+        [ins] Waterfoxem
     }
     .gender = masculine
 -vendor-short-name =
@@ -74,4 +74,4 @@
         [ins] Mozillou
     }
     .gender = feminine
-trademarkInfo = Firefox a jeho logo jsou ochrannými známkami organizace Mozilla Foundation.
+trademarkInfo = Waterfox a jeho logo jsou ochrannými známkami organizace Waterfox Ltd..

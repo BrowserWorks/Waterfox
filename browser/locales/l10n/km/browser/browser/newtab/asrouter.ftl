@@ -61,7 +61,7 @@ cfr-doorhanger-pintab-animation-pause = ផ្អាក
 cfr-doorhanger-pintab-animation-resume = បន្ត
 
 
-## Firefox Accounts Message
+## Waterfox Accounts Message
 
 
 ## Protections panel
@@ -91,7 +91,7 @@ cfr-doorhanger-pintab-animation-resume = បន្ត
 ## Send Tab
 
 
-## Firefox Send
+## Waterfox Send
 
 
 ## Social Tracking Protection
@@ -100,7 +100,7 @@ cfr-doorhanger-pintab-animation-resume = បន្ត
 ## Enhanced Tracking Protection Milestones
 
 
-## What’s New Panel Content for Firefox 76
+## What’s New Panel Content for Waterfox 76
 
 
 ## Lockwise message

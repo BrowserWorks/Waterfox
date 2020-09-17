@@ -4,7 +4,7 @@
 
 enable-close-button = ಈ ಹಾಳೆ ಮುಚ್ಚು
 
-welcome-title = Firefox ಡೆವೆಲಪರ್ ಉಪಕರಣಗಳಿಗೆ ಸ್ವಾಗತ!
+welcome-title = Waterfox ಡೆವೆಲಪರ್ ಉಪಕರಣಗಳಿಗೆ ಸ್ವಾಗತ!
 newsletter-email-placeholder =
     .placeholder = ಮಿಂಚಂಚೆ
 newsletter-subscribe-button = ಚಂದಾದಾರನಾಗು

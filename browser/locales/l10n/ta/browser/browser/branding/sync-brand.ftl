@@ -6,7 +6,7 @@
 
 # “Sync” can be localized, “Firefox” must be treated as a brand,
 # and kept in English.
--sync-brand-name = Firefox ஒத்திசைவு
+-sync-brand-name = Waterfox ஒத்திசைவு
 
 # “Account” can be localized, “Firefox” must be treated as a brand,
 # and kept in English.

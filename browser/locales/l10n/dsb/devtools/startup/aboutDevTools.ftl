@@ -3,18 +3,18 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 head-title = Wó wuwijaŕskich rědach
-enable-title = Wuwijaŕske rědy Firefox zmóžniś
-enable-inspect-element-title = Wuwijaŕske rědy Firefox zmóžniś, aby se Element pśepytowaś wužywało
+enable-title = Wuwijaŕske rědy Waterfox zmóžniś
+enable-inspect-element-title = Wuwijaŕske rědy Waterfox zmóžniś, aby se Element pśepytowaś wužywało
 enable-inspect-element-message = Pśepytajśo a wobźěłajśo HTML a CSS z Inspektora wuwijaŕskich rědow.
-enable-about-debugging-message = Wuwijajśo a testujśo WebExtensions, webworkery, service workery a wěcej z wuwijaŕskimi rědami Firefox.
+enable-about-debugging-message = Wuwijajśo a testujśo WebExtensions, webworkery, service workery a wěcej z wuwijaŕskimi rědami Waterfox.
 enable-key-shortcut-message = Sćo tastowu skrotconku wuwijaŕskich rědow aktiwěrował. Joli jo to zmólka była, móžośo toś ten rejtarik zacyniś.
 enable-menu-message = Wudopołniśo HTML, CSS a JavaScript swójogo websedła z rědami ako Inspektor a pytanje za zmólkami.
-enable-common-message = Wuwijaŕske rědy Firefox su znjemóžnjone pó standarźe, aby wy wěcej kontrole nad swójim wobglědowakom měł.
+enable-common-message = Wuwijaŕske rědy Waterfox su znjemóžnjone pó standarźe, aby wy wěcej kontrole nad swójim wobglědowakom měł.
 enable-learn-more-link = Zgóńśo wěcej wó wuwijaŕskich rědach
 enable-enable-button = Wuwijaŕske rědy zmóžniś
 enable-close-button = Toś ten rejtarik zacyniś
 
-welcome-title = Witajśo k wuwijaŕskim rědam Firefox!
+welcome-title = Witajśo k wuwijaŕskim rědam Waterfox!
 newsletter-title = Wuwijaŕski powěsćowy list Mozilla
 newsletter-message = Wobstarajśo se nowosći wuwijarjow, pokaze a resurse, kótarež se direktnje na was sćelu.
 newsletter-email-placeholder =
@@ -24,8 +24,8 @@ newsletter-subscribe-button = Aboněrowaś
 newsletter-thanks-title = Wjeliki źěk!
 newsletter-thanks-message = Jolic hyšći njejsćo abonement powěsćowego lista Mozilla wobkšuśił, musyśo to něnto cyniś. Pšosym glědajśo do dochada posta abo papjernika za mejlku wót nas.
 
-footer-title = Firefox Developer Edition
-footer-message = Pytaśo wěcej ako jano wuwijaŕske rědy? Wuslěźćo wobglědowak Firefox, kótaryž jo se specielnje za wuwijarje a moderne źěłowe wótběgi wuwił.
+footer-title = Waterfox Developer Edition
+footer-message = Pytaśo wěcej ako jano wuwijaŕske rědy? Wuslěźćo wobglědowak Waterfox, kótaryž jo se specielnje za wuwijarje a moderne źěłowe wótběgi wuwił.
 footer-learn-more-link = Dalšne informacije
 
 features-learn-more = Dalšne informacije

@@ -3,13 +3,13 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 head-title = Baɗte kuutorɗe topayɓe
-enable-title = Hurmin Kuutorɗe topaɓe Firefox
+enable-title = Hurmin Kuutorɗe topaɓe Waterfox
 enable-key-shortcut-message = A hurminii sodorde kuutorɗe topayɓe. So ɗuum wonaa juumre, aɗa waawi uddude ndee tabbere.
 enable-learn-more-link = Ɓeydu humpito baɗte kuutorɗe topayɓe
 enable-enable-button = Hurmin kuutorɗe topayɓe
 enable-close-button = Uddu ndee Tabbere
 
-welcome-title = A jaɓɓaama e kuutorɗe topayɓe Firefox!
+welcome-title = A jaɓɓaama e kuutorɗe topayɓe Waterfox!
 newsletter-title = Ɓatakeeji Topayɓe Mozilla
 newsletter-email-placeholder =
     .placeholder = Iimeel
@@ -18,7 +18,7 @@ newsletter-subscribe-button = Lulno
 newsletter-thanks-title = A jaaraama!
 newsletter-thanks-message = So a suwaa tawo teeŋtinde lulnagol e ɓataake habrirde baɗte Mozilla maa tawa aɗa foti waɗde ɗum. Tiiɗno ƴeewto wandannde ɓaakeeji maa walla ceɗol spaam maa ngam yiytude iwɗo e amen.
 
-footer-title = Taƴtorde topotooɗo Firefox
+footer-title = Taƴtorde topotooɗo Waterfox
 footer-learn-more-link = Ɓeydu humpito
 
 features-learn-more = Ɓeydu humpito

@@ -74,7 +74,7 @@ onboarding-multistage-theme-description-automatic = استعمل سمة النظ
 onboarding-multistage-theme-label-light = فاتحة
 onboarding-multistage-theme-label-dark = داكنة
 # "Firefox Alpenglow" here is the name of the theme, and should be kept in English.
-onboarding-multistage-theme-label-alpenglow = Firefox Alpenglow
+onboarding-multistage-theme-label-alpenglow = Waterfox Alpenglow
 
 ## Please make sure to split the content of the title attribute into lines whose
 ## width corresponds to about 40 Latin characters, to ensure that the tooltip
@@ -152,17 +152,17 @@ onboarding-fullpage-welcome-subheader = لنبدأ رحلة البحث عمّا 
 onboarding-fullpage-form-email =
     .placeholder = عنوان بريدك الإلكتروني…
 
-## Firefox Sync modal dialog strings.
+## Waterfox Sync modal dialog strings.
 
 onboarding-sync-welcome-header = خذ معك { -brand-product-name } أينما ذهبت
 onboarding-sync-welcome-content = تشارك العلامات، وتأريخ التصفح، وكلمات السر وباقي الإعدادات على جميع أجهزتك.
-onboarding-sync-welcome-learn-more-link = اطّلع على المزيد عن حسابات Firefox
+onboarding-sync-welcome-learn-more-link = اطّلع على المزيد عن حسابات Waterfox
 onboarding-sync-form-input =
     .placeholder = البريد الإلكتروني
 onboarding-sync-form-continue-button = تابِع
 onboarding-sync-form-skip-login-button = تجاوز هذه الخطوة
 
-## This is part of the line "Enter your email to continue to Firefox Sync"
+## This is part of the line "Enter your email to continue to Waterfox Sync"
 
 onboarding-sync-form-header = أدخِل بريدك الإلكتروني
 onboarding-sync-form-sub-header = لمواصلة استخدام { -sync-brand-name }
@@ -173,7 +173,7 @@ onboarding-sync-form-sub-header = لمواصلة استخدام { -sync-brand-na
 onboarding-benefit-products-text = أنجِز أمورك مستخدما طقما من الأدوات يحترم خصوصيتك على مختلف الأجهزة لديك.
 # "Personal Data Promise" is a concept that should be translated consistently
 # across the product. It refers to a concept shown elsewhere to the user: "The
-# Firefox Personal Data Promise is the way we honor your data in everything we
+# Waterfox Personal Data Promise is the way we honor your data in everything we
 # make and do. We take less data. We keep it safe. And we make sure that we are
 # transparent about how we use it."
 onboarding-benefit-privacy-text = كل ما نفعله يحترم ميثاق ”عهدة البيانات الشخصية“: استلم أدنى قدر، أبقِها آمنة ولا أسرار مخفية.

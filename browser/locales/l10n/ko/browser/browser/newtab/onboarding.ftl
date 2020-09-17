@@ -77,7 +77,7 @@ onboarding-multistage-theme-description-automatic = 시스템 테마 사용
 onboarding-multistage-theme-label-light = 밝게
 onboarding-multistage-theme-label-dark = 어둡게
 # "Firefox Alpenglow" here is the name of the theme, and should be kept in English.
-onboarding-multistage-theme-label-alpenglow = Firefox Alpenglow
+onboarding-multistage-theme-label-alpenglow = Waterfox Alpenglow
 
 ## Please make sure to split the content of the title attribute into lines whose
 ## width corresponds to about 40 Latin characters, to ensure that the tooltip
@@ -155,17 +155,17 @@ onboarding-fullpage-welcome-subheader = 여러분이 할 수 있는 모든 것�
 onboarding-fullpage-form-email =
     .placeholder = 이메일 주소…
 
-## Firefox Sync modal dialog strings.
+## Waterfox Sync modal dialog strings.
 
 onboarding-sync-welcome-header = { -brand-product-name }와 함께 하세요
 onboarding-sync-welcome-content = 북마크, 기록, 비밀번호 및 다른 설정을 모든 기기에서 사용해 보세요.
-onboarding-sync-welcome-learn-more-link = Firefox 계정 더 알아보기
+onboarding-sync-welcome-learn-more-link = Waterfox 계정 더 알아보기
 onboarding-sync-form-input =
     .placeholder = 이메일
 onboarding-sync-form-continue-button = 계속
 onboarding-sync-form-skip-login-button = 단계 건너뛰기
 
-## This is part of the line "Enter your email to continue to Firefox Sync"
+## This is part of the line "Enter your email to continue to Waterfox Sync"
 
 onboarding-sync-form-header = 이메일을 입력
 onboarding-sync-form-sub-header = 해서 { -sync-brand-name } 사용
@@ -176,7 +176,7 @@ onboarding-sync-form-sub-header = 해서 { -sync-brand-name } 사용
 onboarding-benefit-products-text = 내가 사용하는 모든 기기에서 개인 정보를 존중하는 도구를 사용합니다.
 # "Personal Data Promise" is a concept that should be translated consistently
 # across the product. It refers to a concept shown elsewhere to the user: "The
-# Firefox Personal Data Promise is the way we honor your data in everything we
+# Waterfox Personal Data Promise is the way we honor your data in everything we
 # make and do. We take less data. We keep it safe. And we make sure that we are
 # transparent about how we use it."
 onboarding-benefit-privacy-text = 우리가 하는 모든 활동은 개인 정보 약속을 존중합니다: 적게 가집니다. 안전하게 보관합니다. 비밀은 없습니다.

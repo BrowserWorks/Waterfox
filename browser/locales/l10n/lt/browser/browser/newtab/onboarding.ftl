@@ -155,7 +155,7 @@ onboarding-fullpage-welcome-subheader = Susipažinkite su viskuo, ką galite atl
 onboarding-fullpage-form-email =
     .placeholder = Jūsų el. pašto adresas…
 
-## Firefox Sync modal dialog strings.
+## Waterfox Sync modal dialog strings.
 
 onboarding-sync-welcome-header = Pasiimkite „{ -brand-product-name }“ su savimi
 onboarding-sync-welcome-content = Turėkite savo adresyną, žurnalą, slaptažodžius ir kitas nuostatas visuose savo įrenginiuose.
@@ -165,7 +165,7 @@ onboarding-sync-form-input =
 onboarding-sync-form-continue-button = Tęsti
 onboarding-sync-form-skip-login-button = Praleisti šį žingsnį
 
-## This is part of the line "Enter your email to continue to Firefox Sync"
+## This is part of the line "Enter your email to continue to Waterfox Sync"
 
 onboarding-sync-form-header = Įveskite savo el. paštą
 onboarding-sync-form-sub-header = norėdami tęsti su „{ -sync-brand-name }“.
@@ -176,7 +176,7 @@ onboarding-sync-form-sub-header = norėdami tęsti su „{ -sync-brand-name }“
 onboarding-benefit-products-text = Atlikite darbus su įrankių šeima, kuri gerbia jūsų privatumą visuose jūsų įrenginiuose.
 # "Personal Data Promise" is a concept that should be translated consistently
 # across the product. It refers to a concept shown elsewhere to the user: "The
-# Firefox Personal Data Promise is the way we honor your data in everything we
+# Waterfox Personal Data Promise is the way we honor your data in everything we
 # make and do. We take less data. We keep it safe. And we make sure that we are
 # transparent about how we use it."
 onboarding-benefit-privacy-text = Viskas, ką darome, atitinka mūsų Asmeninių duomenų pažadą: imti mažiau. Laikyti saugiai. Jokių paslapčių.

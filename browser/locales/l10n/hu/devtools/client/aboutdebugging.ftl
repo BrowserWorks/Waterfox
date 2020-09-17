@@ -17,11 +17,11 @@ about-debugging-page-title-runtime-page = Hibakeresés – Futtatókörnyezet / 
 
 # Sidebar strings
 
-# Display name of the runtime for the currently running instance of Firefox. Used in the
+# Display name of the runtime for the currently running instance of Waterfox. Used in the
 # Sidebar and in the Setup page.
 about-debugging-this-firefox-runtime-name = Ez a { -brand-shorter-name }
 
-# Sidebar heading for selecting the currently running instance of Firefox
+# Sidebar heading for selecting the currently running instance of Waterfox
 about-debugging-sidebar-this-firefox =
     .name = { about-debugging-this-firefox-runtime-name }
 
@@ -66,8 +66,8 @@ about-debugging-sidebar-item-connect-button-connection-timeout = A kapcsolat id�
 about-debugging-sidebar-item-connected-label = Kapcsolódva
 
 # Text displayed in sidebar items for remote devices where a compatible browser (eg
-# Firefox) has not been detected yet. Typically, Android phones connected via USB with
-# USB debugging enabled, but where Firefox is not started.
+# Waterfox) has not been detected yet. Typically, Android phones connected via USB with
+# USB debugging enabled, but where Waterfox is not started.
 about-debugging-sidebar-runtime-item-waiting-for-browser = Várakozás a böngészőre…
 
 # Text displayed in sidebar items for remote devices that have been disconnected from the
@@ -103,7 +103,7 @@ about-debugging-setup-title = Beállítások
 # Introduction text in the Setup page to explain how to configure remote debugging.
 about-debugging-setup-intro = Állítsa be a kapcsolódási módot, amellyel távolról akar hibát keresni a készüléken.
 
-# Explanatory text in the Setup page about what the 'This Firefox' page is for
+# Explanatory text in the Setup page about what the 'This Waterfox' page is for
 about-debugging-setup-this-firefox2 = Használja a <a>{ about-debugging-this-firefox-runtime-name }</a> lehetőséget a kiegészítők és service workerek hibakeresésére a { -brand-shorter-name } ezen verzióján.
 
 # Title of the heading Connect section of the Setup page.
@@ -138,7 +138,7 @@ about-debugging-setup-usb-step-enable-dev-menu2 = Engedélyezze a fejlesztői me
 about-debugging-setup-usb-step-enable-debug2 = Engedélyezze az USB-s hibakeresést az androidos fejlesztői menüben.
 
 # USB section step by step guide
-about-debugging-setup-usb-step-enable-debug-firefox2 = Engedélyezze az USB-s hibakeresést a Firefoxban az androidos eszközén.
+about-debugging-setup-usb-step-enable-debug-firefox2 = Engedélyezze az USB-s hibakeresést a Waterfoxban az androidos eszközén.
 
 # USB section step by step guide
 about-debugging-setup-usb-step-plug-device = Csatlakoztassa az androidos eszközt a számítógépéhez.
@@ -185,7 +185,7 @@ about-debugging-network-location-form-duplicate = A „{ $host-value }” gazdag
 
 # Below are the titles for the various categories of debug targets that can be found
 # on "runtime" pages of about:debugging.
-# Title of the temporary extensions category (only available for "This Firefox" runtime).
+# Title of the temporary extensions category (only available for "This Waterfox" runtime).
 about-debugging-runtime-temporary-extensions =
     .name = Ideiglenes kiegészítők
 # Title of the extensions category.
@@ -219,20 +219,20 @@ about-debugging-runtime-service-workers-not-compatible = A böngésző beállít
 # This string is displayed in the runtime page if the remote browser version is too old.
 # "Troubleshooting" link points to https://developer.mozilla.org/docs/Tools/about:debugging#Troubleshooting
 # { $runtimeVersion } is the version of the remote browser (for instance "67.0a1")
-# { $minVersion } is the minimum version that is compatible with the current Firefox instance (same format)
+# { $minVersion } is the minimum version that is compatible with the current Waterfox instance (same format)
 about-debugging-browser-version-too-old = A csatlakoztatott böngésző régi verziójú ({ $runtimeVersion }). A minimális támogatott verzió: ({ $minVersion }). Ez egy nem támogatott összeállítás és a fejlesztői eszközök hibáját okozhatja. Frissítse a csatlakoztatott böngészőt. <a>Hibaelhárítás</a>
 
 # Dedicated message for a backward compatibility issue that occurs when connecting:
-# from Fx 70+ to the old Firefox for Android (aka Fennec) which uses Fx 68.
-about-debugging-browser-version-too-old-fennec = A Firefox ezen verziója nem tud hibát keresni a Firefox for Androidban (68). Javasoljuk, hogy a teszteléshez telepítse a Firefox for Android Nightlyt a telefonján.
+# from Fx 70+ to the old Waterfox for Android (aka Fennec) which uses Fx 68.
+about-debugging-browser-version-too-old-fennec = A Waterfox ezen verziója nem tud hibát keresni a Waterfox for Androidban (68). Javasoljuk, hogy a teszteléshez telepítse a Waterfox for Android Nightlyt a telefonján.
 
 # This string is displayed in the runtime page if the remote browser version is too recent.
 # "Troubleshooting" link points to https://developer.mozilla.org/docs/Tools/about:debugging#Troubleshooting
 # { $runtimeID } is the build ID of the remote browser (for instance "20181231", format is yyyyMMdd)
-# { $localID } is the build ID of the current Firefox instance (same format)
+# { $localID } is the build ID of the current Waterfox instance (same format)
 # { $runtimeVersion } is the version of the remote browser (for instance "67.0a1")
 # { $localVersion } is the version of your current browser (same format)
-about-debugging-browser-version-too-recent = A csatlakoztatott böngésző frissebb ({ $runtimeVersion }, összeállítási azonosító: { $runtimeID }) mint az Ön { -brand-shorter-name }a ({ $localVersion }, összeállítási azonosító: { $localID }). Ez egy nem támogatott összeállítás és a fejlesztői eszközök hibáját okozhatja. Frissítse a csatlakoztatott böngészőt. Frissítse a Firefoxot. <a>Hibaelhárítás</a>
+about-debugging-browser-version-too-recent = A csatlakoztatott böngésző frissebb ({ $runtimeVersion }, összeállítási azonosító: { $runtimeID }) mint az Ön { -brand-shorter-name }a ({ $localVersion }, összeállítási azonosító: { $localID }). Ez egy nem támogatott összeállítás és a fejlesztői eszközök hibáját okozhatja. Frissítse a csatlakoztatott böngészőt. Frissítse a Waterfoxot. <a>Hibaelhárítás</a>
 
 # Displayed for runtime info in runtime pages.
 # { $name } is brand name such as "Firefox Nightly"
@@ -270,18 +270,18 @@ about-debugging-debug-target-list-empty = Még nincs.
 # A target can be an addon, a tab, a worker...
 about-debugging-debug-target-inspect-button = Vizsgálat
 
-# Text of a button displayed in the "This Firefox" page, in the Temporary Extension
+# Text of a button displayed in the "This Waterfox" page, in the Temporary Extension
 # section. Clicking on the button will open a file picker to load a temporary extension
 about-debugging-tmp-extension-install-button = Ideiglenes kiegészítő betöltése…
 
-# Text displayed when trying to install a temporary extension in the "This Firefox" page.
+# Text displayed when trying to install a temporary extension in the "This Waterfox" page.
 about-debugging-tmp-extension-install-error = Hiba történt az ideiglenes kiegészítő telepítésekor.
 
-# Text of a button displayed for a temporary extension loaded in the "This Firefox" page.
+# Text of a button displayed for a temporary extension loaded in the "This Waterfox" page.
 # Clicking on the button will reload the extension.
 about-debugging-tmp-extension-reload-button = Újratöltés
 
-# Text of a button displayed for a temporary extension loaded in the "This Firefox" page.
+# Text of a button displayed for a temporary extension loaded in the "This Waterfox" page.
 # Clicking on the button will uninstall the extension and remove it from the page.
 about-debugging-tmp-extension-remove-button = Eltávolítás
 

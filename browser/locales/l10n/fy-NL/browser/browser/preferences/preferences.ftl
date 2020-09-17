@@ -122,9 +122,9 @@ search-results-help-link = Help nedich? Besykje <a data-l10n-name="url">{ -brand
 
 startup-header = Opstarte
 # { -brand-short-name } will be 'Firefox Developer Edition',
-# since this setting is only exposed in Firefox Developer Edition
+# since this setting is only exposed in Waterfox Developer Edition
 separate-profile-mode =
-    .label = Tagelyk útfieren fan { -brand-short-name } en Firefox tastean
+    .label = Tagelyk útfieren fan { -brand-short-name } en Waterfox tastean
 use-firefox-sync = Tip: Dit brûkt ferskillende profilen. Brûk { -sync-brand-short-name } om gegevens dêrtusken te dielen.
 get-started-not-logged-in = Oanmelde by { -sync-brand-short-name } …
 get-started-configured = { -sync-brand-short-name }-foarkarren iepenje
@@ -455,10 +455,10 @@ home-newtabs-mode-label = Nije ljepblêden
 home-restore-defaults =
     .label = Standert werstelle
     .accesskey = w
-# "Firefox" should be treated as a brand and kept in English,
+# "Waterfox" should be treated as a brand and kept in English,
 # while "Home" and "(Default)" can be localized.
 home-mode-choice-default =
-    .label = Firefox-startside (Standert)
+    .label = Waterfox-startside (Standert)
 home-mode-choice-custom =
     .label = Oanpaste URL's
 home-mode-choice-blank =
@@ -480,10 +480,10 @@ choose-bookmark =
     .label = Blêdwizer brûke…
     .accesskey = B
 
-## Home Section - Firefox Home Content Customization
+## Home Section - Waterfox Home Content Customization
 
-home-prefs-content-header = Ynhâld fan Firefox-startside
-home-prefs-content-description = Kies hokker ynhâld jo op jo Firefox-startside werjaan wolle.
+home-prefs-content-header = Ynhâld fan Waterfox-startside
+home-prefs-content-description = Kies hokker ynhâld jo op jo Waterfox-startside werjaan wolle.
 home-prefs-search-header =
     .label = Sykje op it web
 home-prefs-topsites-header =
@@ -603,7 +603,7 @@ containers-preferences-button =
 containers-remove-button =
     .label = Fuortsmite
 
-## Firefox Account - Signed out. Note that "Sync" and "Firefox Account" are now
+## Waterfox Account - Signed out. Note that "Sync" and "Firefox Account" are now
 ## more discrete ("signed in" no longer means "and sync is connected").
 
 sync-signedout-caption = Nim jo web mei jo mei
@@ -619,9 +619,9 @@ sync-signedout-account-signin2 =
 #
 # They can be moved within the sentence as needed to adapt
 # to your language, but should not be changed or translated.
-sync-mobile-promo = Download Firefox foar <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> of <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS</a> om mei jo mobile apparaat te syngronisearjen.
+sync-mobile-promo = Download Waterfox foar <img data-l10n-name="android-icon"/> <a data-l10n-name="android-link">Android</a> of <img data-l10n-name="ios-icon"/> <a data-l10n-name="ios-link">iOS</a> om mei jo mobile apparaat te syngronisearjen.
 
-## Firefox Account - Signed in
+## Waterfox Account - Signed in
 
 sync-profile-picture =
     .tooltiptext = Profylôfbylding wizigje
@@ -707,7 +707,7 @@ sync-engine-creditcards =
     .accesskey = C
 sync-engine-addons =
     .label = Add-ons
-    .tooltiptext = Utwreidingen en tema's foar Firefox foar desktop
+    .tooltiptext = Utwreidingen en tema's foar Waterfox foar desktop
     .accesskey = A
 sync-engine-prefs =
     .label =
@@ -813,8 +813,8 @@ history-header = Skiednis
 # "Firefox will" + "Remember history".
 #
 # If this doesn't work for your language, you can translate this message:
-#   - Simply as "Firefox", moving the verb into each option.
-#     This will result in "Firefox" + "Will remember history", etc.
+#   - Simply as "Waterfox", moving the verb into each option.
+#     This will result in "Waterfox" + "Will remember history", etc.
 #   - As a stand-alone message, for example "Firefox history settings:".
 history-remember-label = { -brand-short-name } sil
     .accesskey = s

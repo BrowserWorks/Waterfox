@@ -29,9 +29,9 @@ graph-week-summary-private-window = Стеження, яке { -brand-short-name
 
 protection-report-webpage-title = Панель стану захисту
 protection-report-page-content-title = Панель стану захисту
-# This message shows when all privacy protections are turned off, which is why we use the word "can", Firefox is able to protect your privacy, but it is currently not.
+# This message shows when all privacy protections are turned off, which is why we use the word "can", Waterfox is able to protect your privacy, but it is currently not.
 protection-report-page-summary = { -brand-short-name } може непомітно захищати вашу приватність під час перебування в Інтернеті. Це персоналізований підсумок стану захисту, включаючи засоби контролю вашої безпеки в Інтернеті.
-# This message shows when at least some protections are turned on, we are more assertive compared to the message above, Firefox is actively protecting you.
+# This message shows when at least some protections are turned on, we are more assertive compared to the message above, Waterfox is actively protecting you.
 protection-report-page-summary-default = { -brand-short-name } непомітно захищає вашу приватність під час перебування в Інтернеті. Це персоналізований підсумок стану захисту, включаючи засоби контролю вашої безпеки в Інтернеті.
 
 protection-report-settings-link = Керуйте своїми налаштуваннями приватності й безпеки

@@ -80,7 +80,7 @@ cfr-doorhanger-pintab-animation-pause = Ndalesë
 cfr-doorhanger-pintab-animation-resume = Vazhdoje
 
 
-## Firefox Accounts Message
+## Waterfox Accounts Message
 
 cfr-doorhanger-bookmark-fxa-header = Njëkohësoni faqerojtësit tuaj kudo.
 cfr-doorhanger-bookmark-fxa-body = Gjetje e fortë! Tani, mos rrini pa këtë faqerojtës në pajisjet tuaja celulare. Fillojani me një { -fxaccount-brand-name }.
@@ -191,7 +191,7 @@ cfr-doorhanger-send-tab-body = Dërgoni Skeda ju lejon ta ndani lehtësisht kët
 cfr-doorhanger-send-tab-ok-button = Provoni Dërgim Skedash
     .accesskey = P
 
-## Firefox Send
+## Waterfox Send
 
 cfr-doorhanger-firefox-send-header = Ndajeni me të tjerët në mënyrë të parrezik këtë PDF
 cfr-doorhanger-firefox-send-body = Mbajini dokumentet tuaj rezervat të parrezikuar nga sy përgjues, me fshehtëzim skaj-më-skaj dhe një lidhje që zhduket pasi të keni mbaruar punë.
@@ -229,7 +229,7 @@ cfr-doorhanger-milestone-ok-button = Shihini Krejt
 cfr-doorhanger-milestone-close-button = Mbylle
     .accesskey = M
 
-## What’s New Panel Content for Firefox 76
+## What’s New Panel Content for Waterfox 76
 
 
 ## Lockwise message

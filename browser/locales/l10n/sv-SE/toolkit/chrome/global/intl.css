@@ -10,7 +10,7 @@ window {
   font: 3mm tahoma,arial,helvetica,sans-serif;
 }
 
-/* För att copyright-texten i Om Firefox/Thunderbird inte ska gå ända ut till
+/* För att copyright-texten i Om Waterfox/Thunderbird inte ska gå ända ut till
  * fönsterkanten */
 dialog#aboutDialog #copyright {
  margin-right: 5px;

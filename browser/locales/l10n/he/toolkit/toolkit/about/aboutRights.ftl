@@ -5,7 +5,7 @@
 rights-title = הזכויות שלך
 rights-intro = { -brand-full-name } היא תוכנה חופשית בקוד פתוח, שנבנתה בידי קהילה של אלפים מכל רחבי העולם. ישנם מספר דברים שעליך לדעת:
 rights-intro-point-1 = { -brand-short-name } ניתן לך תחת התנאים של <a data-l10n-name="mozilla-public-license-link">הרישיון הציבורי של Mozilla</a>. משמעות הדבר היא שניתן להשתמש ב־{ -brand-short-name }, להעתיקו ולהפיצו לאחרים, כמו גם לשנות את קוד המקור של { -brand-short-name } בדרך המתאימה ביותר לצרכיך. הרישיון הציבורי של Mozilla גם נותן לך את הזכות להפיץ את הגרסאות עם השינויים שלך.
-rights-intro-point-2 = לא הוענקה לך אף זכות בסמל המסחרי או רישיונות לסמל המסחרי של קרן Mozilla או חלקן, לא כולל הגבלה על השם או הלוגו של Firefox. מידע נוסף על הסמלים המסחריים נמצא <a data-l10n-name="mozilla-trademarks-link">כאן</a>.
+rights-intro-point-2 = לא הוענקה לך אף זכות בסמל המסחרי או רישיונות לסמל המסחרי של קרן Mozilla או חלקן, לא כולל הגבלה על השם או הלוגו של Waterfox. מידע נוסף על הסמלים המסחריים נמצא <a data-l10n-name="mozilla-trademarks-link">כאן</a>.
 rights-intro-point-3 = תכונות מסוימות ב־{ -brand-short-name }, כמו למשל מדווח הקריסות, נותנות לך את האפשרות לספק משוב ל־{ -vendor-short-name }. באמצעות בחירה בשליחת משוב, אתה נותן ל־{ -vendor-short-name } הרשאה להשתמש במשוב כדי לשפר את המוצרים, לפרסם את המשוב באתר שלהם, ולהפיץ את המשוב.
 rights-intro-point-4 = מידע על אופן השימוש במידע האישי שלך ובמשוב שלך הנשלחים ל־{ -vendor-short-name } דרך { -brand-short-name } מתואר ב<a data-l10n-name="mozilla-privacy-policy-link">מדיניות הפרטיות של { -brand-short-name }</a>.
 rights-intro-point-4-unbranded = כל מדיניות פרטיות ישימה למוצר זה צריכה להופיע כאן.

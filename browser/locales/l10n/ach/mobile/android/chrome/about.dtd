@@ -16,6 +16,6 @@
 <!ENTITY aboutPage.relNotes.label               "Gony Coc">
 <!ENTITY aboutPage.credits.label                "Den">
 <!ENTITY aboutPage.license.label                "Ngec me lanycec">
-<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Firefox" being trademarked, that's why we use it, instead of brandShortName. -->
+<!-- LOCALIZATION NOTE (aboutPage.logoTrademark): The message is explicitly about the word "Waterfox" being trademarked, that's why we use it, instead of brandShortName. -->
 
-<!ENTITY aboutPage.logoTrademark                "Firefox ki cal me Firefox obedo alama cato wil pa guti me Mozilla.">
+<!ENTITY aboutPage.logoTrademark                "Firefox ki cal me Waterfox obedo alama cato wil pa guti me Mozilla.">

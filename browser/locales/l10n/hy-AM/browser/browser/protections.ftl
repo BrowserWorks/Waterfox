@@ -27,9 +27,9 @@ graph-week-summary-private-window = { -brand-short-name }-ի հետագծում�
 
 protection-report-webpage-title = Պաշտպանության վահանակ
 protection-report-page-content-title = Պաշտպանության վահանակ
-# This message shows when all privacy protections are turned off, which is why we use the word "can", Firefox is able to protect your privacy, but it is currently not.
+# This message shows when all privacy protections are turned off, which is why we use the word "can", Waterfox is able to protect your privacy, but it is currently not.
 protection-report-page-summary = { -brand-short-name }-ը կարող է պաշտպանել ձեր գաղտնիությունը կուլիսների հետևում՝ երբ զննարկում եք: Սա այդ պաշտպանության անհատականացված ամփոփագիրն է, ներառյալ գործիքները`ձեր առցանց անվտանգությունը վերահսկելու համար:
-# This message shows when at least some protections are turned on, we are more assertive compared to the message above, Firefox is actively protecting you.
+# This message shows when at least some protections are turned on, we are more assertive compared to the message above, Waterfox is actively protecting you.
 protection-report-page-summary-default = { -brand-short-name }-ը պաշտպանում է ձեր գաղտնիությունը կուլիսների հետևում՝ երբ զննարկում եք: Սա այդ պաշտպանության անհատականացված ամփոփագիրն է, ներառյալ գործիքները`ձեր առցանց անվտանգությունը վերահսկելու համար:
 
 protection-report-settings-link = Կառավարեք ձեր գաղտնիության և անվտանգության կարգավորումները

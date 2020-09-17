@@ -48,8 +48,8 @@ about-debugging-sidebar-item-connect-button-connection-timeout = Tenging féll �
 about-debugging-sidebar-item-connected-label = Tengd(ur)
 
 # Text displayed in sidebar items for remote devices where a compatible browser (eg
-# Firefox) has not been detected yet. Typically, Android phones connected via USB with
-# USB debugging enabled, but where Firefox is not started.
+# Waterfox) has not been detected yet. Typically, Android phones connected via USB with
+# USB debugging enabled, but where Waterfox is not started.
 about-debugging-sidebar-runtime-item-waiting-for-browser = Beðið eftir vafra…
 
 # Text displayed in sidebar items for remote devices that have been disconnected from the
@@ -142,7 +142,7 @@ about-debugging-network-location-form-invalid = Ógildur hýsill "{ $host-value 
 
 # Below are the titles for the various categories of debug targets that can be found
 # on "runtime" pages of about:debugging.
-# Title of the temporary extensions category (only available for "This Firefox" runtime).
+# Title of the temporary extensions category (only available for "This Waterfox" runtime).
 about-debugging-runtime-temporary-extensions =
     .name = Tímabundnar viðbætur
 # Title of the extensions category.
@@ -175,11 +175,11 @@ about-debugging-debug-target-list-empty = Ekkert ennþá.
 # A target can be an addon, a tab, a worker...
 about-debugging-debug-target-inspect-button = Skoða
 
-# Text of a button displayed for a temporary extension loaded in the "This Firefox" page.
+# Text of a button displayed for a temporary extension loaded in the "This Waterfox" page.
 # Clicking on the button will reload the extension.
 about-debugging-tmp-extension-reload-button = Endurhlaða
 
-# Text of a button displayed for a temporary extension loaded in the "This Firefox" page.
+# Text of a button displayed for a temporary extension loaded in the "This Waterfox" page.
 # Clicking on the button will uninstall the extension and remove it from the page.
 about-debugging-tmp-extension-remove-button = Fjarlægja
 

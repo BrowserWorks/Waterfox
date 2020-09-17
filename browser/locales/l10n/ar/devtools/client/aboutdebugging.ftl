@@ -16,10 +16,10 @@ about-debugging-page-title-runtime-page = التنقيح - زمن التشغيل
 
 # Sidebar strings
 
-# Display name of the runtime for the currently running instance of Firefox. Used in the
+# Display name of the runtime for the currently running instance of Waterfox. Used in the
 # Sidebar and in the Setup page.
 about-debugging-this-firefox-runtime-name = { -brand-shorter-name } هذا
-# Sidebar heading for selecting the currently running instance of Firefox
+# Sidebar heading for selecting the currently running instance of Waterfox
 about-debugging-sidebar-this-firefox =
     .name = { about-debugging-this-firefox-runtime-name }
 # Text displayed in the about:debugging sidebar when USB devices discovery is enabled.
@@ -49,8 +49,8 @@ about-debugging-sidebar-item-connect-button-connection-timeout = انتهت ال
 # successfully connecting to them. Temporary UI, do not localize.
 about-debugging-sidebar-item-connected-label = متّصل
 # Text displayed in sidebar items for remote devices where a compatible browser (eg
-# Firefox) has not been detected yet. Typically, Android phones connected via USB with
-# USB debugging enabled, but where Firefox is not started.
+# Waterfox) has not been detected yet. Typically, Android phones connected via USB with
+# USB debugging enabled, but where Waterfox is not started.
 about-debugging-sidebar-runtime-item-waiting-for-browser = ينتظر المتصفح…
 # Text displayed in sidebar items for remote devices that have been disconnected from the
 # computer.
@@ -79,7 +79,7 @@ about-debugging-refresh-usb-devices-button = أنعِش الأجهزة
 about-debugging-setup-title = الإعداد
 # Introduction text in the Setup page to explain how to configure remote debugging.
 about-debugging-setup-intro = اضبط الطريقة التي تريد بها الاتصال بجهازك لتنقيحه.
-# Explanatory text in the Setup page about what the 'This Firefox' page is for
+# Explanatory text in the Setup page about what the 'This Waterfox' page is for
 about-debugging-setup-this-firefox2 = استعمل <a>{ about-debugging-this-firefox-runtime-name }</a> لتنقّح الامتدادات وعمّال الخدمة في إصدارة { -brand-shorter-name } هذه.
 # Title of the heading Connect section of the Setup page.
 about-debugging-setup-connect-heading = أوصِل جهازا
@@ -102,7 +102,7 @@ about-debugging-setup-usb-step-enable-dev-menu2 = فعّل قائمة ”مطو�
 # USB section step by step guide
 about-debugging-setup-usb-step-enable-debug2 = فعّل ”تصحيح أخطاء USB/‏USB Debugging“ في قائمة ”مطور البرامج/Developer“.
 # USB section step by step guide
-about-debugging-setup-usb-step-enable-debug-firefox2 = فعّل التنقيح عبر USB في متصفح Firefox على أجهزة أندرويد.
+about-debugging-setup-usb-step-enable-debug-firefox2 = فعّل التنقيح عبر USB في متصفح Waterfox على أجهزة أندرويد.
 # USB section step by step guide
 about-debugging-setup-usb-step-plug-device = أوصِل جهاز أندرويد بهذا الحاسوب.
 # Text shown in the USB section of the setup page with a link to troubleshoot connection errors.
@@ -139,7 +139,7 @@ about-debugging-network-location-form-duplicate = المضيف ”{ $host-value 
 
 # Below are the titles for the various categories of debug targets that can be found
 # on "runtime" pages of about:debugging.
-# Title of the temporary extensions category (only available for "This Firefox" runtime).
+# Title of the temporary extensions category (only available for "This Waterfox" runtime).
 about-debugging-runtime-temporary-extensions =
     .name = الامتدادات المؤقتة
 # Title of the extensions category.
@@ -181,15 +181,15 @@ about-debugging-debug-target-list-empty = لا شيء بعد.
 # button will open a DevTools toolbox that will allow inspecting the target.
 # A target can be an addon, a tab, a worker...
 about-debugging-debug-target-inspect-button = افحص
-# Text of a button displayed in the "This Firefox" page, in the Temporary Extension
+# Text of a button displayed in the "This Waterfox" page, in the Temporary Extension
 # section. Clicking on the button will open a file picker to load a temporary extension
 about-debugging-tmp-extension-install-button = حمّل إضافة مؤقتا…
-# Text displayed when trying to install a temporary extension in the "This Firefox" page.
+# Text displayed when trying to install a temporary extension in the "This Waterfox" page.
 about-debugging-tmp-extension-install-error = حدث عُطل أثناء تثبيت الإضافة مؤقتا.
-# Text of a button displayed for a temporary extension loaded in the "This Firefox" page.
+# Text of a button displayed for a temporary extension loaded in the "This Waterfox" page.
 # Clicking on the button will reload the extension.
 about-debugging-tmp-extension-reload-button = أعِد التحميل
-# Text of a button displayed for a temporary extension loaded in the "This Firefox" page.
+# Text of a button displayed for a temporary extension loaded in the "This Waterfox" page.
 # Clicking on the button will uninstall the extension and remove it from the page.
 about-debugging-tmp-extension-remove-button = أزِل
 # Message displayed in the file picker that opens to select a temporary extension to load

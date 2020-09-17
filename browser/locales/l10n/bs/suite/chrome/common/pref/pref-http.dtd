@@ -10,6 +10,6 @@
 <!ENTITY prefEnableHTTP10.label              "Koristite HTTP 1.0">
 <!ENTITY prefEnableHTTP11.label              "Koristite HTTP 1.1">
 <!ENTITY prefPara                            "HTTP veze mogu biti fino podešene koristeći ove opcije kako bi se poboljšale performanse ili kompatibilnost. Na primjer, za neke proxy servere je potrebno HTTP/1.0 (pogledajte bilješke o izdanju za detalje).">
-<!ENTITY prefFirefoxCompat.label             "Reklamirajte kompatibilnost Firefoxa">
+<!ENTITY prefFirefoxCompat.label             "Reklamirajte kompatibilnost Waterfoxa">
 <!ENTITY prefLightningShow.label             "Reklamirajte instalaciju Lightening-a">
 <!ENTITY prefCompatWarning                   "UPOZORENJE: onemogućavanje ovih postavki može rezultirati da web stranice ili servisi ne rade kako treba.">

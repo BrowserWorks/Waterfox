@@ -88,7 +88,7 @@ cfr-doorhanger-pintab-animation-pause = Oedi
 cfr-doorhanger-pintab-animation-resume = Ailgychwyn
 
 
-## Firefox Accounts Message
+## Waterfox Accounts Message
 
 cfr-doorhanger-bookmark-fxa-header = Cydweddu eich nodau tudalen ym mhob man
 cfr-doorhanger-bookmark-fxa-body = Mae hwn yn dda! Peidiwch bod heb y nod tudalen hon ar eich dyfeisiau symudol. Dechrau arni gyda { -fxaccount-brand-name }.
@@ -213,7 +213,7 @@ cfr-doorhanger-send-tab-body = Mae'r Tab Anfon yn caniatáu i chi rannu'r ddolen
 cfr-doorhanger-send-tab-ok-button = Rhowch gynnig ar y Tab Anfon
     .accesskey = R
 
-## Firefox Send
+## Waterfox Send
 
 cfr-doorhanger-firefox-send-header = Rhannwch y PDF hwn yn ddiogel
 cfr-doorhanger-firefox-send-body = Cadwch eich dogfennau sensitif yn ddiogel rhag llygaid busneslyd gydag amgryptio o'r dechrau i'r diwedd a dolen sy'n diflannu pan fyddwch chi wedi gorffen.
@@ -255,7 +255,7 @@ cfr-doorhanger-milestone-ok-button = Gweld y Cyfan
 cfr-doorhanger-milestone-close-button = Cau
     .accesskey = C
 
-## What’s New Panel Content for Firefox 76
+## What’s New Panel Content for Waterfox 76
 
 
 ## Lockwise message

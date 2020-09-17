@@ -104,9 +104,9 @@ manifest-loaded-ok = Manifiesto cargado.
 # Text displayed as a caption when there has been an error while trying to
 # load the manifest
 manifest-loaded-error = Hubo un error mientras se cargaba el manifiesto:
-# Text displayed as an error when there has been a Firefox DevTools error while
+# Text displayed as an error when there has been a Waterfox DevTools error while
 # trying to load the manifest
-manifest-loaded-devtools-error = Error de Firefox DevTools
+manifest-loaded-devtools-error = Error de Waterfox DevTools
 # Text displayed when the page has no manifest available
 manifest-non-existing = No se encontró manifiesto para inspeccionar.
 # Text displayed when the page has a manifest embedded in a Data URL and
