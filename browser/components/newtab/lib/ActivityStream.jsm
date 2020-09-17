@@ -101,39 +101,39 @@ const DEFAULT_SITES = new Map([
   // This first item is the global list fallback for any unexpected geos
   [
     "",
-    "https://www.youtube.com/,https://www.facebook.com/,https://www.wikipedia.org/,https://www.reddit.com/,https://www.amazon.com/,https://twitter.com/",
+    "https://www.waterfox.net/",
   ],
   [
     "US",
-    "https://www.youtube.com/,https://www.facebook.com/,https://www.amazon.com/,https://www.reddit.com/,https://www.wikipedia.org/,https://twitter.com/",
+    "https://www.waterfox.net/",
   ],
   [
     "CA",
-    "https://www.youtube.com/,https://www.facebook.com/,https://www.reddit.com/,https://www.wikipedia.org/,https://www.amazon.ca/,https://twitter.com/",
+    "https://www.waterfox.net/",
   ],
   [
     "DE",
-    "https://www.youtube.com/,https://www.facebook.com/,https://www.amazon.de/,https://www.ebay.de/,https://www.wikipedia.org/,https://www.reddit.com/",
+    "https://www.waterfox.net/",
   ],
   [
     "PL",
-    "https://www.youtube.com/,https://www.facebook.com/,https://allegro.pl/,https://www.wikipedia.org/,https://www.olx.pl/,https://www.wykop.pl/",
+    "https://www.waterfox.net/",
   ],
   [
     "RU",
-    "https://vk.com/,https://www.youtube.com/,https://ok.ru/,https://www.avito.ru/,https://www.aliexpress.com/,https://www.wikipedia.org/",
+    "https://www.waterfox.net/",
   ],
   [
     "GB",
-    "https://www.youtube.com/,https://www.facebook.com/,https://www.reddit.com/,https://www.amazon.co.uk/,https://www.bbc.co.uk/,https://www.ebay.co.uk/",
+    "https://www.waterfox.net/",
   ],
   [
     "FR",
-    "https://www.youtube.com/,https://www.facebook.com/,https://www.wikipedia.org/,https://www.amazon.fr/,https://www.leboncoin.fr/,https://twitter.com/",
+    "https://www.waterfox.net/",
   ],
   [
     "CN",
-    "https://www.baidu.com/,https://www.zhihu.com/,https://www.ifeng.com/,https://weibo.com/,https://www.ctrip.com/,https://www.iqiyi.com/",
+    "https://www.waterfox.net/",
   ],
 ]);
 const GEO_PREF = "browser.search.region";
